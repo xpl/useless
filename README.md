@@ -13,7 +13,7 @@ Copy useless folder to `node_modules` subfolder of your project. In this case th
 
 ##Installing as pre-built monolithic script
 
-If you want to use only platform-independent part of the library, go to build folder and pick useless-base.js. This one is ready to be included to either server or client side.
+If you want to use only platform-independent part of the library, go to `build` folder and pick `useless-base.js`. This one is ready to be included to either server or client side.
 
 More distribution options to come.
 
