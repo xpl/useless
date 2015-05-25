@@ -9,7 +9,7 @@ Some code is formatted using tabs with tab width set to 4. GitHub does not allow
 
 ##Installing as NPM module
 
-Copy useless folder to `node_modules` subfolder of your project. In this case the whole library will load as source which you can browse and/or edit. Edits are welcome!
+Copy `useless` folder to `node_modules` subfolder of your project. In this case the whole library will load as source which you can browse and/or edit. Edits are welcome!
 
 ##Installing as pre-built monolithic script
 
