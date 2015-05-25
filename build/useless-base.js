@@ -3985,6 +3985,9 @@ _.clamp = function (n, min, max) {
 _.lerp = function (t, min, max) {
     return min + (max - min) * t }
 
+_.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
+    return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
+
 
 /*  2-dimensional vector
     ======================================================================== */
@@ -3992,18 +3995,17 @@ _.lerp = function (t, min, max) {
 Vec2 = $prototype ({
 
     $static: {
-        zero: $property (function () {
-            return new Vec2 (0, 0) }),
-        unit: $property (function () {
-            return new Vec2 (1, 1) }),
-        lerp: function (t, a, b) {
-            return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp: function (n, a, b) {
-            return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        zero: $property (function () { return new Vec2 (0, 0) }),
+        unit: $property (function () { return new Vec2 (1, 1) }),
+        one:  $alias ('unit'),
+        lerp:  function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
+        clamp: function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
         this.x = x
         this.y = y },
+
+    length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
 
     add: function (other) {
         return new Vec2 (this.x + other.x, this.y + other.y) },
@@ -4040,7 +4042,7 @@ Bezier = {
         return new Vec2 (x, y) },
         
     cubic1D: function (a, b, c, d, t) {
-        return Bezier.cubic (Vec2.zero (), new Vec2 (a, b), new Vec2 (c, d), Vec2.one (), t).y } }
+        return Bezier.cubic (Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one, t).y } }
 
 
 /*  Bounding box (2D)
@@ -4207,15 +4209,47 @@ _.ptInRect = function (pt, rect) {
     return ((pt.x >= rect.left) && (pt.y >= rect.top) && (pt.x < rect.right) && (pt.y < rect.bottom)) }
 
 
-/*  Converts from HSL color space to RGB, with saturation and luminance set to 0.5
+/*  Color utility
     ======================================================================== */
 
-_.hueToCSSColor = function (H, a) {
-    var r = Math.max (0.0, Math.min (1.0, Math.abs (H * 6.0 - 3.0) - 1.0))
-    var g = Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (H * 6.0 - 2.0)))
-    var b = Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (H * 6.0 - 4.0)))
-    return 'rgba(' + Math.round (r * 255) + ',' + Math.round (g * 255) + ',' + Math.round (b * 255) + ', ' + (a || '1.0') + ')' }
+_.hue2CSS = function (H, a)   { return _.RGB2CSS (_.hue2RGB (H), a)       }
+_.HSL2CSS = function (hsl, a) { return _.RGB2CSS (_.HSL2RGB (hsl), a) }
 
+_.HSL2RGB = function (hsl) { var h = hsl[0], s = hsl[1], l = hsl[2]
+    var rgb = _.hue2RGB (h)
+    var c = (1.0 - Math.abs (2.0 * l - 1.0)) * s
+    return [(rgb[0] - 0.5) * c + l,
+            (rgb[1] - 0.5) * c + l,
+            (rgb[2] - 0.5) * c + l] }
+
+_.hue2RGB = function (hue) {
+    return [Math.max (0.0, Math.min (1.0, Math.abs (hue * 6.0 - 3.0) - 1.0)),
+            Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (hue * 6.0 - 2.0))),
+            Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (hue * 6.0 - 4.0)))] }
+
+_.RGB2CSS = function (rgb, a) {
+    return 'rgba(' +
+        Math.round (rgb[0] * 255) + ',' +
+        Math.round (rgb[1] * 255) + ',' +
+        Math.round (rgb[2] * 255) + ',' + (a === undefined ? (rgb[3] === undefined ? 1.0 : rgb[3]) : a) + ')' }
+
+_.RGB2HSL = function (rgb) {
+    var r = rgb[0], g = rgb[1], b = rgb[2]
+    var max = Math.max (r, g, b), min = Math.min (r, g, b);
+    var h, s, l = (max + min) / 2;
+
+    if (max == min) {
+        h = s = 0 }
+    else {
+        var d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch(max){
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break; }
+        h /= 6 }
+    return [h, s, l] }
+    
 
 /*  Advanced rounding utility
     ======================================================================== */
@@ -6155,7 +6189,7 @@ _.defineTagKeyword ('async')
  */
 _.tests.itself = {
 
-    /*  For reference on basic syntax of assertions, see common.js, here's only
+    /*  For reference on basic syntax of assertions, see assert.js, here's only
         extra function provided by this module:
      */
 
@@ -6588,6 +6622,9 @@ _.clamp = function (n, min, max) {
 _.lerp = function (t, min, max) {
     return min + (max - min) * t }
 
+_.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
+    return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
+
 
 /*  2-dimensional vector
     ======================================================================== */
@@ -6595,18 +6632,17 @@ _.lerp = function (t, min, max) {
 Vec2 = $prototype ({
 
     $static: {
-        zero: $property (function () {
-            return new Vec2 (0, 0) }),
-        unit: $property (function () {
-            return new Vec2 (1, 1) }),
-        lerp: function (t, a, b) {
-            return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp: function (n, a, b) {
-            return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        zero: $property (function () { return new Vec2 (0, 0) }),
+        unit: $property (function () { return new Vec2 (1, 1) }),
+        one:  $alias ('unit'),
+        lerp:  function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
+        clamp: function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
         this.x = x
         this.y = y },
+
+    length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
 
     add: function (other) {
         return new Vec2 (this.x + other.x, this.y + other.y) },
@@ -6643,7 +6679,7 @@ Bezier = {
         return new Vec2 (x, y) },
         
     cubic1D: function (a, b, c, d, t) {
-        return Bezier.cubic (Vec2.zero (), new Vec2 (a, b), new Vec2 (c, d), Vec2.one (), t).y } }
+        return Bezier.cubic (Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one, t).y } }
 
 
 /*  Bounding box (2D)
@@ -6810,15 +6846,47 @@ _.ptInRect = function (pt, rect) {
     return ((pt.x >= rect.left) && (pt.y >= rect.top) && (pt.x < rect.right) && (pt.y < rect.bottom)) }
 
 
-/*  Converts from HSL color space to RGB, with saturation and luminance set to 0.5
+/*  Color utility
     ======================================================================== */
 
-_.hueToCSSColor = function (H, a) {
-    var r = Math.max (0.0, Math.min (1.0, Math.abs (H * 6.0 - 3.0) - 1.0))
-    var g = Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (H * 6.0 - 2.0)))
-    var b = Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (H * 6.0 - 4.0)))
-    return 'rgba(' + Math.round (r * 255) + ',' + Math.round (g * 255) + ',' + Math.round (b * 255) + ', ' + (a || '1.0') + ')' }
+_.hue2CSS = function (H, a)   { return _.RGB2CSS (_.hue2RGB (H), a)       }
+_.HSL2CSS = function (hsl, a) { return _.RGB2CSS (_.HSL2RGB (hsl), a) }
 
+_.HSL2RGB = function (hsl) { var h = hsl[0], s = hsl[1], l = hsl[2]
+    var rgb = _.hue2RGB (h)
+    var c = (1.0 - Math.abs (2.0 * l - 1.0)) * s
+    return [(rgb[0] - 0.5) * c + l,
+            (rgb[1] - 0.5) * c + l,
+            (rgb[2] - 0.5) * c + l] }
+
+_.hue2RGB = function (hue) {
+    return [Math.max (0.0, Math.min (1.0, Math.abs (hue * 6.0 - 3.0) - 1.0)),
+            Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (hue * 6.0 - 2.0))),
+            Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (hue * 6.0 - 4.0)))] }
+
+_.RGB2CSS = function (rgb, a) {
+    return 'rgba(' +
+        Math.round (rgb[0] * 255) + ',' +
+        Math.round (rgb[1] * 255) + ',' +
+        Math.round (rgb[2] * 255) + ',' + (a === undefined ? (rgb[3] === undefined ? 1.0 : rgb[3]) : a) + ')' }
+
+_.RGB2HSL = function (rgb) {
+    var r = rgb[0], g = rgb[1], b = rgb[2]
+    var max = Math.max (r, g, b), min = Math.min (r, g, b);
+    var h, s, l = (max + min) / 2;
+
+    if (max == min) {
+        h = s = 0 }
+    else {
+        var d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch(max){
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break; }
+        h /= 6 }
+    return [h, s, l] }
+    
 
 /*  Advanced rounding utility
     ======================================================================== */

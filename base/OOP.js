@@ -509,8 +509,8 @@ _.deferTest ('OOP', {
 /*  Adds this.$ to jQuery objects (to enforce code style consistency)
     ======================================================================== */
 
-    if (typeof $ !== 'undefined') {
-        $.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
+    if (typeof jQuery !== 'undefined') {
+        jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
 
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))

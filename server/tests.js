@@ -57,7 +57,7 @@ module.exports = $trait ({
 
 
 	withTestDb: function (what) {							log.warn ('Preparing Test DB')
-		require ('../db').init ('president_test',
+		require ('../db').init (this.dbName + '_test',
 						 this.$ (function (testDb) { var productionDb = this.db;
 						 							  					this.db = testDb
 			this.dropDb (this.newContext ({

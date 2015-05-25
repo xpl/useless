@@ -1,7 +1,14 @@
-var fs = require ('fs')
+var fs = require ('fs'),
+	_  = require ('useless')
 
-fs.writeFileSync ('./build/useless.js',
-	require ('./server/base/util').compileScript ({
-										source:       fs.readFileSync ('./useless-base.js', { encoding: 'utf8' }),
-										includePath: './' }),
-									  { encoding:    'utf8' })
+Testosterone.run ({                             
+    codebase: true,
+    verbose:  false,
+    silent:   true },
+
+    function (okay) { if (okay) {
+    	fs.writeFileSync ('./build/useless-base.js',
+			require ('./server/base/util').compileScript ({
+												source:       fs.readFileSync ('./useless.js', { encoding: 'utf8' }),
+												includePath: './' }),
+											  { encoding:    'utf8' }) } })

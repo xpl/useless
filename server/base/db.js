@@ -4,17 +4,13 @@
 var sqlite			= require ('sqlite3'),
     mongo			= require ('mongodb'),
       _				= require ('underscore'),
-    util			= require ('./util'),
-    foundation		= require ('../base/foundation'),
-    concurrency		= require ('../base/concurrency'),
-    Collections		= require ('../base/collections'),
-    serverConfig	= require ('../../config')
+    util			= require ('./util')
 
 Db = $prototype ({
 
 	/* opens mongodb connection
 	 */
-	constructor: function (dbName, complete) {
+	constructor: function (dbName, schema, complete) {
 		new mongo.Db (dbName, this.server = new mongo.Server ('localhost', 27017, {
 				safe: true,
 				auto_reconnect: true,
@@ -23,6 +19,7 @@ Db = $prototype ({
 		
 			.open (this.$ (function (err, db) {
 				this.db = db
+				this.schema = schema
 				this.collections = {}
 				if (!err) {
 					this.openCollections (complete) }
@@ -32,7 +29,7 @@ Db = $prototype ({
 
 	/*	Makes aliases + adds custom properties/methods to a collection
 	 */
-	initCollection: function (id, collection) { var schema = Collections[id]
+	initCollection: function (id, collection) { var schema = this.schema[id]
 		_.extend (this[id] = this.collections[id] = collection, {
 			schema: schema,
 			convertObjectIds: function (obj) {

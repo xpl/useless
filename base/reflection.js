@@ -115,7 +115,7 @@ _.readSource = _.cps.memoize (function (file, then) {
                                         catch (e) {
                                             then ('') } }
                                     else {
-                                        $.get (file, then, 'text') } } })
+                                        jQuery.get (file, then, 'text') } } })
 
 /*  Callstack API
  */
