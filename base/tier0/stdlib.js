@@ -439,6 +439,34 @@ _.withTest (['stdlib', 'quote'], function () {
     _.quoteWith  = _.flip2 (_.quote)
     _.quotesWith = _.higherOrder (_.quoteWith) })
 
+
+/*  _.partition 2.0
+    ======================================================================== */
+
+_.withTest (['stdlib', 'partition2'], function () {
+
+        $assert (_.partition2 (
+                    [ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty),
+                    [['a', 'b', 'c'], [undefined, undefined], ['d']]) }, function () {
+
+    _.partition2 = function (arr, pred) { var prevColor = undefined
+
+            var result = []
+            var group = []
+
+            _.each (arr, function (x) { var color = pred (x)
+                if (prevColor != color && group.length) {
+                    result.push (group)
+                    group = [] }
+                group.push (x)
+                prevColor = color })
+
+            if (group.length) {
+                result.push (group) }
+
+            return result } })
+
+
 /*  experimental shit (subject to removal)
     ======================================================================== */
 

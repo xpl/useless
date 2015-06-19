@@ -6,14 +6,15 @@ _ = require ('underscore')
 
 _.tests.reflection = {
 
-    '$scriptsRoot': function () {
-        $assert ($scriptsRoot.length > 0) },
+    'file paths': function () {
+        $assert ($sourcePath .length > 0)
+        $assert ($uselessPath.length > 0) },
 
     'readSource': function () {
-        _.readSource ($scriptsRoot + 'useless.js', function (text) {
+        _.readSource ($uselessPath + 'useless.js', function (text) {
             $assert (text.length > 0) })
 
-        _.readSourceLine ($scriptsRoot + 'useless.js', 0, function (line) {
+        _.readSourceLine ($uselessPath + 'useless.js', 0, function (line) {
             $assert (line.length > 0) }) },
 
     'CallStack from error': function () {
@@ -39,7 +40,7 @@ _.tests.reflection = {
             calleeShort:    'string',       // short function name (only the last part of dot-sequence)
             file:           'string',       // full path to source file at which call occurred
             fileName:       'string',       // name only (with extension)
-            fileShort:      'string',       // path relative to $scriptsRoot
+            fileShort:      'string',       // path relative to $sourcePath
             thirdParty:     'boolean',      // denotes whether the call location occured at 3rd party library
             line:           'number',       // line number
             column:         'number',       // character number
@@ -91,12 +92,16 @@ _.tests.reflection = {
 /*  Custom syntax (defined in a way that avoids cross-dependency loops)
  */
 _.defineKeyword ('callStack',   function () {
-    return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })
+    return CallStack.fromRawString (CallStack.currentAsRawString).offset (Platform.NodeJS ? 1 : 0) })
 
-_.defineKeyword ('scriptsRoot',
-    _.memoize (function () {
-        return CallStack.rawStringToArray (CallStack.currentAsRawString)[0].file.replace (/base\/.+\.js/g, '') }))
+_.defineKeyword ('currentFile', function () {
+    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
 
+_.defineKeyword ('uselessPath', _.memoize (function () {
+    return _.initial ($currentFile.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
+
+_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+    return local ? (local + '/') : $uselessPath }))
 
 /*  Source code access (cross-platform)
  */
@@ -116,6 +121,7 @@ _.readSource = _.cps.memoize (function (file, then) {
                                             then ('') } }
                                     else {
                                         jQuery.get (file, then, 'text') } } })
+
 
 /*  Callstack API
  */
@@ -175,19 +181,26 @@ CallStack = $extends (Array, {
         var cut = _.platform ().engine === 'browser' ? 3 : 2
         return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
 
+    shortenPath: $static (function (file) {
+                    return file.replace ($sourcePath, '') }),
+
+    isThirdParty: $static (function (file) { var local = file.replace ($sourcePath, '')
+                    return (local.indexOf ('/node_modules/') >= 0) ||
+                           (file.indexOf ('/node_modules/') >= 0 && !local) ||
+                           (local.indexOf ('underscore') >= 0) ||
+                           (local.indexOf ('jquery') >= 0) }),
+
     fromRawString: $static (_.sequence (
         function (rawString) {
             return CallStack.rawStringToArray (rawString) },
 
         function (array) {
-            return _.map (array, function (entry) {
+            return _.map (array, function (entry) { var fileShort = CallStack.shortenPath (entry.file)
                 return _.extend (entry, {
                             calleeShort:    _.last (entry.callee.split ('.')),
                             fileName:       _.last (entry.file.split ('/')),
-                            fileShort:      (entry.file.replace ($scriptsRoot, '')),
-                            thirdParty:     (entry.file.indexOf ($scriptsRoot) == -1) ||
-                                            (entry.file.indexOf ($scriptsRoot + 'lib/') != -1) ||
-                                            (entry.file.indexOf ($scriptsRoot + 'node_modules') != -1) }) }) },
+                            fileShort:      fileShort,
+                            thirdParty:     CallStack.isThirdParty (entry.file) }) }) },
 
         function (parsedArray) {
             return _.map (parsedArray, function (entry) {

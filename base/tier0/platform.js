@@ -7,9 +7,12 @@ _.platform = function () {
                 if ((typeof window !== 'undefined') && (window._.platform === arguments.callee)) {
                     if (navigator.platform && navigator.platform.indexOf) {
                         return _.extend ({ engine: 'browser'},
-                                ((navigator.platform.indexOf ("iPad")   >= 0) ? { system: 'iOS', device: 'iPad' }  :
-                                ((navigator.platform.indexOf ("iPhone") >= 0)
-                            ||   (navigator.platform.indexOf ("iPod")   >= 0) ? { system: 'iOS', device: 'iPhone' } : {} ))) } }
+                                ((navigator.platform .indexOf ("Linux arm") >= 0)
+                            ||   (navigator.platform .indexOf ("Android")   >= 0)
+                            ||   (navigator.userAgent.indexOf ("Android")   >= 0) ? { touch: true, system: 'Android' } :
+                                ((navigator.platform .indexOf ("iPad")      >= 0) ? { touch: true, system: 'iOS', device: 'iPad' }  :
+                                ((navigator.platform .indexOf ("iPhone")    >= 0)
+                            ||   (navigator.platform .indexOf ("iPod")      >= 0) ? { touch: true, system: 'iOS', device: 'iPhone' } : {} )))) } }
 
                 if ((typeof global !== 'undefined') && (global._.platform === arguments.callee)) {
                     return { engine: 'node' } }
@@ -45,6 +48,7 @@ var globalUncaughtExceptionHandler = function (e) { var chain = arguments.callee
                     newE.originalError = e
                     e = newE } } } }
     else {
+        console.log (e)
         throw e } }
 
 _.withUncaughtExceptionHandler = function (handler, context) { context = context || _.identity

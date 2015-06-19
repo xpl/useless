@@ -6,6 +6,9 @@ Error reporting UI
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+if (typeof UI === 'undefined') {
+	UI = {} }
+
 UI.error = function (what, retry, dismiss) {
 	if (_.isTypeOf (Error, what)) {
 		retry   = retry   || what.retry

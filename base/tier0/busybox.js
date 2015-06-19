@@ -47,10 +47,10 @@ _.mul = function (a, b) {
 _.equal = function (a, b) {
             return a === b }
 
-_.sums      = _.higherOrder (_.sum)
-_.subtracts = _.higherOrder (_.subtract)
-_.muls      = _.higherOrder (_.mul)
-_.equals    = _.higherOrder (_.equal)
+_.sums      = _.plus  = _.higherOrder (_.sum)
+_.subtracts = _.minus = _.higherOrder (_.subtract)
+_.muls                = _.higherOrder (_.mul)
+_.equals              = _.higherOrder (_.equal)
 
 _.largest = function (a, b) {                   // FFFFUUUU: underscore already taken _.max for its dirty needs, pidory blyat.
                 if (isNaN (a) && isNaN (b)) {

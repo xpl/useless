@@ -6,6 +6,10 @@ Entry point.
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+if (typeof require === 'undefined') {
+    require = function (s) {
+        return (s === 'underscore') ? _ : undefined } }
+
 _ = require ('underscore')
 
 
@@ -81,15 +85,16 @@ _ = (function () {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     Platform = $singleton ({ $property: {
+        
         engine: _.platform ().engine,
         system: _.platform ().system,
         device: _.platform ().device,
+        touch:  _.platform ().touch || false,
 
         NodeJS: _.platform ().engine === 'node',
         iPad:   _.platform ().device === 'iPad',
         iPhone: _.platform ().device === 'iPhone',
         iOS:    _.platform ().system === 'iOS' } })
-
 
 /*  Provides infix notation for stdlib utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

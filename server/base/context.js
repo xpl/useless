@@ -3,10 +3,8 @@ var _				= require ('underscore'),
 	sys				= require ('sys'),
 	url				= require ('url'),
 	path			= require ('path'),
-	foundation		= require ('../../base/foundation'),
 	util			= require ('./util'),
-	serverConfig	= require ('../../config')
-	_.string		= require ('underscore.string')
+	serverConfig	= {}//require ('../config')
 
 Context = $prototype ({
 

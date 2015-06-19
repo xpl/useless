@@ -81,6 +81,22 @@ function () { _.extend (_.cps, {
                         /* array */ obj) } } })} )
 
 
+/*  map
+    ======================================================================== */
+
+_.withTest (['cps', 'map'], function () {
+
+    _.cps.map ([7,6,5],
+        function (x, i, then) { then (x + 1) },
+        function (result)     { $assert (result, [8,7,6]) }) },
+
+function () { _.extend (_.cps, {
+
+    map: function (obj, iter, complete) { var result = _.isArray (obj) ? [] : {}
+            _.cps.each (obj, function (x, i, next) {
+                iter (x, i, function (y) {
+                    result[i] = y; next () }) }, function () { complete (result) }) } }) })
+
 /*  memoize
     ======================================================================== */
 

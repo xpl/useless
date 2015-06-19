@@ -43,6 +43,19 @@ module.exports = {
 			log.error (e)
 			return undefined } },
 
+	require: function (modules, then) { _.cps.map (modules,
+		        function (name, then) {
+	                try         {   then (require (name)) }
+
+	                catch (e)   {   log.warn ('Installing', name, 'from npm')
+	                                exec ('npm install ' + name, function (e, stdout, stderr) {
+	                                                                    if (e) {
+	                                                                        util.fatalError (stderr) }
+	                                                                    else {
+	                                                                        then (require (name)) } }) } },
+            	function (modules) {
+            		then.apply (null, _.coerceToArray (modules)) }) },
+
 	compileScript: function (cfg) {
 						return _.map (cfg.source.split ('\n'),
 									function (line) {

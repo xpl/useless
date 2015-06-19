@@ -17,14 +17,14 @@ $(document).ready (function () {
 		}
 	})*/
 
-	$(document).scroll (function () {
+	/*$(document).scroll (function () {
 		_.delay (function () {
 			var focusGuys = $('input:focus, textarea:focus')
 			if (!focusGuys.length) { // if some input is not in focus (screen-slide behavior)
 				$(document.body).scrollTop (0) // don't allow this shit (fallback case when ontouchmove prevention fails)
 			} else {
-				focusGuys.one ('blur', function () {
-					$(document.body).scrollTop (0) /* scroll back ASAP */ }) } }, 100) })
+				focusGuys.one ('blur', function () { // scroll back ASAP
+					$(document.body).scrollTop (0) }) } }, 100) })*/
 
 	// force 3D acceleration for whole page
-	document.body.style.webkitTransform = 'translate3d(0,0,0)' })
+	/*document.body.style.webkitTransform = 'translate3d(0,0,0)'*/ })

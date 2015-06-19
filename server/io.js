@@ -1,3 +1,6 @@
+var fs   = require ('fs'),
+	path = require ('path')
+
 /*	Chainable request processing primitives for basic I/O
  */
 
@@ -68,7 +71,8 @@ module.exports = $trait ({
 
 	/*	Serves file's contents
 	 */
-	file: function (file) { return function (context) {
-		return context.file (file) }}
+	file: function (location) { var isDirectory = fs.lstatSync (location).isDirectory ()
+		return function (context) {
+			return context.file (isDirectory ? path.join (location, context.env.file) : location) } },
 
 })

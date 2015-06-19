@@ -6,6 +6,10 @@ Entry point.
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+if (typeof require === 'undefined') {
+    require = function (s) {
+        return (s === 'underscore') ? _ : undefined } }
+
 _ = require ('underscore')
 
 
@@ -31,12 +35,6 @@ _ = (function () {
 
     return _ }) ()
 
-/*  Require stub
-    ======================================================================== */
-
-    if (typeof require === 'undefined') {
-        require = function (s) {
-            return (s === 'underscore') ? _ : undefined } }
 
 /*  As we do not run macro processor on server scripts, $include reduces to
     built-in require (if running in Node.js environment)
@@ -3395,7 +3393,7 @@ _ = require ('underscore')
 /*  String extensions
     ======================================================================== */
 
-_.withTest ('String extensions', function () {
+_.deferTest ('String extensions', function () {
 
     /*  Convenient infix versions of string-crunching basics. The
         naming scheme of reversed/capitalized/trimmed is chosen to
@@ -4050,15 +4048,15 @@ _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] -
 Vec2 = $prototype ({
 
     $static: {
-        zero: $property (function () { return new Vec2 (0, 0) }),
-        unit: $property (function () { return new Vec2 (1, 1) }),
-        one:  $alias ('unit'),
-        lerp:  function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp: function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        zero:       $property (function () { return new Vec2 (0, 0) }),
+        unit:       $property (function () { return new Vec2 (1, 1) }),
+        one:        $alias ('unit'),
+        lerp:       function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
+        clamp:      function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
-        this.x = x
-        this.y = y },
+        this.x =                             x
+        this.y = ((arguments.length === 1) ? x : y) },
 
     length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
 
@@ -4071,8 +4069,33 @@ Vec2 = $prototype ({
     scale: function (t) {
         return new Vec2 (this.x * t, this.y * t) },
 
-    inversed: $property (function () {
+    divide: function (other) {
+        return new Vec2 (this.x / other.x, this.y / other.y) },
+
+    normal: $property (function () {
+        return this.scale (1.0 / this.length) }),
+
+    perp: $property (function () {
+        return new Vec2 (this.y, -this.x) }),
+
+    inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
+
+    cssLeftTop: $property (function () {
+        return { left: Math.floor (this.x), top: Math.floor (this.y) } }),
+
+    cssLeftTopMargin: $property (function () {
+        return { marginLeft: Math.floor (this.x), marginTop: Math.floor (this.y) } }),
+
+    cssWidthHeight: $property (function () {
+        return { width: Math.floor (this.x), height: Math.floor (this.y) } }),
+
+    floor: $property (function () {
+        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
+
+    sum: $static (function (arr) {
+        return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
+            function (memo, v) { return memo.add (v) }, Vec2.zero) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + '}' } })
@@ -4106,21 +4129,38 @@ Bezier = {
 BBox = $prototype ({
 
     $static: {
+
         zero: $property (function () {
             return new BBox (0, 0, 0, 0) }),
+
         unit: $property (function () {
             return new BBox (0, 0, 1, 1) }),
+
+        fromLeftTopAndSize: function (pt, size) {
+            return BBox.fromLTWH ({ left: pt.x, top: pt.y, width: size.x, height: size.y }) },
+
         fromLTWH: function (r) {
             return new BBox (r.left + r.width / 2.0, r.top + r.height / 2.0, r.width, r.height) },
+
         fromLTRB: function (r) {
-            return new BBox (_.lerp (0.5, r.left, r.right), _.lerp (0.5, r.top. r.bottom), r.right - r.left, r.bottom - r.top) },
+            return new BBox (_.lerp (0.5, r.left, r.right), _.lerp (0.5, r.top, r.bottom), r.right - r.left, r.bottom - r.top) },
+
         fromSizeAndCenter: function (size, center) {
             return new BBox (center.x - size.x / 2.0, center.y - size.y / 2.0, size.x, size.y) },
+
         fromSize: function (a, b) {
             if (b) {
                 return new BBox (-a / 2.0, -b / 2.0, a, b) }
             else {
-                return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } } },
+                return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
+        
+        fromPoints: function (pts) { var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE
+            _.each (pts, function (pt) {
+                l = Math.min (pt.x, l)
+                t = Math.min (pt.y, t)
+                r = Math.max (pt.x, r)
+                b = Math.max (pt.y, b) })
+            return BBox.fromLTRB ({ left: l, top: t, right: r, bottom: b }) } },
 
     constructor: function (x, y, w, h) {
         if (arguments.length == 4) {
@@ -4130,6 +4170,31 @@ BBox = $prototype ({
             this.height = h }
         else {
             _.extend (this, x) } },
+
+    classifyPoint: function (pt) {
+        
+        var sides = _.extend ({},
+            (pt.x > this.right)   ? { right   : true } : {},
+            (pt.x < this.left)    ? { left    : true } : {},
+            (pt.y < this.bottom)  ? { bottom  : true } : {},
+            (pt.y > this.top)     ? { top     : true } : {})
+        
+        return _.extend (sides,
+            (!sides.left &&
+             !sides.right &&
+             !sides.bottom && !sides.top) ? { inside: true } : {}) },
+
+    clone: $property (function () {
+        return new BBox (this.x, this.y, this.width, this.height) }),
+
+    css: $property (function () {
+        return { left: this.left, top: this.top, width: this.width, height: this.height } }),
+
+    leftTop: $property (function () {
+        return new Vec2 (this.left, this.top) }),
+
+    rightBottom: $property (function () {
+        return new Vec2 (this.right, this.bottom) }),
 
     left: $property (function () {
         return this.x - this.width / 2.0 }),
@@ -4149,8 +4214,14 @@ BBox = $prototype ({
     size: $property (function () {
         return new Vec2 (this.width, this.height) }),
 
+    offset: function (amount) {
+        return new BBox (this.x + amount.x, this.y + amount.y, this.width, this.height) },
+
     newWidth: function (width) {
         return new BBox (this.x - (width - this.width) / 2.0, this.y, width, this.height) },
+
+    grow: function (amount) {
+        return new BBox (this.x, this.y, this.width + amount, this.height + amount) },
 
     toString: function () {
         return '{' + this.x + ',' + this.y + ':' + this.width + '×' + this.height + '}' } })
@@ -4195,7 +4266,7 @@ Transform = $prototype ({
                     [0.0, s,   0.0],
                     [0.0, 0.0, 1.0] ])) },
 
-    inversed: $property ($memoized (function () { var m = this.components
+    inverse: $property ($memoized (function () { var m = this.components
                                         var id = (1.0 / 
                                                     (m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
                                                      m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
@@ -4222,7 +4293,7 @@ Transform = $prototype ({
                         v.x * m[1][0] + v.y * m[1][1] + m[1][2]) },
 
     project: function (v) {
-                return this.inversed.unproject (v) } })
+                return this.inverse.unproject (v) } })
 
 
 /*  Generates random number generator
@@ -4813,13 +4884,16 @@ _.tests.reflection = {
 /*  Custom syntax (defined in a way that avoids cross-dependency loops)
  */
 _.defineKeyword ('callStack',   function () {
-    return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })
+    return CallStack.fromRawString (CallStack.currentAsRawString).offset (Platform.NodeJS ? 1 : 0) })
+
+_.defineKeyword ('currentFile', function () {
+    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
 
 _.defineKeyword ('uselessPath', _.memoize (function () {
-    return CallStack.rawStringToArray (CallStack.currentAsRawString)[0].file.replace (/base\/.+\.js/g, '') }))
+    return _.initial ($currentFile.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
 
-_.defineKeyword ('sourcePath', _.memoize (function () {
-    return ($uselessPath.match (/(.+)\/node_modules\/(.+)/)[1] || $uselessPath) + '/' }))
+_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+    return local ? (local + '/') : $uselessPath }))
 
 /*  Source code access (cross-platform)
  */
@@ -4839,6 +4913,7 @@ _.readSource = _.cps.memoize (function (file, then) {
                                             then ('') } }
                                     else {
                                         jQuery.get (file, then, 'text') } } })
+
 
 /*  Callstack API
  */
@@ -4903,7 +4978,9 @@ CallStack = $extends (Array, {
 
     isThirdParty: $static (function (file) { var local = file.replace ($sourcePath, '')
                     return (local.indexOf ('/node_modules/') >= 0) ||
-                           (file.indexOf ('/node_modules/') >= 0 && !local) }),
+                           (file.indexOf ('/node_modules/') >= 0 && !local) ||
+                           (local.indexOf ('underscore') >= 0) ||
+                           (local.indexOf ('jquery') >= 0) }),
 
     fromRawString: $static (_.sequence (
         function (rawString) {
@@ -5162,7 +5239,7 @@ _.extend (log, {
             var cleanArgs       = log.cleanArgs (args)
 
             var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
-            var stackOffset     = Platform.NodeJS ? 2 : 1
+            var stackOffset     = Platform.NodeJS ? 3 : 2
 
             var indent          = (log.impl.writeBackend.indent || 0) + config.indent
 
@@ -6694,15 +6771,15 @@ _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] -
 Vec2 = $prototype ({
 
     $static: {
-        zero: $property (function () { return new Vec2 (0, 0) }),
-        unit: $property (function () { return new Vec2 (1, 1) }),
-        one:  $alias ('unit'),
-        lerp:  function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp: function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        zero:       $property (function () { return new Vec2 (0, 0) }),
+        unit:       $property (function () { return new Vec2 (1, 1) }),
+        one:        $alias ('unit'),
+        lerp:       function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
+        clamp:      function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
-        this.x = x
-        this.y = y },
+        this.x =                             x
+        this.y = ((arguments.length === 1) ? x : y) },
 
     length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
 
@@ -6715,8 +6792,33 @@ Vec2 = $prototype ({
     scale: function (t) {
         return new Vec2 (this.x * t, this.y * t) },
 
-    inversed: $property (function () {
+    divide: function (other) {
+        return new Vec2 (this.x / other.x, this.y / other.y) },
+
+    normal: $property (function () {
+        return this.scale (1.0 / this.length) }),
+
+    perp: $property (function () {
+        return new Vec2 (this.y, -this.x) }),
+
+    inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
+
+    cssLeftTop: $property (function () {
+        return { left: Math.floor (this.x), top: Math.floor (this.y) } }),
+
+    cssLeftTopMargin: $property (function () {
+        return { marginLeft: Math.floor (this.x), marginTop: Math.floor (this.y) } }),
+
+    cssWidthHeight: $property (function () {
+        return { width: Math.floor (this.x), height: Math.floor (this.y) } }),
+
+    floor: $property (function () {
+        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
+
+    sum: $static (function (arr) {
+        return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
+            function (memo, v) { return memo.add (v) }, Vec2.zero) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + '}' } })
@@ -6750,21 +6852,38 @@ Bezier = {
 BBox = $prototype ({
 
     $static: {
+
         zero: $property (function () {
             return new BBox (0, 0, 0, 0) }),
+
         unit: $property (function () {
             return new BBox (0, 0, 1, 1) }),
+
+        fromLeftTopAndSize: function (pt, size) {
+            return BBox.fromLTWH ({ left: pt.x, top: pt.y, width: size.x, height: size.y }) },
+
         fromLTWH: function (r) {
             return new BBox (r.left + r.width / 2.0, r.top + r.height / 2.0, r.width, r.height) },
+
         fromLTRB: function (r) {
-            return new BBox (_.lerp (0.5, r.left, r.right), _.lerp (0.5, r.top. r.bottom), r.right - r.left, r.bottom - r.top) },
+            return new BBox (_.lerp (0.5, r.left, r.right), _.lerp (0.5, r.top, r.bottom), r.right - r.left, r.bottom - r.top) },
+
         fromSizeAndCenter: function (size, center) {
             return new BBox (center.x - size.x / 2.0, center.y - size.y / 2.0, size.x, size.y) },
+
         fromSize: function (a, b) {
             if (b) {
                 return new BBox (-a / 2.0, -b / 2.0, a, b) }
             else {
-                return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } } },
+                return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
+        
+        fromPoints: function (pts) { var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE
+            _.each (pts, function (pt) {
+                l = Math.min (pt.x, l)
+                t = Math.min (pt.y, t)
+                r = Math.max (pt.x, r)
+                b = Math.max (pt.y, b) })
+            return BBox.fromLTRB ({ left: l, top: t, right: r, bottom: b }) } },
 
     constructor: function (x, y, w, h) {
         if (arguments.length == 4) {
@@ -6774,6 +6893,31 @@ BBox = $prototype ({
             this.height = h }
         else {
             _.extend (this, x) } },
+
+    classifyPoint: function (pt) {
+        
+        var sides = _.extend ({},
+            (pt.x > this.right)   ? { right   : true } : {},
+            (pt.x < this.left)    ? { left    : true } : {},
+            (pt.y < this.bottom)  ? { bottom  : true } : {},
+            (pt.y > this.top)     ? { top     : true } : {})
+        
+        return _.extend (sides,
+            (!sides.left &&
+             !sides.right &&
+             !sides.bottom && !sides.top) ? { inside: true } : {}) },
+
+    clone: $property (function () {
+        return new BBox (this.x, this.y, this.width, this.height) }),
+
+    css: $property (function () {
+        return { left: this.left, top: this.top, width: this.width, height: this.height } }),
+
+    leftTop: $property (function () {
+        return new Vec2 (this.left, this.top) }),
+
+    rightBottom: $property (function () {
+        return new Vec2 (this.right, this.bottom) }),
 
     left: $property (function () {
         return this.x - this.width / 2.0 }),
@@ -6793,8 +6937,14 @@ BBox = $prototype ({
     size: $property (function () {
         return new Vec2 (this.width, this.height) }),
 
+    offset: function (amount) {
+        return new BBox (this.x + amount.x, this.y + amount.y, this.width, this.height) },
+
     newWidth: function (width) {
         return new BBox (this.x - (width - this.width) / 2.0, this.y, width, this.height) },
+
+    grow: function (amount) {
+        return new BBox (this.x, this.y, this.width + amount, this.height + amount) },
 
     toString: function () {
         return '{' + this.x + ',' + this.y + ':' + this.width + '×' + this.height + '}' } })
@@ -6839,7 +6989,7 @@ Transform = $prototype ({
                     [0.0, s,   0.0],
                     [0.0, 0.0, 1.0] ])) },
 
-    inversed: $property ($memoized (function () { var m = this.components
+    inverse: $property ($memoized (function () { var m = this.components
                                         var id = (1.0 / 
                                                     (m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
                                                      m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
@@ -6866,7 +7016,7 @@ Transform = $prototype ({
                         v.x * m[1][0] + v.y * m[1][1] + m[1][2]) },
 
     project: function (v) {
-                return this.inversed.unproject (v) } })
+                return this.inverse.unproject (v) } })
 
 
 /*  Generates random number generator

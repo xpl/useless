@@ -3,7 +3,7 @@ _ = require ('underscore')
 /*  String extensions
     ======================================================================== */
 
-_.withTest ('String extensions', function () {
+_.deferTest ('String extensions', function () {
 
     /*  Convenient infix versions of string-crunching basics. The
         naming scheme of reversed/capitalized/trimmed is chosen to
