@@ -22,7 +22,7 @@
 				var pt1 = $('.handle1').offset ()
 				var pt2 = $('.handle2').offset ()
 
-				var cubic = Bezier.cubic1D.partial (
+				var cubic = Bezier.cubic1D.tails (
 					pt1.left / cnv.width,
 					pt1.top  / cnv.height,
 					pt2.left / cnv.width,

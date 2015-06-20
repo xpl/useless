@@ -20,11 +20,14 @@ _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] -
 Vec2 = $prototype ({
 
     $static: {
-        zero:       $property (function () { return new Vec2 (0, 0) }),
-        unit:       $property (function () { return new Vec2 (1, 1) }),
-        one:        $alias ('unit'),
-        lerp:       function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp:      function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        zero:        $property (function () { return new Vec2 (0, 0) }),
+        unit:        $property (function () { return new Vec2 (1, 1) }),
+        one:         $alias ('unit'),
+        fromLT:      function (x) { return new Vec2 (x.left, x.top) },
+        fromLeftTop: $alias ('fromLT'),
+        dot:         function (a, b) { return a.x * b.x + a.y * b.y },
+        lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
+        clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
         this.x =                             x
@@ -38,8 +41,11 @@ Vec2 = $prototype ({
     sub: function (other) {
         return new Vec2 (this.x - other.x, this.y - other.y) },
 
-    scale: function (t) {
-        return new Vec2 (this.x * t, this.y * t) },
+    scale: function (tx, ty) {
+        return new Vec2 (this.x * tx, this.y * (ty === undefined ? tx : ty)) },
+
+    mul: function (other) {
+        return new Vec2 (this.x * other.x, this.y * other.y) },
 
     divide: function (other) {
         return new Vec2 (this.x / other.x, this.y / other.y) },
@@ -49,6 +55,9 @@ Vec2 = $prototype ({
 
     perp: $property (function () {
         return new Vec2 (this.y, -this.x) }),
+
+    half: $property (function () {
+        return new Vec2 (this.x * 0.5, this.y * 0.5) }),
 
     inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
@@ -67,7 +76,7 @@ Vec2 = $prototype ({
 
     sum: $static (function (arr) {
         return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
-            function (memo, v) { return memo.add (v) }, Vec2.zero) }),
+            function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + '}' } })
@@ -78,7 +87,7 @@ Vec2 = $prototype ({
 
 Bezier = {
 
-    cubic: function (p0, p1, p2, p3, t) {
+    cubic: function (t, p0, p1, p2, p3) {
         var cube = t * t * t
         var square = t * t
         var ax = 3.0 * (p1.x - p0.x);
@@ -91,8 +100,13 @@ Bezier = {
         var y = (cy * cube) + (by * square) + (ay * t) + p0.y;
         return new Vec2 (x, y) },
         
-    cubic1D: function (a, b, c, d, t) {
-        return Bezier.cubic (Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one, t).y } }
+    cubic1D: function (t, a, b, c, d) {
+        return Bezier.cubic (t, Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one).y },
+
+    make: {
+        
+        cubic:   function (a,b,c,d) { return function (t) { return Bezier.cubic   (t,a,b,c,d) } },
+        cubic1D: function (a,b,c,d) { return function (t) { return Bezier.cubic1D (t,a,b,c,d) } } } }
 
 
 /*  Bounding box (2D)
@@ -145,19 +159,57 @@ BBox = $prototype ({
 
     classifyPoint: function (pt) {
         
-        var sides = _.extend ({},
+        var sides = _.extend (
+
             (pt.x > this.right)   ? { right   : true } : {},
             (pt.x < this.left)    ? { left    : true } : {},
-            (pt.y < this.bottom)  ? { bottom  : true } : {},
-            (pt.y > this.top)     ? { top     : true } : {})
+            (pt.y > this.bottom)  ? { bottom  : true } : {},
+            (pt.y < this.top)     ? { top     : true } : {})
         
         return _.extend (sides,
+
             (!sides.left &&
              !sides.right &&
              !sides.bottom && !sides.top) ? { inside: true } : {}) },
 
+        classifyRay: function (pos, delta, paddingX, paddingY) { paddingX = paddingX || 0; paddingY = paddingY || 0
+
+            var half = this.size.half
+
+            var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+
+            scaleX = 1.0 / delta.x;
+            scaleY = 1.0 / delta.y;
+            signX = Math.sign(scaleX);
+            signY = Math.sign(scaleY);
+            nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
+            nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
+            farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
+            farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
+            if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+                return undefined;
+            }
+            nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+            farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+            if (nearTime >= 1 || farTime <= 0) {
+                return undefined;
+            }
+            var hit = { time: _.clamp (nearTime, 0, 1) }
+            if (nearTimeX > nearTimeY) {
+                hit.normal = new Vec2 (-signX, 0)
+            } else {
+                hit.normal = new Vec2 (0, -signY)
+            }
+            hit.delta = delta.scale (hit.time)
+            hit.where = pos.add (hit.delta)
+            return hit;
+        },
+
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
+    
+    floor: $property (function () {
+        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
 
     css: $property (function () {
         return { left: this.left, top: this.top, width: this.width, height: this.height } }),

@@ -576,7 +576,7 @@ Component = $prototype ({
 
         /*  Call init (if not marked as deferred)
          */
-        if (cfg.init !== false) {
+        if (!(cfg.init === false || (this.constructor.$defaults && (this.constructor.$defaults.init === false)))) {
             this.init () } }),
 
     /*  Arranges methods defined in $traits in chains and evals them
@@ -702,6 +702,4 @@ Component = $prototype ({
                             return this }
 
 })
-
-
 

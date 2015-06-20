@@ -306,6 +306,9 @@ _.defineGlobalProperty = function (name, value, cfg) {
 
                             return value }
 
+_.defineConstant = function (obj, name, value) {
+                        Object.defineProperty (obj, name, _.extend ({ enumerable: true, get:  _.constant (value) })) }
+
 /*  Uncaught exception handling facility
     ======================================================================== */
 
@@ -1283,6 +1286,28 @@ _.withTest (['type', 'POD'], function () {
     isPOD: function (v) {
         return !_.isNonPOD (v) } }) })
 
+/*  Numbers
+    ======================================================================== */
+
+_.withTest (['type', 'numbers'], function () {
+
+    $assert (_.every (_.map ([0,        1,     -7,    200003, 12344567788], _.arity1 (_.not (_.isDecimal)))))
+    $assert (_.every (_.map ([0.1, -0.001, 0.0001, -0.000001,    0.000001], _.arity1 (       _.isDecimal))))
+
+    $assert (_.isDecimal (0.003, 0.01), false) // custom tolerance
+
+}, function () {
+
+    if (typeof Number.EPSILON === 'undefined') {
+        _.defineConstant (Number, 'EPSILON', 2.2204460492503130808472633361816E-16) } // NodeJS lack this
+
+    _.extend (_, {
+        isDecimal: function (x, tolerance) {
+                        if (!_.isNumber (x) || _.isNaN (x)) {
+                            return false }
+                        else {
+                            return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } }) })
+
 /*  'empty' classifiers (fixes underscore shit)
     ======================================================================== */
 
@@ -1482,8 +1507,30 @@ _.deferTest (['type', 'stringify'], function () {
                                                         return tabs + (isArray ? '' : (kv[0] + ': ' + (kv[2] || ''))) +
                                                             _.stringifyImpl (kv[1], parentsPlusX, siblings, depth + 1, cfg, indent) }))) }
 
+                            else if (_.isDecimal (x) && (cfg.precision > 0)) {
+                                return _.toFixed (x,     cfg.precision) }
+                                
                             else {
                                 return x + '' } } })
+
+/*  Safe version of toFixed
+    ======================================================================== */
+
+_.toFixed = function (x, precision) {
+    return (x && x.toFixed && x.toFixed (precision)) || undefined }
+
+_.toFixed2 = function (x) {
+    return _.toFixed (x, 2) }
+
+_.toFixed3 = function (x) {
+    return _.toFixed (x, 3) }
+
+
+
+
+
+
+
 /*  stdlib.js extends Underscore.js
     ======================================================================== */
 
@@ -3345,6 +3392,8 @@ _.withTest ('Array extensions', function () {
 
     $extensionMethods (Array, {
 
+        last: function (arr) { return _.last (arr) },
+        
         random: function (arr) {
             return arr[_.random (0, arr.length - 1)] },
 
@@ -3458,6 +3507,18 @@ _.deferTest ('String extensions', function () {
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
+
+    cut: function (s, from, len) {
+        return s.substring (0, from - 1) + s.substring (from, s.length) },
+
+    insert: function (s, position, what) {
+        return s.substring (0, position) + what + s.substring (position, s.length) },
+
+    lowercase: function (s) {
+        return s.toLowerCase () },
+
+    uppercase: function (s) {
+        return s.toUpperCase () },
 
     trimmed: function (s) {
         return s.trim () },
@@ -4048,11 +4109,14 @@ _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] -
 Vec2 = $prototype ({
 
     $static: {
-        zero:       $property (function () { return new Vec2 (0, 0) }),
-        unit:       $property (function () { return new Vec2 (1, 1) }),
-        one:        $alias ('unit'),
-        lerp:       function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp:      function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        zero:        $property (function () { return new Vec2 (0, 0) }),
+        unit:        $property (function () { return new Vec2 (1, 1) }),
+        one:         $alias ('unit'),
+        fromLT:      function (x) { return new Vec2 (x.left, x.top) },
+        fromLeftTop: $alias ('fromLT'),
+        dot:         function (a, b) { return a.x * b.x + a.y * b.y },
+        lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
+        clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
         this.x =                             x
@@ -4066,8 +4130,11 @@ Vec2 = $prototype ({
     sub: function (other) {
         return new Vec2 (this.x - other.x, this.y - other.y) },
 
-    scale: function (t) {
-        return new Vec2 (this.x * t, this.y * t) },
+    scale: function (tx, ty) {
+        return new Vec2 (this.x * tx, this.y * (ty === undefined ? tx : ty)) },
+
+    mul: function (other) {
+        return new Vec2 (this.x * other.x, this.y * other.y) },
 
     divide: function (other) {
         return new Vec2 (this.x / other.x, this.y / other.y) },
@@ -4077,6 +4144,9 @@ Vec2 = $prototype ({
 
     perp: $property (function () {
         return new Vec2 (this.y, -this.x) }),
+
+    half: $property (function () {
+        return new Vec2 (this.x * 0.5, this.y * 0.5) }),
 
     inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
@@ -4095,7 +4165,7 @@ Vec2 = $prototype ({
 
     sum: $static (function (arr) {
         return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
-            function (memo, v) { return memo.add (v) }, Vec2.zero) }),
+            function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + '}' } })
@@ -4106,7 +4176,7 @@ Vec2 = $prototype ({
 
 Bezier = {
 
-    cubic: function (p0, p1, p2, p3, t) {
+    cubic: function (t, p0, p1, p2, p3) {
         var cube = t * t * t
         var square = t * t
         var ax = 3.0 * (p1.x - p0.x);
@@ -4119,8 +4189,13 @@ Bezier = {
         var y = (cy * cube) + (by * square) + (ay * t) + p0.y;
         return new Vec2 (x, y) },
         
-    cubic1D: function (a, b, c, d, t) {
-        return Bezier.cubic (Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one, t).y } }
+    cubic1D: function (t, a, b, c, d) {
+        return Bezier.cubic (t, Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one).y },
+
+    make: {
+        
+        cubic:   function (a,b,c,d) { return function (t) { return Bezier.cubic   (t,a,b,c,d) } },
+        cubic1D: function (a,b,c,d) { return function (t) { return Bezier.cubic1D (t,a,b,c,d) } } } }
 
 
 /*  Bounding box (2D)
@@ -4173,19 +4248,57 @@ BBox = $prototype ({
 
     classifyPoint: function (pt) {
         
-        var sides = _.extend ({},
+        var sides = _.extend (
+
             (pt.x > this.right)   ? { right   : true } : {},
             (pt.x < this.left)    ? { left    : true } : {},
-            (pt.y < this.bottom)  ? { bottom  : true } : {},
-            (pt.y > this.top)     ? { top     : true } : {})
+            (pt.y > this.bottom)  ? { bottom  : true } : {},
+            (pt.y < this.top)     ? { top     : true } : {})
         
         return _.extend (sides,
+
             (!sides.left &&
              !sides.right &&
              !sides.bottom && !sides.top) ? { inside: true } : {}) },
 
+        classifyRay: function (pos, delta, paddingX, paddingY) { paddingX = paddingX || 0; paddingY = paddingY || 0
+
+            var half = this.size.half
+
+            var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+
+            scaleX = 1.0 / delta.x;
+            scaleY = 1.0 / delta.y;
+            signX = Math.sign(scaleX);
+            signY = Math.sign(scaleY);
+            nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
+            nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
+            farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
+            farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
+            if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+                return undefined;
+            }
+            nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+            farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+            if (nearTime >= 1 || farTime <= 0) {
+                return undefined;
+            }
+            var hit = { time: _.clamp (nearTime, 0, 1) }
+            if (nearTimeX > nearTimeY) {
+                hit.normal = new Vec2 (-signX, 0)
+            } else {
+                hit.normal = new Vec2 (0, -signY)
+            }
+            hit.delta = delta.scale (hit.time)
+            hit.where = pos.add (hit.delta)
+            return hit;
+        },
+
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
+    
+    floor: $property (function () {
+        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
 
     css: $property (function () {
         return { left: this.left, top: this.top, width: this.width, height: this.height } }),
@@ -4438,6 +4551,10 @@ _.tests.parse = {
 }
 
 Parse = {
+
+    keyCodeAsString: function (key) {
+        return String.fromCharCode ((96 <= key && key <= 105) ? key - 48 : key) },
+
     fileName: function (path) {
         return _.first (_.last (path.split (/\\|\//)).split ('.')) },
 
@@ -6166,7 +6283,7 @@ Component = $prototype ({
 
         /*  Call init (if not marked as deferred)
          */
-        if (cfg.init !== false) {
+        if (!(cfg.init === false || (this.constructor.$defaults && (this.constructor.$defaults.init === false)))) {
             this.init () } }),
 
     /*  Arranges methods defined in $traits in chains and evals them
@@ -6292,8 +6409,6 @@ Component = $prototype ({
                             return this }
 
 })
-
-
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -6771,11 +6886,14 @@ _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] -
 Vec2 = $prototype ({
 
     $static: {
-        zero:       $property (function () { return new Vec2 (0, 0) }),
-        unit:       $property (function () { return new Vec2 (1, 1) }),
-        one:        $alias ('unit'),
-        lerp:       function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp:      function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        zero:        $property (function () { return new Vec2 (0, 0) }),
+        unit:        $property (function () { return new Vec2 (1, 1) }),
+        one:         $alias ('unit'),
+        fromLT:      function (x) { return new Vec2 (x.left, x.top) },
+        fromLeftTop: $alias ('fromLT'),
+        dot:         function (a, b) { return a.x * b.x + a.y * b.y },
+        lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
+        clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
         this.x =                             x
@@ -6789,8 +6907,11 @@ Vec2 = $prototype ({
     sub: function (other) {
         return new Vec2 (this.x - other.x, this.y - other.y) },
 
-    scale: function (t) {
-        return new Vec2 (this.x * t, this.y * t) },
+    scale: function (tx, ty) {
+        return new Vec2 (this.x * tx, this.y * (ty === undefined ? tx : ty)) },
+
+    mul: function (other) {
+        return new Vec2 (this.x * other.x, this.y * other.y) },
 
     divide: function (other) {
         return new Vec2 (this.x / other.x, this.y / other.y) },
@@ -6800,6 +6921,9 @@ Vec2 = $prototype ({
 
     perp: $property (function () {
         return new Vec2 (this.y, -this.x) }),
+
+    half: $property (function () {
+        return new Vec2 (this.x * 0.5, this.y * 0.5) }),
 
     inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
@@ -6818,7 +6942,7 @@ Vec2 = $prototype ({
 
     sum: $static (function (arr) {
         return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
-            function (memo, v) { return memo.add (v) }, Vec2.zero) }),
+            function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + '}' } })
@@ -6829,7 +6953,7 @@ Vec2 = $prototype ({
 
 Bezier = {
 
-    cubic: function (p0, p1, p2, p3, t) {
+    cubic: function (t, p0, p1, p2, p3) {
         var cube = t * t * t
         var square = t * t
         var ax = 3.0 * (p1.x - p0.x);
@@ -6842,8 +6966,13 @@ Bezier = {
         var y = (cy * cube) + (by * square) + (ay * t) + p0.y;
         return new Vec2 (x, y) },
         
-    cubic1D: function (a, b, c, d, t) {
-        return Bezier.cubic (Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one, t).y } }
+    cubic1D: function (t, a, b, c, d) {
+        return Bezier.cubic (t, Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one).y },
+
+    make: {
+        
+        cubic:   function (a,b,c,d) { return function (t) { return Bezier.cubic   (t,a,b,c,d) } },
+        cubic1D: function (a,b,c,d) { return function (t) { return Bezier.cubic1D (t,a,b,c,d) } } } }
 
 
 /*  Bounding box (2D)
@@ -6896,19 +7025,57 @@ BBox = $prototype ({
 
     classifyPoint: function (pt) {
         
-        var sides = _.extend ({},
+        var sides = _.extend (
+
             (pt.x > this.right)   ? { right   : true } : {},
             (pt.x < this.left)    ? { left    : true } : {},
-            (pt.y < this.bottom)  ? { bottom  : true } : {},
-            (pt.y > this.top)     ? { top     : true } : {})
+            (pt.y > this.bottom)  ? { bottom  : true } : {},
+            (pt.y < this.top)     ? { top     : true } : {})
         
         return _.extend (sides,
+
             (!sides.left &&
              !sides.right &&
              !sides.bottom && !sides.top) ? { inside: true } : {}) },
 
+        classifyRay: function (pos, delta, paddingX, paddingY) { paddingX = paddingX || 0; paddingY = paddingY || 0
+
+            var half = this.size.half
+
+            var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+
+            scaleX = 1.0 / delta.x;
+            scaleY = 1.0 / delta.y;
+            signX = Math.sign(scaleX);
+            signY = Math.sign(scaleY);
+            nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
+            nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
+            farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
+            farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
+            if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+                return undefined;
+            }
+            nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+            farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+            if (nearTime >= 1 || farTime <= 0) {
+                return undefined;
+            }
+            var hit = { time: _.clamp (nearTime, 0, 1) }
+            if (nearTimeX > nearTimeY) {
+                hit.normal = new Vec2 (-signX, 0)
+            } else {
+                hit.normal = new Vec2 (0, -signY)
+            }
+            hit.delta = delta.scale (hit.time)
+            hit.where = pos.add (hit.delta)
+            return hit;
+        },
+
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
+    
+    floor: $property (function () {
+        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
 
     css: $property (function () {
         return { left: this.left, top: this.top, width: this.width, height: this.height } }),

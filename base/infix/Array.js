@@ -40,6 +40,8 @@ _.withTest ('Array extensions', function () {
 
     $extensionMethods (Array, {
 
+        last: function (arr) { return _.last (arr) },
+        
         random: function (arr) {
             return arr[_.random (0, arr.length - 1)] },
 

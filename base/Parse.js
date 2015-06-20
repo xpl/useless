@@ -13,6 +13,10 @@ _.tests.parse = {
 }
 
 Parse = {
+
+    keyCodeAsString: function (key) {
+        return String.fromCharCode ((96 <= key && key <= 105) ? key - 48 : key) },
+
     fileName: function (path) {
         return _.first (_.last (path.split (/\\|\//)).split ('.')) },
 

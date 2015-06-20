@@ -1,5 +1,8 @@
-var git  = require ('nodegit'),
+/*var git  = require ('nodegit'),
 	exec = require ('child_process').exec
+*/
+
+var fs = require ('fs')
 
 module.exports = $trait ({
 
@@ -7,13 +10,16 @@ module.exports = $trait ({
 		return {
 			'echo':				{ post: this.echo },
 			'api': {
-				'source/:file': { get:	this.developerAccess (this.readSource) },
+				'source/:file': { get:	this.developerAccess (this.readSource),
+								  post: this.developerAccess (this.jsonInput (this.writeSource)) },
 				'git-commits':	{ get:  this.developerAccess (this.gitCommits) },
 				'git-pull':		{ post: this.developerAccess (this.gitPull) } } } },
 
+
 	afterInit: function () { // remote logging
-		_.onAfter (log.impl, 'writeBackend', this.$ (function (params) {
-			this.messageToPeers ({ what: 'log', params: params }, _.property ('isDeveloper')) })) },
+		if (this.messageToPeers) {
+			_.onAfter (log.impl, 'writeBackend', this.$ (function (params) {
+				this.messageToPeers ({ what: 'log', params: params }, _.property ('isDeveloper')) })) } },
 
 	/*	Prints raw incoming HTTP data (for debugging of client write methods)
 	 */
@@ -22,10 +28,17 @@ module.exports = $trait ({
 			console.log ('ECHO:', data)
 			context.success (data) }) },
 
-	/*	Reads source code of server (requires developer privileges)
+	/*	Access to source code of server (requires developer privileges)
 	 */
 	readSource: function (context) {
 		_.readSource (context.env.file, function (text) { context.success (text) }) },
+	writeSource: function (context) {
+		_.readSource (context.env.file, function (text) { console.log (text)
+			try { fs.mkdirSync (context.env.file + '.backups') }
+			catch (e) {}
+			fs.writeFileSync (context.env.file + '.backups/' + Date.now (), text, { encoding: 'utf8' })
+			fs.writeFileSync (context.env.file, context.env.text, { encoding: 'utf8' })
+			context.jsonSuccess () }) },
 
 	/*	Git tools
 	 */

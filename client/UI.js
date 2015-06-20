@@ -198,6 +198,30 @@ $.fn.extend ({
         else {
             return this.remove () } },
 
+    offsetInParent: function () {
+        return Vec2.fromLeftTop (this.offset ()).sub (
+               Vec2.fromLeftTop (this.parent ().offset ())) },
+
+    caret: function () { var node = this[0]
+              if (node.selectionStart) {
+                return node.selectionStart;
+              } else if (!document.selection) {
+                return 0;
+              }
+
+              var c = "\001",
+                  sel = document.selection.createRange(),
+                  dul = sel.duplicate(),
+                  len = 0;
+
+              dul.moveToElementText(node);
+              sel.text = c;
+              len = dul.text.indexOf(c);
+              sel.moveStart('character',-1);
+              sel.text = "";
+              return len;
+            },
+
     monitorInput: function (cfg) {
         var change = function () {
             if ($.trim ($(this).val ()) === '') {

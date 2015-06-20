@@ -19,4 +19,6 @@ More distribution options to come.
 
 ##Testing and building
 
-Run `npm test` to run unit tests. Run `npm build` to produce compiled source (will go to build folder). Running build will invoke tests.
+Run `npm test` to run unit tests. `ALL PASS` indicates everything is okay.
+
+To build from source, you will need to run `npm install esprima` and `npm install escodegen` in repository folder. These dependencies are needed to parse and generate JavaScript source files. Run `npm build` to produce compiled source (will go to `build` folder). Running build will invoke tests.

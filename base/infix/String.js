@@ -69,6 +69,18 @@ _.deferTest ('String extensions', function () {
 
     quote: _.quote,
 
+    cut: function (s, from, len) {
+        return s.substring (0, from - 1) + s.substring (from, s.length) },
+
+    insert: function (s, position, what) {
+        return s.substring (0, position) + what + s.substring (position, s.length) },
+
+    lowercase: function (s) {
+        return s.toLowerCase () },
+
+    uppercase: function (s) {
+        return s.toUpperCase () },
+
     trimmed: function (s) {
         return s.trim () },
 

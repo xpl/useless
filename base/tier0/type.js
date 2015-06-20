@@ -108,6 +108,28 @@ _.withTest (['type', 'POD'], function () {
     isPOD: function (v) {
         return !_.isNonPOD (v) } }) })
 
+/*  Numbers
+    ======================================================================== */
+
+_.withTest (['type', 'numbers'], function () {
+
+    $assert (_.every (_.map ([0,        1,     -7,    200003, 12344567788], _.arity1 (_.not (_.isDecimal)))))
+    $assert (_.every (_.map ([0.1, -0.001, 0.0001, -0.000001,    0.000001], _.arity1 (       _.isDecimal))))
+
+    $assert (_.isDecimal (0.003, 0.01), false) // custom tolerance
+
+}, function () {
+
+    if (typeof Number.EPSILON === 'undefined') {
+        _.defineConstant (Number, 'EPSILON', 2.2204460492503130808472633361816E-16) } // NodeJS lack this
+
+    _.extend (_, {
+        isDecimal: function (x, tolerance) {
+                        if (!_.isNumber (x) || _.isNaN (x)) {
+                            return false }
+                        else {
+                            return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } }) })
+
 /*  'empty' classifiers (fixes underscore shit)
     ======================================================================== */
 
@@ -307,5 +329,26 @@ _.deferTest (['type', 'stringify'], function () {
                                                         return tabs + (isArray ? '' : (kv[0] + ': ' + (kv[2] || ''))) +
                                                             _.stringifyImpl (kv[1], parentsPlusX, siblings, depth + 1, cfg, indent) }))) }
 
+                            else if (_.isDecimal (x) && (cfg.precision > 0)) {
+                                return _.toFixed (x,     cfg.precision) }
+                                
                             else {
                                 return x + '' } } })
+
+/*  Safe version of toFixed
+    ======================================================================== */
+
+_.toFixed = function (x, precision) {
+    return (x && x.toFixed && x.toFixed (precision)) || undefined }
+
+_.toFixed2 = function (x) {
+    return _.toFixed (x, 2) }
+
+_.toFixed3 = function (x) {
+    return _.toFixed (x, 3) }
+
+
+
+
+
+

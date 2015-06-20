@@ -33,6 +33,9 @@ _.defineGlobalProperty = function (name, value, cfg) {
 
                             return value }
 
+_.defineConstant = function (obj, name, value) {
+                        Object.defineProperty (obj, name, _.extend ({ enumerable: true, get:  _.constant (value) })) }
+
 /*  Uncaught exception handling facility
     ======================================================================== */
 
