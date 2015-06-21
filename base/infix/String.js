@@ -105,6 +105,9 @@ _.deferTest ('String extensions', function () {
     capitalized: function (s) {
         return s.charAt (0).toUpperCase () + s.slice (1) },
 
+    decapitalized: function (s) {
+        return s.charAt (0).toLowerCase () + s.slice (1) },
+
     latinAlphanumericValue: function (s) {
         return s.replace (/[^a-z0-9]/gi, '') },
 

@@ -63,7 +63,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
 
     function () {
 
-        _.mixin ({ mapMap: _.hyperOperator (_.map2, _.arity1) }) })
+        _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
 
 
 /*  Internal impl.
@@ -145,8 +145,59 @@ _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
 
     _.mixin ({
 
-        filterFilter: _.hyperOperator (_.filter2, _.arity1) }) })
+        filterFilter: _.hyperOperator (_.unary, _.filter2) }) })
 
+
+/*  Reduce on steroids
+    ======================================================================== */
+
+_.deferTest (['stdlib', 'reduce 2.0'], function () {
+
+    /*$assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
+    $assert (_.reduce2 ({ a: 3, b: 7, c: 9 }, _.sum), 19)
+    $assert (_.reduce2 (     3   + 7   + 9  , _.sum), 19)
+
+    $assert (_.reduce2 ([1], _.sum), 1)
+    $assert (_.reduce2 ([],  _.sum), undefined)
+
+    $assert (              1 + 20 + 3 + 4 + 5,
+        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))*/
+
+}, function () {
+
+    /*  Because hyperOperator is fractal thing, it is nessesary to define a compatible argument
+        order for _.reduce and its functor operand, as they get melted together to form a generic
+        self-similar routine of a higher order.
+
+        And that becames kinda "Yodish" when applied to familiar 'reduce'. See how they dont match:
+
+            1. _.reduce (value, op, memo)
+            2.       op (memo, value)
+    */
+    _.yodaReduce = function (value, memo, op_) {
+
+                    var op     = _.last (arguments)
+
+                    var safeOp = function (value, memo) { var hasMemo = (memo !== undefined)
+                                                          var result  = (hasMemo ? op (value, memo) : value)
+                        return (result === undefined) ?
+                                    (hasMemo ? memo : value) :
+                                    (result) }
+
+                    if (_.isArray (value)) {                                
+                        for (var i = 0, n = value.length; i < n; i++) {
+                            memo = safeOp (value[i],   memo) } }
+
+                    else if (_.isStrictlyObject (value)) {                  
+                        _.each (Object.keys (value), function (key) {
+                            memo = safeOp (value[key], memo) }) }
+
+                    else {
+                            memo = safeOp (value,      memo) } return memo }
+
+    _.reduceReduce = function (initial, value, op) {
+                        return _.hyperOperator (_.binary, _.yodaReduce) (value, initial, op.flip2) }
+ })
 
 /*  Zip 2.0
     ======================================================================== */
@@ -232,7 +283,7 @@ _.deferTest (['stdlib', 'zipZip'], function () {
                                 bar: [undefined, 'undefined'] } ] }) },
 function () {
 
-    _.mixin ({ zipZip: _.hyperOperator (_.zip2, _.arity2) }) })
+    _.mixin ({ zipZip: _.hyperOperator (_.binary, _.zip2) }) })
 
 
 /*  Most useful _.extend derivatives
@@ -339,8 +390,8 @@ _.deferTest (['stdlib', 'diff'], function () {
 
 }, function () {
 
-    _.hyperMatch = _.hyperOperator (function (a, b, pred) {
-                                        return _.coerceToUndefined (_.nonempty (_.zip2 (a, b, pred))) }, _.arity2)
+    _.hyperMatch = _.hyperOperator (_.binary, function (a, b, pred) {
+                                        return _.coerceToUndefined (_.nonempty (_.zip2 (a, b, pred))) })
 
     _.diff = _.tails3 (_.hyperMatch, function (a, b) {
                                         return (a === b) ? undefined : b }) })
@@ -365,8 +416,8 @@ _.deferTest (['stdlib', 'undiff'], function () {
 
 }, function () {
 
-    _.hyperMatch = _.hyperOperator (function (a, b, pred) {
-                                        return _.coerceToUndefined (_.zip2 (a, b, pred)) }, _.arity2)
+    _.hyperMatch = _.hyperOperator (_.binary, function (a, b, pred) {
+                                        return _.coerceToUndefined (_.zip2 (a, b, pred)) })
 
     _.undiff = _.tails3 (_.hyperMatch, function (a, b) {
                                             return (a === b) ? b : undefined }) })

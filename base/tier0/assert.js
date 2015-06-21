@@ -138,8 +138,19 @@ _.withTest ('assert.js bootstrap', function () {
                          bar: Bar })
 
         $assertFails (function () {
-            $assertTypeof (new Bar (), Foo) }) }
+            $assertTypeof (new Bar (), Foo) }) };
 
+
+/*  Argument contracts
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+if (_.hasStdlib) {
+
+    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertAsDeclared (arguments) }
+
+                    testF (777, 'foo bar baz')
+
+    $assertFails (function () { testF (777, 42) }) }
 
 /*  Ensuring throw (and no throw)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -272,6 +283,19 @@ function () {
 
         assertNotThrows: function (what) {
             _.assertCalls.call (this, 0, function () { what () }) },
+
+        assertAsDeclared: function (arguments, callee) {
+            var match = (callee || arguments.callee).toString ().match (/.*function[^\(]\(([^\)]+)\)/)
+            if (match) {
+                var valuesPassed   = _.asArray (arguments)
+                var valuesNeeded   = _.map (match[1].split (','),
+                                            function (_s) {
+                                                var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
+                                                var n = parseInt (s, 10)
+                                                return _.isFinite (n) ? n : s })
+
+                _.assert (_.every (_.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
+                                                                                return (a !== undefined) ? (a === b) : true }))) } },
 
         fail: function () {
                 _.assertionFailed () },

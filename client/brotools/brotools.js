@@ -2,9 +2,39 @@ _.extend ($global, {
     $tune:      _.identity,
     $cubic:       Bezier.cubic1D,
     $afterTune: _.identity,
-    $print:     _.identity })
+    $print:     _.identity,
+    $log:       _.identity })
 
-CodeBro = $singleton (Component, {
+BroTool = $component ({
+
+    init: function () { // /(.*\$tune.+\()([^,\)]+)(.*)/
+        /*_.extend (this, {
+            matchExpr:
+                $r.expr ('before',     $r.anything.text ('$' + this.keyword).something).then (
+                $r.expr ('arguments',  $r.someOf.except.text (')')).inParentheses.then (
+                $r.expr ('tail',       $r.anything))).$
+
+        _.defineKeyword (name, this.eat)*/
+
+        console.log ('foo')
+        alert ('brotool') },
+
+    parse: function (txt) {
+    },
+
+    eat: function (value, cfg) {
+
+    }
+})
+
+BroPrint = $singleton (BroTool, {
+
+    init: function () {
+
+    }
+})
+
+BroTools = $singleton (Component, {
 
     $defaults: {
         init: false,
@@ -19,7 +49,8 @@ CodeBro = $singleton (Component, {
             $tune:      this.tune,
             $cubic:     this.cubic,
             $afterTune: this.afterTune,
-            $print:     this.print })
+            $print:     this.print,
+            $log:       this.log })
 
         $(document).ready (this.$ (function () {
             this.el = $('<div class="tuning-hall visible">').appendTo (document.body)
@@ -40,26 +71,29 @@ CodeBro = $singleton (Component, {
             _.each (this.entriesByComponentName[compo],
                 function (entry) { entry.sliddah.handle.text (trigger.queue.length) })} })) },
 
-    cubic: function (t, p1, p2, p3, p4) {
-
-                var value = this.tune ([p1, p2, p3, p4], { cubic: true, where: $callStack.safeLocation (2) })
-                return Bezier.cubic1D (t, value[0], value[1], value[2], value[3]) },
+    cubic: function (t, p1, p2, p3, p4) { var value = this.eat ([p1, p2, p3, p4], { cubic: true })
+                return Bezier.cubic1D (t,
+                    value[0], value[1], value[2], value[3]) },
 
     print: function (value) {
+                return this.eat (value, { print: true }) },
 
-                return this.tune (value, { print: true, where: $callStack.safeLocation (2) }) },
+    log: function (value) {
+                return this.eat (value, { log: true }) },
 
-    tune: function (value, cfg) { cfg = cfg || {}
+    tune: function (value, cfg) {
+                return this.eat (value, { slider: true }) },
 
-        var where = cfg.where || $callStack.safeLocation (2)
-        var tag   = where.beforeParse
-        var entry = this.entriesByStackLocation[tag]
+    eat: function (value, cfg) { cfg = cfg || {}
+
+        var where = $callStack.safeLocation (3)
+        var entry = this.entriesByStackLocation[where.beforeParse]
 
         if (!entry && (entry =
-                            this.entriesByStackLocation[tag] =
+                            this.entriesByStackLocation[where.beforeParse] =
                                 this.addToDashboard (entry = _.extend ({}, cfg, { where: where, value: value })))) {
             this.entries.push (entry)
-            this.investigatedComponentForEntry (entry) }
+            this.investigateComponentForEntry (entry) }
 
         if (entry) {            if (entry.print) {
                                     entry.value = value
@@ -69,7 +103,7 @@ CodeBro = $singleton (Component, {
         else {
             return value } },
 
-    investigatedComponentForEntry: function (entry) {
+    investigateComponentForEntry: function (entry) {
         
         SourcePector.whatComponent (entry.where, this.$ (function (compo) { entry.compo = compo
                     
@@ -124,11 +158,11 @@ CodeBro = $singleton (Component, {
 
     patchEntrySource: function (entry, value) { SourcePector.patchLine (entry.where, function (text, apply) {
 
-                        var expr = CodeBro.parseEntry (_.extend2 (entry, { where: { source: text }}))
+                        var expr = BroTools.parseEntry (_.extend2 (entry, { where: { source: text }}))
                         if (expr) {
-                            apply (CodeBro.printExpr  (_.extend  (expr,  { value: value }))) } }) },
+                            apply (BroTools.printExpr  (_.extend  (expr,  { value: value }))) } }) },
 
-    addToDashboard: function (entry) { var expr = CodeBro.parseEntry (entry)
+    addToDashboard: function (entry) { var expr = BroTools.parseEntry (entry)
 
         if (!expr) { log.error ('Failed to recognize:', entry.where.source); return undefined }
 
@@ -146,18 +180,18 @@ CodeBro = $singleton (Component, {
         var commitValueChange = this.$ (function (value) {
 
                                     entry.value = value
-                                    entry.valueEl.text (CodeBro.printExprValue (entry, 2))
+                                    entry.valueEl.text (BroTools.printExprValue (entry, 2))
 
                                     if (entry.compo && this.triggersByComponentName[entry.compo]) {
                                                        this.triggersByComponentName[entry.compo] (entry) }
 
-                                    CodeBro.patchEntrySource (entry, value) })
+                                    BroTools.patchEntrySource (entry, value) })
 
         entry.el.append ($('<div class="src">')
             .append (entry.headEl  = $('<span class="head">').text (expr.varName || expr.head)
                                                              .toggleClass ('var', expr.varName !== undefined))
 
-            .append (entry.valueEl = $('<span class="value">').text (CodeBro.printExprValue (expr, 2)))
+            .append (entry.valueEl = $('<span class="value">').text (BroTools.printExprValue (expr, 2)))
 
             .append (entry.restEl  = $('<span class="rest">')
                                             .append ($('<em>').text (expr.comment || expr.rest))))

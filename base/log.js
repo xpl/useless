@@ -256,7 +256,10 @@ _.extend (log, log.printAPI = {
 
     failure:    log.impl.write ({ location: true }).partial (log.color.red),
     error:      log.impl.write ({ location: true }).partial (log.color.red),
+    e:          log.impl.write ({ location: true }).partial (log.color.red),
     info:       log.impl.write ({ location: true }).partial (log.color.blue),
+    i:          log.impl.write ({ location: true }).partial (log.color.blue),
+    w:          log.impl.write ({ location: true }).partial (log.color.orange),
     warn:       log.impl.write ({ location: true }).partial (log.color.orange),
     warning:    log.impl.write ({ location: true }).partial (log.color.orange),
     success:    log.impl.write ({ location: true }).partial (log.color.green),

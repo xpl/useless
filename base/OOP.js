@@ -304,6 +304,25 @@ _.deferTest ('OOP', {
         $assert (B.$base === A.prototype) },
 
 
+/*  Adds value contracts to arguments for unit testing purposes
+    ======================================================================== */
+
+    'value contracts for arguments': function () {
+
+        var Proto = $prototype ($test ({
+
+            frobnicate:  function (_777, _foo_bar_baz, unaffected) {},
+            noMistake:   function () {} }))
+
+        var obj = new Proto ()
+
+        $assertFails (function () {
+            obj.frobnicate (999, 'not right') })
+
+        obj.frobnicate (777, 'foo bar baz')
+        obj.noMistake () },
+
+
 /*  Tags on definition render to static properties
     ======================================================================== */
 
@@ -315,7 +334,7 @@ _.deferTest ('OOP', {
 /*  PUBLIC API
     ======================================================================== */
 
-    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin'])
+    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'test'])
         .each (_.defineTagKeyword)
 
     $prototype = function (arg1, arg2) {
@@ -362,6 +381,7 @@ _.deferTest ('OOP', {
             compile: function (def, base) { return Tags.unwrap (_.sequence (
                 this.extendWithTags,
                 this.flatten,
+                this.generateArgumentContractsIfTaggedAsTest,
                 this.ensureFinalContracts (base),
                 this.generateConstructor (base),
                 this.evalAlwaysTriggeredMacros (base),
@@ -385,6 +405,12 @@ _.deferTest ('OOP', {
                             def = macros[name] (def, value, name, base) } })
                     return def } },
 
+            generateArgumentContractsIfTaggedAsTest: function (def) {
+                return (def.$test && _.map2 (def, function (fn) {
+                    return Tags.modifySubject (fn, function (fn) {
+                        return (_.isFunction (fn) && function () { $assertAsDeclared (arguments, fn)
+                                                                    return fn.apply  (this, arguments) }) || fn }) })) || def },
+
             contributeTraits: function (def) {
                 if (def.$trait) {
                     def.$traits = [def.$trait]
@@ -396,7 +422,7 @@ _.deferTest ('OOP', {
                             _.defaults (def, _.omit (constructor.$definition,
                                 _.or ($builtin.matches, _.key (_.equals ('constructor'))))) } ) 
 
-                    def.$traits = $static ($builtin ($property (traits)))
+                    def.$traits  = $static ($builtin ($property (traits)))
                     def.hasTrait = $static ($builtin (function (Constructor) {
                         return traits.indexOf (Constructor) >= 0 })) }
 
@@ -541,6 +567,8 @@ _.deferTest ('OOP', {
 
             $singleton = function (arg1, arg2) {
                     return new ($prototype.apply (null, arguments)) () } })
+
+
 
 
         

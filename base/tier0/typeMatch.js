@@ -56,7 +56,7 @@ _.deferTest (['type', 'type matching'], function () {
                 return allSatisfied ?
                             match : _.coerceToEmpty (value) } }
 
-    var matchTypes = _.hyperOperator (
+    var matchTypes = _.hyperOperator (_.binary,
         function (type_, value, pred) { var type = Tags.unwrap (type_)
 
             if (_.isArray (type)) { // matches [ItemType] → [item, item, ..., N]
@@ -73,7 +73,7 @@ _.deferTest (['type', 'type matching'], function () {
                     return undefined } }
 
             else {
-                return zip (type_, value, pred) } }, _.arity2)
+                return zip (type_, value, pred) } })
 
     var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
 
@@ -110,11 +110,11 @@ _.deferTest (['type', 'type matching'], function () {
             return value } }
 
     _.decideType = function (value) {
-        var operator = _.hyperOperator (
+        var operator = _.hyperOperator (_.unary,
                             function (value, pred) {
                                 if (value && value.constructor && value.constructor.$definition) {
                                     return value.constructor }
-                                return unifyType (_.map2 (value, pred)) }, _.arity1)
+                                return unifyType (_.map2 (value, pred)) })
         return operator (
             value,
             _.typeOf) } })

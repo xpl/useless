@@ -103,6 +103,7 @@ _.defineKeyword ('uselessPath', _.memoize (function () {
 _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
     return local ? (local + '/') : $uselessPath }))
 
+
 /*  Source code access (cross-platform)
  */
 _.readSourceLine = function (file, line, then) {
@@ -182,11 +183,12 @@ CallStack = $extends (Array, {
         return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
 
     shortenPath: $static (function (file) {
-                    return file.replace ($sourcePath, '') }),
+                    return file.replace ($uselessPath, '')
+                               .replace ($sourcePath,  '') }),
 
     isThirdParty: $static (function (file) { var local = file.replace ($sourcePath, '')
                     return (local.indexOf ('/node_modules/') >= 0) ||
-                           (file.indexOf ('/node_modules/') >= 0 && !local) ||
+                           (file.indexOf  ('/node_modules/') >= 0 && !local) ||
                            (local.indexOf ('underscore') >= 0) ||
                            (local.indexOf ('jquery') >= 0) }),
 
@@ -195,11 +197,11 @@ CallStack = $extends (Array, {
             return CallStack.rawStringToArray (rawString) },
 
         function (array) {
-            return _.map (array, function (entry) { var fileShort = CallStack.shortenPath (entry.file)
+            return _.map (array, function (entry) {
                 return _.extend (entry, {
                             calleeShort:    _.last (entry.callee.split ('.')),
                             fileName:       _.last (entry.file.split ('/')),
-                            fileShort:      fileShort,
+                            fileShort:      CallStack.shortenPath (entry.file),
                             thirdParty:     CallStack.isThirdParty (entry.file) }) }) },
 
         function (parsedArray) {

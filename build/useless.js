@@ -499,8 +499,19 @@ _.withTest ('assert.js bootstrap', function () {
                          bar: Bar })
 
         $assertFails (function () {
-            $assertTypeof (new Bar (), Foo) }) }
+            $assertTypeof (new Bar (), Foo) }) };
 
+
+/*  Argument contracts
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+if (_.hasStdlib) {
+
+    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertAsDeclared (arguments) }
+
+                    testF (777, 'foo bar baz')
+
+    $assertFails (function () { testF (777, 42) }) }
 
 /*  Ensuring throw (and no throw)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -633,6 +644,19 @@ function () {
 
         assertNotThrows: function (what) {
             _.assertCalls.call (this, 0, function () { what () }) },
+
+        assertAsDeclared: function (arguments, callee) {
+            var match = (callee || arguments.callee).toString ().match (/.*function[^\(]\(([^\)]+)\)/)
+            if (match) {
+                var valuesPassed   = _.asArray (arguments)
+                var valuesNeeded   = _.map (match[1].split (','),
+                                            function (_s) {
+                                                var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
+                                                var n = parseInt (s, 10)
+                                                return _.isFinite (n) ? n : s })
+
+                _.assert (_.every (_.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
+                                                                                return (a !== undefined) ? (a === b) : true }))) } },
 
         fail: function () {
                 _.assertionFailed () },
@@ -855,6 +879,9 @@ _.arity2 = function (fn) { return function (a, b) {
 _.arity3 = function (fn) { return function (a, b, c) {
                                     return fn.call (this, a, b, c) }}
 
+_.arityFn = function (N) { return _['arity' + N] }
+
+
 /*  A version of _.partial that binds to tail of argument list
     ======================================================================== */
 
@@ -915,7 +942,7 @@ _.withTest (['function', 'Y combinator'], function () {
 
     Y: function (eatSelf) {
         var self = eatSelf (function () {
-            return self.apply (this, arguments) }); return self } }) })
+            return self.apply (this, arguments) }); return self } }) });
 
 
 /*  converts regular things like map/zip to hyper versions, that traverse
@@ -929,25 +956,47 @@ _.withTest (['function', 'Y combinator'], function () {
     for any kind of previously defined one-dimensional operators like
     map/filter/zip/reduce/etc.
 
-    Arity argument specifies how many arguments operator's predicate accepts.
-    Use _.arityN to specify arity.
-
-    Example:    hyperMap = _.hyperOperator (_.map2, _.arity1)
-                hyperZip = _.hyperOperator (_.zip2, _.arity2)
+    Example:    hyperMap = _.hyperOperator (_.unary,  _.map2)
+                hyperZip = _.hyperOperator (_.binary, _.zip2, _.goDeeperOnlyWhenNessesary)
  */
 
-_.hyperOperator = function (operator, arity_) {                     var arity         = arity_ || _.identity
-                        return function () {                        var subOperator   = _.last (arguments)
-                            return _.Y (function (hyperOperator_) { var hyperOperator = _.tails (operator, arity (hyperOperator_))
-                                return function () {
-                                    return (_.isAtomic (arguments[0]) ?
-                                                hyperOperator :
-                                                subOperator)
-                                                    .apply (this, arguments) } }).apply (this, _.initial (arguments)) } }
+ (function () {
 
-_.isAtomic = function (x) {
-                    return (arguments[0] && (typeof arguments[0] === 'object')) &&
-                            !_.isPrototypeInstance (x) }
+    /*  N number denotes how many arguments underlying operation accepts
+     */
+    _.hyperOperator = function (N, operator, diCaprioPredicate, nonTrivial) {
+                                                                          var arity            = _.arityFn (N)       || _.identity
+                                                                          var weNeedToGoDeeper =  (diCaprioPredicate || _.goDeeperAlwaysIfPossible) (N, nonTrivial || _.isNonTrivial)
+                            return function () {                          var subOperator      = _.last (arguments)
+                                return _.Y (function (hyperOperator_) {   var hyperOperator    = _.tails (operator, arity (hyperOperator_))
+                                    return function () {
+                                        return (weNeedToGoDeeper (arguments) ?
+                                                    hyperOperator :
+                                                    subOperator)
+                                                        .apply (this, arguments) } }).apply (this, _.initial (arguments)) } }
+
+    /*  Combinatoric complexity classifiers for exact configuration of hyperOperator behavior
+     */
+    _.goDeeperAlwaysIfPossible= function (N, canGoDeeper) {
+             if (N === 0) {                          return _.constant (false)                                }
+        else if (N === 1) { return function (args) { return   canGoDeeper (args[0])                           } }
+        else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) || canGoDeeper (args[1])  } }
+        else              { return function (args) { return _.some (_.asArray (args),  canGoDeeper)           } } }
+
+    _.goDeeperOnlyWhenNessesary = function (N, canGoDeeper) {
+             if (N === 0) {                          return _.constant (false)                                }
+        else if (N === 1) { return function (args) { return   canGoDeeper (args[0])                           } }
+        else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) && canGoDeeper (args[1])  } }
+        else              { return function (args) { return _.every (_.asArray (args), canGoDeeper)           } } }
+
+    _.isNonTrivial = function (x) {
+                        return (typeof x === 'object') && !_.isPrototypeInstance (x) }
+
+    /*  Self-descriptive constants (for clarity)
+     */
+    _.binary = 2
+    _.unary  = 1
+}) ()
 
 /*  Generates higher order stuff from regular routine
     ======================================================================== */
@@ -1108,6 +1157,8 @@ _.withTest (['function', 'sequence / then'], function () {
 
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
+
+_.asString = function (what) { return what + '' }
 
 _.typeOf = function (what) {
                 return typeof what }
@@ -1596,7 +1647,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
 
     function () {
 
-        _.mixin ({ mapMap: _.hyperOperator (_.map2, _.arity1) }) })
+        _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
 
 
 /*  Internal impl.
@@ -1678,8 +1729,59 @@ _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
 
     _.mixin ({
 
-        filterFilter: _.hyperOperator (_.filter2, _.arity1) }) })
+        filterFilter: _.hyperOperator (_.unary, _.filter2) }) })
 
+
+/*  Reduce on steroids
+    ======================================================================== */
+
+_.deferTest (['stdlib', 'reduce 2.0'], function () {
+
+    /*$assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
+    $assert (_.reduce2 ({ a: 3, b: 7, c: 9 }, _.sum), 19)
+    $assert (_.reduce2 (     3   + 7   + 9  , _.sum), 19)
+
+    $assert (_.reduce2 ([1], _.sum), 1)
+    $assert (_.reduce2 ([],  _.sum), undefined)
+
+    $assert (              1 + 20 + 3 + 4 + 5,
+        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))*/
+
+}, function () {
+
+    /*  Because hyperOperator is fractal thing, it is nessesary to define a compatible argument
+        order for _.reduce and its functor operand, as they get melted together to form a generic
+        self-similar routine of a higher order.
+
+        And that becames kinda "Yodish" when applied to familiar 'reduce'. See how they dont match:
+
+            1. _.reduce (value, op, memo)
+            2.       op (memo, value)
+    */
+    _.yodaReduce = function (value, memo, op_) {
+
+                    var op     = _.last (arguments)
+
+                    var safeOp = function (value, memo) { var hasMemo = (memo !== undefined)
+                                                          var result  = (hasMemo ? op (value, memo) : value)
+                        return (result === undefined) ?
+                                    (hasMemo ? memo : value) :
+                                    (result) }
+
+                    if (_.isArray (value)) {                                
+                        for (var i = 0, n = value.length; i < n; i++) {
+                            memo = safeOp (value[i],   memo) } }
+
+                    else if (_.isStrictlyObject (value)) {                  
+                        _.each (Object.keys (value), function (key) {
+                            memo = safeOp (value[key], memo) }) }
+
+                    else {
+                            memo = safeOp (value,      memo) } return memo }
+
+    _.reduceReduce = function (initial, value, op) {
+                        return _.hyperOperator (_.binary, _.yodaReduce) (value, initial, op.flip2) }
+ })
 
 /*  Zip 2.0
     ======================================================================== */
@@ -1765,7 +1867,7 @@ _.deferTest (['stdlib', 'zipZip'], function () {
                                 bar: [undefined, 'undefined'] } ] }) },
 function () {
 
-    _.mixin ({ zipZip: _.hyperOperator (_.zip2, _.arity2) }) })
+    _.mixin ({ zipZip: _.hyperOperator (_.binary, _.zip2) }) })
 
 
 /*  Most useful _.extend derivatives
@@ -1872,8 +1974,8 @@ _.deferTest (['stdlib', 'diff'], function () {
 
 }, function () {
 
-    _.hyperMatch = _.hyperOperator (function (a, b, pred) {
-                                        return _.coerceToUndefined (_.nonempty (_.zip2 (a, b, pred))) }, _.arity2)
+    _.hyperMatch = _.hyperOperator (_.binary, function (a, b, pred) {
+                                        return _.coerceToUndefined (_.nonempty (_.zip2 (a, b, pred))) })
 
     _.diff = _.tails3 (_.hyperMatch, function (a, b) {
                                         return (a === b) ? undefined : b }) })
@@ -1898,8 +2000,8 @@ _.deferTest (['stdlib', 'undiff'], function () {
 
 }, function () {
 
-    _.hyperMatch = _.hyperOperator (function (a, b, pred) {
-                                        return _.coerceToUndefined (_.zip2 (a, b, pred)) }, _.arity2)
+    _.hyperMatch = _.hyperOperator (_.binary, function (a, b, pred) {
+                                        return _.coerceToUndefined (_.zip2 (a, b, pred)) })
 
     _.undiff = _.tails3 (_.hyperMatch, function (a, b) {
                                             return (a === b) ? b : undefined }) })
@@ -2343,7 +2445,7 @@ _.deferTest (['type', 'type matching'], function () {
                 return allSatisfied ?
                             match : _.coerceToEmpty (value) } }
 
-    var matchTypes = _.hyperOperator (
+    var matchTypes = _.hyperOperator (_.binary,
         function (type_, value, pred) { var type = Tags.unwrap (type_)
 
             if (_.isArray (type)) { // matches [ItemType] → [item, item, ..., N]
@@ -2360,7 +2462,7 @@ _.deferTest (['type', 'type matching'], function () {
                     return undefined } }
 
             else {
-                return zip (type_, value, pred) } }, _.arity2)
+                return zip (type_, value, pred) } })
 
     var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
 
@@ -2397,11 +2499,11 @@ _.deferTest (['type', 'type matching'], function () {
             return value } }
 
     _.decideType = function (value) {
-        var operator = _.hyperOperator (
+        var operator = _.hyperOperator (_.unary,
                             function (value, pred) {
                                 if (value && value.constructor && value.constructor.$definition) {
                                     return value.constructor }
-                                return unifyType (_.map2 (value, pred)) }, _.arity1)
+                                return unifyType (_.map2 (value, pred)) })
         return operator (
             value,
             _.typeOf) } })
@@ -2992,6 +3094,25 @@ _.deferTest ('OOP', {
         $assert (B.$base === A.prototype) },
 
 
+/*  Adds value contracts to arguments for unit testing purposes
+    ======================================================================== */
+
+    'value contracts for arguments': function () {
+
+        var Proto = $prototype ($test ({
+
+            frobnicate:  function (_777, _foo_bar_baz, unaffected) {},
+            noMistake:   function () {} }))
+
+        var obj = new Proto ()
+
+        $assertFails (function () {
+            obj.frobnicate (999, 'not right') })
+
+        obj.frobnicate (777, 'foo bar baz')
+        obj.noMistake () },
+
+
 /*  Tags on definition render to static properties
     ======================================================================== */
 
@@ -3003,7 +3124,7 @@ _.deferTest ('OOP', {
 /*  PUBLIC API
     ======================================================================== */
 
-    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin'])
+    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'test'])
         .each (_.defineTagKeyword)
 
     $prototype = function (arg1, arg2) {
@@ -3050,6 +3171,7 @@ _.deferTest ('OOP', {
             compile: function (def, base) { return Tags.unwrap (_.sequence (
                 this.extendWithTags,
                 this.flatten,
+                this.generateArgumentContractsIfTaggedAsTest,
                 this.ensureFinalContracts (base),
                 this.generateConstructor (base),
                 this.evalAlwaysTriggeredMacros (base),
@@ -3073,6 +3195,12 @@ _.deferTest ('OOP', {
                             def = macros[name] (def, value, name, base) } })
                     return def } },
 
+            generateArgumentContractsIfTaggedAsTest: function (def) {
+                return (def.$test && _.map2 (def, function (fn) {
+                    return Tags.modifySubject (fn, function (fn) {
+                        return (_.isFunction (fn) && function () { $assertAsDeclared (arguments, fn)
+                                                                    return fn.apply  (this, arguments) }) || fn }) })) || def },
+
             contributeTraits: function (def) {
                 if (def.$trait) {
                     def.$traits = [def.$trait]
@@ -3084,7 +3212,7 @@ _.deferTest ('OOP', {
                             _.defaults (def, _.omit (constructor.$definition,
                                 _.or ($builtin.matches, _.key (_.equals ('constructor'))))) } ) 
 
-                    def.$traits = $static ($builtin ($property (traits)))
+                    def.$traits  = $static ($builtin ($property (traits)))
                     def.hasTrait = $static ($builtin (function (Constructor) {
                         return traits.indexOf (Constructor) >= 0 })) }
 
@@ -3229,6 +3357,8 @@ _.deferTest ('OOP', {
 
             $singleton = function (arg1, arg2) {
                     return new ($prototype.apply (null, arguments)) () } })
+
+
 
 
         
@@ -3543,6 +3673,9 @@ _.deferTest ('String extensions', function () {
 
     capitalized: function (s) {
         return s.charAt (0).toUpperCase () + s.slice (1) },
+
+    decapitalized: function (s) {
+        return s.charAt (0).toLowerCase () + s.slice (1) },
 
     latinAlphanumericValue: function (s) {
         return s.replace (/[^a-z0-9]/gi, '') },
@@ -5012,6 +5145,7 @@ _.defineKeyword ('uselessPath', _.memoize (function () {
 _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
     return local ? (local + '/') : $uselessPath }))
 
+
 /*  Source code access (cross-platform)
  */
 _.readSourceLine = function (file, line, then) {
@@ -5091,11 +5225,12 @@ CallStack = $extends (Array, {
         return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
 
     shortenPath: $static (function (file) {
-                    return file.replace ($sourcePath, '') }),
+                    return file.replace ($uselessPath, '')
+                               .replace ($sourcePath,  '') }),
 
     isThirdParty: $static (function (file) { var local = file.replace ($sourcePath, '')
                     return (local.indexOf ('/node_modules/') >= 0) ||
-                           (file.indexOf ('/node_modules/') >= 0 && !local) ||
+                           (file.indexOf  ('/node_modules/') >= 0 && !local) ||
                            (local.indexOf ('underscore') >= 0) ||
                            (local.indexOf ('jquery') >= 0) }),
 
@@ -5104,11 +5239,11 @@ CallStack = $extends (Array, {
             return CallStack.rawStringToArray (rawString) },
 
         function (array) {
-            return _.map (array, function (entry) { var fileShort = CallStack.shortenPath (entry.file)
+            return _.map (array, function (entry) {
                 return _.extend (entry, {
                             calleeShort:    _.last (entry.callee.split ('.')),
                             fileName:       _.last (entry.file.split ('/')),
-                            fileShort:      fileShort,
+                            fileShort:      CallStack.shortenPath (entry.file),
                             thirdParty:     CallStack.isThirdParty (entry.file) }) }) },
 
         function (parsedArray) {
@@ -5468,7 +5603,10 @@ _.extend (log, log.printAPI = {
 
     failure:    log.impl.write ({ location: true }).partial (log.color.red),
     error:      log.impl.write ({ location: true }).partial (log.color.red),
+    e:          log.impl.write ({ location: true }).partial (log.color.red),
     info:       log.impl.write ({ location: true }).partial (log.color.blue),
+    i:          log.impl.write ({ location: true }).partial (log.color.blue),
+    w:          log.impl.write ({ location: true }).partial (log.color.orange),
     warn:       log.impl.write ({ location: true }).partial (log.color.orange),
     warning:    log.impl.write ({ location: true }).partial (log.color.orange),
     success:    log.impl.write ({ location: true }).partial (log.color.green),
@@ -7313,6 +7451,211 @@ _.extend (Math, (function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }))
+_.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { $assert (a, _.quote (b.str, '//')) }
+
+    /*  R should be used for code clarity purposes when one needs to generate a
+        complex regular expression that is hard to read and maintain.
+     */
+    $assertExpr ('/[^\\s]*/',        $r.anyOf.except.space.$)
+    $assertExpr ('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$)
+
+    var expr = $r.expr ('before',    $r.anything.text ('$print').something).then (
+               $r.expr ('argument',  $r.someOf.except.text (',(')).inParentheses.then (
+               $r.expr ('tail',      $r.anything))).$
+
+    /*  Above construction generates the following regular expression
+     */
+    $assertExpr ('/(.*\\$print.+)\\(([^,\\(]+)\\)(.*)/', expr)
+
+    /*  Main feature: named groups, easily accessible as dictionary elements.
+     */
+    $assert (expr.parse ( ' var x = $print (blabla) // lalala '),
+
+              {  before:  ' var x = $print ',
+               argument:  'blabla',              
+                   tail:  ' // lalala ',        })
+
+    /*  Based on Lisp-like list based syntax, for easy programmatic generation and stuff
+     */
+    $assert ([['[^', '\\s', "\]"], '*'], R.anyOf (R.except (R.space))) },                       function () {
+
+    /*  Implementation
+     */
+    R = $singleton ({
+
+        constructor: function () {
+
+            this.reduce = _.hyperOperator (_.binary, _.yodaReduce,
+                                            _.goDeeperAlwaysIfPossible,
+                                            _.isNonTrivial.and (_.not (this.isSubexpr)))
+
+            this.initDSL () },
+
+        expr: function (expr, subexprs) { subexprs = subexprs || []
+                return new R.Expr (R.reduce (expr, '', function (s, memo) {
+                                                            if (R.isSubexpr (s)) { subexprs.push (s)
+                                                                return memo + R.expr (R.root (s.value), subexprs).str }
+                                                            else {
+                                                                return memo + s } }), subexprs) },
+
+        Expr: $prototype ({
+
+            constructor: function (str, subexprs) {
+                            this.rx = new RegExp ()
+                            this.rx.compile (str)
+                            this.str = str
+                            this.subexprs = subexprs },
+
+            parse: function (str) {
+                    var match = str.match (this.rx)
+                return (match && _.extend.apply (null,
+                                    _.zipWith ([_.rest (match), this.subexprs], function (match, subexpr) {
+                                                                                    return _.object ([[ subexpr.name, match ]]) }))) || {} } }),
+
+        metacharacters: $property (_.index ('\\^$.|?*+()[{')),
+
+        escape:       function (s)    { return _.map (s, function (x) { return R.metacharacters[x] ? ('\\' + x) : x }).join ('') },
+
+        text:         $alias ('escape'),
+
+        subexpr:      function (name, s) { return { name: name, value: ['(', s, ')'] } },
+     
+        maybe:        function (s)    { return [s, '?'] },
+
+        anyOf:        function (s)    { return [s, '*'] },
+        someOf:       function (s)    { return [s, '+'] },
+
+        oneOf:        function (s)    { return ['[',  s, ']'] },
+        except:       function (s)    { return ['[^', s, ']'] },
+
+        or:           function (a, b) { return [a, '|', b] },
+
+        begin:       $property ('^'),
+        end:         $property ('$'),
+        space:       $property ('\\s'),
+        anything:    $property ('.*'),
+        something:   $property ('.+'),
+        comma:       $property (','),
+
+        parentheses: function (s) { return ['\\(', s, '\\)'] },
+        brackets:    function (s) { return ['\\[', s, '\\]'] },
+
+        isSubexpr: function (s) { return (_.isStrictlyObject (s) && !_.isArray (s)) ? true : false },
+
+        root: function (r) { return (r && r.$$) ? r.$$ : r },
+
+        initDSL: function () {
+
+            _.defineKeyword ( 'r', function ()       { return $$r ([]) })
+            _.defineKeyword ('$r', function (cursor) {
+
+                var shift = function (x) { cursor.push (x); return cursor.forward }
+
+                _.defineHiddenProperty (cursor, 'then', function (x)    { cursor.push (R.root (x));                return cursor })
+                _.defineHiddenProperty (cursor, 'text', function (x)    { cursor.push (R.text (x));                return cursor })
+                _.defineHiddenProperty (cursor, 'expr', function (x, s) { cursor.push (R.subexpr (x, R.root (s))); return cursor })
+
+                _.defineHiddenProperty (cursor, 'forward', function () {
+                    return cursor.next || ((cursor.next = $r).prev = cursor).next })
+
+                _.each (['maybe', 'anyOf', 'someOf', 'oneOf', 'except'], function (key) {
+                    _.defineHiddenProperty (cursor, key, function () {
+                        return shift (R[key] (cursor.forward)) }) })
+
+                _.each (['parentheses', 'brackets'], function (key) {
+                    _.defineHiddenProperty (cursor, 'in' + key.capitalized, function () {
+                        return (cursor.$$.prev = $$r (R[key] (cursor.$$))) }) })
+
+                _.each (['or'], function (key) {
+                    _.defineHiddenProperty (cursor, key, function () { var next = $r
+                        return (next.prev = (cursor.$$.prev = $$r (R[key] (cursor.$$, next)))).next = next }) })
+
+                _.each (['begin', 'end', 'space', 'anything', 'something'], function (key) {
+                    _.defineHiddenProperty (cursor, key, function () {
+                        return shift ([R[key], cursor.forward]); }) })
+
+                _.defineHiddenProperty (cursor, '$$', function () { var root = cursor
+                    while (root.prev) { root = root.prev }
+                    return root })
+
+                _.defineHiddenProperty (cursor, '$', function () {
+                    return R.expr (cursor.$$) })
+
+                return cursor }) } }) })
+
+
+/*  Experimental stuff
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
+
+_.tests.AOP = {
+
+	'basics': function () { $assertCalls (1, function (createCalled) {
+							$assertCalls (1, function (displayCalled) {
+							$assertCalls (1, function (destroyCalled) {
+
+		var Proto = $prototype ($test ({
+
+			create:  function (_777) {  },
+			display: function () {},
+			destroy: function () { return 456 } }))
+
+		$aspect (Proto, $test ({
+
+			afterCreate:   function (_777) 			      { createCalled () },
+			display:       function (_foo, _123, display) { displayCalled () },
+			beforeDestroy: function () 					  { destroyCalled () } }))
+
+		var demo = new Proto ()
+
+		demo.create (777)
+		demo.display ('foo', 123)
+		demo.destroy () }) }) })
+	}
+};
+
+(function () {
+
+	var fnNameExpr = $r.expr ('how', $r.text ('before').or.text ('after')).expr ('name', $r.anything).$
+
+	var tryBind = function (target, methodName, bind, boundMethod) {
+		var method = target[methodName]
+		if (method && _.isFunction (method)) {
+			bind (target, methodName, boundMethod) } }
+
+	_.defineKeyword ('aspect', function (ofWhat, cfg) {
+
+        var aspectDef = Tags.unwrap (_.sequence (
+			                $prototype.impl.extendWithTags,
+			                $prototype.impl.flatten,
+			                $prototype.impl.generateArgumentContractsIfTaggedAsTest,
+			                $prototype.impl.contributeTraits,
+			                $prototype.impl.expandAliases).call ($prototype.impl, cfg))
+
+		var motherDef = ofWhat.constructor && ofWhat.constructor.$definition
+		if (motherDef) {
+				(motherDef.$aspects = motherDef.$aspects || []).push (aspectDef) }
+
+		_.each (aspectDef, function (value, name) {
+		
+			if (aspectDef.hasOwnProperty (name) && _.isFunction (value)) {
+
+				var parsed       = fnNameExpr.parse (name)
+				var originalName = (parsed.name &&          parsed.name.decapitalized) || name
+				var bindTool     = (parsed.how  && _['on' + parsed.how .capitalized])  || _.intercept
+
+				if (bindTool) {
+
+					tryBind (ofWhat,           originalName, bindTool, value)
+					tryBind (ofWhat.prototype, originalName, bindTool, value) } } })
+
+		if (ofWhat.aspectAdded) {
+			ofWhat.aspectAdded (aspectDef) }
+
+		return aspectDef })
+
+}) ()
 
 
 /*  ==================================================================== */

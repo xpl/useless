@@ -136,6 +136,13 @@ _ = (function () {
     $include ('./base/component')       // component model
     $include ('./base/Testosterone')    // unit test shell
     $include ('./base/math')            // math utility
+    $include ('./base/Rx')              // regular expressions helper
+
+
+/*  Experimental stuff
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $include ('./base/AOP')
 
 
 /*  ==================================================================== */

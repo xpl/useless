@@ -16,6 +16,9 @@ _.arity2 = function (fn) { return function (a, b) {
 _.arity3 = function (fn) { return function (a, b, c) {
                                     return fn.call (this, a, b, c) }}
 
+_.arityFn = function (N) { return _['arity' + N] }
+
+
 /*  A version of _.partial that binds to tail of argument list
     ======================================================================== */
 
@@ -76,7 +79,7 @@ _.withTest (['function', 'Y combinator'], function () {
 
     Y: function (eatSelf) {
         var self = eatSelf (function () {
-            return self.apply (this, arguments) }); return self } }) })
+            return self.apply (this, arguments) }); return self } }) });
 
 
 /*  converts regular things like map/zip to hyper versions, that traverse
@@ -90,25 +93,47 @@ _.withTest (['function', 'Y combinator'], function () {
     for any kind of previously defined one-dimensional operators like
     map/filter/zip/reduce/etc.
 
-    Arity argument specifies how many arguments operator's predicate accepts.
-    Use _.arityN to specify arity.
-
-    Example:    hyperMap = _.hyperOperator (_.map2, _.arity1)
-                hyperZip = _.hyperOperator (_.zip2, _.arity2)
+    Example:    hyperMap = _.hyperOperator (_.unary,  _.map2)
+                hyperZip = _.hyperOperator (_.binary, _.zip2, _.goDeeperOnlyWhenNessesary)
  */
 
-_.hyperOperator = function (operator, arity_) {                     var arity         = arity_ || _.identity
-                        return function () {                        var subOperator   = _.last (arguments)
-                            return _.Y (function (hyperOperator_) { var hyperOperator = _.tails (operator, arity (hyperOperator_))
-                                return function () {
-                                    return (_.isAtomic (arguments[0]) ?
-                                                hyperOperator :
-                                                subOperator)
-                                                    .apply (this, arguments) } }).apply (this, _.initial (arguments)) } }
+ (function () {
 
-_.isAtomic = function (x) {
-                    return (arguments[0] && (typeof arguments[0] === 'object')) &&
-                            !_.isPrototypeInstance (x) }
+    /*  N number denotes how many arguments underlying operation accepts
+     */
+    _.hyperOperator = function (N, operator, diCaprioPredicate, nonTrivial) {
+                                                                          var arity            = _.arityFn (N)       || _.identity
+                                                                          var weNeedToGoDeeper =  (diCaprioPredicate || _.goDeeperAlwaysIfPossible) (N, nonTrivial || _.isNonTrivial)
+                            return function () {                          var subOperator      = _.last (arguments)
+                                return _.Y (function (hyperOperator_) {   var hyperOperator    = _.tails (operator, arity (hyperOperator_))
+                                    return function () {
+                                        return (weNeedToGoDeeper (arguments) ?
+                                                    hyperOperator :
+                                                    subOperator)
+                                                        .apply (this, arguments) } }).apply (this, _.initial (arguments)) } }
+
+    /*  Combinatoric complexity classifiers for exact configuration of hyperOperator behavior
+     */
+    _.goDeeperAlwaysIfPossible= function (N, canGoDeeper) {
+             if (N === 0) {                          return _.constant (false)                                }
+        else if (N === 1) { return function (args) { return   canGoDeeper (args[0])                           } }
+        else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) || canGoDeeper (args[1])  } }
+        else              { return function (args) { return _.some (_.asArray (args),  canGoDeeper)           } } }
+
+    _.goDeeperOnlyWhenNessesary = function (N, canGoDeeper) {
+             if (N === 0) {                          return _.constant (false)                                }
+        else if (N === 1) { return function (args) { return   canGoDeeper (args[0])                           } }
+        else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) && canGoDeeper (args[1])  } }
+        else              { return function (args) { return _.every (_.asArray (args), canGoDeeper)           } } }
+
+    _.isNonTrivial = function (x) {
+                        return (typeof x === 'object') && !_.isPrototypeInstance (x) }
+
+    /*  Self-descriptive constants (for clarity)
+     */
+    _.binary = 2
+    _.unary  = 1
+}) ()
 
 /*  Generates higher order stuff from regular routine
     ======================================================================== */
