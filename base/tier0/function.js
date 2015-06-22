@@ -103,7 +103,7 @@ _.withTest (['function', 'Y combinator'], function () {
      */
     _.hyperOperator = function (N, operator, diCaprioPredicate, nonTrivial) {
                                                                           var arity            = _.arityFn (N)       || _.identity
-                                                                          var weNeedToGoDeeper =  (diCaprioPredicate || _.goDeeperAlwaysIfPossible) (N, nonTrivial || _.isNonTrivial)
+                                                                          var weNeedToGoDeeper =  (diCaprioPredicate || _.goDeeperWhenFirstArgumentIsGood) (N, nonTrivial || _.isNonTrivial)
                             return function () {                          var subOperator      = _.last (arguments)
                                 return _.Y (function (hyperOperator_) {   var hyperOperator    = _.tails (operator, arity (hyperOperator_))
                                     return function () {
@@ -114,6 +114,9 @@ _.withTest (['function', 'Y combinator'], function () {
 
     /*  Combinatoric complexity classifiers for exact configuration of hyperOperator behavior
      */
+    _.goDeeperWhenFirstArgumentIsGood= function (N, canGoDeeper) { 
+        return function (args) { return   (args.length > 0) ? canGoDeeper (args[0]) : false } }
+
     _.goDeeperAlwaysIfPossible= function (N, canGoDeeper) {
              if (N === 0) {                          return _.constant (false)                                }
         else if (N === 1) { return function (args) { return   canGoDeeper (args[0])                           } }
@@ -126,14 +129,17 @@ _.withTest (['function', 'Y combinator'], function () {
         else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) && canGoDeeper (args[1])  } }
         else              { return function (args) { return _.every (_.asArray (args), canGoDeeper)           } } }
 
-    _.isNonTrivial = function (x) {
-                        return (typeof x === 'object') && !_.isPrototypeInstance (x) }
+    _.isTrivial = function (x) { return _           .isEmpty (x) || _.isString (x) || _.isNumber (x) ||
+                                        !(_.isStrictlyObject (x) || _.isArray (x)) || _.isPrototypeInstance (x) || _.isMeta (x) }
+
+    _.isMeta = _.constant (false)
+
+    _.isNonTrivial = _.not (_.isTrivial)
 
     /*  Self-descriptive constants (for clarity)
      */
     _.binary = 2
-    _.unary  = 1
-}) ()
+    _.unary  = 1 }) ()
 
 /*  Generates higher order stuff from regular routine
     ======================================================================== */

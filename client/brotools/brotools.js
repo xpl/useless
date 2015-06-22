@@ -86,7 +86,7 @@ BroTools = $singleton (Component, {
 
     eat: function (value, cfg) { cfg = cfg || {}
 
-        var where = $callStack.safeLocation (3)
+        var where = $callStack.clean.safeLocation (1)
         var entry = this.entriesByStackLocation[where.beforeParse]
 
         if (!entry && (entry =

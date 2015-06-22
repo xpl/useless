@@ -20,6 +20,9 @@ _.isTypeOf = _.isInstanceofSyntaxAvailable () ? _.isTypeOf_ES5 : _.isTypeOf_ES4
 _.isPrototypeInstance = function (x) {
     return x && x.constructor && x.constructor.$definition }
 
+_.typeOf2 = function (x) {
+    return _.isEmptyArray (x) ? x : (typeof x) }
+
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
 
@@ -296,7 +299,7 @@ _.deferTest (['type', 'stringify'], function () {
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
 
-                            else if (_.isObject (x)) { var isArray = _.isArray (x)
+                            else if (_.isObject (x) && $atom.isNot (x)) { var isArray = _.isArray (x)
 
                                 var pretty = cfg.pretty || false
 

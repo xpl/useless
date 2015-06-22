@@ -76,6 +76,11 @@ _.withTest ('keywords', function () {
     $assert (Tags.hasSubject ($foo ()),   false)
     $assert (Tags.hasSubject ($foo (42)), true)
 
+    /*  Map over tagged values:
+     */
+    $assert (     $qux ([8, 9, $foo ($bar (10))]),
+        Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
+
 }, function () {
 
     Tags = _.extend2 (
@@ -124,8 +129,13 @@ _.withTest ('keywords', function () {
 
         modifySubject: function (what, changesFn) {
                             return _.isTypeOf (Tags, what) ?
-                                what.clone ().modifySubject (changesFn) :
-                                changesFn (what) }, // short circuits if not wrapped
+                                        what.clone ().modifySubject (changesFn) : changesFn (what) }, // short circuits if not wrapped
+
+        map: function (obj, op) { return Tags.modifySubject (obj,
+                                                function (obj) {
+                                                    return _.map2 (obj, function (t, k) {
+                                                        return Tags.modifySubject (t, function (v) {
+                                                            return op (v, k, _.isTypeOf (Tags, t) ? t : undefined) }) }) }) },
 
         add: function (name, args) {
                 return Tags.wrap.apply (null, _.rest (arguments, 1)).add (name) } })
@@ -160,7 +170,13 @@ _.withTest ('keywords', function () {
                                     _.extend (_.partial (Tags.add, k), { matches: Tags.matches (k) })))
                                 _.tagKeywords[k] = true }
 
-                            return $global[_.keyword (k)] }
+                                var kk = _.keyword (k)
+
+                            return _.extend ($global[kk], {
+                                        is: function (x) { return  (_.isTypeOf (Tags, x) && kk) || undefined },
+                                     isNot: function (x) { return !(_.isTypeOf (Tags, x) && kk) || undefined },
+                                    unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) }
+
 
     _(['constant', 'get'])
         .each (_.defineTagKeyword)
@@ -170,5 +186,5 @@ _.withTest ('keywords', function () {
                                                             return Tags.modifySubject (val, fn) }) }
 
     _.deleteKeyword = function (name) {
-                        delete $global[_.keyword (name)] }      })
+                        delete $global[_.keyword (name)] } } )
 

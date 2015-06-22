@@ -49,13 +49,13 @@ _.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
 
 _.deferTest (['stdlib', 'mapMap'], function () {
 
-    $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
-    $assert (_.mapMap ([7], _.typeOf), ['number'])
-    $assert (_.mapMap ([ ], _.typeOf), [        ])
+    $assert (_.mapMap ( 7,  _.typeOf2),  'number')   // degenerate cases
+    $assert (_.mapMap ([7], _.typeOf2), ['number'])
+    $assert (_.mapMap ([ ], _.typeOf2), [        ])
 
     $assert (_.mapMap ( {   foo: 7,
                             bar: ['foo', {
-                                bar: undefined } ] }, _.typeOf),
+                                bar: undefined } ] }, _.typeOf2),
                         
                         {   foo: 'number',
                             bar: ['string', {
@@ -196,7 +196,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
                             memo = safeOp (value,      memo) } return memo }
 
     _.reduceReduce = function (initial, value, op) {
-                        return _.hyperOperator (_.binary, _.yodaReduce) (value, initial, op.flip2) }
+                        return _.hyperOperator (_.binary, _.yodaReduce, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
  })
 
 /*  Zip 2.0
@@ -359,16 +359,19 @@ _.withTest (['stdlib', 'nonempty'], function () {
 /*  deep cloning of objects (as _.clone is shallow)
     ======================================================================== */
 
-_.withTest (['stdlib', 'cloneDeep'], function () {
-    var obj     = { a: [{ b: { c: 'd' } }] }
+_.deferTest (['stdlib', 'cloneDeep'], function () {
+    var obj     = { a: [{ b: { c: 'd' } }], b: {} }
     var copy    = _.cloneDeep (obj)
 
-    $assert (obj !== copy)  // should be distinct references
+    $assert (obj   !== copy)    // should be distinct references
+    $assert (obj.a !== copy.a)  // should be distinct references
+    $assert (obj.b !== copy.b)  // should be distinct references
+
     $assert (obj, copy)     // structure should not change
 
 }, function () { _.extend (_, {
 
-    cloneDeep: _.tails2 (_.mapMap, _.identity) }) })
+    cloneDeep: _.tails2 (_.mapMap, _.clone) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,
@@ -393,8 +396,8 @@ _.deferTest (['stdlib', 'diff'], function () {
     _.hyperMatch = _.hyperOperator (_.binary, function (a, b, pred) {
                                         return _.coerceToUndefined (_.nonempty (_.zip2 (a, b, pred))) })
 
-    _.diff = _.tails3 (_.hyperMatch, function (a, b) {
-                                        return (a === b) ? undefined : b }) })
+    _.diff = _.tails3 (_.hyperMatch, function (a, b) { 
+                                        return  ((($atom.unwrap (a) === $atom.unwrap (b)) || (a === $any) || (b === $any)) ? undefined : b) }) })
 
 
 /*  inverse of _.diff (returns similarities)
@@ -420,7 +423,7 @@ _.deferTest (['stdlib', 'undiff'], function () {
                                         return _.coerceToUndefined (_.zip2 (a, b, pred)) })
 
     _.undiff = _.tails3 (_.hyperMatch, function (a, b) {
-                                            return (a === b) ? b : undefined }) })
+                                            return (($atom.unwrap (a) === $atom.unwrap (b)) || (a === $any) || (b === $any))  ? b : undefined }) })
 
 
 /*  Makes { foo: true, bar: true } from ['foo', 'bar']

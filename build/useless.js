@@ -966,7 +966,7 @@ _.withTest (['function', 'Y combinator'], function () {
      */
     _.hyperOperator = function (N, operator, diCaprioPredicate, nonTrivial) {
                                                                           var arity            = _.arityFn (N)       || _.identity
-                                                                          var weNeedToGoDeeper =  (diCaprioPredicate || _.goDeeperAlwaysIfPossible) (N, nonTrivial || _.isNonTrivial)
+                                                                          var weNeedToGoDeeper =  (diCaprioPredicate || _.goDeeperWhenFirstArgumentIsGood) (N, nonTrivial || _.isNonTrivial)
                             return function () {                          var subOperator      = _.last (arguments)
                                 return _.Y (function (hyperOperator_) {   var hyperOperator    = _.tails (operator, arity (hyperOperator_))
                                     return function () {
@@ -977,6 +977,9 @@ _.withTest (['function', 'Y combinator'], function () {
 
     /*  Combinatoric complexity classifiers for exact configuration of hyperOperator behavior
      */
+    _.goDeeperWhenFirstArgumentIsGood= function (N, canGoDeeper) { 
+        return function (args) { return   (args.length > 0) ? canGoDeeper (args[0]) : false } }
+
     _.goDeeperAlwaysIfPossible= function (N, canGoDeeper) {
              if (N === 0) {                          return _.constant (false)                                }
         else if (N === 1) { return function (args) { return   canGoDeeper (args[0])                           } }
@@ -989,14 +992,17 @@ _.withTest (['function', 'Y combinator'], function () {
         else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) && canGoDeeper (args[1])  } }
         else              { return function (args) { return _.every (_.asArray (args), canGoDeeper)           } } }
 
-    _.isNonTrivial = function (x) {
-                        return (typeof x === 'object') && !_.isPrototypeInstance (x) }
+    _.isTrivial = function (x) { return _           .isEmpty (x) || _.isString (x) || _.isNumber (x) ||
+                                        !(_.isStrictlyObject (x) || _.isArray (x)) || _.isPrototypeInstance (x) || _.isMeta (x) }
+
+    _.isMeta = _.constant (false)
+
+    _.isNonTrivial = _.not (_.isTrivial)
 
     /*  Self-descriptive constants (for clarity)
      */
     _.binary = 2
-    _.unary  = 1
-}) ()
+    _.unary  = 1 }) ()
 
 /*  Generates higher order stuff from regular routine
     ======================================================================== */
@@ -1248,6 +1254,9 @@ _.isTypeOf = _.isInstanceofSyntaxAvailable () ? _.isTypeOf_ES5 : _.isTypeOf_ES4
 
 _.isPrototypeInstance = function (x) {
     return x && x.constructor && x.constructor.$definition }
+
+_.typeOf2 = function (x) {
+    return _.isEmptyArray (x) ? x : (typeof x) }
 
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
@@ -1525,7 +1534,7 @@ _.deferTest (['type', 'stringify'], function () {
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
 
-                            else if (_.isObject (x)) { var isArray = _.isArray (x)
+                            else if (_.isObject (x) && $atom.isNot (x)) { var isArray = _.isArray (x)
 
                                 var pretty = cfg.pretty || false
 
@@ -1633,13 +1642,13 @@ _.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
 
 _.deferTest (['stdlib', 'mapMap'], function () {
 
-    $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
-    $assert (_.mapMap ([7], _.typeOf), ['number'])
-    $assert (_.mapMap ([ ], _.typeOf), [        ])
+    $assert (_.mapMap ( 7,  _.typeOf2),  'number')   // degenerate cases
+    $assert (_.mapMap ([7], _.typeOf2), ['number'])
+    $assert (_.mapMap ([ ], _.typeOf2), [        ])
 
     $assert (_.mapMap ( {   foo: 7,
                             bar: ['foo', {
-                                bar: undefined } ] }, _.typeOf),
+                                bar: undefined } ] }, _.typeOf2),
                         
                         {   foo: 'number',
                             bar: ['string', {
@@ -1780,7 +1789,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
                             memo = safeOp (value,      memo) } return memo }
 
     _.reduceReduce = function (initial, value, op) {
-                        return _.hyperOperator (_.binary, _.yodaReduce) (value, initial, op.flip2) }
+                        return _.hyperOperator (_.binary, _.yodaReduce, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
  })
 
 /*  Zip 2.0
@@ -1943,16 +1952,19 @@ _.withTest (['stdlib', 'nonempty'], function () {
 /*  deep cloning of objects (as _.clone is shallow)
     ======================================================================== */
 
-_.withTest (['stdlib', 'cloneDeep'], function () {
-    var obj     = { a: [{ b: { c: 'd' } }] }
+_.deferTest (['stdlib', 'cloneDeep'], function () {
+    var obj     = { a: [{ b: { c: 'd' } }], b: {} }
     var copy    = _.cloneDeep (obj)
 
-    $assert (obj !== copy)  // should be distinct references
+    $assert (obj   !== copy)    // should be distinct references
+    $assert (obj.a !== copy.a)  // should be distinct references
+    $assert (obj.b !== copy.b)  // should be distinct references
+
     $assert (obj, copy)     // structure should not change
 
 }, function () { _.extend (_, {
 
-    cloneDeep: _.tails2 (_.mapMap, _.identity) }) })
+    cloneDeep: _.tails2 (_.mapMap, _.clone) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,
@@ -1977,8 +1989,8 @@ _.deferTest (['stdlib', 'diff'], function () {
     _.hyperMatch = _.hyperOperator (_.binary, function (a, b, pred) {
                                         return _.coerceToUndefined (_.nonempty (_.zip2 (a, b, pred))) })
 
-    _.diff = _.tails3 (_.hyperMatch, function (a, b) {
-                                        return (a === b) ? undefined : b }) })
+    _.diff = _.tails3 (_.hyperMatch, function (a, b) { 
+                                        return  ((($atom.unwrap (a) === $atom.unwrap (b)) || (a === $any) || (b === $any)) ? undefined : b) }) })
 
 
 /*  inverse of _.diff (returns similarities)
@@ -2004,7 +2016,7 @@ _.deferTest (['stdlib', 'undiff'], function () {
                                         return _.coerceToUndefined (_.zip2 (a, b, pred)) })
 
     _.undiff = _.tails3 (_.hyperMatch, function (a, b) {
-                                            return (a === b) ? b : undefined }) })
+                                            return (($atom.unwrap (a) === $atom.unwrap (b)) || (a === $any) || (b === $any))  ? b : undefined }) })
 
 
 /*  Makes { foo: true, bar: true } from ['foo', 'bar']
@@ -2290,6 +2302,11 @@ _.withTest ('keywords', function () {
     $assert (Tags.hasSubject ($foo ()),   false)
     $assert (Tags.hasSubject ($foo (42)), true)
 
+    /*  Map over tagged values:
+     */
+    $assert (     $qux ([8, 9, $foo ($bar (10))]),
+        Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
+
 }, function () {
 
     Tags = _.extend2 (
@@ -2338,8 +2355,13 @@ _.withTest ('keywords', function () {
 
         modifySubject: function (what, changesFn) {
                             return _.isTypeOf (Tags, what) ?
-                                what.clone ().modifySubject (changesFn) :
-                                changesFn (what) }, // short circuits if not wrapped
+                                        what.clone ().modifySubject (changesFn) : changesFn (what) }, // short circuits if not wrapped
+
+        map: function (obj, op) { return Tags.modifySubject (obj,
+                                                function (obj) {
+                                                    return _.map2 (obj, function (t, k) {
+                                                        return Tags.modifySubject (t, function (v) {
+                                                            return op (v, k, _.isTypeOf (Tags, t) ? t : undefined) }) }) }) },
 
         add: function (name, args) {
                 return Tags.wrap.apply (null, _.rest (arguments, 1)).add (name) } })
@@ -2374,7 +2396,13 @@ _.withTest ('keywords', function () {
                                     _.extend (_.partial (Tags.add, k), { matches: Tags.matches (k) })))
                                 _.tagKeywords[k] = true }
 
-                            return $global[_.keyword (k)] }
+                                var kk = _.keyword (k)
+
+                            return _.extend ($global[kk], {
+                                        is: function (x) { return  (_.isTypeOf (Tags, x) && kk) || undefined },
+                                     isNot: function (x) { return !(_.isTypeOf (Tags, x) && kk) || undefined },
+                                    unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) }
+
 
     _(['constant', 'get'])
         .each (_.defineTagKeyword)
@@ -2384,13 +2412,16 @@ _.withTest ('keywords', function () {
                                                             return Tags.modifySubject (val, fn) }) }
 
     _.deleteKeyword = function (name) {
-                        delete $global[_.keyword (name)] }      })
+                        delete $global[_.keyword (name)] } } )
 
 
 /*  Type matching for arbitrary complex structures (TODO: test)
     ======================================================================== */
 
 _.defineTagKeyword ('required')
+
+_.defineTagKeyword ('atom')
+
 _.defineKeyword ('any', _.identity)
 
 _.deferTest (['type', 'type matching'], function () {
@@ -2416,6 +2447,7 @@ _.deferTest (['type', 'type matching'], function () {
 
     $assert (_.omitTypeMismatches ({ '*': 'number' }, { foo: 42, bar: 42 }), { foo: 42, bar: 42 })
 
+    $assert (_.decideType ([]), [])
     $assert (_.decideType (42),         'number')
     $assert (_.decideType (_.identity), 'function')
     $assert (_.decideType ([{ foo: 1 }, { foo: 2 }]), [{ foo: 'number' }])
@@ -2433,6 +2465,8 @@ _.deferTest (['type', 'type matching'], function () {
 
 }, function () {
 
+    _.isMeta = function (x) { return (x === $any) || ($atom.is (x) === true) || ($required.is (x) === true)  }
+
     var zip = function (type, value, pred) {
         var required    = Tags.unwrapAll (_.filter2 (type, $required.matches))
         var match       = _.nonempty (_.zip2 (Tags.unwrapAll (type), value, pred))
@@ -2445,7 +2479,7 @@ _.deferTest (['type', 'type matching'], function () {
                 return allSatisfied ?
                             match : _.coerceToEmpty (value) } }
 
-    var matchTypes = _.hyperOperator (_.binary,
+    var hyperMatch = _.hyperOperator (_.binary,
         function (type_, value, pred) { var type = Tags.unwrap (type_)
 
             if (_.isArray (type)) { // matches [ItemType] → [item, item, ..., N]
@@ -2474,15 +2508,20 @@ _.deferTest (['type', 'type matching'], function () {
                                         (typeof v === contract) ||          // plain JS type
                                         (v === contract) }                  // constant match
 
-    _.typeMismatches = function (contract, value) {
-                            return matchTypes (contract, value,
+    _.mismatches = function (op, contract, value) {
+                            return hyperMatch (contract, value,
                                         function (contract, v) {
-                                            return typeMatchesValue (contract, v) ? undefined : contract }) }
+                                            return op (contract, v) ? undefined : contract }) }
 
-    _.omitTypeMismatches = function (contract, value) {
-                            return matchTypes (contract, value,
+    _.omitMismatches = function (op, contract, value) {
+                            return hyperMatch (contract, value,
                                         function (contract, v) {
-                                            return typeMatchesValue (contract, v) ? v : undefined }) }
+                                            return op (contract, v) ? v : undefined }) }
+
+    _.typeMismatches     = _.partial (_.mismatches,     typeMatchesValue)
+    _.omitTypeMismatches = _.partial (_.omitMismatches, typeMatchesValue)
+
+    _.valueMismatches = _.partial (_.mismatches, function (a, b) { return (a === $any) || (b === $any) || (a === b) })
 
     var unifyType = function (value) {
         if (_.isArray (value)) {
@@ -2504,9 +2543,8 @@ _.deferTest (['type', 'type matching'], function () {
                                 if (value && value.constructor && value.constructor.$definition) {
                                     return value.constructor }
                                 return unifyType (_.map2 (value, pred)) })
-        return operator (
-            value,
-            _.typeOf) } })
+
+        return operator (value, _.typeOf2) } })
 
 
 /*  Delivers continuation-passing style notation to various common things
@@ -3159,6 +3197,10 @@ _.deferTest ('OOP', {
                 def = def.$base && def.$base.constructor }
             return chain },
 
+        mapMethods: function (def, op) {
+                        return Tags.map (def, function (fn, k, t) {
+                            return _.isFunction (fn) ? op (fn, k, t) : fn }) },
+
 
     /*  INTERNALS
         ==================================================================== */
@@ -3196,10 +3238,10 @@ _.deferTest ('OOP', {
                     return def } },
 
             generateArgumentContractsIfTaggedAsTest: function (def) {
-                return (def.$test && _.map2 (def, function (fn) {
-                    return Tags.modifySubject (fn, function (fn) {
-                        return (_.isFunction (fn) && function () { $assertAsDeclared (arguments, fn)
-                                                                    return fn.apply  (this, arguments) }) || fn }) })) || def },
+                                                        return !def.$test ? def : $prototype.mapMethods (def, function (fn) {
+                                                                                                                 return function () {
+                                                                                                                    $assertAsDeclared      (arguments, fn)
+                                                                                                                     return fn.apply (this, arguments) } }) },
 
             contributeTraits: function (def) {
                 if (def.$trait) {
@@ -3293,6 +3335,37 @@ _.deferTest ('OOP', {
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
                 return _.isKeyword (key) && _.isTagKeyword (key) && (typeof Tags.unwrap (value) === 'object') && !_.isArray (value) } } }) })
 
+
+/*  $assertCallOrder
+     ======================================================================== */
+
+    _.defineKeyword ('assertCallOrder', function (context) {
+
+        var tag   = 1
+        var calls = []
+        var probe = function (def) { var uniqueTag = tag++
+                        return $test (_.extend ({ $$uniqueTag$$: uniqueTag },
+                                   $prototype.mapMethods (def, function (fn, name) { 
+                                        return function () {
+                                                    calls.push ({ ctx: this, tag: uniqueTag, name: name })
+                                                    return fn.apply (this, arguments) } }))) }
+
+        return context.call (this, probe, function () {
+            var contract = _.map (_.asArray (arguments), function (e) {
+                return {
+                    ctx:  e[0],
+                    tag:  e[1].$$uniqueTag$$,
+                    name: e[2] } })
+
+           var match   = function (s) { return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
+           var matches = _.zipZip (contract, calls, function (a, b) { return _.nonempty ((a !== b) ? [a, b] : [b]) })
+
+           if (!_.every (matches, match)) {
+                _.assertionFailed ({ notMatching: log.asTable (_.map (matches, function (s, n) {
+                    return {
+                        name: (n + 1) + '. ' + ((n >= calls.length) ? 'NOT CALLED' : s.name.join (' ← ')),
+                        'this':  ((s.ctx.length > 1) && 'wrong') || '',
+                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) })
 
 /*  $traits impl.
     ======================================================================== */
@@ -7587,73 +7660,115 @@ _.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { 
 /*  Experimental stuff
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+/* 
+    On $aspect.
 
+    Aspects are units of behavior expressed in terms of ad-hoc
+    patching of existing components' internals. They embody the
+    powerful idea of a source code patches that are fully defined
+    and maintained by sole terms of that source code itself, with
+    no help of external tool to operate.
+
+    To better understand why this is reasonable, here's overview
+    of every stuff you can use to extend existing behavior of
+    a component.
+
+ 1. Simply edit the original component, hardwiring desired behavior
+    into it. And that's the actual way of how we manage things around,
+    not surprisingly.
+
+ 2. Good old inheritance. Key difference is that inheritance produces
+    new versions of a component. Instead, $aspect will change existing
+    one - which is more often scenario.
+
+ 3. Traits. Comparing to inheritance, $trait looks similar to $aspect,
+    but really they're opposite of each other. Here's why:
+
+    Traits are reasonable when implementing new components. Being
+    generic and abstract, $traits sum up inside of a component,
+    producing it's final implementation, as seen by it's developer.
+
+ 4. Aspects do the exact opposite: they define and carry so-called
+   "weak modifications", which are external / temporary / optional /
+    situative by nature, as seen by the external user of a component.
+
+    It's something you'd solve with plugins or extensions...
+    if only you'd had enough time to pre-mind all possible scenarios
+    of code customization. That's why $aspects here.
+
+    They require none, and allow to drop complex pluggable
+    architectures completely - to focus on _what_ we do, not how.
+*/
 
 _.tests.AOP = {
 
-	'basics': function () { $assertCalls (1, function (createCalled) {
-							$assertCalls (1, function (displayCalled) {
-							$assertCalls (1, function (destroyCalled) {
+    'basics': function () { $assertCallOrder (function ($test, $order) {
 
-		var Proto = $prototype ($test ({
+                                var Thing = $prototype ($test ({
 
-			create:  function (_777) {  },
-			display: function () {},
-			destroy: function () { return 456 } }))
+                                    create:  function (_778)              {   },
+                                    display: function (_foobar, _778)     {   },
+                                    destroy: function ()                  { return 456 } }))
 
-		$aspect (Proto, $test ({
+                                var NewFlavorOfThing = $aspect (Thing, $test ({
 
-			afterCreate:   function (_777) 			      { createCalled () },
-			display:       function (_foo, _123, display) { displayCalled () },
-			beforeDestroy: function () 					  { destroyCalled () } }))
+                                    beforeCreate: function (_777)                        { return _777 + 1 },
+                                    display:      function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', _123 + 1) },
+                                    afterDestroy: function (_456)                        { } }))
 
-		var demo = new Proto ()
+                                var demo = new Thing ()
 
-		demo.create (777)
-		demo.display ('foo', 123)
-		demo.destroy () }) }) })
-	}
-};
+                                demo.create  (777)
+                                demo.display ('foo', 123)
+                                demo.destroy ()
+
+                                $order ([demo, NewFlavorOfThing, 'beforeCreate' ],
+                                        [demo,            Thing,       'create' ],
+                                        [demo, NewFlavorOfThing,      'display' ],
+                                        [demo,            Thing,      'display' ],
+                                        [demo,            Thing,      'destroy' ],
+                                        [demo, NewFlavorOfThing, 'afterDestroy' ]) }) } };
+
 
 (function () {
 
-	var fnNameExpr = $r.expr ('how', $r.text ('before').or.text ('after')).expr ('name', $r.anything).$
+    var fnNameExpr = $r.expr ('how', $r.text ('before').or.text ('after')).expr ('name', $r.anything).$
 
-	var tryBind = function (target, methodName, bind, boundMethod) {
-		var method = target[methodName]
-		if (method && _.isFunction (method)) {
-			bind (target, methodName, boundMethod) } }
+    var tryBind = function (target, methodName, bind, boundMethod) {
+        var method = target[methodName]
+        if (method && _.isFunction (method)) {
+            bind (target, methodName, boundMethod) } }
 
-	_.defineKeyword ('aspect', function (ofWhat, cfg) {
+    _.defineKeyword ('aspect', function (ofWhat, cfg) {
 
         var aspectDef = Tags.unwrap (_.sequence (
-			                $prototype.impl.extendWithTags,
-			                $prototype.impl.flatten,
-			                $prototype.impl.generateArgumentContractsIfTaggedAsTest,
-			                $prototype.impl.contributeTraits,
-			                $prototype.impl.expandAliases).call ($prototype.impl, cfg))
+                            $prototype.impl.extendWithTags,
+                            $prototype.impl.flatten,
+                            $prototype.impl.generateArgumentContractsIfTaggedAsTest,
+                            $prototype.impl.contributeTraits,
+                            $prototype.impl.expandAliases).call ($prototype.impl, cfg))
+        
+        var motherDef = ofWhat.constructor && ofWhat.constructor.$definition
+        if (motherDef) {
+                (motherDef.$aspects = motherDef.$aspects || []).push (aspectDef) }
 
-		var motherDef = ofWhat.constructor && ofWhat.constructor.$definition
-		if (motherDef) {
-				(motherDef.$aspects = motherDef.$aspects || []).push (aspectDef) }
+        _.each (aspectDef, function (value, name) {
+        
+            if (aspectDef.hasOwnProperty (name) && _.isFunction (value)) {
 
-		_.each (aspectDef, function (value, name) {
-		
-			if (aspectDef.hasOwnProperty (name) && _.isFunction (value)) {
+                var parsed       = fnNameExpr.parse (name)
+                var originalName = (parsed.name &&          parsed.name.decapitalized) || name
+                var bindTool     = (parsed.how  && _['on' + parsed.how .capitalized])  || _.intercept
 
-				var parsed       = fnNameExpr.parse (name)
-				var originalName = (parsed.name &&          parsed.name.decapitalized) || name
-				var bindTool     = (parsed.how  && _['on' + parsed.how .capitalized])  || _.intercept
+                if (bindTool) {
 
-				if (bindTool) {
+                    tryBind (ofWhat,           originalName, bindTool, value)
+                    tryBind (ofWhat.prototype, originalName, bindTool, value) } } })
 
-					tryBind (ofWhat,           originalName, bindTool, value)
-					tryBind (ofWhat.prototype, originalName, bindTool, value) } } })
+        if (ofWhat.aspectAdded) {
+            ofWhat.aspectAdded (aspectDef) }
 
-		if (ofWhat.aspectAdded) {
-			ofWhat.aspectAdded (aspectDef) }
-
-		return aspectDef })
+        return aspectDef })
 
 }) ()
 

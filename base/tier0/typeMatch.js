@@ -2,6 +2,9 @@
     ======================================================================== */
 
 _.defineTagKeyword ('required')
+
+_.defineTagKeyword ('atom')
+
 _.defineKeyword ('any', _.identity)
 
 _.deferTest (['type', 'type matching'], function () {
@@ -27,6 +30,7 @@ _.deferTest (['type', 'type matching'], function () {
 
     $assert (_.omitTypeMismatches ({ '*': 'number' }, { foo: 42, bar: 42 }), { foo: 42, bar: 42 })
 
+    $assert (_.decideType ([]), [])
     $assert (_.decideType (42),         'number')
     $assert (_.decideType (_.identity), 'function')
     $assert (_.decideType ([{ foo: 1 }, { foo: 2 }]), [{ foo: 'number' }])
@@ -44,6 +48,8 @@ _.deferTest (['type', 'type matching'], function () {
 
 }, function () {
 
+    _.isMeta = function (x) { return (x === $any) || ($atom.is (x) === true) || ($required.is (x) === true)  }
+
     var zip = function (type, value, pred) {
         var required    = Tags.unwrapAll (_.filter2 (type, $required.matches))
         var match       = _.nonempty (_.zip2 (Tags.unwrapAll (type), value, pred))
@@ -56,7 +62,7 @@ _.deferTest (['type', 'type matching'], function () {
                 return allSatisfied ?
                             match : _.coerceToEmpty (value) } }
 
-    var matchTypes = _.hyperOperator (_.binary,
+    var hyperMatch = _.hyperOperator (_.binary,
         function (type_, value, pred) { var type = Tags.unwrap (type_)
 
             if (_.isArray (type)) { // matches [ItemType] → [item, item, ..., N]
@@ -85,15 +91,20 @@ _.deferTest (['type', 'type matching'], function () {
                                         (typeof v === contract) ||          // plain JS type
                                         (v === contract) }                  // constant match
 
-    _.typeMismatches = function (contract, value) {
-                            return matchTypes (contract, value,
+    _.mismatches = function (op, contract, value) {
+                            return hyperMatch (contract, value,
                                         function (contract, v) {
-                                            return typeMatchesValue (contract, v) ? undefined : contract }) }
+                                            return op (contract, v) ? undefined : contract }) }
 
-    _.omitTypeMismatches = function (contract, value) {
-                            return matchTypes (contract, value,
+    _.omitMismatches = function (op, contract, value) {
+                            return hyperMatch (contract, value,
                                         function (contract, v) {
-                                            return typeMatchesValue (contract, v) ? v : undefined }) }
+                                            return op (contract, v) ? v : undefined }) }
+
+    _.typeMismatches     = _.partial (_.mismatches,     typeMatchesValue)
+    _.omitTypeMismatches = _.partial (_.omitMismatches, typeMatchesValue)
+
+    _.valueMismatches = _.partial (_.mismatches, function (a, b) { return (a === $any) || (b === $any) || (a === b) })
 
     var unifyType = function (value) {
         if (_.isArray (value)) {
@@ -115,6 +126,5 @@ _.deferTest (['type', 'type matching'], function () {
                                 if (value && value.constructor && value.constructor.$definition) {
                                     return value.constructor }
                                 return unifyType (_.map2 (value, pred)) })
-        return operator (
-            value,
-            _.typeOf) } })
+
+        return operator (value, _.typeOf2) } })

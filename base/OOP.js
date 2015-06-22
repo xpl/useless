@@ -369,6 +369,10 @@ _.deferTest ('OOP', {
                 def = def.$base && def.$base.constructor }
             return chain },
 
+        mapMethods: function (def, op) {
+                        return Tags.map (def, function (fn, k, t) {
+                            return _.isFunction (fn) ? op (fn, k, t) : fn }) },
+
 
     /*  INTERNALS
         ==================================================================== */
@@ -406,10 +410,10 @@ _.deferTest ('OOP', {
                     return def } },
 
             generateArgumentContractsIfTaggedAsTest: function (def) {
-                return (def.$test && _.map2 (def, function (fn) {
-                    return Tags.modifySubject (fn, function (fn) {
-                        return (_.isFunction (fn) && function () { $assertAsDeclared (arguments, fn)
-                                                                    return fn.apply  (this, arguments) }) || fn }) })) || def },
+                                                        return !def.$test ? def : $prototype.mapMethods (def, function (fn) {
+                                                                                                                 return function () {
+                                                                                                                    $assertAsDeclared      (arguments, fn)
+                                                                                                                     return fn.apply (this, arguments) } }) },
 
             contributeTraits: function (def) {
                 if (def.$trait) {
@@ -503,6 +507,37 @@ _.deferTest ('OOP', {
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
                 return _.isKeyword (key) && _.isTagKeyword (key) && (typeof Tags.unwrap (value) === 'object') && !_.isArray (value) } } }) })
 
+
+/*  $assertCallOrder
+     ======================================================================== */
+
+    _.defineKeyword ('assertCallOrder', function (context) {
+
+        var tag   = 1
+        var calls = []
+        var probe = function (def) { var uniqueTag = tag++
+                        return $test (_.extend ({ $$uniqueTag$$: uniqueTag },
+                                   $prototype.mapMethods (def, function (fn, name) { 
+                                        return function () {
+                                                    calls.push ({ ctx: this, tag: uniqueTag, name: name })
+                                                    return fn.apply (this, arguments) } }))) }
+
+        return context.call (this, probe, function () {
+            var contract = _.map (_.asArray (arguments), function (e) {
+                return {
+                    ctx:  e[0],
+                    tag:  e[1].$$uniqueTag$$,
+                    name: e[2] } })
+
+           var match   = function (s) { return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
+           var matches = _.zipZip (contract, calls, function (a, b) { return _.nonempty ((a !== b) ? [a, b] : [b]) })
+
+           if (!_.every (matches, match)) {
+                _.assertionFailed ({ notMatching: log.asTable (_.map (matches, function (s, n) {
+                    return {
+                        name: (n + 1) + '. ' + ((n >= calls.length) ? 'NOT CALLED' : s.name.join (' ← ')),
+                        'this':  ((s.ctx.length > 1) && 'wrong') || '',
+                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) })
 
 /*  $traits impl.
     ======================================================================== */
