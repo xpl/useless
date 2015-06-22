@@ -146,7 +146,7 @@ _.withTest ('assert.js bootstrap', function () {
 
 if (_.hasStdlib) {
 
-    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertAsDeclared (arguments) }
+    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertArguments (arguments) }
 
                     testF (777, 'foo bar baz')
 
@@ -284,18 +284,22 @@ function () {
         assertNotThrows: function (what) {
             _.assertCalls.call (this, 0, function () { what () }) },
 
-        assertAsDeclared: function (arguments, callee) {
-            var match = (callee || arguments.callee).toString ().match (/.*function[^\(]\(([^\)]+)\)/)
+        assertArguments: function (arguments, callee) {
+            var fn    = (callee || arguments.callee).toString ()
+            var match = fn.match (/.*function[^\(]\(([^\)]+)\)/)
             if (match) {
-                var valuesPassed   = _.asArray (arguments)
+                var valuesPassed   = _.asArray (arguments);
                 var valuesNeeded   = _.map (match[1].split (','),
                                             function (_s) {
                                                 var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
                                                 var n = parseInt (s, 10)
                                                 return _.isFinite (n) ? n : s })
 
-                _.assert (_.every (_.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
-                                                                                return (a !== undefined) ? (a === b) : true }))) } },
+                var zap = _.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
+                                return (a === undefined) ? true : (a === b) })
+
+                if (!_.every (zap)) {
+                    _.assertionFailed ({ notMatching: [fn, valuesNeeded, valuesPassed] }) } } },
 
         fail: function () {
                 _.assertionFailed () },

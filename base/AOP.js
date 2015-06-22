@@ -44,14 +44,14 @@ _.tests.AOP = {
 
                                 var Thing = $prototype ($test ({
 
-                                    create:  function (_778)              {   },
+                                    create:  function (_777)              {   },
                                     display: function (_foobar, _778)     {   },
                                     destroy: function ()                  { return 456 } }))
 
                                 var NewFlavorOfThing = $aspect (Thing, $test ({
 
-                                    beforeCreate: function (_777)                        { return _777 + 1 },
-                                    display:      function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', _123 + 1) },
+                                    beforeCreate: function (_777)                        { },
+                                    display:      function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', 778) },
                                     afterDestroy: function (_456)                        { } }))
 
                                 var demo = new Thing ()

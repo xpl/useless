@@ -47,6 +47,15 @@ $extensionMethods (Function, {
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
 
+    wraps: function (f, w) { 
+        f._wrapped = _.withSameArgs (f, w); return f },
+
+    wrapped: function (f) {
+        return f._wrapped || f },
+
+    original: function (f) {
+        while (f && f._wrapped) { f = f._wrapped } return f },
+
     arity0:         _.arity0,
     arity1:         _.arity1,
     arity2:         _.arity2,

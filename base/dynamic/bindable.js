@@ -60,7 +60,7 @@ _.deferTest ('bindable', function () {
                                         return makeBindable (obj, targetMethod)['_' + name].push (delegate) } }
 
     var mixin = function (method) {
-                    return _.extend ({}, method, { _bindable: true, impl: method },
+                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */

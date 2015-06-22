@@ -276,6 +276,9 @@ _.deferTest (['type', 'stringify'], function () {
 
     _.stringifyImpl     = function (x, parents, siblings, depth, cfg, prevIndent) {
 
+                            if (x === $global) {
+                                return '$global' }
+
                             var customFormat = cfg.formatter && cfg.formatter (x)
                             
                             if (customFormat) {

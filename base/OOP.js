@@ -371,7 +371,7 @@ _.deferTest ('OOP', {
 
         mapMethods: function (def, op) {
                         return Tags.map (def, function (fn, k, t) {
-                            return _.isFunction (fn) ? op (fn, k, t) : fn }) },
+                            return _.isFunction (fn) ? op (fn, k, t).wraps (fn) : fn }) },
 
 
     /*  INTERNALS
@@ -410,10 +410,10 @@ _.deferTest ('OOP', {
                     return def } },
 
             generateArgumentContractsIfTaggedAsTest: function (def) {
-                                                        return !def.$test ? def : $prototype.mapMethods (def, function (fn) {
-                                                                                                                 return function () {
-                                                                                                                    $assertAsDeclared      (arguments, fn)
-                                                                                                                     return fn.apply (this, arguments) } }) },
+                return def.$test ? $prototype.mapMethods (def, function (fn, name) {
+                                                                     return function () { var args = _.asArray (arguments)
+                                                                        $assertArguments (args.copy, fn.original)
+                                                                         return fn.apply (this, args) } }) : def },
 
             contributeTraits: function (def) {
                 if (def.$trait) {

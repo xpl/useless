@@ -16,7 +16,7 @@ module.exports = $trait ({
 
 		Testosterone.run ({
 			verbose: false,
-			silent:  false }, function (okay) {
+			silent:  true }, function (okay) {
 				if (okay) { then () } }) },
 
 	/*	Tests $traits (app components)

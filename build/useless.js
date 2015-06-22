@@ -507,7 +507,7 @@ _.withTest ('assert.js bootstrap', function () {
 
 if (_.hasStdlib) {
 
-    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertAsDeclared (arguments) }
+    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertArguments (arguments) }
 
                     testF (777, 'foo bar baz')
 
@@ -645,18 +645,22 @@ function () {
         assertNotThrows: function (what) {
             _.assertCalls.call (this, 0, function () { what () }) },
 
-        assertAsDeclared: function (arguments, callee) {
-            var match = (callee || arguments.callee).toString ().match (/.*function[^\(]\(([^\)]+)\)/)
+        assertArguments: function (arguments, callee) {
+            var fn    = (callee || arguments.callee).toString ()
+            var match = fn.match (/.*function[^\(]\(([^\)]+)\)/)
             if (match) {
-                var valuesPassed   = _.asArray (arguments)
+                var valuesPassed   = _.asArray (arguments);
                 var valuesNeeded   = _.map (match[1].split (','),
                                             function (_s) {
                                                 var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
                                                 var n = parseInt (s, 10)
                                                 return _.isFinite (n) ? n : s })
 
-                _.assert (_.every (_.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
-                                                                                return (a !== undefined) ? (a === b) : true }))) } },
+                var zap = _.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
+                                return (a === undefined) ? true : (a === b) })
+
+                if (!_.every (zap)) {
+                    _.assertionFailed ({ notMatching: [fn, valuesNeeded, valuesPassed] }) } } },
 
         fail: function () {
                 _.assertionFailed () },
@@ -1510,6 +1514,9 @@ _.deferTest (['type', 'stringify'], function () {
     _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}, -1) }
 
     _.stringifyImpl     = function (x, parents, siblings, depth, cfg, prevIndent) {
+
+                            if (x === $global) {
+                                return '$global' }
 
                             var customFormat = cfg.formatter && cfg.formatter (x)
                             
@@ -3199,7 +3206,7 @@ _.deferTest ('OOP', {
 
         mapMethods: function (def, op) {
                         return Tags.map (def, function (fn, k, t) {
-                            return _.isFunction (fn) ? op (fn, k, t) : fn }) },
+                            return _.isFunction (fn) ? op (fn, k, t).wraps (fn) : fn }) },
 
 
     /*  INTERNALS
@@ -3238,10 +3245,10 @@ _.deferTest ('OOP', {
                     return def } },
 
             generateArgumentContractsIfTaggedAsTest: function (def) {
-                                                        return !def.$test ? def : $prototype.mapMethods (def, function (fn) {
-                                                                                                                 return function () {
-                                                                                                                    $assertAsDeclared      (arguments, fn)
-                                                                                                                     return fn.apply (this, arguments) } }) },
+                return def.$test ? $prototype.mapMethods (def, function (fn, name) {
+                                                                     return function () { var args = _.asArray (arguments)
+                                                                        $assertArguments (args.copy, fn.original)
+                                                                         return fn.apply (this, args) } }) : def },
 
             contributeTraits: function (def) {
                 if (def.$trait) {
@@ -3531,6 +3538,15 @@ $extensionMethods (Function, {
 
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
+
+    wraps: function (f, w) { 
+        f._wrapped = _.withSameArgs (f, w); return f },
+
+    wrapped: function (f) {
+        return f._wrapped || f },
+
+    original: function (f) {
+        while (f && f._wrapped) { f = f._wrapped } return f },
 
     arity0:         _.arity0,
     arity1:         _.arity1,
@@ -3881,7 +3897,7 @@ _.deferTest ('bindable', function () {
                                         return makeBindable (obj, targetMethod)['_' + name].push (delegate) } }
 
     var mixin = function (method) {
-                    return _.extend ({}, method, { _bindable: true, impl: method },
+                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */
@@ -7706,14 +7722,14 @@ _.tests.AOP = {
 
                                 var Thing = $prototype ($test ({
 
-                                    create:  function (_778)              {   },
+                                    create:  function (_777)              {   },
                                     display: function (_foobar, _778)     {   },
                                     destroy: function ()                  { return 456 } }))
 
                                 var NewFlavorOfThing = $aspect (Thing, $test ({
 
-                                    beforeCreate: function (_777)                        { return _777 + 1 },
-                                    display:      function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', _123 + 1) },
+                                    beforeCreate: function (_777)                        { },
+                                    display:      function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', 778) },
                                     afterDestroy: function (_456)                        { } }))
 
                                 var demo = new Thing ()
