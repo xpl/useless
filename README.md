@@ -41,7 +41,7 @@ You can run `build.js` under `nodemon` (which can be installed from npm). This w
 
 This will work for applications that dont rely on `useless/server` to implement app lifecycle.
 
-###Using `useless/server` self-deployment protocol
+###Using `useless/server/deploy`
 
 Applications that are based on top of  `useless/server` can easily get this feature by adding following traits to main application component.
 
