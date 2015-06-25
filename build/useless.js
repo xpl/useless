@@ -6,11 +6,14 @@ Entry point.
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-if (typeof require === 'undefined') {
-    require = function (s) {
-        return (s === 'underscore') ? _ : undefined } }
 
-_ = require ('underscore')
+/*  As we do not run macro processor on server scripts, $include reduces to
+    built-in require (if running in Node.js environment)
+    ======================================================================== */
+
+if (typeof require !== 'undefined') {
+    _ = require ('underscore')
+    $include = require }
 
 
 /*  Bootstrap code (couple of absolutely urgent fixes to underscore.js)
@@ -27,20 +30,7 @@ _ = (function () {
     if ('a1 b2 c3' !== _.zipWith ([['a','b','c'], [1,2,3]], function (a, b) { return a + b }).join (' ')) {
         throw new Error ('_.zipWith broken') }
 
-    var __mixin = _.mixin
-        _.mixin = function (what) { __mixin (what); return _ } // _.mixin that returns _
-
-    if (_.mixin ({}) !== _) {
-        throw new Error ('_.mixin broken') }
-
     return _ }) ()
-
-
-/*  As we do not run macro processor on server scripts, $include reduces to
-    built-in require (if running in Node.js environment)
-    ======================================================================== */
-
-    $include = require
 
 
 /*  Internal dependencies
@@ -126,9 +116,6 @@ unicode_hack = (function() {
         return new RegExp(regexpString,modifiers);
     };
 })();
-
-_ = require ('underscore')
-
 
 /*	Base64 utility
 	======================================================================== */
@@ -274,8 +261,6 @@ Base64 = {
 /*  Platform abstraction layer
  */
 
-_ = require ('underscore')
-
 _.platform = function () {
                 if ((typeof window !== 'undefined') && (window._.platform === arguments.callee)) {
                     if (navigator.platform && navigator.platform.indexOf) {
@@ -306,40 +291,6 @@ _.defineGlobalProperty = function (name, value, cfg) {
 
                             return value }
 
-_.defineConstant = function (obj, name, value) {
-                        Object.defineProperty (obj, name, _.extend ({ enumerable: true, get:  _.constant (value) })) }
-
-/*  Uncaught exception handling facility
-    ======================================================================== */
-
-var globalUncaughtExceptionHandler = function (e) { var chain = arguments.callee.chain
-    if (chain.length) {
-        for (var i = 0, n = chain.length; i < n; i++) {
-            try {
-                chain[i] (e); break }
-            catch (newE) {
-                if (i === n - 1) {
-                    throw newE }
-                else {
-                    newE.originalError = e
-                    e = newE } } } }
-    else {
-        console.log (e)
-        throw e } }
-
-_.withUncaughtExceptionHandler = function (handler, context) { context = context || _.identity
-
-                           globalUncaughtExceptionHandler.chain.unshift (handler)
-    context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
-
-globalUncaughtExceptionHandler.chain = []
-
-switch (_.platform ().engine) {
-    case 'node':
-        require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
-    case 'browser':
-        window.addEventListener ('error', function (e) { globalUncaughtExceptionHandler (e.error) }) }
-
 /*  Use this helper to override underscore's functions
     ======================================================================== */
 
@@ -359,6 +310,36 @@ if (_.platform ().engine !== 'browser') {
 _.defineGlobalProperty ('alert2', function (args) {
     alert (_.map (arguments, _.stringify).join (', ')) })
 
+/*  Uncaught exception handling facility
+    ======================================================================== */
+
+var globalUncaughtExceptionHandler = function (e) { var chain = arguments.callee.chain
+    if (chain.length) {
+        for (var i = 0, n = chain.length; i < n; i++) {
+            try {
+                chain[i] (e); break }
+            catch (newE) {
+                if (i === n - 1) {
+                    throw newE }
+                else {
+                    newE.originalError = e
+                    e = newE } } } }
+    else {
+        console.log ('Uncaught exception: ', e)
+        throw e } }
+
+_.withUncaughtExceptionHandler = function (handler, context) { context = context || _.identity
+
+                           globalUncaughtExceptionHandler.chain.unshift (handler)
+    context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
+
+globalUncaughtExceptionHandler.chain = []
+
+switch (_.platform ().engine) {
+    case 'node':
+        require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
+    case 'browser':
+        window.addEventListener ('error', function (e) { globalUncaughtExceptionHandler (e.error) }) }
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -367,7 +348,9 @@ Unit tests (bootstrap code)
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-_ = require ('underscore'); _.extend (_, {
+_.hasAsserts = true
+
+_.extend (_, {
 
 /*  a namespace where you put tests (for enumeration purposes)
     ======================================================================== */
@@ -645,11 +628,11 @@ function () {
         assertNotThrows: function (what) {
             _.assertCalls.call (this, 0, function () { what () }) },
 
-        assertArguments: function (arguments, callee) {
-            var fn    = (callee || arguments.callee).toString ()
+        assertArguments: function (args, callee, name) {
+            var fn    = (callee || args.callee).toString ()
             var match = fn.match (/.*function[^\(]\(([^\)]+)\)/)
             if (match) {
-                var valuesPassed   = _.asArray (arguments);
+                var valuesPassed   = _.asArray (args);
                 var valuesNeeded   = _.map (match[1].split (','),
                                             function (_s) {
                                                 var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
@@ -660,7 +643,7 @@ function () {
                                 return (a === undefined) ? true : (a === b) })
 
                 if (!_.every (zap)) {
-                    _.assertionFailed ({ notMatching: [fn, valuesNeeded, valuesPassed] }) } } },
+                    _.assertionFailed ({ notMatching: _.nonempty ([[name, fn].join (': '), valuesNeeded, valuesPassed]) }) } } },
 
         fail: function () {
                 _.assertionFailed () },
@@ -710,22 +693,6 @@ function () {
 
 })
 
-/*  _.throwsError
-    ======================================================================== */
-
-_.withTest (['stdlib', 'throwsError'], function () {
-
-        $assertThrows (
-            _.throwsError ('неуловимый Джо'),
-            _.matches ({ message: 'неуловимый Джо' })) }, function () { _.extend (_, {
-
-    throwsError: function (msg) {
-                    return function () {
-                        throw new Error (msg) }} }) })
-
-_.overrideThis   = _.throwsError ('override this')
-_.notImplemented = _.throwsError ('not implemented')
-
 /*  console.log with 'pure' semantics, for debugging of complex expressions
     ======================================================================== */
 
@@ -749,8 +716,6 @@ _.mixin ({
 
 
 
-
-_ = require ('underscore')
 
 /*  converts 'arguments' (and any other array mimick) to real Array
     ======================================================================== */
@@ -1363,7 +1328,8 @@ _.withTest (['type', 'numbers'], function () {
 }, function () {
 
     if (typeof Number.EPSILON === 'undefined') {
-        _.defineConstant (Number, 'EPSILON', 2.2204460492503130808472633361816E-16) } // NodeJS lack this
+        Object.defineProperty (Number, 'EPSILON', { enumerable: true,
+                                                    get:  _.constant (2.2204460492503130808472633361816E-16) }) } // NodeJS lack this
 
     _.extend (_, {
         isDecimal: function (x, tolerance) {
@@ -1432,23 +1398,6 @@ _.withTest (['type', 'empty-centric routines'], function () {
         Keep hands off boolean logic. If someone states that something's false - it's false, not
         a 'void non-existing piece of nothing'. It's a value. It has value. And it's false. Oh,
         fock, just don't get me started...
-
-        I personally think that Underscore's maintainers live in some kind of spherical-vacuo
-        candyworld, sharing none of the common with the world of real tasks and real problems that
-        occur in everyone's daily practice. It's a shame that such wisely chosen namespace is
-        occupied by such unwise people.
-
-        I'll show them Kuzma's mother. I will make a public fork of the utility, identical in API
-        for the most part, but done right semantically. For example, its future utilities won't be
-        making any difference between objects and arrays: meet _.filter and _.map working with
-        either type correctly, and much more. If the underlying language doesn't make a difference,
-        why should we? In JavaScript 'verse everything's object. An array appears to one as just an
-        object having keys of 0..N and the 'length' property. It is perfectly valid to interpret
-        such entities as a single kind at data-crunching utility level. Separation of the concerns
-        for that matter is not needed in JS, as being simply artificial to it, besides, contradicting
-        the basic rationale: if someone requests a filter over an object, the utility beneath should
-        return an object accordingly (and not in "heres-your-object/but-its-now-array/dunno-why/but-
-        why-the-hell-not" form).
      */
     isEmpty: function (obj) {
         return _.coerceToUndefined (obj) === undefined },
@@ -1548,7 +1497,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 if (x.toJSON) {
                                     return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
-                                if (!cfg.pure && (depth > 5 || (isArray && x.length > 30))) {
+                                if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
                                     return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
                                 parentsPlusX = parents.concat ([x])
@@ -1598,11 +1547,53 @@ _.toFixed3 = function (x) {
 
 
 
-/*  stdlib.js extends Underscore.js
+_.hasStdlib = true
+
+/*  _.throwsError
     ======================================================================== */
 
-_.extend (_ = require ('underscore'), {
-    hasStdlib: true })
+_.withTest (['stdlib', 'throwsError'], function () {
+
+        $assertThrows (
+            _.throwsError ('неуловимый Джо'),
+            _.matches ({ message: 'неуловимый Джо' })) }, function () { _.extend (_, {
+
+    throwsError: function (msg) {
+                    return function () {
+                        throw new Error (msg) }} }) })
+
+_.overrideThis   = _.throwsError ('override this')
+_.notImplemented = _.throwsError ('not implemented')
+
+
+/*  A functional try/catch
+    ======================================================================== */
+
+_.deferTest (['stdlib', 'tryEval'], function () {
+
+    /*  'return' interface
+     */
+    $assert ('ok',     _.tryEval (_.constant ('ok'),
+                                  $fails))
+
+    $assert ('failed', _.tryEval (_.throwsError ('yo'),
+                                  $assertMatches.partial ({ message: 'yo'}).then (_.constant ('failed'))))
+
+   /*   CPS interface
+    */
+    $assertCPS (_.tryEval.partial (_.constant ('ok'),
+                                   _.constant ('failed')), 'ok')
+ 
+    $assertCPS (_.tryEval.partial (_.throwsError ('yo'),
+                                   _.constant ('failed')), 'failed')
+
+}, function () { _.mixin ({
+                    tryEval: function (try_, catch_, then_) { var result = undefined
+                        try       { result = try_ ()    }
+                        catch (e) { result = catch_ && catch_ (e) }
+                        return then_ ?
+                                    then_ (result) :
+                                    result } }) })
 
 
 /*  Abstract _.values
@@ -1687,8 +1678,7 @@ _.withTest (['stdlib', 'objectMap'], function () {
 
 
 
-/*  Filter 2.0: fast, coupled with map semantics, compatible with original
-    behavior. Hyperoperator-powered filter (deep one).
+/*  Filter 2.0
     ======================================================================== */
 
 _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
@@ -1774,7 +1764,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
             1. _.reduce (value, op, memo)
             2.       op (memo, value)
     */
-    _.yodaReduce = function (value, memo, op_) {
+    _.reduce2 = function (value, memo, op_) {
 
                     var op     = _.last (arguments)
 
@@ -1796,7 +1786,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
                             memo = safeOp (value,      memo) } return memo }
 
     _.reduceReduce = function (initial, value, op) {
-                        return _.hyperOperator (_.binary, _.yodaReduce, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
+                        return _.hyperOperator (_.binary, _.reduce2, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
  })
 
 /*  Zip 2.0
@@ -2142,8 +2132,6 @@ _.omitKeys = function (obj, predicate) {
 
 
 
-_ = require ('underscore')
-
 /*  Properties
     ======================================================================== */
 
@@ -2230,8 +2218,6 @@ _.withTest ('properties', function () { var obj = {}
         return (obj && _.pickKeys (obj, obj.hasOwnProperty.bind (obj))) || {} }  }) })
 
 
-
-_ = require ('underscore')
 
 /*  Keywords
     ======================================================================== */
@@ -2557,8 +2543,6 @@ _.deferTest (['type', 'type matching'], function () {
 /*  Delivers continuation-passing style notation to various common things
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_ = require ('underscore')
-
 /*  CPS primitives module
     ======================================================================== */
 
@@ -2840,8 +2824,6 @@ Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
 
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-_ = require ('underscore')
 
 _.hasOOP = true
 
@@ -3247,7 +3229,7 @@ _.deferTest ('OOP', {
             generateArgumentContractsIfTaggedAsTest: function (def) {
                 return def.$test ? $prototype.mapMethods (def, function (fn, name) {
                                                                      return function () { var args = _.asArray (arguments)
-                                                                        $assertArguments (args.copy, fn.original)
+                                                                        $assertArguments (args.copy, fn.original, name)
                                                                          return fn.apply (this, args) } }) : def },
 
             contributeTraits: function (def) {
@@ -3346,6 +3328,7 @@ _.deferTest ('OOP', {
 /*  $assertCallOrder
      ======================================================================== */
 
+if (_.hasAsserts) {
     _.defineKeyword ('assertCallOrder', function (context) {
 
         var tag   = 1
@@ -3364,7 +3347,7 @@ _.deferTest ('OOP', {
                     tag:  e[1].$$uniqueTag$$,
                     name: e[2] } })
 
-           var match   = function (s) { return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
+           var match   = function (s) { s = _.isArray (s) ? s[0] : s; return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
            var matches = _.zipZip (contract, calls, function (a, b) { return _.nonempty ((a !== b) ? [a, b] : [b]) })
 
            if (!_.every (matches, match)) {
@@ -3372,7 +3355,7 @@ _.deferTest ('OOP', {
                     return {
                         name: (n + 1) + '. ' + ((n >= calls.length) ? 'NOT CALLED' : s.name.join (' ← ')),
                         'this':  ((s.ctx.length > 1) && 'wrong') || '',
-                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) })
+                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) }) }
 
 /*  $traits impl.
     ======================================================================== */
@@ -3479,7 +3462,7 @@ $extensionMethods = function (Type, methods) {
 
         /*  define as property of Type
          */
-        if (!tags.$method && (tags.$property || (_.oneArg (fn)))) {
+        if (!tags.$method && (tags.$property || (_.oneArg (fn))) && !(name in Type.prototype)) {
             _.defineHiddenProperty (Type.prototype, name, function () {
                 return fn (this) })}
 
@@ -3490,9 +3473,6 @@ $extensionMethods = function (Type, methods) {
 
         else {
             throw new Error ('$extensionMethods: crazy input, unable to match') } })}
-_ = require ('underscore')
-
-
 /*  Function extensions
     ======================================================================== */
 
@@ -3561,16 +3541,46 @@ $extensionMethods (Function, {
 
     memoized: _.memoize,
     throttled: _.throttle,
-    debounced: _.debounce,
+    
+    debounced: function (func, wait, immediate) {
+        
+        var timestamp, timeout, result, args, context
+        var later = function () {
+            var last = Date.now () - timestamp
+            if (last < wait && last > 0) {
+                timeout = setTimeout (later, wait - last) }
+            else {
+                timeout = null;
+                if (!immediate) {
+                    result = func.apply (context, args)
+                    if (!timeout) {
+                        context = args = null } } } }
+
+        var debouncedFn = function() {
+            context = this
+            args = arguments
+            timestamp = Date.now()
+            var callNow = immediate && !timeout
+            if (!timeout) {
+                timeout = setTimeout(later, wait) }
+            if (callNow) {
+                result = func.apply(context, args)
+                context = args = null }
+            return result }
+
+        debouncedFn.callImmediately = function () { // cancels timeout (set by fn.debounced/fn.throttled) and calls immediately
+            if (timeout) {
+                clearTimeout (timeout)
+                timeout = null }
+            func.apply (context, args) }
+
+        return debouncedFn },
 
     delay: _.delay,
     delayed: function (fn, time) {
         return function () {
             var args = arguments, context = this
             _.delay (function () { fn.apply (context, args) }, time) } } })
-
-_ = require ('underscore')
-
 
 /*  Array extensions
     ======================================================================== */
@@ -3655,8 +3665,6 @@ _.withTest ('Array extensions', function () {
                         return _.times (Math.max (memo.length, row.length), function (i) {
                             return zippo (memo[i], row[i]) }) }, firstArg) } })
 
-
-_ = require ('underscore')
 
 /*  String extensions
     ======================================================================== */
@@ -3835,9 +3843,6 @@ _.deferTest ('String extensions', function () {
 /*  Dynamic code binding toolbox
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_ = require ('underscore')
-
-
 /*  Interceptable/observable methods
     ======================================================================== */
 
@@ -3950,9 +3955,6 @@ _.deferTest ('bindable', function () {
                         after[j].apply (this_, args) } }
 
                 return result } )) } }) })
-
-_ = require ('underscore')
-
 
 /*  A generic functional primitives for dynamic code binding
     ======================================================================== */
@@ -4308,9 +4310,6 @@ _.extend (_, {
 
 /*  Otherwise basic utility (actually a bug-ridden clumsy legacy code)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_ = require ('underscore')
-
 
 /*  Context-free math functions
     ======================================================================== */
@@ -4758,9 +4757,6 @@ _.extend (Math, (function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }))
-_ = require ('underscore')
-
-
 /*  Parsers (TODO: REFACTOR)
     ======================================================================== */
 
@@ -4814,18 +4810,6 @@ Parse = {
             parseInt (time[1], 10))).getTime () }                       // minute
 }
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-------------------------------------------------------------------------
-
-NOTE:   This is really old and obsolete piece of code.
-        Should revise, refactor, write tests.
-        Also needs l10n for string constants.
-
-------------------------------------------------------------------------
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-_ = require ('underscore')
-
 Format = {
 
     /*  Use this to print objects as JavaScript (supports functions and $-tags output)
@@ -4847,58 +4831,14 @@ Format = {
                                     else {
                                         return undefined } } }) },
 
-    /*  example: _.urlencode ({ email: 'foo@bar.com', name: 'Боря' }) // gives 'email=foo%40bar%2ecom&name=%D0%91%D0%BE%D1%80%D1%8F'
-     */
-    urlencode: function (obj) {
-        return _.map (obj, function (v, k) { 
-            return k + '=' + _.fixedEncodeURIComponent (v) }).join ('&') },
-    
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {
             string += Math.floor (Math.random () * 16).toString (16) }
         return string },
 
-    /*  TODO: l10n
-     */
-    monthNames: ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'],
-    monthNamesCase: ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'],
-    monthNamesShort: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
-    
-    bool: function (x) {
-        return x ? 'Да' : 'Нет' },
-
     leadingZero: function (x) {
         return x < 10 ? '0' + x : x.toString () },
-
-    sum: function (value) {
-        var numberParts = value.toString ().split ('.')
-        var decimal = numberParts[1] ? ('.' + numberParts[1]) : ''
-        var major = numberParts[0]
-        var prettyPrintedMajor = ''
-        var negative = major[0] == '-'
-        for (var i = 0; i < major.length; i++) {
-            if ((major.length - i) % 3 == 0 && i > 0 && !(negative && i == 1)) {
-                prettyPrintedMajor += " " }
-            prettyPrintedMajor += major[i] }
-        return prettyPrintedMajor + decimal },
-
-    russianRoubles: function (value) {
-        return Format.sum (value) + ' ₽' },
-
-    russianRoublesSigned: function (value) {
-        var cls = (value > 0) ? 'income' : ((value < 0) ? 'outcome' : '')
-        return '<span class="' + cls + '">' + Format.sum (value) + '</span> ₽' },
-
-    russianRoublesHtml: function (value) {
-        return Format.sum (value) + ' <span class="rouble-sign"></span>' },
-
-    phoneNumber: function (normalized) {
-        var groups = ((normalized || '') + '').match(/(\d)(\d\d\d)(\d\d\d)(\d\d)(\d+)/)
-        if (groups) {
-            return '+' + groups[1] + ' (' + groups[2] + ') ' + groups[3] + '-' + groups[4] + '-' + groups[5] }
-        else {
-            return normalized } },
 
     plural: function (n, a, b, c) /* ex.: plural (21, 'час', 'часа', 'часов') */ {
         if (_.isArray (a)) {
@@ -4906,171 +4846,8 @@ Format = {
             b = a[1]
             a = a[0] }
         var cases = [c, a, b, b, b, c]
-        return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) },
-    
-    cm: function (cm) {
-        return cm + ' см' },
-
-    kg: function (kg) {
-        return kg + ' кг' },
-
-    dateFromDate: function (date) {
-        return (Format.leadingZero (date.getDate ()) + '.' +
-            Format.leadingZero (date.getMonth () + 1) + '.' +
-            Format.leadingZero (date.getFullYear () % 100)) },
-
-    timeFromDate: function (date) {
-        return (Format.leadingZero (date.getHours ()) + ':' +
-            Format.leadingZero (date.getMinutes ())) },
-
-    dateTimeFromDate: function (date) {
-        return Format.dateFromDate (date) + ' ' + Format.timeFromDate (date) },
-
-    dateFromTimestamp: function (timestamp) {
-        return Format.dateFromDate (new Date (timestamp)) },
-
-    dateTimeFromTimestamp: function (timestamp) {
-        var date = new Date (timestamp)
-        return (Format.dateFromDate (date) + ' <span class="time">' +
-            Format.leadingZero (date.getHours ()) + ':' + Format.leadingZero (date.getMinutes ()) + '</span>') },
-
-
-    /*  Calendar-accurate version of Format.relativeTime, use it to derive person's
-        age from timestamp of the person's birth date:
-
-            _.ageFromTimestamp (978296400000)                           // 13 лет
-            _.ageFromTimestamp (978296400000, { withMonths: true })     // 13 лет 10 мес.
-     */
-    ageFromTimestamp: function (timestamp, cfg_) { // calendar-accurate version of relativeTime
-        var cfg = cfg_ || {}
-        var date = new Date (timestamp)
-        var now = new Date ()
-        var monthsDelta = Math.floor ((now.getFullYear () * 12 + now.getMonth ()) - (date.getFullYear () * 12 + date.getMonth ()))
-        var years = Math.floor (monthsDelta / 12)
-        var monthsRest = monthsDelta % 12
-        var text = []
-        if (monthsRest && (date.getDate () >= now.getDate ())) {
-            monthsRest = monthsRest - 1 }
-        if (years) {
-            if ((date.getMonth () == now.getMonth ()) && (date.getDate () > now.getDate ())) {
-                years = years - 1 }
-            text.push (Format.plural (years, ['год', 'года', 'лет'])) }
-        if (!years || (monthsRest && cfg.withMonths)) {
-            text.push (Format.plural (monthsRest, ['мес.', 'мес.', 'мес.'])) }
-        return text.join (' ') },
-
-
-    /*  This is really silly and should be replaced by real date formatting utility. I wrote this
-        while porting html templates from Django. Because the only format option we used was 'd.m.Y',
-        it was considered to implement Format.date as a stub, accepting that only format option.
-        Avoid using it in production code, as its only a back-compat stub, not a real utility.
-     */
-    date: function (timestamp, template) {
-        if (template != "d.m.Y") {
-            throw "unsupported format" }
-        var date = new Date (timestamp)
-        return (Format.leadingZero (date.getDay ()) + '.' +
-                Format.leadingZero (date.getMonth () + 1) + '.' +
-                date.getFullYear ()) },
-
-
-    /*  This one should be calendar-accurate and general, but for now its just
-        a hard-coded stub, solving a single particular case of use.
-
-        TODO: rewrite (actually, write)
-     */
-    dateFromNow: function (years, months, days) {
-        if (days !== undefined) {
-            throw '_.dateFromNow: days not supported yet' }
-        if (months > 12) {
-            throw '_.dateFromNow: months delta over 12 not supported yet' }
-        var now = new Date ()
-        var targetYear = now.getFullYear () - years,
-            targetMonth = now.getMonth () - months,
-            targetDate = now.getDate ()
-        if (months > now.getMonth ()) {
-            targetYear = targetYear - 1
-            targetMonth = 12 + targetMonth }
-        return new Date (targetYear, targetMonth, targetDate) },
-
-    /*  SQL datetime utils
-     */
-    dateFromSQLDate: function (sqlDate) {
-        if (!sqlDate) {
-            return undefined
-        }
-        var dateTime = sqlDate.split (' ')
-        var date = dateTime[0].split ('-')
-        var time = dateTime.length > 1 ? dateTime[1].split (':') : ['0', '0', '0']
-        var seconds = parseFloat (time[2])
-        return new Date (
-            parseInt (date[0], 10), parseInt (date[1], 10) - 1, parseInt (date[2], 10),
-            parseInt (time[0], 10), parseInt (time[1], 10), Math.floor (seconds),
-            (seconds - Math.floor (seconds)) * 1000) },
-
-    timestampFromSQLDate: function (value) {
-        var date = _.dateFromSQLDate (value)
-        var timestamp = date ? date.getTime () : undefined
-        return timestamp > 0 ? timestamp : undefined },
-
-    /*  Format.relativeTime (date, { withAgoText: false, shortUnits: false, minDelta: undefined })
-     */
-    relativeTime: (function () {
-        var conversions = [
-            { units: ['мс', 'мс', 'мс'],        shortUnits: ['мс', 'мс', 'мс'],     multiplier: 1 },
-            { units: ['сек.', 'сек.', 'сек.'],  shortUnits: ['с', 'с', 'с'],        multiplier: 1000 },
-            { units: ['мин.', 'мин.', 'мин.'],  shortUnits: ['м', 'м', 'м'],        multiplier: 60 },
-            { units: ['час', 'часа', 'часов'],  shortUnits: ['ч', 'ч', 'ч'],        multiplier: 60 },
-            { units: ['день', 'дня', 'дней'],   shortUnits: ['д', 'д', 'д'],        multiplier: 24 },
-            { units: ['мес.', 'мес.', 'мес.'],  shortUnits: ['мес', 'мес', 'мес'],multiplier: 30 },
-            { units: ['год', 'года', 'лет'],    shortUnits: ['г', 'г', 'г'],        multiplier: 12 },
-        ]
-        var msInDay = 1000 * 60 * 60 * 24
-        return function (date, cfg) {
-            if (!date) {
-                return '' }
-            if (typeof date == 'number') {
-                date = new Date (date) }
-            cfg = cfg || {}
-            opts = {
-                withAgoText: cfg.withAgoText || false,
-                shortUnits: cfg.shortUnits || false,
-                minDelta: cfg.minDelta }
-
-            var now = new Date ()
-            var delta = now - date
-            var future = (delta < 0)
-            delta = Math.abs (delta)
-            if (opts.minDelta && delta < opts.minDelta) {
-                return 'только что' }
-            if (delta <= 6 * msInDay) {
-                var day
-                var weekday = date.getDay(),
-                    dayDiff = weekday - now.getDay()
-                if (dayDiff == 0)                       day = 'сегодня'
-                else if (dayDiff == -1)                 day = 'вчера'
-                else if (dayDiff == -2)                 day = 'позавчера'
-                else if (dayDiff == 1 && date > now)    day = 'завтра'
-                else if (dayDiff == 2 && date > now)    day = 'послезавтра' }
-            var units = null;
-            for (var i = 0, n = conversions.length; i < n; i++) {
-                var conversion = conversions[i]
-                if (delta < conversion.multiplier)
-                    break;
-                units = opts.shortUnits ? conversion.shortUnits : conversion.units
-                delta = delta / conversion.multiplier }
-            if (!units) {
-                return 'только что' }
-            else {
-                var text = Format.plural (Math.floor(delta), units[0], units[1], units[2])
-                if (future) {
-                    return 'через ' + text }
-                else {
-                    return text + (opts.withAgoText ? ' назад' : '') } } } })()
+        return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) }
 }
-
-
-_ = require ('underscore')
 
 
 /*  Sorting utilities (TODO: REFACTOR)
@@ -5128,9 +4905,6 @@ Sort = {
 
 /*  Self-awareness utils
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_ = require ('underscore')
-
 
 /*  Self-awareness module
     ======================================================================== */
@@ -5433,8 +5207,6 @@ _.perfTest = function (arg, then) {
 
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-var _ = require ('underscore')
 
 _.tests.log = function () {     //  Writes to test's log (as it's off-screen until needed)
 
@@ -6504,8 +6276,9 @@ Component = $prototype ({
 
         /*  Check $requires (TODO: make human-readable error reporting)
          */
-        _.each (this.constructor.$requires, function (contract, name) {
-            $assertTypeof (this[name], contract) }, this)
+        if (_.hasAsserts) {
+            _.each (this.constructor.$requires, function (contract, name) {
+                $assertTypeof (this[name], contract) }, this) }
 
 
         /*  Call init (if not marked as deferred)
@@ -6783,7 +6556,9 @@ Testosterone = $singleton ({
         _.cps.each (selectTests,
                 this.$ (this.runTest),
                 this.$ (function () {
-                            cfg.done = true
+                            _.assert (cfg.done !== true)
+                                      cfg.done   = true
+
                             this.printLog (cfg)
                             this.failedTests = _.filter (this.runningTests, _.property ('failed'))
                             this.failed = (this.failedTests.length > 0)
@@ -6962,6 +6737,9 @@ Test = $prototype ({
 
     onException: function (e, then) { var self = this
 
+        if (this.done) {
+            throw e } // not our exception, re-throw
+
         if (!this.fail ()) {
             if (then) {
                 then.call (this) } }
@@ -7019,12 +6797,15 @@ Test = $prototype ({
 
         var routine     = Tags.unwrap (this.routine)
         var doRoutine   = function (then) {
+                                var done = function () {
+                                                self.done = true
+                                                then () }
                                 try { 
                                     if (_.noArgs (routine)) {
                                         routine.call (self.context)
-                                        then () }
+                                        done () }
                                     else {
-                                        self.tryCatch (routine, then) } }
+                                        self.tryCatch (routine, done) } }
 
                                 catch (e) {
                                     self.onException (e, then) } }
@@ -7091,9 +6872,6 @@ Test = $prototype ({
 
 if (Platform.NodeJS) {
     module.exports = Testosterone }
-_ = require ('underscore')
-
-
 /*  Context-free math functions
     ======================================================================== */
 
@@ -7574,7 +7352,7 @@ _.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { 
 
         constructor: function () {
 
-            this.reduce = _.hyperOperator (_.binary, _.yodaReduce,
+            this.reduce = _.hyperOperator (_.binary, _.reduce2,
                                             _.goDeeperAlwaysIfPossible,
                                             _.isNonTrivial.and (_.not (this.isSubexpr)))
 
@@ -7677,8 +7455,6 @@ _.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { 
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 /* 
-    On $aspect.
-
     Aspects are units of behavior expressed in terms of ad-hoc
     patching of existing components' internals. They embody the
     powerful idea of a source code patches that are fully defined
@@ -7722,21 +7498,21 @@ _.tests.AOP = {
 
                                 var Thing = $prototype ($test ({
 
-                                    create:  function (_777)              {   },
-                                    display: function (_foobar, _778)     {   },
-                                    destroy: function ()                  { return 456 } }))
+                                    create:            function (_777)              {   },
+                                    display:           function (_foobar, _778)     {   },
+                                    destroy:           function ()                  { return 456 } }))
 
                                 var NewFlavorOfThing = $aspect (Thing, $test ({
 
-                                    beforeCreate: function (_777)                        { },
-                                    display:      function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', 778) },
-                                    afterDestroy: function (_456)                        { } }))
+                                    beforeCreate:   function (_777)                        { },
+                                    display:        function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', 778) },
+                                    afterDestroy:   function (_456)                        { } }))
 
                                 var demo = new Thing ()
 
-                                demo.create  (777)
-                                demo.display ('foo', 123)
-                                demo.destroy ()
+                                demo.create   (777)
+                                demo.display  ('foo', 123)
+                                demo.destroy  ()
 
                                 $order ([demo, NewFlavorOfThing, 'beforeCreate' ],
                                         [demo,            Thing,       'create' ],

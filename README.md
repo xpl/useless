@@ -13,12 +13,18 @@ Copy `useless` folder to `node_modules` subfolder of your project. In this case 
 
 ##Installing as pre-built monolithic script
 
-If you want to use only platform-independent part of the library, go to `build` folder and pick `useless-base.js`. This one is ready to be included to either server or client side.
+If you want to use only platform-independent part of the library, go to `build` folder and pick `useless.js`. This one is ready to be included to either server or client side.
 
-More distribution options to come.
+For minified version (with unit tests stripped) pick `useless.min.js`. This one is ready to be used in production setup.
 
-##Testing and building
+##Building
 
-Run `npm test` to run unit tests. `ALL PASS` indicates everything is okay.
+Build command:
 
-To build from source, you will need to run `npm install esprima` and `npm install escodegen` in repository folder. These dependencies are needed to parse and generate JavaScript source files. Run `npm build` to produce compiled source (will go to `build` folder). Running build will invoke tests.
+`node build.js <header-file> <output-folder>`
+
+For building useless.js, run `node build.js useless ./build`. It will compile `useless.js` in root directory to `./build/useless.js`, and also will generate minified version `./build/useless.min.js` via Google Closure Compiler. There will be also intermediate file `./build/useless.stripped.js` with unit tests and comments stripped.
+
+To make reduced version (with some submodules disabled), you can make your own version of `useless.js` file, commenting out unneeded `$include` directives. And then running build command to compile it.
+
+

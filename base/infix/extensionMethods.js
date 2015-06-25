@@ -15,7 +15,7 @@ $extensionMethods = function (Type, methods) {
 
         /*  define as property of Type
          */
-        if (!tags.$method && (tags.$property || (_.oneArg (fn)))) {
+        if (!tags.$method && (tags.$property || (_.oneArg (fn))) && !(name in Type.prototype)) {
             _.defineHiddenProperty (Type.prototype, name, function () {
                 return fn (this) })}
 

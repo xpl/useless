@@ -1,8 +1,50 @@
-/*  stdlib.js extends Underscore.js
+_.hasStdlib = true
+
+/*  _.throwsError
     ======================================================================== */
 
-_.extend (_ = require ('underscore'), {
-    hasStdlib: true })
+_.withTest (['stdlib', 'throwsError'], function () {
+
+        $assertThrows (
+            _.throwsError ('неуловимый Джо'),
+            _.matches ({ message: 'неуловимый Джо' })) }, function () { _.extend (_, {
+
+    throwsError: function (msg) {
+                    return function () {
+                        throw new Error (msg) }} }) })
+
+_.overrideThis   = _.throwsError ('override this')
+_.notImplemented = _.throwsError ('not implemented')
+
+
+/*  A functional try/catch
+    ======================================================================== */
+
+_.deferTest (['stdlib', 'tryEval'], function () {
+
+    /*  'return' interface
+     */
+    $assert ('ok',     _.tryEval (_.constant ('ok'),
+                                  $fails))
+
+    $assert ('failed', _.tryEval (_.throwsError ('yo'),
+                                  $assertMatches.partial ({ message: 'yo'}).then (_.constant ('failed'))))
+
+   /*   CPS interface
+    */
+    $assertCPS (_.tryEval.partial (_.constant ('ok'),
+                                   _.constant ('failed')), 'ok')
+ 
+    $assertCPS (_.tryEval.partial (_.throwsError ('yo'),
+                                   _.constant ('failed')), 'failed')
+
+}, function () { _.mixin ({
+                    tryEval: function (try_, catch_, then_) { var result = undefined
+                        try       { result = try_ ()    }
+                        catch (e) { result = catch_ && catch_ (e) }
+                        return then_ ?
+                                    then_ (result) :
+                                    result } }) })
 
 
 /*  Abstract _.values
@@ -87,8 +129,7 @@ _.withTest (['stdlib', 'objectMap'], function () {
 
 
 
-/*  Filter 2.0: fast, coupled with map semantics, compatible with original
-    behavior. Hyperoperator-powered filter (deep one).
+/*  Filter 2.0
     ======================================================================== */
 
 _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
@@ -174,7 +215,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
             1. _.reduce (value, op, memo)
             2.       op (memo, value)
     */
-    _.yodaReduce = function (value, memo, op_) {
+    _.reduce2 = function (value, memo, op_) {
 
                     var op     = _.last (arguments)
 
@@ -196,7 +237,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
                             memo = safeOp (value,      memo) } return memo }
 
     _.reduceReduce = function (initial, value, op) {
-                        return _.hyperOperator (_.binary, _.yodaReduce, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
+                        return _.hyperOperator (_.binary, _.reduce2, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
  })
 
 /*  Zip 2.0

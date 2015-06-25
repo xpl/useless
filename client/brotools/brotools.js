@@ -5,35 +5,6 @@ _.extend ($global, {
     $print:     _.identity,
     $log:       _.identity })
 
-BroTool = $component ({
-
-    init: function () { // /(.*\$tune.+\()([^,\)]+)(.*)/
-        /*_.extend (this, {
-            matchExpr:
-                $r.expr ('before',     $r.anything.text ('$' + this.keyword).something).then (
-                $r.expr ('arguments',  $r.someOf.except.text (')')).inParentheses.then (
-                $r.expr ('tail',       $r.anything))).$
-
-        _.defineKeyword (name, this.eat)*/
-
-        console.log ('foo')
-        alert ('brotool') },
-
-    parse: function (txt) {
-    },
-
-    eat: function (value, cfg) {
-
-    }
-})
-
-BroPrint = $singleton (BroTool, {
-
-    init: function () {
-
-    }
-})
-
 BroTools = $singleton (Component, {
 
     $defaults: {
@@ -359,7 +330,7 @@ SourceFile = $component ({
                                             this.text = _.pluck (this.lines, 'text').join ('\n')
                                             this.saveChanges () })) } },
 
-    saveChanges: $debounce (function (then) { 
+    saveChanges: $debounce (function (then) { return
         API.post ('source/static/' + this.fileName, {
             what:    _.pick (this, 'text'),
             failure: UI.error,

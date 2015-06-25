@@ -1,5 +1,3 @@
-_ = require ('underscore')
-
 /*  converts 'arguments' (and any other array mimick) to real Array
     ======================================================================== */
 

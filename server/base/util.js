@@ -43,16 +43,19 @@ module.exports = {
 			log.error (e)
 			return undefined } },
 
-	require: function (modules, then) { _.cps.map (modules,
-		        function (name, then) {
-	                try         {   then (require (name)) }
-
-	                catch (e)   {   log.warn ('Installing', name, 'from npm')
-	                                exec ('npm install ' + name, function (e, stdout, stderr) {
+	require: function (names, then) { _.cps.map (names,
+		        function (name, i, return_) {
+		        	_.tryEval (function () { return require (name) },
+		        			   function (e) {
+    						    	log.warn ('Installing', name, 'from npm')
+                        			exec ('npm install ' + name, function (e, stdout, stderr) {
 	                                                                    if (e) {
 	                                                                        util.fatalError (stderr) }
 	                                                                    else {
-	                                                                        then (require (name)) } }) } },
+	                                                                        return_ (require (name)) } }) },
+                        		function (module) { if (module) {
+					                        			log.info ('Loaded', name)
+						                				return_ (module) } }) },
             	function (modules) {
             		then.apply (null, _.coerceToArray (modules)) }) },
 
@@ -61,10 +64,13 @@ module.exports = {
 									function (line) {
 										var moduleName = (line.match (/\$include \(\'(.+)\'\).*/) || [])[1]
 										if (moduleName) {
-											var file = path.join (cfg.includePath, moduleName + '.js')
+											if (line.match (/^\s*\/\/.*/)) {
+												return '' }
+											else {
+												var file = path.join (cfg.includePath, moduleName + '.js')
 
-											try       { return fs.readFileSync (file, { encoding: 'utf-8' }) }
-											catch (e) { return module.exports.fatalError ('\nCannot read:', file) } }
+												try       { return fs.readFileSync (file, { encoding: 'utf-8' }) }
+												catch (e) { return module.exports.fatalError ('\nCannot read:', file) } } }
 
 										else {
 											return line } }).join ('\n') },
@@ -138,26 +144,25 @@ module.exports = {
 			failure: log.error
 		})
   	},
-   	httpGet: function (cfg) {
-     	log.info ('httpGet:', cfg.host + cfg.path)
-
-		var req = (cfg.port === 443 ? https : http).get (cfg, function (response) {
+  	readHttpResponse: function (encoding, then) {
+  		return function (response) {
 			var data = ''
-			response.setEncoding ((cfg.encoding == 'cp1251') ? 'binary' : (cfg.encoding || 'utf8'))
+			response.setEncoding ((encoding == 'cp1251') ? 'binary' : (encoding || 'utf8'))
 			response.on ('data', function (chunk) {
 				data += chunk
 			})
 			response.on ('end', function() {
-				switch (cfg.encoding) {
+				switch (encoding) {
 					case 'cp1251':
-						cfg.success (new Iconv ('windows-1251', 'utf-8//IGNORE').convert (new Buffer (data, 'binary')).toString ()); break;
+						then (new Iconv ('windows-1251', 'utf-8//IGNORE').convert (new Buffer (data, 'binary')).toString ()); break;
 					case 'binary':
-						cfg.success (new Buffer (data, 'binary')); break;
+						then (new Buffer (data, 'binary')); break;
 					default:
-						cfg.success (data.toString (cfg.encoding)); break;
-				}
-			})
-		})
+						then (data.toString (encoding)); break; } }) }
+  	},
+   	httpGet: function (cfg) {
+     	log.info ('httpGet:', cfg.host + cfg.path)
+		var req = (cfg.port === 443 ? https : http).get (cfg, util.readHttpResponse (cfg.encoding, cfg.success))
 		req.on ('error', cfg.failure)
 	},
    	downloadFile: function (cfg) {

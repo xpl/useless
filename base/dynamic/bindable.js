@@ -1,6 +1,3 @@
-_ = require ('underscore')
-
-
 /*  Interceptable/observable methods
     ======================================================================== */
 

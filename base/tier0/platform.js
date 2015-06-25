@@ -1,8 +1,6 @@
 /*  Platform abstraction layer
  */
 
-_ = require ('underscore')
-
 _.platform = function () {
                 if ((typeof window !== 'undefined') && (window._.platform === arguments.callee)) {
                     if (navigator.platform && navigator.platform.indexOf) {
@@ -32,40 +30,6 @@ _.defineGlobalProperty = function (name, value, cfg) {
                                         get: (_.isFunction (value) && value.length === 0) ? value : _.constant (value) }, cfg))
 
                             return value }
-
-_.defineConstant = function (obj, name, value) {
-                        Object.defineProperty (obj, name, _.extend ({ enumerable: true, get:  _.constant (value) })) }
-
-/*  Uncaught exception handling facility
-    ======================================================================== */
-
-var globalUncaughtExceptionHandler = function (e) { var chain = arguments.callee.chain
-    if (chain.length) {
-        for (var i = 0, n = chain.length; i < n; i++) {
-            try {
-                chain[i] (e); break }
-            catch (newE) {
-                if (i === n - 1) {
-                    throw newE }
-                else {
-                    newE.originalError = e
-                    e = newE } } } }
-    else {
-        console.log (e)
-        throw e } }
-
-_.withUncaughtExceptionHandler = function (handler, context) { context = context || _.identity
-
-                           globalUncaughtExceptionHandler.chain.unshift (handler)
-    context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
-
-globalUncaughtExceptionHandler.chain = []
-
-switch (_.platform ().engine) {
-    case 'node':
-        require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
-    case 'browser':
-        window.addEventListener ('error', function (e) { globalUncaughtExceptionHandler (e.error) }) }
 
 /*  Use this helper to override underscore's functions
     ======================================================================== */

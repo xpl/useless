@@ -1,5 +1,3 @@
-var _ = require ('underscore')
-
 _.tests.log = function () {     //  Writes to test's log (as it's off-screen until needed)
 
     log.write   ('Hello')       //  Use for plain output.

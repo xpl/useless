@@ -1,6 +1,4 @@
 /* 
-    On $aspect.
-
     Aspects are units of behavior expressed in terms of ad-hoc
     patching of existing components' internals. They embody the
     powerful idea of a source code patches that are fully defined
@@ -44,21 +42,21 @@ _.tests.AOP = {
 
                                 var Thing = $prototype ($test ({
 
-                                    create:  function (_777)              {   },
-                                    display: function (_foobar, _778)     {   },
-                                    destroy: function ()                  { return 456 } }))
+                                    create:            function (_777)              {   },
+                                    display:           function (_foobar, _778)     {   },
+                                    destroy:           function ()                  { return 456 } }))
 
                                 var NewFlavorOfThing = $aspect (Thing, $test ({
 
-                                    beforeCreate: function (_777)                        { },
-                                    display:      function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', 778) },
-                                    afterDestroy: function (_456)                        { } }))
+                                    beforeCreate:   function (_777)                        { },
+                                    display:        function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', 778) },
+                                    afterDestroy:   function (_456)                        { } }))
 
                                 var demo = new Thing ()
 
-                                demo.create  (777)
-                                demo.display ('foo', 123)
-                                demo.destroy ()
+                                demo.create   (777)
+                                demo.display  ('foo', 123)
+                                demo.destroy  ()
 
                                 $order ([demo, NewFlavorOfThing, 'beforeCreate' ],
                                         [demo,            Thing,       'create' ],

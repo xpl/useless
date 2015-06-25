@@ -1,6 +1,3 @@
-_ = require ('underscore')
-
-
 /*  A generic functional primitives for dynamic code binding
     ======================================================================== */
 

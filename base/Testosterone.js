@@ -143,7 +143,9 @@ Testosterone = $singleton ({
         _.cps.each (selectTests,
                 this.$ (this.runTest),
                 this.$ (function () {
-                            cfg.done = true
+                            _.assert (cfg.done !== true)
+                                      cfg.done   = true
+
                             this.printLog (cfg)
                             this.failedTests = _.filter (this.runningTests, _.property ('failed'))
                             this.failed = (this.failedTests.length > 0)
@@ -322,6 +324,9 @@ Test = $prototype ({
 
     onException: function (e, then) { var self = this
 
+        if (this.done) {
+            throw e } // not our exception, re-throw
+
         if (!this.fail ()) {
             if (then) {
                 then.call (this) } }
@@ -379,12 +384,15 @@ Test = $prototype ({
 
         var routine     = Tags.unwrap (this.routine)
         var doRoutine   = function (then) {
+                                var done = function () {
+                                                self.done = true
+                                                then () }
                                 try { 
                                     if (_.noArgs (routine)) {
                                         routine.call (self.context)
-                                        then () }
+                                        done () }
                                     else {
-                                        self.tryCatch (routine, then) } }
+                                        self.tryCatch (routine, done) } }
 
                                 catch (e) {
                                     self.onException (e, then) } }

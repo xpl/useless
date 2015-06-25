@@ -1,6 +1,3 @@
-_ = require ('underscore')
-
-
 /*  Function extensions
     ======================================================================== */
 
@@ -69,7 +66,40 @@ $extensionMethods (Function, {
 
     memoized: _.memoize,
     throttled: _.throttle,
-    debounced: _.debounce,
+    
+    debounced: function (func, wait, immediate) {
+        
+        var timestamp, timeout, result, args, context
+        var later = function () {
+            var last = Date.now () - timestamp
+            if (last < wait && last > 0) {
+                timeout = setTimeout (later, wait - last) }
+            else {
+                timeout = null;
+                if (!immediate) {
+                    result = func.apply (context, args)
+                    if (!timeout) {
+                        context = args = null } } } }
+
+        var debouncedFn = function() {
+            context = this
+            args = arguments
+            timestamp = Date.now()
+            var callNow = immediate && !timeout
+            if (!timeout) {
+                timeout = setTimeout(later, wait) }
+            if (callNow) {
+                result = func.apply(context, args)
+                context = args = null }
+            return result }
+
+        debouncedFn.callImmediately = function () { // cancels timeout (set by fn.debounced/fn.throttled) and calls immediately
+            if (timeout) {
+                clearTimeout (timeout)
+                timeout = null }
+            func.apply (context, args) }
+
+        return debouncedFn },
 
     delay: _.delay,
     delayed: function (fn, time) {

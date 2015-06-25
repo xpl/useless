@@ -6,7 +6,6 @@ Entry point.
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-
 /*  As we do not run macro processor on server scripts, $include reduces to
     built-in require (if running in Node.js environment)
     ======================================================================== */
@@ -32,6 +31,10 @@ _ = (function () {
 
     return _ }) ()
 
+/*  Tests stub
+ */
+_.tests = {}
+_.deferTest = function (name, test, subj) { subj () }
 
 /*  Internal dependencies
     ======================================================================== */
@@ -40,16 +43,16 @@ _ = (function () {
 /*  Third party (free-licensed)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-    $include ('./base/3rd/Base64')        // Base64 encoder/decoder
+//  $include ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
+//  $include ('./base/3rd/Base64')        // Base64 encoder/decoder
 
 
 /*  Basics of basics
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
+    
     $include ('./base/tier0/platform')    // platform abstraction layer
-    $include ('./base/tier0/uncaught')    // uncaught exception facility
-    $include ('./base/tier0/assert')      // $assert syntax
+//  $include ('./base/tier0/uncaught')    // uncaught exception facility
+//  $include ('./base/tier0/assert')      // $assert syntax
     $include ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)
     $include ('./base/tier0/function')    // function-centric utilities
     $include ('./base/tier0/busybox')     // a vocabulary for functional expressions that process real stuff
@@ -57,7 +60,7 @@ _ = (function () {
     $include ('./base/tier0/stdlib')      // consider it as underscore 2.0
     $include ('./base/tier0/properties')  // properties 2.0
     $include ('./base/tier0/keywords')    // metaprogramming utility
-    $include ('./base/tier0/typeMatch')   // advanced type system extensions
+//  $include ('./base/tier0/typeMatch')   // advanced type system extensions
 
 
 /*  Delivers continuation-passing style notation to various common things
@@ -107,37 +110,36 @@ _ = (function () {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $include ('./base/math')      // clumsy math utils
-    $include ('./base/Parse')     // clumsy parsing utils
+//  $include ('./base/Parse')     // clumsy parsing utils
     $include ('./base/Format')    // clumsy formatting utils
-    $include ('./base/Sort')      // (this one is normal)
+//  $include ('./base/Sort')      // (this one is normal)
 
 
 /*  Self-awareness utils
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/reflection')  // callstack access + source code access
-    $include ('./base/profiling')   // performance measurement utility
+//  $include ('./base/reflection')  // callstack access + source code access
+//  $include ('./base/profiling')   // performance measurement utility
 
 
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/log')             // logging facility
+//  $include ('./base/log')             // logging facility
     $include ('./base/concurrency')     // concurrency utility
     $include ('./base/component')       // component model
-    $include ('./base/Testosterone')    // unit test shell
-    $include ('./base/math')            // math utility
-    $include ('./base/Rx')              // regular expressions helper
+//  $include ('./base/Testosterone')    // unit test shell
+//  $include ('./base/Rx')              // regular expressions helper
 
 
 /*  Experimental stuff
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/AOP')
+//  $include ('./base/AOP')
 
 
-/*  ==================================================================== */
+/*  Browser-related code
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (Platform.NodeJS) { // Should strip it from client with conditional macro in future...
-        module.exports = _ }
+    $include ('./client/UI')
 

@@ -6,7 +6,9 @@ Unit tests (bootstrap code)
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-_ = require ('underscore'); _.extend (_, {
+_.hasAsserts = true
+
+_.extend (_, {
 
 /*  a namespace where you put tests (for enumeration purposes)
     ======================================================================== */
@@ -284,11 +286,11 @@ function () {
         assertNotThrows: function (what) {
             _.assertCalls.call (this, 0, function () { what () }) },
 
-        assertArguments: function (arguments, callee) {
-            var fn    = (callee || arguments.callee).toString ()
+        assertArguments: function (args, callee, name) {
+            var fn    = (callee || args.callee).toString ()
             var match = fn.match (/.*function[^\(]\(([^\)]+)\)/)
             if (match) {
-                var valuesPassed   = _.asArray (arguments);
+                var valuesPassed   = _.asArray (args);
                 var valuesNeeded   = _.map (match[1].split (','),
                                             function (_s) {
                                                 var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
@@ -299,7 +301,7 @@ function () {
                                 return (a === undefined) ? true : (a === b) })
 
                 if (!_.every (zap)) {
-                    _.assertionFailed ({ notMatching: [fn, valuesNeeded, valuesPassed] }) } } },
+                    _.assertionFailed ({ notMatching: _.nonempty ([[name, fn].join (': '), valuesNeeded, valuesPassed]) }) } } },
 
         fail: function () {
                 _.assertionFailed () },
@@ -348,22 +350,6 @@ function () {
         _.defineGlobalProperty ('$' + name, _[name], { configurable: true }) })
 
 })
-
-/*  _.throwsError
-    ======================================================================== */
-
-_.withTest (['stdlib', 'throwsError'], function () {
-
-        $assertThrows (
-            _.throwsError ('неуловимый Джо'),
-            _.matches ({ message: 'неуловимый Джо' })) }, function () { _.extend (_, {
-
-    throwsError: function (msg) {
-                    return function () {
-                        throw new Error (msg) }} }) })
-
-_.overrideThis   = _.throwsError ('override this')
-_.notImplemented = _.throwsError ('not implemented')
 
 /*  console.log with 'pure' semantics, for debugging of complex expressions
     ======================================================================== */

@@ -1,2 +1,9 @@
 node_modules/
 lib/
+build/es-test.js
+
+build/es-test.min.js
+
+build/es-test.stripped.js
+
+es-test.js

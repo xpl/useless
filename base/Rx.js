@@ -32,7 +32,7 @@ _.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { 
 
         constructor: function () {
 
-            this.reduce = _.hyperOperator (_.binary, _.yodaReduce,
+            this.reduce = _.hyperOperator (_.binary, _.reduce2,
                                             _.goDeeperAlwaysIfPossible,
                                             _.isNonTrivial.and (_.not (this.isSubexpr)))
 

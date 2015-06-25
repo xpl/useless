@@ -1,6 +1,3 @@
-_ = require ('underscore')
-
-
 /*  Sorting utilities (TODO: REFACTOR)
     ======================================================================== */
 

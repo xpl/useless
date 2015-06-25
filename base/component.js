@@ -570,8 +570,9 @@ Component = $prototype ({
 
         /*  Check $requires (TODO: make human-readable error reporting)
          */
-        _.each (this.constructor.$requires, function (contract, name) {
-            $assertTypeof (this[name], contract) }, this)
+        if (_.hasAsserts) {
+            _.each (this.constructor.$requires, function (contract, name) {
+                $assertTypeof (this[name], contract) }, this) }
 
 
         /*  Call init (if not marked as deferred)

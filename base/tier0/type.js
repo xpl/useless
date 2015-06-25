@@ -124,7 +124,8 @@ _.withTest (['type', 'numbers'], function () {
 }, function () {
 
     if (typeof Number.EPSILON === 'undefined') {
-        _.defineConstant (Number, 'EPSILON', 2.2204460492503130808472633361816E-16) } // NodeJS lack this
+        Object.defineProperty (Number, 'EPSILON', { enumerable: true,
+                                                    get:  _.constant (2.2204460492503130808472633361816E-16) }) } // NodeJS lack this
 
     _.extend (_, {
         isDecimal: function (x, tolerance) {
@@ -193,23 +194,6 @@ _.withTest (['type', 'empty-centric routines'], function () {
         Keep hands off boolean logic. If someone states that something's false - it's false, not
         a 'void non-existing piece of nothing'. It's a value. It has value. And it's false. Oh,
         fock, just don't get me started...
-
-        I personally think that Underscore's maintainers live in some kind of spherical-vacuo
-        candyworld, sharing none of the common with the world of real tasks and real problems that
-        occur in everyone's daily practice. It's a shame that such wisely chosen namespace is
-        occupied by such unwise people.
-
-        I'll show them Kuzma's mother. I will make a public fork of the utility, identical in API
-        for the most part, but done right semantically. For example, its future utilities won't be
-        making any difference between objects and arrays: meet _.filter and _.map working with
-        either type correctly, and much more. If the underlying language doesn't make a difference,
-        why should we? In JavaScript 'verse everything's object. An array appears to one as just an
-        object having keys of 0..N and the 'length' property. It is perfectly valid to interpret
-        such entities as a single kind at data-crunching utility level. Separation of the concerns
-        for that matter is not needed in JS, as being simply artificial to it, besides, contradicting
-        the basic rationale: if someone requests a filter over an object, the utility beneath should
-        return an object accordingly (and not in "heres-your-object/but-its-now-array/dunno-why/but-
-        why-the-hell-not" form).
      */
     isEmpty: function (obj) {
         return _.coerceToUndefined (obj) === undefined },
@@ -309,7 +293,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 if (x.toJSON) {
                                     return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
-                                if (!cfg.pure && (depth > 5 || (isArray && x.length > 30))) {
+                                if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
                                     return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
                                 parentsPlusX = parents.concat ([x])

@@ -6,8 +6,6 @@ Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-_ = require ('underscore')
-
 _.hasOOP = true
 
 _.deferTest ('OOP', {
@@ -412,7 +410,7 @@ _.deferTest ('OOP', {
             generateArgumentContractsIfTaggedAsTest: function (def) {
                 return def.$test ? $prototype.mapMethods (def, function (fn, name) {
                                                                      return function () { var args = _.asArray (arguments)
-                                                                        $assertArguments (args.copy, fn.original)
+                                                                        $assertArguments (args.copy, fn.original, name)
                                                                          return fn.apply (this, args) } }) : def },
 
             contributeTraits: function (def) {
@@ -511,6 +509,7 @@ _.deferTest ('OOP', {
 /*  $assertCallOrder
      ======================================================================== */
 
+if (_.hasAsserts) {
     _.defineKeyword ('assertCallOrder', function (context) {
 
         var tag   = 1
@@ -529,7 +528,7 @@ _.deferTest ('OOP', {
                     tag:  e[1].$$uniqueTag$$,
                     name: e[2] } })
 
-           var match   = function (s) { return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
+           var match   = function (s) { s = _.isArray (s) ? s[0] : s; return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
            var matches = _.zipZip (contract, calls, function (a, b) { return _.nonempty ((a !== b) ? [a, b] : [b]) })
 
            if (!_.every (matches, match)) {
@@ -537,7 +536,7 @@ _.deferTest ('OOP', {
                     return {
                         name: (n + 1) + '. ' + ((n >= calls.length) ? 'NOT CALLED' : s.name.join (' ← ')),
                         'this':  ((s.ctx.length > 1) && 'wrong') || '',
-                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) })
+                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) }) }
 
 /*  $traits impl.
     ======================================================================== */
