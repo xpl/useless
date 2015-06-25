@@ -26,9 +26,17 @@ BroTools = $singleton (Component, {
         $(document).ready (this.$ (function () {
             this.el = $('<div class="tuning-hall visible">').appendTo (document.body)
 
+            $('<button class="entry save-changes">Save changes</button>')
+                .click (this.saveChanges)
+                .appendTo (this.el)
+
             $(document).keydown (this.$ (function (e) {
                 if (e.keyCode === 192 /* ~ */) {
                     this.el.toggleClass ('visible') } })) })) },
+
+    saveChanges: function () {
+        SourcePector.saveChanges ()
+        this.el.removeClass ('changed') },
 
     afterTune: function (callMe) {
 
@@ -40,20 +48,22 @@ BroTools = $singleton (Component, {
             trigger (callMe)
 
             _.each (this.entriesByComponentName[compo],
-                function (entry) { entry.sliddah.handle.text (trigger.queue.length) })} })) },
+                function (entry) {
+                    if (entry.sliddah) {
+                        entry.sliddah.handle.text (trigger.queue.length) } })} })) },
 
     cubic: function (t, p1, p2, p3, p4) { var value = this.eat ([p1, p2, p3, p4], { cubic: true })
                 return Bezier.cubic1D (t,
                     value[0], value[1], value[2], value[3]) },
 
-    print: function (value) {
-                return this.eat (value, { print: true }) },
+    print: function (value, cfg) {
+                return this.eat (value, _.extend ({ print: true }, cfg)) },
 
-    log: function (value) {
-                return this.eat (value, { log: true }) },
+    log: function (value, cfg) {
+                return this.eat (value, _.extend ({ log: true }, cfg)) },
 
     tune: function (value, cfg) {
-                return this.eat (value, { slider: true }) },
+                return this.eat (value, _.extend ({ slider: true }, cfg)) },
 
     eat: function (value, cfg) { cfg = cfg || {}
 
@@ -129,9 +139,10 @@ BroTools = $singleton (Component, {
 
     patchEntrySource: function (entry, value) { SourcePector.patchLine (entry.where, function (text, apply) {
 
-                        var expr = BroTools.parseEntry (_.extend2 (entry, { where: { source: text }}))
-                        if (expr) {
-                            apply (BroTools.printExpr  (_.extend  (expr,  { value: value }))) } }) },
+                        var expr    = BroTools.parseEntry (_.extend2 (entry, { where: { source: text }}))
+                        var printed = expr && BroTools.printExpr  (_.extend  (expr,  { value: value }))
+                        if (printed) {
+                            apply (printed) } }) },
 
     addToDashboard: function (entry) { var expr = BroTools.parseEntry (entry)
 
@@ -156,7 +167,8 @@ BroTools = $singleton (Component, {
                                     if (entry.compo && this.triggersByComponentName[entry.compo]) {
                                                        this.triggersByComponentName[entry.compo] (entry) }
 
-                                    BroTools.patchEntrySource (entry, value) })
+                                    this.patchEntrySource (entry, value)
+                                    this.el.addClass ('changed') })
 
         entry.el.append ($('<div class="src">')
             .append (entry.headEl  = $('<span class="head">').text (expr.varName || expr.head)
@@ -173,8 +185,8 @@ BroTools = $singleton (Component, {
 
         else if (!entry.print) {
             entry.el.append ((entry.sliddah = new Sliddah ({
-                                    min:   entry.min || -10,
-                                    max:   entry.max ||  10,
+                                    min:   entry.min == undefined ? -1 : entry.min,
+                                    max:   entry.max == undefined ?  1 : entry.max,
                                     value: entry.value })).dom)
 
             entry.sliddah.valueChange (commitValueChange) }
@@ -279,6 +291,11 @@ SourcePector = $singleton (Component, {
 
     init: function () {},
 
+    saveChanges: function () {
+        _.each (this.filesByName, function (file) {
+            if (file.changed) {
+                file.saveChanges () } }) },
+
     file: function (name) {
                 return this.filesByName[name] ||
                       (this.filesByName[name] = new SourceFile ({ fileName: name })) },
@@ -327,16 +344,16 @@ SourceFile = $component ({
         if (line) {
             patch (line.text, this.$ (function (result) {
                                             line.text = result
-                                            this.text = _.pluck (this.lines, 'text').join ('\n')
-                                            this.saveChanges () })) } },
+                                            this.changed = true })) } },
 
-    saveChanges: $debounce (function (then) { return
+    saveChanges: function (then) {
+        this.changed = false
         API.post ('source/static/' + this.fileName, {
-            what:    _.pick (this, 'text'),
+            what:    { text: _.pluck (this.lines, 'text').join ('\n') },
             failure: UI.error,
             success: this.$ (function () {
                 log.ok (this.fileName, '— successfully saved')
-                if (then) { then () } }) }) }),
+                if (then) { then () } }) }) },
 
     whatComponent: function (lineNumber) {
             return this.lines[lineNumber - 1] && this.lines[lineNumber - 1].compo } })

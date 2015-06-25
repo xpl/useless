@@ -106,7 +106,7 @@ $.fn.extend ({
                             var translatedEvent = translateTouchEvent (e, this[0])
                             var offset = relativeTo.offset ()
 
-                            cfg.move.call (this, memo, new Vec2 (
+                            memo = cfg.move.call (this, memo, new Vec2 (
                                 // offset (relative to initial event)
                                 translatedEvent.pageX - initialEvent.pageX,
                                 translatedEvent.pageY - initialEvent.pageY), new Vec2 (
@@ -114,7 +114,7 @@ $.fn.extend ({
                                 translatedEvent.pageX - offset.left,
                                 translatedEvent.pageY - offset.top),
                                 // the event
-                                translatedEvent) }
+                                translatedEvent) || memo }
                         else {
                             abort (e) } })
 

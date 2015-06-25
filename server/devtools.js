@@ -32,6 +32,7 @@ module.exports = $trait ({
 	 */
 	readSource: function (context) {
 		_.readSource (context.env.file, function (text) { context.success (text) }) },
+		
 	writeSource: function (context) {
 		_.readSource (context.env.file, function (text) { console.log (text)
 			try { fs.mkdirSync (context.env.file + '.backups') }

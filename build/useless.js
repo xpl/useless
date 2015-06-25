@@ -4323,6 +4323,7 @@ _.lerp = function (t, min, max) {
 _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
     return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
 
+_.sqr = function (x) { return x * x }
 
 /*  2-dimensional vector
     ======================================================================== */
@@ -4343,10 +4344,14 @@ Vec2 = $prototype ({
         this.x =                             x
         this.y = ((arguments.length === 1) ? x : y) },
 
-    length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
+    length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
+    lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
 
-    add: function (other) {
-        return new Vec2 (this.x + other.x, this.y + other.y) },
+    add: function (a, b) {
+        if (b === undefined) {
+            return new Vec2 (this.x + a.x, this.y + a.y) }
+        else {
+            return new Vec2 (this.x + a, this.y + b) } },
 
     sub: function (other) {
         return new Vec2 (this.x - other.x, this.y - other.y) },
@@ -4389,7 +4394,19 @@ Vec2 = $prototype ({
             function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 
     toString: function () {
-        return '{' + this.x + ',' + this.y + '}' } })
+        return '{' + this.x + ',' + this.y + '}' },
+
+    projectOnCircle: function (center, r) {
+        return center.add (this.sub (center).normal.scale (r)) },
+
+    projectOnLineSegment: function (v, w) {
+        var wv = w.sub (v)
+        var l2 = wv.lengthSquared
+        if (l2 == 0) return v
+        var t = Vec2.dot (this.sub (v), wv) / l2
+        if (t < 0) return v
+        if (t > 1) return w
+        return v.add (wv.scale (t)) } })
 
 
 /*  Cubic bezier
@@ -4482,38 +4499,57 @@ BBox = $prototype ({
              !sides.right &&
              !sides.bottom && !sides.top) ? { inside: true } : {}) },
 
-        classifyRay: function (pos, delta, paddingX, paddingY) { paddingX = paddingX || 0; paddingY = paddingY || 0
+    classifyRay: function (pos, delta, paddingX, paddingY) { paddingX = paddingX || 0; paddingY = paddingY || 0
 
-            var half = this.size.half
+        var half = this.size.half
 
-            var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+        var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
 
-            scaleX = 1.0 / delta.x;
-            scaleY = 1.0 / delta.y;
-            signX = Math.sign(scaleX);
-            signY = Math.sign(scaleY);
-            nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
-            nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
-            farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
-            farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
-            if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
-                return undefined;
-            }
-            nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
-            farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
-            if (nearTime >= 1 || farTime <= 0) {
-                return undefined;
-            }
-            var hit = { time: _.clamp (nearTime, 0, 1) }
-            if (nearTimeX > nearTimeY) {
-                hit.normal = new Vec2 (-signX, 0)
-            } else {
-                hit.normal = new Vec2 (0, -signY)
-            }
-            hit.delta = delta.scale (hit.time)
-            hit.where = pos.add (hit.delta)
-            return hit;
-        },
+        scaleX = 1.0 / delta.x;
+        scaleY = 1.0 / delta.y;
+        signX = Math.sign(scaleX);
+        signY = Math.sign(scaleY);
+        nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
+        nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
+        farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
+        farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
+        if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+            return undefined;
+        }
+        nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+        farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+        if (nearTime >= 1 || farTime <= 0) {
+            return undefined;
+        }
+        var hit = { time: _.clamp (nearTime, 0, 1) }
+        if (nearTimeX > nearTimeY) {
+            hit.normal = new Vec2 (-signX, 0)
+        } else {
+            hit.normal = new Vec2 (0, -signY)
+        }
+        hit.delta = delta.scale (hit.time)
+        hit.where = pos.add (hit.delta)
+        return hit;
+    },
+
+    nearestPointTo: function (pt, cornerRadius) { var r = cornerRadius || 0
+
+        var a = new Vec2 (this.left,  this.top),
+            b = new Vec2 (this.right, this.top),
+            c = new Vec2 (this.right, this.bottom),
+            d = new Vec2 (this.left,  this.bottom)
+
+        var pts = [ pt.projectOnLineSegment (a.add (r, 0),  b.add (-r, 0)),  // top
+                    pt.projectOnLineSegment (b.add (0, r),  c.add (0, -r)),  // right
+                    pt.projectOnLineSegment (c.add (-r, 0), d.add (r, 0)),   // bottom
+                    pt.projectOnLineSegment (d.add (0, -r), a.add (0, r)),   // left
+
+                    pt.projectOnCircle (a.add ( r,  r), r),
+                    pt.projectOnCircle (b.add (-r,  r), r),
+                    pt.projectOnCircle (c.add (-r, -r), r),
+                    pt.projectOnCircle (d.add ( r, -r), r) ]
+
+        return _.min (pts, function (test) { return pt.sub (test).length }) },
 
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
@@ -6884,6 +6920,7 @@ _.lerp = function (t, min, max) {
 _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
     return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
 
+_.sqr = function (x) { return x * x }
 
 /*  2-dimensional vector
     ======================================================================== */
@@ -6904,10 +6941,14 @@ Vec2 = $prototype ({
         this.x =                             x
         this.y = ((arguments.length === 1) ? x : y) },
 
-    length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
+    length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
+    lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
 
-    add: function (other) {
-        return new Vec2 (this.x + other.x, this.y + other.y) },
+    add: function (a, b) {
+        if (b === undefined) {
+            return new Vec2 (this.x + a.x, this.y + a.y) }
+        else {
+            return new Vec2 (this.x + a, this.y + b) } },
 
     sub: function (other) {
         return new Vec2 (this.x - other.x, this.y - other.y) },
@@ -6950,7 +6991,19 @@ Vec2 = $prototype ({
             function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 
     toString: function () {
-        return '{' + this.x + ',' + this.y + '}' } })
+        return '{' + this.x + ',' + this.y + '}' },
+
+    projectOnCircle: function (center, r) {
+        return center.add (this.sub (center).normal.scale (r)) },
+
+    projectOnLineSegment: function (v, w) {
+        var wv = w.sub (v)
+        var l2 = wv.lengthSquared
+        if (l2 == 0) return v
+        var t = Vec2.dot (this.sub (v), wv) / l2
+        if (t < 0) return v
+        if (t > 1) return w
+        return v.add (wv.scale (t)) } })
 
 
 /*  Cubic bezier
@@ -7043,38 +7096,57 @@ BBox = $prototype ({
              !sides.right &&
              !sides.bottom && !sides.top) ? { inside: true } : {}) },
 
-        classifyRay: function (pos, delta, paddingX, paddingY) { paddingX = paddingX || 0; paddingY = paddingY || 0
+    classifyRay: function (pos, delta, paddingX, paddingY) { paddingX = paddingX || 0; paddingY = paddingY || 0
 
-            var half = this.size.half
+        var half = this.size.half
 
-            var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+        var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
 
-            scaleX = 1.0 / delta.x;
-            scaleY = 1.0 / delta.y;
-            signX = Math.sign(scaleX);
-            signY = Math.sign(scaleY);
-            nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
-            nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
-            farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
-            farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
-            if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
-                return undefined;
-            }
-            nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
-            farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
-            if (nearTime >= 1 || farTime <= 0) {
-                return undefined;
-            }
-            var hit = { time: _.clamp (nearTime, 0, 1) }
-            if (nearTimeX > nearTimeY) {
-                hit.normal = new Vec2 (-signX, 0)
-            } else {
-                hit.normal = new Vec2 (0, -signY)
-            }
-            hit.delta = delta.scale (hit.time)
-            hit.where = pos.add (hit.delta)
-            return hit;
-        },
+        scaleX = 1.0 / delta.x;
+        scaleY = 1.0 / delta.y;
+        signX = Math.sign(scaleX);
+        signY = Math.sign(scaleY);
+        nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
+        nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
+        farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
+        farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
+        if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+            return undefined;
+        }
+        nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+        farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+        if (nearTime >= 1 || farTime <= 0) {
+            return undefined;
+        }
+        var hit = { time: _.clamp (nearTime, 0, 1) }
+        if (nearTimeX > nearTimeY) {
+            hit.normal = new Vec2 (-signX, 0)
+        } else {
+            hit.normal = new Vec2 (0, -signY)
+        }
+        hit.delta = delta.scale (hit.time)
+        hit.where = pos.add (hit.delta)
+        return hit;
+    },
+
+    nearestPointTo: function (pt, cornerRadius) { var r = cornerRadius || 0
+
+        var a = new Vec2 (this.left,  this.top),
+            b = new Vec2 (this.right, this.top),
+            c = new Vec2 (this.right, this.bottom),
+            d = new Vec2 (this.left,  this.bottom)
+
+        var pts = [ pt.projectOnLineSegment (a.add (r, 0),  b.add (-r, 0)),  // top
+                    pt.projectOnLineSegment (b.add (0, r),  c.add (0, -r)),  // right
+                    pt.projectOnLineSegment (c.add (-r, 0), d.add (r, 0)),   // bottom
+                    pt.projectOnLineSegment (d.add (0, -r), a.add (0, r)),   // left
+
+                    pt.projectOnCircle (a.add ( r,  r), r),
+                    pt.projectOnCircle (b.add (-r,  r), r),
+                    pt.projectOnCircle (c.add (-r, -r), r),
+                    pt.projectOnCircle (d.add ( r, -r), r) ]
+
+        return _.min (pts, function (test) { return pt.sub (test).length }) },
 
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
