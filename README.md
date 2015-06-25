@@ -13,24 +13,29 @@
 
 ###Developer
 
-* Handling of uncaught exceptions (cross-platform)
-* Callstack handling
-    * Access at arbitrary location (for reflection/introspection purposes)
-    - Fetches source code lines for stack entries
-    - Can detect and strip third party calls (clean output)
-    - Nice text output (replaces default Node.js exception printer)
-    * UI widget with expandable source lines
-* Seamless debugging
+- Uncaught exceptions handling (cross-platform)
+
+* Seamless
     - Uncaught exceptions pass through network API calls
-    - Client displays server's exceptions as if it was single environment.
-    - Cross-machine logging
-* Advanced logging
+    - Client displays server's exceptions as if it was single environment
+
++ Callstack
+    - Access at arbitrary location (for reflection purposes)
+    - Strips third party calls (clean mode)
+    - Fetches source code (local/remote)
+    - Nice output
+        - Console mode (replaces default Node.js exception printer)
+        - GUI mode (shows pop-up dialog with expandable source lines)
+
+* Logging
     * platform-independent
     * color output
     * shows code location
     * configurable object printer
     * table layout formatting
     * hookable/interceptable
+    * cross-machine
+
 * Tests
     - Tests before code
     - Tests as documentantion
@@ -41,18 +46,18 @@
 
 ###Standard library of algorithms
 
-* Extends underscore.js namespace for functional utility
-* Infix calls for library methods (as extensions to Function/Array/String)
-* Abstract `map/zip/filter/reduce` (accept arrays/objects/scalars)
-* Deep `map/zip/filter/reduce` (work on any type of structure)
-* Advanced type detection / matching
+* Extends underscore.js `_` namespace
+* Infix calls for library methods (as Function/Array/String extensions)
+* Abstract `map/zip/filter/reduce` over arrays/objects/scalars
+* Deep `map/zip/filter/reduce` over any type of structure
+* Advanced type detection / pattern matching
 * Continuation-passing style (CPS) versions of standard algorithms
 * Concurrency primitives (task pooling, interlocked methods)
-* Vector math (Vec2, Transform, BBox, intersections)
+* Vector math (`Vec2`, `Transform`, `BBox`, intersections)
 - Multicast model for method calls with simple functional I/O
-    - trigger / triggerOnce
-    - barrier (synchronization primitive)
-    - observable value
+    - `_.trigger` / `_.triggerOnce`
+    - `_.barrier` (synchronization primitive)
+    - `_.observable`
 
 ###Macro processor for prototype definitions (`$prototype / $extends`)
 
@@ -69,12 +74,12 @@
 
 ###Component model
 
-* methods are bound to `this` automatically
-* chaining into methods (also enables that for $traits)
-+ bindable `$trigger` / `$barrier` / `$observableProperty`
-+ tracks bound components / auto-unbinding upon deinitialization
-+ parent-child relationship / automatic deinitialization
-+ configuration contracts (`$requires`, `$defaults`)
+* binds own methods to `this` automatically
+* enables chaining into methods (also enables that for $traits)
++ manages bindable `$trigger` / `$barrier` / `$observableProperty` members
++ tracks bound components / auto-unbinds upon deinitialization
++ holds parent-child relationship / handles automatic deinitialization
++ validates configuration contracts (`$requires`, `$defaults`)
 
 ###And more..
 
