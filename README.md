@@ -11,39 +11,6 @@
 
 ##Features
 
-###Developer
-
-- Uncaught exceptions handling (cross-platform)
-
-* Seamless
-    - Uncaught exceptions pass through network API calls
-    - Client displays server's exceptions as if it was single environment
-
-+ Callstack
-    - Access at arbitrary location (for reflection purposes)
-    - Strips third party calls (clean mode)
-    - Fetches source code (local/remote)
-    - Nice output
-        - Console mode (replaces default Node.js exception printer)
-        - GUI mode (shows pop-up dialog with expandable source lines)
-
-* Logging
-    * platform-independent
-    * color output
-    * shows code location
-    * configurable object printer
-    * table layout formatting
-    * hookable/interceptable
-    * cross-machine
-
-* Tests
-    - Tests before code
-    - Tests as documentantion
-    - Rich library of assertions
-    - Asynchronous / nested assertions
-    - Custom assertions
-    - Humane error reporting
-
 ###Standard library of algorithms
 
 * Extends underscore.js `_` namespace
@@ -81,6 +48,40 @@
 + tracks bound components / auto-unbinds upon deinitialization
 + holds parent-child relationship / handles automatic deinitialization
 + validates configuration contracts (`$requires`, `$defaults`)
+
+###Exception handling
+
+- Cross-platform handling of uncaught exceptions
+- Uncaught exceptions pass through network API calls
+- Client displays server's exceptions as if it was single environment
+
+###Callstack access
+
+* Access at arbitrary location (for reflection purposes)
+* Strips third party calls (clean mode)
+* Fetches source code (local/remote)
+* Nice output
+    * Console mode (replaces default Node.js exception printer)
+    * GUI mode (shows pop-up dialog with expandable source lines)
+
+###Logging
+
++ platform-independent
++ color output
++ shows code location
++ configurable object printer
++ table layout formatting
++ hookable/interceptable
++ cross-machine
+
+###Tests
+
+* Tests before code
+* Tests as documentantion
+* Rich library of assertions
+* Asynchronous / nested assertions
+* Custom assertions
+* Humane error reporting
 
 ###And more..
 
