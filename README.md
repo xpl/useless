@@ -59,8 +59,9 @@
     - `_.barrier` (synchronization primitive)
     - `_.observable`
 
-###Macro processor for prototype definitions (`$prototype / $extends`)
+###Macro processor for prototype definitions
 
++ `$prototype` / `$extends`
 + smart property declarations
 + static methods / properties
 + tag groups on members (`$static: { ... }`)
