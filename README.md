@@ -1,11 +1,90 @@
 # Use Less. Do More.
-...Or Yet Another Useless JavaScript Library 
 
-Was cut violently from a recent project of mine. It does not even compile, totally lacks documentation and pretty useless for now. Hence the name.
+##...Or Yet Another Useless JavaScript Library 
+
+* `./base` platform-independent part
+* `./client` browser-related utility
+* `./server` app framework for Node.js
+* `./build` built source (full/stripped/minified)
+* `./useless.js` header file for build tool (contains include directives)
+* `./useless.micro.js` header file for reduced build (example)
+
+##Features
+
+###Developer
+
+* Handling of uncaught exceptions (cross-platform)
+* Callstack handling
+    * Access at arbitrary location (for reflection/introspection purposes)
+    - Fetches source code lines for stack entries
+    - Can detect and strip third party calls (clean output)
+    - Nice text output (replaces default Node.js exception printer)
+    * UI widget with expandable source lines
+* Seamless debugging
+    - Uncaught exceptions pass through network API calls
+    - Client displays server's exceptions as if it was single environment.
+    - Cross-machine logging
+* Advanced logging
+    * platform-independent
+    * color output
+    * shows code location
+    * configurable object printer
+    * table layout formatting
+    * hookable/interceptable
+* Tests
+    - Tests before code
+    - Tests as documentantion
+    - Rich library of assertions
+    - Asynchronous / nested assertions
+    - Custom assertions
+    - Humane error reporting
+
+###Standard library of algorithms
+
+* Extends underscore.js namespace for functional utility
+* Infix calls for library methods (as extensions to Function/Array/String)
+* Abstract `map/zip/filter/reduce` (accept arrays/objects/scalars)
+* Deep `map/zip/filter/reduce` (work on any type of structure)
+* Advanced type detection / matching
+* Continuation-passing style (CPS) versions of standard algorithms
+* Concurrency primitives (task pooling, interlocked methods)
+* Vector math (Vec2, Transform, BBox, intersections)
+- Multicast model for method calls with simple functional I/O
+    - trigger / triggerOnce
+    - barrier (synchronization primitive)
+    - observable value
+
+###Macro processor for prototype definitions (`$prototype / $extends`)
+
++ smart property declarations
++ static methods / properties
++ tag groups on members (`$static: { ... }`)
++ `$final`
++ member aliases
++ RTTI
++ pluggable macros for custom syntax
++ `$singleton`
+* `$traits` (mixins) as combinatoric-style alternative to inheritance
+* `$aspect` (Aspect Oriented Programming) / declarative method binding
+
+###Component model
+
+* methods are bound to `this` automatically
+* chaining into methods (also enables that for $traits)
++ bindable `$trigger` / `$barrier` / `$observableProperty`
++ tracks bound components / auto-unbinding upon deinitialization
++ parent-child relationship / automatic deinitialization
++ configuration contracts (`$requires`, `$defaults`)
+
+###And more..
+
+- Platform detection/abstraction layer
+- DSL for writing regexps in JS + named subexpressions
+- Unicode regexp hack
+- Performance measurement
+- Base64 encoding/decoding
 
 **::)**
-
-Some code is formatted using tabs with tab width set to 4. GitHub does not allow to change tab size for repository viewer, so be prepared for creeped formatting when viewing the code via browser. Will fix that in future.
 
 ##Installing as NPM module
 
