@@ -43,7 +43,7 @@ This will work for applications that dont rely on `useless/server` to implement 
 
 ###Using `useless/server/deploy`
 
-Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following to main application component:
+Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following **$traits** to main application component:
 
 ```
 $traits: [        
