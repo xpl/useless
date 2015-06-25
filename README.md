@@ -35,7 +35,7 @@ There exists `useless-micro.js` as example of such reduced build. Running `node 
 
 ###Using external tools
 
-You can run `build.js` under `nodemon` (which can be installed from npm). This will trigger automatic re-builds on source change. There also exists `.nodemonignore` which you can edit to exclude some files from monitoring.
+You can run `build.js` under `nodemon` (which can be installed from npm). This will trigger automatic re-builds on source change.
 
 `nodemon build.js <header-file> <output-folder>`
 
@@ -43,9 +43,7 @@ This will work for applications that dont rely on `useless/server` to implement 
 
 ###Using `useless/server/deploy`
 
-Applications that are based on top of  `useless/server` can easily get this feature by adding following traits to main application component.
-
-This will trigger test & build sequence on server startup, aborting startup if something goes wrong (with nice error reports).
+Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following to main application component:
 
 ```
 $traits: [        
@@ -54,4 +52,6 @@ $traits: [
         require ('useless/server/deploy'),
 ```
 
-For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`.
+This will add test & build phase to app startup sequence, aborting if something went wrong.
+
+For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`. There also exists `.nodemonignore` which you can edit to exclude some files from monitoring.
