@@ -29,7 +29,7 @@ For building useless.js, run `node build.js useless ./build`. It will compile `u
 
 To make reduced version (with some submodules disabled), you can make your own version of `useless.js` file, commenting out unneeded `$include` directives. And then running build command to compile it.
 
-There exists `useless-micro.js` as example of such reduced build. Running `node build.js useless.micro ./build` will produce `./build/useless.micro.min.js` as output.
+There exists `useless.micro.js` as example of such reduced build. Running `node build.js useless.micro ./build` will produce `./build/useless.micro.min.js` as output.
 
 ##Automatic builds on source change
 
