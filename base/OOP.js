@@ -321,6 +321,22 @@ _.deferTest ('OOP', {
         obj.noMistake () },
 
 
+/*  $const (xxx) as convenient alias for $static ($property (xxx))
+    ======================================================================== */
+
+    '$const': function () {
+
+        var A = $prototype ({
+            $const: {
+                foo: 'foo',
+                bar: 'bar' },
+            qux: $const ('qux'),
+            zap: $const ('zap') })
+
+        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
+        $assertThrows (function () { A.foo = 'bar '}) },
+
+
 /*  Tags on definition render to static properties
     ======================================================================== */
 
@@ -496,14 +512,15 @@ _.deferTest ('OOP', {
             flatten: function (def) {
                 var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
                 var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
-                    return _.map (membersDef, function (member, memberName) { return [memberName, Tags.add (keyword.slice (1), member)] }) }), true))
+                    return _.map (membersDef, function (member, memberName) {
+                        return [memberName, $global[keyword] (member)] }) }), true))
 
                 var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
 
                 return _.extend (memberDefinitions, mergedKeywordGroups) },
 
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
-                return _.isKeyword (key) && _.isTagKeyword (key) && (typeof Tags.unwrap (value) === 'object') && !_.isArray (value) } } }) })
+                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
 
 
 /*  $assertCallOrder
@@ -571,6 +588,12 @@ if (_.hasAsserts) {
 
     if (typeof jQuery !== 'undefined') {
         jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
+
+
+/*  $const is alias for static property
+    ======================================================================== */
+
+    _.defineKeyword ('const', function (x) { return $static ($property (x)) })
 
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
