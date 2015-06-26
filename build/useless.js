@@ -1657,6 +1657,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
         _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
 
 
+
 /*  Internal impl.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -1874,6 +1875,44 @@ _.deferTest (['stdlib', 'zipZip'], function () {
 function () {
 
     _.mixin ({ zipZip: _.hyperOperator (_.binary, _.zip2) }) })
+
+
+/*  Find 2.0 + Hyperfind
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.deferTest (['stdlib', 'findFind'], function () {
+
+    $assert (_.find2 (77,   _.equals (77)),   77)
+    $assert (_.find2 ({ },  _.equals (77)),   false)
+    $assert (_.find2 ([1],  _.constant (88)), 88)
+
+    var obj = { x: 1, y: { z: 2 }}
+
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),   2)
+    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)), obj) },
+
+function () {
+
+    _.find2 = function (value, pred) {
+
+        if (_.isArray (value)) {                                
+            for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
+                              if (typeof x !== 'boolean') { return x }
+                                     else if (x === true) { return value[i] } } }
+
+        else if (_.isStrictlyObject (value)) {        
+            for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
+                                                     if (typeof x !== 'boolean') { return x }
+                                                            else if (x === true) { return value[k] } } }
+
+                                                              var x = pred (value)
+                                if (typeof x !== 'boolean') { return x }
+                                       else if (x === true) { return value }
+                                                              return false }
+
+    _.findFind = function (obj, pred) {
+                        return _.hyperOperator (_.unary, _.find2,
+                                _.goDeeperAlwaysIfPossible, function (x) { return _.isNonTrivial (x) && !(pred (x)) }) (obj, pred) } })
 
 
 /*  Most useful _.extend derivatives
@@ -4212,9 +4251,9 @@ _.extend (_, {
 
             readWith: function (fn) { // TODO: this is should be general read behavior, rather than special method
                 if (this.hasValue) {
-                    fn (this.value) }
+                    fn.call (this.context, this.value) }
                 else {
-                    fn () }
+                    fn.call (this.context) }
                 this (fn) } }) },
 
 

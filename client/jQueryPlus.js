@@ -74,7 +74,13 @@ $.fn.extend ({
         
     animationend: function (fn) {
         return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn) },
-        
+
+    animateWith: function (cls, done) { 
+        this.addClass (cls)
+        this.animationend (this.$ (function () { this.removeClass (cls)
+                                                 if (done) { done.call (this) } }))
+        return this },
+
     drag: function (cfg) {
 
         if (!Platform.touch && !window.__globalDragOverlay) {

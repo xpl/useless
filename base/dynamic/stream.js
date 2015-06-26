@@ -231,9 +231,9 @@ _.extend (_, {
 
             readWith: function (fn) { // TODO: this is should be general read behavior, rather than special method
                 if (this.hasValue) {
-                    fn (this.value) }
+                    fn.call (this.context, this.value) }
                 else {
-                    fn () }
+                    fn.call (this.context) }
                 this (fn) } }) },
 
 
