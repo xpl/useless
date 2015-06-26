@@ -53,3 +53,27 @@ See how `_.mapMap` is defined:
   _.mapMap = _.hyperOperator (_.unary, _.map2)  // 'unary' says that both _.map2 and its functor take 1 argument.
 ```
 
+##function.js
+
+Various function-centric utility.
+
+###_.arity
+
+Limits function to given number of arguments.
+
+```javascript
+  _.arity   = function (N, fn) { ... }
+  _.arity0  = ...
+  _.arity1  = ...
+  _.arity2  = function (fn) { return function (a, b) { return fn.call (this, a, b) }}
+  _.arity3  = ...
+  _.arityFn = function (N) { return _['arity' + N] }
+```
+
+Useful in cases when a callback does not expect some extra arguments that some other routine supplies to it. As example, where `_.map` supplies 3 arguments to callback, but they're totally not expected:
+
+```javascript
+  var operation = function (x, destroyWorldIfSupplied) { .. }
+  
+  _.map (arr, operation.arity1) // arguments beyound `x` never pass through
+```
