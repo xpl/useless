@@ -30,26 +30,26 @@
 
 ###Macro processor for prototype definitions
 
-+ `$prototype` / `$extends`
++ **$prototype** / **$extends**
 + Smart property declarations
 + Static methods / properties
 + Tag groups on members (`$static: { ... }`)
 + RTTI
 + Pluggable macros for custom syntax
 + Member aliases
-+ `$final`
-* `$traits` (a.k.a. mixins) as combinatoric-style alternative to inheritance
-* `$aspect` Aspect Oriented Programming / declarative method binding
-+ `$singleton`
++ **$final**
+* **$traits** / a.k.a. mixins, as combinatoric-style alternative to inheritance
+* **$aspect** / Aspect Oriented Programming / declarative method binding
++ **$singleton**
 
 ###Component model
 
-* Binds own methods to `this` automatically
-+ Manages bindable `$trigger` / `$barrier` / `$observableProperty` members
+* Binds own methods to **this** automatically
++ Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
 + Tracks bound components / auto-unbinds upon deinitialization
 + Holds parent-child relationship / handles automatic deinitialization
-* Enables $traits to chain into method calls by overlapping method definitions
-+ Enforces configuration contracts (`$requires`, `$defaults`)
+* Enables **$traits** to chain into method calls by overlapping method definitions
++ Enforces configuration contracts (**$requires**, **$defaults**)
 
 ###Exception handling
 
