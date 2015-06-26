@@ -7,10 +7,6 @@
 * `./useless.js` header file for build tool (contains include directives)
 * `./useless.micro.js` header file for reduced build (example)
 
-Here's brief overview of what's inside.
-
-##`./base`
-
 ###Standard library of algorithms
 
 * Extends underscore.js `_` namespace
