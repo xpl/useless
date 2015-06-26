@@ -22,7 +22,7 @@
 * Continuation-passing style (CPS) versions of standard algorithms
 * Concurrency primitives (task pooling, interlocked methods)
 * Basic math (`lerp` / `clamp`, color space conversion, etc)
-* Vector math (`Vec2`, `Transform`, `BBox`, `Bezier`, intersections)
+* Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections)
 - Multicast model for method calls with simple functional I/O
     - `_.trigger`, `_.triggerOnce` / one-to-many broadcast
     - `_.barrier` / synchronization primitive
@@ -32,13 +32,13 @@
 
 + **$prototype** / **$extends**
 + Smart property declarations
-+ Static methods / properties
++ **$static** methods / properties
 + Tag groups on members (`$static: { ... }`)
 + RTTI
 + Pluggable macros for custom syntax
 + Member aliases
 + **$final**
-* **$traits** / a.k.a. mixins, as combinatoric-style alternative to inheritance
+* **$traits** / a.k.a. mixins / combinatoric-style alternative to inheritance
 * **$aspect** / Aspect Oriented Programming / declarative method binding
 + **$singleton**
 
@@ -101,7 +101,7 @@ A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$
 
 ###BroTools™
 
-An interactive code macroprocessor. Makes certain constants in source code editable. One tags a constant of interest with special keyword, e.g. `$tune (12.224)`. Calling $tune translates to a certain widget in the BroTools™ UI, associated with source code location of the call (read via Callstack API). Interacting with the widget leads to source code update, writing new value inside call expression. Currently under development.
+An interactive code macroprocessor. Makes certain constants in source code editable. One tags a constant of interest with special keyword, e.g. `$tune (12.224)`. Calling **$tune** translates to a certain widget in the BroTools™ UI, associated with source code location of the call (read via Callstack API). Interacting with the widget leads to source code update, writing new value inside call expression. Currently under development.
 
 ###API.js
 
