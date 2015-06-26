@@ -109,19 +109,34 @@ XHR requests to communicate with `./server` part.
 
 A pop-up alert that shows errors / stack traces.
 
-###TileView.js / TableView.js
+###Virtualized Views
 
-These widgets built on top of virtualized rendering back-end (`VirtualListViewRenderer.js`) and can display vast amount of data.
+- `TileView.js`
+- `TableView.js`
+- `VirtualListViewRenderer.js`
+- `InfiniScrollContainer.js`
 
-###RangeControl.js / ContextMenu.js / Popover.js / FormDialog.js
+For displaying vast amounts of data.
 
-Various commonplace widgets.
+###Generic widgets
+
+- `RangeControl.js`
+- `ContextMenu.js`
+- `Popover.js`
+- `FormDialog.js`
+
+Various common building blocks for web applications.
 
 ###Nav.js
 
 Tabbed navigation host / URL persistence.
 
-###Collection.js / RemoteCollection.js / DataManager.js
+###RemoteCollection
+
+- `DataManager.js`
+- `Collection/Collection.js`
+- `Collection/RemoteCollection.js`
+- `Collection/FilterChain.js`
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
