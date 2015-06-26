@@ -67,6 +67,10 @@ Initial memo **should** be provided. A note on nonstandard argument order. Becau
 ```
 So from that perspective, argument order of the default implementation is not chosen correct, as it brings unnessesary interface distinction that leads to unforeseen problems (and bothers that old guy Occam).
 
+###_.zip2
+###_.zipZip
+###_.findFind
+
 ##function.js
 
 Various function-centric utility.
