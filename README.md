@@ -14,7 +14,7 @@
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
 * Higher order toolbox (functions that warp functions)
-* Infix interface for underscore's stuff (as **Array**/**String**/**Function** extensions)
+* Infix interface for underscore's stuff (as Array/String/Function extensions)
 * Abstract `map/zip/filter/reduce` over arrays/objects/scalars
 * Deep `map/zip/filter/reduce` over arbitrary structures
 * Deep version of underscore's stuff (`_.clone`, `_.extend`, etc)
