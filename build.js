@@ -119,8 +119,6 @@ function stripCommentsAndTests (src, name, path) {
                 else {
                     return true } })) }
 
-    escodegen.attachComments(stripped, syntax.comments, stripped.tokens);
-    
 // log.info (_.stringify (stripped, { pretty: true, maxArrayLength: 10000, maxDepth: 10 }))
 
 //    log.write (escodegen.generate (stripped))
