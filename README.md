@@ -1,13 +1,13 @@
 # Use Less. Do More.
 
-##__...or something **::)**__
-
 * `./base` platform-independent part
 * `./client` browser-related utility
 * `./server` app framework for Node.js
 * `./build` built source (full/stripped/minified)
 * `./useless.js` header file for build tool (contains include directives)
 * `./useless.micro.js` header file for reduced build (example)
+
+Here's brief overview of what's inside.
 
 ##`./base`
 
@@ -22,9 +22,9 @@
 * Concurrency primitives (task pooling, interlocked methods)
 * Vector math (`Vec2`, `Transform`, `BBox`, intersections)
 - Multicast model for method calls with simple functional I/O
-    - `_.trigger` / `_.triggerOnce`
-    - `_.barrier` (synchronization primitive)
-    - `_.observable`
+    - `_.trigger`, `_.triggerOnce` / one-to-many broadcast
+    - `_.barrier` / synchronization primitive
+    - `_.observable` / state change notifications
 
 ###Macro processor for prototype definitions
 
@@ -109,15 +109,11 @@ XHR requests to communicate with `./server` part.
 
 A pop-up alert that shows errors / stack traces.
 
-###TileView.js
-###TableView.js
+###TileView.js / TableView.js
 
 These widgets built on top of virtualized rendering back-end (`VirtualListViewRenderer.js`) and can display vast amount of data.
 
-###RangeControl.js
-###ContextMenu.js
-###Popover.js
-###FormDialog.js
+###RangeControl.js / ContextMenu.js / Popover.js / FormDialog.js
 
 Various commonplace widgets.
 
@@ -125,9 +121,7 @@ Various commonplace widgets.
 
 Tabbed navigation host / URL persistence.
 
-###Collection/Collection.js
-###Collection/RemoteCollection.js
-###DataManager.js
+###Collection.js / RemoteCollection.js / DataManager.js
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
