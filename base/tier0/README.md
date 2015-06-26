@@ -58,6 +58,7 @@ See how `_.mapMap` is defined:
 Various function-centric utility.
 
 ###_.arity
+###Function.arity
 
 Limits function to given number of arguments.
 
