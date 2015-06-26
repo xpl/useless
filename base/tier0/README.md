@@ -1,4 +1,4 @@
-#[← TO INDEX](../../README.md)
+#[←](../../README.md)
 
 #Tier0
 
