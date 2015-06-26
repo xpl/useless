@@ -32,5 +32,43 @@ BroTune = Bro.Tool ({
         	return this.slidah.dom }
     }),
 
-	valueFromArguments: function (x) { return x },
-})
+	valueFromArguments: function (x) { return x } })
+
+
+BroProp = Bro.Tool ({
+
+    name:  $const ('prop'),
+    Entry: $const ({
+
+        $defaults: {
+            min: -10,
+            max:  10 },
+
+        configure: function (obj, prop, v) {
+            obj[prop] = v
+            obj[prop + 'Change'] (this.$ (function (v) {
+                this.commitValueChange (v) })) },
+
+        parseArguments: function (args) {
+            return _.rest (args.match (/(.+),\s*(.+),\s*(.*\(.*\).*)/)) },
+
+        printValue: function () {
+            return 'new Vec2 (' + this.value.x.toFixed (3) + ', ' + this.value.y.toFixed (3) + ')' },
+
+        call: function (x) {
+            return this.value },
+
+        printArguments: function () {
+            console.log (this)
+            this.arguments[2] = this.printValue ()
+            return this.arguments.join (', ') },
+
+        widget: function () {
+
+            return undefined }
+    }),
+
+    valueFromArguments: function (obj, prop, v) { return v } })
+
+
+

@@ -27,12 +27,15 @@ Bro = $singleton (Component, {
                         varName ? { varName: varName[1] } : {},
                         comment ? { comment: comment[1] } : {}) },
 
-        parse: function () {
+        parse: function () { console.log (this.where.source)
                     var parsed = this.constructor.tool.matchExpr.parse (this.where.source)
                     return _.extend (this, this.parseHints ({
                         before:           parsed.before,
-                        arguments: _.map (parsed.arguments.split (','), _.trimmed),
+                        arguments: _.map (this.parseArguments (parsed.arguments), _.trimmed),
                         after:            parsed.after })) },
+
+        parseArguments: function (args) {
+            return args.split (',') },
 
         print: function () {
                     return [this.before, '(' + this.printArguments () + ')', this.after].join ('') },
@@ -76,9 +79,9 @@ Bro = $singleton (Component, {
             _.defineKeyword (this.constructor.name, this.call) },
 
         matchExpr: $memoized ($property (function () {
-            return  $r.expr ('before',     $r.anything.text ('$' + this.constructor.name).something).then (
-                    $r.expr ('arguments',  $r.someOf.except.text (')')).inParentheses.then (
-                    $r.expr ('after',      $r.anything))).$ })),
+            return  $r.expr ('before',    $r.anything.text ('$' + this.constructor.name).anyOf.except.text ('(')).text('(').then (
+                    $r.expr ('arguments', $r.anything.then ($r.expr ('inner', $r.anything.inParentheses).maybe).then ($r.anyOf.except.text (')'))).text (')').then (
+                    $r.expr ('after',     $r.anything))).$ })),
 
         call: function (args) {
             var callArgs = _.asArray (arguments)
@@ -129,6 +132,7 @@ Bro = $singleton (Component, {
 
     entryValueChange: function (entry) {
         this.el.addClass ('changed')
+
         SourcePector.patchLine (entry.where, function (text, apply) {
             apply (entry.print ()) })
 
@@ -316,7 +320,7 @@ SourceFile = $component ({
     patchLine: function (number, patch) { 
         var line = this.lines[number - 1]
         if (line) {
-            patch (line.text, this.$ (function (result) { //log.warn (this.fileName + ':' + number, '\t', result)
+            patch (line.text, this.$ (function (result) { log.warn (this.fileName + ':' + number, '\t', result)
                                             line.text = result
                                             this.changed = true })) } },
 
