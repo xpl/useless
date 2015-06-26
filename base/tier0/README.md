@@ -57,7 +57,10 @@ See how `_.mapMap` is defined:
 
 Various function-centric utility.
 
-###_.arity / Function.arity
+###arity
+
+``_.arity``
+``Function.arity``
 
 Limits function to given number of arguments.
 
@@ -76,4 +79,14 @@ Super useful in cases when a callback does not expect some extra arguments passe
   var operation = function (x, destroyWorldIfSupplied) { .. }
   
   _.map (arr, operation.arity1) // arguments beyound `x` never pass through
+```
+
+###Y combinator (for anonymous recursive functions)
+
+Useful when you need to define a self-referent function within a functional expression (i.e. not using variables).
+
+```javascript
+  var countTo5 = _.Y (function (self) {
+      return function (n) {
+          return n >= 5 ? n : self (n + 1) } })
 ```
