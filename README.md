@@ -4,8 +4,8 @@
 * `./client` browser-related utility
 * `./server` app framework for Node.js
 * `./build` built source (full/stripped/minified)
-* `./useless.js` header file for build tool (contains include directives)
-* `./useless.micro.js` header file for reduced build (example)
+* `./useless.js` header file for the build tool (contains include directives)
+* `./useless.micro.js` header file (an example of reduced build config)
 
 ##Feature overview
 
