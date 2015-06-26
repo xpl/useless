@@ -33,9 +33,6 @@ Objects:
 
 ###_.mapMap (x, op)
 
-  ``x  : any type``
-  ``op : fn (value, key)``
-
 Fractalized version of previous utility. Hence the name (map over map). Can operate over arbitrary structure, 'seeing through' it:
 
 ```
@@ -48,7 +45,7 @@ Fractalized version of previous utility. Hence the name (map over map). Can oper
           bar: 'undefined' }] }) },
 ```
 
-Made with `_.hyperOperator` — a highly abstract operator that fractalizes ordinary algorithms, looping them through themselves. See how `_.mapMap` is defined:
+Made with `_.hyperOperator` — a highly abstract operator that fractalizes ordinary algorithms, looping them through themselves, making structure transparent for their operation. See how `_.mapMap` is defined:
 
 ```
   _.mapMap = _.hyperOperator (_.unary, _.map2)  // 'unary' says that both _.map2 and its functor take 1 argument.
