@@ -1,10 +1,3 @@
-_.extend ($global, {
-    $tune:      _.identity,
-    $cubic:       Bezier.cubic1D,
-    $afterTune: _.identity,
-    $print:     _.identity,
-    $log:       _.identity })
-
 Bro = $singleton (Component, {
 
     $defaults: {
@@ -15,98 +8,103 @@ Bro = $singleton (Component, {
         triggersByComponentName: {},
         toolsByName: {} },
 
+    BaseEntry: $component ({
+
+        init: function () {
+            $assertTypeof (this.parse (), { before: 'string', after: 'string', arguments: [] })
+            this.el = this.widgetContainer ()
+            this.el.append (this.widget ()) },
+
+        configure: _.identity,
+
+        call: function () {
+            return this.value },
+
+        parseHints: function (parsed) {
+            var varName = parsed.before.match (/var\s*(.+)\s*=.+/)
+            var comment = parsed.after.match (/\/\/\s*(.+)/)
+            return _.extend ({}, parsed,
+                        varName ? { varName: varName[1] } : {},
+                        comment ? { comment: comment[1] } : {}) },
+
+        parse: function () {
+                    var parsed = this.constructor.tool.matchExpr.parse (this.where.source)
+                    return _.extend (this, this.parseHints ({
+                        before:           parsed.before,
+                        arguments: _.map (parsed.arguments.split (','), _.trimmed),
+                        after:            parsed.after })) },
+
+        print: function () {
+                    return [this.before, '(' + this.printArguments () + ')', this.after].join ('') },
+
+        printValue: function () {
+            return this.value + '' },
+
+        printArguments: function () {
+            this.arguments[0] = this.printValue ()
+            return this.arguments.join (', ') },
+
+        patchSource: function () { SourcePector.patchLine (
+                                        this.where,
+                                        this.$ (function (text, apply) { apply (this.printValue ()) })) },
+
+        commitValueChange: function (value) {
+            this.value = value
+            this.valueEl.text (this.printValue ())
+            Bro.entryValueChange (this) },
+
+        widget: _.notImplemented,
+
+        widgetContainer: function () {
+            return $('<div class="entry">').attr ('data-line', this.where.line)
+                        .append ($('<div class="src">')
+                            .append (this.headEl  = $('<span class="head">').text (this.varName || this.before)
+                                                                               .toggleClass ('var', this.varName !== undefined))
+
+                            .append (this.valueEl = $('<span class="value">').text (this.printValue ()))
+
+                            .append (this.restEl  = $('<span class="rest">')
+                                                            .append ($('<em>').text (this.comment || this.after)))) } }),
+    
     BaseTool: $component ({
-
-        BaseEntry: $component ({
-
-            $requires: {
-                value: $any,
-                where: 'object' },
-
-            init: function () {
-
-            },
-
-            parseHints: function () {
-
-
-        var varName = this.head.match (/var\s*(.+)\s*=.+/)
-        var comment = this.rest.match (/\/\/\s*(.+)/)
-        return _.extend (this,
-            varName ? { varName: varName[1] } : {},
-            comment ? { comment: comment[1] } : {}) },
-
-    parseEntry: function (entry) {
-                        return this.parseHints (entry.print ?
-                                    this.parsePrintExpr (entry.where.source) : (entry.cubic ?
-                                    this.parseCubicExpr (entry.where.source) :
-                                    this.parseTuneExpr  (entry.where.source))) },
-
-            patchSource: function () { SourcePector.patchLine (this.where, function (text, apply) {
-
-                var expr    = Bro.parseEntry (_.extend2 (entry, { where: { source: text }}))
-                var printed = expr && Bro.printExpr  (_.extend  (expr,  { value: value }))
-                if (printed) {
-                    apply (printed) } }) },
-
-            widget: function () {
-
-                return $('<div class="entry">').attr ('data-line', this.where.line)
-
-                var commitValueChange = this.$ (function (value) {
-
-                                            entry.value = value
-                                            entry.valueEl.text (Bro.printExprValue (entry, 2))
-
-                                            Bro.entryValueChange (this)
-
-                                            this.patchEntrySource (entry, value)
-                                            this.el.addClass ('changed') })
-
-                        entry.el.append ($('<div class="src">')
-                            .append (entry.headEl  = $('<span class="head">').text (expr.varName || expr.head)
-                                                                             .toggleClass ('var', expr.varName !== undefined))
-
-                            .append (entry.valueEl = $('<span class="value">').text (Bro.printExprValue (expr, 2)))
-
-                            .append (entry.restEl  = $('<span class="rest">')
-                                                            .append ($('<em>').text (expr.comment || expr.rest))))
-            }
-        }),
 
         init: function () { log.i ('BroTools™: installing', '$' + this.constructor.name)
 
-            this.Entry = $extends (BaseTool.BaseEntry,
+            this.Entry = $extends (Bro.BaseEntry,
                             _.extend (this.constructor.Entry, { tool: $const (this) }))
 
             _.defineKeyword (this.constructor.name, this.call) },
 
-        call: function () {
-            new this.Entry ({ value: this.value.apply (null, arguments) }) },
+        matchExpr: $memoized ($property (function () {
+            return  $r.expr ('before',     $r.anything.text ('$' + this.constructor.name).something).then (
+                    $r.expr ('arguments',  $r.someOf.except.text (')')).inParentheses.then (
+                    $r.expr ('after',      $r.anything))).$ })),
 
-        value: _.identity,
+        call: function (args) {
+            var callArgs = _.asArray (arguments)
+            var where = $callStack.safeLocation (2)
+            var entry = Bro.locateEntry (where)
+            if (!entry) {
+                entry = _.tryEval (this.$ (function () { return new this.Entry ({
+                                                            where:             where,
+                                                            initArguments:     callArgs,
+                                                            value:             this.valueFromArguments.apply (null, callArgs) }) }),
+                                    function (e) {
+                                        UI.error (e) },
 
-        result: function () {
-            return this.valueFromArguments.apply (null, arguments) },
+                                    function (entry) { if (entry) { Bro.addEntry (entry)
+                                                                    entry.configure.apply (null, callArgs)
+                                                       return entry } }) }
 
-        eat: function (value, cfg) {
-            var where = $callStack.clean.safeLocation (1)
-            var entry = this.entriesByStackLocation[where.beforeParse]
-
-            if (!entry && (entry =
-                                this.entriesByStackLocation[where.beforeParse] =
-                                    this.addToDashboard (entry = _.extend ({}, cfg, { where: where, value: value })))) {
-                this.entries.push (entry)
-                this.investigateComponentForEntry (entry) }
-
-            if (entry) {            if (entry.print) {
-                                        entry.value = value
-                                        entry.valueEl.text (_.stringify (value, { precision: cfg.precision || 3 })) }
-                return entry.value }
-
+            if (entry) {
+                return entry.call.apply (null, callArgs) }
             else {
-                return value }
-        }
+                return this.eval.apply (null, callArgs) } },
+
+        valueFromArguments: _.identity,
+
+        eval: function () {
+            return this.valueFromArguments.apply (null, arguments) }
     }),
 
     Tool: function (def) {
@@ -116,12 +114,7 @@ Bro = $singleton (Component, {
 
     init: function () {
 
-        _.extend ($global, {
-            $tune:      this.tune,
-            $cubic:     this.cubic,
-            $afterTune: this.afterTune,
-            $print:     this.print,
-            $log:       this.log })
+        _.defineKeyword ('afterTune', this.afterTune)
 
         $(document).ready (this.$ (function () {
             this.el = $('<div class="tuning-hall visible">').appendTo (document.body)
@@ -134,164 +127,45 @@ Bro = $singleton (Component, {
                 if (e.keyCode === 192 /* ~ */) {
                     this.el.toggleClass ('visible') } })) })) },
 
+    entryValueChange: function (entry) {
+        this.el.addClass ('changed')
+        SourcePector.patchLine (entry.where, function (text, apply) {
+            apply (entry.print ()) })
+
+        if (this.triggersByComponentName[entry.compo]) {
+            this.triggersByComponentName[entry.compo] () } },
+
     saveChanges: function () {
         SourcePector.saveChanges ()
         this.el.removeClass ('changed') },
 
+    locateEntry: function (where) {
+        return this.entriesByStackLocation[where.beforeParse] },
+
+    addEntry: function (entry) {
+        this.entriesByStackLocation[entry.where.beforeParse] = entry
+        this.entries.push (entry)
+        this.investigateComponentForEntry (entry)
+        this.addToDashboard (entry) },
+
     afterTune: function (callMe) {
-
         SourcePector.whatComponent ($callStack.safeLocation (2), this.$ (function (compo) { if (compo) {
-            
-            var trigger = (this.triggersByComponentName[compo] ||
-                          (this.triggersByComponentName[compo] = _.trigger ()))
-
-            trigger (callMe)
-
-            _.each (this.entriesByComponentName[compo],
-                function (entry) {
-                    if (entry.sliddah) {
-                        entry.sliddah.handle.text (trigger.queue.length) } })} })) },
-
-    cubic: function (t, p1, p2, p3, p4) { var value = this.eat ([p1, p2, p3, p4], { cubic: true })
-                return Bezier.cubic1D (t,
-                    value[0], value[1], value[2], value[3]) },
-
-    print: function (value, cfg) {
-                return this.eat (value, _.extend ({ print: true }, cfg)) },
-
-    log: function (value, cfg) {
-                return this.eat (value, _.extend ({ log: true }, cfg)) },
-
-    tune: function (value, cfg) {
-                return this.eat (value, _.extend ({ slider: true }, cfg)) },
-
-    eat: function (value, cfg) { cfg = cfg || {}
-
-        var where = $callStack.clean.safeLocation (1)
-        var entry = this.entriesByStackLocation[where.beforeParse]
-
-        if (!entry && (entry =
-                            this.entriesByStackLocation[where.beforeParse] =
-                                this.addToDashboard (entry = _.extend ({}, cfg, { where: where, value: value })))) {
-            this.entries.push (entry)
-            this.investigateComponentForEntry (entry) }
-
-        if (entry) {            if (entry.print) {
-                                    entry.value = value
-                                    entry.valueEl.text (_.stringify (value, { precision: cfg.precision || 3 })) }
-            return entry.value }
-
-        else {
-            return value } },
+                                                                        (this.triggersByComponentName[compo] ||
+                                                                        (this.triggersByComponentName[compo] = _.trigger ())) (callMe) } } )) },
 
     investigateComponentForEntry: function (entry) {
         
-        SourcePector.whatComponent (entry.where, this.$ (function (compo) { entry.compo = compo
-                    
-                    if (entry.sliddah) {
-                        entry.sliddah.handle.text (this.triggersByComponentName[compo].queue.length) }
-
+        SourcePector.whatComponent (entry.where, this.$ (function (compo) {
+                    entry.compo = compo
                     this.entriesByComponentName[compo] = (this.entriesByComponentName[compo] || []).concat ([entry]) })) },
 
-    parsePrintExpr: function (line) {
-                           var match = line.match (/(.*\$print.+\()([^,\)]+)(.*)/)
-                        return match && {
-                                head: match[1], value: match[2], rest: match[3] } },
-
-    parseTuneExpr: function (line) {
-                           var match = line.match (/(.*\$tune.+\()([^,\)]+)(.*)/)
-                        return match && {
-                                head: match[1], value: parseFloat (match[2]), rest: match[3] } },
-
-    parseCubicExpr: function (line) {
-                           var match = line.match (/(.*\$cubic.+\([^,\)]+\,)([^,\)]+)\,([^,\)]+)\,([^,\)]+)\,([^,\)]+)(.*)/)
-                        return match && {
-                                cubic: true,
-                                head:  match[1], value: [
-                                                    parseFloat (match[2]),
-                                                    parseFloat (match[3]),
-                                                    parseFloat (match[4]),
-                                                    parseFloat (match[5])], rest: match[6] } },
-
-    parseHints: function (expr) {                               if (!expr) return undefined
-        var varName = expr.head.match (/var\s*(.+)\s*=.+/)
-        var comment = expr.rest.match (/\/\/\s*(.+)/)
-        return _.extend (expr,
-            varName ? { varName: varName[1] } : {},
-            comment ? { comment: comment[1] } : {}) },
-
-    parseEntry: function (entry) {
-                        return this.parseHints (entry.print ?
-                                    this.parsePrintExpr (entry.where.source) : (entry.cubic ?
-                                    this.parseCubicExpr (entry.where.source) :
-                                    this.parseTuneExpr  (entry.where.source))) },
-
-    printExprValue: function (expr, precision) { precision = precision || 2
-        return expr.cubic ?
-            (_.map      (expr.value, function (x) { return _.toFixed (x,          precision) }).join (', ')) :
-            (_.isNumber (expr.value) ?                     _.toFixed (expr.value, precision) : undefined) },
-
-    printExpr: function (expr) {
-                        return [expr.head, expr.cubic ?
-                                                _.map (expr.value, _.toFixed3).join (', ') :
-                                                _.toFixed3 (expr.value),
-                                expr.rest].join ('') },
-
-    patchEntrySource: function (entry, value) { SourcePector.patchLine (entry.where, function (text, apply) {
-
-                        var expr    = Bro.parseEntry (_.extend2 (entry, { where: { source: text }}))
-                        var printed = expr && Bro.printExpr  (_.extend  (expr,  { value: value }))
-                        if (printed) {
-                            apply (printed) } }) },
-
-    addToDashboard: function (entry) { var expr = Bro.parseEntry (entry)
-
-        if (!expr) { log.error ('Failed to recognize:', entry.where.source); return undefined }
-
-        entry.el = $('<div class="entry">')
-                        .attr ('data-line', entry.where.line)
-                        .toggleClass ('cubic', entry.cubic || false)
-        
-        var minors = this.el.children ().filter (function () { return $(this).integerAttr ('data-line') > entry.where.line })
-        
-        if (minors.length) {
-            entry.el.insertBefore (minors[0]) }
-        else {
-            entry.el.appendTo (this.el) }
-
-        var commitValueChange = this.$ (function (value) {
-
-                                    entry.value = value
-                                    entry.valueEl.text (Bro.printExprValue (entry, 2))
-
-                                    if (entry.compo && this.triggersByComponentName[entry.compo]) {
-                                                       this.triggersByComponentName[entry.compo] (entry) }
-
-                                    this.patchEntrySource (entry, value)
-                                    this.el.addClass ('changed') })
-
-        entry.el.append ($('<div class="src">')
-            .append (entry.headEl  = $('<span class="head">').text (expr.varName || expr.head)
-                                                             .toggleClass ('var', expr.varName !== undefined))
-
-            .append (entry.valueEl = $('<span class="value">').text (Bro.printExprValue (expr, 2)))
-
-            .append (entry.restEl  = $('<span class="rest">')
-                                            .append ($('<em>').text (expr.comment || expr.rest))))
-        
-        if (entry.cubic) {
-            entry.el.append ((entry.cubicle = new Cubicle ({ value: entry.value })).dom)
-            entry.cubicle.valueChange (commitValueChange) }
-
-        else if (!entry.print) {
-            entry.el.append ((entry.sliddah = new Sliddah ({
-                                    min:   entry.min == undefined ? -1 : entry.min,
-                                    max:   entry.max == undefined ?  1 : entry.max,
-                                    value: entry.value })).dom)
-
-            entry.sliddah.valueChange (commitValueChange) }
-
-        return entry } })
+    addToDashboard: function (entry) {
+                        var minors = this.el.children ().filter (function () { return $(this).integerAttr ('data-line') > entry.where.line })
+                        if (minors.length) {
+                            entry.el.insertBefore (minors[0]) }
+                        else {
+                            entry.el.appendTo (this.el) }
+                        return entry } })
 
 Cubicle = $component ({
 
@@ -439,10 +313,10 @@ SourceFile = $component ({
                                              (line.compo   = compo) }, undefined)
             this.ready (true) })) },
 
-    patchLine: function (number, patch) { //log.warn (this.fileName + ':' + number, '\t', text)
+    patchLine: function (number, patch) { 
         var line = this.lines[number - 1]
         if (line) {
-            patch (line.text, this.$ (function (result) {
+            patch (line.text, this.$ (function (result) { //log.warn (this.fileName + ':' + number, '\t', result)
                                             line.text = result
                                             this.changed = true })) } },
 
