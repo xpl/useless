@@ -130,14 +130,15 @@ function stripCommentsAndTests (src, name, path) {
     return output
 }
 
-function compile (file, path) {
-    var compiledSrc = compileMacros (file + '.js').replace (/_\.withTest \(/g, '_.deferTest (')
+function compile (file, dir) {
+    var name = _.initial (path.basename (file).split ('.')).join ('.')
+    var compiledSrc = compileMacros (file).replace (/_\.withTest \(/g, '_.deferTest (')
 
     compileWithGoogle (
-        stripCommentsAndTests (compiledSrc, file, path),
-        writeCompiled.partial (file + '.min.js', path))
+        stripCommentsAndTests (compiledSrc, name, dir),
+        writeCompiled.partial (name + '.min.js', dir))
 
-    writeCompiled (file + '.js', path,
+    writeCompiled (name + '.js', dir,
         compiledSrc) }
 
 Testosterone.run ({                             
@@ -145,11 +146,11 @@ Testosterone.run ({
     verbose:  false,
     silent:   true },
 
-    function (okay) { if (okay) {
+    function (okay) { if (okay) { 
 
         var opts = (process.argv.length === 4) ?
             { file: process.argv[2], path: process.argv[3] } :
-            { file: 'useless',       path: './build' }
+            { file: './useless.js',  path: './build' }
 
         console.log ('Checking dependencies')
         util.require (['esprima', 'escodegen'], function (esprima, escodegen) {

@@ -1389,7 +1389,7 @@ _.extend($prototype, {
                 return _.map(membersDef, function (member, memberName) {
                     return [
                         memberName,
-                        Tags.add(keyword.slice(1), member)
+                        $global[keyword](member)
                     ]
                 })
             }), true));
@@ -1398,7 +1398,7 @@ _.extend($prototype, {
         },
         isTagKeywordGroup: function (value_, key) {
             var value = Tags.unwrap(value_);
-            return _.isKeyword(key) && _.isTagKeyword(key) && typeof Tags.unwrap(value) === 'object' && !_.isArray(value)
+            return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value)
         }
     }
 });
@@ -1430,6 +1430,9 @@ if (typeof jQuery !== 'undefined') {
         }
     })
 }
+_.defineKeyword('const', function (x) {
+    return $static($property(x))
+});
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))()
 };
@@ -2001,6 +2004,9 @@ _.rescale = function (v, from, to, opts) {
     var unit = (v - from[0]) / (from[1] - from[0]);
     return _.lerp(opts && opts.clamp ? _.clamp(unit, 0, 1) : unit, to[0], to[1])
 };
+_.sqr = function (x) {
+    return x * x
+};
 Vec2 = $prototype({
     $static: {
         zero: $property(function () {
@@ -2029,10 +2035,17 @@ Vec2 = $prototype({
         this.y = arguments.length === 1 ? x : y
     },
     length: $property(function () {
-        return Math.sqrt(this.x * this.x + this.y * this.y)
+        return Math.sqrt(this.lengthSquared)
     }),
-    add: function (other) {
-        return new Vec2(this.x + other.x, this.y + other.y)
+    lengthSquared: $property(function () {
+        return this.x * this.x + this.y * this.y
+    }),
+    add: function (a, b) {
+        if (b === undefined) {
+            return new Vec2(this.x + a.x, this.y + a.y)
+        } else {
+            return new Vec2(this.x + a, this.y + b)
+        }
     },
     sub: function (other) {
         return new Vec2(this.x - other.x, this.y - other.y)
@@ -2086,6 +2099,21 @@ Vec2 = $prototype({
     }),
     toString: function () {
         return '{' + this.x + ',' + this.y + '}'
+    },
+    projectOnCircle: function (center, r) {
+        return center.add(this.sub(center).normal.scale(r))
+    },
+    projectOnLineSegment: function (v, w) {
+        var wv = w.sub(v);
+        var l2 = wv.lengthSquared;
+        if (l2 == 0)
+            return v;
+        var t = Vec2.dot(this.sub(v), wv) / l2;
+        if (t < 0)
+            return v;
+        if (t > 1)
+            return w;
+        return v.add(wv.scale(t))
     }
 });
 Bezier = {
@@ -2210,6 +2238,23 @@ BBox = $prototype({
         hit.delta = delta.scale(hit.time);
         hit.where = pos.add(hit.delta);
         return hit
+    },
+    nearestPointTo: function (pt, cornerRadius) {
+        var r = cornerRadius || 0;
+        var a = new Vec2(this.left, this.top), b = new Vec2(this.right, this.top), c = new Vec2(this.right, this.bottom), d = new Vec2(this.left, this.bottom);
+        var pts = [
+            pt.projectOnLineSegment(a.add(r, 0), b.add(-r, 0)),
+            pt.projectOnLineSegment(b.add(0, r), c.add(0, -r)),
+            pt.projectOnLineSegment(c.add(-r, 0), d.add(r, 0)),
+            pt.projectOnLineSegment(d.add(0, -r), a.add(0, r)),
+            pt.projectOnCircle(a.add(r, r), r),
+            pt.projectOnCircle(b.add(-r, r), r),
+            pt.projectOnCircle(c.add(-r, -r), r),
+            pt.projectOnCircle(d.add(r, -r), r)
+        ];
+        return _.min(pts, function (test) {
+            return pt.sub(test).length
+        })
     },
     clone: $property(function () {
         return new BBox(this.x, this.y, this.width, this.height)
@@ -2978,7 +3023,7 @@ if (jQuery) {
                                     e.preventDefault();
                                     var translatedEvent = translateTouchEvent(e, this[0]);
                                     var offset = relativeTo.offset();
-                                    cfg.move.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top), translatedEvent)
+                                    memo = cfg.move.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top), translatedEvent) || memo
                                 } else {
                                     abort(e)
                                 }

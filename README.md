@@ -144,7 +144,7 @@ Copy `useless` folder to `node_modules` subfolder of your project. In this case 
 
 ##Installing as pre-built monolithic script
 
-If you want to use only platform-independent part of the library, go to `build` folder and pick `useless.js`. This one is ready to be included to either server or client side.
+If you want to use only the platform-independent part of the library, go to `build` folder and pick `useless.js`. This one is ready to be included to either server or client side.
 
 For minified version (with unit tests stripped) pick `useless.min.js`. This one is ready to be used in production setup.
 
@@ -154,13 +154,15 @@ Build command:
 
 `node build.js <header-file> <output-folder>`
 
-For building useless.js, run `node build.js useless ./build`. It will compile `useless.js` in root directory to `./build/useless.js`, and also will generate minified version `./build/useless.min.js` via Google Closure Compiler. There will be also intermediate file `./build/useless.stripped.js` with unit tests and comments stripped.
+For generic build, run `node build.js ./useless.js ./build`
+
+It will generate `./build/useless.js` by substituting `$include` directives found in header file. Produced result will undergo stripping of tests and comments, and then finally compiled using Google Closure Compiler, outputting minified result to `./build/useless.min.js`
 
 ##Custom build
 
-To make reduced version (with some submodules disabled), you can make your own version of `useless.js` file, commenting out unneeded `$include` directives. And then running build command to compile it.
+To make reduced distribution (with some submodules disabled), you can create your own version of default header file, commenting out unneeded `$include` directives.
 
-There exists `useless.micro.js` as example of such reduced build. Running `node build.js useless.micro ./build` will produce `./build/useless.micro.min.js` as output.
+There exists `./useless.micro.js` as an example of such reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
 
 ##Automatic builds on source change
 
