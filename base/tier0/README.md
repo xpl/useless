@@ -70,7 +70,7 @@ Limits function to given number of arguments.
   _.arityFn = function (N) { return _['arity' + N] }
 ```
 
-Useful in cases when a callback does not expect some extra arguments that some other routine supplies to it. As example, where `_.map` supplies 3 arguments to callback, but they're totally not expected:
+Super useful in cases when a callback does not expect some extra arguments passed to it. In the following example, `_.map` supplies 3 arguments to it's callback, but they're totally not expected:
 
 ```javascript
   var operation = function (x, destroyWorldIfSupplied) { .. }
