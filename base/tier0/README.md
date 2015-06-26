@@ -6,7 +6,7 @@ Most deep layer of Useless.js code base.
 
 A collection of most basic data processing algorithms missing / misimplemented in Underscore.js
 
-###map2 (x, op)
+###_.map2 (x, op)
 
 ``x  : any type``
 ``op : fn (value, key)``
@@ -15,19 +15,42 @@ Abstract map that can operate over any type of `x`. This is semantically correct
 
 Scalar value:
 ```
-    > _.map2 ('foo', _.appends ('bar'))
-    > 'foobar'
+> _.map2 ('foo', _.appends ('bar'))
+> 'foobar'
 ```
 
 Arrays:
 ```
-    > _.map2 (['foo'], _.appends ('bar'))
-    > ['foobar']
+> _.map2 (['foo'], _.appends ('bar'))
+> ['foobar']
 ```
 
 Objects:
 ```    
-    > _.map2 ({ foo: 'foo' }, _.appends ('bar'))
-    > { foo: 'foobar' }
+> _.map2 ({ foo: 'foo' }, _.appends ('bar'))
+> { foo: 'foobar' }
+```
+
+###_.mapMap (x, op)
+
+``x  : any type``
+``op : fn (value, key)``
+
+Fractalized version of previous utility. Hence the name (map over map). Can operate over arbitrary structure, 'seeing through' it:
+
+```
+> _.mapMap ({ foo: 7,
+              bar: ['foo', {
+                bar: undefined }] }, _.typeOf))
+                            
+>  { foo: 'number', 
+     bar: ['string', {
+        bar: 'undefined' }] }) },
+```
+
+Made with `_.hyperOperator` — a highly abstract operator that fractalizes ordinary algorithms, looping them through themselves. See how `_.mapMap` is defined:
+
+```
+_.mapMap = _.hyperOperator (_.unary, _.map2)  // 'unary' says that both _.map2 and its functor take 1 argument.
 ```
 
