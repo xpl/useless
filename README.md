@@ -31,25 +31,25 @@
 ###Macro processor for prototype definitions
 
 + `$prototype` / `$extends`
-+ smart property declarations
-+ static methods / properties
-+ tag groups on members (`$static: { ... }`)
++ Smart property declarations
++ Static methods / properties
++ Tag groups on members (`$static: { ... }`)
 + `$final`
-+ member aliases
++ Member aliases
 + RTTI
-+ pluggable macros for custom syntax
++ Pluggable macros for custom syntax
 + `$singleton`
 * `$traits` (mixins) as combinatoric-style alternative to inheritance
 * `$aspect` (Aspect Oriented Programming) / declarative method binding
 
 ###Component model
 
-* binds own methods to `this` automatically
-* enables chaining into methods (also enables that for $traits)
-+ manages bindable `$trigger` / `$barrier` / `$observableProperty` members
-+ tracks bound components / auto-unbinds upon deinitialization
-+ holds parent-child relationship / handles automatic deinitialization
-+ validates configuration contracts (`$requires`, `$defaults`)
+* Binds own methods to `this` automatically
+* Enables chaining into methods (also enables that for $traits)
++ Manages bindable `$trigger` / `$barrier` / `$observableProperty` members
++ Tracks bound components / auto-unbinds upon deinitialization
++ Holds parent-child relationship / handles automatic deinitialization
++ Validates configuration contracts (`$requires`, `$defaults`)
 
 ###Exception handling
 
@@ -68,13 +68,13 @@
 
 ###Logging
 
-+ platform-independent
-+ color output
-+ shows code location
-+ configurable object printer
-+ table layout formatting
-+ hookable/interceptable
-+ cross-machine
++ Platform-independent
++ Color output
++ Shows code location
++ Configurable object printer
++ Table layout formatting
++ Hookable/interceptable
++ Cross-machine
 
 ###Tests
 
@@ -88,10 +88,10 @@
 ###And more..
 
 - Platform detection/abstraction layer
-- DSL for writing regexps in JS + named subexpressions
-- Unicode regexp hack
 - Performance measurement
-- Base64 encoding/decoding
+- DSL for writing regexps in JS + named subexpressions
+- Unicode regexp hack (3rd party)
+- Base64 encoding/decoding (3rd party)
 
 ##`./client`
 
