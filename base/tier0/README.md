@@ -9,7 +9,7 @@ A collection of most basic data processing algorithms missing / misimplemented i
 ###_.map2 (x, op)
 
 ``x  : any type``
-``op : fn (value, key)``
+``op : f (value, key)``
 
 Abstract map that can operate over any type of `x`. This is semantically correct, in contrary to standard `_.map` behavior. When implemented like this, it can be used as a basic composable building block for larger structure-independent algorithms.
 
@@ -55,11 +55,11 @@ See how `_.mapMap` is defined:
 
 ###_.reduceReduce (memo, value, op)
 
-``memo (initial value) : required``
+``memo : required``
 ``value : any``
-``op : function (memo, value)``
+``op : f (memo, value)``
 
-A note on nonstandard argument order. Because `hyperOperator` is fractal thing, it is nessesary to define a compatible argument order for `_.reduce2` and its functor operand, as they get melted together to form a generic self-similar routine of a higher order. And that becames kinda "Yodish" when applied to familiar `_.reduce`. See how they dont match:
+Initial memo **should** be provided. A note on nonstandard argument order. Because `hyperOperator` is fractal thing, it is nessesary to define a compatible argument order for `_.reduce2` and its functor operand, as they get melted together to form a generic self-similar routine of a higher order. And that becames kinda "Yodish" when applied to familiar `_.reduce`. See how they dont match:
 
 ```
   1. _.reduce (value, op, memo)
