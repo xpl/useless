@@ -14,7 +14,7 @@
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
 * Higher order toolbox (functions that warp functions)
-* Infix interface for underscore.js stuff (as Array/String/Function extensions)
+* Infix interface for underscore's stuff (as Array/String/Function extensions)
 * Abstract `map/zip/filter/reduce` over arrays/objects/scalars
 * Deep `map/zip/filter/reduce` over arbitrary structures
 * Deep version of underscore's stuff (`_.clone`, `_.extend`, etc)
@@ -34,22 +34,22 @@
 + Smart property declarations
 + Static methods / properties
 + Tag groups on members (`$static: { ... }`)
-+ `$final`
-+ Member aliases
 + RTTI
 + Pluggable macros for custom syntax
++ Member aliases
++ `$final`
+* `$traits` (a.k.a. mixins) as combinatoric-style alternative to inheritance
+* `$aspect` Aspect Oriented Programming / declarative method binding
 + `$singleton`
-* `$traits` (mixins) as combinatoric-style alternative to inheritance
-* `$aspect` (Aspect Oriented Programming) / declarative method binding
 
 ###Component model
 
 * Binds own methods to `this` automatically
-* Enables chaining into methods (also enables that for $traits)
 + Manages bindable `$trigger` / `$barrier` / `$observableProperty` members
 + Tracks bound components / auto-unbinds upon deinitialization
 + Holds parent-child relationship / handles automatic deinitialization
-+ Validates configuration contracts (`$requires`, `$defaults`)
+* Enables $traits to chain into method calls by overlapping method definitions
++ Enforces configuration contracts (`$requires`, `$defaults`)
 
 ###Exception handling
 
