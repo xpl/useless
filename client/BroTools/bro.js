@@ -5,14 +5,114 @@ _.extend ($global, {
     $print:     _.identity,
     $log:       _.identity })
 
-BroTools = $singleton (Component, {
+Bro = $singleton (Component, {
 
     $defaults: {
         init: false,
         entries: [],
         entriesByStackLocation: {},
         entriesByComponentName: {},
-        triggersByComponentName: {} },
+        triggersByComponentName: {},
+        toolsByName: {} },
+
+    BaseTool: $component ({
+
+        BaseEntry: $component ({
+
+            $requires: {
+                value: $any,
+                where: 'object' },
+
+            init: function () {
+
+            },
+
+            parseHints: function () {
+
+
+        var varName = this.head.match (/var\s*(.+)\s*=.+/)
+        var comment = this.rest.match (/\/\/\s*(.+)/)
+        return _.extend (this,
+            varName ? { varName: varName[1] } : {},
+            comment ? { comment: comment[1] } : {}) },
+
+    parseEntry: function (entry) {
+                        return this.parseHints (entry.print ?
+                                    this.parsePrintExpr (entry.where.source) : (entry.cubic ?
+                                    this.parseCubicExpr (entry.where.source) :
+                                    this.parseTuneExpr  (entry.where.source))) },
+
+            patchSource: function () { SourcePector.patchLine (this.where, function (text, apply) {
+
+                var expr    = Bro.parseEntry (_.extend2 (entry, { where: { source: text }}))
+                var printed = expr && Bro.printExpr  (_.extend  (expr,  { value: value }))
+                if (printed) {
+                    apply (printed) } }) },
+
+            widget: function () {
+
+                return $('<div class="entry">').attr ('data-line', this.where.line)
+
+                var commitValueChange = this.$ (function (value) {
+
+                                            entry.value = value
+                                            entry.valueEl.text (Bro.printExprValue (entry, 2))
+
+                                            Bro.entryValueChange (this)
+
+                                            this.patchEntrySource (entry, value)
+                                            this.el.addClass ('changed') })
+
+                        entry.el.append ($('<div class="src">')
+                            .append (entry.headEl  = $('<span class="head">').text (expr.varName || expr.head)
+                                                                             .toggleClass ('var', expr.varName !== undefined))
+
+                            .append (entry.valueEl = $('<span class="value">').text (Bro.printExprValue (expr, 2)))
+
+                            .append (entry.restEl  = $('<span class="rest">')
+                                                            .append ($('<em>').text (expr.comment || expr.rest))))
+            }
+        }),
+
+        init: function () { log.i ('BroTools™: installing', '$' + this.constructor.name)
+
+            this.Entry = $extends (BaseTool.BaseEntry,
+                            _.extend (this.constructor.Entry, { tool: $const (this) }))
+
+            _.defineKeyword (this.constructor.name, this.call) },
+
+        call: function () {
+            new this.Entry ({ value: this.value.apply (null, arguments) }) },
+
+        value: _.identity,
+
+        result: function () {
+            return this.valueFromArguments.apply (null, arguments) },
+
+        eat: function (value, cfg) {
+            var where = $callStack.clean.safeLocation (1)
+            var entry = this.entriesByStackLocation[where.beforeParse]
+
+            if (!entry && (entry =
+                                this.entriesByStackLocation[where.beforeParse] =
+                                    this.addToDashboard (entry = _.extend ({}, cfg, { where: where, value: value })))) {
+                this.entries.push (entry)
+                this.investigateComponentForEntry (entry) }
+
+            if (entry) {            if (entry.print) {
+                                        entry.value = value
+                                        entry.valueEl.text (_.stringify (value, { precision: cfg.precision || 3 })) }
+                return entry.value }
+
+            else {
+                return value }
+        }
+    }),
+
+    Tool: function (def) {
+        var tool = $extends (this.BaseTool, def)
+        this.toolsByName[tool.name] = new tool ()
+        return tool },
 
     init: function () {
 
@@ -139,12 +239,12 @@ BroTools = $singleton (Component, {
 
     patchEntrySource: function (entry, value) { SourcePector.patchLine (entry.where, function (text, apply) {
 
-                        var expr    = BroTools.parseEntry (_.extend2 (entry, { where: { source: text }}))
-                        var printed = expr && BroTools.printExpr  (_.extend  (expr,  { value: value }))
+                        var expr    = Bro.parseEntry (_.extend2 (entry, { where: { source: text }}))
+                        var printed = expr && Bro.printExpr  (_.extend  (expr,  { value: value }))
                         if (printed) {
                             apply (printed) } }) },
 
-    addToDashboard: function (entry) { var expr = BroTools.parseEntry (entry)
+    addToDashboard: function (entry) { var expr = Bro.parseEntry (entry)
 
         if (!expr) { log.error ('Failed to recognize:', entry.where.source); return undefined }
 
@@ -162,7 +262,7 @@ BroTools = $singleton (Component, {
         var commitValueChange = this.$ (function (value) {
 
                                     entry.value = value
-                                    entry.valueEl.text (BroTools.printExprValue (entry, 2))
+                                    entry.valueEl.text (Bro.printExprValue (entry, 2))
 
                                     if (entry.compo && this.triggersByComponentName[entry.compo]) {
                                                        this.triggersByComponentName[entry.compo] (entry) }
@@ -174,7 +274,7 @@ BroTools = $singleton (Component, {
             .append (entry.headEl  = $('<span class="head">').text (expr.varName || expr.head)
                                                              .toggleClass ('var', expr.varName !== undefined))
 
-            .append (entry.valueEl = $('<span class="value">').text (BroTools.printExprValue (expr, 2)))
+            .append (entry.valueEl = $('<span class="value">').text (Bro.printExprValue (expr, 2)))
 
             .append (entry.restEl  = $('<span class="rest">')
                                             .append ($('<em>').text (expr.comment || expr.rest))))

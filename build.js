@@ -91,7 +91,7 @@ function stripCommentsAndTests (src, name, path) {
 
     var stripped = {
         type: 'Program',
-        body: _.flatten (_.filter2 (esprima.parse (src).body,
+        body: _.flatten (_.filter2 (esprima.parse (src, { raw: true, tokens: true, range: true }).body,
             function (expr) {
 
                 if (matchesHasModuleEqualsTrue (expr)) { var module = expr.expression.left.property.name
@@ -119,6 +119,8 @@ function stripCommentsAndTests (src, name, path) {
                 else {
                     return true } })) }
 
+    escodegen.attachComments(stripped, syntax.comments, stripped.tokens);
+    
 // log.info (_.stringify (stripped, { pretty: true, maxArrayLength: 10000, maxDepth: 10 }))
 
 //    log.write (escodegen.generate (stripped))

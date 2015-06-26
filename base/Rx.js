@@ -80,6 +80,8 @@ _.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { 
         begin:       $property ('^'),
         end:         $property ('$'),
         space:       $property ('\\s'),
+        maybeSpaces: $property ('\\s*'),
+        spaces:      $property ('\\s+'),
         anything:    $property ('.*'),
         something:   $property ('.+'),
         comma:       $property (','),

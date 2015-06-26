@@ -1,6 +1,6 @@
 # Use Less. Do More.
 
-##...Or Yet Another Useless JavaScript Library 
+##__...or something **::)**__
 
 * `./base` platform-independent part
 * `./client` browser-related utility
@@ -9,7 +9,7 @@
 * `./useless.js` header file for build tool (contains include directives)
 * `./useless.micro.js` header file for reduced build (example)
 
-##Features
+##`./base`
 
 ###Standard library of algorithms
 
@@ -91,7 +91,45 @@
 - Performance measurement
 - Base64 encoding/decoding
 
-**::)**
+##`./client`
+
+###jQueryPlus.js
+
+A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$.fn.drag`), which is utilized by countless number of widgets I made.
+
+###BroTools™
+
+An interactive code macroprocessor. Makes certain constants in source code editable. One tags a constant of interest with special keyword, e.g. `$tune (12.224)`. Calling $tune translates to a certain widget in the BroTools™ UI, associated with source code location of the call (read via Callstack API). Interacting with the widget leads to source code update, writing new value inside call expression. Currently under development.
+
+###API.js
+
+XHR requests to communicate with `./server` part.
+
+###UI.error.js
+
+A pop-up alert that shows errors / stack traces.
+
+###TileView.js
+###TableView.js
+
+These widgets built on top of virtualized rendering back-end (`VirtualListViewRenderer.js`) and can display vast amount of data.
+
+###RangeControl.js
+###ContextMenu.js
+###Popover.js
+###FormDialog.js
+
+Various commonplace widgets.
+
+###Nav.js
+
+Tabbed navigation host / URL persistence.
+
+###Collection/Collection.js
+###Collection/RemoteCollection.js
+###DataManager.js
+
+Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
 ##Installing as NPM module
 

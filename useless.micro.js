@@ -141,5 +141,5 @@ _.deferTest = function (name, test, subj) { subj () }
 /*  Browser-related code
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./client/UI')
+    $include ('./client/jQueryPlus')
 
