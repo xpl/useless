@@ -86,7 +86,7 @@ Super useful in cases when a callback does not expect some extra arguments passe
 For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
 
 ```javascript
-  _.Y (function (self) {                          // counts to 5
+  _.Y (function (self) {                          // returns a function that counts to 5
       return function (n) {
           return n >= 5 ? n : self (n + 1) } })
 ```
