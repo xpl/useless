@@ -1,9 +1,9 @@
 <html>
 	<head>
 		<title>Cubic</title>
-		<script src="../lib/underscore-min.js"></script>
-		<script src="../lib/jquery-2.0.3.min.js"></script>
-		<script src="../lib/foundation-0.0.1.js"></script>
+		<script src="lib/underscore-min.js"></script>
+		<script src="lib/jquery-2.0.3.min.js"></script>
+		<script src="../build/useless.micro.js"></script>
 	</head>
 	<style>
 		.rect { position: relative; background: #cccccc; width: 200px; height: 200px; }
@@ -43,7 +43,7 @@
 				$(handle).drag ({
 					start: function () {
 						this.pos = this.offset () },
-					move:  function (offset) {
+					move:  function (memo, offset) {
 						this.css ({
 							left: this.pos.left + offset.x,
 							top:  this.pos.top  + offset.y }); update () },
