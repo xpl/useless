@@ -53,6 +53,20 @@ See how `_.mapMap` is defined:
   _.mapMap = _.hyperOperator (_.unary, _.map2)  // 'unary' says that both _.map2 and its functor take 1 argument.
 ```
 
+###_.reduceReduce (memo, value, op)
+
+``memo (initial value) : required``
+``value : any``
+``op : function (memo, value)``
+
+A note on nonstandard argument order. Because `hyperOperator` is fractal thing, it is nessesary to define a compatible argument order for `_.reduce2` and its functor operand, as they get melted together to form a generic self-similar routine of a higher order. And that becames kinda "Yodish" when applied to familiar `_.reduce`. See how they dont match:
+
+```
+  1. _.reduce (value, op, memo)
+  2.       op (memo, value)
+```
+So from that perspective, argument order of the default implementation is not chosen correct, as it brings unnessesary interface distinction that leads to unforeseen problems (and bothers that old guy Occam).
+
 ##function.js
 
 Various function-centric utility.
