@@ -9,16 +9,20 @@
 
 ##Feature overview
 
-###Standard library of algorithms
+###Generic algorithms
 
 * Extends underscore.js `_` namespace
-* Infix calls for library methods (as Function/Array/String extensions)
+* Functional primitives busybox (predicates, operators and stuff)
+* Higher order toolbox (functions that warp functions)
+* Infix interface for underscore.js stuff (as Array/String/Function extensions)
 * Abstract `map/zip/filter/reduce` over arrays/objects/scalars
-* Deep `map/zip/filter/reduce` over any type of structure
+* Deep `map/zip/filter/reduce` over arbitrary structures
+* Deep version of underscore's stuff (`_.clone`, `_.extend`, etc)
 * Advanced type detection / pattern matching
 * Continuation-passing style (CPS) versions of standard algorithms
 * Concurrency primitives (task pooling, interlocked methods)
-* Vector math (`Vec2`, `Transform`, `BBox`, intersections)
+* Basic math (`lerp` / `clamp`, color space conversion, etc)
+* Vector math (`Vec2`, `Transform`, `BBox`, `Bezier`, intersections)
 - Multicast model for method calls with simple functional I/O
     - `_.trigger`, `_.triggerOnce` / one-to-many broadcast
     - `_.barrier` / synchronization primitive
