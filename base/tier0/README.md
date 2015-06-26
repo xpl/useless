@@ -45,7 +45,7 @@ Fractalized version of previous utility. Hence the name (map over map). Can oper
           bar: 'undefined' }] }) },
 ```
 
-Made with `_.hyperOperator` — a highly abstract operator that fractalizes ordinary algorithms, looping them through themselves, making structure transparent for their operation. See how `_.mapMap` is defined:
+Defined via `_.hyperOperator` - a highly abstract transformation that fractalizes ordinary algorithms, looping them through themselves, making any complex structure completely transparent for their operation. See how `_.mapMap` is defined:
 
 ```
   _.mapMap = _.hyperOperator (_.unary, _.map2)  // 'unary' says that both _.map2 and its functor take 1 argument.
