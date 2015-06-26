@@ -9,7 +9,7 @@
 
 ##Feature overview
 
-###Generic algorithms
+###[Generic algorithms](./base/tier0/README.md)
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
