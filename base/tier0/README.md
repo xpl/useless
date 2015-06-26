@@ -2,6 +2,10 @@
 
 Most deep layer of Useless.js code base.
 
+```
+!!! DOCUMENTATION UNDER CONSTRUCTION !!!
+```
+
 ##stdlib.js
 
 A collection of most basic data processing algorithms missing / misimplemented in Underscore.js
