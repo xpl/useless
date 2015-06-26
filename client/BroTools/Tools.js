@@ -55,6 +55,12 @@ BroProp = Bro.Tool ({
         printValue: function () {
             return 'new Vec2 (' + this.value.x.toFixed (3) + ', ' + this.value.y.toFixed (3) + ')' },
 
+        updatedExpr: function () { var newVec2 = this.expr.arguments[2].arguments
+            newVec2[0] = this.numberExpr (this.value.x)
+            newVec2[1] = this.numberExpr (this.value.y)
+            return this.expr
+        },
+
         call: function (x) {
             return this.value },
 

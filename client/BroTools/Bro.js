@@ -10,10 +10,12 @@ Bro = $singleton (Component, {
 
     BaseEntry: $component ({
 
-        init: function () {
+        init: function () { 
             $assertTypeof (this.parse (), { before: 'string', after: 'string', arguments: [] })
             this.el = this.widgetContainer ()
-            this.el.append (this.widget ()) },
+            this.el.append (this.widget ())
+
+            log.ok (this.print ()) },
 
         configure: _.identity,
 
@@ -27,25 +29,35 @@ Bro = $singleton (Component, {
                         varName ? { varName: varName[1] } : {},
                         comment ? { comment: comment[1] } : {}) },
 
-        parse: function () { console.log (this.where.source)
-                    var parsed = this.constructor.tool.matchExpr.parse (this.where.source)
-                    return _.extend (this, this.parseHints ({
-                        before:           parsed.before,
-                        arguments: _.map (this.parseArguments (parsed.arguments), _.trimmed),
-                        after:            parsed.after })) },
-
-        parseArguments: function (args) {
-            return args.split (',') },
+        parse: function () { console.log (this.expr.loc.start.column, this.where.source)
+                    return this.parseHints (_.extend (this, {
+                        before: this.where.source.substr (0, this.expr.loc.start.column),
+                        after:  this.where.source.substr (this.expr.loc.end.column, this.where.source.length - this.expr.loc.end.column) })) },
 
         print: function () {
-                    return [this.before, '(' + this.printArguments () + ')', this.after].join ('') },
+            try {
+                    return this.before + escodegen.generate (this.updatedExpr (), { format: { indent: { style: '' }, newline: ' ' }})
+                            .replace (/\n/g, ' ')
+                            .replace (/\(/g, ' (') + this.after
+            } catch (e) {
+                log.error (e)
+                return 'FAILURE' } },
+
+        numberExpr: function (n) {
+            var literal = { "type": "Literal", "value": Math.abs (n) }
+            return (n < 0) ? {
+                            "type": "UnaryExpression",
+                            "operator": "-",
+                            "argument": literal } : literal },
+
+        updatedExpr: function () {
+            if (this.value !== undefined) {
+                this.expr.arguments[0] = this.numberExpr (this.value)
+            }
+            return this.expr },
 
         printValue: function () {
             return this.value + '' },
-
-        printArguments: function () {
-            this.arguments[0] = this.printValue ()
-            return this.arguments.join (', ') },
 
         patchSource: function () { SourcePector.patchLine (
                                         this.where,
@@ -61,13 +73,13 @@ Bro = $singleton (Component, {
         widgetContainer: function () {
             return $('<div class="entry">').attr ('data-line', this.where.line)
                         .append ($('<div class="src">')
-                            .append (this.headEl  = $('<span class="head">').text (this.varName || this.before)
+                            .append (this.headEl  = $('<span class="head">').text (this.varName || this.before.trimmed)
                                                                                .toggleClass ('var', this.varName !== undefined))
 
                             .append (this.valueEl = $('<span class="value">').text (this.printValue ()))
 
                             .append (this.restEl  = $('<span class="rest">')
-                                                            .append ($('<em>').text (this.comment || this.after)))) } }),
+                                                            .append ($('<em>').text (this.comment || this.after.trimmed)))) } }),
     
     BaseTool: $component ({
 
@@ -88,8 +100,10 @@ Bro = $singleton (Component, {
             var where = $callStack.safeLocation (2)
             var entry = Bro.locateEntry (where)
             if (!entry) {
-                entry = _.tryEval (this.$ (function () { return new this.Entry ({
-                                                            where:             where,
+                SourcePector.locateStackEntry (where, this.$ (function (line, expr) {
+                    _.tryEval (this.$ (function () { return new this.Entry ({
+                                                            where:             _.extend (where, { source: line }),
+                                                            expr:              expr,
                                                             initArguments:     callArgs,
                                                             value:             this.valueFromArguments.apply (null, callArgs) }) }),
                                     function (e) {
@@ -97,8 +111,7 @@ Bro = $singleton (Component, {
 
                                     function (entry) { if (entry) { Bro.addEntry (entry)
                                                                     entry.configure.apply (null, callArgs)
-                                                       return entry } }) }
-
+                                                       return entry } }) })) }
             if (entry) {
                 return entry.call.apply (null, callArgs) }
             else {
@@ -261,79 +274,5 @@ Sliddah = $component ({
     destroy: function () {
         this.dom.destroy ()
         delete this.dom } })
-
-SourcePector = $singleton (Component, {
-
-    $defaults: {
-        filesByName: {} },
-
-    init: function () {},
-
-    saveChanges: function () {
-        _.each (this.filesByName, function (file) {
-            if (file.changed) {
-                file.saveChanges () } }) },
-
-    file: function (name) {
-                return this.filesByName[name] ||
-                      (this.filesByName[name] = new SourceFile ({ fileName: name })) },
-         
-    patchLine: function (stackEntry, patch) { if (stackEntry && stackEntry.fileName) {
-                    this.file (stackEntry.fileName).ready (function () {
-                        this.patchLine (stackEntry.line, patch) }) } },
-
-    whatComponent: function (stackEntry, then) { if (stackEntry && stackEntry.fileName) {
-                    this.file (stackEntry.fileName).ready (function () {
-                        then (this.whatComponent (stackEntry.line)) }) } } })
-
-SourceFile = $component ({
-
-    $requires: {
-        fileName: 'string' },
-
-    $defaults: {
-        text:       undefined,
-        lines:      [] },
-
-    ready: $barrier (),
-
-    init: function () { _.readSource ('/static/' + this.fileName, this.$ (function (text) {
-
-            this.text = text
-            this.lines = _.map (text.split ('\n'), function (line, i) {
-
-                var def = (line.indexOf ('$component') >= 0) ||
-                          (line.indexOf ('$prototype') >= 0) ||
-                          (line.indexOf ('$extends')   >= 0) ||
-                          (line.indexOf ('$singleton') >= 0)
-                return {
-                    number: (i + 1),
-                    text:    line,
-                    compo:  (def && line.split (' ')[0]) || undefined } })
-
-            _.reduce (this.lines, function (compo, line) {
-                                        return line.compo ?
-                                            ((line.compo === compo) ? compo : line.compo) :
-                                             (line.compo   = compo) }, undefined)
-            this.ready (true) })) },
-
-    patchLine: function (number, patch) { 
-        var line = this.lines[number - 1]
-        if (line) {
-            patch (line.text, this.$ (function (result) { log.warn (this.fileName + ':' + number, '\t', result)
-                                            line.text = result
-                                            this.changed = true })) } },
-
-    saveChanges: function (then) {
-        this.changed = false
-        API.post ('source/static/' + this.fileName, {
-            what:    { text: _.pluck (this.lines, 'text').join ('\n') },
-            failure: UI.error,
-            success: this.$ (function () {
-                log.ok (this.fileName, '— successfully saved')
-                if (then) { then () } }) }) },
-
-    whatComponent: function (lineNumber) {
-            return this.lines[lineNumber - 1] && this.lines[lineNumber - 1].compo } })
 
 
