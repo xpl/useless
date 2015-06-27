@@ -1,5 +1,5 @@
 
-#Guide to `useless/base`
+#Guide to `./useless/base`
 
 * `./tier0` core features
 * `./infix` extensions for built-in types (Array/String/Function)
