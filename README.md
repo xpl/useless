@@ -13,16 +13,11 @@
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
-  - `_.typeOf` `_.count` `_.tuple` `_.concat` `_.atIndex` `_.applies` `_.prepends` `_.appends` `_.join` `_.joinWith` `_.joinsWith` `_.sum` `_.sums` `_.subtract` `_.subtracts` `_.mul` `_.equal` `_.equals` `_.largest` `_.notZero` `_.propertyOf`
 * Higher order toolbox (functions that warp functions)
-  - `_.arity` `_.tails` `_.flip` `_.or` `_.and` `_.not` `_.Y` `_.hyperOperator` `_.higherOrder` `_.eval` `_.evals` `_.method` `_.wrapper` `_.once` `_.withTimeout` `_.sequence` `_.then`
 * Infix interface for underscore's stuff (as Array/String/Function extensions)
-* Abstract algorithms over arrays/objects/scalars
-  - `_.map2` `_.zip2` `_.filter2` `_.reduce2` `_.find2`
-* Deep algorithms over arbitrary structures
-  - `_.mapMap` `_.zipZip` `_.filterFilter` `_.reduceReduce` `_.findFind`
-* Deep version of underscore's stuff
-  - `_.cloneDeep` `_.extend2` `_.extendExtend`
+* Abstract `map/zip/filter/reduce` over arrays/objects/scalars
+* Deep `map/zip/filter/reduce` over arbitrary structures
+* Deep version of underscore's stuff (`_.clone`, `_.extend`, etc)
 * Advanced type detection / pattern matching
 * Continuation-passing style (CPS) versions of standard algorithms
 * Concurrency primitives (task pooling, interlocked methods)
