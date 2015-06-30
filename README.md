@@ -13,6 +13,7 @@
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
+  - `_.typeOf` `_.count` `_.tuple` `_.concat` `_.atIndex` `_.applies` `_.prepends` `_.appends` `_.join` `_.joinWith` `_.joinsWith` `_.sum` `_.sums` `_.subtract` `_.subtracts` `_.mul` `_.equal` `_.equals` `_.largest` `_.notZero` `_.propertyOf`
 * Higher order toolbox (functions that warp functions)
 * Infix interface for underscore's stuff (as Array/String/Function extensions)
 * Abstract `map/zip/filter/reduce` over arrays/objects/scalars
