@@ -3497,14 +3497,16 @@ $extensionMethods = function (Type, methods) {
 
         /*  define as property of Type
          */
-        if (!tags.$method && (tags.$property || (_.oneArg (fn))) && !(name in Type.prototype)) {
-            _.defineHiddenProperty (Type.prototype, name, function () {
-                return fn (this) })}
+        if (!tags.$method && (tags.$property || (_.oneArg (fn)))) {
+            if (!(name in Type.prototype)) {
+                _.defineHiddenProperty (Type.prototype, name, function () {
+                    return fn (this) }) } }
 
         /*  define as method
          */
         else if (!tags.$property) {
-            Type.prototype[name] = _.asMethod (tags.$flipped ? _.flip (fn) : fn) }
+            if (!(name in Type.prototype)) {
+                Type.prototype[name] = _.asMethod (tags.$flipped ? _.flip (fn) : fn) } }
 
         else {
             throw new Error ('$extensionMethods: crazy input, unable to match') } })}
@@ -6393,7 +6395,7 @@ Component = $prototype ({
 
             /*  Expand $bindable
              */
-            if (def.$bindable) { $assert (_.isFunction (this[name]))
+            if (def.$bindable) { if (_.hasAsserts) { $assert (_.isFunction (this[name])) }
                 this[name] = _.bindable (this[name], this) }
 
             /*  Expand $debounce

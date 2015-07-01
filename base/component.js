@@ -547,7 +547,7 @@ Component = $prototype ({
 
             /*  Expand $bindable
              */
-            if (def.$bindable) { $assert (_.isFunction (this[name]))
+            if (def.$bindable) { if (_.hasAsserts) { $assert (_.isFunction (this[name])) }
                 this[name] = _.bindable (this[name], this) }
 
             /*  Expand $debounce

@@ -40,16 +40,9 @@ _.deferTest = function (name, test, subj) { subj () }
     ======================================================================== */
 
 
-/*  Third party (free-licensed)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
 //  $include ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
 //  $include ('./base/3rd/Base64')        // Base64 encoder/decoder
 
-
-/*  Basics of basics
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-    
     $include ('./base/tier0/platform')    // platform abstraction layer
 //  $include ('./base/tier0/uncaught')    // uncaught exception facility
 //  $include ('./base/tier0/assert')      // $assert syntax
@@ -62,21 +55,9 @@ _.deferTest = function (name, test, subj) { subj () }
     $include ('./base/tier0/keywords')    // metaprogramming utility
 //  $include ('./base/tier0/typeMatch')   // advanced type system extensions
 
-
-/*  Delivers continuation-passing style notation to various common things
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
     $include ('./base/CPS')
 
-
-/*  OOP paradigm
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
     $include ('./base/OOP')
-
-
-/*  Ports platform.js to OOP terms 
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     Platform = $singleton ({ $property: {
         
@@ -90,24 +71,13 @@ _.deferTest = function (name, test, subj) { subj () }
         iPhone: _.platform ().device === 'iPhone',
         iOS:    _.platform ().system === 'iOS' } })
 
-/*  Provides infix notation for stdlib utility
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
     $include ('./base/infix/extensionMethods')    // bootstrap
     $include ('./base/infix/Function')            // extends Function
     $include ('./base/infix/Array')               // extends Array
     $include ('./base/infix/String')              // extends String
 
-
-/*  Dynamic code binding toolbox
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
     $include ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
     $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
-
-
-/*  Otherwise basic utility (actually a bug-ridden clumsy legacy code)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $include ('./base/math')      // clumsy math utils
 //  $include ('./base/Parse')     // clumsy parsing utils
@@ -136,7 +106,6 @@ _.deferTest = function (name, test, subj) { subj () }
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 //  $include ('./base/AOP')
-
 
 /*  Browser-related code
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
