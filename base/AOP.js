@@ -38,19 +38,22 @@
 
 _.tests.AOP = {
 
-    'basics': function () { $assertCallOrder (function ($test, $order) {
+    'basics': function () {     var callLog = []
 
                                 var Thing = $prototype ($test ({
 
-                                    create:            function (_777)              {   },
-                                    display:           function (_foobar, _778)     {   },
-                                    destroy:           function ()                  { return 456 } }))
+                                    create:            function (_777)              { callLog.push ([this, 'Thing.create']) },
+                                    display:           function (_foobar, _778)     { callLog.push ([this, 'Thing.display']) },
+                                    destroy:           function ()                  { callLog.push ([this, 'Thing.destroy']); return 456 } }))
 
                                 var NewFlavorOfThing = $aspect (Thing, $test ({
 
-                                    beforeCreate:   function (_777)                        { },
-                                    display:        function (_foo, _123, originalMethod)  { return originalMethod.call (this, _foo + 'bar', 778) },
-                                    afterDestroy:   function (_456)                        { } }))
+                                    beforeCreate:   function (_777)                        { callLog.push ([this, 'NewFlavorOfThing.beforeCreate']) },
+
+                                    display:        function (_foo, _123, originalMethod)  { callLog.push ([this, 'NewFlavorOfThing.display']);
+                                                                                             return originalMethod.call (this, _foo + 'bar', 778) },
+
+                                    afterDestroy:   function (_456)                        { callLog.push ([this, 'NewFlavorOfThing.afterDestroy']) } }))
 
                                 var demo = new Thing ()
 
@@ -58,12 +61,12 @@ _.tests.AOP = {
                                 demo.display  ('foo', 123)
                                 demo.destroy  ()
 
-                                $order ([demo, NewFlavorOfThing, 'beforeCreate' ],
-                                        [demo,            Thing,       'create' ],
-                                        [demo, NewFlavorOfThing,      'display' ],
-                                        [demo,            Thing,      'display' ],
-                                        [demo,            Thing,      'destroy' ],
-                                        [demo, NewFlavorOfThing, 'afterDestroy' ]) }) } };
+                                $assert (callLog, [[demo, 'NewFlavorOfThing.beforeCreate'],
+                                                   [demo,            'Thing.create'      ],
+                                                   [demo, 'NewFlavorOfThing.display'     ],
+                                                   [demo,            'Thing.display'     ],
+                                                   [demo,            'Thing.destroy'     ],
+                                                   [demo, 'NewFlavorOfThing.afterDestroy']]) } };
 
 
 (function () {

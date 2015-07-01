@@ -12,15 +12,16 @@ Bro = $singleton (Component, {
 
         init: function () { 
             $assertTypeof (this.parse (), { before: 'string', after: 'string', arguments: [] })
-            this.el = this.widgetContainer ()
-            this.el.append (this.widget ())
-
-            log.ok (this.print ()) },
+            this.el = this.widgetContainer ().addClass (this.tool.constructor.name)
+            this.el.append (this.widget (this.el)) },
 
         configure: _.identity,
 
         call: function () {
             return this.value },
+
+        tool: $property (function () {
+            return this.constructor.tool }),
 
         parseHints: function (parsed) {
             var varName = parsed.before.match (/var\s*(.+)\s*=.+/)
@@ -29,10 +30,11 @@ Bro = $singleton (Component, {
                         varName ? { varName: varName[1] } : {},
                         comment ? { comment: comment[1] } : {}) },
 
-        parse: function () { console.log (this.expr.loc.start.column, this.where.source)
+        parse: function () { //console.log (this.expr.loc.start.column, this.where.source)
                     return this.parseHints (_.extend (this, {
                         before: this.where.source.substr (0, this.expr.loc.start.column),
-                        after:  this.where.source.substr (this.expr.loc.end.column, this.where.source.length - this.expr.loc.end.column) })) },
+                        after:  this.expr.loc.end.line === this.expr.loc.start.line ?
+                                    this.where.source.substr (this.expr.loc.end.column, this.where.source.length - this.expr.loc.end.column) : '' })) },
 
         print: function () {
             try {
@@ -96,22 +98,27 @@ Bro = $singleton (Component, {
                     $r.expr ('after',     $r.anything))).$ })),
 
         call: function (args) {
+
             var callArgs = _.asArray (arguments)
             var where = $callStack.safeLocation (2)
             var entry = Bro.locateEntry (where)
-            if (!entry) {
-                SourcePector.locateStackEntry (where, this.$ (function (line, expr) {
-                    _.tryEval (this.$ (function () { return new this.Entry ({
-                                                            where:             _.extend (where, { source: line }),
-                                                            expr:              expr,
-                                                            initArguments:     callArgs,
-                                                            value:             this.valueFromArguments.apply (null, callArgs) }) }),
-                                    function (e) {
-                                        UI.error (e) },
 
-                                    function (entry) { if (entry) { Bro.addEntry (entry)
-                                                                    entry.configure.apply (null, callArgs)
-                                                       return entry } }) })) }
+            if (!entry) {
+                SourcePector.whatComponent (where, this.$ (function (compo) { if (!(compo in Bro.ignoreComponents)) {
+                    SourcePector.locateStackEntry (where, this.$ (function (line, expr) {
+                        _.tryEval (this.$ (function () { return new this.Entry ({
+                                                                where:             _.extend (where, { source: line }),
+                                                                compo:             compo,
+                                                                expr:              expr,
+                                                                initArguments:     callArgs,
+                                                                value:             this.valueFromArguments.apply (null, callArgs) }) }),
+                                        function (e) {
+                                            UI.error (e) },
+
+                                        function (entry) { if (entry) { Bro.addEntry (entry)
+                                                                        entry.configure.apply (null, callArgs)
+                                                           return entry } }) })) } })) }
+
             if (entry) {
                 return entry.call.apply (null, callArgs) }
             else {
@@ -124,18 +131,24 @@ Bro = $singleton (Component, {
     }),
 
     Tool: function (def) {
-        var tool = $extends (this.BaseTool, def)
-        this.toolsByName[tool.name] = new tool ()
-        return tool },
+        var toolPrototype = $extends (this.BaseTool, def)
+        var toolInstance  = this.toolsByName[toolPrototype.name] = new toolPrototype ({ init: false })
+
+        $global['$' + toolPrototype.name] = toolPrototype.stub || _.identity
+
+        this.initialized (function () {
+            toolInstance.init () })
+
+        return toolPrototype },
 
     init: function () {
 
-        _.defineKeyword ('afterTune', this.afterTune)
+        this.ignoreComponents = _.index (_.coerceToArray (this.ignoreComponents || []))
 
         $(document).ready (this.$ (function () {
             this.el = $('<div class="tuning-hall visible">').appendTo (document.body)
 
-            $('<button class="entry save-changes">Save changes</button>')
+            $('<button class="entry btn save-changes">Save changes</button>')
                 .click (this.saveChanges)
                 .appendTo (this.el)
 
@@ -161,20 +174,14 @@ Bro = $singleton (Component, {
 
     addEntry: function (entry) {
         this.entriesByStackLocation[entry.where.beforeParse] = entry
+        this.entriesByComponentName[entry.compo] = (this.entriesByComponentName[entry.compo] || []).concat ([entry])
         this.entries.push (entry)
-        this.investigateComponentForEntry (entry)
         this.addToDashboard (entry) },
 
-    afterTune: function (callMe) {
-        SourcePector.whatComponent ($callStack.safeLocation (2), this.$ (function (compo) { if (compo) {
+    afterTune: function (where, callMe) {
+        SourcePector.whatComponent (where, this.$ (function (compo) { if (compo) {
                                                                         (this.triggersByComponentName[compo] ||
                                                                         (this.triggersByComponentName[compo] = _.trigger ())) (callMe) } } )) },
-
-    investigateComponentForEntry: function (entry) {
-        
-        SourcePector.whatComponent (entry.where, this.$ (function (compo) {
-                    entry.compo = compo
-                    this.entriesByComponentName[compo] = (this.entriesByComponentName[compo] || []).concat ([entry]) })) },
 
     addToDashboard: function (entry) {
                         var minors = this.el.children ().filter (function () { return $(this).integerAttr ('data-line') > entry.where.line })
@@ -202,7 +209,7 @@ Cubicle = $component ({
                                         start: this.$ (function () {
                                                     this.dragging = true; return handle.offsetInParent () }),
                                         
-                                        move:  this.$ (function (memo, offset) { handle.css (memo.add (offset).cssLeftTop)
+                                        move:  this.$ (function (memo, offset) { handle.css (memo.add (offset).asLeftTop)
                                                     this.update () }),
                                        
                                         end:   this.$ (function () {
@@ -247,6 +254,10 @@ Cubicle = $component ({
     destroy: function () {
         this.dom.destroy ()
         delete this.dom } })
+
+_.defineKeyword ('afterTune', function (what) { var where = $callStack.safeLocation (2)
+    Bro.initialized (function () {
+        Bro.afterTune (where, what) }) })
 
 Sliddah = $component ({
 

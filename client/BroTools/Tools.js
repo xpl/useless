@@ -35,22 +35,42 @@ BroTune = Bro.Tool ({
 	valueFromArguments: function (x) { return x } })
 
 
+BroButton = Bro.Tool ({
+    name: $const ('btn'),
+    Entry: $const ({
+
+        click: $trigger (),
+
+        configure: function (click) {
+            this.click (click) },
+
+        widget: function (container) {
+            container.click (this.click) },
+
+        printValue: $memoized (function () {
+            return escodegen.generate (this.expr.arguments[0])
+        })
+    }),
+})
+
+BroPrint = Bro.Tool ({
+    name: $const ('print'),
+    Entry: $const ({
+        widget: function () {
+            return undefined },
+    }),
+})
+
 BroProp = Bro.Tool ({
 
     name:  $const ('prop'),
+    stub:  $const (function (obj, prop, v) { obj[prop] = v }),
     Entry: $const ({
-
-        $defaults: {
-            min: -10,
-            max:  10 },
 
         configure: function (obj, prop, v) {
             obj[prop] = v
             obj[prop + 'Change'] (this.$ (function (v) {
                 this.commitValueChange (v) })) },
-
-        parseArguments: function (args) {
-            return _.rest (args.match (/(.+),\s*(.+),\s*(.*\(.*\).*)/)) },
 
         printValue: function () {
             return 'new Vec2 (' + this.value.x.toFixed (3) + ', ' + this.value.y.toFixed (3) + ')' },
@@ -58,19 +78,12 @@ BroProp = Bro.Tool ({
         updatedExpr: function () { var newVec2 = this.expr.arguments[2].arguments
             newVec2[0] = this.numberExpr (this.value.x)
             newVec2[1] = this.numberExpr (this.value.y)
-            return this.expr
-        },
+            return this.expr },
 
         call: function (x) {
             return this.value },
 
-        printArguments: function () {
-            console.log (this)
-            this.arguments[2] = this.printValue ()
-            return this.arguments.join (', ') },
-
         widget: function () {
-
             return undefined }
     }),
 

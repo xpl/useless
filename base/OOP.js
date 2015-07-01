@@ -363,7 +363,7 @@ _.deferTest ('OOP', {
     _.extend ($prototype, {
 
         isConstructor: function (what) {
-            return (what && (what.$definition !== undefined)) || false },
+            return _.isPrototypeConstructor (what) },
 
         macro: function (arg, fn) {
             if (arguments.length === 1) {
@@ -522,38 +522,6 @@ _.deferTest ('OOP', {
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
 
-
-/*  $assertCallOrder
-     ======================================================================== */
-
-if (_.hasAsserts) {
-    _.defineKeyword ('assertCallOrder', function (context) {
-
-        var tag   = 1
-        var calls = []
-        var probe = function (def) { var uniqueTag = tag++
-                        return $test (_.extend ({ $$uniqueTag$$: uniqueTag },
-                                   $prototype.mapMethods (def, function (fn, name) { 
-                                        return function () {
-                                                    calls.push ({ ctx: this, tag: uniqueTag, name: name })
-                                                    return fn.apply (this, arguments) } }))) }
-
-        return context.call (this, probe, function () {
-            var contract = _.map (_.asArray (arguments), function (e) {
-                return {
-                    ctx:  e[0],
-                    tag:  e[1].$$uniqueTag$$,
-                    name: e[2] } })
-
-           var match   = function (s) { s = _.isArray (s) ? s[0] : s; return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
-           var matches = _.zipZip (contract, calls, function (a, b) { return _.nonempty ((a !== b) ? [a, b] : [b]) })
-
-           if (!_.every (matches, match)) {
-                _.assertionFailed ({ notMatching: log.asTable (_.map (matches, function (s, n) {
-                    return {
-                        name: (n + 1) + '. ' + ((n >= calls.length) ? 'NOT CALLED' : s.name.join (' ← ')),
-                        'this':  ((s.ctx.length > 1) && 'wrong') || '',
-                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) }) }
 
 /*  $traits impl.
     ======================================================================== */

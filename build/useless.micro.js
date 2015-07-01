@@ -609,7 +609,10 @@ _.isTypeOf_ES5 = function (constructor, what) {
 _.isTypeOf = _.isInstanceofSyntaxAvailable () ? _.isTypeOf_ES5 : _.isTypeOf_ES4
 
 _.isPrototypeInstance = function (x) {
-    return x && x.constructor && x.constructor.$definition }
+    return x && x.constructor && _.isPrototypeConstructor (x.constructor) }
+
+_.isPrototypeConstructor = function (x) {
+    return (x && (x.$definition !== undefined)) || false }
 
 _.typeOf2 = function (x) {
     return _.isEmptyArray (x) ? x : (typeof x) }
@@ -844,8 +847,15 @@ _.deferTest (['type', 'stringify'], function () {
 
         var renders = '{ foo: 1, nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
+        var Proto = $prototype ({})
+
+        $assert (_.stringify (Proto),   '<prototype>')
+
         $assert (_.stringify (123),     '123')
-        $assert (_.stringify (complex), renders) }, function () {
+        $assert (_.stringify (complex), renders)
+
+        var obj = {}
+        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
 
     _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}, -1) }
 
@@ -863,7 +873,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return cfg.pure ? undefined : '<cyclic>' }
 
                             else if (siblings.indexOf (x) >= 0) {
-                                return cfg.pure ? undefined : '<ref>' }
+                                return cfg.pure ? undefined : '<ref:' + siblings.indexOf (x) + '>' }
 
                             else if (x === undefined) {
                                 return 'undefined' }
@@ -872,7 +882,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return 'null' }
 
                             else if (_.isFunction (x)) {
-                                return cfg.pure ? x.toString () : '<function>' }
+                                return cfg.pure ? x.toString () : (_.isPrototypeConstructor (x) ? '<prototype>' : '<function>') }
 
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
@@ -887,7 +897,8 @@ _.deferTest (['type', 'stringify'], function () {
                                 if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
                                     return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
-                                parentsPlusX = parents.concat ([x])
+                                var parentsPlusX = parents.concat ([x])
+
                                 siblings.push (x)
 
                                 var values  = _.pairs (x)
@@ -1044,6 +1055,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
         _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
 
 
+
 /*  Internal impl.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -1099,14 +1111,14 @@ _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
 
     filter2: function (value, op) {
         if (_.isArray (value)) {                                var result = []
-            for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v)
+            for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v, i)
                 if (opSays === true) {
                     result.push (v) }
                 else if (opSays !== false) {
                     result.push (opSays) } } return result }
 
         else if (_.isStrictlyObject (value)) {                  var result = {}
-            _.each (Object.keys (value), function (key) {       var v = value[key], opSays = op (v)
+            _.each (Object.keys (value), function (key) {       var v = value[key], opSays = op (v, key)
                 if (opSays === true) {
                     result[key] = v }
                 else if (opSays !== false) {
@@ -1261,6 +1273,38 @@ _.deferTest (['stdlib', 'zipZip'], function () {
 function () {
 
     _.mixin ({ zipZip: _.hyperOperator (_.binary, _.zip2) }) })
+
+
+/*  Find 2.0 + Hyperfind
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.deferTest (['stdlib', 'findFind'], function () {
+
+    var obj = { x: 1, y: { z: 2 }}
+
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.constant (false)), false)
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),       2)
+    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)),     obj) },
+
+function () {
+
+    _.findFind = function (obj, pred_) {
+                    return _.hyperOperator (_.unary,
+                             function (value, pred) {
+                                    if (_.isArray (value)) {                                
+                                        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
+                                                          if (typeof x !== 'boolean') { return x }
+                                                                 else if (x === true) { return value[i] } } }
+
+                                    else if (_.isStrictlyObject (value)) {        
+                                        for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
+                                                                                 if (typeof x !== 'boolean') { return x }
+                                                                                        else if (x === true) { return value[k] } } }
+
+                                                                                          var x = pred_ (value)
+                                                            if (typeof x !== 'boolean') { return x }
+                                                                   else if (x === true) { return value }
+                                                                                          return false }) (obj, pred_) } })
 
 
 /*  Most useful _.extend derivatives
@@ -2440,7 +2484,7 @@ _.deferTest ('OOP', {
     _.extend ($prototype, {
 
         isConstructor: function (what) {
-            return (what && (what.$definition !== undefined)) || false },
+            return _.isPrototypeConstructor (what) },
 
         macro: function (arg, fn) {
             if (arguments.length === 1) {
@@ -2599,38 +2643,6 @@ _.deferTest ('OOP', {
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
 
-
-/*  $assertCallOrder
-     ======================================================================== */
-
-if (_.hasAsserts) {
-    _.defineKeyword ('assertCallOrder', function (context) {
-
-        var tag   = 1
-        var calls = []
-        var probe = function (def) { var uniqueTag = tag++
-                        return $test (_.extend ({ $$uniqueTag$$: uniqueTag },
-                                   $prototype.mapMethods (def, function (fn, name) { 
-                                        return function () {
-                                                    calls.push ({ ctx: this, tag: uniqueTag, name: name })
-                                                    return fn.apply (this, arguments) } }))) }
-
-        return context.call (this, probe, function () {
-            var contract = _.map (_.asArray (arguments), function (e) {
-                return {
-                    ctx:  e[0],
-                    tag:  e[1].$$uniqueTag$$,
-                    name: e[2] } })
-
-           var match   = function (s) { s = _.isArray (s) ? s[0] : s; return (s.tag.length === 1) && (s.name.length === 1) && (s.ctx.length === 1) }
-           var matches = _.zipZip (contract, calls, function (a, b) { return _.nonempty ((a !== b) ? [a, b] : [b]) })
-
-           if (!_.every (matches, match)) {
-                _.assertionFailed ({ notMatching: log.asTable (_.map (matches, function (s, n) {
-                    return {
-                        name: (n + 1) + '. ' + ((n >= calls.length) ? 'NOT CALLED' : s.name.join (' ← ')),
-                        'this':  ((s.ctx.length > 1) && 'wrong') || '',
-                        'proto': ((s.tag.length > 1) && 'wrong') || '' } })) }) } }) }) }
 
 /*  $traits impl.
     ======================================================================== */
@@ -3170,11 +3182,24 @@ _.deferTest ('bindable', function () {
             method.onBefore (function (x) { mkay (); $assert (x === 42) })
             method (42) })
 
+    /*  Test 'once' semantics
+     */
+    var obj2 = { plusOne: function (x) { return x + 1 } }
+
+    $assertCalls (1, function (beforeCalled) {
+    $assertCalls (1, function (afterCalled) {
+
+        _.onceBefore (obj, 'plusOne', function (x)         { beforeCalled (); $assert (x === 7) })
+        _.onceAfter  (obj, 'plusOne', function (x, result) { afterCalled ();  $assert ([x, result], [7, 8]) })
+
+        $assert (obj.plusOne (7), 8)
+        $assert (obj.plusOne (7), 8) }) })
+
 }, function () {
 
     /*  Internal impl
      */
-    var hooks = ['onBefore', 'onAfter', 'intercept']
+    var hooks = ['onceBefore', 'onceAfter', 'onBefore', 'onAfter', 'intercept']
 
     var makeBindable = function (obj, targetMethod) { var method = obj[targetMethod]
                             return _.isBindable (method) ? method : (obj[targetMethod] = _.bindable (method)) }
@@ -3215,25 +3240,43 @@ _.deferTest ('bindable', function () {
             return _.withSameArgs (method, _.extendWith (mixin (method), function () {      
 
                 var wrapper     = arguments.callee
+                var onceBefore  = wrapper._onceBefore
+                var onceAfter   = wrapper._onceAfter
                 var before      = wrapper._onBefore
                 var after       = wrapper._onAfter
                 var intercept   = wrapper._intercept
                 var this_       = context || this
+                var i, ni       = undefined
+
+                /*  Call onceBefore
+                 */
+                if (onceBefore.length) {
+                    for (i = 0, ni = onceBefore.length; i < ni; i++) {
+                        onceBefore[i].apply (this_, arguments) }
+                    onceBefore.removeAll () }
 
                 /*  Call before
                  */
-                for (var i = 0, ni = before.length; i < ni; i++) {
+                for (i = 0, ni = before.length; i < ni; i++) {
                     before[i].apply (this_, arguments) }
 
                 /*  Call intercept
                  */
-                var result = _.cps.compose ([method].concat (intercept)).apply (this_, arguments)
+                var result = (intercept.length ? _.cps.compose ([method].concat (intercept)) : method).apply (this_, arguments)
 
-                /*  Call after
-                 */
-                if (after.length) {
-                    for (var j = 0, nj = after.length, args = _.asArray (arguments).concat (result); j < nj; j++) {
-                        after[j].apply (this_, args) } }
+                if (after.length || onceAfter.length) { var args = _.asArray (arguments).concat (result)
+
+                    /*  Call after
+                     */
+                    for (i = 0, ni = after.length; i < ni; i++) {
+                        after[i].apply (this_, args) }
+
+                    /*  Call onceAfter
+                     */
+                    if (onceAfter.length) {
+                        for (i = 0, ni = onceAfter.length; i < ni; i++) {
+                            onceAfter[i].apply (this_, args) }
+                        onceAfter.removeAll () } }
 
                 return result } )) } }) })
 
@@ -3312,6 +3355,20 @@ _.tests.stream = {
                 value ('foo')
                 value ('bar') }) },
 
+    '_.gatherChanges': function () {
+
+        var valueA   = _.observable (),
+            valueB   = _.observable (),
+            changes  = []
+
+        _.gatherChanges (valueA, valueB, function (a, b) {
+            changes.push ([a, b]) })
+
+        valueA (123)
+        valueB (777)
+
+        $assert (changes, [[123, undefined], [123, 777]])
+    },
 
     'context': function () {
         var trigger = _.extend (_.trigger (), { context: 42 })
@@ -3415,6 +3472,16 @@ _.tests.stream = {
 
 _.extend (_, {
 
+    gatherChanges: function (observables_) {
+
+        var observables = _.isArray (observables_) ? observables_ : _.initial (arguments)
+        var accept      = _.last (arguments)
+        var gather      =   function (value) {
+                                accept.apply (this, _.pluck (observables, 'value')) }
+
+        _.each (observables, function (read) {
+            read (gather) }) },
+
     allTriggered: function (triggers, then) {
                         var triggered = []
                         if (triggers.length > 0) {
@@ -3437,6 +3504,9 @@ _.extend (_, {
                         read: _.identity,
                         write: function (returnResult) {
                                     return function (value) {
+
+                                        if (stream.beforeWrite) {
+                                            value = stream.beforeWrite (value) }
 
                                         if (!stream.hasValue ||
                                             !(stream.trackReference ?
@@ -3470,9 +3540,9 @@ _.extend (_, {
 
             readWith: function (fn) { // TODO: this is should be general read behavior, rather than special method
                 if (this.hasValue) {
-                    fn (this.value) }
+                    fn.call (this.context, this.value) }
                 else {
-                    fn () }
+                    fn.call (this.context) }
                 this (fn) } }) },
 
 
@@ -3615,15 +3685,24 @@ Vec2 = $prototype ({
         zero:        $property (function () { return new Vec2 (0, 0) }),
         unit:        $property (function () { return new Vec2 (1, 1) }),
         one:         $alias ('unit'),
-        fromLT:      function (x) { return new Vec2 (x.left, x.top) },
-        fromLeftTop: $alias ('fromLT'),
+        fromLT:      function (lt) { return new Vec2 (lt.left, lt.top) },
+        fromWH:      function (wh) { return new Vec2 (wh.width, wh.height) },
+        fromLeftTop:     $alias ('fromLT'),
+        fromWidthHeight: $alias ('fromWH'),
         dot:         function (a, b) { return a.x * b.x + a.y * b.y },
         lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
         clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
-        this.x =                             x
-        this.y = ((arguments.length === 1) ? x : y) },
+        if (arguments.length === 1) {
+            if (_.isNumber (x)) {
+                this.x = this.y = x }
+            else {
+                this.x = x.x
+                this.y = x.y } }
+        else {
+            this.x = x
+            this.y = y } },
 
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
@@ -3658,13 +3737,13 @@ Vec2 = $prototype ({
     inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
 
-    cssLeftTop: $property (function () {
+    asLeftTop: $property (function () {
         return { left: Math.floor (this.x), top: Math.floor (this.y) } }),
 
-    cssLeftTopMargin: $property (function () {
+    asLeftTopMargin: $property (function () {
         return { marginLeft: Math.floor (this.x), marginTop: Math.floor (this.y) } }),
 
-    cssWidthHeight: $property (function () {
+    asWidthHeight: $property (function () {
         return { width: Math.floor (this.x), height: Math.floor (this.y) } }),
 
     floor: $property (function () {
@@ -3873,6 +3952,9 @@ BBox = $prototype ({
 
     grow: function (amount) {
         return new BBox (this.x, this.y, this.width + amount, this.height + amount) },
+
+    area: $property (function () {
+        return Math.abs (this.width * this.height) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + ':' + this.width + '×' + this.height + '}' } })
@@ -4609,6 +4691,19 @@ _.tests.component = {
 
         compo.smell = 'bad' }) },
 
+    /*  $observableProperty automatically calls prototype constructor if supplied with non-prototype instance data
+     */
+    '$observableProperty (Prototype)': function () {
+        var Compo = $component ({
+                        position: $observableProperty (Vec2.zero),
+                        init: function () {
+                            this.positionChange (function (v) {
+                                $assertTypeof (v, Vec2)
+                                log.i (v)
+                                $assert (v.y, 42) }) } })
+
+        var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
+        compo.position = { x: 20, y: 42 } },                  // supply POD value from property accessor
 
     'hierarchy management': function () { $assertCalls (9, function (mkay) {
         
@@ -4715,7 +4810,7 @@ _.tests.component = {
 /*  Syntax
  */
 _([ 'bindable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'memoize', 'debounce', 'throttle', 'overrideThis'])
+    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis'])
     .each (_.defineTagKeyword)
 
 _.defineKeyword ('component', function (definition) {
@@ -4807,7 +4902,13 @@ Component = $prototype ({
                 /*  xxxChange stream
                  */
                 var observable  = this[name + 'Change'] = value ? _.observable (value) : _.observable ()
-                    observable.context = this
+                    observable.context    = this
+
+                /*  auto-coercion of incoming values to prototype instance
+                 */
+                if (_.isPrototypeInstance (value)) { var constructor = value.constructor
+                    observable.beforeWrite = function (value) {
+                        return constructor.isTypeOf (value) ? value : (new constructor (value)) } }
 
                 /*  property
                  */
@@ -4842,8 +4943,10 @@ Component = $prototype ({
 
             /*  Expand $memoize
              */
-            if (def.$memoize) {
-                this[name] = _.memoize (this[name]) } }, this)
+                 if (def.$memoize) {
+                this[name] = _.memoize (this[name]) }
+            else if (def.$memoizeCPS) {
+                this[name] = _.cps.memoize (this[name]) } }, this)
 
         
 
@@ -4884,7 +4987,7 @@ Component = $prototype ({
     callTraitsMethod: function (name, then) {
 
         //  Continuation-passing style chain
-        if (then) {
+        if (_.isFunction (then)) {
             _.cps.sequence (_.filterMap.call (this, this.constructor.$traits, function (Trait) {
                 var method = Trait.prototype[name]
                 return method && _.cps.arity0 ((
@@ -5066,7 +5169,7 @@ $.fn.extend ({
         return (value.length == 0) ? undefined : value },
 
     intValue: function () {
-        var value = parseInt ($(this).nonemptyValue (), 10)
+        var value = parseInt (this.nonemptyValue (), 10)
         return isNaN (value) ? undefined : value },
 
     hitTest: function (event) {
@@ -5075,6 +5178,9 @@ $.fn.extend ({
             x: event.clientX - offset.left,
             y: event.clientY - offset.top }
         return (pt.x >= 0) && (pt.y >= 0) && (pt.x < $(this).width ()) && (pt.y < $(this).height ()) },
+
+    attrs: function (/* name1, name2, ... */) {
+        return _.object (_.map (arguments, function (name) { return [name, this.attr (name)] }, this)) },
 
     belongsTo: function (selector) {
         return (this.is (selector) || this.parents (selector).length) },
@@ -5093,7 +5199,13 @@ $.fn.extend ({
         
     animationend: function (fn) {
         return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn) },
-        
+
+    animateWith: function (cls, done) { 
+        this.addClass (cls)
+        this.animationend (this.$ (function () { this.removeClass (cls)
+                                                 if (done) { done.call (this) } }))
+        return this },
+
     drag: function (cfg) {
 
         if (!Platform.touch && !window.__globalDragOverlay) {
@@ -5216,6 +5328,13 @@ $.fn.extend ({
                 $(this).remove () }) }
         else {
             return this.remove () } },
+
+    outerExtent:  function () { return new Vec2 (this.outerWidth (), this.outerHeight ()) },
+    extent:       function () { return new Vec2 (this.width (),      this.height ()) },
+    innerExtent:  function () { return new Vec2 (this.innerWidth (), this.innerHeight ()) },
+    outerBBox:    function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ())) },
+
+    leftTop:      function () { return new Vec2.fromLT (this.offset ()) },
 
     offsetInParent: function () {
         return Vec2.fromLeftTop (this.offset ()).sub (

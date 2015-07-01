@@ -234,7 +234,6 @@ CallStack = $extends (Array, {
                 line: (fileLineColumn[1] || '').integerValue,
                 column: (fileLineColumn[2] || '').integerValue } }) }) })
 
-
 /*  Prototype.$sourceFile
  */
 $prototype.macro (function (def, base) {

@@ -875,7 +875,10 @@ _.isTypeOf_ES5 = function (constructor, what) {
 };
 _.isTypeOf = _.isInstanceofSyntaxAvailable() ? _.isTypeOf_ES5 : _.isTypeOf_ES4;
 _.isPrototypeInstance = function (x) {
-    return x && x.constructor && x.constructor.$definition
+    return x && x.constructor && _.isPrototypeConstructor(x.constructor)
+};
+_.isPrototypeConstructor = function (x) {
+    return x && x.$definition !== undefined || false
 };
 _.typeOf2 = function (x) {
     return _.isEmptyArray(x) ? x : typeof x
@@ -983,13 +986,13 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg, prevIndent) {
     } else if (parents.indexOf(x) >= 0) {
         return cfg.pure ? undefined : '<cyclic>'
     } else if (siblings.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<ref>'
+        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>'
     } else if (x === undefined) {
         return 'undefined'
     } else if (x === null) {
         return 'null'
     } else if (_.isFunction(x)) {
-        return cfg.pure ? x.toString() : '<function>'
+        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) ? '<prototype>' : '<function>'
     } else if (typeof x === 'string') {
         return _.quoteWith('"', x)
     } else if (_.isObject(x) && $atom.isNot(x)) {
@@ -1001,7 +1004,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg, prevIndent) {
         if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
             return isArray ? '<array[' + x.length + ']>' : '<object>'
         }
-        parentsPlusX = parents.concat([x]);
+        var parentsPlusX = parents.concat([x]);
         siblings.push(x);
         var values = _.pairs(x);
         var oneLine = !pretty || values.length < 2;
@@ -1101,7 +1104,7 @@ _.mixin({
         if (_.isArray(value)) {
             var result = [];
             for (var i = 0, n = value.length; i < n; i++) {
-                var v = value[i], opSays = op(v);
+                var v = value[i], opSays = op(v, i);
                 if (opSays === true) {
                     result.push(v)
                 } else if (opSays !== false) {
@@ -1112,7 +1115,7 @@ _.mixin({
         } else if (_.isStrictlyObject(value)) {
             var result = {};
             _.each(Object.keys(value), function (key) {
-                var v = value[key], opSays = op(v);
+                var v = value[key], opSays = op(v, key);
                 if (opSays === true) {
                     result[key] = v
                 } else if (opSays !== false) {
@@ -1187,6 +1190,37 @@ _.mixin({
     }
 });
 _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
+_.findFind = function (obj, pred_) {
+    return _.hyperOperator(_.unary, function (value, pred) {
+        if (_.isArray(value)) {
+            for (var i = 0, n = value.length; i < n; i++) {
+                var x = pred(value[i]);
+                if (typeof x !== 'boolean') {
+                    return x
+                } else if (x === true) {
+                    return value[i]
+                }
+            }
+        } else if (_.isStrictlyObject(value)) {
+            for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
+                var k = ks[i];
+                var x = pred(value[k]);
+                if (typeof x !== 'boolean') {
+                    return x
+                } else if (x === true) {
+                    return value[k]
+                }
+            }
+        }
+        var x = pred_(value);
+        if (typeof x !== 'boolean') {
+            return x
+        } else if (x === true) {
+            return value
+        }
+        return false
+    })(obj, pred_)
+};
 _.extend = $restArg(_.extend);
 _.extendWith = _.flip(_.extend);
 _.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
@@ -1686,7 +1720,7 @@ $extends = function (base, def) {
 };
 _.extend($prototype, {
     isConstructor: function (what) {
-        return what && what.$definition !== undefined || false
+        return _.isPrototypeConstructor(what)
     },
     macro: function (arg, fn) {
         if (arguments.length === 1) {
@@ -1875,55 +1909,6 @@ _.extend($prototype, {
         }
     }
 });
-if (_.hasAsserts) {
-    _.defineKeyword('assertCallOrder', function (context) {
-        var tag = 1;
-        var calls = [];
-        var probe = function (def) {
-            var uniqueTag = tag++;
-            return $test(_.extend({ $$uniqueTag$$: uniqueTag }, $prototype.mapMethods(def, function (fn, name) {
-                return function () {
-                    calls.push({
-                        ctx: this,
-                        tag: uniqueTag,
-                        name: name
-                    });
-                    return fn.apply(this, arguments)
-                }
-            })))
-        };
-        return context.call(this, probe, function () {
-            var contract = _.map(_.asArray(arguments), function (e) {
-                return {
-                    ctx: e[0],
-                    tag: e[1].$$uniqueTag$$,
-                    name: e[2]
-                }
-            });
-            var match = function (s) {
-                s = _.isArray(s) ? s[0] : s;
-                return s.tag.length === 1 && s.name.length === 1 && s.ctx.length === 1
-            };
-            var matches = _.zipZip(contract, calls, function (a, b) {
-                return _.nonempty(a !== b ? [
-                    a,
-                    b
-                ] : [b])
-            });
-            if (!_.every(matches, match)) {
-                _.assertionFailed({
-                    notMatching: log.asTable(_.map(matches, function (s, n) {
-                        return {
-                            name: n + 1 + '. ' + (n >= calls.length ? 'NOT CALLED' : s.name.join(' \u2190 ')),
-                            'this': s.ctx.length > 1 && 'wrong' || '',
-                            'proto': s.tag.length > 1 && 'wrong' || ''
-                        }
-                    }))
-                })
-            }
-        })
-    })
-}
 _.isTraitOf = function (Trait, instance) {
     var constructor = instance && instance.constructor;
     return constructor && constructor.hasTrait && constructor.hasTrait(Trait) || false
@@ -2264,6 +2249,8 @@ $extensionMethods(String, {
 });
 (function () {
     var hooks = [
+        'onceBefore',
+        'onceAfter',
         'onBefore',
         'onAfter',
         'intercept'
@@ -2314,17 +2301,33 @@ $extensionMethods(String, {
         bindable: function (method, context) {
             return _.withSameArgs(method, _.extendWith(mixin(method), function () {
                 var wrapper = arguments.callee;
+                var onceBefore = wrapper._onceBefore;
+                var onceAfter = wrapper._onceAfter;
                 var before = wrapper._onBefore;
                 var after = wrapper._onAfter;
                 var intercept = wrapper._intercept;
                 var this_ = context || this;
-                for (var i = 0, ni = before.length; i < ni; i++) {
+                var i, ni = undefined;
+                if (onceBefore.length) {
+                    for (i = 0, ni = onceBefore.length; i < ni; i++) {
+                        onceBefore[i].apply(this_, arguments)
+                    }
+                    onceBefore.removeAll()
+                }
+                for (i = 0, ni = before.length; i < ni; i++) {
                     before[i].apply(this_, arguments)
                 }
-                var result = _.cps.compose([method].concat(intercept)).apply(this_, arguments);
-                if (after.length) {
-                    for (var j = 0, nj = after.length, args = _.asArray(arguments).concat(result); j < nj; j++) {
-                        after[j].apply(this_, args)
+                var result = (intercept.length ? _.cps.compose([method].concat(intercept)) : method).apply(this_, arguments);
+                if (after.length || onceAfter.length) {
+                    var args = _.asArray(arguments).concat(result);
+                    for (i = 0, ni = after.length; i < ni; i++) {
+                        after[i].apply(this_, args)
+                    }
+                    if (onceAfter.length) {
+                        for (i = 0, ni = onceAfter.length; i < ni; i++) {
+                            onceAfter[i].apply(this_, args)
+                        }
+                        onceAfter.removeAll()
                     }
                 }
                 return result
@@ -2333,6 +2336,16 @@ $extensionMethods(String, {
     })
 }());
 _.extend(_, {
+    gatherChanges: function (observables_) {
+        var observables = _.isArray(observables_) ? observables_ : _.initial(arguments);
+        var accept = _.last(arguments);
+        var gather = function (value) {
+            accept.apply(this, _.pluck(observables, 'value'))
+        };
+        _.each(observables, function (read) {
+            read(gather)
+        })
+    },
     allTriggered: function (triggers, then) {
         var triggered = [];
         if (triggers.length > 0) {
@@ -2359,6 +2372,9 @@ _.extend(_, {
             read: _.identity,
             write: function (returnResult) {
                 return function (value) {
+                    if (stream.beforeWrite) {
+                        value = stream.beforeWrite(value)
+                    }
                     if (!stream.hasValue || !(stream.trackReference ? stream.value === value : _.isEqual(stream.value, value))) {
                         var prevValue = stream.value;
                         var hadValue = stream.hasValue;
@@ -2391,9 +2407,9 @@ _.extend(_, {
             },
             readWith: function (fn) {
                 if (this.hasValue) {
-                    fn(this.value)
+                    fn.call(this.context, this.value)
                 } else {
-                    fn()
+                    fn.call(this.context)
                 }
                 this(fn)
             }
@@ -2538,10 +2554,14 @@ Vec2 = $prototype({
             return new Vec2(1, 1)
         }),
         one: $alias('unit'),
-        fromLT: function (x) {
-            return new Vec2(x.left, x.top)
+        fromLT: function (lt) {
+            return new Vec2(lt.left, lt.top)
+        },
+        fromWH: function (wh) {
+            return new Vec2(wh.width, wh.height)
         },
         fromLeftTop: $alias('fromLT'),
+        fromWidthHeight: $alias('fromWH'),
         dot: function (a, b) {
             return a.x * b.x + a.y * b.y
         },
@@ -2553,8 +2573,17 @@ Vec2 = $prototype({
         }
     },
     constructor: function (x, y) {
-        this.x = x;
-        this.y = arguments.length === 1 ? x : y
+        if (arguments.length === 1) {
+            if (_.isNumber(x)) {
+                this.x = this.y = x
+            } else {
+                this.x = x.x;
+                this.y = x.y
+            }
+        } else {
+            this.x = x;
+            this.y = y
+        }
     },
     length: $property(function () {
         return Math.sqrt(this.lengthSquared)
@@ -2593,19 +2622,19 @@ Vec2 = $prototype({
     inverse: $property(function () {
         return new Vec2(-this.x, -this.y)
     }),
-    cssLeftTop: $property(function () {
+    asLeftTop: $property(function () {
         return {
             left: Math.floor(this.x),
             top: Math.floor(this.y)
         }
     }),
-    cssLeftTopMargin: $property(function () {
+    asLeftTopMargin: $property(function () {
         return {
             marginLeft: Math.floor(this.x),
             marginTop: Math.floor(this.y)
         }
     }),
-    cssWidthHeight: $property(function () {
+    asWidthHeight: $property(function () {
         return {
             width: Math.floor(this.x),
             height: Math.floor(this.y)
@@ -2825,6 +2854,9 @@ BBox = $prototype({
     grow: function (amount) {
         return new BBox(this.x, this.y, this.width + amount, this.height + amount)
     },
+    area: $property(function () {
+        return Math.abs(this.width * this.height)
+    }),
     toString: function () {
         return '{' + this.x + ',' + this.y + ':' + this.width + '\xD7' + this.height + '}'
     }
@@ -3722,6 +3754,7 @@ _([
     'observable',
     'observableProperty',
     'memoize',
+    'memoizeCPS',
     'debounce',
     'throttle',
     'overrideThis'
@@ -3782,6 +3815,12 @@ Component = $prototype({
                 var value = this[name];
                 var observable = this[name + 'Change'] = value ? _.observable(value) : _.observable();
                 observable.context = this;
+                if (_.isPrototypeInstance(value)) {
+                    var constructor = value.constructor;
+                    observable.beforeWrite = function (value) {
+                        return constructor.isTypeOf(value) ? value : new constructor(value)
+                    }
+                }
                 _.defineProperty(this, name, {
                     get: function () {
                         return observable.value
@@ -3808,6 +3847,8 @@ Component = $prototype({
             }
             if (def.$memoize) {
                 this[name] = _.memoize(this[name])
+            } else if (def.$memoizeCPS) {
+                this[name] = _.cps.memoize(this[name])
             }
         }, this);
         _.intercept(this, 'init', function (init) {
@@ -3833,7 +3874,7 @@ Component = $prototype({
         }
     }),
     callTraitsMethod: function (name, then) {
-        if (then) {
+        if (_.isFunction(then)) {
             _.cps.sequence(_.filterMap.call(this, this.constructor.$traits, function (Trait) {
                 var method = Trait.prototype[name];
                 return method && _.cps.arity0(_.noArgs(method) ? method.asContinuation : method).bind(this)
@@ -4353,10 +4394,14 @@ Vec2 = $prototype({
             return new Vec2(1, 1)
         }),
         one: $alias('unit'),
-        fromLT: function (x) {
-            return new Vec2(x.left, x.top)
+        fromLT: function (lt) {
+            return new Vec2(lt.left, lt.top)
+        },
+        fromWH: function (wh) {
+            return new Vec2(wh.width, wh.height)
         },
         fromLeftTop: $alias('fromLT'),
+        fromWidthHeight: $alias('fromWH'),
         dot: function (a, b) {
             return a.x * b.x + a.y * b.y
         },
@@ -4368,8 +4413,17 @@ Vec2 = $prototype({
         }
     },
     constructor: function (x, y) {
-        this.x = x;
-        this.y = arguments.length === 1 ? x : y
+        if (arguments.length === 1) {
+            if (_.isNumber(x)) {
+                this.x = this.y = x
+            } else {
+                this.x = x.x;
+                this.y = x.y
+            }
+        } else {
+            this.x = x;
+            this.y = y
+        }
     },
     length: $property(function () {
         return Math.sqrt(this.lengthSquared)
@@ -4408,19 +4462,19 @@ Vec2 = $prototype({
     inverse: $property(function () {
         return new Vec2(-this.x, -this.y)
     }),
-    cssLeftTop: $property(function () {
+    asLeftTop: $property(function () {
         return {
             left: Math.floor(this.x),
             top: Math.floor(this.y)
         }
     }),
-    cssLeftTopMargin: $property(function () {
+    asLeftTopMargin: $property(function () {
         return {
             marginLeft: Math.floor(this.x),
             marginTop: Math.floor(this.y)
         }
     }),
-    cssWidthHeight: $property(function () {
+    asWidthHeight: $property(function () {
         return {
             width: Math.floor(this.x),
             height: Math.floor(this.y)
@@ -4640,6 +4694,9 @@ BBox = $prototype({
     grow: function (amount) {
         return new BBox(this.x, this.y, this.width + amount, this.height + amount)
     },
+    area: $property(function () {
+        return Math.abs(this.width * this.height)
+    }),
     toString: function () {
         return '{' + this.x + ',' + this.y + ':' + this.width + '\xD7' + this.height + '}'
     }

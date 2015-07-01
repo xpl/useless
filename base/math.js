@@ -21,15 +21,24 @@ Vec2 = $prototype ({
         zero:        $property (function () { return new Vec2 (0, 0) }),
         unit:        $property (function () { return new Vec2 (1, 1) }),
         one:         $alias ('unit'),
-        fromLT:      function (x) { return new Vec2 (x.left, x.top) },
-        fromLeftTop: $alias ('fromLT'),
+        fromLT:      function (lt) { return new Vec2 (lt.left, lt.top) },
+        fromWH:      function (wh) { return new Vec2 (wh.width, wh.height) },
+        fromLeftTop:     $alias ('fromLT'),
+        fromWidthHeight: $alias ('fromWH'),
         dot:         function (a, b) { return a.x * b.x + a.y * b.y },
         lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
         clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
 
     constructor: function (x, y) {
-        this.x =                             x
-        this.y = ((arguments.length === 1) ? x : y) },
+        if (arguments.length === 1) {
+            if (_.isNumber (x)) {
+                this.x = this.y = x }
+            else {
+                this.x = x.x
+                this.y = x.y } }
+        else {
+            this.x = x
+            this.y = y } },
 
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
@@ -64,13 +73,13 @@ Vec2 = $prototype ({
     inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
 
-    cssLeftTop: $property (function () {
+    asLeftTop: $property (function () {
         return { left: Math.floor (this.x), top: Math.floor (this.y) } }),
 
-    cssLeftTopMargin: $property (function () {
+    asLeftTopMargin: $property (function () {
         return { marginLeft: Math.floor (this.x), marginTop: Math.floor (this.y) } }),
 
-    cssWidthHeight: $property (function () {
+    asWidthHeight: $property (function () {
         return { width: Math.floor (this.x), height: Math.floor (this.y) } }),
 
     floor: $property (function () {
@@ -279,6 +288,9 @@ BBox = $prototype ({
 
     grow: function (amount) {
         return new BBox (this.x, this.y, this.width + amount, this.height + amount) },
+
+    area: $property (function () {
+        return Math.abs (this.width * this.height) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + ':' + this.width + '×' + this.height + '}' } })

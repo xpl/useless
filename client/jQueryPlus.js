@@ -47,7 +47,7 @@ $.fn.extend ({
         return (value.length == 0) ? undefined : value },
 
     intValue: function () {
-        var value = parseInt ($(this).nonemptyValue (), 10)
+        var value = parseInt (this.nonemptyValue (), 10)
         return isNaN (value) ? undefined : value },
 
     hitTest: function (event) {
@@ -56,6 +56,9 @@ $.fn.extend ({
             x: event.clientX - offset.left,
             y: event.clientY - offset.top }
         return (pt.x >= 0) && (pt.y >= 0) && (pt.x < $(this).width ()) && (pt.y < $(this).height ()) },
+
+    attrs: function (/* name1, name2, ... */) {
+        return _.object (_.map (arguments, function (name) { return [name, this.attr (name)] }, this)) },
 
     belongsTo: function (selector) {
         return (this.is (selector) || this.parents (selector).length) },
@@ -203,6 +206,13 @@ $.fn.extend ({
                 $(this).remove () }) }
         else {
             return this.remove () } },
+
+    outerExtent:  function () { return new Vec2 (this.outerWidth (), this.outerHeight ()) },
+    extent:       function () { return new Vec2 (this.width (),      this.height ()) },
+    innerExtent:  function () { return new Vec2 (this.innerWidth (), this.innerHeight ()) },
+    outerBBox:    function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ())) },
+
+    leftTop:      function () { return new Vec2.fromLT (this.offset ()) },
 
     offsetInParent: function () {
         return Vec2.fromLeftTop (this.offset ()).sub (

@@ -164,14 +164,14 @@ _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
 
     filter2: function (value, op) {
         if (_.isArray (value)) {                                var result = []
-            for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v)
+            for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v, i)
                 if (opSays === true) {
                     result.push (v) }
                 else if (opSays !== false) {
                     result.push (opSays) } } return result }
 
         else if (_.isStrictlyObject (value)) {                  var result = {}
-            _.each (Object.keys (value), function (key) {       var v = value[key], opSays = op (v)
+            _.each (Object.keys (value), function (key) {       var v = value[key], opSays = op (v, key)
                 if (opSays === true) {
                     result[key] = v }
                 else if (opSays !== false) {

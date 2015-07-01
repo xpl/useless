@@ -73,6 +73,20 @@ _.tests.stream = {
                 value ('foo')
                 value ('bar') }) },
 
+    '_.gatherChanges': function () {
+
+        var valueA   = _.observable (),
+            valueB   = _.observable (),
+            changes  = []
+
+        _.gatherChanges (valueA, valueB, function (a, b) {
+            changes.push ([a, b]) })
+
+        valueA (123)
+        valueB (777)
+
+        $assert (changes, [[123, undefined], [123, 777]])
+    },
 
     'context': function () {
         var trigger = _.extend (_.trigger (), { context: 42 })
@@ -176,6 +190,16 @@ _.tests.stream = {
 
 _.extend (_, {
 
+    gatherChanges: function (observables_) {
+
+        var observables = _.isArray (observables_) ? observables_ : _.initial (arguments)
+        var accept      = _.last (arguments)
+        var gather      =   function (value) {
+                                accept.apply (this, _.pluck (observables, 'value')) }
+
+        _.each (observables, function (read) {
+            read (gather) }) },
+
     allTriggered: function (triggers, then) {
                         var triggered = []
                         if (triggers.length > 0) {
@@ -198,6 +222,9 @@ _.extend (_, {
                         read: _.identity,
                         write: function (returnResult) {
                                     return function (value) {
+
+                                        if (stream.beforeWrite) {
+                                            value = stream.beforeWrite (value) }
 
                                         if (!stream.hasValue ||
                                             !(stream.trackReference ?

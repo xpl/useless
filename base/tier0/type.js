@@ -18,7 +18,10 @@ _.isTypeOf_ES5 = function (constructor, what) {
 _.isTypeOf = _.isInstanceofSyntaxAvailable () ? _.isTypeOf_ES5 : _.isTypeOf_ES4
 
 _.isPrototypeInstance = function (x) {
-    return x && x.constructor && x.constructor.$definition }
+    return x && x.constructor && _.isPrototypeConstructor (x.constructor) }
+
+_.isPrototypeConstructor = function (x) {
+    return (x && (x.$definition !== undefined)) || false }
 
 _.typeOf2 = function (x) {
     return _.isEmptyArray (x) ? x : (typeof x) }
@@ -253,8 +256,15 @@ _.deferTest (['type', 'stringify'], function () {
 
         var renders = '{ foo: 1, nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
+        var Proto = $prototype ({})
+
+        $assert (_.stringify (Proto),   '<prototype>')
+
         $assert (_.stringify (123),     '123')
-        $assert (_.stringify (complex), renders) }, function () {
+        $assert (_.stringify (complex), renders)
+
+        var obj = {}
+        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
 
     _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}, -1) }
 
@@ -272,7 +282,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return cfg.pure ? undefined : '<cyclic>' }
 
                             else if (siblings.indexOf (x) >= 0) {
-                                return cfg.pure ? undefined : '<ref>' }
+                                return cfg.pure ? undefined : '<ref:' + siblings.indexOf (x) + '>' }
 
                             else if (x === undefined) {
                                 return 'undefined' }
@@ -281,7 +291,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return 'null' }
 
                             else if (_.isFunction (x)) {
-                                return cfg.pure ? x.toString () : '<function>' }
+                                return cfg.pure ? x.toString () : (_.isPrototypeConstructor (x) ? '<prototype>' : '<function>') }
 
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
@@ -296,7 +306,8 @@ _.deferTest (['type', 'stringify'], function () {
                                 if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
                                     return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
-                                parentsPlusX = parents.concat ([x])
+                                var parentsPlusX = parents.concat ([x])
+
                                 siblings.push (x)
 
                                 var values  = _.pairs (x)

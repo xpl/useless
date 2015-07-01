@@ -310,6 +310,19 @@ _.tests.component = {
 
         compo.smell = 'bad' }) },
 
+    /*  $observableProperty automatically calls prototype constructor if supplied with non-prototype instance data
+     */
+    '$observableProperty (Prototype)': function () {
+        var Compo = $component ({
+                        position: $observableProperty (Vec2.zero),
+                        init: function () {
+                            this.positionChange (function (v) {
+                                $assertTypeof (v, Vec2)
+                                log.i (v)
+                                $assert (v.y, 42) }) } })
+
+        var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
+        compo.position = { x: 20, y: 42 } },                  // supply POD value from property accessor
 
     'hierarchy management': function () { $assertCalls (9, function (mkay) {
         
@@ -416,7 +429,7 @@ _.tests.component = {
 /*  Syntax
  */
 _([ 'bindable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'memoize', 'debounce', 'throttle', 'overrideThis'])
+    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis'])
     .each (_.defineTagKeyword)
 
 _.defineKeyword ('component', function (definition) {
@@ -508,7 +521,13 @@ Component = $prototype ({
                 /*  xxxChange stream
                  */
                 var observable  = this[name + 'Change'] = value ? _.observable (value) : _.observable ()
-                    observable.context = this
+                    observable.context    = this
+
+                /*  auto-coercion of incoming values to prototype instance
+                 */
+                if (_.isPrototypeInstance (value)) { var constructor = value.constructor
+                    observable.beforeWrite = function (value) {
+                        return constructor.isTypeOf (value) ? value : (new constructor (value)) } }
 
                 /*  property
                  */
@@ -543,8 +562,10 @@ Component = $prototype ({
 
             /*  Expand $memoize
              */
-            if (def.$memoize) {
-                this[name] = _.memoize (this[name]) } }, this)
+                 if (def.$memoize) {
+                this[name] = _.memoize (this[name]) }
+            else if (def.$memoizeCPS) {
+                this[name] = _.cps.memoize (this[name]) } }, this)
 
         
 
@@ -585,7 +606,7 @@ Component = $prototype ({
     callTraitsMethod: function (name, then) {
 
         //  Continuation-passing style chain
-        if (then) {
+        if (_.isFunction (then)) {
             _.cps.sequence (_.filterMap.call (this, this.constructor.$traits, function (Trait) {
                 var method = Trait.prototype[name]
                 return method && _.cps.arity0 ((
