@@ -214,7 +214,10 @@ Type `npm install useless` in root directory of your project.
 
 ### From Git
 
-Run `git clone https://github.com/xpl/useless.git` in `node_modules` subfolder of your project.
+1. Go to `node_modules` subfolder of your project
+2. Run `git clone https://github.com/xpl/useless.git`, go to `useless` folder
+3. Run `npm install` to install dependencies
+4. Optionally, run `node build.js` to test if everything's ok
 
 ### As monolithic pre-built script
 
