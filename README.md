@@ -2,9 +2,14 @@
 
 A cross-platform JavaScript toolbox for writing complex web applications. 
 
-<span style="color: red;">Currently in pre-release stage, missing basic documentation and being under heavy development.</span>
+Currently in pre-release stage, missing some basic documentation and being under heavy development.
 
 [Installing](#installing) | [Building](#building)
+
+## Quick links
+
+Compiled/minified version, for production setup: [useless.min.js](./build/useless.min.js)
+Source version, for development use: [useless.js](./build/useless.js)
 
 ##Directory structure
 
