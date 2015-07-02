@@ -79,6 +79,8 @@ module.exports = $trait ({
 
 	afterInit: function (then) {
 		//APISchema.prettyPrint (this.apiSchema)
+		if (_.isFunction (this.api)) {
+			this.defineAPIs (this.api ()) }
 		then () },
 
 	defineAPIs: function (schemaPart) {
