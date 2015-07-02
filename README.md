@@ -8,8 +8,8 @@ Currently in pre-release stage, missing some basic documentation and being under
 
 ## Quick links
 
-Compiled/minified version, for production setup: [useless.min.js](./build/useless.min.js)
-Source version, for development use: [useless.js](./build/useless.js)
+* Compiled/minified version (for production setup): [useless.min.js](./build/useless.min.js)
+* Source version (for development use): [useless.js](./build/useless.js)
 
 ##Directory structure
 
