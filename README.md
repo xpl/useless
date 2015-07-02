@@ -45,48 +45,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Macro processor for prototype definitions
 
-```javascript
-Foo = $prototype ({
-        /*  If constructor is not defined (like here), it's default impl. will equal
-            to the following:                                                               */
-
-//          constructor: function (cfg) { _.extend (this, cfg) },
-
-        /*  $static keyword is used to designate type-level members (context-free ones),
-            effectively porting that shit from C++/C#/Java world.                           */
-
-            method:                  function () { ... },
-            staticMethod:   $static (function () { ... }),
-
-        /*  $property keyword is used to tag a value as an property definition.
-            Property definitions expand itself within properties.js module, which
-            is separate from OOP.js                                                         */
-
-            property:                $property (function () { ... }),
-            staticProperty: $static ($property (function () { ... })),
-
-        /*  Tags on members can be grouped like this, to reduce clutter if you have lots
-            of members tagged with same keyword.                                            */
-
-            $static: {
-                one:    function () { return 1 },
-                two:    function () { return 2 },
-                three: $property (3) },
-
-        /*  Demonstrates some semantics of property definitions, provided by properties.js
-            See that module for further investigation.                                      */
-
-            $property: {
-                static42:       $static (42),
-                just42:         42,
-                just42_too:     function () { return 42 },
-                fullBlown:  {
-                    enumerable:     false,  // will be visible as object's own property (defaults to true)
-                    configurable:   true,   // can be deleted by delete operator (defaults to false)
-                    get:            function () { return 42 },
-                    set:            function (x) { ... } } } }) })
-```
-
 - **$prototype** / **$extends**
 - Smart property declarations
 - **$static** methods / properties
@@ -198,6 +156,55 @@ Tabbed navigation host / URL persistence.
 - `Collection/FilterChain.js`
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
+
+## `./server`
+
+Example:
+
+```javascript
+require ('useless')
+
+UselessApp = $component ({
+
+	api: function () { return {
+		'/':           this.file ('./static/index.html'),
+		'hello-world': this.helloWorld },
+
+	helloWorld: function (context) { context.success ('Hello world!') }
+
+	$traits: [
+
+		require ('useless/server/exceptions'),
+		require ('useless/server/tests'),
+		require ('useless/server/deploy'),
+		require ('useless/server/api'),
+		require ('useless/server/io'),
+		require ('useless/server/http') ],
+
+	init: function (then) {
+	    then ()
+		log.ok ('App started') } })
+
+module.exports = { init: function () { return new UselessApp () } }
+```
+
+Following are **$traits** defined at `useless/server`:
+
+- `api.js` URL mapping
+- `appcache.js` AppCache back-end
+- `auth.js` authorization management
+- `deploy.js` self-deployment protocol (automatic builds)
+- `devtools.js` APIs for Git / source code access (developer mode)
+- `entity.js` journaled CRUD for collections (high level DB access)
+- `exceptions.js` error handling for requests
+- `history.js` journal for DB operation
+- `http.js` request serving basics
+- `io.js` basic I/O for requests
+- `templating.js` basic templating (via underscore)
+- `tests.js` self-test on startup, adds **$test/$tests** syntax for server **$traits** + new asserts
+- `uploads.js` file uploads
+- `uptime.js` uptime tracking / restart()
+- `websocket.js` WebSocket utility (peer tracking / auth / multicast)
 
 ## Installing
 
