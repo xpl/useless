@@ -1,8 +1,6 @@
 # Use Less. Do More.
 
-A cross-platform JavaScript toolbox for writing complex web applications. 
-
-Currently in pre-release stage, missing some basic documentation and being under heavy development.
+A cross-platform JavaScript toolbox for writing complex web applications. Currently in pre-release stage, missing some basic documentation and being under heavy development.
 
 [Installing](#installing) | [Building](#building)
 
