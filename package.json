@@ -4,7 +4,11 @@
   "description": "Yet Another Useless Framework",
   "main": "useless.js",
   "directories": {
-    "example": "example"
+    "base": "platform-independent part",
+    "client": "browser-related utility",
+    "server": "app framework for Node.js",
+    "build": "built source (full/stripped/minified)",
+    "example": "examples"
   },
   "scripts": {
     "test":  "node test.js",
@@ -15,9 +19,11 @@
     "url": "git+https://github.com/xpl/useless.git"
   },
   "keywords": [
+    "javascript",
     "useless",
     "framework",
     "OOP",
+    "AOP",
     "metaprogramming",
     "traits",
     "functional",
