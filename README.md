@@ -4,6 +4,8 @@ A cross-platform JavaScript toolbox for writing complex web applications.
 
 <span style="color: red;">Currently in pre-release stage, missing basic documentation and being under heavy development.</span>
 
+[Installing](#installing) | [Building](#building)
+
 ##Directory structure
 
 * `./base` platform-independent part
@@ -148,23 +150,23 @@ Tabbed navigation host / URL persistence.
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
-##Installing as Node.js module
+##Installing<a href="#installing"></a>
 
 ###From NPM
 
 Type `npm install useless` in root directory of your project.
 
-###Manual / from Git
+###From Git
 
-Copy `useless` folder to `node_modules` subfolder of your project, or run `git clone https://github.com/xpl/useless.git` in that subfolder.
+Run `git clone https://github.com/xpl/useless.git` in `node_modules` subfolder of your project.
 
-##Installing as monolithic pre-built script
+##As monolithic pre-built script
 
 Go to `build` folder and pick `useless.js`. For minified version (with unit tests stripped) pick `useless.min.js`. This one is ready to be used in production setup.
 
 This version includes only the platform-independent part of the library, not including any of the `./client` features. If you need any of these, you can either link them them in browser code separately, or make custom build file with the additional files included (see instructions below).
 
-##Building
+##Building<a href="#building"></a>
 
 Build command:
 
