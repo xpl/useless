@@ -1,9 +1,4 @@
-/*  NOTE: WIP
-
-    TODO: reference-counted Component
-
-    Component model 2.0 (now exploiting superpowers provided by foundation.js).
-    What for:
+/*  What for:
 
     -   Hierarchy management (parent-child relationship)
     -   Destructors ('destroy' method), propagating through hierarchy
