@@ -1,6 +1,6 @@
 {
   "name": "useless",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Yet Another Useless Framework",
   "main": "useless.js",
   "directories": {
@@ -11,7 +11,7 @@
     "example": "examples"
   },
   "scripts": {
-    "test":  "node test.js",
+    "test": "node test.js",
     "build": "node build.js"
   },
   "repository": {
