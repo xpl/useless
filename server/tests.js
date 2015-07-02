@@ -56,13 +56,21 @@ module.exports = $trait ({
 													putBackProductionDb (); then () }) })) },
 
 
-	withTestDb: function (what) {							log.warn ('Preparing Test DB')
-		require ('../db').init (this.dbName + '_test',
-						 this.$ (function (testDb) { var productionDb = this.db;
-						 							  					this.db = testDb
-			this.dropDb (this.newContext ({
-				minimal: true,
-				success: this.$ (function () { 
-				   what (this.$ (function () { this.db = productionDb })) }) })) })) },
+	withTestDb: function (what) {
+
+		if (!this.dbName) {
+			log.info ('Skipping DB tests')
+			what (_.identity) }
+			
+		else {
+			log.warn ('Preparing Test DB')
+
+			require ('./base/db').init (this.dbName + '_test',
+							 this.$ (function (testDb) { var productionDb = this.db;
+							 							  					this.db = testDb
+				this.dropDb (this.newContext ({
+					minimal: true,
+					success: this.$ (function () { 
+					   what (this.$ (function () { this.db = productionDb })) }) })) })) } },
 	
 })

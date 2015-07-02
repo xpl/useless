@@ -132,10 +132,10 @@ function stripCommentsAndTests (src, name, path) {
 
 function compile (file, dir) {
     var name = _.initial (path.basename (file).split ('.')).join ('.')
-    var compiledSrc = compileMacros (file).replace (/_\.withTest \(/g, '_.deferTest (')
+    var compiledSrc = compileMacros (file)
 
     compileWithGoogle (
-        stripCommentsAndTests (compiledSrc, name, dir),
+        stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, dir),
         writeCompiled.partial (name + '.min.js', dir))
 
     writeCompiled (name + '.js', dir,

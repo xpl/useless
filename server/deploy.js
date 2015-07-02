@@ -7,7 +7,7 @@ module.exports = $trait ({
 
     /*  Self deployment protocol
      */
-    beforeInit: function (then) { log.info ('Deploying shared modules')
+    beforeInit: function (then) { log.info ('Building monolithic useless.js')
 
         var includeFile = fs.readFileSync ($uselessPath + 'useless.js', { encoding: 'utf8' })
         var compiledSrc = util.compileScript ({ source: includeFile, includePath: $uselessPath })

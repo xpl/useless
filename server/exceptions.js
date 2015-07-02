@@ -1,6 +1,6 @@
 module.exports = $trait ({
 
-	beforeInit: function (then) { log.info ('Setting up exception handling...')
+	beforeInit: function (then) { log.info ('Setting up exception handling')
 
 		_.withUncaughtExceptionHandler (this.$ (function (e) {
 			if (!this.restarting) {				// Swallow errors if we're restarting (as they're expected)
