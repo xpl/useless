@@ -148,15 +148,21 @@ Tabbed navigation host / URL persistence.
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
-##Installing as NPM module
+##Installing as Node.js module
 
-Copy `useless` folder to `node_modules` subfolder of your project. In this case the whole library will load as source which you can browse and/or edit. Edits are welcome!
+###From NPM
 
-##Installing as pre-built monolithic script
+Type `npm install useless` in root directory of your project.
 
-If you want to use only the platform-independent part of the library, go to `build` folder and pick `useless.js`. This one is ready to be included to either server or client side.
+###Manual / from Git
 
-For minified version (with unit tests stripped) pick `useless.min.js`. This one is ready to be used in production setup.
+Copy `useless` folder to `node_modules` subfolder of your project, or run `git clone https://github.com/xpl/useless.git` in that subfolder.
+
+##Installing as monolithic pre-built script
+
+Go to `build` folder and pick `useless.js`. For minified version (with unit tests stripped) pick `useless.min.js`. This one is ready to be used in production setup.
+
+This version includes only the platform-independent part of the library, not including any of the `./client` features. If you need any of these, you can either link them them in browser code separately, or make custom build file with the additional files included (see instructions below).
 
 ##Building
 
@@ -170,9 +176,9 @@ It will generate `./build/useless.js` by substituting `$include` directives foun
 
 ##Custom build
 
-To make reduced distribution (with some submodules disabled), you can create your own version of default header file, commenting out unneeded `$include` directives.
+To make reduced/extended distribution (with some submodules disabled or enabled), you can create your own version of default header file, commenting out unneeded `$include` directives.
 
-There exists `./useless.micro.js` as an example of such reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
+There exists `./useless.micro.js` as an example of reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
 
 ##Automatic builds on source change
 
