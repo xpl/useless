@@ -1,8 +1,7 @@
 /*	DB driver
  */
 
-var sqlite			= require ('sqlite3'),
-    mongo			= require ('mongodb'),
+var mongo			= require ('mongodb'),
       _				= require ('underscore'),
     util			= require ('./util')
 

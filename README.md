@@ -1,5 +1,11 @@
 # Use Less. Do More.
 
+A cross-platform JavaScript toolbox for writing complex web applications. 
+
+<span style="color: red;">Currently in pre-release stage, missing basic documentation and being under heavy development.</span>
+
+##Directory structure
+
 * `./base` platform-independent part
 * `./client` browser-related utility
 * `./server` app framework for Node.js
@@ -23,33 +29,33 @@
 * Concurrency primitives (task pooling, interlocked methods)
 * Basic math (`lerp` / `clamp`, color space conversion, etc)
 * Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections)
-- Multicast model for method calls with simple functional I/O
+* Multicast model for method calls with simple functional I/O
     - `_.trigger`, `_.triggerOnce` / one-to-many broadcast
     - `_.barrier` / synchronization primitive
     - `_.observable` / state change notifications
 
 ###Macro processor for prototype definitions
 
-+ **$prototype** / **$extends**
-+ Smart property declarations
-+ **$static** methods / properties
-+ Tag groups on members (`$static: { ... }`)
-+ RTTI
-+ Pluggable macros for custom syntax
-+ Member aliases
-+ **$final**
-* **$traits** / a.k.a. mixins / combinatoric-style alternative to inheritance
-* **$aspect** / Aspect Oriented Programming / declarative method binding
-+ **$singleton**
+- **$prototype** / **$extends**
+- Smart property declarations
+- **$static** methods / properties
+- Tag groups on members (`$static: { ... }`)
+- RTTI
+- Pluggable macros for custom syntax
+- Member aliases
+- **$final**
+- **$traits** / a.k.a. mixins / combinatoric-style alternative to inheritance
+- **$aspect** / Aspect Oriented Programming / declarative method binding
+- **$singleton**
 
 ###Component model
 
-* Binds own methods to **this** automatically
-+ Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
-+ Tracks bound components / auto-unbinds upon deinitialization
-+ Holds parent-child relationship / handles automatic deinitialization
-* Enables **$traits** to chain into method calls by overlapping method definitions
-+ Enforces configuration contracts (**$requires**, **$defaults**)
+- Binds own methods to **this** automatically
+- Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
+- Tracks bound components / auto-unbinds upon deinitialization
+- Holds parent-child relationship / handles automatic deinitialization
+- Enables **$traits** to chain into method calls by overlapping method definitions
+- Enforces configuration contracts (**$requires**, **$defaults**)
 
 ###Exception handling
 
@@ -59,12 +65,12 @@
 
 ###Callstack access
 
-* Access at arbitrary location (for reflection purposes)
-* Strips third party calls (clean mode)
-* Fetches source code (local/remote)
-* Nice output
-    * Console mode (replaces default Node.js exception printer)
-    * GUI mode (shows pop-up dialog with expandable source lines)
+- Access at arbitrary location (for reflection purposes)
+- Strips third party calls (clean mode)
+- Fetches source code (local/remote)
+- Nice output
+    - Console mode (replaces default Node.js exception printer)
+    - GUI mode (shows pop-up dialog with expandable source lines)
 
 ###Logging
 
