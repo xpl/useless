@@ -7,12 +7,12 @@ _.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { 
     $assertExpr ('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$)
 
     var expr = $r.expr ('before',    $r.anything.text ('$print').something).then (
-               $r.expr ('argument',  $r.someOf.except.text (',(')).inParentheses.then (
+               $r.expr ('argument',  $r.someOf.except.text (',)')).inParentheses.then (
                $r.expr ('tail',      $r.anything))).$
 
     /*  Above construction generates the following regular expression
      */
-    $assertExpr ('/(.*\\$print.+)\\(([^,\\(]+)\\)(.*)/', expr)
+    $assertExpr ('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr)
 
     /*  Main feature: named groups, easily accessible as dictionary elements.
      */

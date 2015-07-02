@@ -52,7 +52,13 @@ module.exports = {
 	                                                                    if (e) {
 	                                                                        util.fatalError (stderr) }
 	                                                                    else {
-	                                                                        return_ (require (name)) } }) },
+	                                                                    	_.delay (function () {
+		                                                                    	var module = require (name)
+		                                                                    	if (module) {
+		                                                                    		log.ok ('Installed', name) }
+		                                                                    	else {
+		                                                                    		log.error ('Install failed:', name) }
+		                                                                    	return_ (module) }) } }) },
                         		function (module) { if (module) {
 					                        			log.info ('Loaded', name)
 						                				return_ (module) } }) },

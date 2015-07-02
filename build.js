@@ -95,7 +95,7 @@ function stripCommentsAndTests (src, name, path) {
             function (expr) {
 
                 if (matchesHasModuleEqualsTrue (expr)) { var module = expr.expression.left.property.name
-                    log.write (module)
+                    log.write ('+', module.match (/^has(.+)/)[1])
                     hasModules[module] = true
                     return true }
 

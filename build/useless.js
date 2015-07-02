@@ -396,7 +396,7 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
-_.withTest ('assert.js bootstrap', function () {
+_.deferTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -720,7 +720,7 @@ _.mixin ({
 /*  converts 'arguments' (and any other array mimick) to real Array
     ======================================================================== */
 
-_.withTest (['stdlib', 'asArray'], function () {
+_.deferTest (['stdlib', 'asArray'], function () {
 
     (function (a, b) {
         var args = _.asArray (arguments)
@@ -746,7 +746,7 @@ _.withTest (['stdlib', 'asArray'], function () {
              that will soon become widely recognized reality for everyone.
  */
 
-_.withTest ('argcount tracking', function () {
+_.deferTest ('argcount tracking', function () {
 
     var none        = function () {}
     var one         = function (a) {}
@@ -901,7 +901,7 @@ _.not = function (x) { return function () {
 /*  Y combinator (for anonymous recursive functions)
     ======================================================================== */
 
-_.withTest (['function', 'Y combinator'], function () {
+_.deferTest (['function', 'Y combinator'], function () {
 
     var countTo5 = _.Y (function (self) {
         return function (n) {
@@ -976,7 +976,7 @@ _.withTest (['function', 'Y combinator'], function () {
 /*  Generates higher order stuff from regular routine
     ======================================================================== */
 
-_.withTest (['function', 'higherOrder'], function () {
+_.deferTest (['function', 'higherOrder'], function () {
 
         var file = []
         var write = function (x) { file.push (x) }
@@ -1045,7 +1045,7 @@ _.wrapper = function (fn, wrapper) {
 /*  _.once
     ======================================================================== */
 
-_.withTest (['function', 'once'], function () {
+_.deferTest (['function', 'once'], function () {
 
     $assertCalls (1, function (mkay) {
         var f = _.once (function () { mkay () })
@@ -1093,7 +1093,7 @@ _.deferTest (['function', 'withTimeout'], function (testDone) {
 /*  Sequential composition operator (inverted _.compose, basically)
     ======================================================================== */
 
-_.withTest (['function', 'sequence / then'], function () {
+_.deferTest (['function', 'sequence / then'], function () {
 
         var context = { foo: 'bar' }
 
@@ -1300,7 +1300,7 @@ _.deferTest (['type', 'matches(regex)'], function () {
 /*  POD data types
     ======================================================================== */
 
-_.withTest (['type', 'POD'], function () {
+_.deferTest (['type', 'POD'], function () {
 
     $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
     $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD)))
@@ -1321,7 +1321,7 @@ _.withTest (['type', 'POD'], function () {
 /*  Numbers
     ======================================================================== */
 
-_.withTest (['type', 'numbers'], function () {
+_.deferTest (['type', 'numbers'], function () {
 
     $assert (_.every (_.map ([0,        1,     -7,    200003, 12344567788], _.arity1 (_.not (_.isDecimal)))))
     $assert (_.every (_.map ([0.1, -0.001, 0.0001, -0.000001,    0.000001], _.arity1 (       _.isDecimal))))
@@ -1344,7 +1344,7 @@ _.withTest (['type', 'numbers'], function () {
 /*  'empty' classifiers (fixes underscore shit)
     ======================================================================== */
 
-_.withTest (['type', 'empty-centric routines'], function () {
+_.deferTest (['type', 'empty-centric routines'], function () {
 
     $assert (_.coerceToEmpty (42), undefined)
     $assert (_.coerceToEmpty ([42]), [])
@@ -1563,7 +1563,7 @@ _.hasStdlib = true
 /*  _.throwsError
     ======================================================================== */
 
-_.withTest (['stdlib', 'throwsError'], function () {
+_.deferTest (['stdlib', 'throwsError'], function () {
 
         $assertThrows (
             _.throwsError ('неуловимый Джо'),
@@ -1672,7 +1672,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
 /*  Internal impl.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.withTest (['stdlib', 'objectMap'], function () {
+_.deferTest (['stdlib', 'objectMap'], function () {
 
         var obj     = { a: 1, b: 2 }
         var plusOne = function (v) { return v + 1 }
@@ -1923,7 +1923,7 @@ function () {
 /*  Most useful _.extend derivatives
     ======================================================================== */
 
-_.withTest (['stdlib', 'extend 2.0'], function () {
+_.deferTest (['stdlib', 'extend 2.0'], function () {
 
         /*  Inverted version of _.extend, for humanized narration where it makes sense (not here,
             but see AOP impl for example of such one)
@@ -1974,7 +1974,7 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
 /*  removes empty contents from any kinds of objects
     ======================================================================== */
 
-_.withTest (['stdlib', 'nonempty'], function () {
+_.deferTest (['stdlib', 'nonempty'], function () {
 
     var obj = { blank: {}, empty: [], one: 1, none: undefined, nil: null, clear: '', zero: 0, no: false }
     var arr = [{}, [], 1, undefined, null, '', 0, false]
@@ -2063,7 +2063,7 @@ _.deferTest (['stdlib', 'undiff'], function () {
 /*  Makes { foo: true, bar: true } from ['foo', 'bar']
     ======================================================================== */
 
-_.withTest (['stdlib', 'index'], function () {
+_.deferTest (['stdlib', 'index'], function () {
     
         $assert (_.index (['foo', 'bar']), { foo: true, bar: true }) }, function () { _.extend (_, {
 
@@ -2076,7 +2076,7 @@ _.withTest (['stdlib', 'index'], function () {
 /*  A shorthand to _.filter + _.map (map with filter behavior).
     ======================================================================== */
 
-_.withTest (['stdlib', 'filterMap'], function () {
+_.deferTest (['stdlib', 'filterMap'], function () {
 
     var input     = ['foo', undefined, 'bar']
     var plusBar   = function (x) { return x && (x + 'bar') }
@@ -2109,7 +2109,7 @@ _.withTest (['stdlib', 'filterMap'], function () {
 /*  For string wrapping
     ======================================================================== */
 
-_.withTest (['stdlib', 'quote'], function () {
+_.deferTest (['stdlib', 'quote'], function () {
 
         $assert (_.quote      ('qux'),           '"qux"')
         $assert (_.quote      ('qux', '[]'),     '[qux]')
@@ -2131,7 +2131,7 @@ _.withTest (['stdlib', 'quote'], function () {
 /*  _.partition 2.0
     ======================================================================== */
 
-_.withTest (['stdlib', 'partition2'], function () {
+_.deferTest (['stdlib', 'partition2'], function () {
 
         $assert (_.partition2 (
                     [ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty),
@@ -2179,7 +2179,7 @@ _.omitKeys = function (obj, predicate) {
 /*  Properties
     ======================================================================== */
 
-_.withTest ('properties', function () { var obj = {}
+_.deferTest ('properties', function () { var obj = {}
 
     _.defineProperty (obj, 'fourtyTwo',         42)
     _.defineProperty (obj, 'fourtyTwo_too',     function ()  { return 42 })
@@ -2266,7 +2266,7 @@ _.withTest ('properties', function () { var obj = {}
 /*  Keywords
     ======================================================================== */
 
-_.withTest ('keywords', function () {
+_.deferTest ('keywords', function () {
 
     if ($global['$fourtyTwo'] === undefined) { // coz this test called twice during startup
 
@@ -2597,7 +2597,7 @@ _.cps = function () {
 /*  apply
     ======================================================================== */
 
-_.withTest (['cps', 'apply'], function () {
+_.deferTest (['cps', 'apply'], function () {
 
     // TODO
 
@@ -2617,7 +2617,7 @@ _.withTest (['cps', 'apply'], function () {
 /*  each
     ======================================================================== */
 
-_.withTest (['cps', 'each'], function () {
+_.deferTest (['cps', 'each'], function () {
 
     /*  Example array
      */
@@ -2671,7 +2671,7 @@ function () { _.extend (_.cps, {
 /*  map
     ======================================================================== */
 
-_.withTest (['cps', 'map'], function () {
+_.deferTest (['cps', 'map'], function () {
 
     _.cps.map ([7,6,5],
         function (x, i, then) { then (x + 1) },
@@ -2687,7 +2687,7 @@ function () { _.extend (_.cps, {
 /*  memoize
     ======================================================================== */
 
-_.withTest (['cps', 'memoize'], function () {
+_.deferTest (['cps', 'memoize'], function () {
 
     $assertCalls (1, function (noMoreThanOne) {
         var plusOne = _.cps.memoize (function (x, then) { noMoreThanOne (); then (x + 1) })
@@ -2718,7 +2718,7 @@ function () { _.extend (_.cps, {
 /*  reduce
     ======================================================================== */
 
-_.withTest (['cps', 'reduce'], function () { $assertCalls (2, function (mkay) {
+_.deferTest (['cps', 'reduce'], function () { $assertCalls (2, function (mkay) {
 
     var input   = [1,2,3]
     var sums    = function (a, b, then) { then (a + b) }
@@ -2745,7 +2745,7 @@ _.withTest (['cps', 'reduce'], function () { $assertCalls (2, function (mkay) {
 /*  noop / identity / constant
     ======================================================================== */
 
-_.withTest (['cps', 'noop, identity, constant'], function () { $assertCalls (4, function (mkay) {
+_.deferTest (['cps', 'noop, identity, constant'], function () { $assertCalls (4, function (mkay) {
 
     /*  Port of underscore's _.noop to CPS terms
      */
@@ -2825,7 +2825,7 @@ _.deferTest (['cps', 'arity / resultArity'], function () {
 /*  sequence / compose
     ======================================================================== */
 
-_.withTest (['cps', 'sequence / compose'], function () { $assertCalls (4, function (mkay) {
+_.deferTest (['cps', 'sequence / compose'], function () { $assertCalls (4, function (mkay) {
 
     /*  Basic example of asynchronous functions sequencing
      */
@@ -3430,7 +3430,7 @@ _.deferTest ('OOP', {
 /*  $singleton (a humanized macro to new ($prototype (definition)))
     ======================================================================== */
 
-     _.withTest ('$singleton', function () { $assertCalls (2, function (mkay) {
+     _.deferTest ('$singleton', function () { $assertCalls (2, function (mkay) {
 
             var Base    = $prototype ({
                             method:    _.constant (42) })
@@ -3622,7 +3622,7 @@ $extensionMethods (Function, {
 /*  Array extensions
     ======================================================================== */
 
-_.withTest ('Array extensions', function () {
+_.deferTest ('Array extensions', function () {
 
     var excess = [3,1,2,3,3,4,3]
 
@@ -7538,12 +7538,12 @@ _.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { 
     $assertExpr ('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$)
 
     var expr = $r.expr ('before',    $r.anything.text ('$print').something).then (
-               $r.expr ('argument',  $r.someOf.except.text (',(')).inParentheses.then (
+               $r.expr ('argument',  $r.someOf.except.text (',)')).inParentheses.then (
                $r.expr ('tail',      $r.anything))).$
 
     /*  Above construction generates the following regular expression
      */
-    $assertExpr ('/(.*\\$print.+)\\(([^,\\(]+)\\)(.*)/', expr)
+    $assertExpr ('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr)
 
     /*  Main feature: named groups, easily accessible as dictionary elements.
      */
