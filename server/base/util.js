@@ -7,7 +7,7 @@ var path		= require ('path'),
 	exec		= require ('child_process').exec,
 	Buffer		= require ('buffer').Buffer,
 	Iconv		= require ('iconv').Iconv,
-	_			= require ('useless')
+	_			= require ('underscore')
 
 _.tests.util = {
 

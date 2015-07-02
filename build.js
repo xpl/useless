@@ -1,5 +1,5 @@
 var fs          = require ('fs'),
-    _           = require ('useless'),
+    _           = require ('./useless'),
     util        = require ('./server/base/util'),
     querystring = require ('querystring'),
     http        = require ('http'),
