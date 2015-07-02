@@ -57,7 +57,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 - **$aspect** / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
-### Component model
+### [Component model](https://github.com/xpl/useless/wiki/$component)
 
 - Binds own methods to **this** automatically
 - Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
