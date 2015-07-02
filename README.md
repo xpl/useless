@@ -4,12 +4,14 @@ A cross-platform JavaScript toolbox for writing complex web applications.
 
 Currently in pre-release stage, missing some basic documentation and being under heavy development.
 
+## Browser builds
+
+* Compiled/minified (for production setup): [useless.min.js](./build/useless.min.js) (111 Kb)
+* Readable source (for development use): [useless.js](./build/useless.js)
+
+## Node.js module
+
 [Installing](#installing) | [Building](#building)
-
-## Quick links
-
-* Compiled/minified version (for production setup): [useless.min.js](./build/useless.min.js) (111 Kb)
-* Source version (for development use): [useless.js](./build/useless.js)
 
 ##Directory structure
 
