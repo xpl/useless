@@ -157,7 +157,7 @@ Tabbed navigation host / URL persistence.
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
-## Installing<a href="#installing"></a>
+## Installing
 
 ### From NPM
 
@@ -173,7 +173,7 @@ Go to `build` folder and pick `useless.js`. For minified version (with unit test
 
 This version includes only the platform-independent part of the library, not including any of the `./client` features. If you need any of these, you can either link them them in browser code separately, or make custom build file with the additional files included (see instructions below).
 
-## Building<a href="#building"></a>
+## Building
 
 Build command:
 
