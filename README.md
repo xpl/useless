@@ -165,7 +165,7 @@ Type `npm install useless` in root directory of your project.
 
 Run `git clone https://github.com/xpl/useless.git` in `node_modules` subfolder of your project.
 
-##As monolithic pre-built script
+###As monolithic pre-built script
 
 Go to `build` folder and pick `useless.js`. For minified version (with unit tests stripped) pick `useless.min.js`. This one is ready to be used in production setup.
 
