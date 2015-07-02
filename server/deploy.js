@@ -1,7 +1,7 @@
-var fs				= require ('fs'),
-    path			= require ('path'),
+var fs              = require ('fs'),
+    path            = require ('path'),
     util            = require ('./base/util'),
-    exec			= require ('child_process').exec
+    exec            = require ('child_process').exec
 
 module.exports = $trait ({
 
