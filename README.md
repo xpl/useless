@@ -6,6 +6,10 @@ Currently in pre-release stage, missing some basic documentation and being under
 
 [Installing](#installing) | [Building](#building)
 
+```
+> npm install useless
+```
+
 ### Browser builds
 
 * Compiled/minified (for production setup): [useless.min.js](./build/useless.min.js) (111 Kb)
