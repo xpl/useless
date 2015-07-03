@@ -2,7 +2,7 @@
 
 A cross-platform JavaScript toolbox for writing complex web applications. Currently in pre-release stage, missing some basic documentation and being under heavy development.
 
-[Installing](#installing) | [Building](#building)
+[Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
 ```
 > npm install useless
@@ -57,7 +57,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 - **$aspect** / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
-### [Component model](https://github.com/xpl/useless/wiki/$component)
+### Component model
+
+[How-to & Examples](https://github.com/xpl/useless/wiki/$component)
 
 - Binds own methods to **this** automatically
 - Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
