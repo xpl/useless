@@ -21,6 +21,16 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 * `./build` built source (full/stripped/minified)
 * `./useless.js` header file for the build tool (contains include directives)
 * `./useless.micro.js` header file (an example of reduced build config)
+* `./example.js` example application
+* `./example` static content for `example.js` app
+
+## Running example app
+
+```
+> node example.js
+```
+
+If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
 
 ## Feature overview
 

@@ -1,0 +1,38 @@
+<html>
+	<head>
+		<meta charset="utf-8"></meta>
+		<title>Useless Examples</title>
+
+		<script src="/example/lib/underscore-min.js"></script>
+		<script src="/example/lib/jquery-2.0.3.min.js"></script>
+		<script src="/useless.js"></script>
+		<script src="/useless/jQueryPlus.js"></script>
+
+		<!-- UI.error -->
+		<script src="/useless/UI.error.js"></script>
+		<link rel="stylesheet" href="/useless/UI.error.css" type="text/css">
+
+	</head>
+	<style>
+		body { font-family: Helvetica, sans-serif; padding: 20px;}
+		h1 { font-size: 40px; }
+	</style>
+	<script>
+		/*	Bind UI.error as default exception handler
+		 */
+		_.withUncaughtExceptionHandler (function (e) {
+			UI.error (e, undefined, _.identity) })
+
+		function callMe (fn) {
+			fn () }
+
+		function erroneousFunction () {
+			_.map ([1,2,3], callMe) }
+
+		$(document).ready (function () {
+			erroneousFunction () })
+		</script>
+	<body>
+		<h1># UI.error demo</h1>
+	</body>
+</html>

@@ -109,16 +109,13 @@ _.readSourceLine = function (file, line, then) {
 
 
 _.readSource = _.cps.memoize (function (file, then) {
-                                if (!file || !file.match (/.+\.js/)) { // oh, dont waste my time.. are you even script?
-                                    then ('') }
-                                else {
+                                try {
                                     if (Platform.NodeJS) {
-                                        try {
-                                            then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
-                                        catch (e) {
-                                            then ('') } }
+                                        then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
                                     else {
-                                        jQuery.get (file, then, 'text') } } })
+                                        jQuery.get (file, then, 'text') } }
+                                catch (e) {
+                                    then ('') } })
 
 
 /*  Callstack API

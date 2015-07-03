@@ -88,7 +88,7 @@ ErrorOverlay = $singleton (Component, {
 				var dom = $('<li class="callstack-entry">')
 						.toggleClass ('third-party', entry.thirdParty)
 						.append ([
-							$('<span class="file">').text (_.nonempty ([entry.fileShort, ':', entry.line]).join ('')),
+							$('<span class="file">').text (_.nonempty ([entry.fileShort || '(index)', ':', entry.line]).join ('')),
 							$('<span class="callee">').text (entry.calleeShort),
 							$('<span class="src">').text (entry.source || '').click (function (e) {
 								var el = $(e.delegateTarget)

@@ -10,7 +10,7 @@ module.exports = $trait ({
             .createServer (this.$ (function (request, response) {
                 console.log (request.method, ': ', request.url)
                 this.serveRequest (new Context ({ request: request, response: response })) }))
-            .listen (1333, then.arity0) },
+            .listen (this.port || 1333, then.arity0) },
 
 
     /*  entry point for all requests, now accepting either actual Context or it's config for ad-hoc evaluation

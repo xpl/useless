@@ -7,6 +7,11 @@ var fs = require ('fs')
 module.exports = $trait ({
 
     api: function () {
+
+        if (!this.developerAccess) {
+            this.developerAccess = _.identity
+            log.warn ('Define this.developerAccess to restrict access to devtools API!') }
+
         return {
             'echo':             { post: this.echo },
             'api': {
