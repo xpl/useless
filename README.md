@@ -54,7 +54,8 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - `_.observable` / state change notifications
 
 ### Macro processor for prototype definitions
-## [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype-------$trait-------$aspect)
+
+[**How-to & Examples**](https://github.com/xpl/useless/wiki/$prototype-------$trait-------$aspect)
 
 - **$prototype** / **$extends**
 - Smart property declarations
@@ -69,7 +70,8 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - **$singleton**
 
 ### Component model
-## [How-to & Examples](https://github.com/xpl/useless/wiki/$component)
+
+[**How-to & Examples**](https://github.com/xpl/useless/wiki/$component)
 
 - Binds own methods to **this** automatically
 - Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
