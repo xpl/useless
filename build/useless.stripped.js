@@ -3512,7 +3512,7 @@ _.extend(log, {
                 var config = _.extend({ indent: 0 }, defaultCfg, log.readConfig(args));
                 var stackOffset = Platform.NodeJS ? 3 : 2;
                 var indent = (log.impl.writeBackend.indent || 0) + config.indent;
-                var text = log.impl.stringifyArguments(cleanArgs);
+                var text = log.impl.stringifyArguments(cleanArgs, config);
                 var indentation = _.times(indent, _.constant('\t')).join('');
                 var match = text.reversed.match(/(\n*)([^]*)/);
                 var location = config.location && log.impl.location(config.where || $callStack[stackOffset + (config.stackOffset || 0)]) || '';
@@ -3547,10 +3547,11 @@ _.extend(log, {
                 where.fileName + ':' + where.line
             ]).join(' @ '))
         },
-        stringifyArguments: function (args) {
-            return _.map(args, log.impl.stringify).join(' ')
+        stringifyArguments: function (args, cfg) {
+            return _.map(args, log.impl.stringify.tails2(cfg)).join(' ')
         },
-        stringify: function (what) {
+        stringify: function (what, cfg) {
+            cfg = cfg || {};
             if (_.isTypeOf(Error, what)) {
                 var str = log.impl.stringifyError(what);
                 if (what.originalError) {
@@ -3561,7 +3562,11 @@ _.extend(log, {
             } else if (_.isTypeOf(CallStack, what)) {
                 return log.impl.stringifyCallStack(what)
             } else if (typeof what === 'object') {
-                return _.stringify(what)
+                if (_.isArray(what) && what.length > 1 && _.isObject(what[0]) && cfg.table) {
+                    return log.asTable(what)
+                } else {
+                    return _.stringify(what, cfg)
+                }
             } else if (typeof what === 'string') {
                 return what
             } else {

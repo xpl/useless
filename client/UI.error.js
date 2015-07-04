@@ -32,9 +32,9 @@ ErrorOverlay = $singleton (Component, {
 			$('<div class="modal loading error">').append ([
 				this.modalBody = $('<div class="modal-body">').append ('<h5>Now panic!</h5>'),
 				$('<div class="modal-footer">').append ([
-					this.btnRetry = $('<button type="button" class="btn btn-warning" style="display:none;">Попробовать ещё раз</button>')
+					this.btnRetry = $('<button type="button" class="btn btn-warning" style="display:none;">Try again</button>')
 						.touchClick (this.retry),
-					this.btnClose = $('<button type="button" class="btn btn-danger" style="display:none;">Закрыть</button>')
+					this.btnClose = $('<button type="button" class="btn btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ]).appendTo (document.body)
 		return el })),
 

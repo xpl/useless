@@ -36,7 +36,7 @@ _.tests.log = function () {     //  Writes to test's log (as it's off-screen unt
                      'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
 
     log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
-    log.orange  (log.indent (2), [
+    log.orange  (log.config ({ indent: 2, table: true }), [
         { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
         { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
 
@@ -146,7 +146,7 @@ _.extend (log, {
 
             var indent          = (log.impl.writeBackend.indent || 0) + config.indent
 
-            var text            = log.impl.stringifyArguments (cleanArgs)
+            var text            = log.impl.stringifyArguments (cleanArgs, config)
             var indentation     = _.times (indent, _.constant ('\t')).join ('')
             var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
 
@@ -194,12 +194,12 @@ _.extend (log, {
 
         /*  This could be re-used by outer code for turning arbitrary argument lists into string
          */
-        stringifyArguments: function (args) {
-            return _.map (args, log.impl.stringify).join (' ') },
+        stringifyArguments: function (args, cfg) {
+            return _.map (args, log.impl.stringify.tails2 (cfg)).join (' ') },
 
         /*  Smart object stringifier
          */
-        stringify: function (what) {
+        stringify: function (what, cfg) { cfg = cfg || {}
             if (_.isTypeOf (Error, what)) {
                 var str = log.impl.stringifyError (what)
                 if (what.originalError) {
@@ -211,10 +211,10 @@ _.extend (log, {
                 return log.impl.stringifyCallStack (what) }
 
             else if (typeof what === 'object') {
-                /*if (_.isArray (what) && what.length > 1 && _.isObject (what[0])) {
+                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
                     return log.asTable (what) }
-                else {*/
-                    return _.stringify (what) /*}*/ }
+                else {
+                    return _.stringify (what, cfg) } }
                     
             else if (typeof what === 'string') {
                 return what }
