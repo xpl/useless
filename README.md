@@ -32,6 +32,8 @@ Most of widgets defined in `./client` part are not work well too, as their code 
 
 Someday I will publish a complete demo app that utilizes all these features (like a To-Do list or something).
 
+Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
+
 ### Running example app
 
 ```bash
