@@ -1,6 +1,6 @@
 {
   "name": "useless",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "Yet Another Useless Framework",
   "main": "useless.js",
   "directories": {
