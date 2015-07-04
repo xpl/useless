@@ -32,7 +32,11 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
 
-## [Generic algorithms](./base/tier0/README.md)
+# Features
+
+## Generic algorithms
+
+### [Reference](./base/tier0/README.md) (incomplete)
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
@@ -51,9 +55,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - `_.barrier` / synchronization primitive
     - `_.observable` / state change notifications
 
-## [Macro processor for prototype definitions](https://github.com/xpl/useless/wiki/$prototype)
+## Macro processor for prototype definitions
 
-[How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
+### [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
 
 - **$prototype** / **$extends**
 - Smart property declarations
@@ -67,7 +71,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - **$aspect** / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
-## [Component model](https://github.com/xpl/useless/wiki/$component)
+## Component model
+
+### [How-to & Examples](https://github.com/xpl/useless/wiki/$component)
 
 - Binds own methods to **this** automatically
 - Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
