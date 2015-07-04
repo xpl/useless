@@ -117,8 +117,6 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 + Hookable/interceptable
 + Displays server's log in browser console (`./server/devtools.js` feature)
 
-![Node.js logging](https://raw.githubusercontent.com/xpl/useless/master/example/img/log-demo.png)
-
 ## Tests
 
 * Tests before code
