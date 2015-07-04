@@ -117,6 +117,8 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 + Hookable/interceptable
 + Cross-machine
 
+![Node.js logging](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)
+
 ## Tests
 
 * Tests before code
