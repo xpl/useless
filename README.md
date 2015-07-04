@@ -271,7 +271,7 @@ This will work for applications that dont rely on `useless/server` to implement 
 
 Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
 
-```
+```javascript
 $traits: [        
         require ('useless/server/exceptions'),
         require ('useless/server/tests'),
