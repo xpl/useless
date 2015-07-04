@@ -51,7 +51,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - `_.barrier` / synchronization primitive
     - `_.observable` / state change notifications
 
-## [Macro processor for prototype definitions](https://github.com/xpl/useless/wiki/$prototype-------$trait-------$aspect)
+## [Macro processor for prototype definitions](https://github.com/xpl/useless/wiki/$prototype)
+
+[How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
 
 - **$prototype** / **$extends**
 - Smart property declarations
