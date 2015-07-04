@@ -1,7 +1,7 @@
 BroTune = Bro.Tool ({
 
-    name:  $static ('tune'),
-    Entry: $static ({
+    name:  $const ('tune'),
+    Entry: $const ({
 
     	$requires: {
    			value: 'number',
@@ -36,8 +36,8 @@ BroTune = Bro.Tool ({
 
 
 BroButton = Bro.Tool ({
-    name: $static ('btn'),
-    Entry: $static ({
+    name: $const ('btn'),
+    Entry: $const ({
 
         click: $trigger (),
 
@@ -54,8 +54,8 @@ BroButton = Bro.Tool ({
 })
 
 BroPrint = Bro.Tool ({
-    name: $static ('print'),
-    Entry: $static ({
+    name: $const ('print'),
+    Entry: $const ({
         widget: function () {
             return undefined },
     }),
@@ -63,9 +63,9 @@ BroPrint = Bro.Tool ({
 
 BroProp = Bro.Tool ({
 
-    name:  $static ('prop'),
-    stub:  $static (function (obj, prop, v) { obj[prop] = v }),
-    Entry: $static ({
+    name:  $const ('prop'),
+    stub:  $const (function (obj, prop, v) { obj[prop] = v }),
+    Entry: $const ({
 
         configure: function (obj, prop, v) {
             obj[prop] = v

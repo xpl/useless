@@ -1454,10 +1454,10 @@ _.defineTagKeyword = function (k) {
     var kk = _.keyword(k);
     return _.extend($global[kk], {
         is: function (x) {
-            return _.isTypeOf(Tags, x) && kk || undefined
+            return _.isTypeOf(Tags, x) && kk in x || false
         },
         isNot: function (x) {
-            return !(_.isTypeOf(Tags, x) && kk) || undefined
+            return !(_.isTypeOf(Tags, x) && kk in x) || false
         },
         unwrap: function (x) {
             return $atom.matches(x) === true ? Tags.unwrap(x) : x
@@ -1937,6 +1937,9 @@ if (typeof jQuery !== 'undefined') {
         }
     })
 }
+_.defineKeyword('const', function (x) {
+    return $static($property(x))
+});
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))()
 };
@@ -3267,13 +3270,17 @@ _.readSourceLine = function (file, line, then) {
     })
 };
 _.readSource = _.cps.memoize(function (file, then) {
-    try {
-        if (Platform.NodeJS) {
-            then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '')
-        } else {
-            jQuery.get(file, then, 'text')
+    if (file.indexOf('<') < 0) {
+        try {
+            if (Platform.NodeJS) {
+                then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '')
+            } else {
+                jQuery.get(file, then, 'text')
+            }
+        } catch (e) {
+            then('')
         }
-    } catch (e) {
+    } else {
         then('')
     }
 });

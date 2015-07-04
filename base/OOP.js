@@ -218,6 +218,22 @@ _.deferTest ('OOP', {
         $assert (_.isTypeOf_ES4 (Foo, bar)) },  // (validate inheritance)
 
 
+/*  $const (xxx) as convenient alias for $static ($property (xxx))
+    ======================================================================== */
+ 
+    '$const': function () {
+ 
+        var A = $prototype ({
+            $const: {
+                foo: 'foo',
+                bar: 'bar' },
+            qux: $const ('qux'),
+            zap: $const ('zap') })
+ 
+        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
+        $assertThrows (function () { A.foo = 'bar '}) },
+
+
 /*  This is how to decide whether a function is $prototype constructor
     ======================================================================== */
 
@@ -540,6 +556,12 @@ _.deferTest ('OOP', {
 
     if (typeof jQuery !== 'undefined') {
         jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
+
+
+/*  $const is alias for static property
+    ======================================================================== */
+
+    _.defineKeyword ('const', function (x) { return $static ($property (x)) })
 
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
