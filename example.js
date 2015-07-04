@@ -5,9 +5,6 @@
 
 require ('./useless')
 
-var path = require ('path'),
-    fs   = require ('fs')
-
 Examples = $singleton (Component, {
 
     api: function () { return {
