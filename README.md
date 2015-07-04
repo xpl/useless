@@ -13,7 +13,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 * Compiled/minified (for production setup): [useless.min.js](./build/useless.min.js) (111 Kb)
 * Readable source (for development use): [useless.js](./build/useless.js)
 
-## Directory structure
+### Directory structure
 
 * `./base` platform-independent part
 * `./client` browser-related utility
@@ -24,7 +24,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 * `./example.js` example application
 * `./example` static content for `example.js` app
 
-## Running example app
+### Running example app
 
 ```
 > node example.js
@@ -32,9 +32,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
 
-## Feature overview
-
-### [Generic algorithms](./base/tier0/README.md)
+## [Generic algorithms](./base/tier0/README.md)
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
@@ -53,9 +51,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - `_.barrier` / synchronization primitive
     - `_.observable` / state change notifications
 
-### Macro processor for prototype definitions
-
-[How-to & Examples](https://github.com/xpl/useless/wiki/$prototype-------$trait-------$aspect)
+## [Macro processor for prototype definitions](https://github.com/xpl/useless/wiki/$prototype-------$trait-------$aspect)
 
 - **$prototype** / **$extends**
 - Smart property declarations
@@ -69,9 +65,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - **$aspect** / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
-### Component model
-
-[How-to & Examples](https://github.com/xpl/useless/wiki/$component)
+## [Component model](https://github.com/xpl/useless/wiki/$component)
 
 - Binds own methods to **this** automatically
 - Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
@@ -80,13 +74,13 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Enables **$traits** to chain into method calls by overlapping method definitions
 - Enforces configuration contracts (**$requires**, **$defaults**)
 
-### Exception handling
+## Exception handling
 
 - Cross-platform handling of uncaught exceptions
 - Uncaught exceptions pass through network API calls
 - Client displays server's exceptions as if it was single environment
 
-### Callstack access
+## Callstack access
 
 - Access at arbitrary location (for reflection purposes)
 - Strips third party calls (clean mode)
@@ -95,7 +89,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - Console mode (replaces default Node.js exception printer)
     - GUI mode (shows pop-up dialog with expandable source lines)
 
-### Logging
+## Logging
 
 + Platform-independent
 + Color output
@@ -105,7 +99,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 + Hookable/interceptable
 + Cross-machine
 
-### Tests
+## Tests
 
 * Tests before code
 * Tests as documentantion
@@ -114,7 +108,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 * Custom assertions
 * Humane error reporting
 
-### And more..
+## And more..
 
 - Platform detection/abstraction layer
 - Performance measurement
@@ -122,7 +116,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Unicode regexp hack (3rd party)
 - Base64 encoding/decoding (3rd party)
 
-## `./client`
+# `./client`
 
 ### jQueryPlus.js
 
@@ -171,7 +165,7 @@ Tabbed navigation host / URL persistence.
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
-## `./server`
+# `./server`
 
 Example:
 
@@ -220,7 +214,7 @@ Following are **$traits** defined at `useless/server`:
 - `uptime.js` uptime tracking / restart()
 - `websocket.js` WebSocket utility (peer tracking / auth / multicast)
 
-## Installing
+# Installing
 
 ### From NPM
 
@@ -239,7 +233,7 @@ Go to `build` folder and pick `useless.js`. For minified version (with unit test
 
 This version includes only the platform-independent part of the library, not including any of the `./client` features. If you need any of these, you can either link them them in browser code separately, or make custom build file with the additional files included (see instructions below).
 
-## Building
+# Building
 
 Build command:
 
