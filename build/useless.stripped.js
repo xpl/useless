@@ -3270,18 +3270,14 @@ _.readSourceLine = function (file, line, then) {
     })
 };
 _.readSource = _.cps.memoize(function (file, then) {
-    if (!file || !file.match(/.+\.js/)) {
-        then('')
-    } else {
+    try {
         if (Platform.NodeJS) {
-            try {
-                then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '')
-            } catch (e) {
-                then('')
-            }
+            then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '')
         } else {
             jQuery.get(file, then, 'text')
         }
+    } catch (e) {
+        then('')
     }
 });
 CallStack = $extends(Array, {
