@@ -105,6 +105,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - GUI mode (a pop-up dialog with expandable source lines, `./client/UI.error.js` feature)
 
 ![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
+![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)
 
 ## Logging
 
