@@ -107,6 +107,8 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - Console mode (replaces default Node.js exception printer)
     - GUI mode (shows pop-up dialog with expandable source lines)
 
+![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
+
 ## Logging
 
 + Platform-independent
