@@ -102,7 +102,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Fetches source code (local/remote)
 - Nice output
     - Console mode (replaces default Node.js exception printer)
-    - GUI mode (shows pop-up dialog with expandable source lines)
+    - GUI mode (a pop-up dialog with expandable source lines, `./client/UI.error.js` feature)
 
 ![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
 
