@@ -67,7 +67,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Pluggable macros for custom syntax
 - Member aliases
 - **$final**
-- **$traits** / a.k.a. mixins / combinatoric-style alternative to inheritance
+- [**$traits**](https://github.com/xpl/useless/wiki/$trait) / a.k.a. mixins / combinatoric-style alternative to inheritance
 - **$aspect** / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
@@ -204,7 +204,7 @@ UselessApp = $component ({
 module.exports = { init: function () { return new UselessApp () } }
 ```
 
-Following are **$traits** defined at `useless/server`:
+Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
 - `api.js` URL mapping
 - `appcache.js` AppCache back-end
@@ -269,7 +269,7 @@ This will work for applications that dont rely on `useless/server` to implement 
 
 ### Using `useless/server/deploy`
 
-Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following **$traits** to main application component:
+Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
 
 ```
 $traits: [        
