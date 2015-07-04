@@ -34,7 +34,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ## Generic algorithms
 
-* #### [Reference](./base/tier0/README.md) (incomplete)
+  #### [Reference](./base/tier0/README.md) (incomplete)
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
@@ -55,7 +55,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ## Macro processor for prototype definitions
 
-- #### [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
+  #### [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
 
 - **$prototype** / **$extends**
 - Smart property declarations
@@ -71,7 +71,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ## Component model
 
-- #### [How-to & Examples](https://github.com/xpl/useless/wiki/$component)
+  #### [How-to & Examples](https://github.com/xpl/useless/wiki/$component)
 
 - Binds own methods to **this** automatically
 - Manages bindable **$trigger** / **$barrier** / **$observableProperty** members
