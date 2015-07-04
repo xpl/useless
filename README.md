@@ -96,8 +96,6 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)
 
-![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
-
 - Cross-platform handling of uncaught exceptions
 - Uncaught exceptions pass through network API calls
 - Client displays server's exceptions as if it was single environment
@@ -107,6 +105,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Nice output
     - Console mode (replaces default Node.js exception printer)
     - GUI mode (a pop-up dialog with expandable source lines, `./client/UI.error.js` feature)
+       - ![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
 
 ## Logging
 
