@@ -4,7 +4,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 [Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
-```
+```bash
 > npm install useless
 ```
 
