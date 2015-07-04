@@ -32,9 +32,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
 
-## Generic algorithms
+# Features
 
-#### [Reference](./base/tier0/README.md) (incomplete)
+## Generic algorithms | [Reference](./base/tier0/README.md) (incomplete)
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
