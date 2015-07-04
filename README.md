@@ -200,9 +200,9 @@ UselessApp = $component ({
 
 	api: function () { return {
 		'/':           this.file ('./static/index.html'),
-		'hello-world': this.helloWorld },
+		'hello-world': this.helloWorld } },
 
-	helloWorld: function (context) { context.success ('Hello world!') }
+	helloWorld: function (context) { context.success ('Hello world!') },
 
 	$traits: [
 
