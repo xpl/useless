@@ -40,7 +40,7 @@ Someday I will publish a complete demo app that utilizes all these features (lik
 
 If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
 
-# './base' features
+# `./base` features
 
 ## Generic algorithms
 
