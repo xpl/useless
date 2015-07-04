@@ -26,7 +26,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Running example app
 
-```
+```bash
 > node example.js
 ```
 
@@ -245,7 +245,9 @@ This version includes only the platform-independent part of the library, not inc
 
 Build command:
 
-`node build.js <header-file> <output-folder>`
+```bash
+node build.js <header-file> <output-folder>
+```
 
 For generic build, run `node build.js ./useless.js ./build`
 
@@ -263,7 +265,9 @@ There exists `./useless.micro.js` as an example of reduced build. Running `node 
 
 You can run `build.js` under `nodemon` (which can be installed from npm). This will trigger automatic re-builds on source change.
 
-`nodemon build.js <header-file> <output-folder>`
+```bash
+nodemon build.js <header-file> <output-folder>
+```
 
 This will work for applications that dont rely on `useless/server` to implement app lifecycle.
 
