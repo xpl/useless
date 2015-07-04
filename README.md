@@ -26,7 +26,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### A notice to brave hackers
 
-Currently `./server` part is not working well, some code may not even compile (especially DB-related things), only the basic function work (request I/O). My current focus is to make the `./base` part work, as it used in production of several projects I'm working on.
+Currently `./server` part is not working well, some code may not even compile (especially DB-related things), only the basic function work (request I/O). My current focus is to make the `./base` part work, as it is used in production of several projects I'm working on.
 
 Most of widgets defined in `./client` part are not work well too, as their code is hard out of sync with recent code base changes. `UI.error` widget works well, though (run example app for demo), as well as `jQueryPlus.js` utility.
 
