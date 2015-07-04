@@ -94,6 +94,8 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ## Exception handling
 
+![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)
+
 - Cross-platform handling of uncaught exceptions
 - Uncaught exceptions pass through network API calls
 - Client displays server's exceptions as if it was single environment
@@ -103,9 +105,6 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Nice output
     - Console mode (replaces default Node.js exception printer)
     - GUI mode (a pop-up dialog with expandable source lines, `./client/UI.error.js` feature)
-
-![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
-![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)
 
 ## Logging
 
@@ -117,9 +116,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 + Hookable/interceptable
 + Displays server's log in browser console (`./server/devtools.js` feature)
 
-![Node.js logging](https://raw.githubusercontent.com/xpl/useless/master/example/img/log-demo.png)
-
 ## Tests
+
+![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.png)
 
 * Tests before code
 * Tests as documentantion
@@ -127,6 +126,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 * Asynchronous / nested assertions
 * Custom assertions
 * Humane error reporting
+
 
 ## And more..
 
@@ -152,7 +152,9 @@ XHR requests to communicate with `./server` part.
 
 ### UI.error.js
 
-A pop-up alert that shows errors / stack traces.
+A pop-up alert that shows errors / stack traces. See example app for demo & how-to.
+
+![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
 
 ### Virtualized Views
 
