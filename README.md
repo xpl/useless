@@ -119,14 +119,14 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ## Tests
 
+![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.png)
+
 * Tests before code
 * Tests as documentantion
 * Rich library of assertions
 * Asynchronous / nested assertions
 * Custom assertions
 * Humane error reporting
-
-![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.png)
 
 
 ## And more..
