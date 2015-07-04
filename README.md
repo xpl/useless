@@ -128,6 +128,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 * Custom assertions
 * Humane error reporting
 
+![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.png)
+
+
 ## And more..
 
 - Platform detection/abstraction layer
