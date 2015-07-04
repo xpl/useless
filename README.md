@@ -144,6 +144,8 @@ A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$
 
 ### BroTools™
 
+![BroTools™ demo](https://pp.vk.me/c625526/v625526383/3557e/vRWBw0o4Nxw.jpg)
+
 An interactive code macroprocessor. Makes certain constants in source code editable. One tags a constant of interest with special keyword, e.g. `$tune (12.224)`. Calling **$tune** translates to a certain widget in the BroTools™ UI, associated with source code location of the call (read via Callstack API). Interacting with the widget leads to source code update, writing new value inside call expression. Currently under development.
 
 ### API.js
