@@ -154,7 +154,7 @@ XHR requests to communicate with `./server` part.
 
 A pop-up alert that shows errors / stack traces. See example app for demo & how-to.
 
-[UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
+![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
 
 ### Virtualized Views
 
