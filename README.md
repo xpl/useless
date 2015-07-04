@@ -68,7 +68,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Member aliases
 - **$final**
 - [**$traits**](https://github.com/xpl/useless/wiki/$trait) / a.k.a. mixins / combinatoric-style alternative to inheritance
-- **$aspect** / Aspect Oriented Programming / declarative method binding
+- [**$aspect**](https://github.com/xpl/useless/wiki/$aspect) / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
 ## Component model
