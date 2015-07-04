@@ -55,6 +55,8 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ### Macro processor for prototype definitions
 
+[How-to & Examples](https://github.com/xpl/useless/wiki/$prototype-------$trait-------$aspect)
+
 - **$prototype** / **$extends**
 - Smart property declarations
 - **$static** methods / properties
