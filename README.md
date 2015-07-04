@@ -136,7 +136,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Unicode regexp hack (3rd party)
 - Base64 encoding/decoding (3rd party)
 
-# `./client`
+# `./client` features
 
 ### jQueryPlus.js
 
@@ -187,7 +187,7 @@ Tabbed navigation host / URL persistence.
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Incomplete and abandoned.
 
-# `./server`
+# `./server` features
 
 Example:
 
