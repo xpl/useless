@@ -36,7 +36,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ## Generic algorithms
 
-[Reference](./base/tier0/README.md) (incomplete)
+[Reference (incomplete)](./base/tier0/README.md)
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
