@@ -92,12 +92,12 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Enables **$traits** to chain into method calls by overlapping method definitions
 - Enforces configuration contracts (**$requires**, **$defaults**)
 
-## Exception handling / Callstack access
+## Exception handling
 
 - Cross-platform handling of uncaught exceptions
 - Uncaught exceptions pass through network API calls
 - Client displays server's exceptions as if it was single environment
-- Stack access at arbitrary location (for reflection purposes)
+- Callstack API for access at arbitrary location (for reflection purposes)
 - Strips third party calls (clean mode)
 - Fetches source code (local/remote)
 - Nice output
