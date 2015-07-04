@@ -2295,6 +2295,12 @@ _.withTest ('keywords', function () {
     $assert ($foo (42).$bar,    undefined)
     $assert ($foo ($bar (42)),  $bar ($foo ($foo (42))))
 
+    /*  Safe way to check for a tag presence is $tag.is method:
+     */
+    $assert ($foo.is ($foo (42)), true)
+    $assert ($foo.is ($bar (42)), false)
+    $assert ($foo.is (42),        false)
+
     /*  Example of complex object containing tagged fields.
      */
     var test = {
@@ -2436,8 +2442,8 @@ _.withTest ('keywords', function () {
                                 var kk = _.keyword (k)
 
                             return _.extend ($global[kk], {
-                                        is: function (x) { return  (_.isTypeOf (Tags, x) && kk) || undefined },
-                                     isNot: function (x) { return !(_.isTypeOf (Tags, x) && kk) || undefined },
+                                        is: function (x) { return  (_.isTypeOf (Tags, x) && (kk in x)) || false },
+                                     isNot: function (x) { return !(_.isTypeOf (Tags, x) && (kk in x)) || false },
                                     unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) }
 
 
@@ -2948,7 +2954,7 @@ _.deferTest ('OOP', {
         really common way to define prototype constructors in JavaScript)
 
         Such semantics could be treated as somewhat similar to the 'anonymous
-        classed' feature in Java, which is a useful mechanism for ad-hoc
+        classes' feature in Java, which is a useful mechanism for ad-hoc
         specialization of constructed prototypes.   
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -3184,22 +3190,6 @@ _.deferTest ('OOP', {
         obj.noMistake () },
 
 
-/*  $const (xxx) as convenient alias for $static ($property (xxx))
-    ======================================================================== */
-
-    '$const': function () {
-
-        var A = $prototype ({
-            $const: {
-                foo: 'foo',
-                bar: 'bar' },
-            qux: $const ('qux'),
-            zap: $const ('zap') })
-
-        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
-        $assertThrows (function () { A.foo = 'bar '}) },
-
-
 /*  Tags on definition render to static properties
     ======================================================================== */
 
@@ -3419,12 +3409,6 @@ _.deferTest ('OOP', {
 
     if (typeof jQuery !== 'undefined') {
         jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
-
-
-/*  $const is alias for static property
-    ======================================================================== */
-
-    _.defineKeyword ('const', function (x) { return $static ($property (x)) })
 
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
@@ -5160,12 +5144,15 @@ _.readSourceLine = function (file, line, then) {
 
 
 _.readSource = _.cps.memoize (function (file, then) {
-                                try {
-                                    if (Platform.NodeJS) {
-                                        then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
-                                    else {
-                                        jQuery.get (file, then, 'text') } }
-                                catch (e) {
+                                if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
+                                    try {
+                                        if (Platform.NodeJS) {
+                                            then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
+                                        else {
+                                            jQuery.get (file, then, 'text') } }
+                                    catch (e) {
+                                        then ('') } }
+                                else {
                                     then ('') } })
 
 
@@ -6360,8 +6347,8 @@ Component = $prototype ({
 
                 /*  xxxChange stream
                  */
-                var observable  = this[name + 'Change'] = value ? _.observable (value) : _.observable ()
-                    observable.context    = this
+                var observable         = this[name + 'Change'] = value ? _.observable (value) : _.observable ()
+                    observable.context = this
 
                 /*  auto-coercion of incoming values to prototype instance
                  */

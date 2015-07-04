@@ -515,8 +515,8 @@ Component = $prototype ({
 
                 /*  xxxChange stream
                  */
-                var observable  = this[name + 'Change'] = value ? _.observable (value) : _.observable ()
-                    observable.context    = this
+                var observable         = this[name + 'Change'] = value ? _.observable (value) : _.observable ()
+                    observable.context = this
 
                 /*  auto-coercion of incoming values to prototype instance
                  */

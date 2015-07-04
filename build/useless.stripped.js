@@ -1937,9 +1937,6 @@ if (typeof jQuery !== 'undefined') {
         }
     })
 }
-_.defineKeyword('const', function (x) {
-    return $static($property(x))
-});
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))()
 };

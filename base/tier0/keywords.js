@@ -30,6 +30,12 @@ _.withTest ('keywords', function () {
     $assert ($foo (42).$bar,    undefined)
     $assert ($foo ($bar (42)),  $bar ($foo ($foo (42))))
 
+    /*  Safe way to check for a tag presence is $tag.is method:
+     */
+    $assert ($foo.is ($foo (42)), true)
+    $assert ($foo.is ($bar (42)), false)
+    $assert ($foo.is (42),        false)
+
     /*  Example of complex object containing tagged fields.
      */
     var test = {
@@ -171,8 +177,8 @@ _.withTest ('keywords', function () {
                                 var kk = _.keyword (k)
 
                             return _.extend ($global[kk], {
-                                        is: function (x) { return  (_.isTypeOf (Tags, x) && kk) || undefined },
-                                     isNot: function (x) { return !(_.isTypeOf (Tags, x) && kk) || undefined },
+                                        is: function (x) { return  (_.isTypeOf (Tags, x) && (kk in x)) || false },
+                                     isNot: function (x) { return !(_.isTypeOf (Tags, x) && (kk in x)) || false },
                                     unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) }
 
 

@@ -109,12 +109,15 @@ _.readSourceLine = function (file, line, then) {
 
 
 _.readSource = _.cps.memoize (function (file, then) {
-                                try {
-                                    if (Platform.NodeJS) {
-                                        then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
-                                    else {
-                                        jQuery.get (file, then, 'text') } }
-                                catch (e) {
+                                if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
+                                    try {
+                                        if (Platform.NodeJS) {
+                                            then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
+                                        else {
+                                            jQuery.get (file, then, 'text') } }
+                                    catch (e) {
+                                        then ('') } }
+                                else {
                                     then ('') } })
 
 

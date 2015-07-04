@@ -88,7 +88,7 @@ Bro = $singleton (Component, {
         init: function () { log.i ('BroTools™: installing', '$' + this.constructor.name)
 
             this.Entry = $extends (Bro.BaseEntry,
-                            _.extend (this.constructor.Entry, { tool: $const (this) }))
+                            _.extend (this.constructor.Entry, { tool: $static (this) }))
 
             _.defineKeyword (this.constructor.name, this.call) },
 
