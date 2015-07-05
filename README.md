@@ -117,7 +117,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 + Configurable object printer
 + Table layout formatting
 + Hookable/interceptable
-+ Displays server's log in browser console (`./server/devtools.js` feature)
++ [Displays server's log in browser console](https://github.com/xpl/useless/wiki/Cross-machine-logging)
 
 ## Tests
 
