@@ -10,8 +10,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Browser builds
 
-* Compiled/minified (for production setup): [useless.min.js](./build/useless.min.js) (111 Kb)
-* Readable source (for development use): [useless.js](./build/useless.js)
+* Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js) (111 Kb)
+* Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
 
 ### Directory structure
 
