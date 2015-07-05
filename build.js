@@ -119,47 +119,46 @@ function stripCommentsAndTests (src, name, path) {
                 else {
                     return true } })) }
 
-// log.info (_.stringify (stripped, { pretty: true, maxArrayLength: 10000, maxDepth: 10 }))
+//  log.info (_.stringify (stripped, { pretty: true, maxArrayLength: 10000, maxDepth: 10 }))
 
-//    log.write (escodegen.generate (stripped))
+//  log.write (escodegen.generate (stripped))
 
-    var output = escodegen.generate (stripped, { format: { semicolons: false }})
+    var output = escodegen.generate (stripped)
 
     writeCompiled (name + '.stripped.js', path, '/*    AUTO GENERATED from ' + name + '.js (stripped unit tests and comments) */\n\n' + output)
 
     return output
 }
 
-function compile (file, dir) {
-    var name = _.initial (path.basename (file).split ('.')).join ('.')
-    var compiledSrc = compileMacros (file)
+function compile (cfg) {
+    var name = _.initial (path.basename (cfg.file).split ('.')).join ('.')
+    var compiledSrc = compileMacros (cfg.file)
 
-    compileWithGoogle (
-        stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, dir),
-        writeCompiled.partial (name + '.min.js', dir))
+    if (!cfg['no-compress']) {
+        compileWithGoogle (
+            stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, cfg.path),
+            writeCompiled.partial (name + '.min.js', cfg.path)) }
 
-    writeCompiled (name + '.js', dir,
-        compiledSrc) }
+    writeCompiled (name + '.js', cfg.path, compiledSrc) }
 
 Testosterone.run ({                             
     codebase: true,
     verbose:  false,
     silent:   true },
 
-    function (okay) { if (okay) { 
+    function (okay) { if (okay) {
 
-        var opts = (process.argv.length === 4) ?
-            { file: process.argv[2], path: process.argv[3] } :
-            { file: './useless.js',  path: './build' }
+        var arguments     = _.rest (process.argv, 2)
+        var optionNames   = ['no-compress']
+        var filePath      = _.without.apply (null, [arguments].concat (optionNames))
+        var options       = _.index (_.intersection (arguments, optionNames))
+
+        var cfg = _.extend ({ file: filePath[0] || './useless.js',
+                              path: filePath[1] || './build' }, options)
 
         console.log ('Checking dependencies')
-        util.require (['esprima', 'escodegen'], function (esprima, escodegen) {
 
-            $global.esprima   = esprima
-            $global.escodegen = escodegen
-
-            compile (opts.file, opts.path) })  } })
-
+        util.require (['esprima', 'escodegen'], compile.partial (cfg)) } })
 
 
 

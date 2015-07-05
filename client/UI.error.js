@@ -67,7 +67,7 @@ ErrorOverlay = $singleton (Component, {
 		this.el.find ('.modal-body')
 			.append ($('<div class="loading-error alert alert-error fade in">').append (
 				$('<span class="message">').append (
-					_.isTypeOf (Error, what) ? ErrorOverlay.printError (what) : what)))
+					_.isTypeOf (Error, what) ? ErrorOverlay.printError (what) : log.impl.stringify (what))))
 		this.el.fadeIn (500)
 		_.delay (this.$ (function () {
 			this.modalBody.scrollTop (this.modalBody[0].scrollHeight) }))  },

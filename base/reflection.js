@@ -237,8 +237,12 @@ CallStack = $extends (Array, {
 /*  Prototype.$sourceFile
  */
 $prototype.macro (function (def, base) {
-    var stackEntry = $callStack[Platform.NodeJS ? 5 : 5]
-    def.$sourceFile = $static ($property (stackEntry ? stackEntry.fileShort : 'unknown'))
+    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
+    def.$sourceFile = $static ($memoized ($property (function () {
+        return CallStack
+                    .fromRawString (stack)
+                    .safeLocation (5)
+                    .fileShort || 'unknown' })))
     return def })
 
 

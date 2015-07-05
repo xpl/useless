@@ -43,7 +43,14 @@ module.exports = {
             log.error (e)
             return undefined } },
 
-    require: function (names, then) { _.cps.map (names,
+    /*  Loaded modules are returned either as arguments:
+            1. require (['esprima', 'escodegen'], function (esprima, escodegen) { })
+
+        Or pushed to global namespace, if callback has no arguments:
+            2. require (['esprima', 'escodegen'], function () { $assert (esprima !== undefined) })
+     */
+    require: function (names, then) {
+        _.cps.map (names,
                 function (name, i, return_) {
                     _.tryEval (function () { return require (name) },
                                function (e) {
@@ -63,6 +70,8 @@ module.exports = {
                                                         log.info ('Loaded', name)
                                                         return_ (module) } }) },
                 function (modules) {
+                    if (_.noArgs (then)) {
+                        _.each (modules, function (module, i) { $global[names[i]] = module }) }
                     then.apply (null, _.coerceToArray (modules)) }) },
 
     compileScript: function (cfg) {

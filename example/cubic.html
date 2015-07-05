@@ -5,6 +5,11 @@
 		<script src="lib/jquery-2.0.3.min.js"></script>
 		<script src="../build/useless.js"></script>
 		<script src="../client/jQueryPlus.js"></script>
+
+		<script src="../client/UI.error.js"></script>
+		<link rel="stylesheet" href="../client/UI.error.css" type="text/css">
+
+		<script src="../client/boot.js"></script>
 	</head>
 	<style>
 		.rect { position: relative; background: #cccccc; width: 200px; height: 200px; }
@@ -42,13 +47,8 @@
 
 			$('.handle').each (function (i, handle) {
 				$(handle).drag ({
-					start: function () {
-						this.pos = this.offset () },
-					move:  function (memo, offset) {
-						this.css ({
-							left: this.pos.left + offset.x,
-							top:  this.pos.top  + offset.y }); update () },
-					end:   function () {} }) })
+					start: function ()             { return this.leftTop () },
+					move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop); update () } }) })
 
 			update () })
 		</script>

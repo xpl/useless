@@ -99,13 +99,6 @@ Testosterone = $singleton ({
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
                                         //  but it's a chicken-egg class problem
 
-    /*  $tests publisher
-     */
-    findAndPublishPrototypeTests: _.trigger (function () {
-                                                $prototype.each (function (def, name) {
-                                                    if (def.$tests) {
-                                                        _.tests[name] = def.$tests } }) }),
-
     /*  Entry point
      */
     run: $interlocked (function (cfg_, optionalThen) {

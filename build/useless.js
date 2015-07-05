@@ -5294,8 +5294,12 @@ CallStack = $extends (Array, {
 /*  Prototype.$sourceFile
  */
 $prototype.macro (function (def, base) {
-    var stackEntry = $callStack[Platform.NodeJS ? 5 : 5]
-    def.$sourceFile = $static ($property (stackEntry ? stackEntry.fileShort : 'unknown'))
+    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
+    def.$sourceFile = $static ($memoized ($property (function () {
+        return CallStack
+                    .fromRawString (stack)
+                    .safeLocation (5)
+                    .fileShort || 'unknown' })))
     return def })
 
 
@@ -6675,13 +6679,6 @@ Testosterone = $singleton ({
 
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
                                         //  but it's a chicken-egg class problem
-
-    /*  $tests publisher
-     */
-    findAndPublishPrototypeTests: _.trigger (function () {
-                                                $prototype.each (function (def, name) {
-                                                    if (def.$tests) {
-                                                        _.tests[name] = def.$tests } }) }),
 
     /*  Entry point
      */
