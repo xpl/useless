@@ -316,3 +316,5 @@ $traits: [
 This will add test & build phase to app startup sequence, aborting if something went wrong.
 
 For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`. **Important notice:** you should add `./node_modules/useless/build/` folder to `.nodemonignore` file in root directory of your project, to prevent restart loop.
+
+Currenly it re-builds only `useless.js`, with no compression applied.
