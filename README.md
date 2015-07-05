@@ -72,6 +72,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - **$prototype** / **$extends**
 - Smart property declarations
 - **$static** methods / properties
+- **$memoized** properties
 - Tag groups on members (`$static: { ... }`)
 - RTTI
 - Pluggable macros for custom syntax
@@ -142,6 +143,12 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$.fn.drag`), which is utilized by countless number of widgets I made.
 
+```javascript
+$(handle).drag ({
+	start: function ()             { return this.leftTop () },
+	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
+```
+
 ### BroTools™
 
 ![BroTools™ demo](https://pp.vk.me/c625526/v625526383/3557e/vRWBw0o4Nxw.jpg)
@@ -154,7 +161,7 @@ XHR requests to communicate with `./server` part.
 
 ### UI.error.js
 
-A pop-up alert that shows errors / stack traces. See example app for demo & how-to.
+A pop-up alert that shows errors / stack traces. See example app for demo & how-to. **Notice**: not works if running from local HTML file (because it reads back JavaScript sources via XHR requests).
 
 ![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack.png)
 
@@ -265,7 +272,11 @@ Build command:
 node build.js <header-file> <output-folder>
 ```
 
-For generic build, run `node build.js ./useless.js ./build`
+For generic build, run `node build.js ./useless.js ./build`, or simply
+
+```bash
+> node build.js
+```
 
 It will generate `./build/useless.js` by substituting `$include` directives found in header file. Produced result will undergo stripping of tests and comments, and then finally compiled using Google Closure Compiler, outputting minified result to `./build/useless.min.js`
 
@@ -285,7 +296,11 @@ You can run `build.js` under `nodemon` (which can be installed from npm). This w
 nodemon build.js <header-file> <output-folder>
 ```
 
-This will work for applications that dont rely on `useless/server` to implement app lifecycle.
+This will work for applications that dont rely on `useless/server` to implement app lifecycle. For frequent re-builds, you may turn off compression, re-building only `useless.js` (Google Closure Compiler has limited call quota per IP):
+
+```bash
+> nodemon build.js no-compress
+```
 
 ### Using `useless/server/deploy`
 
