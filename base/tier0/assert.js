@@ -16,8 +16,8 @@ _.extend (_, {
     tests: {},
 
 /*  A degenerate case of a test shell. We use it to bootstrap most critical
-    useless.js internals, where real shell (tests.js) is not available, as it
-    itself depends on these utility. It takes test and test's subject as
+    useless.js internals, where real shell (Testosterone.js) is not available,
+    as it itself depends on these utility. It takes test and test's subject as
     arguments (test before code, embodying test-driven philosophy) and executes
     test immediately, throwing exception if anything fails - which is simply
     the default behavior of $assert. So expect no advanced error reporting
