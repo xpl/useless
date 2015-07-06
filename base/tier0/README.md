@@ -387,7 +387,7 @@ _.nonempty ('')   // undefined
 
 ## _.cloneDeep (obj)
 
-Performs deep copying of an object (as underscore's `_.clone` is shallow, not copying more than 1 level deep).
+Performs deep copying of an object (as underscore's `_.clone` is shallow, copying no more than 1 level deep).
 
 ```javascript
 var obj  = { a: [{ b: { c: 'd' } }], b: {} }
