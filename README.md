@@ -107,6 +107,19 @@ If everything's ok, example app will be running at <a href="http://localhost:133
     - Console mode (replaces default Node.js exception printer)
     - GUI mode (a pop-up dialog with expandable source lines, `./client/UI.error.js` feature)
 
+## Test framework
+
+[How-to & Examples](https://github.com/xpl/useless/wiki/Test-framework)
+
+![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)
+
+* Tests before code
+* Tests as documentantion
+* Rich library of assertions
+* Asynchronous / nested assertions
+* Custom assertions
+* Humane error reporting
+
 ## Logging
 
 [Reference / examples](https://github.com/xpl/useless/blob/master/base/log.js)
@@ -118,18 +131,6 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 + Table layout formatting
 + Hookable/interceptable
 + [Displays server's log in browser console](https://github.com/xpl/useless/wiki/Cross-machine-logging)
-
-## Tests
-
-![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)
-
-* Tests before code
-* Tests as documentantion
-* Rich library of assertions
-* Asynchronous / nested assertions
-* Custom assertions
-* Humane error reporting
-
 
 ## And more..
 
