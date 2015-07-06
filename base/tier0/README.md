@@ -141,7 +141,7 @@ Runs a function under time limit. `then` is last argument (not in config) to con
         function () { /* this is called if timeout is not expired (OPTIONAL) */)
 ```
 
-## _.sequence / _.then
+## _.sequence / _.then / Function.then
 
 Sequential composition operator. Basically, a reversed version of `_.compose`. Complex example (taken from unit test):
 
