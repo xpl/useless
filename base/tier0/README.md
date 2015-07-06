@@ -1,18 +1,16 @@
 #[←](../../README.md)
 
-#Tier0
-
 Most deep layer of Useless.js code base.
 
 ```
 !!! DOCUMENTATION UNDER CONSTRUCTION !!!
 ```
 
-## function.js
+# function.js
 
 Various function-centric utility.
 
-### arity
+## arity
 
 ``_.arity``
 ``Function.arity``
@@ -36,7 +34,7 @@ Super useful in cases when a callback does not expect some extra arguments passe
   _.map (arr, operation.arity1) // arguments beyound `x` never pass through
 ```
 
-### tails
+## tails
 
 ``_.tails``
 ``Function.tails``
@@ -50,7 +48,7 @@ printABC = function (a, b, c) { console.log (a, b, c) }
 printABC.tails2 (3, 4) (1) // prints 1, 3, 4
 ```
 
-### flip
+## flip
 
 ``_.flip``
 ``Function.flip``
@@ -64,7 +62,7 @@ var printBA = printAB.flip
 printBA (3,4) // prints 4,3
 ```
 
-### Higher-order boolean logic
+## Higher-order boolean logic
 
 ```javascript
 _.or  (fnA, fnB) // returns function that computes fnA (args) || fnB (args)
@@ -72,7 +70,7 @@ _.and (fnA, fnB) // returns function that computes fnA (args) && fnB (args)
 _.not (fn)       // returns function that computes !fn(args)
 ```
 
-### _.higherOrder (fn)
+## _.higherOrder (fn)
 
 Generates higher order stuff from regular routine:
 
@@ -83,7 +81,7 @@ var prints = _.higherOrder (print)
 _.times (3, prints ('foo')) // prints 'foo foo foo'
 ```
 
-### Y combinator (for anonymous recursive functions)
+## Y combinator (for anonymous recursive functions)
 
 For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
 
@@ -93,7 +91,7 @@ For rare cases when one needs to bring self-reference to a pure functional expre
           return n >= 5 ? n : self (n + 1) } })
 ```
 
-###Hyper operator
+## Hyper operator
 
 Converts regular things like map/zip to hyper versions, that traverse deep structures.
 
@@ -104,11 +102,11 @@ Operator argument is the thing that walks down the tree and transforms it. But i
   _.zipZip = _.hyperOperator (_.binary, _.zip2)
 ```
 
-##stdlib.js
+# stdlib.js
 
 A collection of most basic data processing algorithms missing / misimplemented in Underscore.js (and some less important but handy things).
 
-###_.map2 (x, op)
+## _.map2 (x, op)
 
 ``x  : any type``
 ``op : f (value, key)``
@@ -133,7 +131,7 @@ Objects:
   > { foo: 'foobar' }
 ```
 
-###_.mapMap (x, op)
+## _.mapMap (x, op)
 
 Fractalized version of previous utility. Hence the name (map over map). Can operate over arbitrary structure, 'seeing through' it:
 
@@ -155,7 +153,7 @@ See how `_.mapMap` is defined:
   _.mapMap = _.hyperOperator (_.unary, _.map2)  // 'unary' says that both _.map2 and its functor take 1 argument.
 ```
 
-###_.reduceReduce (memo, value, op)
+## _.reduceReduce (memo, value, op)
 
 ``memo : required``
 ``value : any``
@@ -169,7 +167,7 @@ Initial memo **should** be provided. A note on nonstandard argument order. Becau
 ```
 So from that perspective, argument order of the default implementation is not chosen correct, as it brings unnessesary interface distinction that leads to unforeseen problems (and bothers that old guy Occam).
 
-###_.filter2 / _.reject2
+## _.filter2 / _.reject2
 
 Datatype-abstract version of filter with optional `_.map` semantics (by returning values other than `true` or `false` from predicate). So if you're looked for something like `_.filterMap` — it is here.
 
@@ -192,7 +190,7 @@ _.filter2 (['foo', 2, 3],
 
 There also exists `_.reject2` which improves `_.reject` the same way.
 
-###_.filterFilter
+## _.filterFilter
 
 Filters structures of arbitrary complexity:
 
@@ -201,11 +199,11 @@ _.filterFilter ({ foo: 'foo', bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals
 //       gives  {             bar: [7,        {            }] }
 ```
 
-###_.zip2
-###_.zipZip
-###_.findFind
+## _.zip2
+## _.zipZip
+## _.findFind
 
-###_.values2 (x)
+## _.values2 (x)
 
 Datatype-abstract version of `_.values`
 
@@ -216,7 +214,7 @@ _.values2 (['foo', 'bar'])         // ['foo', 'bar']
 _.values2 ({ f: 'foo', b: 'bar' }) // ['foo', 'bar']
 ```
 
-### _.extend derivatives
+## _.extend derivatives
 
 Deep one, allowing to extend two levels deep (I'm sorry, but `_.extendExtend` which extends arbitrary deep structures is not there yet..):
 
@@ -241,7 +239,7 @@ Higher-order one, allows to use it as `_.map` operator, which cuts shit in typic
 // gives [{ bar:1, foo:42 }, { foo:42 }]
 ```
 
-###_.tryEval (try, catch, then)
+## _.tryEval (try, catch, then)
 
 A functional try-catch.
 
