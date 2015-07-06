@@ -313,7 +313,6 @@ _.tests.component = {
                         init: function () {
                             this.positionChange (function (v) {
                                 $assertTypeof (v, Vec2)
-                                log.i (v)
                                 $assert (v.y, 42) }) } })
 
         var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
@@ -395,9 +394,6 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
-
-    /*  Regression tests
-     */
     '(regression) was not able to define inner compos at singleton compos': function () {
         var Foo = $singleton (Component, {
             InnerCompo: $component ({
@@ -467,7 +463,7 @@ Component = $prototype ({
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
-                if (_.isFunction (fn) && !$prototype.isConstructor (fn))  {
+                if (_.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
                     iterator.call (this, fn, k) } } } },
 
     /*  Thou shall not override this

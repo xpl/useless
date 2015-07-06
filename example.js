@@ -22,9 +22,8 @@ Examples = $singleton (Component, {
         require ('./server/io'),
         require ('./server/http'),
         require ('./server/templating'),
+        require ('./server/websocket'),
         require ('./server/devtools'),
         require ('./server/uptime') ],
 
-    init: function (then) {
-        log.green ('Example app is running at http://localhost:1333')
-        then () } })
+    init: function (then) { log.green ('Example app is running at http://localhost:1333'); then () } })

@@ -46,6 +46,9 @@ module.exports = $trait ({
     adminAccess: function (then) {
         return this.userAccess (_.property ('isAdmin'), then) },
 
+    isDeveloper: function (user) {
+        return user.isAdmin && user.isDeveloper },
+
     developerAccess: function (then) {
         return this.userAccess (function (who) { return who.isAdmin && who.isDeveloper }, then) },
 

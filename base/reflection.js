@@ -77,12 +77,20 @@ _.tests.reflection = {
 
         /*  Safe location querying
          */
-        $assertCPS (stack.safeLocation (777).sourceReady, '??? WRONG LOCATION ???') } },
+        $assertCPS (stack.safeLocation (7777).sourceReady, '??? WRONG LOCATION ???') } },
 
-    'Prototype.$sourceFile': function () {
-        if (Platform.NodeJS) {
-            var Proto = $prototype ()
-            $assert (Proto.$sourceFile, 'base/reflection.js') } }
+    'Prototype.$meta': function (done) {
+        var Dummy = $prototype ()
+
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
+            done () }) },
+
+    'Trait.$meta': function (done) {
+        var Dummy = $trait ()
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
+            done () }) },
 }
 
 
@@ -234,17 +242,27 @@ CallStack = $extends (Array, {
                 line: (fileLineColumn[1] || '').integerValue,
                 column: (fileLineColumn[2] || '').integerValue } }) }) })
 
-/*  Prototype.$sourceFile
+/*  Reflection for $prototypes
  */
 $prototype.macro (function (def, base) {
-    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
-    def.$sourceFile = $static ($memoized ($property (function () {
-        return CallStack
-                    .fromRawString (stack)
-                    .safeLocation (5)
-                    .fileShort || 'unknown' })))
-    return def })
 
+    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
+
+    if (!def.$meta) {
+        def.$meta = $static (_.cps.memoize (function (then) { _.cps.find (CallStack.fromRawString (stack).reversed,
+
+                function (entry, found) {
+                    entry.sourceReady (function (text) { var match = (text || '').match (
+                                                                         /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
+                        found ((match && {
+                            name: match[1],
+                            type: match[2],
+                            file: entry.fileShort }) || false) }) },
+
+                function (found) {
+                    then (found || {}) }) })) }
+
+    return def })
 
 
 

@@ -1,7 +1,7 @@
 {
   "name": "useless",
   "version": "0.0.22",
-  "description": "Yet Another Useless Framework",
+  "description": "Use Less. Do More. JavaScript on steroids.",
   "main": "useless.js",
   "directories": {
     "base": "platform-independent part",
@@ -22,16 +22,30 @@
     "javascript",
     "useless",
     "framework",
+    "unit tests",
+    "test driven",
     "OOP",
     "AOP",
+    "CPS",
+    "DSL",
     "metaprogramming",
     "traits",
+    "mixins",
+    "singleton",
     "functional",
     "underscore",
     "reflection",
     "type matching",
     "math",
-    "algorithms"
+    "algorithms",
+    "exception handling",
+    "stack traces",
+    "logging",
+    "vector math",
+    "isomorphic",
+    "cross-platform",
+    "regular expressions",
+    "mongodb"
   ],
   "author": "Vitaly Gordon <rocket.mind@gmail.com> (http://github.com/xpl)",
   "license": "MIT",
@@ -42,6 +56,7 @@
   "dependencies": {
     "underscore": ">= 1.8.3",
     "process": ">= 0.9.0",
-    "iconv": ">= 2.1.7"
+    "iconv": ">= 2.1.7",
+    "websocket": ">= 1.0.19"
   }
 }

@@ -1,5 +1,9 @@
 module.exports = $trait ({
 
+    /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
+     */
+    deferAppComponentTests: true,
+
     /*  Example of a single test routine
      */
     test: function () { },
@@ -12,16 +16,26 @@ module.exports = $trait ({
 
     /*  Tests codebase
      */
-    beforeInit: function (then) {                           log.info ('Running code base tests')
+    beforeInit: function (then) { log.info ('Running code base tests')
 
         Testosterone.run ({
             verbose: false,
-            silent:  true }, function (okay) {
-                if (okay) { then () } }) },
+            silent:  true }, this.$ (function (okay) {
+                                        if (okay) {
+                                            if (this.deferAppComponentTests) {
+                                                then () }
+                                            else {
+                                                this.runAppComponentTests (then) } } })) },
+
+    afterInit: function (then) {
+        if (this.deferAppComponentTests) {
+            this.runAppComponentTests (then) }
+        else {
+            then () } },
 
     /*  Tests $traits (app components)
      */
-    afterInit: function (then) {
+    runAppComponentTests: function (then) { log.info ('Running app components tests')
 
         /*  Adds custom assertions to help test App framework
          */
@@ -40,20 +54,22 @@ module.exports = $trait ({
 
         /*  Init test database and run tests within that context
          */
-        this.withTestDb (this.$ (function (putBackProductionDb) {   log.info ('Running app components tests')
-            Testosterone.run ({                             
-                context: this,
-                codebase: false,
-                verbose: false,
-                silent: false,
-                suites: _.filterMap (this.constructor.$traits, function (Trait) {
-                    if (Trait.prototype.test) {
-                        return { name: Trait.$sourceFile, tests: { test: Trait.prototype.test } } }
-                    else if (Trait.prototype.tests) {
-                        return { name: Trait.$sourceFile, tests: Trait.prototype.tests } }
-                    else {
-                        return undefined } }) }, function (okay) {
-                                                    putBackProductionDb (); then () }) })) },
+        this.withTestDb (this.$ (function (putBackProductionDb) {
+
+            _.cps.map (this.constructor.$traits || [], function (Trait, return_) {
+
+                Trait.$meta (function (meta) {
+                    var tests = (Trait.prototype.test || 
+                                 Trait.prototype.tests)
+                    return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
+
+                this.$ (function (suites) {
+                    Testosterone.run ({                             
+                        context: this,
+                        codebase: false,
+                        verbose: false,
+                        silent: false,
+                        suites: _.nonempty (suites) }, function (okay) { putBackProductionDb (); then () }) })) })) },
 
 
     withTestDb: function (what) {

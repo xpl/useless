@@ -1,4 +1,4 @@
-_.tests.log = function () {     //  Writes to test's log (as it's off-screen until needed)
+_.tests.log = function () {
 
     log.write   ('Hello')       //  Use for plain output.
 

@@ -75,6 +75,8 @@ _.defineTagKeyword ('assertion')
  */
 Testosterone = $singleton ({
 
+    prototypeTests: [],
+
     isRunning: $property (function () {
         return this.currentTest !== undefined }),
 
@@ -85,16 +87,14 @@ Testosterone = $singleton ({
         this.defineAssertion ('assertFails', $shouldFail (function (what) { what.call (this) }))
 
         _.each (_.omit (_.assertions, 'assertFails'), function (fn, name) {
-            this.defineAssertion (name, name in _.asyncAssertions ? $async (fn) : fn) }, this)
+            this.defineAssertion (name, name in _.asyncAssertions ? $async (fn) : fn) }, this);
 
         /*  For defining tests inside prototype definitions
          */
-        $prototype.macro ('$tests', function (def, value, name) {
-            var src = Tags.unwrap (def.$sourceFile)
-            _.extend (_.tests[src] || (_.tests[src] = {}), value)
-
-            //Testosterone.findAndPublishPrototypeTests.postpone (); 
-            return _.extend (def, _.object ([[name, $static (value)]])) })
+        (function (register) {
+            $prototype.macro ('$test',  register)
+            $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
+                                                        this.prototypeTests.push ([Tags.unwrap (def.$meta), value]); return def }))
 
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
                                         //  but it's a chicken-egg class problem
@@ -104,7 +104,7 @@ Testosterone = $singleton ({
     run: $interlocked (function (cfg_, optionalThen) {
         var releaseLock = _.last (arguments)
         var then = arguments.length === 3 ? optionalThen : _.identity
-        
+
         /*  Configuration
          */
         var defaults = {
@@ -121,30 +121,35 @@ Testosterone = $singleton ({
         var suites = _.map (cfg.suites || [], this.$ (function (suite) {
             return this.testSuite (suite.name, suite.tests, cfg.context) }))
 
-        /*  Pick tests
+        var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
+
+        /*  Pick prototype tests
          */
-        var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
-        var allTests    = _.flatten (_.pluck (baseTests.concat (suites), 'tests'))
-        var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
+        collectPrototypeTests (this.$ (function (prototypeTests) {
 
-        /*  Reset context
-         */
-        this.runningTests = selectTests
+            /*  Gather tests
+             */
+            var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
+            var allTests    = _.flatten (_.pluck (baseTests.concat (suites).concat (prototypeTests), 'tests'))
+            var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
 
-        /*  Go
-         */
-        _.cps.each (selectTests,
-                this.$ (this.runTest),
-                this.$ (function () {
-                            _.assert (cfg.done !== true)
-                                      cfg.done   = true
+            /*  Reset context (assigning indices)
+             */
+            this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { index: i }) })
 
-                            this.printLog (cfg)
-                            this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                            this.failed = (this.failedTests.length > 0)
-                            then (!this.failed)
-                            releaseLock () }) ) }),
+            /*  Go
+             */
+            _.cps.each (selectTests,
+                    this.$ (this.runTest),
+                    this.$ (function () {
+                                _.assert (cfg.done !== true)
+                                          cfg.done   = true
 
+                                this.printLog (cfg)
+                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+                                this.failed = (this.failedTests.length > 0)
+                                then (!this.failed)
+                                releaseLock () }) ) })) }),
 
     /*  You may define custom assertions through this API
      */
@@ -169,11 +174,16 @@ Testosterone = $singleton ({
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {
-            return this.testSuite (name, ((typeof suite === 'function') && _.object ([[name, suite]])) || suite) } )) },
+            return this.testSuite (name, suite) } )) },
 
-    testSuite: function (name, tests, context) { return {
+    collectPrototypeTests: function (then) {
+        _.cps.map (this.prototypeTests, this.$ (function (def, then) {
+            (def[0]) (this.$ (function (meta) {
+                then (this.testSuite (meta.name, def[1])) })) }), then) },
+
+    testSuite: function (name, tests, context) { return { 
         name: name,
-        tests: _(_.pairs (tests))
+        tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
                         return new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context }) }) } },
 
@@ -349,6 +359,7 @@ Test = $prototype ({
                         
                     // print exception
                 else {
+                    if (self.depth > 1) { log.newline () }
                     log.write (log.indent (locations.length), e) }
 
                 log.newline ()
@@ -433,14 +444,11 @@ Test = $prototype ({
                                     then () }) }) }) },
 
     printLog: function () {
-        var index = Testosterone.runningTests.indexOf (this) + 1
-        var total = Testosterone.runningTests.length
 
         log.write (log.color.blue,
             '\n' + log.boldLine,
-            '\n' + ((this.suite !== this.name && this.suite.quote ('[]')) || ''),
-            this.name,
-            (index + ' of ' + total).quote ('()') +
+            '\n' + _.nonempty ([((this.suite !== this.name && this.suite.quote ('[]')) || ''), this.name]).join (' '),
+            (this.index + ' of ' + Testosterone.runningTests.length).quote ('()') +
             (this.failed ? ' FAILED' : '') + ':',
             '\n')
 

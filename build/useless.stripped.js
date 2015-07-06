@@ -1580,22 +1580,33 @@ _.extend(_.cps, {
         var index = index_ || 0;
         var keys = index === 0 ? obj.length === undefined ? _.keys(obj) : undefined : keys_;
         var length = index === 0 ? keys ? keys.length : obj.length : length_;
+        var passKey = _.numArgs(elem) !== 2;
         if (!obj || index >= (length || 0)) {
             if (complete) {
                 complete();
             }
         } else {
             var key = keys ? keys[index] : index;
-            elem(obj[key], key, function () {
+            var next = function () {
                 self(obj, elem, complete, index + 1, length, keys);
-            }, obj);
+            };
+            if (passKey) {
+                elem(obj[key], key, next, complete, obj);
+            } else {
+                elem(obj[key], next, complete, obj);
+            }
         }
     }
 });
 _.extend(_.cps, {
     map: function (obj, iter, complete) {
         var result = _.isArray(obj) ? [] : {};
-        _.cps.each(obj, function (x, i, next) {
+        _.cps.each(obj, _.numArgs(iter) == 2 ? function (x, i, next) {
+            iter(x, function (y) {
+                result[i] = y;
+                next();
+            });
+        } : function (x, i, next) {
             iter(x, i, function (y) {
                 result[i] = y;
                 next();
@@ -1603,6 +1614,25 @@ _.extend(_.cps, {
         }, function () {
             complete(result);
         });
+    }
+});
+_.extend(_.cps, {
+    find: function (obj, pred, complete) {
+        var passKey = _.numArgs(pred) !== 2;
+        _.cps.each(obj, function (x, key, next, complete) {
+            var take = function (match) {
+                if (match === false) {
+                    next();
+                } else {
+                    complete(match === true ? x : match, key);
+                }
+            };
+            if (passKey) {
+                pred(x, key, take);
+            } else {
+                pred(x, take);
+            }
+        }, complete);
     }
 });
 _.extend(_.cps, {
@@ -1700,260 +1730,6 @@ _.cps.sequence = $restArg(function (arr) {
 _.cps.compose = $restArg(function (arr) {
     var functions = _.isArray(arr) && arr || _.asArray(arguments);
     return _.cps.sequence(functions.slice().reverse());
-});
-_.hasOOP = true;
-_([
-    'property',
-    'static',
-    'final',
-    'alias',
-    'memoized',
-    'private',
-    'builtin',
-    'test'
-]).each(_.defineTagKeyword);
-$prototype = function (arg1, arg2) {
-    return $prototype.impl.compile.apply($prototype.impl, arguments.length > 1 ? _.asArray(arguments).reverse() : arguments);
-};
-$extends = function (base, def) {
-    return $prototype(base, def || {});
-};
-_.extend($prototype, {
-    isConstructor: function (what) {
-        return _.isPrototypeConstructor(what);
-    },
-    macro: function (arg, fn) {
-        if (arguments.length === 1) {
-            $prototype.impl.alwaysTriggeredMacros.push(arg);
-        } else {
-            $prototype.impl.memberNameTriggeredMacros[arg] = fn;
-        }
-    },
-    each: function (visitor) {
-        var namespace = $global;
-        for (var k in namespace) {
-            if (!_.isKeyword(k)) {
-                var value = namespace[k];
-                if ($prototype.isConstructor(value)) {
-                    visitor(value, k);
-                }
-            }
-        }
-    },
-    inheritanceChain: function (def) {
-        var chain = [];
-        while (def) {
-            chain.push(def);
-            def = def.$base && def.$base.constructor;
-        }
-        return chain;
-    },
-    mapMethods: function (def, op) {
-        return Tags.map(def, function (fn, k, t) {
-            return _.isFunction(fn) ? op(fn, k, t).wraps(fn) : fn;
-        });
-    },
-    impl: {
-        alwaysTriggeredMacros: [],
-        memberNameTriggeredMacros: {},
-        compile: function (def, base) {
-            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateArgumentContractsIfTaggedAsTest, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberNameTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
-        },
-        evalAlwaysTriggeredMacros: function (base) {
-            return function (def) {
-                var macros = $prototype.impl.alwaysTriggeredMacros;
-                for (var i = 0, n = macros.length; i < n; i++) {
-                    def = macros[i](def, base);
-                }
-                return def;
-            };
-        },
-        evalMemberNameTriggeredMacros: function (base) {
-            return function (def) {
-                var macros = $prototype.impl.memberNameTriggeredMacros;
-                _.each(def, function (value, name) {
-                    if (macros.hasOwnProperty(name)) {
-                        def = macros[name](def, value, name, base);
-                    }
-                });
-                return def;
-            };
-        },
-        generateArgumentContractsIfTaggedAsTest: function (def) {
-            return def.$test ? $prototype.mapMethods(def, function (fn, name) {
-                return function () {
-                    var args = _.asArray(arguments);
-                    $assertArguments(args.copy, fn.original, name);
-                    return fn.apply(this, args);
-                };
-            }) : def;
-        },
-        contributeTraits: function (def) {
-            if (def.$trait) {
-                def.$traits = [def.$trait];
-                delete def.$trait;
-            }
-            if (def.$traits) {
-                var traits = def.$traits;
-                _.each(traits, function (constructor) {
-                    _.defaults(def, _.omit(constructor.$definition, _.or($builtin.matches, _.key(_.equals('constructor')))));
-                });
-                def.$traits = $static($builtin($property(traits)));
-                def.hasTrait = $static($builtin(function (Constructor) {
-                    return traits.indexOf(Constructor) >= 0;
-                }));
-            }
-            return def;
-        },
-        extendWithTags: function (def) {
-            return _.extendWith(Tags.unwrap(def), _.objectMap(Tags.get(def), $static));
-        },
-        generateConstructor: function (base) {
-            return function (def) {
-                return _.extend(def, {
-                    constructor: Tags.modifySubject(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
-                        if (base) {
-                            fn.prototype.__proto__ = base.prototype;
-                        }
-                        return fn;
-                    })
-                });
-            };
-        },
-        generateBuiltInMembers: function (base) {
-            return function (def) {
-                return _.defaults(def, {
-                    $base: $builtin($static($property(_.constant(base && base.prototype)))),
-                    $definition: $builtin($static($property(_.constant(_.extend({}, base && base.$definition, def))))),
-                    isTypeOf: $builtin($static(_.partial(_.isTypeOf, Tags.unwrap(def.constructor)))),
-                    isInstanceOf: $builtin(function (constructor) {
-                        return _.isTypeOf(constructor, this);
-                    }),
-                    $: $builtin(function (fn) {
-                        return _.$.apply(null, [this].concat(_.asArray(arguments)));
-                    })
-                });
-            };
-        },
-        defaultConstructor: function (base) {
-            return base ? function () {
-                base.prototype.constructor.apply(this, arguments);
-            } : function (cfg) {
-                _.extend(this, cfg || {});
-            };
-        },
-        defineStaticMembers: function (def) {
-            this.defineMembers(Tags.unwrap(def.constructor), _.pick(def, $static.matches));
-            return def;
-        },
-        defineInstanceMembers: function (def) {
-            this.defineMembers(Tags.unwrap(def.constructor).prototype, _.omit(def, $static.matches));
-            return def;
-        },
-        defineMembers: function (targetObject, def) {
-            _.each(def, function (value, key) {
-                if (key !== 'constructor' && def.hasOwnProperty(key)) {
-                    this.defineMember(targetObject, value, key);
-                }
-            }, this);
-        },
-        defineMember: function (targetObject, def, key) {
-            if (def && def.$property) {
-                if (def.$memoized) {
-                    _.defineMemoizedProperty(targetObject, key, def);
-                } else {
-                    _.defineProperty(targetObject, key, def);
-                }
-            } else {
-                var what = Tags.unwrap(def);
-                targetObject[key] = what;
-            }
-        },
-        ensureFinalContracts: function (base) {
-            return function (def) {
-                if (base) {
-                    if (base.$final) {
-                        throw new Error('Cannot derive from $final-marked prototype');
-                    }
-                    if (base.$definition) {
-                        var invalidMembers = _.intersection(_.keys(_.pick(base.$definition, $final.matches)), _.keys(def));
-                        if (invalidMembers.length) {
-                            throw new Error('Cannot override $final ' + invalidMembers.join(', '));
-                        }
-                    }
-                }
-                return def;
-            };
-        },
-        expandAliases: function (def) {
-            return _.objectMap(def, function (v) {
-                return $alias.matches(v) ? def[Tags.unwrap(v)] : v;
-            });
-        },
-        flatten: function (def) {
-            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
-            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
-                return _.map(membersDef, function (member, memberName) {
-                    return [
-                        memberName,
-                        $global[keyword](member)
-                    ];
-                });
-            }), true));
-            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
-            return _.extend(memberDefinitions, mergedKeywordGroups);
-        },
-        isTagKeywordGroup: function (value_, key) {
-            var value = Tags.unwrap(value_);
-            return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
-        }
-    }
-});
-_.isTraitOf = function (Trait, instance) {
-    var constructor = instance && instance.constructor;
-    return constructor && constructor.hasTrait && constructor.hasTrait(Trait) || false;
-};
-_.isTypeOf = _.or(_.isTypeOf, _.isTraitOf);
-$trait = function (arg1, arg2) {
-    var constructor = undefined;
-    var def = _.extend(arguments.length > 1 ? arg2 : arg1, {
-        constructor: _.throwsError('Traits are not instantiable (what for?)'),
-        isTraitOf: $static($builtin(function (instance) {
-            return _.isTraitOf(constructor, instance);
-        }))
-    });
-    return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
-};
-_.$ = function (this_, fn) {
-    return _.bind.apply(undefined, [
-        fn,
-        this_
-    ].concat(_.rest(arguments, 2)));
-};
-if (typeof jQuery !== 'undefined') {
-    jQuery.fn.extend({
-        $: function (f) {
-            return _.$(this, f);
-        }
-    });
-}
-_.defineKeyword('const', function (x) {
-    return $static($property(x));
-});
-$singleton = function (arg1, arg2) {
-    return new ($prototype.apply(null, arguments))();
-};
-Platform = $singleton({
-    $property: {
-        engine: _.platform().engine,
-        system: _.platform().system,
-        device: _.platform().device,
-        touch: _.platform().touch || false,
-        NodeJS: _.platform().engine === 'node',
-        iPad: _.platform().device === 'iPad',
-        iPhone: _.platform().device === 'iPhone',
-        iOS: _.platform().system === 'iOS'
-    }
 });
 _([
     'method',
@@ -2534,6 +2310,260 @@ _.extend(_, {
             read: read,
             write: write
         });
+    }
+});
+_.hasOOP = true;
+_([
+    'property',
+    'static',
+    'final',
+    'alias',
+    'memoized',
+    'private',
+    'builtin',
+    'testArguments'
+]).each(_.defineTagKeyword);
+$prototype = function (arg1, arg2) {
+    return $prototype.impl.compile.apply($prototype.impl, arguments.length > 1 ? _.asArray(arguments).reverse() : arguments);
+};
+$extends = function (base, def) {
+    return $prototype(base, def || {});
+};
+_.extend($prototype, {
+    isConstructor: function (what) {
+        return _.isPrototypeConstructor(what);
+    },
+    macro: function (arg, fn) {
+        if (arguments.length === 1) {
+            $prototype.impl.alwaysTriggeredMacros.push(arg);
+        } else {
+            $prototype.impl.memberNameTriggeredMacros[arg] = fn;
+        }
+    },
+    each: function (visitor) {
+        var namespace = $global;
+        for (var k in namespace) {
+            if (!_.isKeyword(k)) {
+                var value = namespace[k];
+                if ($prototype.isConstructor(value)) {
+                    visitor(value, k);
+                }
+            }
+        }
+    },
+    inheritanceChain: function (def) {
+        var chain = [];
+        while (def) {
+            chain.push(def);
+            def = def.$base && def.$base.constructor;
+        }
+        return chain;
+    },
+    wrapMethods: function (def, op) {
+        return Tags.map(def, function (fn, k, t) {
+            return _.isFunction(fn) ? op(fn, k, t).wraps(fn) : fn;
+        });
+    },
+    impl: {
+        alwaysTriggeredMacros: [],
+        memberNameTriggeredMacros: {},
+        compile: function (def, base) {
+            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberNameTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
+        },
+        evalAlwaysTriggeredMacros: function (base) {
+            return function (def) {
+                var macros = $prototype.impl.alwaysTriggeredMacros;
+                for (var i = 0, n = macros.length; i < n; i++) {
+                    def = macros[i](def, base);
+                }
+                return def;
+            };
+        },
+        evalMemberNameTriggeredMacros: function (base) {
+            return function (def) {
+                var macros = $prototype.impl.memberNameTriggeredMacros;
+                _.each(def, function (value, name) {
+                    if (macros.hasOwnProperty(name)) {
+                        def = macros[name](def, value, name, base);
+                    }
+                });
+                return def;
+            };
+        },
+        generateArgumentContractsIfNeeded: function (def) {
+            return def.$testArguments ? $prototype.wrapMethods(def, function (fn, name) {
+                return function () {
+                    var args = _.asArray(arguments);
+                    $assertArguments(args.copy, fn.original, name);
+                    return fn.apply(this, args);
+                };
+            }) : def;
+        },
+        contributeTraits: function (def) {
+            if (def.$trait) {
+                def.$traits = [def.$trait];
+                delete def.$trait;
+            }
+            if (def.$traits) {
+                var traits = def.$traits;
+                _.each(traits, function (constructor) {
+                    _.defaults(def, _.omit(constructor.$definition, _.or($builtin.matches, _.key(_.equals('constructor')))));
+                });
+                def.$traits = $static($builtin($property(traits)));
+                def.hasTrait = $static($builtin(function (Constructor) {
+                    return traits.indexOf(Constructor) >= 0;
+                }));
+            }
+            return def;
+        },
+        extendWithTags: function (def) {
+            return _.extendWith(Tags.unwrap(def), _.objectMap(Tags.get(def), $static));
+        },
+        generateConstructor: function (base) {
+            return function (def) {
+                return _.extend(def, {
+                    constructor: Tags.modifySubject(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
+                        if (base) {
+                            fn.prototype.__proto__ = base.prototype;
+                        }
+                        return fn;
+                    })
+                });
+            };
+        },
+        generateBuiltInMembers: function (base) {
+            return function (def) {
+                return _.defaults(def, {
+                    $base: $builtin($static($property(_.constant(base && base.prototype)))),
+                    $definition: $builtin($static($property(_.constant(_.extend({}, base && base.$definition, def))))),
+                    isTypeOf: $builtin($static(_.partial(_.isTypeOf, Tags.unwrap(def.constructor)))),
+                    isInstanceOf: $builtin(function (constructor) {
+                        return _.isTypeOf(constructor, this);
+                    }),
+                    $: $builtin(function (fn) {
+                        return _.$.apply(null, [this].concat(_.asArray(arguments)));
+                    })
+                });
+            };
+        },
+        defaultConstructor: function (base) {
+            return base ? function () {
+                base.prototype.constructor.apply(this, arguments);
+            } : function (cfg) {
+                _.extend(this, cfg || {});
+            };
+        },
+        defineStaticMembers: function (def) {
+            this.defineMembers(Tags.unwrap(def.constructor), _.pick(def, $static.matches));
+            return def;
+        },
+        defineInstanceMembers: function (def) {
+            this.defineMembers(Tags.unwrap(def.constructor).prototype, _.omit(def, $static.matches));
+            return def;
+        },
+        defineMembers: function (targetObject, def) {
+            _.each(def, function (value, key) {
+                if (key !== 'constructor' && def.hasOwnProperty(key)) {
+                    this.defineMember(targetObject, value, key);
+                }
+            }, this);
+        },
+        defineMember: function (targetObject, def, key) {
+            if (def && def.$property) {
+                if (def.$memoized) {
+                    _.defineMemoizedProperty(targetObject, key, def);
+                } else {
+                    _.defineProperty(targetObject, key, def);
+                }
+            } else {
+                var what = Tags.unwrap(def);
+                targetObject[key] = what;
+            }
+        },
+        ensureFinalContracts: function (base) {
+            return function (def) {
+                if (base) {
+                    if (base.$final) {
+                        throw new Error('Cannot derive from $final-marked prototype');
+                    }
+                    if (base.$definition) {
+                        var invalidMembers = _.intersection(_.keys(_.pick(base.$definition, $final.matches)), _.keys(def));
+                        if (invalidMembers.length) {
+                            throw new Error('Cannot override $final ' + invalidMembers.join(', '));
+                        }
+                    }
+                }
+                return def;
+            };
+        },
+        expandAliases: function (def) {
+            return _.objectMap(def, function (v) {
+                return $alias.matches(v) ? def[Tags.unwrap(v)] : v;
+            });
+        },
+        flatten: function (def) {
+            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
+            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
+                return _.map(membersDef, function (member, memberName) {
+                    return [
+                        memberName,
+                        $global[keyword](member)
+                    ];
+                });
+            }), true));
+            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
+            return _.extend(memberDefinitions, mergedKeywordGroups);
+        },
+        isTagKeywordGroup: function (value_, key) {
+            var value = Tags.unwrap(value_);
+            return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
+        }
+    }
+});
+_.isTraitOf = function (Trait, instance) {
+    var constructor = instance && instance.constructor;
+    return constructor && constructor.hasTrait && constructor.hasTrait(Trait) || false;
+};
+_.isTypeOf = _.or(_.isTypeOf, _.isTraitOf);
+$trait = function (arg1, arg2) {
+    var constructor = undefined;
+    var def = _.extend(arguments.length > 1 ? arg2 : arg1, {
+        constructor: _.throwsError('Traits are not instantiable (what for?)'),
+        isTraitOf: $static($builtin(function (instance) {
+            return _.isTraitOf(constructor, instance);
+        }))
+    });
+    return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
+};
+_.$ = function (this_, fn) {
+    return _.bind.apply(undefined, [
+        fn,
+        this_
+    ].concat(_.rest(arguments, 2)));
+};
+if (typeof jQuery !== 'undefined') {
+    jQuery.fn.extend({
+        $: function (f) {
+            return _.$(this, f);
+        }
+    });
+}
+_.defineKeyword('const', function (x) {
+    return $static($property(x));
+});
+$singleton = function (arg1, arg2) {
+    return new ($prototype.apply(null, arguments))();
+};
+Platform = $singleton({
+    $property: {
+        engine: _.platform().engine,
+        system: _.platform().system,
+        device: _.platform().device,
+        touch: _.platform().touch || false,
+        NodeJS: _.platform().engine === 'node',
+        iPad: _.platform().device === 'iPad',
+        iPhone: _.platform().device === 'iPhone',
+        iOS: _.platform().system === 'iOS'
     }
 });
 _.clamp = function (n, min, max) {
@@ -3404,9 +3434,22 @@ CallStack = $extends(Array, {
 });
 $prototype.macro(function (def, base) {
     var stack = CallStack.currentAsRawString;
-    def.$sourceFile = $static($memoized($property(function () {
-        return CallStack.fromRawString(stack).safeLocation(5).fileShort || 'unknown';
-    })));
+    if (!def.$meta) {
+        def.$meta = $static(_.cps.memoize(function (then) {
+            _.cps.find(CallStack.fromRawString(stack), function (entry, found) {
+                entry.sourceReady(function (text) {
+                    var match = (text || '').match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/);
+                    found(match && {
+                        name: match[1],
+                        type: match[2],
+                        file: entry.fileShort
+                    } || false);
+                });
+            }, function (found) {
+                then(found || {});
+            });
+        }));
+    }
     return def;
 });
 _.measure = function (routine, then) {
@@ -3797,7 +3840,7 @@ Component = $prototype({
             var def = this.constructor.$definition[k];
             if (!(def && def.$property)) {
                 var fn = this[k];
-                if (_.isFunction(fn) && !$prototype.isConstructor(fn)) {
+                if (_.isFunction(fn) && !_.isPrototypeConstructor(fn)) {
                     iterator.call(this, fn, k);
                 }
             }
@@ -4002,6 +4045,7 @@ _.defineTagKeyword('shouldFail');
 _.defineTagKeyword('async');
 _.defineTagKeyword('assertion');
 Testosterone = $singleton({
+    prototypeTests: [],
     isRunning: $property(function () {
         return this.currentTest !== undefined;
     }),
@@ -4012,14 +4056,16 @@ Testosterone = $singleton({
         _.each(_.omit(_.assertions, 'assertFails'), function (fn, name) {
             this.defineAssertion(name, name in _.asyncAssertions ? $async(fn) : fn);
         }, this);
-        $prototype.macro('$tests', function (def, value, name) {
-            var src = Tags.unwrap(def.$sourceFile);
-            _.extend(_.tests[src] || (_.tests[src] = {}), value);
-            return _.extend(def, _.object([[
-                    name,
-                    $static(value)
-                ]]));
-        });
+        (function (register) {
+            $prototype.macro('$test', register);
+            $prototype.macro('$tests', register);
+        }(this.$(function (def, value, name) {
+            this.prototypeTests.push([
+                Tags.unwrap(def.$meta),
+                value
+            ]);
+            return def;
+        })));
         this.run = this.$(this.run);
     },
     run: $interlocked(function (cfg_, optionalThen) {
@@ -4038,19 +4084,23 @@ Testosterone = $singleton({
         var suites = _.map(cfg.suites || [], this.$(function (suite) {
             return this.testSuite(suite.name, suite.tests, cfg.context);
         }));
-        var baseTests = cfg.codebase === false ? [] : this.collectTests();
-        var allTests = _.flatten(_.pluck(baseTests.concat(suites), 'tests'));
-        var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
-        this.runningTests = selectTests;
-        _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
-            _.assert(cfg.done !== true);
-            cfg.done = true;
-            this.printLog(cfg);
-            this.failedTests = _.filter(this.runningTests, _.property('failed'));
-            this.failed = this.failedTests.length > 0;
-            then(!this.failed);
-            releaseLock();
-        }));
+        this.collectPrototypeTests(function (prototypeTests) {
+            var baseTests = cfg.codebase === false ? [] : this.collectTests();
+            var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
+            var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
+            this.runningTests = _.map(selectTests, function (test, i) {
+                return _.extend(test, { index: i });
+            });
+            _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
+                _.assert(cfg.done !== true);
+                cfg.done = true;
+                this.printLog(cfg);
+                this.failedTests = _.filter(this.runningTests, _.property('failed'));
+                this.failed = this.failedTests.length > 0;
+                then(!this.failed);
+                releaseLock();
+            }));
+        });
     }),
     defineAssertions: function (assertions) {
         _.each(assertions, function (fn, name) {
@@ -4071,16 +4121,23 @@ Testosterone = $singleton({
     },
     collectTests: function () {
         return _.map(_.tests, this.$(function (suite, name) {
-            return this.testSuite(name, typeof suite === 'function' && _.object([[
-                    name,
-                    suite
-                ]]) || suite);
+            return this.testSuite(name, suite);
         }));
+    },
+    collectPrototypeTests: function (then) {
+        _.cps.map(this.prototypeTests, this.$(function (def, then) {
+            def[0](this.$(function (meta) {
+                then(this.testSuite(meta.name, def[1]));
+            }));
+        }), this.$(then));
     },
     testSuite: function (name, tests, context) {
         return {
             name: name,
-            tests: _(_.pairs(tests)).map(function (keyValue) {
+            tests: _(_.pairs(typeof tests === 'function' && _.object([[
+                    name,
+                    tests
+                ]]) || tests)).map(function (keyValue) {
                 return new Test({
                     name: keyValue[0],
                     routine: keyValue[1],
@@ -4272,6 +4329,9 @@ Test = $prototype({
                         }
                     }
                 } else {
+                    if (self.depth > 1) {
+                        log.newline();
+                    }
                     log.write(log.indent(locations.length), e);
                 }
                 log.newline();
@@ -4364,9 +4424,10 @@ Test = $prototype({
         });
     },
     printLog: function () {
-        var index = Testosterone.runningTests.indexOf(this) + 1;
-        var total = Testosterone.runningTests.length;
-        log.write(log.color.blue, '\n' + log.boldLine, '\n' + (this.suite !== this.name && this.suite.quote('[]') || ''), this.name, (index + ' of ' + total).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
+        log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([
+            this.suite !== this.name && this.suite.quote('[]') || '',
+            this.name
+        ]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
         this.evalLogCalls();
     },
     evalLogCalls: function () {
@@ -4960,6 +5021,28 @@ _.extend(Math, function (decimalAdjust) {
     return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
 }));
 R = $singleton({
+    $test: function () {
+        var $assertExpr = function (a, b) {
+            $assert(a, _.quote(b.str, '//'));
+        };
+        $assertExpr('/[^\\s]*/', $r.anyOf.except.space.$);
+        $assertExpr('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$);
+        var expr = $r.expr('before', $r.anything.text('$print').something).then($r.expr('argument', $r.someOf.except.text(',)')).inParentheses.then($r.expr('tail', $r.anything))).$;
+        $assertExpr('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr);
+        $assert(expr.parse(' var x = $print (blabla) // lalala '), {
+            before: ' var x = $print ',
+            argument: 'blabla',
+            tail: ' // lalala '
+        });
+        $assert([
+            [
+                '[^',
+                '\\s',
+                ']'
+            ],
+            '*'
+        ], R.anyOf(R.except(R.space)));
+    },
     constructor: function () {
         this.reduce = _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible, _.isNonTrivial.and(_.not(this.isSubexpr)));
         this.initDSL();
@@ -5165,7 +5248,7 @@ R = $singleton({
         }
     };
     _.defineKeyword('aspect', function (ofWhat, cfg) {
-        var aspectDef = Tags.unwrap(_.sequence($prototype.impl.extendWithTags, $prototype.impl.flatten, $prototype.impl.generateArgumentContractsIfTaggedAsTest, $prototype.impl.contributeTraits, $prototype.impl.expandAliases).call($prototype.impl, cfg));
+        var aspectDef = Tags.unwrap(_.sequence($prototype.impl.extendWithTags, $prototype.impl.flatten, $prototype.impl.generateArgumentContractsIfNeeded, $prototype.impl.contributeTraits, $prototype.impl.expandAliases).call($prototype.impl, cfg));
         var motherDef = ofWhat.constructor && ofWhat.constructor.$definition;
         if (motherDef) {
             (motherDef.$aspects = motherDef.$aspects || []).push(aspectDef);

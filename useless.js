@@ -66,6 +66,22 @@ _ = (function () {
     $include ('./base/CPS')
 
 
+/*  Provides infix notation for stdlib utility
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $include ('./base/infix/extensionMethods')    // bootstrap
+    $include ('./base/infix/Function')            // extends Function
+    $include ('./base/infix/Array')               // extends Array
+    $include ('./base/infix/String')              // extends String
+
+
+/*  Dynamic code binding toolbox
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $include ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
+    $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
+
+
 /*  OOP paradigm
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -86,21 +102,6 @@ _ = (function () {
         iPad:   _.platform ().device === 'iPad',
         iPhone: _.platform ().device === 'iPhone',
         iOS:    _.platform ().system === 'iOS' } })
-
-/*  Provides infix notation for stdlib utility
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $include ('./base/infix/extensionMethods')    // bootstrap
-    $include ('./base/infix/Function')            // extends Function
-    $include ('./base/infix/Array')               // extends Array
-    $include ('./base/infix/String')              // extends String
-
-
-/*  Dynamic code binding toolbox
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $include ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
-    $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
 
 
 /*  Otherwise basic utility (actually a bug-ridden clumsy legacy code)

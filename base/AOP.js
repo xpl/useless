@@ -40,13 +40,13 @@ _.tests.AOP = {
 
     'basics': function () {     var callLog = []
 
-                                var Thing = $prototype ($test ({
+                                var Thing = $prototype ($testArguments ({
 
                                     create:            function (_777)              { callLog.push ([this, 'Thing.create']) },
                                     display:           function (_foobar, _778)     { callLog.push ([this, 'Thing.display']) },
                                     destroy:           function ()                  { callLog.push ([this, 'Thing.destroy']); return 456 } }))
 
-                                var NewFlavorOfThing = $aspect (Thing, $test ({
+                                var NewFlavorOfThing = $aspect (Thing, $testArguments ({
 
                                     beforeCreate:   function (_777)                        { callLog.push ([this, 'NewFlavorOfThing.beforeCreate']) },
 
@@ -83,7 +83,7 @@ _.tests.AOP = {
         var aspectDef = Tags.unwrap (_.sequence (
                             $prototype.impl.extendWithTags,
                             $prototype.impl.flatten,
-                            $prototype.impl.generateArgumentContractsIfTaggedAsTest,
+                            $prototype.impl.generateArgumentContractsIfNeeded,
                             $prototype.impl.contributeTraits,
                             $prototype.impl.expandAliases).call ($prototype.impl, cfg))
         

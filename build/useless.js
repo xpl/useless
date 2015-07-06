@@ -358,8 +358,8 @@ _.extend (_, {
     tests: {},
 
 /*  A degenerate case of a test shell. We use it to bootstrap most critical
-    useless.js internals, where real shell (tests.js) is not available, as it
-    itself depends on these utility. It takes test and test's subject as
+    useless.js internals, where real shell (Testosterone.js) is not available,
+    as it itself depends on these utility. It takes test and test's subject as
     arguments (test before code, embodying test-driven philosophy) and executes
     test immediately, throwing exception if anything fails - which is simply
     the default behavior of $assert. So expect no advanced error reporting
@@ -2634,16 +2634,34 @@ _.withTest (['cps', 'each'], function () {
 
         /*  called for each item, in linear order
          */
-        function (item, itemIndex, then, arrayWeTraverse) {
+        function (item, itemIndex, then, complete, arrayWeTraverse) {
             $assert (item === data[itemIndex])
             $assert (itemIndex === currentIndex++)
             $assert (arrayWeTraverse === data)
+
+            $assert (_.isFunction (then))
+            $assert (_.isFunction (complete))
+
             then () },
 
         /*  called when all items enumerated
          */
         function () {
             $assert (currentIndex === data.length) })
+
+    /*  You can omit 'index' argument for iterator function
+     */
+    var data2 = []
+    _.cps.each (data,
+        function (item, then) { data2.push (item); then () },
+        function () { $assert (data, data2) })
+
+    /*  You can stop iteration by calling last argument
+     */
+    var data3 = []
+    _.cps.each (data,
+        function (item, i, then, break_) { data3.push (item); break_ () },
+        function () { $assert (data3, ['foo']) })
 
     /*  Iterating over dictionary is legal
      */
@@ -2661,17 +2679,20 @@ function () { _.extend (_.cps, {
                 var index   = index_ || 0
                 var keys    = index === 0 ? (obj.length === undefined ? _.keys(obj) : undefined) : keys_
                 var length  = index === 0 ? (keys ? keys.length : obj.length) : length_
+                var passKey = (_.numArgs (elem) !== 2)
 
                 if (!obj || (index >= (length || 0))) {
                     if (complete) {
                         complete () }}
+
                 else {
-                    var key = keys ? keys[index] : index
-                    elem (
-                        /* item */  obj[key],
-                        /* index */ key,
-                        /* next */  function () { self (obj, elem, complete, index + 1, length, keys) },
-                        /* array */ obj) } } })} )
+                    var key  = keys ? keys[index] : index
+                    var next = function () { self (obj, elem, complete, index + 1, length, keys) }
+
+                    if (passKey) {
+                        elem (obj[key], key, next, complete, obj) }
+                    else {
+                        elem (obj[key],      next, complete, obj) } } } })} )
 
 
 /*  map
@@ -2679,6 +2700,14 @@ function () { _.extend (_.cps, {
 
 _.withTest (['cps', 'map'], function () {
 
+    /*  2-argument iterator semantics
+     */
+    _.cps.map ([7,6,5],
+        function (x, then)    { then (x + 1) },
+        function (result)     { $assert (result, [8,7,6]) })
+
+    /*  3-argument iterator semantics
+     */
     _.cps.map ([7,6,5],
         function (x, i, then) { then (x + 1) },
         function (result)     { $assert (result, [8,7,6]) }) },
@@ -2686,9 +2715,49 @@ _.withTest (['cps', 'map'], function () {
 function () { _.extend (_.cps, {
 
     map: function (obj, iter, complete) { var result = _.isArray (obj) ? [] : {}
-            _.cps.each (obj, function (x, i, next) {
-                iter (x, i, function (y) {
-                    result[i] = y; next () }) }, function () { complete (result) }) } }) })
+            _.cps.each (obj, (_.numArgs (iter) == 2)
+                                    ? function (x, i, next) { iter (x,    function (y) { result[i] = y; next () }) }
+                                    : function (x, i, next) { iter (x, i, function (y) { result[i] = y; next () }) },
+                function () { complete (result) }) } }) })
+
+/*  find
+    ======================================================================== */
+
+_.withTest (['cps', 'find'], function () {
+
+    /*  Basic use
+     */
+    _.cps.find ([7,6,5],
+        function (x, then) { then ((x % 3) === 0) },
+        function (x, key)  { $assert ([x, key], [6, 1]) })
+
+    /*  Over dictionary
+     */
+    _.cps.find ({ foo: 7, bar: 6, baz: 5 },
+        function (x, key, then) { then (key === 'baz') },
+        function (x, key)       { $assert ([x, key], [5, 'baz']) })
+
+    /*  Returning non-boolean
+     */
+    _.cps.find ([7,6,5],
+        function (x, then) { then (((x % 3) === 0) ? 'yeah' : false) },
+        function (x, key)  { $assert ([x, key], ['yeah', 1]) })
+
+    /*  Not found
+     */
+    _.cps.find ([7,6,5],
+        function (x, key, then) { then (false) },
+        function (x)            { $assert (x, undefined) }) },
+
+function () { _.extend (_.cps, {
+
+    find: function (obj, pred, complete) { var passKey = (_.numArgs (pred) !== 2)
+
+        _.cps.each (obj, function (x, key, next, complete) { var take = function (match) {
+                                                                            if (match === false) { next () }
+                                                                            else                 { complete (match === true ? x : match, key) } }
+                            if (passKey) { pred (x, key, take) }
+                            else         { pred (x,      take) } }, complete) } }) })
 
 /*  memoize
     ======================================================================== */
@@ -2863,625 +2932,6 @@ _.withTest (['cps', 'sequence / compose'], function () { $assertCalls (4, functi
 
 
 
-
-/*  OOP paradigm
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-------------------------------------------------------------------------
-
-Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
-
-------------------------------------------------------------------------
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-_.hasOOP = true
-
-_.deferTest ('OOP', {
-
-    '$prototype / $extends': function () {
-
-    /*  Prototypes are defined via $prototype
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        var Foo = $prototype ({
-
-        /*  If constructor is not defined (like here), it's default impl. will equal
-            to the following:                                                               */
-
-//          constructor: function (cfg) { _.extend (this, cfg) },
-
-        /*  $static keyword is used to designate type-level members (context-free ones),
-            effectively porting that shit from C++/C#/Java world.                           */
-
-            method:                  function () { return 'foo.method' },
-            staticMethod:   $static (function () { return 'Foo.staticMethod' }),
-
-        /*  $property keyword is used to tag a value as an property definition.
-            Property definitions expand itself within properties.js module, which
-            is separate from OOP.js                                                         */
-
-            property:                $property (function () { return 'foo.property' }),
-            staticProperty: $static ($property (function () { return 'Foo.staticProperty' })),
-
-        /*  Tags on members can be grouped like this, to reduce clutter if you have lots
-            of members tagged with same keyword. Currently no more than one level is
-            supported.                                                                      */
-
-            $static: {
-                one: function () { return 1 },
-                two: function () { return 2 },
-                three: $property (3) },
-
-        /*  Demonstrates some semantics of property definitions, provided by properties.js
-            See that module for further investigation.                                      */
-
-            $property: {
-                static42:       $static (42),
-                just42:         42,
-                just42_too:     function () { return 42 },
-                fullBlown:  {
-                    enumerable:     false,  // will be visible as object's own property (defaults to true)
-                    configurable:   true,   // can be deleted by delete operator (defaults to false)
-                    get:            function () { return 42 },
-                    set:            function (x) { $stub } } } })
-
-
-    /*  Inherited prototypes are defined via $extends
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        var Bar = $extends (Foo, $final ({
-
-        /*  If constructor is not defined (like here), it's default impl.
-            will be equal to the following one (calls base constructor):     */
-
-//          constructor: function () { Foo.prototype.constructor.apply (this, arguments)) } 
-
-            staticMethod: $static (function () {
-                return 'Bar.staticMethod' }),
-
-            method: function () {
-                return 'bar.method' } }))
-
-
-    /*  Instances of $prototype/$extends are created by the 'new' operator, as
-        this pair of utility is just a thin wrapper over native JS prototypes.
-
-        The 'new' operator calls 'constructor' member from a prototype
-        definition. If no constructor is specified, default one takes first
-        argument and extends constructed instance with it, overriding any member
-        value that is specified at prototype definition (and this is a
-        really common way to define prototype constructors in JavaScript)
-
-        Such semantics could be treated as somewhat similar to the 'anonymous
-        classes' feature in Java, which is a useful mechanism for ad-hoc
-        specialization of constructed prototypes.   
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        var foo = new Foo ()
-        var fuu = new Foo ({ method: function () { return 'fuu.method' }})
-        var bar = new Bar ({ hi: 'there' })
-
-        $assert (bar.hi         === 'there')
-        $assert (fuu.method ()  === 'fuu.method')
-
-        $assert ([foo.just42,   bar.just42],   [42, 42])        //  inheritance should work
-        $assert ([Foo.static42, Bar.static42], [42, undefined]) //  (static members do not inherit)
-
-    /*  Overriding should work
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert ([foo.method (),        bar.method ()],         ['foo.method',       'bar.method'])
-        $assert ([Foo.staticMethod (),  Bar.staticMethod ()],   ['Foo.staticMethod', 'Bar.staticMethod'])
-
-    /*  Regular members shouln't be visible at type level
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert ([foo.property,         foo.staticProperty], ['foo.property',       undefined])
-        $assert ([Foo.staticProperty,   Foo.property],       ['Foo.staticProperty', undefined])
-
-    /*  Until explicitly stated otherwise, properties are constant.
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assertThrows (function () { foo.just42 = 43 },
-            _.matches ({ message: 'cannot change just42 (as it\'s sealed to 42)' })) },
-
-
-/*  Use $final to tag a thing as non-overrideable (comes from Java)
-    ======================================================================== */
-
-    '$final': function () {
-
-    /*  Tagging arbitrary member as $final
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assertThrows (function () {
-
-            var A = $prototype ({
-                        constructor: $final (function () {}) })
-
-            var B = $extends (A, {
-                        constructor: function () {} }) },   // will throw Error
-
-            _.matches ({ message: 'Cannot override $final constructor' }))
-
-    /*  Tagging whole prototype as $final
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assertThrows (function () {
-
-            var A = $prototype ($final ({}))
-            var B = $extends (A) }, // will throw Error
-
-             _.matches ({ message: 'Cannot derive from $final-marked prototype' })) },
-
-
-/*  Use $alias to make member aliases with correct semantics
-    ======================================================================== */
-
-    '$alias': function () {
-
-        var foo = new $prototype ({
-            failure: $alias ('error'),
-            crash:   $alias ('error'),
-            error:   function () { return 'foo.error' } })
-
-        $assert (foo.crash, foo.failure, foo.error) }, // all point to same function
-
-
-/*  Run-time type information APIs
-    ======================================================================== */
-
-    'RTTI': function () {
-
-        var Foo = $prototype ({ $static: { noop: _.noop } }),
-            Bar = $extends (Foo) // empty definition argument read as {}
-
-        var foo = new Foo (),
-            bar = new Bar ()
-
-    /*  Basically, the simplest way to check a type, relying on some native JavaScript prototype semantics.
-        But it does not account inheritance.
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert (foo.constructor === Foo)
-        $assert (bar.constructor === Bar)
-
-    /*  A functional crossbrowser version of 'instanceof' (accounts inheritance):
-     
-            1.  Boils down to native 'instanceof' where available
-            2.  In elder browsers, emulates with correct semantics
-     
-        Why use (instead of native syntax):
-        
-            -   cross-browser
-            -   functional (can be partial'ed to yield a predicate)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert (_.isTypeOf (Function,  foo.constructor.noop))           
-        $assert (_.isTypeOf (Tags,      foo.constructor.$definition.noop)) // note how $static group is collapsed to normal form
-
-    /*  Infix version (a static member of every $prototype)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert ( Foo.isTypeOf (foo))
-        $assert (!Bar.isTypeOf (foo))
-        $assert (Bar.isTypeOf (bar))
-        $assert (Foo.isTypeOf (bar))
-
-    /*  Another infix version (a member of every $prototype)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert ( foo.isInstanceOf (Foo))
-        $assert (!foo.isInstanceOf (Bar))
-        $assert (bar.isInstanceOf (Bar))
-        $assert (bar.isInstanceOf (Foo))
-
-    /*  A private impl of isTypeOf (one shouldn't invoke these directly)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert (_.isTypeOf_ES5 (Bar, bar))     // isTypeOf impl. for ECMAScript level 5
-        $assert (_.isTypeOf_ES5 (Foo, bar))     // (validate inheritance)
-
-        $assert (_.isTypeOf_ES4 (Bar, bar))     // isTypeOf impl. for ECMAScript level 4 (IE8 and below)
-        $assert (_.isTypeOf_ES4 (Foo, bar)) },  // (validate inheritance)
-
-
-/*  $const (xxx) as convenient alias for $static ($property (xxx))
-    ======================================================================== */
- 
-    '$const': function () {
- 
-        var A = $prototype ({
-            $const: {
-                foo: 'foo',
-                bar: 'bar' },
-            qux: $const ('qux'),
-            zap: $const ('zap') })
- 
-        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
-        $assertThrows (function () { A.foo = 'bar '}) },
-
-
-/*  This is how to decide whether a function is $prototype constructor
-    ======================================================================== */
-
-    'isConstructor': function () {
-
-        var Proto = $prototype (),  // empty argument read as {}
-            dummy = function () {}
-
-        $assert ($prototype.isConstructor (Proto), true)
-        $assert ($prototype.isConstructor (dummy), false)
-        $assert ($prototype.isConstructor (null),  false) // regression
-
-        $assert ([Proto, dummy].map ($prototype.isConstructor), [true, false]) },
-
-
-/*  $trait  A combinatoric-style alternative to inheritance.
-            (also known as "mixin" in some languages)
-    ======================================================================== */
-
-    '$trait / $traits': function () {
-
-        var Closeable = $trait ({
-            close: function () {} })
-
-        var Movable = $trait ({
-            move: function () {} })
-
-        var Enumerable = $trait ({
-            each: function (iter) {},
-            length: $property (function () { return 0; }) })
-
-        var JustCloseable     = $prototype ({ $trait:  Closeable })
-        var MovableEnumerable = $prototype ({ $traits: [Movable, Enumerable], move: function () {} })
-
-        var movableEnumerable = new MovableEnumerable ()
-
-        $assert (movableEnumerable.move === MovableEnumerable.prototype.move)
-
-        $assertThrows (function () { new Closeable () },
-            _.matches ({ message: 'Traits are not instantiable (what for?)' }))
-
-        $assertTypeof (movableEnumerable, {
-            move: 'function',
-            each: 'function',
-            length: 'number' })
-
-        $assert ([
-            movableEnumerable.isInstanceOf (Movable),
-            movableEnumerable.isInstanceOf (Enumerable),
-            movableEnumerable.isInstanceOf (Closeable)], [true, true, false])
-
-        $assert (Movable.isTypeOf (movableEnumerable))
-        $assert (Movable.isTraitOf (movableEnumerable))
-
-        $assert (MovableEnumerable.hasTrait (Enumerable))
-
-        $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
-        $assertMatches (JustCloseable,      { $traits: [Closeable],
-                                              $trait:  undefined }) },
-
-
-/*  $prototype.inheritanceChain for traversing inheritance chain
-    ======================================================================== */
-
-    'inheritanceChain': function () {
-
-        var A = $prototype ()
-        var B = $extends (A)
-        var C = $extends (B)
-
-        $assert ($prototype.inheritanceChain (C), [C,B,A]) },
-
-
-/*  $prototype is really same as $extends, if passed two arguments
-    ======================================================================== */
-
-    'two-argument syntax of $prototype': function () {
-
-        var A = $prototype ()
-        var B = $prototype (A, {}) // same as $extends (Base, def)
-
-        $assert (B.$base === A.prototype) },
-
-
-/*  Adds value contracts to arguments for unit testing purposes
-    ======================================================================== */
-
-    'value contracts for arguments': function () {
-
-        var Proto = $prototype ($test ({
-
-            frobnicate:  function (_777, _foo_bar_baz, unaffected) {},
-            noMistake:   function () {} }))
-
-        var obj = new Proto ()
-
-        $assertFails (function () {
-            obj.frobnicate (999, 'not right') })
-
-        obj.frobnicate (777, 'foo bar baz')
-        obj.noMistake () },
-
-
-/*  Tags on definition render to static properties
-    ======================================================================== */
-
-    'tags on definition': function () {
-
-        $assertMatches ($prototype ($static ($final ({}))), { $static: true, $final: true }) } }, function () {
-
-
-/*  PUBLIC API
-    ======================================================================== */
-
-    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'test'])
-        .each (_.defineTagKeyword)
-
-    $prototype = function (arg1, arg2) {
-                    return $prototype.impl.compile.apply ($prototype.impl,
-                                (arguments.length > 1)
-                                    ? _.asArray (arguments).reverse ()
-                                    : arguments) }
-
-    $extends = function (base, def) {
-                    return $prototype (base, def || {}) }
-
-    _.extend ($prototype, {
-
-        isConstructor: function (what) {
-            return _.isPrototypeConstructor (what) },
-
-        macro: function (arg, fn) {
-            if (arguments.length === 1) {
-                $prototype.impl.alwaysTriggeredMacros.push (arg) }
-            else {
-                $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
-
-        each: function (visitor) { var namespace = $global
-            for (var k in namespace) {
-                if (!_.isKeyword (k)) { var value = namespace[k]
-                    if ($prototype.isConstructor (value)) {
-                        visitor (value, k) } } } },
-
-        inheritanceChain: function (def) { var chain = []
-            while (def) {
-                chain.push (def)
-                def = def.$base && def.$base.constructor }
-            return chain },
-
-        mapMethods: function (def, op) {
-                        return Tags.map (def, function (fn, k, t) {
-                            return _.isFunction (fn) ? op (fn, k, t).wraps (fn) : fn }) },
-
-
-    /*  INTERNALS
-        ==================================================================== */
-
-        impl: {
-
-            alwaysTriggeredMacros: [],
-            memberNameTriggeredMacros: {},
-
-            compile: function (def, base) { return Tags.unwrap (_.sequence (
-                this.extendWithTags,
-                this.flatten,
-                this.generateArgumentContractsIfTaggedAsTest,
-                this.ensureFinalContracts (base),
-                this.generateConstructor (base),
-                this.evalAlwaysTriggeredMacros (base),
-                this.evalMemberNameTriggeredMacros (base),
-                this.contributeTraits,
-                this.generateBuiltInMembers (base),
-                this.expandAliases,
-                this.defineStaticMembers,
-                this.defineInstanceMembers).call (this, def || {}).constructor) },
-
-            evalAlwaysTriggeredMacros: function (base) {
-                return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
-                    for (var i = 0, n = macros.length; i < n; i++) {
-                        def = macros[i] (def, base) }
-                    return def } },
-
-            evalMemberNameTriggeredMacros: function (base) {
-                return function (def) { var macros = $prototype.impl.memberNameTriggeredMacros
-                    _.each (def, function (value, name) {
-                        if (macros.hasOwnProperty (name)) {
-                            def = macros[name] (def, value, name, base) } })
-                    return def } },
-
-            generateArgumentContractsIfTaggedAsTest: function (def) {
-                return def.$test ? $prototype.mapMethods (def, function (fn, name) {
-                                                                     return function () { var args = _.asArray (arguments)
-                                                                        $assertArguments (args.copy, fn.original, name)
-                                                                         return fn.apply (this, args) } }) : def },
-
-            contributeTraits: function (def) {
-                if (def.$trait) {
-                    def.$traits = [def.$trait]
-                    delete def.$trait }
-
-                if (def.$traits) { var traits = def.$traits
-                    _.each (traits,
-                        function (constructor) {
-                            _.defaults (def, _.omit (constructor.$definition,
-                                _.or ($builtin.matches, _.key (_.equals ('constructor'))))) } ) 
-
-                    def.$traits  = $static ($builtin ($property (traits)))
-                    def.hasTrait = $static ($builtin (function (Constructor) {
-                        return traits.indexOf (Constructor) >= 0 })) }
-
-                return def },
-
-            extendWithTags: function (def) {
-                return _.extendWith (Tags.unwrap (def), _.objectMap (Tags.get (def), $static)) },
-
-            generateConstructor: function (base) { return function (def) {
-                return _.extend (def, { constructor:
-                    Tags.modifySubject (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
-                        function (fn) {
-                            if (base) { fn.prototype.__proto__ = base.prototype }
-                            return fn }) }) } },
-
-            generateBuiltInMembers: function (base) { return function (def) {
-                return _.defaults (def, {
-                    $base:          $builtin ($static ($property (_.constant (base && base.prototype)))),
-                    $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
-                    isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, Tags.unwrap (def.constructor)))),
-                    isInstanceOf:   $builtin (function (constructor) { return _.isTypeOf (constructor, this) }),
-                    $:              $builtin (function (fn)          { return _.$.apply (null, [this].concat (_.asArray (arguments))) }) }) }},
-
-            defaultConstructor: function (base) {
-                return (base ?
-                    function ()    { base.prototype.constructor.apply (this, arguments) } :
-                    function (cfg) { _.extend (this, cfg || {}) }) },
-
-            defineStaticMembers: function (def) {
-                this.defineMembers (Tags.unwrap (def.constructor), _.pick (def, $static.matches))
-                return def },
-
-            defineInstanceMembers: function (def) {
-                this.defineMembers (Tags.unwrap (def.constructor).prototype, _.omit (def, $static.matches))
-                return def },
-
-            defineMembers: function (targetObject, def) {
-                _.each (def, function (value, key) {
-                    if (key !== 'constructor' && def.hasOwnProperty (key)) {
-                        this.defineMember (targetObject, value, key) } }, this) },
-
-            defineMember: function (targetObject, def, key) {
-                if (def && def.$property) {
-                    if (def.$memoized) {
-                        _.defineMemoizedProperty (targetObject, key, def) }
-                    else {
-                        _.defineProperty (targetObject, key, def) } }
-                else {
-                    var what = Tags.unwrap (def)
-                    targetObject[key] = what } },
-
-            ensureFinalContracts: function (base) { return function (def) {
-                if (base) {
-                    if (base.$final) {
-                        throw new Error ('Cannot derive from $final-marked prototype') }
-
-                    if (base.$definition) {
-                        var invalidMembers = _.intersection (
-                            _.keys (_.pick (base.$definition, $final.matches)),
-                            _.keys (def))
-                        if (invalidMembers.length) {
-                            throw new Error ('Cannot override $final ' + invalidMembers.join (', ')) } } }
-
-                return def } },
-
-            expandAliases: function (def) {
-                return _.objectMap (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
-
-            flatten: function (def) {
-                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
-                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
-                    return _.map (membersDef, function (member, memberName) {
-                        return [memberName, $global[keyword] (member)] }) }), true))
-
-                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
-
-                return _.extend (memberDefinitions, mergedKeywordGroups) },
-
-            isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
-                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
-
-
-/*  $traits impl.
-    ======================================================================== */
-
-    _.isTraitOf = function (Trait, instance) {
-        var constructor = instance && instance.constructor
-        return (constructor &&
-            constructor.hasTrait &&
-            constructor.hasTrait (Trait)) || false }    //  indexOf is fast if has 1-2 traits,
-                                                        //  no need to pre-index
-    _.isTypeOf = _.or (_.isTypeOf, _.isTraitOf)
-
-    $trait = function (arg1, arg2) {
-        var constructor = undefined
-        var def = _.extend (arguments.length > 1 ? arg2 : arg1, {
-                        constructor: _.throwsError ('Traits are not instantiable (what for?)'),
-                        isTraitOf: $static ($builtin (function (instance) {
-                            return _.isTraitOf (constructor, instance) })) })
-
-        return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) }
-
-
-/*  Context-free implementation of this.$
-    ======================================================================== */
-
-    _.$ = function (this_, fn) {
-                return _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) }
-
-
-/*  Adds this.$ to jQuery objects (to enforce code style consistency)
-    ======================================================================== */
-
-    if (typeof jQuery !== 'undefined') {
-        jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
-
-
-/*  $const is alias for static property
-    ======================================================================== */
-
-    _.defineKeyword ('const', function (x) { return $static ($property (x)) })
-
-
-/*  $singleton (a humanized macro to new ($prototype (definition)))
-    ======================================================================== */
-
-     _.withTest ('$singleton', function () { $assertCalls (2, function (mkay) {
-
-            var Base    = $prototype ({
-                            method:    _.constant (42) })
-
-        /*  returns constructed instance of a definition passed as argument
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-            var Simple  = $singleton ({
-                            constructor: function () { mkay () },
-                            method:      function () { return 42 } })
-
-        /*  can inherit from a prototype
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-            var Derived = $singleton (Base, {
-                            constructor: function () { mkay (); Base.prototype.constructor.apply (this, arguments) } })
-
-            $assert (Simple.method (), Derived.method (), 42) }) }, function () {
-
-        /*  IMPLEMENTATION
-            ==================================================================== */
-
-            $singleton = function (arg1, arg2) {
-                    return new ($prototype.apply (null, arguments)) () } })
-
-
-
-
-        
-
-
-/*  Ports platform.js to OOP terms 
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    Platform = $singleton ({ $property: {
-        
-        engine: _.platform ().engine,
-        system: _.platform ().system,
-        device: _.platform ().device,
-        touch:  _.platform ().touch || false,
-
-        NodeJS: _.platform ().engine === 'node',
-        iPad:   _.platform ().device === 'iPad',
-        iPhone: _.platform ().device === 'iPhone',
-        iOS:    _.platform ().system === 'iOS' } })
 
 /*  Provides infix notation for stdlib utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -4409,6 +3859,626 @@ _.extend (_, {
 
 
 
+/*  OOP paradigm
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+------------------------------------------------------------------------
+
+Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
+
+------------------------------------------------------------------------
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+_.hasOOP = true
+
+_.withTest ('OOP', {
+
+    '$prototype / $extends': function () {
+
+    /*  Prototypes are defined via $prototype
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        var Foo = $prototype ({
+
+        /*  If constructor is not defined (like here), it's default impl. will equal
+            to the following:                                                               */
+
+//          constructor: function (cfg) { _.extend (this, cfg) },
+
+        /*  $static keyword is used to designate type-level members (context-free ones),
+            effectively porting that shit from C++/C#/Java world.                           */
+
+            method:                  function () { return 'foo.method' },
+            staticMethod:   $static (function () { return 'Foo.staticMethod' }),
+
+        /*  $property keyword is used to tag a value as an property definition.
+            Property definitions expand itself within properties.js module, which
+            is separate from OOP.js                                                         */
+
+            property:                $property (function () { return 'foo.property' }),
+            staticProperty: $static ($property (function () { return 'Foo.staticProperty' })),
+
+        /*  Tags on members can be grouped like this, to reduce clutter if you have lots
+            of members tagged with same keyword. Currently no more than one level is
+            supported.                                                                      */
+
+            $static: {
+                one: function () { return 1 },
+                two: function () { return 2 },
+                three: $property (3) },
+
+        /*  Demonstrates some semantics of property definitions, provided by properties.js
+            See that module for further investigation.                                      */
+
+            $property: {
+                static42:       $static (42),
+                just42:         42,
+                just42_too:     function () { return 42 },
+                fullBlown:  {
+                    enumerable:     false,  // will be visible as object's own property (defaults to true)
+                    configurable:   true,   // can be deleted by delete operator (defaults to false)
+                    get:            function () { return 42 },
+                    set:            function (x) { $stub } } } })
+
+
+    /*  Inherited prototypes are defined via $extends
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        var Bar = $extends (Foo, $final ({
+
+        /*  If constructor is not defined (like here), it's default impl.
+            will be equal to the following one (calls base constructor):     */
+
+//          constructor: function () { Foo.prototype.constructor.apply (this, arguments)) } 
+
+            staticMethod: $static (function () {
+                return 'Bar.staticMethod' }),
+
+            method: function () {
+                return 'bar.method' } }))
+
+
+    /*  Instances of $prototype/$extends are created by the 'new' operator, as
+        this pair of utility is just a thin wrapper over native JS prototypes.
+
+        The 'new' operator calls 'constructor' member from a prototype
+        definition. If no constructor is specified, default one takes first
+        argument and extends constructed instance with it, overriding any member
+        value that is specified at prototype definition (and this is a
+        really common way to define prototype constructors in JavaScript)
+
+        Such semantics could be treated as somewhat similar to the 'anonymous
+        classes' feature in Java, which is a useful mechanism for ad-hoc
+        specialization of constructed prototypes.   
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        var foo = new Foo ()
+        var fuu = new Foo ({ method: function () { return 'fuu.method' }})
+        var bar = new Bar ({ hi: 'there' })
+
+        $assert (bar.hi         === 'there')
+        $assert (fuu.method ()  === 'fuu.method')
+
+        $assert ([foo.just42,   bar.just42],   [42, 42])        //  inheritance should work
+        $assert ([Foo.static42, Bar.static42], [42, undefined]) //  (static members do not inherit)
+
+    /*  Overriding should work
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assert ([foo.method (),        bar.method ()],         ['foo.method',       'bar.method'])
+        $assert ([Foo.staticMethod (),  Bar.staticMethod ()],   ['Foo.staticMethod', 'Bar.staticMethod'])
+
+    /*  Regular members shouln't be visible at type level
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assert ([foo.property,         foo.staticProperty], ['foo.property',       undefined])
+        $assert ([Foo.staticProperty,   Foo.property],       ['Foo.staticProperty', undefined])
+
+    /*  Until explicitly stated otherwise, properties are constant.
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assertThrows (function () { foo.just42 = 43 },
+            _.matches ({ message: 'cannot change just42 (as it\'s sealed to 42)' })) },
+
+
+/*  Use $final to tag a thing as non-overrideable (comes from Java)
+    ======================================================================== */
+
+    '$final': function () {
+
+    /*  Tagging arbitrary member as $final
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assertThrows (function () {
+
+            var A = $prototype ({
+                        constructor: $final (function () {}) })
+
+            var B = $extends (A, {
+                        constructor: function () {} }) },   // will throw Error
+
+            _.matches ({ message: 'Cannot override $final constructor' }))
+
+    /*  Tagging whole prototype as $final
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assertThrows (function () {
+
+            var A = $prototype ($final ({}))
+            var B = $extends (A) }, // will throw Error
+
+             _.matches ({ message: 'Cannot derive from $final-marked prototype' })) },
+
+
+/*  Use $alias to make member aliases with correct semantics
+    ======================================================================== */
+
+    '$alias': function () {
+
+        var foo = new $prototype ({
+            failure: $alias ('error'),
+            crash:   $alias ('error'),
+            error:   function () { return 'foo.error' } })
+
+        $assert (foo.crash, foo.failure, foo.error) }, // all point to same function
+
+
+/*  Run-time type information APIs
+    ======================================================================== */
+
+    'RTTI': function () {
+
+        var Foo = $prototype ({ $static: { noop: _.noop } }),
+            Bar = $extends (Foo) // empty definition argument read as {}
+
+        var foo = new Foo (),
+            bar = new Bar ()
+
+    /*  Basically, the simplest way to check a type, relying on some native JavaScript prototype semantics.
+        But it does not account inheritance.
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assert (foo.constructor === Foo)
+        $assert (bar.constructor === Bar)
+
+    /*  A functional crossbrowser version of 'instanceof' (accounts inheritance):
+     
+            1.  Boils down to native 'instanceof' where available
+            2.  In elder browsers, emulates with correct semantics
+     
+        Why use (instead of native syntax):
+        
+            -   cross-browser
+            -   functional (can be partial'ed to yield a predicate)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assert (_.isTypeOf (Function,  foo.constructor.noop))           
+        $assert (_.isTypeOf (Tags,      foo.constructor.$definition.noop)) // note how $static group is collapsed to normal form
+
+    /*  Infix version (a static member of every $prototype)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assert ( Foo.isTypeOf (foo))
+        $assert (!Bar.isTypeOf (foo))
+        $assert (Bar.isTypeOf (bar))
+        $assert (Foo.isTypeOf (bar))
+
+    /*  Another infix version (a member of every $prototype)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assert ( foo.isInstanceOf (Foo))
+        $assert (!foo.isInstanceOf (Bar))
+        $assert (bar.isInstanceOf (Bar))
+        $assert (bar.isInstanceOf (Foo))
+
+    /*  A private impl of isTypeOf (one shouldn't invoke these directly)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+        $assert (_.isTypeOf_ES5 (Bar, bar))     // isTypeOf impl. for ECMAScript level 5
+        $assert (_.isTypeOf_ES5 (Foo, bar))     // (validate inheritance)
+
+        $assert (_.isTypeOf_ES4 (Bar, bar))     // isTypeOf impl. for ECMAScript level 4 (IE8 and below)
+        $assert (_.isTypeOf_ES4 (Foo, bar)) },  // (validate inheritance)
+
+
+/*  This is how to decide whether a function is $prototype constructor
+    ======================================================================== */
+
+    'isConstructor': function () {
+
+        var Proto = $prototype (),  // empty argument read as {}
+            dummy = function () {}
+
+        $assert ($prototype.isConstructor (Proto), true)
+        $assert ($prototype.isConstructor (dummy), false)
+        $assert ($prototype.isConstructor (null),  false) // regression
+
+        $assert ([Proto, dummy].map ($prototype.isConstructor), [true, false]) },
+
+
+/*  $prototype.inheritanceChain for traversing inheritance chain
+    ======================================================================== */
+
+    'inheritanceChain': function () {
+
+        var A = $prototype ()
+        var B = $extends (A)
+        var C = $extends (B)
+
+        $assert ($prototype.inheritanceChain (C), [C,B,A]) },
+
+
+/*  $prototype is really same as $extends, if passed two arguments
+    ======================================================================== */
+
+    'two-argument syntax of $prototype': function () {
+
+        var A = $prototype ()
+        var B = $prototype (A, {}) // same as $extends (Base, def)
+
+        $assert (B.$base === A.prototype) },
+
+
+/*  Adds value contracts to arguments for unit testing purposes
+    ======================================================================== */
+
+    'value contracts for arguments': function () {
+
+        var Proto = $prototype ($testArguments ({
+
+            frobnicate:  function (_777, _foo_bar_baz, unaffected) {},
+            noMistake:   function () {} }))
+
+        var obj = new Proto ()
+
+        $assertFails (function () {
+            obj.frobnicate (999, 'not right') })
+
+        obj.frobnicate (777, 'foo bar baz')
+        obj.noMistake () },
+
+
+/*  Tags on definition render to static properties
+    ======================================================================== */
+
+    'tags on definition': function () {
+
+        $assertMatches ($prototype ($static ($final ({}))), { $static: true, $final: true }) } }, function () {
+
+
+/*  PUBLIC API
+    ======================================================================== */
+
+    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'testArguments'])
+        .each (_.defineTagKeyword)
+
+    $prototype = function (arg1, arg2) {
+                    return $prototype.impl.compile.apply ($prototype.impl,
+                                (arguments.length > 1)
+                                    ? _.asArray (arguments).reverse ()
+                                    : arguments) }
+
+    $extends = function (base, def) {
+                    return $prototype (base, def || {}) }
+
+    _.extend ($prototype, {
+
+        isConstructor: function (what) {
+            return _.isPrototypeConstructor (what) },
+
+        macro: function (arg, fn) {
+            if (arguments.length === 1) {
+                $prototype.impl.alwaysTriggeredMacros.push (arg) }
+            else {
+                $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
+
+        each: function (visitor) { var namespace = $global
+            for (var k in namespace) {
+                if (!_.isKeyword (k)) { var value = namespace[k]
+                    if ($prototype.isConstructor (value)) {
+                        visitor (value, k) } } } },
+
+        inheritanceChain: function (def) { var chain = []
+            while (def) {
+                chain.push (def)
+                def = def.$base && def.$base.constructor }
+            return chain },
+
+        wrapMethods: function (def, op) {
+                        return Tags.map (def, function (fn, k, t) {
+                            return _.isFunction (fn) ? op (fn, k, t).wraps (fn) : fn }) },
+
+
+    /*  INTERNALS
+        ==================================================================== */
+
+        impl: {
+
+            alwaysTriggeredMacros: [],
+            memberNameTriggeredMacros: {},
+
+            compile: function (def, base) { return Tags.unwrap (_.sequence (
+                this.extendWithTags,
+                this.flatten,
+                this.generateArgumentContractsIfNeeded,
+                this.ensureFinalContracts (base),
+                this.generateConstructor (base),
+                this.evalAlwaysTriggeredMacros (base),
+                this.evalMemberNameTriggeredMacros (base),
+                this.contributeTraits,
+                this.generateBuiltInMembers (base),
+                this.expandAliases,
+                this.defineStaticMembers,
+                this.defineInstanceMembers).call (this, def || {}).constructor) },
+
+            evalAlwaysTriggeredMacros: function (base) {
+                return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
+                    for (var i = 0, n = macros.length; i < n; i++) {
+                        def = macros[i] (def, base) }
+                    return def } },
+
+            evalMemberNameTriggeredMacros: function (base) {
+                return function (def) { var macros = $prototype.impl.memberNameTriggeredMacros
+                    _.each (def, function (value, name) {
+                        if (macros.hasOwnProperty (name)) {
+                            def = macros[name] (def, value, name, base) } })
+                    return def } },
+
+            generateArgumentContractsIfNeeded: function (def) {
+                return def.$testArguments ? $prototype.wrapMethods (def, function (fn, name) {
+                                                                     return function () { var args = _.asArray (arguments)
+                                                                        $assertArguments (args.copy, fn.original, name)
+                                                                         return fn.apply (this, args) } }) : def },
+
+            contributeTraits: function (def) {
+                if (def.$trait) {
+                    def.$traits = [def.$trait]
+                    delete def.$trait }
+
+                if (def.$traits) { var traits = def.$traits
+                    _.each (traits,
+                        function (constructor) {
+                            _.defaults (def, _.omit (constructor.$definition,
+                                _.or ($builtin.matches, _.key (_.equals ('constructor'))))) } ) 
+
+                    def.$traits  = $static ($builtin ($property (traits)))
+                    def.hasTrait = $static ($builtin (function (Constructor) {
+                        return traits.indexOf (Constructor) >= 0 })) }
+
+                return def },
+
+            extendWithTags: function (def) {                    
+                return _.extendWith (Tags.unwrap (def), _.objectMap (Tags.get (def), $static)) },
+
+            generateConstructor: function (base) { return function (def) {
+                return _.extend (def, { constructor:
+                    Tags.modifySubject (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
+                        function (fn) {
+                            if (base) { fn.prototype.__proto__ = base.prototype }
+                            return fn }) }) } },
+
+            generateBuiltInMembers: function (base) { return function (def) {
+                return _.defaults (def, {
+                    $base:          $builtin ($static ($property (_.constant (base && base.prototype)))),
+                    $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
+                    isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, Tags.unwrap (def.constructor)))),
+                    isInstanceOf:   $builtin (function (constructor) { return _.isTypeOf (constructor, this) }),
+                    $:              $builtin (function (fn)          { return _.$.apply (null, [this].concat (_.asArray (arguments))) }) }) }},
+
+            defaultConstructor: function (base) {
+                return (base ?
+                    function ()    { base.prototype.constructor.apply (this, arguments) } :
+                    function (cfg) { _.extend (this, cfg || {}) }) },
+
+            defineStaticMembers: function (def) {
+                this.defineMembers (Tags.unwrap (def.constructor), _.pick (def, $static.matches))
+                return def },
+
+            defineInstanceMembers: function (def) {
+                this.defineMembers (Tags.unwrap (def.constructor).prototype, _.omit (def, $static.matches))
+                return def },
+
+            defineMembers: function (targetObject, def) {
+                _.each (def, function (value, key) {
+                    if (key !== 'constructor' && def.hasOwnProperty (key)) {
+                        this.defineMember (targetObject, value, key) } }, this) },
+
+            defineMember: function (targetObject, def, key) {
+                if (def && def.$property) {
+                    if (def.$memoized) {
+                        _.defineMemoizedProperty (targetObject, key, def) }
+                    else {
+                        _.defineProperty (targetObject, key, def) } }
+                else {
+                    var what = Tags.unwrap (def)
+                    targetObject[key] = what } },
+
+            ensureFinalContracts: function (base) { return function (def) {
+                if (base) {
+                    if (base.$final) {
+                        throw new Error ('Cannot derive from $final-marked prototype') }
+
+                    if (base.$definition) {
+                        var invalidMembers = _.intersection (
+                            _.keys (_.pick (base.$definition, $final.matches)),
+                            _.keys (def))
+                        if (invalidMembers.length) {
+                            throw new Error ('Cannot override $final ' + invalidMembers.join (', ')) } } }
+
+                return def } },
+
+            expandAliases: function (def) {
+                return _.objectMap (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
+
+            flatten: function (def) {
+                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
+                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
+                    return _.map (membersDef, function (member, memberName) {
+                        return [memberName, $global[keyword] (member)] }) }), true))
+
+                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+
+                return _.extend (memberDefinitions, mergedKeywordGroups) },
+
+            isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
+                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
+
+
+/*  $trait  A combinatoric-style alternative to inheritance.
+            (also known as "mixin" in some languages)
+    ======================================================================== */
+
+    _.withTest (['OOP', '$trait / $traits'], function () {
+
+        var Closeable = $trait ({
+            close: function () {} })
+
+        var Movable = $trait ({
+            move: function () {} })
+
+        var Enumerable = $trait ({
+            each: function (iter) {},
+            length: $property (function () { return 0; }) })
+
+        var JustCloseable     = $prototype ({ $trait:  Closeable })
+        var MovableEnumerable = $prototype ({ $traits: [Movable, Enumerable], move: function () {} })
+
+        var movableEnumerable = new MovableEnumerable ()
+
+        $assert (movableEnumerable.move === MovableEnumerable.prototype.move)
+
+        $assertThrows (function () { new Closeable () },
+            _.matches ({ message: 'Traits are not instantiable (what for?)' }))
+
+        $assertTypeof (movableEnumerable, {
+            move: 'function',
+            each: 'function',
+            length: 'number' })
+
+        $assert ([
+            movableEnumerable.isInstanceOf (Movable),
+            movableEnumerable.isInstanceOf (Enumerable),
+            movableEnumerable.isInstanceOf (Closeable)], [true, true, false])
+
+        $assert (Movable.isTypeOf (movableEnumerable))
+        $assert (Movable.isTraitOf (movableEnumerable))
+
+        $assert (MovableEnumerable.hasTrait (Enumerable))
+
+        $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
+        $assertMatches (JustCloseable,      { $traits: [Closeable],
+                                              $trait:  undefined }) }, function () {
+
+    _.isTraitOf = function (Trait, instance) {
+        var constructor = instance && instance.constructor
+        return (constructor &&
+            constructor.hasTrait &&
+            constructor.hasTrait (Trait)) || false }    //  indexOf is fast if has 1-2 traits,
+                                                        //  no need to pre-index
+    _.isTypeOf = _.or (_.isTypeOf, _.isTraitOf)
+
+    $trait = function (arg1, arg2) {
+        var constructor = undefined
+        var def = _.extend (arguments.length > 1 ? arg2 : arg1, {
+                        constructor: _.throwsError ('Traits are not instantiable (what for?)'),
+                        isTraitOf: $static ($builtin (function (instance) {
+                            return _.isTraitOf (constructor, instance) })) })
+
+        return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) } })
+
+
+/*  Context-free implementation of this.$
+    ======================================================================== */
+
+    _.$ = function (this_, fn) {
+                return _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) }
+
+
+/*  Adds this.$ to jQuery objects (to enforce code style consistency)
+    ======================================================================== */
+
+    if (typeof jQuery !== 'undefined') {
+        jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
+
+
+/*  $const (xxx) as convenient alias for $static ($property (xxx))
+    ======================================================================== */
+ 
+    _.withTest (['OOP', '$const'], function () {
+ 
+        var A = $prototype ({
+            $const: {
+                foo: 'foo',
+                bar: 'bar' },
+            qux: $const ('qux'),
+            zap: $const ('zap') })
+ 
+        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
+        $assertThrows (function () { A.foo = 'bar '}) }, function () {
+
+    _.defineKeyword ('const', function (x) { return $static ($property (x)) })  })
+
+
+/*  $singleton (a humanized macro to new ($prototype (definition)))
+    ======================================================================== */
+
+     _.withTest (['OOP', '$singleton'], function () { $assertCalls (2, function (mkay) {
+
+            var Base    = $prototype ({
+                            method:    _.constant (42) })
+
+        /*  returns constructed instance of a definition passed as argument
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+            var Simple  = $singleton ({
+                            constructor: function () { mkay () },
+                            method:      function () { return 42 } })
+
+        /*  can inherit from a prototype
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+            var Derived = $singleton (Base, {
+                            constructor: function () { mkay (); Base.prototype.constructor.apply (this, arguments) } })
+
+            $assert (Simple.method (), Derived.method (), 42) })
+
+        /*  inner prototypes
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+            var Outside = $singleton ({
+                Inside: $prototype ({ foo: function () {} }) })
+
+            $assertTypeof ((new Outside.Inside ()).foo,  'function')              }, function () {
+
+        /*  IMPLEMENTATION
+            ==================================================================== */
+
+            $singleton = function (arg1, arg2) {
+                    return new ($prototype.apply (null, arguments)) () } })
+
+
+
+
+        
+
+
+/*  Ports platform.js to OOP terms 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    Platform = $singleton ({ $property: {
+        
+        engine: _.platform ().engine,
+        system: _.platform ().system,
+        device: _.platform ().device,
+        touch:  _.platform ().touch || false,
+
+        NodeJS: _.platform ().engine === 'node',
+        iPad:   _.platform ().device === 'iPad',
+        iPhone: _.platform ().device === 'iPhone',
+        iOS:    _.platform ().system === 'iOS' } })
+
+
 /*  Otherwise basic utility (actually a bug-ridden clumsy legacy code)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -5134,12 +5204,20 @@ _.tests.reflection = {
 
         /*  Safe location querying
          */
-        $assertCPS (stack.safeLocation (777).sourceReady, '??? WRONG LOCATION ???') } },
+        $assertCPS (stack.safeLocation (7777).sourceReady, '??? WRONG LOCATION ???') } },
 
-    'Prototype.$sourceFile': function () {
-        if (Platform.NodeJS) {
-            var Proto = $prototype ()
-            $assert (Proto.$sourceFile, 'base/reflection.js') } }
+    'Prototype.$meta': function (done) {
+        var Dummy = $prototype ()
+
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
+            done () }) },
+
+    'Trait.$meta': function (done) {
+        var Dummy = $trait ()
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
+            done () }) },
 }
 
 
@@ -5291,17 +5369,27 @@ CallStack = $extends (Array, {
                 line: (fileLineColumn[1] || '').integerValue,
                 column: (fileLineColumn[2] || '').integerValue } }) }) })
 
-/*  Prototype.$sourceFile
+/*  Reflection for $prototypes
  */
 $prototype.macro (function (def, base) {
-    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
-    def.$sourceFile = $static ($memoized ($property (function () {
-        return CallStack
-                    .fromRawString (stack)
-                    .safeLocation (5)
-                    .fileShort || 'unknown' })))
-    return def })
 
+    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
+
+    if (!def.$meta) {
+        def.$meta = $static (_.cps.memoize (function (then) { _.cps.find (CallStack.fromRawString (stack).reversed,
+
+                function (entry, found) {
+                    entry.sourceReady (function (text) { var match = (text || '').match (
+                                                                         /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
+                        found ((match && {
+                            name: match[1],
+                            type: match[2],
+                            file: entry.fileShort }) || false) }) },
+
+                function (found) {
+                    then (found || {}) }) })) }
+
+    return def })
 
 
 
@@ -5360,7 +5448,7 @@ _.perfTest = function (arg, then) {
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.tests.log = function () {     //  Writes to test's log (as it's off-screen until needed)
+_.tests.log = function () {
 
     log.write   ('Hello')       //  Use for plain output.
 
@@ -6171,7 +6259,6 @@ _.tests.component = {
                         init: function () {
                             this.positionChange (function (v) {
                                 $assertTypeof (v, Vec2)
-                                log.i (v)
                                 $assert (v.y, 42) }) } })
 
         var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
@@ -6253,9 +6340,6 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
-
-    /*  Regression tests
-     */
     '(regression) was not able to define inner compos at singleton compos': function () {
         var Foo = $singleton (Component, {
             InnerCompo: $component ({
@@ -6325,7 +6409,7 @@ Component = $prototype ({
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
-                if (_.isFunction (fn) && !$prototype.isConstructor (fn))  {
+                if (_.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
                     iterator.call (this, fn, k) } } } },
 
     /*  Thou shall not override this
@@ -6656,6 +6740,8 @@ _.defineTagKeyword ('assertion')
  */
 Testosterone = $singleton ({
 
+    prototypeTests: [],
+
     isRunning: $property (function () {
         return this.currentTest !== undefined }),
 
@@ -6666,16 +6752,14 @@ Testosterone = $singleton ({
         this.defineAssertion ('assertFails', $shouldFail (function (what) { what.call (this) }))
 
         _.each (_.omit (_.assertions, 'assertFails'), function (fn, name) {
-            this.defineAssertion (name, name in _.asyncAssertions ? $async (fn) : fn) }, this)
+            this.defineAssertion (name, name in _.asyncAssertions ? $async (fn) : fn) }, this);
 
         /*  For defining tests inside prototype definitions
          */
-        $prototype.macro ('$tests', function (def, value, name) {
-            var src = Tags.unwrap (def.$sourceFile)
-            _.extend (_.tests[src] || (_.tests[src] = {}), value)
-
-            //Testosterone.findAndPublishPrototypeTests.postpone (); 
-            return _.extend (def, _.object ([[name, $static (value)]])) })
+        (function (register) {
+            $prototype.macro ('$test',  register)
+            $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
+                                                        this.prototypeTests.push ([Tags.unwrap (def.$meta), value]); return def }))
 
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
                                         //  but it's a chicken-egg class problem
@@ -6685,7 +6769,7 @@ Testosterone = $singleton ({
     run: $interlocked (function (cfg_, optionalThen) {
         var releaseLock = _.last (arguments)
         var then = arguments.length === 3 ? optionalThen : _.identity
-        
+
         /*  Configuration
          */
         var defaults = {
@@ -6702,30 +6786,35 @@ Testosterone = $singleton ({
         var suites = _.map (cfg.suites || [], this.$ (function (suite) {
             return this.testSuite (suite.name, suite.tests, cfg.context) }))
 
-        /*  Pick tests
+        var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
+
+        /*  Pick prototype tests
          */
-        var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
-        var allTests    = _.flatten (_.pluck (baseTests.concat (suites), 'tests'))
-        var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
+        collectPrototypeTests (this.$ (function (prototypeTests) {
 
-        /*  Reset context
-         */
-        this.runningTests = selectTests
+            /*  Gather tests
+             */
+            var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
+            var allTests    = _.flatten (_.pluck (baseTests.concat (suites).concat (prototypeTests), 'tests'))
+            var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
 
-        /*  Go
-         */
-        _.cps.each (selectTests,
-                this.$ (this.runTest),
-                this.$ (function () {
-                            _.assert (cfg.done !== true)
-                                      cfg.done   = true
+            /*  Reset context (assigning indices)
+             */
+            this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { index: i }) })
 
-                            this.printLog (cfg)
-                            this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                            this.failed = (this.failedTests.length > 0)
-                            then (!this.failed)
-                            releaseLock () }) ) }),
+            /*  Go
+             */
+            _.cps.each (selectTests,
+                    this.$ (this.runTest),
+                    this.$ (function () {
+                                _.assert (cfg.done !== true)
+                                          cfg.done   = true
 
+                                this.printLog (cfg)
+                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+                                this.failed = (this.failedTests.length > 0)
+                                then (!this.failed)
+                                releaseLock () }) ) })) }),
 
     /*  You may define custom assertions through this API
      */
@@ -6750,11 +6839,16 @@ Testosterone = $singleton ({
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {
-            return this.testSuite (name, ((typeof suite === 'function') && _.object ([[name, suite]])) || suite) } )) },
+            return this.testSuite (name, suite) } )) },
 
-    testSuite: function (name, tests, context) { return {
+    collectPrototypeTests: function (then) {
+        _.cps.map (this.prototypeTests, this.$ (function (def, then) {
+            (def[0]) (this.$ (function (meta) {
+                then (this.testSuite (meta.name, def[1])) })) }), then) },
+
+    testSuite: function (name, tests, context) { return { 
         name: name,
-        tests: _(_.pairs (tests))
+        tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
                         return new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context }) }) } },
 
@@ -6930,6 +7024,7 @@ Test = $prototype ({
                         
                     // print exception
                 else {
+                    if (self.depth > 1) { log.newline () }
                     log.write (log.indent (locations.length), e) }
 
                 log.newline ()
@@ -7014,14 +7109,11 @@ Test = $prototype ({
                                     then () }) }) }) },
 
     printLog: function () {
-        var index = Testosterone.runningTests.indexOf (this) + 1
-        var total = Testosterone.runningTests.length
 
         log.write (log.color.blue,
             '\n' + log.boldLine,
-            '\n' + ((this.suite !== this.name && this.suite.quote ('[]')) || ''),
-            this.name,
-            (index + ' of ' + total).quote ('()') +
+            '\n' + _.nonempty ([((this.suite !== this.name && this.suite.quote ('[]')) || ''), this.name]).join (' '),
+            (this.index + ' of ' + Testosterone.runningTests.length).quote ('()') +
             (this.failed ? ' FAILED' : '') + ':',
             '\n')
 
@@ -7527,139 +7619,142 @@ _.extend (Math, (function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }))
-_.deferTest ('regexp helper', function () { var $assertExpr = function (a, b) { $assert (a, _.quote (b.str, '//')) }
+/*  Implementation
+ */
+R = $singleton ({
 
-    /*  R should be used for code clarity purposes when one needs to generate a
-        complex regular expression that is hard to read and maintain.
-     */
-    $assertExpr ('/[^\\s]*/',        $r.anyOf.except.space.$)
-    $assertExpr ('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$)
+    $test: function () {
 
-    var expr = $r.expr ('before',    $r.anything.text ('$print').something).then (
-               $r.expr ('argument',  $r.someOf.except.text (',)')).inParentheses.then (
-               $r.expr ('tail',      $r.anything))).$
+        var $assertExpr = function (a, b) { $assert (a, _.quote (b.str, '//')) }
 
-    /*  Above construction generates the following regular expression
-     */
-    $assertExpr ('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr)
+        /*  R should be used for code clarity purposes when one needs to generate a
+            complex regular expression that is hard to read and maintain.
+         */
+        $assertExpr ('/[^\\s]*/',        $r.anyOf.except.space.$)
+        $assertExpr ('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$)
 
-    /*  Main feature: named groups, easily accessible as dictionary elements.
-     */
-    $assert (expr.parse ( ' var x = $print (blabla) // lalala '),
+        var expr = $r.expr ('before',    $r.anything.text ('$print').something).then (
+                   $r.expr ('argument',  $r.someOf.except.text (',)')).inParentheses.then (
+                   $r.expr ('tail',      $r.anything))).$
 
-              {  before:  ' var x = $print ',
-               argument:  'blabla',              
-                   tail:  ' // lalala ',        })
+        /*  Above construction generates the following regular expression
+         */
+        $assertExpr ('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr)
 
-    /*  Based on Lisp-like list based syntax, for easy programmatic generation and stuff
-     */
-    $assert ([['[^', '\\s', "\]"], '*'], R.anyOf (R.except (R.space))) },                       function () {
+        /*  Main feature: named groups, easily accessible as dictionary elements.
+         */
+        $assert (expr.parse ( ' var x = $print (blabla) // lalala '),
 
-    /*  Implementation
-     */
-    R = $singleton ({
+                  {  before:  ' var x = $print ',
+                   argument:  'blabla',              
+                       tail:  ' // lalala ',        })
 
-        constructor: function () {
+        /*  Based on Lisp-like list based syntax, for easy programmatic generation and stuff
+         */
+        $assert ([['[^', '\\s', "\]"], '*'], R.anyOf (R.except (R.space))) },
 
-            this.reduce = _.hyperOperator (_.binary, _.reduce2,
-                                            _.goDeeperAlwaysIfPossible,
-                                            _.isNonTrivial.and (_.not (this.isSubexpr)))
 
-            this.initDSL () },
+    constructor: function () {
 
-        expr: function (expr, subexprs) { subexprs = subexprs || []
-                return new R.Expr (R.reduce (expr, '', function (s, memo) {
-                                                            if (R.isSubexpr (s)) { subexprs.push (s)
-                                                                return memo + R.expr (R.root (s.value), subexprs).str }
-                                                            else {
-                                                                return memo + s } }), subexprs) },
+        this.reduce = _.hyperOperator (_.binary, _.reduce2,
+                                        _.goDeeperAlwaysIfPossible,
+                                        _.isNonTrivial.and (_.not (this.isSubexpr)))
 
-        Expr: $prototype ({
+        this.initDSL () },
 
-            constructor: function (str, subexprs) {
-                            this.rx = new RegExp ()
-                            this.rx.compile (str)
-                            this.str = str
-                            this.subexprs = subexprs },
+    expr: function (expr, subexprs) { subexprs = subexprs || []
+            return new R.Expr (R.reduce (expr, '', function (s, memo) {
+                                                        if (R.isSubexpr (s)) { subexprs.push (s)
+                                                            return memo + R.expr (R.root (s.value), subexprs).str }
+                                                        else {
+                                                            return memo + s } }), subexprs) },
 
-            parse: function (str) {
-                    var match = str.match (this.rx)
-                return (match && _.extend.apply (null,
-                                    _.zipWith ([_.rest (match), this.subexprs], function (match, subexpr) {
-                                                                                    return _.object ([[ subexpr.name, match ]]) }))) || {} } }),
+    Expr: $prototype ({
 
-        metacharacters: $property (_.index ('\\^$.|?*+()[{')),
+        constructor: function (str, subexprs) {
+                        this.rx = new RegExp ()
+                        this.rx.compile (str)
+                        this.str = str
+                        this.subexprs = subexprs },
 
-        escape:       function (s)    { return _.map (s, function (x) { return R.metacharacters[x] ? ('\\' + x) : x }).join ('') },
+        parse: function (str) {
+                var match = str.match (this.rx)
+            return (match && _.extend.apply (null,
+                                _.zipWith ([_.rest (match), this.subexprs], function (match, subexpr) {
+                                                                                return _.object ([[ subexpr.name, match ]]) }))) || {} } }),
 
-        text:         $alias ('escape'),
+    metacharacters: $property (_.index ('\\^$.|?*+()[{')),
 
-        subexpr:      function (name, s) { return { name: name, value: ['(', s, ')'] } },
-     
-        maybe:        function (s)    { return [s, '?'] },
+    escape:       function (s)    { return _.map (s, function (x) { return R.metacharacters[x] ? ('\\' + x) : x }).join ('') },
 
-        anyOf:        function (s)    { return [s, '*'] },
-        someOf:       function (s)    { return [s, '+'] },
+    text:         $alias ('escape'),
 
-        oneOf:        function (s)    { return ['[',  s, ']'] },
-        except:       function (s)    { return ['[^', s, ']'] },
+    subexpr:      function (name, s) { return { name: name, value: ['(', s, ')'] } },
+ 
+    maybe:        function (s)    { return [s, '?'] },
 
-        or:           function (a, b) { return [a, '|', b] },
+    anyOf:        function (s)    { return [s, '*'] },
+    someOf:       function (s)    { return [s, '+'] },
 
-        begin:       $property ('^'),
-        end:         $property ('$'),
-        space:       $property ('\\s'),
-        maybeSpaces: $property ('\\s*'),
-        spaces:      $property ('\\s+'),
-        anything:    $property ('.*'),
-        something:   $property ('.+'),
-        comma:       $property (','),
+    oneOf:        function (s)    { return ['[',  s, ']'] },
+    except:       function (s)    { return ['[^', s, ']'] },
 
-        parentheses: function (s) { return ['\\(', s, '\\)'] },
-        brackets:    function (s) { return ['\\[', s, '\\]'] },
+    or:           function (a, b) { return [a, '|', b] },
 
-        isSubexpr: function (s) { return (_.isStrictlyObject (s) && !_.isArray (s)) ? true : false },
+    begin:       $property ('^'),
+    end:         $property ('$'),
+    space:       $property ('\\s'),
+    maybeSpaces: $property ('\\s*'),
+    spaces:      $property ('\\s+'),
+    anything:    $property ('.*'),
+    something:   $property ('.+'),
+    comma:       $property (','),
 
-        root: function (r) { return (r && r.$$) ? r.$$ : r },
+    parentheses: function (s) { return ['\\(', s, '\\)'] },
+    brackets:    function (s) { return ['\\[', s, '\\]'] },
 
-        initDSL: function () {
+    isSubexpr: function (s) { return (_.isStrictlyObject (s) && !_.isArray (s)) ? true : false },
 
-            _.defineKeyword ( 'r', function ()       { return $$r ([]) })
-            _.defineKeyword ('$r', function (cursor) {
+    root: function (r) { return (r && r.$$) ? r.$$ : r },
 
-                var shift = function (x) { cursor.push (x); return cursor.forward }
+    initDSL: function () {
 
-                _.defineHiddenProperty (cursor, 'then', function (x)    { cursor.push (R.root (x));                return cursor })
-                _.defineHiddenProperty (cursor, 'text', function (x)    { cursor.push (R.text (x));                return cursor })
-                _.defineHiddenProperty (cursor, 'expr', function (x, s) { cursor.push (R.subexpr (x, R.root (s))); return cursor })
+        _.defineKeyword ( 'r', function ()       { return $$r ([]) })
+        _.defineKeyword ('$r', function (cursor) {
 
-                _.defineHiddenProperty (cursor, 'forward', function () {
-                    return cursor.next || ((cursor.next = $r).prev = cursor).next })
+            var shift = function (x) { cursor.push (x); return cursor.forward }
 
-                _.each (['maybe', 'anyOf', 'someOf', 'oneOf', 'except'], function (key) {
-                    _.defineHiddenProperty (cursor, key, function () {
-                        return shift (R[key] (cursor.forward)) }) })
+            _.defineHiddenProperty (cursor, 'then', function (x)    { cursor.push (R.root (x));                return cursor })
+            _.defineHiddenProperty (cursor, 'text', function (x)    { cursor.push (R.text (x));                return cursor })
+            _.defineHiddenProperty (cursor, 'expr', function (x, s) { cursor.push (R.subexpr (x, R.root (s))); return cursor })
 
-                _.each (['parentheses', 'brackets'], function (key) {
-                    _.defineHiddenProperty (cursor, 'in' + key.capitalized, function () {
-                        return (cursor.$$.prev = $$r (R[key] (cursor.$$))) }) })
+            _.defineHiddenProperty (cursor, 'forward', function () {
+                return cursor.next || ((cursor.next = $r).prev = cursor).next })
 
-                _.each (['or'], function (key) {
-                    _.defineHiddenProperty (cursor, key, function () { var next = $r
-                        return (next.prev = (cursor.$$.prev = $$r (R[key] (cursor.$$, next)))).next = next }) })
+            _.each (['maybe', 'anyOf', 'someOf', 'oneOf', 'except'], function (key) {
+                _.defineHiddenProperty (cursor, key, function () {
+                    return shift (R[key] (cursor.forward)) }) })
 
-                _.each (['begin', 'end', 'space', 'anything', 'something'], function (key) {
-                    _.defineHiddenProperty (cursor, key, function () {
-                        return shift ([R[key], cursor.forward]); }) })
+            _.each (['parentheses', 'brackets'], function (key) {
+                _.defineHiddenProperty (cursor, 'in' + key.capitalized, function () {
+                    return (cursor.$$.prev = $$r (R[key] (cursor.$$))) }) })
 
-                _.defineHiddenProperty (cursor, '$$', function () { var root = cursor
-                    while (root.prev) { root = root.prev }
-                    return root })
+            _.each (['or'], function (key) {
+                _.defineHiddenProperty (cursor, key, function () { var next = $r
+                    return (next.prev = (cursor.$$.prev = $$r (R[key] (cursor.$$, next)))).next = next }) })
 
-                _.defineHiddenProperty (cursor, '$', function () {
-                    return R.expr (cursor.$$) })
+            _.each (['begin', 'end', 'space', 'anything', 'something'], function (key) {
+                _.defineHiddenProperty (cursor, key, function () {
+                    return shift ([R[key], cursor.forward]); }) })
 
-                return cursor }) } }) })
+            _.defineHiddenProperty (cursor, '$$', function () { var root = cursor
+                while (root.prev) { root = root.prev }
+                return root })
+
+            _.defineHiddenProperty (cursor, '$', function () {
+                return R.expr (cursor.$$) })
+
+            return cursor }) } })
 
 
 /*  Experimental stuff
@@ -7707,13 +7802,13 @@ _.tests.AOP = {
 
     'basics': function () {     var callLog = []
 
-                                var Thing = $prototype ($test ({
+                                var Thing = $prototype ($testArguments ({
 
                                     create:            function (_777)              { callLog.push ([this, 'Thing.create']) },
                                     display:           function (_foobar, _778)     { callLog.push ([this, 'Thing.display']) },
                                     destroy:           function ()                  { callLog.push ([this, 'Thing.destroy']); return 456 } }))
 
-                                var NewFlavorOfThing = $aspect (Thing, $test ({
+                                var NewFlavorOfThing = $aspect (Thing, $testArguments ({
 
                                     beforeCreate:   function (_777)                        { callLog.push ([this, 'NewFlavorOfThing.beforeCreate']) },
 
@@ -7750,7 +7845,7 @@ _.tests.AOP = {
         var aspectDef = Tags.unwrap (_.sequence (
                             $prototype.impl.extendWithTags,
                             $prototype.impl.flatten,
-                            $prototype.impl.generateArgumentContractsIfTaggedAsTest,
+                            $prototype.impl.generateArgumentContractsIfNeeded,
                             $prototype.impl.contributeTraits,
                             $prototype.impl.expandAliases).call ($prototype.impl, cfg))
         

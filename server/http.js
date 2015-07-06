@@ -24,7 +24,7 @@ module.exports = $trait ({
                 if (!context.stub) {
                     this.addExceptionHandlingToContext (context) }
 
-                handler.call (this, context) }))) { context.notFound () } },
+                handler.call (this, context) }), this.apiDebug)) { context.notFound () } },
 
     /*  a stub context constructor
      */

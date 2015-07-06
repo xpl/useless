@@ -39,16 +39,34 @@ _.withTest (['cps', 'each'], function () {
 
         /*  called for each item, in linear order
          */
-        function (item, itemIndex, then, arrayWeTraverse) {
+        function (item, itemIndex, then, complete, arrayWeTraverse) {
             $assert (item === data[itemIndex])
             $assert (itemIndex === currentIndex++)
             $assert (arrayWeTraverse === data)
+
+            $assert (_.isFunction (then))
+            $assert (_.isFunction (complete))
+
             then () },
 
         /*  called when all items enumerated
          */
         function () {
             $assert (currentIndex === data.length) })
+
+    /*  You can omit 'index' argument for iterator function
+     */
+    var data2 = []
+    _.cps.each (data,
+        function (item, then) { data2.push (item); then () },
+        function () { $assert (data, data2) })
+
+    /*  You can stop iteration by calling last argument
+     */
+    var data3 = []
+    _.cps.each (data,
+        function (item, i, then, break_) { data3.push (item); break_ () },
+        function () { $assert (data3, ['foo']) })
 
     /*  Iterating over dictionary is legal
      */
@@ -66,17 +84,20 @@ function () { _.extend (_.cps, {
                 var index   = index_ || 0
                 var keys    = index === 0 ? (obj.length === undefined ? _.keys(obj) : undefined) : keys_
                 var length  = index === 0 ? (keys ? keys.length : obj.length) : length_
+                var passKey = (_.numArgs (elem) !== 2)
 
                 if (!obj || (index >= (length || 0))) {
                     if (complete) {
                         complete () }}
+
                 else {
-                    var key = keys ? keys[index] : index
-                    elem (
-                        /* item */  obj[key],
-                        /* index */ key,
-                        /* next */  function () { self (obj, elem, complete, index + 1, length, keys) },
-                        /* array */ obj) } } })} )
+                    var key  = keys ? keys[index] : index
+                    var next = function () { self (obj, elem, complete, index + 1, length, keys) }
+
+                    if (passKey) {
+                        elem (obj[key], key, next, complete, obj) }
+                    else {
+                        elem (obj[key],      next, complete, obj) } } } })} )
 
 
 /*  map
@@ -84,6 +105,14 @@ function () { _.extend (_.cps, {
 
 _.withTest (['cps', 'map'], function () {
 
+    /*  2-argument iterator semantics
+     */
+    _.cps.map ([7,6,5],
+        function (x, then)    { then (x + 1) },
+        function (result)     { $assert (result, [8,7,6]) })
+
+    /*  3-argument iterator semantics
+     */
     _.cps.map ([7,6,5],
         function (x, i, then) { then (x + 1) },
         function (result)     { $assert (result, [8,7,6]) }) },
@@ -91,9 +120,49 @@ _.withTest (['cps', 'map'], function () {
 function () { _.extend (_.cps, {
 
     map: function (obj, iter, complete) { var result = _.isArray (obj) ? [] : {}
-            _.cps.each (obj, function (x, i, next) {
-                iter (x, i, function (y) {
-                    result[i] = y; next () }) }, function () { complete (result) }) } }) })
+            _.cps.each (obj, (_.numArgs (iter) == 2)
+                                    ? function (x, i, next) { iter (x,    function (y) { result[i] = y; next () }) }
+                                    : function (x, i, next) { iter (x, i, function (y) { result[i] = y; next () }) },
+                function () { complete (result) }) } }) })
+
+/*  find
+    ======================================================================== */
+
+_.withTest (['cps', 'find'], function () {
+
+    /*  Basic use
+     */
+    _.cps.find ([7,6,5],
+        function (x, then) { then ((x % 3) === 0) },
+        function (x, key)  { $assert ([x, key], [6, 1]) })
+
+    /*  Over dictionary
+     */
+    _.cps.find ({ foo: 7, bar: 6, baz: 5 },
+        function (x, key, then) { then (key === 'baz') },
+        function (x, key)       { $assert ([x, key], [5, 'baz']) })
+
+    /*  Returning non-boolean
+     */
+    _.cps.find ([7,6,5],
+        function (x, then) { then (((x % 3) === 0) ? 'yeah' : false) },
+        function (x, key)  { $assert ([x, key], ['yeah', 1]) })
+
+    /*  Not found
+     */
+    _.cps.find ([7,6,5],
+        function (x, key, then) { then (false) },
+        function (x)            { $assert (x, undefined) }) },
+
+function () { _.extend (_.cps, {
+
+    find: function (obj, pred, complete) { var passKey = (_.numArgs (pred) !== 2)
+
+        _.cps.each (obj, function (x, key, next, complete) { var take = function (match) {
+                                                                            if (match === false) { next () }
+                                                                            else                 { complete (match === true ? x : match, key) } }
+                            if (passKey) { pred (x, key, take) }
+                            else         { pred (x,      take) } }, complete) } }) })
 
 /*  memoize
     ======================================================================== */

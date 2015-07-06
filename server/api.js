@@ -70,7 +70,8 @@ module.exports = $trait ({
     /*  Public API
      */
 
-    beforeInit: function (then) {
+    beforeInit: function (then) { log.info ('Reading API schema')
+
         this.apiSchema = APISchema.collapse (
             _.flat (_.filterMap.call (this, (this.constructor.$traits || []).reversed, function (Trait) {
                 if (Trait.prototype.api) {
@@ -78,9 +79,15 @@ module.exports = $trait ({
         then () },
 
     afterInit: function (then) {
-        //APISchema.prettyPrint (this.apiSchema)
+
+        if (this.apiDebug) {
+            log.write ('\nCurrent API schema:', '\n' + log.thinLine, '\n')
+            APISchema.prettyPrint (this.apiSchema)
+            log.write (log.thinLine, '\n') }
+
         if (_.isFunction (this.api)) {
             this.defineAPIs (this.api ()) }
+
         then () },
 
     defineAPIs: function (schemaPart) {
@@ -97,7 +104,7 @@ APISchema = {
     prettyPrint: function (routes, depth) { depth = depth || 0
         _.each (routes, function (route) {
             if (APISchema.isHandler (route[1])) {
-                log.green (log.indent (depth), route[0] || '(empty)', 'is handler:',
+                log.green (log.indent (depth), route[0] || '(empty)',
                     _.nonempty ([route[1].get && 'GET', route[1].post && 'POST']).join (' ')) }
             else {
                 log.orange (log.indent (depth), route[0] || '(empty)', ':')
@@ -149,8 +156,12 @@ APISchema = {
                 var merged = _.flatten (_.map (group, function (route) { return route[1] }), true)
                 return [name, APISchema.collapse (merged)] } })) },
 
-    match: function (context, routes, then, depth, virtualTrailSlashCase) {
-        var trace = function (msg) { /*log.blue (_.times (depth, _.constant (' → ')).join (''), msg)*/ }
+    match: function (context, routes, then, debug, depth, virtualTrailSlashCase) {
+
+        var trace = (debug === true)
+                        ? (function (msg) { log.blue (_.times (depth, _.constant (' → ')).join (''), msg) })
+                        : _.identity
+
         var depth = depth || 1
         
         if ((virtualTrailSlashCase == undefined) && context.path.length <= depth) {
@@ -184,12 +195,12 @@ APISchema = {
                         trace ('going deeper') // here's pic of "we need to go deeper" DiCaprio from Inception
                         
                         if (depth < context.path.length - 1) {
-                            return APISchema.match (context, subroutes, then, depth + 1) }
+                            return APISchema.match (context, subroutes, then, debug, depth + 1) }
 
                         else if (!virtualTrailSlashCase) { // makes "/foo" respond to "/foo/" handler
                             
                             trace ('trying to find trail-slash handler')
-                            return APISchema.match (context, subroutes, then, depth + 1, true) }
+                            return APISchema.match (context, subroutes, then, debug, depth + 1, true) }
 
                         else {
                             trace ('nowhere to go deeper') } }

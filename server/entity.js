@@ -1,9 +1,9 @@
 module.exports = $trait ({
 
     beforeInit: function (then) {
-        require ('../db').init (this.dbName, this.$ (function (db) {
-                                                        this.db = db
-                                                        then () })) },
+        require ('./base/db').init (this.dbName, this.$ (function (db) {
+                                                            this.db = db
+                                                            then () })) },
 
 
     /*  Defines common CRUD API for collections (for use in URL schema definition)

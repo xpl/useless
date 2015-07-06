@@ -14,11 +14,13 @@ DataManager = $singleton (Component, {
 /*	Startup
 	======================================================================== */
 
-	init: function () {		
-		_.each (Collections,
-			this.initRemoteCollection)
+	init: function () {
 
-		if (env.who) {
+		if (typeof Collections !== 'undefined') {
+			_.each (Collections,
+				this.initRemoteCollection) }
+
+		if (true /*env.who*/) {
 			this.initLiveUpdates () }
 
 		if (this.appcacheEnabled ()) {
@@ -70,7 +72,7 @@ DataManager = $singleton (Component, {
 			this.connection = new WebSocket ('ws://' + window.location.host)
 
 			this.connection.onopen = function () {
-				this.send (JSON.stringify ({ email: env.who.email, password: env.who.password }))
+				this.send (JSON.stringify ((typeof env === 'undefined' || !env.who) ? {} : { email: env.who.email, password: env.who.password }))
 				Live.online (true) }
 
 			this.connection.onclose = this.$ (function () { console.log ('retrying LIVE connection')

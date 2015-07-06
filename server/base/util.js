@@ -54,7 +54,6 @@ module.exports = {
                 function (name, i, return_) {
                     _.tryEval (function () { return require (name) },
                                function (e) {
-                                    log.warn ('Installing', name, 'from npm')
                                     exec ('npm install ' + name, function (e, stdout, stderr) {
                                                                         if (e) {
                                                                             util.fatalError (stderr) }

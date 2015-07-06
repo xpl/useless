@@ -8,9 +8,10 @@ module.exports = $trait ({
 
     api: function () {
 
-        if (!this.developerAccess) {
+        if (!this.developerAccess || !this.isDeveloper) {
             this.developerAccess = _.identity
-            log.warn ('Define this.developerAccess to restrict access to devtools API!') }
+            this.isDeveloper     = _.constant (true)
+            log.warn ("Add 'auth' trait to restrict access to devtools API") }
 
         return {
             'echo':             { post: this.echo },
@@ -24,7 +25,7 @@ module.exports = $trait ({
     afterInit: function () { // remote logging
         if (this.messageToPeers) {
             _.onAfter (log.impl, 'writeBackend', this.$ (function (params) {
-                this.messageToPeers ({ what: 'log', params: params }, _.property ('isDeveloper')) })) } },
+                this.messageToPeers ({ what: 'log', params: params }, this.isDeveloper) })) } },
 
     /*  Prints raw incoming HTTP data (for debugging of client write methods)
      */

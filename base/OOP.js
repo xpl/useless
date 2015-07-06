@@ -8,7 +8,7 @@ Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
 
 _.hasOOP = true
 
-_.deferTest ('OOP', {
+_.withTest ('OOP', {
 
     '$prototype / $extends': function () {
 
@@ -218,22 +218,6 @@ _.deferTest ('OOP', {
         $assert (_.isTypeOf_ES4 (Foo, bar)) },  // (validate inheritance)
 
 
-/*  $const (xxx) as convenient alias for $static ($property (xxx))
-    ======================================================================== */
- 
-    '$const': function () {
- 
-        var A = $prototype ({
-            $const: {
-                foo: 'foo',
-                bar: 'bar' },
-            qux: $const ('qux'),
-            zap: $const ('zap') })
- 
-        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
-        $assertThrows (function () { A.foo = 'bar '}) },
-
-
 /*  This is how to decide whether a function is $prototype constructor
     ======================================================================== */
 
@@ -247,52 +231,6 @@ _.deferTest ('OOP', {
         $assert ($prototype.isConstructor (null),  false) // regression
 
         $assert ([Proto, dummy].map ($prototype.isConstructor), [true, false]) },
-
-
-/*  $trait  A combinatoric-style alternative to inheritance.
-            (also known as "mixin" in some languages)
-    ======================================================================== */
-
-    '$trait / $traits': function () {
-
-        var Closeable = $trait ({
-            close: function () {} })
-
-        var Movable = $trait ({
-            move: function () {} })
-
-        var Enumerable = $trait ({
-            each: function (iter) {},
-            length: $property (function () { return 0; }) })
-
-        var JustCloseable     = $prototype ({ $trait:  Closeable })
-        var MovableEnumerable = $prototype ({ $traits: [Movable, Enumerable], move: function () {} })
-
-        var movableEnumerable = new MovableEnumerable ()
-
-        $assert (movableEnumerable.move === MovableEnumerable.prototype.move)
-
-        $assertThrows (function () { new Closeable () },
-            _.matches ({ message: 'Traits are not instantiable (what for?)' }))
-
-        $assertTypeof (movableEnumerable, {
-            move: 'function',
-            each: 'function',
-            length: 'number' })
-
-        $assert ([
-            movableEnumerable.isInstanceOf (Movable),
-            movableEnumerable.isInstanceOf (Enumerable),
-            movableEnumerable.isInstanceOf (Closeable)], [true, true, false])
-
-        $assert (Movable.isTypeOf (movableEnumerable))
-        $assert (Movable.isTraitOf (movableEnumerable))
-
-        $assert (MovableEnumerable.hasTrait (Enumerable))
-
-        $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
-        $assertMatches (JustCloseable,      { $traits: [Closeable],
-                                              $trait:  undefined }) },
 
 
 /*  $prototype.inheritanceChain for traversing inheritance chain
@@ -323,7 +261,7 @@ _.deferTest ('OOP', {
 
     'value contracts for arguments': function () {
 
-        var Proto = $prototype ($test ({
+        var Proto = $prototype ($testArguments ({
 
             frobnicate:  function (_777, _foo_bar_baz, unaffected) {},
             noMistake:   function () {} }))
@@ -348,7 +286,7 @@ _.deferTest ('OOP', {
 /*  PUBLIC API
     ======================================================================== */
 
-    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'test'])
+    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'testArguments'])
         .each (_.defineTagKeyword)
 
     $prototype = function (arg1, arg2) {
@@ -383,7 +321,7 @@ _.deferTest ('OOP', {
                 def = def.$base && def.$base.constructor }
             return chain },
 
-        mapMethods: function (def, op) {
+        wrapMethods: function (def, op) {
                         return Tags.map (def, function (fn, k, t) {
                             return _.isFunction (fn) ? op (fn, k, t).wraps (fn) : fn }) },
 
@@ -399,7 +337,7 @@ _.deferTest ('OOP', {
             compile: function (def, base) { return Tags.unwrap (_.sequence (
                 this.extendWithTags,
                 this.flatten,
-                this.generateArgumentContractsIfTaggedAsTest,
+                this.generateArgumentContractsIfNeeded,
                 this.ensureFinalContracts (base),
                 this.generateConstructor (base),
                 this.evalAlwaysTriggeredMacros (base),
@@ -423,8 +361,8 @@ _.deferTest ('OOP', {
                             def = macros[name] (def, value, name, base) } })
                     return def } },
 
-            generateArgumentContractsIfTaggedAsTest: function (def) {
-                return def.$test ? $prototype.mapMethods (def, function (fn, name) {
+            generateArgumentContractsIfNeeded: function (def) {
+                return def.$testArguments ? $prototype.wrapMethods (def, function (fn, name) {
                                                                      return function () { var args = _.asArray (arguments)
                                                                         $assertArguments (args.copy, fn.original, name)
                                                                          return fn.apply (this, args) } }) : def },
@@ -446,7 +384,7 @@ _.deferTest ('OOP', {
 
                 return def },
 
-            extendWithTags: function (def) {
+            extendWithTags: function (def) {                    
                 return _.extendWith (Tags.unwrap (def), _.objectMap (Tags.get (def), $static)) },
 
             generateConstructor: function (base) { return function (def) {
@@ -523,8 +461,50 @@ _.deferTest ('OOP', {
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
 
 
-/*  $traits impl.
+/*  $trait  A combinatoric-style alternative to inheritance.
+            (also known as "mixin" in some languages)
     ======================================================================== */
+
+    _.withTest (['OOP', '$trait / $traits'], function () {
+
+        var Closeable = $trait ({
+            close: function () {} })
+
+        var Movable = $trait ({
+            move: function () {} })
+
+        var Enumerable = $trait ({
+            each: function (iter) {},
+            length: $property (function () { return 0; }) })
+
+        var JustCloseable     = $prototype ({ $trait:  Closeable })
+        var MovableEnumerable = $prototype ({ $traits: [Movable, Enumerable], move: function () {} })
+
+        var movableEnumerable = new MovableEnumerable ()
+
+        $assert (movableEnumerable.move === MovableEnumerable.prototype.move)
+
+        $assertThrows (function () { new Closeable () },
+            _.matches ({ message: 'Traits are not instantiable (what for?)' }))
+
+        $assertTypeof (movableEnumerable, {
+            move: 'function',
+            each: 'function',
+            length: 'number' })
+
+        $assert ([
+            movableEnumerable.isInstanceOf (Movable),
+            movableEnumerable.isInstanceOf (Enumerable),
+            movableEnumerable.isInstanceOf (Closeable)], [true, true, false])
+
+        $assert (Movable.isTypeOf (movableEnumerable))
+        $assert (Movable.isTraitOf (movableEnumerable))
+
+        $assert (MovableEnumerable.hasTrait (Enumerable))
+
+        $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
+        $assertMatches (JustCloseable,      { $traits: [Closeable],
+                                              $trait:  undefined }) }, function () {
 
     _.isTraitOf = function (Trait, instance) {
         var constructor = instance && instance.constructor
@@ -541,7 +521,7 @@ _.deferTest ('OOP', {
                         isTraitOf: $static ($builtin (function (instance) {
                             return _.isTraitOf (constructor, instance) })) })
 
-        return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) }
+        return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) } })
 
 
 /*  Context-free implementation of this.$
@@ -558,16 +538,28 @@ _.deferTest ('OOP', {
         jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
 
 
-/*  $const is alias for static property
+/*  $const (xxx) as convenient alias for $static ($property (xxx))
     ======================================================================== */
+ 
+    _.withTest (['OOP', '$const'], function () {
+ 
+        var A = $prototype ({
+            $const: {
+                foo: 'foo',
+                bar: 'bar' },
+            qux: $const ('qux'),
+            zap: $const ('zap') })
+ 
+        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
+        $assertThrows (function () { A.foo = 'bar '}) }, function () {
 
-    _.defineKeyword ('const', function (x) { return $static ($property (x)) })
+    _.defineKeyword ('const', function (x) { return $static ($property (x)) })  })
 
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
     ======================================================================== */
 
-     _.withTest ('$singleton', function () { $assertCalls (2, function (mkay) {
+     _.withTest (['OOP', '$singleton'], function () { $assertCalls (2, function (mkay) {
 
             var Base    = $prototype ({
                             method:    _.constant (42) })
@@ -585,7 +577,15 @@ _.deferTest ('OOP', {
             var Derived = $singleton (Base, {
                             constructor: function () { mkay (); Base.prototype.constructor.apply (this, arguments) } })
 
-            $assert (Simple.method (), Derived.method (), 42) }) }, function () {
+            $assert (Simple.method (), Derived.method (), 42) })
+
+        /*  inner prototypes
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+            var Outside = $singleton ({
+                Inside: $prototype ({ foo: function () {} }) })
+
+            $assertTypeof ((new Outside.Inside ()).foo,  'function')              }, function () {
 
         /*  IMPLEMENTATION
             ==================================================================== */
