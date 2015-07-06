@@ -57,6 +57,13 @@ printABC.tails2 (3, 4) (1) // prints 1, 3, 4
 
 Flips argument order of a function. There also exist `flip2` and `flip3` which is a shortcut to _"arity2 + flip"_ and _"arity3 + flip"_, respectively.
 
+```javascript
+var printAB = function (a, b) { console.log (a, b) }
+var printBA = printAB.flip
+
+printBA (3,4) // prints 4,3
+```
+
 ### Higher-order boolean logic
 
 ```javascript
