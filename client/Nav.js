@@ -159,7 +159,7 @@ Nav = $singleton (Component, {
 
 	initLogout: function () {
 		$('#logout').click (function (e) {
-			if (confirm ('Выйти?')) {
+			if (confirm ('Are you sure?')) {
 				$(e.delegateTarget).waitUntil (API.post.partial ('logout', {
 					success: function () { window.location = '/' },
 					failure: UI.error })) } }) },
