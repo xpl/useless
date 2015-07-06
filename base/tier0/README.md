@@ -8,6 +8,55 @@ Most deep layer of Useless.js code base.
 !!! DOCUMENTATION UNDER CONSTRUCTION !!!
 ```
 
+##function.js
+
+Various function-centric utility.
+
+###Arity
+
+``_.arity``
+``Function.arity``
+
+Limits function to given number of arguments.
+
+```javascript
+  _.arity   = function (N, fn) { ... }
+  _.arity0  = ...
+  _.arity1  = ...
+  _.arity2  = function (fn) { return function (a, b) { return fn.call (this, a, b) }}
+  _.arity3  = ...
+  _.arityFn = function (N) { return _['arity' + N] }
+```
+
+Super useful in cases when a callback does not expect some extra arguments passed to it. In the following example, `_.map` supplies 3 arguments to it's callback, but they're totally not expected:
+
+```javascript
+  var operation = function (x, destroyWorldIfSupplied) { .. }
+  
+  _.map (arr, operation.arity1) // arguments beyound `x` never pass through
+```
+
+###Y combinator (for anonymous recursive functions)
+
+For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
+
+```javascript
+  _.Y (function (self) {             // returns a function that counts to 5
+      return function (n) {
+          return n >= 5 ? n : self (n + 1) } })
+```
+
+###Hyper operator
+
+Converts regular things like map/zip to hyper versions, that traverse deep structures.
+
+Operator argument is the thing that walks down the tree and transforms it. But its predicate gets called only on the leaves of a tree (end values). Essentially, it abstracts you from structure, making it 'transparent' for any kind of previously defined one-dimensional datatype-abstract operators like `map2`/`filter2`/`zip2`/`reduce2`/`find2` etc.
+
+```javascript
+  _.mapMap = _.hyperOperator (_.unary,  _.map2)
+  _.zipZip = _.hyperOperator (_.binary, _.zip2)
+```
+
 ##stdlib.js
 
 A collection of most basic data processing algorithms missing / misimplemented in Underscore.js (and some less important but handy things).
@@ -101,9 +150,8 @@ There also exists `_.reject2` which improves `_.reject` the same way.
 Filters structures of arbitrary complexity:
 
 ```javascript
-/*  Returns { bar: [7, { }] }
- */
 _.filterFilter ({ foo: 'foo', bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals ('foo')))
+//       gives  {             bar: [7,        {            }] }
 ```
 
 ###_.zip2
@@ -121,6 +169,31 @@ _.values2 (['foo', 'bar'])         // ['foo', 'bar']
 _.values2 ({ f: 'foo', b: 'bar' }) // ['foo', 'bar']
 ```
 
+### _.extend derivatives
+
+Deep one, allowing to extend two levels deep (I'm sorry, but `_.extendExtend` which extends arbitrary deep structures is not there yet..):
+
+```javascript
+_.extend2 ({ foo:1,  bar: { qux:1 } },
+           { foo:42, bar: { baz:1, qux:1 } })
+// gives   { foo:42, bar: { baz:1, qux:1 }
+```
+
+Inverted one, for humanized narration where it makes sense (not here, but see `bindable.js` impl for example of such one):
+
+```javascript
+_.extendWith ({ foo:42, qux:1 },
+              { foo:1,         bar:1 })
+// gives      { foo:42, qux:1, bar: 1 }
+```
+
+Higher-order one, allows to use it as `_.map` operator, which cuts shit in typical arrays-of-objects crunching routines:
+
+```javascript
+  _.map ([{ bar:1         }, {        }], _.extendsWith ({ foo:42 }).arity1)
+// gives [{ bar:1, foo:42 }, { foo:42 }]
+```
+
 ###_.tryEval (try, catch, then)
 
 A functional try-catch.
@@ -136,53 +209,4 @@ var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
  */
 var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
                         function ()  { return 'catched' })
-```
-
-##function.js
-
-Various function-centric utility.
-
-###Arity
-
-``_.arity``
-``Function.arity``
-
-Limits function to given number of arguments.
-
-```javascript
-  _.arity   = function (N, fn) { ... }
-  _.arity0  = ...
-  _.arity1  = ...
-  _.arity2  = function (fn) { return function (a, b) { return fn.call (this, a, b) }}
-  _.arity3  = ...
-  _.arityFn = function (N) { return _['arity' + N] }
-```
-
-Super useful in cases when a callback does not expect some extra arguments passed to it. In the following example, `_.map` supplies 3 arguments to it's callback, but they're totally not expected:
-
-```javascript
-  var operation = function (x, destroyWorldIfSupplied) { .. }
-  
-  _.map (arr, operation.arity1) // arguments beyound `x` never pass through
-```
-
-###Y combinator (for anonymous recursive functions)
-
-For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
-
-```javascript
-  _.Y (function (self) {             // returns a function that counts to 5
-      return function (n) {
-          return n >= 5 ? n : self (n + 1) } })
-```
-
-###Hyper operator
-
-Converts regular things like map/zip to hyper versions, that traverse deep structures.
-
-Operator argument is the thing that walks down the tree and transforms it. But its predicate gets called only on the leaves of a tree (end values). Essentially, it abstracts you from structure, making it 'transparent' for any kind of previously defined one-dimensional datatype-abstract operators like map2/filter2/zip2/reduce2/etc.
-
-```javascript
-  _.mapMap = _.hyperOperator (_.unary,  _.map2)
-  _.zipZip = _.hyperOperator (_.binary, _.zip2)
 ```
