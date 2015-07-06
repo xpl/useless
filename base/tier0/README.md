@@ -79,7 +79,7 @@ Datatype-abstract version of filter with optional `_.map` semantics (by returnin
 
 Generic filter behavior over any container type:
 
-```
+```javascript
 var isFoo = _.equals ('foo')
 
 _.filter2 (     'foo',             isFoo) //      'foo'
@@ -89,7 +89,7 @@ _.filter2 ({ f: 'foo', b: 'bar' }, isFoo) // { f: 'foo }
 
 Map behavior, if predicate returns not boolean:
 
-```
+```javascript
 _.filter2 (['foo', 2, 3],
     function (x) { return _.isString (x) ? (x + 'bar') : false }) // ['foobar']
 ```
@@ -98,7 +98,7 @@ _.filter2 (['foo', 2, 3],
 
 Filters structures of arbitrary complexity:
 
-```
+```javascript
 /*  Returns { bar: [7, { }] }
  */
 _.filterFilter ({ foo: 'foo', bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals ('foo')))
@@ -112,7 +112,7 @@ _.filterFilter ({ foo: 'foo', bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals
 
 Datatype-abstract version of `_.values`
 
-```
+```javascript
 _.values2 (undefined)              // []
 _.values2 ('foo')                  // ['foo']
 _.values2 (['foo', 'bar'])         // ['foo', 'bar']
@@ -123,7 +123,7 @@ _.values2 ({ f: 'foo', b: 'bar' }) // ['foo', 'bar']
 
 A functional try-catch.
 
-```
+```javascript
 /*  Safely evaluates a function
  */
 var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
