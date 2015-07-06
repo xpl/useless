@@ -459,3 +459,38 @@ var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
 var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
                         function ()  { return 'catched' })
 ```
+
+# typeMatch.js
+
+[Read its source for the reference](https://github.com/xpl/useless/blob/master/base/tier0/typeMatch.js), as docs are pending. Provides advanced type / pattern matching utility, allowing to match against deep structures.
+
+# properties.js
+
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/properties.js). Implements property definition basics, which is utilized by high-level facilities like [$prototype](https://github.com/xpl/useless/wiki/$prototype) and [$component](https://github.com/xpl/useless/wiki/$component).
+
+# stringify.js
+
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js). Configurable object printer.
+
+# keywords.js
+
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/keywords.js). Metaprogramming/DSL utility, allows to tag JavaScript values with meta-information, readable by definition processing tools. All custom syntax in **Useless** is built on top of that facility.
+
+# platform.js
+
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/platform.js). Platform Abstraction Layer (bootstrap, global `Platform` object is defined later, in `OOP.js` file).
+
+# uncaught.js
+
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/platform.js). Uncaught exception handling (abstraction layer).
+
+# arguments.js
+
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/arguments.js). Argument count tracking module (provides hinting to several metaprogramming utilities, like property definitions utility).
+
+# assert.js
+
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/assert.js). Unit tests bootstrap.
+
+
+
