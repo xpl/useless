@@ -163,23 +163,15 @@ $(handle).drag ({
 	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
 ```
 
-### BroTools™
-
-![BroTools™ demo](https://pp.vk.me/c625526/v625526383/3557e/vRWBw0o4Nxw.jpg)
-
-An interactive code macroprocessor. Makes certain constants in source code editable. One tags a constant of interest with special keyword, e.g. `$tune (12.224)`. Calling **$tune** translates to a certain widget in the BroTools™ UI, associated with source code location of the call (read via Callstack API). Interacting with the widget leads to source code update, writing new value inside call expression. Currently under development, being in a bare proof-of-concept state.
-
-Depends on APIs provided by `useless/server/devtools` trait and browser versions of `escodegen` and `esprima` modules (can be found on github / NPM).
-
-### API.js
-
-XHR requests to communicate with `./server` part.
-
 ### UI.error.js
 
 A pop-up alert that shows errors / stack traces. See example app for demo & how-to. **Notice**: not works if running from local HTML file (because it reads back JavaScript sources via XHR requests).
 
 [![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://github.com/xpl/useless/blob/master/example/index.html)
+
+### API.js
+
+XHR requests to communicate with `./server` part.
 
 ### RemoteCollection
 
@@ -189,6 +181,14 @@ A pop-up alert that shows errors / stack traces. See example app for demo & how-
 - `Collection/FilterChain.js`
 
 Bits and pieces of real-time database synchronization engine, taken from some previous project. Needs documentation and examples. Rather unusable for now.
+
+### BroTools™
+
+![BroTools™ demo](https://pp.vk.me/c625526/v625526383/3557e/vRWBw0o4Nxw.jpg)
+
+An interactive code macroprocessor. Makes certain constants in source code editable. One tags a constant of interest with special keyword, e.g. `$tune (12.224)`. Calling **$tune** translates to a certain widget in the BroTools™ UI, associated with source code location of the call (read via Callstack API). Interacting with the widget leads to source code update, writing new value inside call expression. Currently under development, being in a bare proof-of-concept state.
+
+Depends on APIs provided by `useless/server/devtools` trait and browser versions of `escodegen` and `esprima` modules (can be found on github / NPM).
 
 # `./server` features
 
