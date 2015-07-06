@@ -170,28 +170,6 @@ A pop-up alert that shows errors / stack traces. See example app for demo & how-
 
 [![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://github.com/xpl/useless/blob/master/example/index.html)
 
-### Virtualized Views
-
-- `TileView.js`
-- `TableView.js`
-- `VirtualListViewRenderer.js`
-- `InfiniScrollContainer.js`
-
-For displaying vast amounts of data.
-
-### Generic widgets
-
-- `RangeControl.js`
-- `ContextMenu.js`
-- `Popover.js`
-- `FormDialog.js`
-
-Various common building blocks for web applications.
-
-### Nav.js
-
-Tabbed navigation host / URL persistence.
-
 ### RemoteCollection
 
 - `DataManager.js`
@@ -199,7 +177,7 @@ Tabbed navigation host / URL persistence.
 - `Collection/RemoteCollection.js`
 - `Collection/FilterChain.js`
 
-Bits and pieces of real-time database synchronization engine, taken from some previous project.
+Bits and pieces of real-time database synchronization engine, taken from some previous project. Needs documentation and examples. Rather unusable for now.
 
 # `./server` features
 
