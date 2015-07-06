@@ -160,6 +160,8 @@ $(handle).drag ({
 
 An interactive code macroprocessor. Makes certain constants in source code editable. One tags a constant of interest with special keyword, e.g. `$tune (12.224)`. Calling **$tune** translates to a certain widget in the BroTools™ UI, associated with source code location of the call (read via Callstack API). Interacting with the widget leads to source code update, writing new value inside call expression. Currently under development.
 
+Depends on APIs provided by `useless/server/devtools` trait and browser versions of `escodegen` and `esprima` modules (can be found on github / NPM).
+
 ### API.js
 
 XHR requests to communicate with `./server` part.
