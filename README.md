@@ -4,6 +4,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology. The rest of the code base should be cross-browser (at least it attemps to).
 
+Database-related utility depends on MongoDB (not included in `npm` dependency list, should install manually). Anyway, it not works well at the moment...
+
 [Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
 ```bash
