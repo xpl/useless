@@ -326,6 +326,21 @@ Higher-order one, allows to use it as `_.map` operator, which cuts shit in typic
 // gives [{ bar:1, foo:42 }, { foo:42 }]
 ```
 
+## _.nonempty (obj)
+
+Removes empty contents from any kinds of objects. If passed value is scalar and it `_.isEmpty`, `undefined` is returned. Should be said, **useless.js** redefines underscore's `_.isEmpty` to bring correct semantics to it (e.g. `false` and `0` should NOT be treated as empty values). In future, there should be an doc entry on that (for now, you may read `type.js` for complete info on subject).
+
+```javascript
+var obj = { blank: {}, empty: [], one: 1, none: undefined, nil: null, clear: '', zero: 0, no: false }
+var arr = [{}, [], 1, undefined, null, '', 0, false]
+
+_.nonempty (obj) // { one: 1, zero: 0, no: false })
+_.nonempty (arr) // [1, 0, false])
+
+_.nonempty (null) // undefined
+_.nonempty ('')   // undefined
+```
+
 ## _.tryEval (try, catch, then)
 
 A functional try-catch.
