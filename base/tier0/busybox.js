@@ -54,7 +54,7 @@ _.subtracts = _.minus = _.higherOrder (_.subtract)
 _.muls                = _.higherOrder (_.mul)
 _.equals              = _.higherOrder (_.equal)
 
-_.largest = function (a, b) {                   // FFFFUUUU: underscore already taken _.max for its dirty needs, pidory blyat.
+_.largest = function (a, b) {                   // FFFFUUUU: underscore already taken _.max for its dirty needs.
                 if (isNaN (a) && isNaN (b)) {
                     return NaN }
                 else if (isNaN (a)) {
