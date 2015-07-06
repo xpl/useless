@@ -13,7 +13,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js) (111 Kb)
 * Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
 
-## Dependencies and limitations
+### Dependencies and limitations
 
 Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology. The rest of the code base should be cross-browser (at least it attemps to).
 
