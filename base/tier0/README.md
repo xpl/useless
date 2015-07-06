@@ -102,6 +102,22 @@ var obj2 = { foo: function () { return 77 } }
 // gives  [42,   77]
 ```
 
+## asFreeFunction / asMethod
+
+``_.asFreeFunction`` ``Function.asFreeFunction``
+``_.asMethod`` ``Function.asMethod``
+
+Converts between calling conventions.
+
+```
+var foo = { name: 'foo', method: function () { log (this.name) } }
+
+var freeFunction = function (obj) { log (obj.name) }
+
+freeFunction.asMethod.call (foo) // translates this → first argument
+foo.method.asFreeFunction (foo)  // translates first argument → this
+```
+
 ## Y combinator (for anonymous recursive functions)
 
 For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
