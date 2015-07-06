@@ -2,10 +2,6 @@
 
 A cross-platform JavaScript toolbox for writing complex web applications. Currently in pre-release stage, missing some basic documentation and being under heavy development.
 
-Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology. The rest of the code base should be cross-browser (at least it attemps to).
-
-Database-related utility depends on MongoDB (not included in `npm` dependency list, should install manually). Anyway, it not works well at the moment...
-
 [Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
 ```bash
@@ -16,6 +12,12 @@ Database-related utility depends on MongoDB (not included in `npm` dependency li
 
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js) (111 Kb)
 * Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
+
+## Dependencies and limitations
+
+Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology. The rest of the code base should be cross-browser (at least it attemps to).
+
+Database-related utility depends on MongoDB (not included in `npm` dependency list, should install manually). Anyway, it does not work well at the moment...
 
 ### Directory structure
 
@@ -30,11 +32,14 @@ Database-related utility depends on MongoDB (not included in `npm` dependency li
 
 ### A notice to brave hackers
 
-Currently `./server` part is not working well, some code may not even compile (especially DB-related things), only the basic function work (request I/O). My current focus is to make the `./base` part work, as it is used in production of several projects I'm working on.
+It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain.
 
-Most of widgets defined in `./client` part are not work well too, as their code is hard out of sync with recent code base changes. `UI.error` (a thing that displays cool stack traces) works well, though (run example app for demo); as well as `jQueryPlus.js` utility (it is production-ready).
+Its main (unreleased for now) feature will be a flexible schema layer over MongoDB which allows to configure various data access widgets (table views, popover selections, form dialogs) directly from that schema, providing real-time synchronization with remote database. It also will act as declarative contract for API validation / security layer. Thats why there's so many code related to abstract data processing / type matching.
 
-Someday I will publish a complete demo app that utilizes all these features (like a To-Do list or something).
+It also features various widgets with rendering virtualization, allowing to render vast amounts of data with smooth scrolling and no pagination (TableView, TileView, ListView). They're already there, but not yet working as they depend on that schema mentioned before. Need to separate this thing from my elder private projects properly...
+Currently I'm focused to make basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
+
+Stay tuned and thanks for your attention!
 
 Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
 
