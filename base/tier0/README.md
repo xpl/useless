@@ -175,11 +175,11 @@ Deep one, allowing to extend two levels deep (I'm sorry, but `_.extendExtend` wh
 
 ```javascript
 _.extend2 ({ foo:1,  bar: { qux:1 } },
-           { foo:42, bar: { baz:1, qux:1 } })
+           { foo:42, bar: { baz:1 } })
 // gives   { foo:42, bar: { baz:1, qux:1 }
 ```
 
-Inverted one, for humanized narration where it makes sense (not here, but see `bindable.js` impl for example of such one):
+One with reversed argument order, for humanized narration where it makes sense (not here, but see `bindable.js` impl for example of such one):
 
 ```javascript
 _.extendWith ({ foo:42, qux:1 },
