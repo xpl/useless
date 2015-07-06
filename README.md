@@ -2,7 +2,7 @@
 
 A cross-platform JavaScript toolbox for writing complex web applications. Currently in pre-release stage, missing some basic documentation and being under heavy development.
 
-Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment.
+Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology.
 
 [Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
