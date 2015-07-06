@@ -109,7 +109,7 @@ var obj2 = { foo: function () { return 77 } }
 
 Converts between calling conventions.
 
-```
+```javascript
 var foo = {
     name:         'foo',
     method:        function ()    { log (this.name) } }
@@ -119,6 +119,16 @@ var freeFunction = function (obj) { log (obj.name)  }
 freeFunction.asMethod.call (foo)  // translates this → first argument
 foo.method.asFreeFunction  (foo)  // translates first argument → this
 ```
+
+## _.once
+
+```javascript
+ var f = _.once (function () { log ('foo') })
+ 
+ f () // prints 'foo'
+ f () // supresses subsequent calls
+```
+
 
 ## Y combinator (for anonymous recursive functions)
 
