@@ -93,9 +93,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 - Enables **$traits** to chain into method calls by overlapping method definitions
 - Enforces configuration contracts (**$requires**, **$defaults**)
 
-## Exception handling
+## Error handling
 
-![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)
+[![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)](https://github.com/xpl/useless/blob/master/base/reflection.js)
 
 - Cross-platform handling of uncaught exceptions
 - Uncaught exceptions pass through network API calls
@@ -109,9 +109,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ## Test framework
 
-[How-to & Examples](https://github.com/xpl/useless/wiki/Test-framework)
+[**How-to & Examples**](https://github.com/xpl/useless/wiki/Test-framework)
 
-![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)
+[![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)](https://github.com/xpl/useless/wiki/Test-framework)
 
 * Tests before code
 * Tests as documentantion
