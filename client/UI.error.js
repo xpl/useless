@@ -27,7 +27,7 @@ ErrorOverlay = $singleton (Component, {
 	closeTriggered: $triggerOnce (),
 
 	el: $memoized ($property (function () {
-		var el = $('<div class="modal-overlay" style="z-index:5000;">').append ([
+		var el = $('<div class="modal-overlay useless-bootstrap" style="z-index:5000;">').append ([
 			$('<div class="background">'),
 			$('<div class="modal loading error">').append ([
 				this.modalBody = $('<div class="modal-body">').append ('<h5>Now panic!</h5>'),

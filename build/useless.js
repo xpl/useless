@@ -658,7 +658,7 @@ function () {
     /*  DEFAULT FAILURE IMPL.
         ---------------------
         We do not subclass Error, because _.isTypeOf currently does not support
-        inhertitance (UPDATE: now does) and it would cause troubles in tests.js
+        inhertitance (UPDATE: now does) and it would cause troubles in test shell
         and logging facility. Thus a subclass is defined that way.
         ======================================================================== */
 
@@ -684,7 +684,7 @@ function () {
                             return _.reduce (values, function (prevEqual, x) {
                                 return prevEqual && _.isEqual (values[0], x) }, true) } })
 
-    /*  Publish asserts as $-things (will be replaced by tests.js onwards,
+    /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
         thus configurable=true)
         ======================================================================== */
 
