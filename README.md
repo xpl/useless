@@ -19,6 +19,14 @@ Client side tools that depend on reflection utility (e.g. test framework / stack
 
 Database-related utility depends on MongoDB (not included in `npm` dependency list, should install manually). Anyway, it does not work well at the moment...
 
+### Running example app
+
+```bash
+> node example.js
+```
+
+If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
+
 ### Directory structure
 
 * `./base` platform-independent part
@@ -42,14 +50,6 @@ Currently I'm focused to make basic bootstrap code work well, as this thing is n
 Stay tuned and thanks for your attention!
 
 Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
-
-### Running example app
-
-```bash
-> node example.js
-```
-
-If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
 
 # `./base` features
 
