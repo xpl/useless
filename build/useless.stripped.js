@@ -3436,7 +3436,7 @@ $prototype.macro(function (def, base) {
     var stack = CallStack.currentAsRawString;
     if (!def.$meta) {
         def.$meta = $static(_.cps.memoize(function (then) {
-            _.cps.find(CallStack.fromRawString(stack), function (entry, found) {
+            _.cps.find(CallStack.fromRawString(stack).reversed, function (entry, found) {
                 entry.sourceReady(function (text) {
                     var match = (text || '').match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/);
                     found(match && {
@@ -4084,7 +4084,8 @@ Testosterone = $singleton({
         var suites = _.map(cfg.suites || [], this.$(function (suite) {
             return this.testSuite(suite.name, suite.tests, cfg.context);
         }));
-        this.collectPrototypeTests(function (prototypeTests) {
+        var collectPrototypeTests = cfg.codebase === false ? _.cps.constant([]) : this.$(this.collectPrototypeTests);
+        collectPrototypeTests(this.$(function (prototypeTests) {
             var baseTests = cfg.codebase === false ? [] : this.collectTests();
             var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
             var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
@@ -4100,7 +4101,7 @@ Testosterone = $singleton({
                 then(!this.failed);
                 releaseLock();
             }));
-        });
+        }));
     }),
     defineAssertions: function (assertions) {
         _.each(assertions, function (fn, name) {
@@ -4129,7 +4130,7 @@ Testosterone = $singleton({
             def[0](this.$(function (meta) {
                 then(this.testSuite(meta.name, def[1]));
             }));
-        }), this.$(then));
+        }), then);
     },
     testSuite: function (name, tests, context) {
         return {

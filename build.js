@@ -141,6 +141,8 @@ function compile (cfg) {
 
     writeCompiled (name + '.js', cfg.path, compiledSrc) }
 
+console.log ('Running code base tests...')
+
 Testosterone.run ({                             
     codebase: true,
     verbose:  false,

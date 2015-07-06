@@ -26,9 +26,6 @@
 		_.withUncaughtExceptionHandler (function (e) {
 			UI.error (e, undefined, _.identity) })
 
-		function callMe (fn) {
-			fn () }
-
 		function erroneousFunction () {
 			_.map ([1,2,3], callMe) }
 
