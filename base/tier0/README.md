@@ -46,6 +46,10 @@ _.notZero = function (x)      { return x !== 0 }
 _.propertyOf = function (obj) { return function (prop) { return obj[prop] } } // inverted version of _.property
 ```
 
+# type.js
+
+[Read its source for the reference](https://github.com/xpl/useless/blob/master/base/tier0/type.js), as it's rather readable on its own. It provides basic type checking extensions / urgent fixes to `underscore.js`.
+
 # function.js
 
 Various function-centric utility.
