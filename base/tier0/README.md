@@ -341,6 +341,64 @@ _.nonempty (null) // undefined
 _.nonempty ('')   // undefined
 ```
 
+## _.cloneDeep (obj)
+
+Performs deep copying of an object (as underscore's `_.clone` is shallow, not copying more than 1 level deep).
+
+```javascript
+var obj  = { a: [{ b: { c: 'd' } }], b: {} }
+var copy = _.cloneDeep (obj) // returns unique copy all levels deep
+```
+## _.index (arr)
+
+Indexes an array, returning dictionary with keys mapped to array's values.
+
+```javascript
+_.index (['foo', 'bar']) // { foo: true, bar: true }
+```
+
+## _.diff (a, b)
+
+Given objects A and B, _.diff subtracts A's structure from B, and returns difference in terms of B. Works on structures of arbitrary complexity.
+
+```javascript
+_.diff ({ a: 1, b: 2, c: 3 },
+        { a: 1, b: 3,      d: 4 })
+//      {       b: 3,      d: 4 })
+```
+
+## _.undiff (A, B)
+
+Inverse of `_.diff` (returns similarities).
+
+```javascript
+_.undiff ({ a: 1, b: 2, c: 3 },
+          { a: 1, b: 3,      d: 4 })
+//        { a: 1 })
+```
+
+## _.quote / _.quoteWith
+
+Convenient utility for string wrapping.
+
+```javascript
+_.quote      ('qux')            // '"qux"'
+_.quote      ('qux', '[]'),     // '[qux]'
+_.quote      ('qux', '/'),      //  '/qux/'
+_.quote      ('qux', '{  }'),   // '{ qux }'
+
+_.quoteWith  ('[]', 'qux'),     // '[qux]'
+```
+
+## _.partition2
+
+`_.partition` done right:
+
+```javascript
+_.partition2 ([ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty)
+//      gives [['a', 'b', 'c'], [undefined, undefined], ['d']]
+```
+
 ## _.tryEval (try, catch, then)
 
 A functional try-catch.
