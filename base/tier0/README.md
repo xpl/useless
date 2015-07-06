@@ -73,7 +73,7 @@ Initial memo **should** be provided. A note on nonstandard argument order. Becau
 ```
 So from that perspective, argument order of the default implementation is not chosen correct, as it brings unnessesary interface distinction that leads to unforeseen problems (and bothers that old guy Occam).
 
-###_.filter2
+###_.filter2 / _.reject2
 
 Datatype-abstract version of filter with optional `_.map` semantics (by returning values other than `true` or `false` from predicate). So if you're looked for something like `_.filterMap` — it is here.
 
@@ -93,6 +93,8 @@ Map behavior, if predicate returns not boolean:
 _.filter2 (['foo', 2, 3],
     function (x) { return _.isString (x) ? (x + 'bar') : false }) // ['foobar']
 ```
+
+There also exists `_.reject2` which improves `_.reject` the same way.
 
 ###_.filterFilter
 
