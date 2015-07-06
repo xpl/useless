@@ -28,6 +28,14 @@ Limits function to given number of arguments.
   _.arityFn = function (N) { return _['arity' + N] }
 ```
 
+Super useful in cases when a callback does not expect some extra arguments passed to it. In the following example, `_.map` supplies 3 arguments to it's callback, but they're totally not expected:
+
+```javascript
+  var operation = function (x, destroyWorldIfSupplied) { .. }
+  
+  _.map (arr, operation.arity1) // arguments beyound `x` never pass through
+```
+
 ### tails
 
 ``_.tails``
@@ -66,14 +74,6 @@ var print  = function (x) { console.log (x) }
 var prints = _.higherOrder (print)
 
 _.times (3, prints ('foo')) // prints 'foo foo foo'
-```
-
-Super useful in cases when a callback does not expect some extra arguments passed to it. In the following example, `_.map` supplies 3 arguments to it's callback, but they're totally not expected:
-
-```javascript
-  var operation = function (x, destroyWorldIfSupplied) { .. }
-  
-  _.map (arr, operation.arity1) // arguments beyound `x` never pass through
 ```
 
 ### Y combinator (for anonymous recursive functions)
