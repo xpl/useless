@@ -120,13 +120,25 @@ freeFunction.asMethod.call (foo)  // translates this → first argument
 foo.method.asFreeFunction  (foo)  // translates first argument → this
 ```
 
-## _.once
+## _.once (fn)
 
 ```javascript
  var f = _.once (function () { log ('foo') })
  
  f () // prints 'foo'
  f () // supresses subsequent calls
+```
+
+## _.withTimeout (cfg, what, then)
+
+Runs a function under time limit. `then` is last argument (not in config) to conform to CPS interface (last argument is continuation). It is called if timeout is not expired. Otherwise, `cfg.expired` gets called. You may explicitly call `then` from `expired` callback if needed.
+
+```javascript
+    _.withTimeout ({
+        maxTime: 10,
+        expired: function (then) { /* calls if done () wont be called in 10 msec */ } },
+        function (done) { done () },
+        function () { /* this is called if timeout is not expired (OPTIONAL) */)
 ```
 
 
