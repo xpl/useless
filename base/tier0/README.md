@@ -226,7 +226,7 @@ For rare cases when one needs to bring self-reference to a pure functional expre
 
 Converts regular things like map/zip to hyper versions, that traverse deep structures.
 
-Fist argument is the thing that walks down the tree and transforms it. But its functor operand gets called only on the leaves of a tree (end values). Essentially, it abstracts you from structure, making it 'transparent' for any kind of previously defined one-dimensional datatype-abstract operators like `map2`/`filter2`/`zip2`/`reduce2`/`find2` etc.
+First argument of a resulting function is the thing that walks down the tree and transforms it. But its functor operand gets called only on the leaves of a tree (end values). Essentially, it abstracts you from structure, making it 'transparent' for any kind of previously defined one-dimensional datatype-abstract operators like `map2`/`filter2`/`zip2`/`reduce2`/`find2` etc.
 
 ```javascript
   _.mapMap = _.hyperOperator (_.unary,  _.map2)
