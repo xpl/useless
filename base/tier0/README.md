@@ -81,6 +81,15 @@ var prints = _.higherOrder (print)
 _.times (3, prints ('foo')) // prints 'foo foo foo'
 ```
 
+## _.eval (x)
+
+Coerces ``value | (fn → value)`` to ``value`` (useful for configuration parameters):
+
+```javascript
+_.eval (function () { return 42 }) // 42
+_.eval (42)                        // 42
+```
+
 ## Y combinator (for anonymous recursive functions)
 
 For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
