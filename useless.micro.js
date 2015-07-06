@@ -50,12 +50,21 @@ _.deferTest = function (name, test, subj) { subj () }
     $include ('./base/tier0/function')    // function-centric utilities
     $include ('./base/tier0/busybox')     // a vocabulary for functional expressions that process real stuff
     $include ('./base/tier0/type')        // type system extensions
+    $include ('./base/tier0/stringify')   // configurable object printer
     $include ('./base/tier0/stdlib')      // consider it as underscore 2.0
     $include ('./base/tier0/properties')  // properties 2.0
     $include ('./base/tier0/keywords')    // metaprogramming utility
 //  $include ('./base/tier0/typeMatch')   // advanced type system extensions
 
     $include ('./base/CPS')
+
+    $include ('./base/infix/extensionMethods')    // bootstrap
+    $include ('./base/infix/Function')            // extends Function
+    $include ('./base/infix/Array')               // extends Array
+    $include ('./base/infix/String')              // extends String
+
+    $include ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
+    $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
 
     $include ('./base/OOP')
 
@@ -70,14 +79,6 @@ _.deferTest = function (name, test, subj) { subj () }
         iPad:   _.platform ().device === 'iPad',
         iPhone: _.platform ().device === 'iPhone',
         iOS:    _.platform ().system === 'iOS' } })
-
-    $include ('./base/infix/extensionMethods')    // bootstrap
-    $include ('./base/infix/Function')            // extends Function
-    $include ('./base/infix/Array')               // extends Array
-    $include ('./base/infix/String')              // extends String
-
-    $include ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
-    $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
 
     $include ('./base/math')      // clumsy math utils
 //  $include ('./base/Parse')     // clumsy parsing utils

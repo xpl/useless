@@ -3486,7 +3486,7 @@ _.perfTest = function (arg, then) {
     });
 };
 _.extend(log = function () {
-    log.write.apply(this, arguments);
+    return log.write.apply(this, arguments);
 }, {
     Color: $prototype(),
     Config: $prototype(),

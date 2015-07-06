@@ -1439,6 +1439,12 @@ _.withTest (['type', 'empty-centric routines'], function () {
                                         (_.isEmptyObject (v) ||
                                         (v.length === 0)))) ? undefined : v } })} )
 
+
+
+
+
+
+
 /*  Tired of wrapping JSON.parse to try/catch? Here's solution.
     Also, it's two-way (can either parse, or stringify).
     ======================================================================== */
@@ -1551,11 +1557,6 @@ _.toFixed2 = function (x) {
 
 _.toFixed3 = function (x) {
     return _.toFixed (x, 3) }
-
-
-
-
-
 
 
 _.hasStdlib = true
@@ -5450,29 +5451,29 @@ _.perfTest = function (arg, then) {
 
 _.tests.log = function () {
 
-    log.write   ('Hello')       //  Use for plain output.
+    log         ('log (x)')         //  Basic API
 
-    log.green   ('Green')       //  Use for plain colored output.
-    log.blue    ('Blue')
-    log.orange  ('Orange')
-    log.red     ('Red')
+    log.green   ('log.green')       //  Use for plain colored output.
+    log.blue    ('log.blue')
+    log.orange  ('log.orange')
+    log.red     ('log.red')
 
-    log.success ('Success')     //  Use for quality production logging (logging that lasts).
-    log.ok      ('Success')
-    log.info    ('Info')        //  Printed location greatly helps to find log cause in code.
-    log.warn    ('Warning')                 
-    log.warning ('Warning')     //  For those who cant remember which one, both are valid.
-    log.error   ('Error')
-    log.failure ('Error')       //  Allows 'log' to be transparently passed as stub handler,
-                                //  to where {success:fn,failure:fn} config expected.
+    log.success ('log.success')     //  Use for quality production logging (logging that lasts).
+    log.ok      ('log.ok')
+    log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
+    log.i       ('log.i')
+    log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
+    log.warn    ('log.warn')
+    log.w       ('log.w')
+    log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
+                                    //  to where {success:fn,failure:fn} config expected.
+    log.error   ('log.error')
+    log.e       ('log.e')
 
-    $assert (log.write ('Identity'), 'Identity')    // Can be used for debugging of functional expressions
-                                                    // (as it returns it first argument, like in _.identity)
+    $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
+                                                        // (as it returns it first argument, like in _.identity)
 
-    log.write   ('Default', log.config ({ location: true }))    //  Config is good as any argument.
-    log.write   (log.config ({ location: true }), 'Default')    //  First, second or last, doesn't matter.
-
-    log.info    ('You can tune callstack location if its wrong', log.config ({ stackOffset: 2 }))
+    log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
 
     log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
 
@@ -5496,21 +5497,23 @@ _.tests.log = function () {
 
     log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') }
 
-
-
-
 _.extend (
-    log = function () {                         // For those who constantly mistypes, writing "log (output)" and oops no such API:
-        log.write.apply (this, arguments) }, {  // now there's one. At last.
+
+    /*  Basic API
+     */
+    log = function () {                         
+        return log.write.apply (this, arguments) }, {
 
 
     Color: $prototype (),
     Config: $prototype (),
 
+
     /*  Returns arguments clean of config (non-value) parameters
      */
     cleanArgs: function (args) {
         return _.reject (args, _.or (log.Color.isTypeOf, log.Config.isTypeOf)) },
+
 
     /*  Monadic operators to help read and modify those control structures 
         in argument lists (internal impl.)
