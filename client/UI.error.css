@@ -599,11 +599,11 @@
 }
 
 /* modal stuff */
-.useless-bootstrap .modal-overlay { position: fixed; left: 0; right: 0; top: 0; bottom: 0; display: -webkit-box; -webkit-box-orient: horizontal; -webkit-box-pack: center; -webkit-box-align: center; }
-.useless-bootstrap .modal-overlay > .background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }
-.useless-bootstrap .modal-overlay .modal { position: relative; margin: 0; left: 0; top: 0; }
+.useless-bootstrap.modal-overlay { position: fixed; left: 0; right: 0; top: 0; bottom: 0; display: -webkit-box; -webkit-box-orient: horizontal; -webkit-box-pack: center; -webkit-box-align: center; }
+.useless-bootstrap.modal-overlay > .background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }
+.useless-bootstrap.modal-overlay .modal { position: relative; margin: 0; left: 0; top: 0; }
 
-.useless-bootstrap .modal-overlay.topmost > .background { z-index: 200; }
+.useless-bootstrap.modal-overlay.topmost > .background { z-index: 200; }
 
 .useless-bootstrap .modal.loading h5 { text-align: center; margin-top: -0.4em; }
 .useless-bootstrap .modal.loading .progress, 
