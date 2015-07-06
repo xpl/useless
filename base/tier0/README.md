@@ -6,6 +6,46 @@ Most deep layer of Useless.js code base.
 !!! DOCUMENTATION UNDER CONSTRUCTION !!!
 ```
 
+# busybox.js
+
+Basic utility for writing data-crunching functional expressions.
+
+```javascript
+_.asString = function (what) { return what + '' }
+_.typeOf   = function (what) { return typeof what }
+
+_.count = function (what)       { return what.length } // underscore reserved _.length for its own purposes..
+_.array = _.tuple = function () { return _.asArray (arguments) }
+
+_.concat = function (a, b) { ... } // a.concat (b) or a + b (if strings)
+
+_.atIndex = function (n) { return function (arr) { return arr[n] } }
+
+_.applies = function (fn, this_, args) { return function () { return fn.apply (this_, args) } }
+
+_.prepends = function (what) { return function (to) { return what + to } }
+_.appends = function (what)  { return function (to) { return to + what } }
+
+_.join      = function (arr, s) { return arr.join (s) }
+_.joinWith  = _.flip2 (_.join)
+_.joinsWith = _.higherOrder (_.joinWith)
+
+_.sum      = function (a, b) { return (a || 0) + (b || 0) }
+_.subtract = function (a, b) { return (a || 0) - (b || 0) }
+_.mul      = function (a, b) { return (a || 0) * (b || 0) }
+_.equal    = function (a, b) { return a === b }
+
+_.sums      = _.plus  = _.higherOrder (_.sum)
+_.subtracts = _.minus = _.higherOrder (_.subtract)
+_.muls                = _.higherOrder (_.mul)
+_.equals              = _.higherOrder (_.equal)
+
+_.largest = function (a, b) { .. } // underscore already taken _.max for its dirty needs
+
+_.notZero = function (x)      { return x !== 0 }
+_.propertyOf = function (obj) { return function (prop) { return obj[prop] } } // inverted version of _.property
+```
+
 # function.js
 
 Various function-centric utility.
