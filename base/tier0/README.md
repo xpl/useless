@@ -10,7 +10,7 @@ Most deep layer of Useless.js code base.
 
 ##stdlib.js
 
-A collection of most basic data processing algorithms missing / misimplemented in Underscore.js
+A collection of most basic data processing algorithms missing / misimplemented in Underscore.js (and some less important but handy things).
 
 ###_.map2 (x, op)
 
@@ -73,9 +73,68 @@ Initial memo **should** be provided. A note on nonstandard argument order. Becau
 ```
 So from that perspective, argument order of the default implementation is not chosen correct, as it brings unnessesary interface distinction that leads to unforeseen problems (and bothers that old guy Occam).
 
+###_.filter2
+
+Datatype-abstract version of filter with optional `_.map` semantics (by returning values other than `true` from predicate). So if you're looked for something like `_.filterMap` — it is here.
+
+Generic filter behavior over any container type:
+
+```
+var isFoo = _.equals ('foo')
+
+_.filter2 (     'foo',             isFoo) //      'foo'
+_.filter2 ([    'foo',    'bar' ], isFoo) //     ['foo']
+_.filter2 ({ f: 'foo', b: 'bar' }, isFoo) // { f: 'foo }
+```
+
+Map behavior, if predicate returns not boolean:
+
+```
+_.filter2 (['foo', 2, 3],
+    function (x) { return _.isString (x) ? (x + 'bar') : false }) // ['foobar']
+```
+
+###_.filterFilter
+
+Filters structures of arbitrary complexity:
+
+```
+/*  Returns { bar: [7, { }] }
+ */
+_.filterFilter ({ foo: 'foo', bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals ('foo')))
+```
+
 ###_.zip2
 ###_.zipZip
 ###_.findFind
+
+###_.values2 (x)
+
+Datatype-abstract version of `_.values`
+
+```
+_.values2 (undefined)              // []
+_.values2 ('foo')                  // ['foo']
+_.values2 (['foo', 'bar'])         // ['foo', 'bar']
+_.values2 ({ f: 'foo', b: 'bar' }) // ['foo', 'bar']
+```
+
+###_.tryEval (try, catch, then)
+
+A functional try-catch.
+
+```
+/*  Safely evaluates a function
+ */
+var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
+                        function ()  { return 'catched' },
+                        function (x) { return x /* should be 'catched' */ })
+
+/*  'Then' callback could be omited
+ */
+var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
+                        function ()  { return 'catched' })
+```
 
 ##function.js
 
