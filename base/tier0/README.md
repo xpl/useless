@@ -8,11 +8,11 @@ Most deep layer of Useless.js code base.
 !!! DOCUMENTATION UNDER CONSTRUCTION !!!
 ```
 
-##function.js
+## function.js
 
 Various function-centric utility.
 
-###Arity
+### arity
 
 ``_.arity``
 ``Function.arity``
@@ -28,6 +28,46 @@ Limits function to given number of arguments.
   _.arityFn = function (N) { return _['arity' + N] }
 ```
 
+### tails
+
+``_.tails``
+``Function.tails``
+
+A version of `_.partial` that binds to **tail** of argument list. There also exists `tails2` and `tails3` that bind starting from second and from third arguments, respectively. Example:
+
+```javascript
+/*   It called tails2, because it binds to second argument and beyond
+ */
+printABC = function (a, b, c) { console.log (a, b, c) }
+printABC.tails2 (3, 4) (1) // prints 1, 3, 4
+```
+
+### flip
+
+``_.flip``
+``Function.flip``
+
+Flips argument order of a function. There also exist `flip2` and `flip3` which is a shortcut to _"arity2 + flip"_ and _"arity3 + flip"_, respectively.
+
+### Higher-order boolean logic
+
+```javascript
+_.or  (fnA, fnB) // returns function that computes fnA (args) || fnB (args)
+_.and (fnA, fnB) // returns function that computes fnA (args) && fnB (args)
+_.not (fn)       // returns function that computes !fn(args)
+```
+
+### _.higherOrder (fn)
+
+Generates higher order stuff from regular routine:
+
+```javascript
+var print  = function (x) { console.log (x) }
+var prints = _.higherOrder (print)
+
+_.times (3, prints ('foo')) // prints 'foo foo foo'
+```
+
 Super useful in cases when a callback does not expect some extra arguments passed to it. In the following example, `_.map` supplies 3 arguments to it's callback, but they're totally not expected:
 
 ```javascript
@@ -36,7 +76,7 @@ Super useful in cases when a callback does not expect some extra arguments passe
   _.map (arr, operation.arity1) // arguments beyound `x` never pass through
 ```
 
-###Y combinator (for anonymous recursive functions)
+### Y combinator (for anonymous recursive functions)
 
 For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
 
