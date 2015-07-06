@@ -110,12 +110,14 @@ var obj2 = { foo: function () { return 77 } }
 Converts between calling conventions.
 
 ```
-var foo = { name: 'foo', method: function () { log (this.name) } }
+var foo = {
+    name:         'foo',
+    method:        function ()    { log (this.name) } }
+    
+var freeFunction = function (obj) { log (obj.name)  }
 
-var freeFunction = function (obj) { log (obj.name) }
-
-freeFunction.asMethod.call (foo) // translates this → first argument
-foo.method.asFreeFunction (foo)  // translates first argument → this
+freeFunction.asMethod.call (foo)  // translates this → first argument
+foo.method.asFreeFunction  (foo)  // translates first argument → this
 ```
 
 ## Y combinator (for anonymous recursive functions)
