@@ -141,6 +141,32 @@ Runs a function under time limit. `then` is last argument (not in config) to con
         function () { /* this is called if timeout is not expired (OPTIONAL) */)
 ```
 
+## _.sequence / _.then
+
+Sequential composition operator. Basically, a reversed version of `_.compose`. Complex example (taken from unit test):
+
+```javascript
+var context = { foo: 'bar' }
+
+var makeCookies = function (from) { $assert (this === context)
+    return 'cookies from ' + from }
+
+var eatCookies = function (cookies) { $assert (this === context)
+    return 'nice ' + cookies }
+
+var lifeProcess = makeCookies.then ?                            // available in both notations
+                        makeCookies.then (eatCookies) :
+                        _.then (makeCookies, eatCookies)
+
+var anotherWay = _.sequence (makeCookies, eatCookies)
+var wayAnother = _.sequence ([makeCookies, eatCookies])
+
+$assert (lifeProcess.call (context, 'shit'), 'nice cookies from shit')
+$assert (anotherWay.call  (context, 'shit'), 'nice cookies from shit')
+$assert (wayAnother.call  (context, 'shit'), 'nice cookies from shit')
+
+$assert (_.sequence ([]).call (context, 'foo'), 'foo')
+```
 
 ## Y combinator (for anonymous recursive functions)
 
