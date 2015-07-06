@@ -75,7 +75,7 @@ So from that perspective, argument order of the default implementation is not ch
 
 ###_.filter2
 
-Datatype-abstract version of filter with optional `_.map` semantics (by returning values other than `true` from predicate). So if you're looked for something like `_.filterMap` — it is here.
+Datatype-abstract version of filter with optional `_.map` semantics (by returning values other than `true` or `false` from predicate). So if you're looked for something like `_.filterMap` — it is here.
 
 Generic filter behavior over any container type:
 
