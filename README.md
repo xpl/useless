@@ -218,7 +218,7 @@ Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined 
 
 - `api.js` URL mapping
 - `appcache.js` AppCache back-end
-- `auth.js` authorization management
+- `auth.js` authorization management (boilerplate, for demo purposes)
 - `deploy.js` self-deployment protocol (automatic builds)
 - `devtools.js` APIs for Git / source code access (developer mode)
 - `entity.js` journaled CRUD for collections (high level DB access)
