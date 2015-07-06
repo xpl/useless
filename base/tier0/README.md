@@ -90,6 +90,18 @@ _.eval (function () { return 42 }) // 42
 _.eval (42)                        // 42
 ```
 
+## _.method (name)
+
+It's like a `_.property`, but calls a method.
+
+```javascript
+var obj1 = { foo: function () { return 42 } }
+var obj2 = { foo: function () { return 77 } }
+
+   _.map ([obj1, obj2], _.method ('foo'))
+// gives  [42,   77]
+```
+
 ## Y combinator (for anonymous recursive functions)
 
 For rare cases when one needs to bring self-reference to a pure functional expression, avoiding extra variable use.
