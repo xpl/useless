@@ -54,10 +54,10 @@ _.withTest ('argcount tracking', function () {
     /*  Querying
      */
     numArgs: function (fn) {
-                return fn._ac === undefined ? fn.length : fn._ac },     // short name for speed (it's now invisible, so pofig)
+                return fn._ac === undefined ? fn.length : fn._ac },     // short name for speed
 
     restArg: function (fn) {
-                return fn._ra || false },                               // short name for speed (it's now invisible, so pofig)
+                return fn._ra || false },                               // short name for speed
 
     noArgs: function (fn) {
                 return (_.numArgs (fn) === 0) && !fn._ra },
