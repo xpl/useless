@@ -124,6 +124,8 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 [Reference / examples](https://github.com/xpl/useless/blob/master/base/log.js)
 
+[![log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)](https://github.com/xpl/useless/blob/master/base/log.js)
+
 + Platform-independent
 + Color output
 + Shows code location
