@@ -138,7 +138,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 - Platform detection/abstraction layer
 - Performance measurement
-- DSL for writing regexps in JS + named subexpressions
+- [DSL for writing regexps in JS + named subexpressions](https://github.com/xpl/useless/blob/master/base/Rx.js)
 - Unicode regexp hack (3rd party)
 - Base64 encoding/decoding (3rd party)
 
