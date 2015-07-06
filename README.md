@@ -166,7 +166,7 @@ XHR requests to communicate with `./server` part.
 
 A pop-up alert that shows errors / stack traces. See example app for demo & how-to. **Notice**: not works if running from local HTML file (because it reads back JavaScript sources via XHR requests).
 
-![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)
+[![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://github.com/xpl/useless/blob/master/example.js)
 
 ### Virtualized Views
 
