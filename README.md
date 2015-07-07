@@ -99,14 +99,14 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 
 [Reference](https://github.com/xpl/useless/blob/master/base/tier0/README.md#stdlibjs)
 
-* Datatype-abstract (works over arrays/objects/scalars):
+Datatype-abstract (works over arrays/objects/scalars):
 
 ```javascript
   > _.map2 ({ one: '1', two: '2' }, _.prepends ('foo_').then (_.appends ('_bar')))
   < { one: "foo_1_bar", two: "foo_2_bar" }
 ```
 
-* Structure-abstract ('sees through' structure of arbitrary complexity):
+Structure-abstract ('sees through' structure of arbitrary complexity):
 
 ```javascript
    > _.mapMap ({ foo: { bar: 1, baz: [2, 3] } }, _.plus (10))
@@ -115,7 +115,7 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 
 ## Asynchronous primitives
 
-* Continuation-passing style (`_.cps.xxx`) versions of **underscore.js** primitives:
+Continuation-passing style (`_.cps.xxx`) versions of **underscore.js** primitives:
 
 ```javascript
    function searchRemoteFilesForText (text, then) {
@@ -132,13 +132,13 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
    cachedReadFile ('/useless.js', log) // prints contents of /useless.js
 ```
 
-* Sequential composition of asynchronous operations:
+Sequential composition of asynchronous operations:
 
 ```
   _.cps.sequence (doRoutine, waitUntilAssertionsComplete, done) ()
 ```
 
-* Task pooling (parallel map/reduce with limit on maximum concurrently running tasks):
+Task pooling (parallel map/reduce with limit on maximum concurrently running tasks):
 
 ```javascript
   _.mapReduce (array, {
@@ -147,7 +147,7 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
                   complete: function (memo) { ... })
 ```
 
-* **$interlocked** (puts a function under concurrency lock)
+**$interlocked** (puts a function under concurrency lock)
 
 ```javascript
   readFilesSequentially = $interlocked (function (file, done, releaseLock) {
@@ -172,7 +172,7 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 
 ## Math utility for front-end works
 
-* Working with ranges:
+Working with ranges:
 
 ```javascript
     _.lerp  (t, min, max)  // linear interpolation between min and max
@@ -183,7 +183,7 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
     _.rescale (t, [fromMin, fromMax], [toMin, toMax], { clamp: true })
 ```
 
-* Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
+Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 
 ```javascript
    var offsetVec   = this.anchor.sub (this.center).normal.perp.scale (
