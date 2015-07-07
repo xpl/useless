@@ -206,10 +206,22 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
 
 Raw API:
 ```javascript
-var mouseMove = _.trigger ()
+var mouseMoved = _.trigger ()
 
-mouseMove (function (x, y) { }) // bind
+/*  Binding
+ */
+mouseMoved (function (x, y) { }) // bind
+mouseMoved (someCallback)        // bind another
+
+/*  Calling
+ */
 mouseMove (12, 33)              // call
+
+/*  Unbinding
+ */
+mouseMove.off (callback)        // unbinds specific listener
+mouseMove.off ()                // unbinds everything
+_.off (callback)                // unbinds callback from everything it's bound to
 ```
 
 Using [$component](https://github.com/xpl/useless/wiki/$component):
