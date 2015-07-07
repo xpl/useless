@@ -161,6 +161,51 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
   readFilesSequentially ('file2.txt', log) // waits until file1.txt is read
 ```
 
+## Multicast model for method calls with simple functional I/O
+
+[Reference](https://github.com/xpl/useless/blob/master/base/dynamic/stream.js)
+
+* `_.trigger`, `_.triggerOnce` / one-to-many broadcast
+* `_.barrier` / synchronization primitive
+* `_.observable` / state change notifications
+
+Raw API:
+```javascript
+var mouseMove = _.trigger ()
+
+mouseMove (function (x, y) { }) // bind
+mouseMove (12, 33)              // call
+```
+
+Using components:
+```javascript
+Compo = $component ({
+
+    layoutChanged: $trigger (),             // calls on layout change
+    layoutReady:   $barrier (),             // it's like document.ready
+    value:         $observableProperty (),  // for property change notifications
+    
+    init: function () {
+        doSomeUselessAsyncJob (function () {
+           this.layoutReady () }) }, // signals that layout is ready
+
+    doLayout: function () {
+        this.layoutChanged () } })   // signals that layout has changed
+```
+```javascript
+compo = new Compo ()
+
+compo.layoutReady (function () {
+    /* Postpones until DOM is ready.
+       If already, calls immediately (like document.ready) */ })
+
+compo.valueChange (function (x) {
+   log (x) })
+
+compo.value = 10 // simply assign a value to notify listeners
+compo.value = 10 // won't trigger, as not changed
+```
+
 ## Bindable methods for ad-hoc code injection
 
 Raw API:
@@ -225,21 +270,6 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 ```javascript
    domElement.css (BBox.fromPoints (pts).grow (20).offset (position.inverse).css)
 ```
-
-## Multicast model for method calls with simple functional I/O
-
-[Reference](https://github.com/xpl/useless/blob/master/base/dynamic/stream.js)
-
-```javascript
-var mouseMove = _.trigger ()
-
-mouseMove (function (x, y) { }) // bind
-mouseMove (12, 33)              // call
-```
-
-* `_.trigger`, `_.triggerOnce` / one-to-many broadcast
-* `_.barrier` / synchronization primitive
-* `_.observable` / state change notifications
 
 ## Error handling
 
