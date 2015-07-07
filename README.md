@@ -86,8 +86,9 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 [Reference](https://github.com/xpl/useless/blob/master/base/tier0/README.md)
 
 * Extends underscore.js `_` namespace
-* Functional primitives busybox (predicates, operators and stuff)
-* Higher order toolbox (functions that warp functions)
+* Functional primitives busybox (predicates, operators / higher order stuff)
+* Binding to tail of argument list / flipping argument list
+* Limiting number of arguments (arity)
 * Infix interface (as Array/String/Function extensions)
 
 ```javascript
@@ -156,7 +157,7 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
                                          $.get (file, done.then (releaseLock), 'text') })
 
   readFilesSequentially ('file1.txt', log)
-  readFilesSequentially ('file2.txt', log) // waits until file1.txt read
+  readFilesSequentially ('file2.txt', log) // waits until file1.txt is read
 ```
 
 ## Advanced type detection / pattern matching
