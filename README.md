@@ -125,7 +125,7 @@ Continuation-passing style (`_.cps.xxx`) versions of **underscore.js** primitive
    function searchRemoteFilesForText (text, then) {
       _.cps.find (['file1.txt', 'file2.txt', 'file3.txt'], function (name, return_) {
           $.get (name, function (fileText) {
-              return_ (fileText.indexOf (then) >= 0) }) }) }
+              return_ (fileText.indexOf (then) >= 0) }) }, then) }
 ```
 ```javascript
    log (_.map ([1,2,3],     _.constant ('stub'))      // prints ['stub','stub','stub']
