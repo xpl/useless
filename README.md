@@ -174,7 +174,7 @@ _.intercept (Player.prototype, 'move', function (x, y, originalMethod) {
 Using components:
 ```javascript
 Button = $component ({
-    layout: $bindable (function () { log ('layout') }) })
+    layout: $bindable (function () { /* ... */ }) })
     
 button = new Button ()
 button.layout.onceBefore (function () { log ("I'm called before next layout()") })
