@@ -1,4 +1,4 @@
-/*  A generic functional primitives for dynamic code binding
+/*  Generic functional primitives for dynamic code binding
     ======================================================================== */
 
 _.tests.stream = {
