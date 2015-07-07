@@ -69,6 +69,7 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 - [**$traits**](https://github.com/xpl/useless/wiki/$trait) / a.k.a. mixins / combinatoric-style alternative to inheritance
 - [**$aspect**](https://github.com/xpl/useless/wiki/$aspect) / Aspect Oriented Programming / declarative method binding
 - **$singleton**
+- Reflection (can read prototype name and file, via Prototype.**$meta**)
 
 ```javascript
 Vec2 = $prototype ({
