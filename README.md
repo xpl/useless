@@ -53,27 +53,6 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 
 # `./base` features
 
-## Generic algorithms
-
-[Reference (incomplete)](./base/tier0/README.md)
-
-* Extends underscore.js `_` namespace
-* Functional primitives busybox (predicates, operators and stuff)
-* Higher order toolbox (functions that warp functions)
-* Infix interface for underscore's stuff (as Array/String/Function extensions)
-* Abstract `map/zip/filter/reduce` over arrays/objects/scalars
-* Deep `map/zip/filter/reduce` over arbitrary structures
-* Deep version of underscore's stuff (`_.clone`, `_.extend`, etc)
-* Advanced type detection / pattern matching
-* Continuation-passing style (CPS) versions of standard algorithms
-* Concurrency primitives (task pooling, interlocked methods)
-* Basic math (`lerp` / `clamp`, color space conversion, etc)
-* Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections)
-* Multicast model for method calls with simple functional I/O
-    - `_.trigger`, `_.triggerOnce` / one-to-many broadcast
-    - `_.barrier` / synchronization primitive
-    - `_.observable` / state change notifications
-
 ## Macro processor for prototype definitions
 
 [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
@@ -101,6 +80,27 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 - Holds parent-child relationship / handles automatic deinitialization
 - Enables **$traits** to chain into method calls by overlapping method definitions
 - Enforces configuration contracts (**$requires**, **$defaults**)
+
+## Generic algorithms
+
+[Reference (incomplete)](./base/tier0/README.md)
+
+* Extends underscore.js `_` namespace
+* Functional primitives busybox (predicates, operators and stuff)
+* Higher order toolbox (functions that warp functions)
+* Infix interface for underscore's stuff (as Array/String/Function extensions)
+* Abstract `map/zip/filter/reduce` over arrays/objects/scalars
+* Deep `map/zip/filter/reduce` over arbitrary structures
+* Deep version of underscore's stuff (`_.clone`, `_.extend`, etc)
+* Advanced type detection / pattern matching
+* Continuation-passing style (CPS) versions of standard algorithms
+* Concurrency primitives (task pooling, interlocked methods)
+* Basic math (`lerp` / `clamp`, color space conversion, etc)
+* Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections)
+* Multicast model for method calls with simple functional I/O
+    - `_.trigger`, `_.triggerOnce` / one-to-many broadcast
+    - `_.barrier` / synchronization primitive
+    - `_.observable` / state change notifications
 
 ## Error handling
 
