@@ -81,26 +81,133 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 - Enables **$traits** to chain into method calls by overlapping method definitions
 - Enforces configuration contracts (**$requires**, **$defaults**)
 
-## Generic algorithms
+## Functional primitives
 
-[Reference (incomplete)](./base/tier0/README.md)
+[Reference](https://github.com/xpl/useless/blob/master/base/tier0/README.md)
 
 * Extends underscore.js `_` namespace
 * Functional primitives busybox (predicates, operators and stuff)
 * Higher order toolbox (functions that warp functions)
-* Infix interface for underscore's stuff (as Array/String/Function extensions)
-* Abstract `map/zip/filter/reduce` over arrays/objects/scalars
-* Deep `map/zip/filter/reduce` over arbitrary structures
-* Deep version of underscore's stuff (`_.clone`, `_.extend`, etc)
-* Advanced type detection / pattern matching
-* Continuation-passing style (CPS) versions of standard algorithms
-* Concurrency primitives (task pooling, interlocked methods)
-* Basic math (`lerp` / `clamp`, color space conversion, etc)
-* Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections)
-* Multicast model for method calls with simple functional I/O
-    - `_.trigger`, `_.triggerOnce` / one-to-many broadcast
-    - `_.barrier` / synchronization primitive
-    - `_.observable` / state change notifications
+* Infix interface (as Array/String/Function extensions)
+
+```javascript
+  > [[1,2], [3,4]].zip (_.seq (_.sum, _.appends ('_foo'), _.quotesWith ('()')))
+  < ["(4_foo)", "(6_foo)"]
+```
+
+## Abstract `map/zip/filter/reduce/find`
+
+[Reference](https://github.com/xpl/useless/blob/master/base/tier0/README.md#stdlibjs)
+
+* Datatype-abstract (works over arrays/objects/scalars):
+
+```javascript
+  > _.map2 ({ one: '1', two: '2' }, _.prepends ('foo_').then (_.appends ('_bar')))
+  < { one: "foo_1_bar", two: "foo_2_bar" }
+```
+
+* Structure-abstract ('sees through' structure of arbitrary complexity):
+
+```javascript
+   > _.mapMap ({ foo: { bar: 1, baz: [2, 3] } }, _.plus (10))
+   < { foo: { bar: 10, baz: [12, 13] } }
+```
+
+## Asynchronous primitives
+
+* Continuation-passing style (`_.cps.xxx`) versions of **underscore.js** primitives:
+
+```javascript
+   function searchRemoteFilesForText (text, then) {
+      _.cps.find (['file1.txt', 'file2.txt', 'file3.txt'], function (name, return_) {
+          $.get (name, function (fileText) {
+              return_ (fileText.indexOf (then) >= 0) }) }) }
+```
+```javascript
+   log (_.map ([1,2,3],     _.constant ('stub'))      // prints ['stub','stub','stub']
+    _.cps.map ([1,2,3], _.cps.constant ('stub'), log) // prints ['stub','stub','stub']
+```
+```javascript
+   cachedReadFile = _.cps.memoize (_.tails ($.get, 'text'))
+   cachedReadFile ('/useless.js', log) // prints contents of /useless.js
+```
+
+* Sequential composition of asynchronous operations:
+
+```
+  _.cps.sequence (doRoutine, waitUntilAssertionsComplete, done) ()
+```
+
+* Task pooling (parallel map/reduce with limit on maximum concurrently running tasks):
+
+```javascript
+  _.mapReduce (array, {
+                  maxConcurrency: 10,
+                  next: function (item, index, next, skip, memo) { ... },
+                  complete: function (memo) { ... })
+```
+
+* **$interlocked** (puts a function under concurrency lock)
+
+```javascript
+  readFilesSequentially = $interlocked (function (file, done, releaseLock) {
+                                         $.get (file, done.then (releaseLock), 'text') })
+
+  readFilesSequentially ('file1.txt', log)
+  readFilesSequentially ('file2.txt', log) // waits until file1.txt read
+```
+
+## Advanced type detection / pattern matching
+
+```javascript
+  > _.decideType ( { foo: 1, bar: { baz: [2,3] } })
+  < { foo: 'number', bar: { baz: ['number'] } }
+```
+
+```javascript
+  > _.omitTypeMismatches ({ foo: 'number', bar: { baz: ['number'] } },
+                          { foo: '1',      bar: { baz: [2,3] } })
+  < { bar: { baz: [2,3 } }
+```
+
+## Math utility for front-end works
+
+* Working with ranges:
+
+```javascript
+    _.lerp  (t, min, max)  // linear interpolation between min and max
+    _.clamp (n, min, max)  // clips if out of range
+    
+    /*  Projects from one range to another (super useful in widgets implementation)
+     */
+    _.rescale (t, [fromMin, fromMax], [toMin, toMax], { clamp: true })
+```
+
+* Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
+
+```javascript
+   var offsetVec   = this.anchor.sub (this.center).normal.perp.scale (
+                       Bezier.cubic1D (Vec2.dot (direction.normal, upVector), 0, 1.22, 0, 1.9))
+```
+```javascript
+   var where = this.bodyBBox.nearestPointTo (this.anchor, this.borderRadius)
+```
+```javascript
+   domElement.css (BBox.fromPoints (pts).grow (20).offset (position.inverse).css)
+```
+
+## Multicast model for method calls with simple functional I/O
+
+```javascript
+var mouseMove = _.trigger ()
+
+mouseMove (function (x, y) { }) // bind
+mouseMove (12, 33)              // call
+```
+
+* `_.trigger`, `_.triggerOnce` / one-to-many broadcast
+* `_.barrier` / synchronization primitive
+* `_.observable` / state change notifications
 
 ## Error handling
 
