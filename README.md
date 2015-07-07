@@ -161,6 +161,15 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
   readFilesSequentially ('file2.txt', log) // waits until file1.txt is read
 ```
 
+## Bindable methods for ad-hoc code injection
+
+```
+_.onAfter   (Player.prototype, 'move', function (x, y) { /* this will execute after move calls */ })
+_.onBefore  (Player.prototype, 'move', function (x, y) { /* this will execute before */ })
+_.intercept (Player.prototype, 'move', function (x, y, originalMethod) {
+    originalMethod.call (this, x, y) })
+```
+
 ## Advanced type detection / pattern matching
 
 [Reference](https://github.com/xpl/useless/blob/master/base/tier0/typeMatch.js)
