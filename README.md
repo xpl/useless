@@ -70,6 +70,41 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 - [**$aspect**](https://github.com/xpl/useless/wiki/$aspect) / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
+Short demo (see [how-to](https://github.com/xpl/useless/wiki/$prototype) for full feature coverage):
+```javascript
+Vec2 = $prototype ({
+
+    /*  Static property: Vec2.zero
+     */
+    zero: $static ($property (function () { return new Vec2 (0, 0) })),
+
+    /*  Static method: Vec2.dot (a, b)
+     */
+    dot: $static (function (a, b) { return a.x * b.x + a.y * b.y }),
+
+    /*  Tag groups for convenience
+     */
+    $static: {
+        unit: $property (function () { return new Vec2 (1, 1) }),
+        one:  $alias ('unit') }, // member aliases
+
+    /*  Constructor
+     */
+    constructor: function (x, y) { this.x = x; this.y = y },
+
+    /*  Instance property (.length)
+     */
+    length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
+
+    /*  Instance method
+     */
+    add: function (other) { return new Vec2 (this.x + other.x, this.y + other.y) } })
+
+/*  Inheritance (relies on native JavaScript prototype semantics)
+ */
+BetterVec2 = $extends (Vec2, { ... })
+```
+
 ## Component model
 
 [How-to & Examples](https://github.com/xpl/useless/wiki/$component)
