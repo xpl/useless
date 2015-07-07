@@ -90,6 +90,7 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 * Binding to tail of argument list / flipping argument list
 * Limiting number of arguments (arity)
 * Infix interface (as Array/String/Function extensions)
+* Handy string-processing operators
 
 ```javascript
   > [[1,2], [3,4]].zip (_.seq (_.sum, _.appends ('_foo'), _.quotesWith ('()')))
