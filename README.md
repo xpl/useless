@@ -171,7 +171,7 @@ _.intercept (Player.prototype, 'move', function (x, y, originalMethod) {
     originalMethod.call (this, x, y) })
 ```
 
-Using components:
+Using components + 'once' semantics:
 ```javascript
 Button = $component ({
     layout: $bindable (function () { /* ... */ }) })
