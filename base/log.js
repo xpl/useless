@@ -1,3 +1,5 @@
+_.hasLog = true
+
 _.tests.log = function () {
 
     log         ('log (x)')         //  Basic API

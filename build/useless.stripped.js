@@ -2245,9 +2245,13 @@ _.extend(_, {
             }
         }).apply(this, arguments);
     }),
-    off: function (fn) {
+    off: function (fn, what) {
         if (fn.queue) {
-            fn.queue.off();
+            if (arguments.length === 1) {
+                fn.queue.off();
+            } else {
+                fn.queue.off(what);
+            }
         }
         if (fn.queuedBy) {
             _.each(fn.queuedBy, function (queue) {
@@ -2268,8 +2272,10 @@ _.extend(_, {
                         }, this);
                         this.removeAll();
                     } else {
-                        fn.queuedBy.remove(this);
-                        this.remove(fn);
+                        if (fn.queuedBy) {
+                            fn.queuedBy.remove(this);
+                            this.remove(fn);
+                        }
                     }
                 }
             }
@@ -3494,6 +3500,7 @@ _.perfTest = function (arg, then) {
         then(timings);
     });
 };
+_.hasLog = true;
 _.extend(log = function () {
     return log.write.apply(this, arguments);
 }, {

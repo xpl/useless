@@ -3610,18 +3610,17 @@ _.tests.stream = {
 
         /*  Test unbinding
          */
-        $assertCalls (0, function (mkay) {
+        $assertCalls (1, function (shouldCall) {
 
-            var fn1 = function () { mkay () },
-                fn2 = function () { mkay () }
+            var whenSomething = _.trigger ()
 
-            obj.whenSomething (fn1)
-            obj.whenSomething (fn2)
-            obj.whenSomething.off (fn1/*, fn2*/)            // that's how you unbind specific listeners
-            //obj.whenSomething.off ([fn1, fn2])            // array argument is supported too
-            obj.whenSomething.off (fn2)
+            var shouldBeCalled    = function () { shouldCall () },
+                shouldNotBeCalled = function () { $fail }
 
-            obj.whenSomething () })
+            whenSomething (shouldBeCalled)
+            whenSomething (shouldNotBeCalled)
+            whenSomething.off (shouldNotBeCalled) // that's how you unbind specific listeners
+            whenSomething () })
 
 
         /*  Test 'barrier' semantics + test argument passing
@@ -3781,13 +3780,13 @@ _.extend (_, {
                     write: function (writes) {
                         return writes.partial (false) } }).apply (this, arguments) }),
 
-    off: function (fn) {
+    off: function (fn, what) {
         if (fn.queue) {
-            fn.queue.off () }
+            if (arguments.length === 1) { fn.queue.off ()     }
+            else                        { fn.queue.off (what) } }
         if (fn.queuedBy) {
-            _.each (fn.queuedBy, function (queue) {
-                queue.remove (fn) })
-            delete fn.queuedBy } },
+            _.each (fn.queuedBy, function (queue) { queue.remove (fn) })
+             delete fn.queuedBy } },
 
     stream: function (cfg_) {
 
@@ -3799,8 +3798,9 @@ _.extend (_, {
                                                             fn.queuedBy.remove (this) }, this)
                                                         this.removeAll () }
                                                     else {
-                                                        fn.queuedBy.remove (this)
-                                                        this.remove (fn) } } } })
+                                                        if (fn.queuedBy) {
+                                                            fn.queuedBy.remove (this)
+                                                            this.remove (fn) } } } } })
 
                 var self = undefined
 
@@ -5448,6 +5448,8 @@ _.perfTest = function (arg, then) {
 
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.hasLog = true
 
 _.tests.log = function () {
 
