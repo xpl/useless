@@ -164,14 +164,14 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
 [Reference](https://github.com/xpl/useless/blob/master/base/tier0/typeMatch.js)
 
 ```javascript
-  > _.decideType ( { foo: 1, bar: { baz: [2,3] } })
-  < { foo: 'number', bar: { baz: ['number'] } }
+  _.decideType ( { foo: 1,        bar: { baz: [2, 3]     } })
+  //      gives  { foo: 'number', bar: { baz: ['number'] } }
 ```
 
 ```javascript
-  > _.omitTypeMismatches ({ foo: 'number', bar: { baz: ['number'] } },
-                          { foo: '1',      bar: { baz: [2,3] } })
-  < { bar: { baz: [2,3 } }
+  _.omitTypeMismatches ({ foo: 'number', bar: { baz: ['number'] } }, // type contract
+                        { foo: '1',      bar: { baz: [2,3] } })      // value we're matching against
+  //      gives         {                bar: { baz: [2,3] } }
 ```
 
 ## Math utility for front-end works
