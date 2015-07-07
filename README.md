@@ -115,6 +115,8 @@ Structure-abstract ('sees through' structure of arbitrary complexity):
 
 ## Asynchronous primitives
 
+[Reference](https://github.com/xpl/useless/blob/master/base/CPS.js)
+
 Continuation-passing style (`_.cps.xxx`) versions of **underscore.js** primitives:
 
 ```javascript
@@ -159,6 +161,8 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
 
 ## Advanced type detection / pattern matching
 
+[Reference](https://github.com/xpl/useless/blob/master/base/tier0/typeMatch.js)
+
 ```javascript
   > _.decideType ( { foo: 1, bar: { baz: [2,3] } })
   < { foo: 'number', bar: { baz: ['number'] } }
@@ -171,6 +175,8 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
 ```
 
 ## Math utility for front-end works
+
+[Reference](https://github.com/xpl/useless/blob/master/base/math.js)
 
 Working with ranges:
 
@@ -197,6 +203,8 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 ```
 
 ## Multicast model for method calls with simple functional I/O
+
+[Reference](https://github.com/xpl/useless/blob/master/base/dynamic/stream.js)
 
 ```javascript
 var mouseMove = _.trigger ()
