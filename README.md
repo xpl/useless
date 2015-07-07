@@ -70,7 +70,6 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 - [**$aspect**](https://github.com/xpl/useless/wiki/$aspect) / Aspect Oriented Programming / declarative method binding
 - **$singleton**
 
-Short demo (see [how-to](https://github.com/xpl/useless/wiki/$prototype) for full feature coverage):
 ```javascript
 Vec2 = $prototype ({
 
@@ -102,7 +101,7 @@ Vec2 = $prototype ({
 
 /*  Inheritance (relies on native JavaScript prototype semantics)
  */
-BetterVec2 = $extends (Vec2, { ... })
+BetterVec2 = $extends (Vec2, { /* ... */ })
 ```
 
 ## Component model
