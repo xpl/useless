@@ -177,7 +177,7 @@ mouseMove (function (x, y) { }) // bind
 mouseMove (12, 33)              // call
 ```
 
-Using components:
+Using [$component](https://github.com/xpl/useless/wiki/$component):
 ```javascript
 Compo = $component ({
 
@@ -219,7 +219,7 @@ _.intercept (Player.prototype, 'move', function (x, y, originalMethod) {
     originalMethod.call (this, x, y) })
 ```
 
-Using components + 'once' semantics:
+Using [$component](https://github.com/xpl/useless/wiki/$component) + 'once' semantics:
 ```javascript
 Button = $component ({
     layout: $bindable (function () { /* ... */ }) })
@@ -228,6 +228,14 @@ button = new Button ()
 button.layout.onceBefore (function () { log ("I'm called before next layout()") })
 button.layout ()
 button.layout () // won't print anything
+```
+
+Using [$aspect](https://github.com/xpl/useless/wiki/$aspect):
+```javascript
+AddsLoggingToButton = $aspect (Button, {
+
+    beforeCreate: function () { log.green ('Button is about to be created') },
+    afterDestroy: function () { log.red   ('Button is now destroyed') } })
 ```
 
 ## Advanced type detection / pattern matching
