@@ -215,13 +215,13 @@ mouseMoved (someCallback)        // bind another
 
 /*  Calling
  */
-mouseMove (12, 33)              // call
+mouseMove (12, 33)               // call
 
 /*  Unbinding
  */
-mouseMove.off (callback)        // unbinds specific listener
-mouseMove.off ()                // unbinds everything
-_.off (callback)                // unbinds callback from everything it's bound to
+mouseMove.off (callback)         // unbinds specific listener
+mouseMove.off ()                 // unbinds everything
+_.off (callback)                 // unbinds callback from everything it's bound to
 ```
 
 Using [$component](https://github.com/xpl/useless/wiki/$component):
