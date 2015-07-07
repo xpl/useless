@@ -155,7 +155,7 @@ Feel free to leave feedback / submit pull requests if you find any of these thin
 
 ### jQueryPlus.js
 
-A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$.fn.drag`), which is utilized by countless number of widgets I made.
+A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$.fn.drag`), which is utilized by countless number of widgets I made. It also compatible with mobile devices (iOS / Android).
 
 ```javascript
 $(handle).drag ({
