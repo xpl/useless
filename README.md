@@ -204,7 +204,7 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
 * `_.barrier` / synchronization primitive
 * `_.observable` / state change notifications
 
-Raw API:
+Raw API (same for every mentioned primitive):
 ```javascript
 var mouseMoved = _.trigger ()
 
