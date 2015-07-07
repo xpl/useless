@@ -11,7 +11,7 @@ Bro = $singleton (Component, {
     BaseEntry: $component ({
 
         init: function () { 
-            $assertTypeof (this.parse (), { before: 'string', after: 'string', arguments: [] })
+            $assertTypeMatches (this.parse (), { before: 'string', after: 'string', arguments: [] })
             this.el = this.widgetContainer ().addClass (this.tool.constructor.name)
             this.el.append (this.widget (this.el)) },
 

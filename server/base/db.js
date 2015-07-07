@@ -32,7 +32,7 @@ Db = $prototype ({
         _.extend (this[id] = this.collections[id] = collection, {
             schema: schema,
             convertObjectIds: function (obj) {
-                return _.objectMap (obj, function (value, key) {
+                return _.mapObject (obj, function (value, key) {
                     return ((schema.fields[key] || {}).isObjectID) ? (new mongo.ObjectID (value)) : value }) } }) },
 
     /*  acquires handles to mongodb 'tables' (im not sure if it's safe to keep them persistent)

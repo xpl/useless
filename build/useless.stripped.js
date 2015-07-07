@@ -357,9 +357,12 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
             }) : e;
         }
     },
-    assertTypeof: function (value, contract) {
-        var mismatches = _.typeMismatches(contract, value);
-        return _.isEmpty(mismatches) ? true : _.assertionFailed({
+    assertType: function (value, contract) {
+        return _.assert(_.decideType(value), contract);
+    },
+    assertTypeMatches: function (value, contract) {
+        var mismatches;
+        return _.isEmpty(_.typeMismatches(contract, value)) ? true : _.assertionFailed({
             asColumns: true,
             notMatching: [
                 { value: value },
@@ -880,9 +883,6 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return x && x.$definition !== undefined || false;
 };
-_.typeOf2 = function (x) {
-    return _.isEmptyArray(x) ? x : typeof x;
-};
 _.coerceToArray = function (x) {
     return x === undefined ? [] : _.isArray(x) ? x : [x];
 };
@@ -1079,23 +1079,13 @@ _.mixin({
         if (_.isArray(value)) {
             return _.map(value, fn, context);
         } else if (_.isStrictlyObject(value)) {
-            return _.objectMap(value, fn, context);
+            return _.mapObject(value, fn, context);
         } else {
             return fn.call(context, value);
         }
     }
 });
 _.mixin({ mapMap: _.hyperOperator(_.unary, _.map2) });
-_.extend(_, {
-    objectMap: function (obj, fn, context) {
-        return _.object(_.map(obj, function (v, k) {
-            return [
-                k,
-                fn.call(context, v, k)
-            ];
-        }));
-    }
-});
 _.mixin({
     reject2: function (value, op) {
         return _.filter2(value, _.not(op));
@@ -1514,7 +1504,7 @@ _.defineKeyword('any', _.identity);
     });
     var typeMatchesValue = function (c, v) {
         var contract = Tags.unwrap(c);
-        return contract === undefined && v === undefined || _.isFunction(contract) && (contract.$definition ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
+        return contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
     };
     _.mismatches = function (op, contract, value) {
         return hyperMatch(contract, value, function (contract, v) {
@@ -1559,7 +1549,13 @@ _.defineKeyword('any', _.identity);
             }
             return unifyType(_.map2(value, pred));
         });
-        return operator(value, _.typeOf2);
+        return operator(value, function (value) {
+            if (_.isPrototypeInstance(value)) {
+                return value.constructor;
+            } else {
+                return _.isEmptyArray(value) ? value : typeof value;
+            }
+        });
     };
 }());
 _.cps = function () {
@@ -2079,7 +2075,7 @@ $extensionMethods(String, {
             ];
         })));
     };
-    _.extend(_, _.objectMap(_.invert(hooks), hookProc.flip2), {
+    _.extend(_, _.mapObject(_.invert(hooks), hookProc.flip2), {
         off: function (obj, targetMethod, delegate) {
             var method = obj[targetMethod];
             if (_.isBindable(method)) {
@@ -2430,7 +2426,7 @@ _.extend($prototype, {
             return def;
         },
         extendWithTags: function (def) {
-            return _.extendWith(Tags.unwrap(def), _.objectMap(Tags.get(def), $static));
+            return _.extendWith(Tags.unwrap(def), _.mapObject(Tags.get(def), $static));
         },
         generateConstructor: function (base) {
             return function (def) {
@@ -2510,7 +2506,7 @@ _.extend($prototype, {
             };
         },
         expandAliases: function (def) {
-            return _.objectMap(def, function (v) {
+            return _.mapObject(def, function (v) {
                 return $alias.matches(v) ? def[Tags.unwrap(v)] : v;
             });
         },
@@ -3935,7 +3931,7 @@ Component = $prototype({
         }, this);
         if (_.hasAsserts) {
             _.each(this.constructor.$requires, function (contract, name) {
-                $assertTypeof(this[name], contract);
+                $assertTypeMatches(this[name], contract);
             }, this);
         }
         if (!(cfg.init === false || this.constructor.$defaults && this.constructor.$defaults.init === false)) {
@@ -4073,10 +4069,11 @@ Testosterone = $singleton({
             $prototype.macro('$test', register);
             $prototype.macro('$tests', register);
         }(this.$(function (def, value, name) {
-            this.prototypeTests.push([
-                Tags.unwrap(def.$meta),
-                value
-            ]);
+            this.prototypeTests.push({
+                readPrototypeMeta: Tags.unwrap(def.$meta),
+                tests: value
+            });
+            def[name] = $static($property($constant(def[name])));
             return def;
         })));
         this.run = this.$(this.run);
@@ -4140,8 +4137,8 @@ Testosterone = $singleton({
     },
     collectPrototypeTests: function (then) {
         _.cps.map(this.prototypeTests, this.$(function (def, then) {
-            def[0](this.$(function (meta) {
-                then(this.testSuite(meta.name, def[1]));
+            def.readPrototypeMeta(this.$(function (meta) {
+                then(this.testSuite(meta.name, def.tests));
             }));
         }), then);
     },

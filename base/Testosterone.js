@@ -53,16 +53,22 @@ _.tests.itself = {
 
     /*  4.  Use $tests to define unit tests on prototypes (works only on stuff in global namespace)
      */
-    /*'$tests': function (done) {
-        DummyPrototypeWithTests = $prototype ({
-            $tests: {
-                dummyTest: function () { $assert (true) } } })
+    '$tests': function () {
 
-        _.delay (function () {
-            $assertTypeof (_.tests.DummyPrototypeWithTests &&
-                           _.tests.DummyPrototypeWithTests.dummyTest, 'function')
+        DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
+        DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
 
-            done () }) }*/
+        /*  $test/$tests renders to static immutable property
+         */
+        $assertThrows (function () { DummyPrototypeWithTest .$test  = 42 })
+        $assertThrows (function () { DummyPrototypeWithTests.$tests = 42 })
+
+        /*  Tests are added to Testosterone.prototypeTests
+         */
+        $assert ([DummyPrototypeWithTest .$test,
+                  DummyPrototypeWithTests.$tests], _.filter2 (Testosterone.prototypeTests, function (def) {
+                                                        return ((def.tests === DummyPrototypeWithTest .$test) ||
+                                                                (def.tests === DummyPrototypeWithTests.$tests)) ? def.tests : false })) }
  }
 
 
@@ -94,7 +100,11 @@ Testosterone = $singleton ({
         (function (register) {
             $prototype.macro ('$test',  register)
             $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
-                                                        this.prototypeTests.push ([Tags.unwrap (def.$meta), value]); return def }))
+                                                        this.prototypeTests.push ({
+                                                            readPrototypeMeta: Tags.unwrap (def.$meta),
+                                                            tests: value })
+                                                        def[name] = $static ($property ($constant (def[name])))
+                                                        return def }))
 
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
                                         //  but it's a chicken-egg class problem
@@ -178,8 +188,8 @@ Testosterone = $singleton ({
 
     collectPrototypeTests: function (then) {
         _.cps.map (this.prototypeTests, this.$ (function (def, then) {
-            (def[0]) (this.$ (function (meta) {
-                then (this.testSuite (meta.name, def[1])) })) }), then) },
+            def.readPrototypeMeta (this.$ (function (meta) {
+                then (this.testSuite (meta.name, def.tests)) })) }), then) },
 
     testSuite: function (name, tests, context) { return { 
         name: name || '',

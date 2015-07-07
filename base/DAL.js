@@ -79,7 +79,7 @@ DAL.makeStringifierForCollectionField = function (field, html, htmlShort) {
             case 'enum': var values = field.values
 
                 if (htmlShort && field.asIcons) {
-                    var iconCls = _.objectMap (values, _.property ('iconCls'))
+                    var iconCls = _.mapObject (values, _.property ('iconCls'))
                     return function (x) {
                                 return '<span class="' + iconCls[x] + '"></span>' } }
 
@@ -143,7 +143,7 @@ DAL.unescapeMongoOperators  = DAL.replaceKeySign.partial ('€', '$')
 
 
 DAL.evalMoveOperator = function (operatorValue, entity) {
-                            return { $set: _.objectMap (operatorValue, function (moves, field) {
+                            return { $set: _.mapObject (operatorValue, function (moves, field) {
                                 var array = _.clone (entity[field])
                                 _.each (moves, function (action) { var from = action[1], to = action[2]
                                     var val = array[from]
@@ -153,7 +153,7 @@ DAL.evalMoveOperator = function (operatorValue, entity) {
 
 
 DAL.explainMoveOperator = function (operatorValue) {
-    return _.objectMap (operatorValue, function (moves) { var index = {}, result = []
+    return _.mapObject (operatorValue, function (moves) { var index = {}, result = []
         
         _.each (moves, function (packed) { var move = { id: packed[0], from: packed[1], to: packed[2] }
             if (move.id in index) {

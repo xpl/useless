@@ -22,13 +22,13 @@ FilterChain_AdHoc = $component ({
 
 			chain.changed.off () // remove mkay listener
 
-			$assertTypeof (chain.filters, {
+			$assertTypeMatches (chain.filters, {
 				foo: 'object', bar: 'object', baz: 'object', qux: 'object' })
 
 			chain.remove ('foo')
 			chain.remove ('bar')
 
-			$assertTypeof (chain.filters, {
+			$assertTypeMatches (chain.filters, {
 				foo: 'undefined', bar: 'undefined', baz: 'object', qux: 'object' })
 
 			$assert (chain.any)
@@ -38,7 +38,7 @@ FilterChain_AdHoc = $component ({
 			$assertCalls (1, function (mkay) {
 				chain.removed (function (filter, name) {
 					$assert (name === 'qux')
-					$assertTypeof (filter.predicate, 'function'); mkay () })
+					$assertTypeMatches (filter.predicate, 'function'); mkay () })
 
 				chain.remove ('qux') })
 
@@ -47,7 +47,7 @@ FilterChain_AdHoc = $component ({
 			$assertCalls (1, function (mkay) {
 				chain.wasSet (function (filter, name) {
 					$assert (name === 'qux')
-					$assertTypeof (filter.predicate, 'function'); mkay () })
+					$assertTypeMatches (filter.predicate, 'function'); mkay () })
 
 				chain.set ('qux', { predicate: _.constant (true) }) }) } },
 

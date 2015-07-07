@@ -82,7 +82,7 @@ _.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
                         if (_.isArray (value)) {
                             return _.map (value, fn, context) }
                         else if (_.isStrictlyObject (value)) {
-                            return _.objectMap (value, fn, context) }
+                            return _.mapObject (value, fn, context) }
                         else {
                             return fn.call (context, value) } } })})
 
@@ -91,13 +91,12 @@ _.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
 
 _.deferTest (['stdlib', 'mapMap'], function () {
 
-    $assert (_.mapMap ( 7,  _.typeOf2),  'number')   // degenerate cases
-    $assert (_.mapMap ([7], _.typeOf2), ['number'])
-    $assert (_.mapMap ([ ], _.typeOf2), [        ])
+    $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
+    $assert (_.mapMap ([7], _.typeOf), ['number'])
 
     $assert (_.mapMap ( {   foo: 7,
                             bar: ['foo', {
-                                bar: undefined } ] }, _.typeOf2),
+                                bar: undefined } ] }, _.typeOf),
                         
                         {   foo: 'number',
                             bar: ['string', {
@@ -106,28 +105,6 @@ _.deferTest (['stdlib', 'mapMap'], function () {
     function () {
 
         _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
-
-
-
-/*  Internal impl.
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_.withTest (['stdlib', 'objectMap'], function () {
-
-        var obj     = { a: 1, b: 2 }
-        var plusOne = function (v) { return v + 1 }
-        var crazy   = function (v, k) { return k + (v + 1) }
-
-        $assert ({ a: 2, b: 3 },        _.objectMap (obj, plusOne))
-        $assert ({ a: 'a2', b: 'b3' },  _.objectMap (obj, crazy))
-
-        _.objectMap (obj, function () { $assert (this, 42) }, 42) }, function () { _.extend (_, {
-
-    objectMap: function (obj, fn, context) {
-                    return _.object (_.map (obj,
-                        function (v, k) {
-                            return [k, fn.call (context, v, k)] })) } }) })
-
 
 
 /*  Filter 2.0

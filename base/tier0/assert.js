@@ -92,25 +92,25 @@ _.withTest ('assert.js bootstrap', function () {
 /*  Type matching (plain)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) {  $assertTypeof (42, 'number')
+    if (_.hasStdlib) {  $assertTypeMatches (42, 'number')
                         $assertFails (function () {
-                            $assertTypeof ('foo', 'number') }) }
+                            $assertTypeMatches ('foo', 'number') }) }
 
 /*  Type matching (array type)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) {  $assertTypeof ([1,2],   [])
-                        $assertTypeof ([],      [])
-                        $assertTypeof ([1,2,3], ['number'])
-                        $assertTypeof ([],      ['number'])
+    if (_.hasStdlib) {  $assertTypeMatches ([1,2],   [])
+                        $assertTypeMatches ([],      [])
+                        $assertTypeMatches ([1,2,3], ['number'])
+                        $assertTypeMatches ([],      ['number'])
                         $assertFails (function () {
-                            $assertTypeof ([1,2,3],     ['string'])
-                            $assertTypeof ([1,2,'foo'], ['number']) }) }
+                            $assertTypeMatches ([1,2,3],     ['string'])
+                            $assertTypeMatches ([1,2,'foo'], ['number']) }) }
 
 /*  Type matching (deep)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) {  $assertTypeof ({
+    if (_.hasStdlib) {  $assertTypeMatches ({
 
                             /*  Input object */
 
@@ -133,14 +133,14 @@ _.withTest ('assert.js bootstrap', function () {
     if (_.hasOOP) { var Foo = $prototype (),
                         Bar = $prototype ()
 
-        $assertTypeof ({ foo: new Foo (),
-                         bar: new Bar () },
+        $assertTypeMatches ({ foo: new Foo (),
+                              bar: new Bar () },
 
-                       { foo: Foo,
-                         bar: Bar })
+                            { foo: Foo,
+                              bar: Bar })
 
         $assertFails (function () {
-            $assertTypeof (new Bar (), Foo) }) };
+            $assertTypeMatches (new Bar (), Foo) }) };
 
 
 /*  Argument contracts
@@ -259,16 +259,19 @@ function () {
             try {       return _.assert (!_.matches.apply (null, _.rest (arguments)) (value)) }
             catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
 
-        assertTypeof: function (value, contract) {
+        assertType: function (value, contract) {
+            return _.assert (_.decideType (value), contract) },
 
-                            var mismatches = _.typeMismatches (contract, value)
-                            return _.isEmpty (mismatches) ? true : _.assertionFailed ({
-                                asColumns: true,
-                                notMatching: [
-                                    { value:        value },
-                                    { type:         _.decideType (value) },
-                                    { contract:     contract },
-                                    { mismatches:   mismatches }] }) },
+        assertTypeMatches: function (value, contract) { var mismatches
+                                return _.isEmpty (_.typeMismatches (contract, value))
+                                    ? true
+                                    : _.assertionFailed ({
+                                        asColumns: true,
+                                        notMatching: [
+                                            { value:        value },
+                                            { type:         _.decideType (value) },
+                                            { contract:     contract },
+                                            { mismatches:   mismatches }] }) },
 
         assertFails: function (what) {
             _.assertThrows.call (this, what, _.isAssertionError) },

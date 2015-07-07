@@ -434,25 +434,25 @@ _.withTest ('assert.js bootstrap', function () {
 /*  Type matching (plain)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) {  $assertTypeof (42, 'number')
+    if (_.hasStdlib) {  $assertTypeMatches (42, 'number')
                         $assertFails (function () {
-                            $assertTypeof ('foo', 'number') }) }
+                            $assertTypeMatches ('foo', 'number') }) }
 
 /*  Type matching (array type)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) {  $assertTypeof ([1,2],   [])
-                        $assertTypeof ([],      [])
-                        $assertTypeof ([1,2,3], ['number'])
-                        $assertTypeof ([],      ['number'])
+    if (_.hasStdlib) {  $assertTypeMatches ([1,2],   [])
+                        $assertTypeMatches ([],      [])
+                        $assertTypeMatches ([1,2,3], ['number'])
+                        $assertTypeMatches ([],      ['number'])
                         $assertFails (function () {
-                            $assertTypeof ([1,2,3],     ['string'])
-                            $assertTypeof ([1,2,'foo'], ['number']) }) }
+                            $assertTypeMatches ([1,2,3],     ['string'])
+                            $assertTypeMatches ([1,2,'foo'], ['number']) }) }
 
 /*  Type matching (deep)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) {  $assertTypeof ({
+    if (_.hasStdlib) {  $assertTypeMatches ({
 
                             /*  Input object */
 
@@ -475,14 +475,14 @@ _.withTest ('assert.js bootstrap', function () {
     if (_.hasOOP) { var Foo = $prototype (),
                         Bar = $prototype ()
 
-        $assertTypeof ({ foo: new Foo (),
-                         bar: new Bar () },
+        $assertTypeMatches ({ foo: new Foo (),
+                              bar: new Bar () },
 
-                       { foo: Foo,
-                         bar: Bar })
+                            { foo: Foo,
+                              bar: Bar })
 
         $assertFails (function () {
-            $assertTypeof (new Bar (), Foo) }) };
+            $assertTypeMatches (new Bar (), Foo) }) };
 
 
 /*  Argument contracts
@@ -601,16 +601,19 @@ function () {
             try {       return _.assert (!_.matches.apply (null, _.rest (arguments)) (value)) }
             catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
 
-        assertTypeof: function (value, contract) {
+        assertType: function (value, contract) {
+            return _.assert (_.decideType (value), contract) },
 
-                            var mismatches = _.typeMismatches (contract, value)
-                            return _.isEmpty (mismatches) ? true : _.assertionFailed ({
-                                asColumns: true,
-                                notMatching: [
-                                    { value:        value },
-                                    { type:         _.decideType (value) },
-                                    { contract:     contract },
-                                    { mismatches:   mismatches }] }) },
+        assertTypeMatches: function (value, contract) { var mismatches
+                                return _.isEmpty (_.typeMismatches (contract, value))
+                                    ? true
+                                    : _.assertionFailed ({
+                                        asColumns: true,
+                                        notMatching: [
+                                            { value:        value },
+                                            { type:         _.decideType (value) },
+                                            { contract:     contract },
+                                            { mismatches:   mismatches }] }) },
 
         assertFails: function (what) {
             _.assertThrows.call (this, what, _.isAssertionError) },
@@ -1227,9 +1230,6 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return (x && (x.$definition !== undefined)) || false }
 
-_.typeOf2 = function (x) {
-    return _.isEmptyArray (x) ? x : (typeof x) }
-
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
 
@@ -1643,7 +1643,7 @@ _.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
                         if (_.isArray (value)) {
                             return _.map (value, fn, context) }
                         else if (_.isStrictlyObject (value)) {
-                            return _.objectMap (value, fn, context) }
+                            return _.mapObject (value, fn, context) }
                         else {
                             return fn.call (context, value) } } })})
 
@@ -1652,13 +1652,12 @@ _.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
 
 _.deferTest (['stdlib', 'mapMap'], function () {
 
-    $assert (_.mapMap ( 7,  _.typeOf2),  'number')   // degenerate cases
-    $assert (_.mapMap ([7], _.typeOf2), ['number'])
-    $assert (_.mapMap ([ ], _.typeOf2), [        ])
+    $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
+    $assert (_.mapMap ([7], _.typeOf), ['number'])
 
     $assert (_.mapMap ( {   foo: 7,
                             bar: ['foo', {
-                                bar: undefined } ] }, _.typeOf2),
+                                bar: undefined } ] }, _.typeOf),
                         
                         {   foo: 'number',
                             bar: ['string', {
@@ -1667,28 +1666,6 @@ _.deferTest (['stdlib', 'mapMap'], function () {
     function () {
 
         _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
-
-
-
-/*  Internal impl.
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_.withTest (['stdlib', 'objectMap'], function () {
-
-        var obj     = { a: 1, b: 2 }
-        var plusOne = function (v) { return v + 1 }
-        var crazy   = function (v, k) { return k + (v + 1) }
-
-        $assert ({ a: 2, b: 3 },        _.objectMap (obj, plusOne))
-        $assert ({ a: 'a2', b: 'b3' },  _.objectMap (obj, crazy))
-
-        _.objectMap (obj, function () { $assert (this, 42) }, 42) }, function () { _.extend (_, {
-
-    objectMap: function (obj, fn, context) {
-                    return _.object (_.map (obj,
-                        function (v, k) {
-                            return [k, fn.call (context, v, k)] })) } }) })
-
 
 
 /*  Filter 2.0
@@ -2470,8 +2447,6 @@ _.defineKeyword ('any', _.identity)
 
 _.deferTest (['type', 'type matching'], function () {
 
-    // TODO: test
-
     $assert (_.omitTypeMismatches ( { '*': $any, foo: $required ('number'), bar: $required ('number') },
                                     { baz: 'x', foo: 42,            bar: 'foo' }),
                                     { })
@@ -2506,6 +2481,10 @@ _.deferTest (['type', 'type matching'], function () {
     $assert (_.decideType ( { foo:         { bar: 1        },
                               bar:         { bar: 2        } }),
                             { '*':         { bar: 'number' } })
+
+    if (_.hasOOP) {
+        var Type = $prototype ()
+        $assert (_.decideType ({ x: new Type () }), { x: Type }) }
 
 }, function () {
 
@@ -2546,7 +2525,7 @@ _.deferTest (['type', 'type matching'], function () {
 
                                 return  ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (
-                                            contract.$definition ?
+                                            _.isPrototypeConstructor (contract) ?
                                                 _.isTypeOf (contract, v) :  // constructor type
                                                 contract (v))) ||           // test predicate
                                         (typeof v === contract) ||          // plain JS type
@@ -2588,7 +2567,13 @@ _.deferTest (['type', 'type matching'], function () {
                                     return value.constructor }
                                 return unifyType (_.map2 (value, pred)) })
 
-        return operator (value, _.typeOf2) } })
+        return operator (value, function (value) {
+            if (_.isPrototypeInstance (value)) {
+                return value.constructor }
+            else {
+                return _.isEmptyArray (value) ? value : (typeof value) } }) } }) // TODO: fix hyperOperator to remove additional check for []
+
+
 
 
 /*  Delivers continuation-passing style notation to various common things
@@ -3441,7 +3426,7 @@ _.deferTest ('bindable', function () {
 
     /*  Public API
      */
-    _.extend (_, _.objectMap (_.invert (hooks), hookProc.flip2), {
+    _.extend (_, _.mapObject (_.invert (hooks), hookProc.flip2), {
 
         off: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]
@@ -4265,7 +4250,7 @@ _.withTest ('OOP', {
                 return def },
 
             extendWithTags: function (def) {                    
-                return _.extendWith (Tags.unwrap (def), _.objectMap (Tags.get (def), $static)) },
+                return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static)) },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
@@ -4325,7 +4310,7 @@ _.withTest ('OOP', {
                 return def } },
 
             expandAliases: function (def) {
-                return _.objectMap (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
+                return _.mapObject (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
 
             flatten: function (def) {
                 var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
@@ -4367,7 +4352,7 @@ _.withTest ('OOP', {
         $assertThrows (function () { new Closeable () },
             _.matches ({ message: 'Traits are not instantiable (what for?)' }))
 
-        $assertTypeof (movableEnumerable, {
+        $assertTypeMatches (movableEnumerable, {
             move: 'function',
             each: 'function',
             length: 'number' })
@@ -4465,7 +4450,7 @@ _.withTest ('OOP', {
             var Outside = $singleton ({
                 Inside: $prototype ({ foo: function () {} }) })
 
-            $assertTypeof ((new Outside.Inside ()).foo,  'function')              }, function () {
+            $assertTypeMatches ((new Outside.Inside ()).foo,  'function')           }, function () {
 
         /*  IMPLEMENTATION
             ==================================================================== */
@@ -5161,7 +5146,7 @@ _.tests.reflection = {
         try {
             throw new Error ('oh fock') }
         catch (e) {
-            $assertTypeof (CallStack.fromError (e), CallStack) } },
+            $assertTypeMatches (CallStack.fromError (e), CallStack) } },
 
     '$callStack': function () {
 
@@ -5175,7 +5160,7 @@ _.tests.reflection = {
 
         /*  ...each having following members
          */
-        $assertTypeof (stack[0], {
+        $assertTypeMatches (stack[0], {
             callee:         'string',       // function name
             calleeShort:    'string',       // short function name (only the last part of dot-sequence)
             file:           'string',       // full path to source file at which call occurred
@@ -6276,7 +6261,7 @@ _.tests.component = {
                         position: $observableProperty (Vec2.zero),
                         init: function () {
                             this.positionChange (function (v) {
-                                $assertTypeof (v, Vec2)
+                                $assertTypeMatches (v, Vec2)
                                 $assert (v.y, 42) }) } })
 
         var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
@@ -6366,7 +6351,7 @@ _.tests.component = {
         var Bar = $extends (Foo.InnerCompo, { bar: $observableProperty () })
         var bar = new Bar ()
 
-        $assertTypeof (_.pick (bar, 'fooChange', 'barChange'), { fooChange: 'function', barChange: 'function' }) },
+        $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
     '(regression) properties were evaluated before init': function () {
         $singleton (Component, { fail: $property (function () { $fail }) }) },
@@ -6548,7 +6533,7 @@ Component = $prototype ({
          */
         if (_.hasAsserts) {
             _.each (this.constructor.$requires, function (contract, name) {
-                $assertTypeof (this[name], contract) }, this) }
+                $assertTypeMatches (this[name], contract) }, this) }
 
 
         /*  Call init (if not marked as deferred)
@@ -6736,16 +6721,22 @@ _.tests.itself = {
 
     /*  4.  Use $tests to define unit tests on prototypes (works only on stuff in global namespace)
      */
-    /*'$tests': function (done) {
-        DummyPrototypeWithTests = $prototype ({
-            $tests: {
-                dummyTest: function () { $assert (true) } } })
+    '$tests': function () {
 
-        _.delay (function () {
-            $assertTypeof (_.tests.DummyPrototypeWithTests &&
-                           _.tests.DummyPrototypeWithTests.dummyTest, 'function')
+        DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
+        DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
 
-            done () }) }*/
+        /*  $test/$tests renders to static immutable property
+         */
+        $assertThrows (function () { DummyPrototypeWithTest .$test  = 42 })
+        $assertThrows (function () { DummyPrototypeWithTests.$tests = 42 })
+
+        /*  Tests are added to Testosterone.prototypeTests
+         */
+        $assert ([DummyPrototypeWithTest .$test,
+                  DummyPrototypeWithTests.$tests], _.filter2 (Testosterone.prototypeTests, function (def) {
+                                                        return ((def.tests === DummyPrototypeWithTest .$test) ||
+                                                                (def.tests === DummyPrototypeWithTests.$tests)) ? def.tests : false })) }
  }
 
 
@@ -6777,7 +6768,11 @@ Testosterone = $singleton ({
         (function (register) {
             $prototype.macro ('$test',  register)
             $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
-                                                        this.prototypeTests.push ([Tags.unwrap (def.$meta), value]); return def }))
+                                                        this.prototypeTests.push ({
+                                                            readPrototypeMeta: Tags.unwrap (def.$meta),
+                                                            tests: value })
+                                                        def[name] = $static ($property ($constant (def[name])))
+                                                        return def }))
 
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
                                         //  but it's a chicken-egg class problem
@@ -6861,8 +6856,8 @@ Testosterone = $singleton ({
 
     collectPrototypeTests: function (then) {
         _.cps.map (this.prototypeTests, this.$ (function (def, then) {
-            (def[0]) (this.$ (function (meta) {
-                then (this.testSuite (meta.name, def[1])) })) }), then) },
+            def.readPrototypeMeta (this.$ (function (meta) {
+                then (this.testSuite (meta.name, def.tests)) })) }), then) },
 
     testSuite: function (name, tests, context) { return { 
         name: name || '',

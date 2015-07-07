@@ -18,7 +18,7 @@ _.tests.reflection = {
         try {
             throw new Error ('oh fock') }
         catch (e) {
-            $assertTypeof (CallStack.fromError (e), CallStack) } },
+            $assertTypeMatches (CallStack.fromError (e), CallStack) } },
 
     '$callStack': function () {
 
@@ -32,7 +32,7 @@ _.tests.reflection = {
 
         /*  ...each having following members
          */
-        $assertTypeof (stack[0], {
+        $assertTypeMatches (stack[0], {
             callee:         'string',       // function name
             calleeShort:    'string',       // short function name (only the last part of dot-sequence)
             file:           'string',       // full path to source file at which call occurred

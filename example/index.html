@@ -17,22 +17,128 @@
 
 	</head>
 	<style>
-		body { font-family: Helvetica, sans-serif; padding: 20px;}
+		body { font-family: Helvetica, sans-serif; padding: 20px; }
 		h1 { font-size: 40px; }
+
+		button { font-size: 20px; padding: 1em; }
+
+		.sliddah {
+			margin-bottom: 10px;
+			width:         100%;
+			height:        24px;
+			display:       block;
+			position:      relative; }
+
+		.sliddah:before {
+			position: absolute;
+			left: 0;
+			top: 10px;
+			right: 0;
+			bottom: 10px;
+			content: '';
+			background: rgba(0,0,0,0.25);
+			border-radius: 5px; }
+
+		.sliddah em {
+			box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+			position: absolute;
+			left:    0px;
+			top:    12px;
+			width:  24px;
+			height: 24px;
+			margin-left: -12px;
+			margin-top:  -12px;
+			background: black;
+			border-radius: 24px;
+			text-align: center;
+		  	line-height: 24px;
+		  	font-size: 10px;
+		  	color: white;
+		  	cursor: default;
+		  	-webkit-transition: color 0.2s ease-in-out; }
 	</style>
 	<script>
-		/*	Bind UI.error as default exception handler
+
+		function initErrorHandlingDemo () {
+
+			/*	Bind UI.error as default exception handler
+			 */
+			_.withUncaughtExceptionHandler (function (e) {
+				UI.error (e, undefined, _.identity) })
+
+			/*	Define some function that throws error
+			 */
+			function erroneousFunction () {
+				_.map ([1,2,3], callMe) }
+
+			/*	Bind to button to trigger that function
+			 */
+			$('#ui-error-demo').click (erroneousFunction) }
+
+		function initComponentDemo () {
+
+			/*	Defines slider component
+			 */
+			Sliddah = $component ({
+
+			    $requires: {
+			        min:   'number',
+			        max:   'number' },
+
+			    value: $observableProperty (),
+
+			    init: function () {
+			        this.dom = $('<div class="sliddah">')
+			            .append (this.handle = $('<em>'))
+			            .drag ({
+			                callMoveAtStart: true,
+			                move: this.$ (function (memo, where, offset) {
+			                    this.value = _.rescale (offset.x, [0, this.dom.width ()], [this.min, this.max], { clamp: true }) }) })
+
+			        _.delay (this.$ (function () {
+			            this.valueChange.readWith (this.$ (function (v) {
+			                this.handle.css ({
+			                    left: Math.round (_.rescale (v,
+			                                        [this.min, this.max],
+			                                        [0, this.dom.width ()], { clamp: true })) }) })) })) },
+
+			    destroy: function () {
+			        this.dom.destroy () } })
+
+			/*	Constructs slider instance
+			 */
+			var slider1 = new Sliddah ({
+				min:   10,
+				max:   100,
+				value: 42,								            // inits $observableProperty from config
+				valueChange: function () {                          // binds to $trigger from config
+					this.handle.text (this.value.toFixed (0))       // 'this' passed to trigger callback
+					$(document.body).css ('background') } })  
+
+			var slider2 = new Sliddah ({ min: 0, max: 1, value: 1,
+				valueChange: function () {
+					$(document.body).css ('background',
+						_.RGB2CSS ([this.value, 1, 1])) } })
+
+			/*	Appends slider to DOM tree
+			 */
+			$('#component-demo').append ([slider1.dom, slider2.dom]) }
+
+		/*	Init demos
 		 */
-		_.withUncaughtExceptionHandler (function (e) {
-			UI.error (e, undefined, _.identity) })
-
-		function erroneousFunction () {
-			_.map ([1,2,3], callMe) }
-
 		$(document).ready (function () {
-			erroneousFunction () })
+			
+			initErrorHandlingDemo ()
+			initComponentDemo ()  })
 		</script>
+
 	<body>
+
 		<h1># UI.error demo</h1>
+		<button id="ui-error-demo">Call erroneousFunction</button>
+
+		<h1># $component demo</h1>
+		<div id="component-demo" style="width: 400px;"></div>
+
 	</body>
 </html>

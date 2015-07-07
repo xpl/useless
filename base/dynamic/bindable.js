@@ -87,7 +87,7 @@ _.deferTest ('bindable', function () {
 
     /*  Public API
      */
-    _.extend (_, _.objectMap (_.invert (hooks), hookProc.flip2), {
+    _.extend (_, _.mapObject (_.invert (hooks), hookProc.flip2), {
 
         off: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]

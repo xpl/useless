@@ -9,8 +9,6 @@ _.defineKeyword ('any', _.identity)
 
 _.deferTest (['type', 'type matching'], function () {
 
-    // TODO: test
-
     $assert (_.omitTypeMismatches ( { '*': $any, foo: $required ('number'), bar: $required ('number') },
                                     { baz: 'x', foo: 42,            bar: 'foo' }),
                                     { })
@@ -45,6 +43,10 @@ _.deferTest (['type', 'type matching'], function () {
     $assert (_.decideType ( { foo:         { bar: 1        },
                               bar:         { bar: 2        } }),
                             { '*':         { bar: 'number' } })
+
+    if (_.hasOOP) {
+        var Type = $prototype ()
+        $assert (_.decideType ({ x: new Type () }), { x: Type }) }
 
 }, function () {
 
@@ -85,7 +87,7 @@ _.deferTest (['type', 'type matching'], function () {
 
                                 return  ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (
-                                            contract.$definition ?
+                                            _.isPrototypeConstructor (contract) ?
                                                 _.isTypeOf (contract, v) :  // constructor type
                                                 contract (v))) ||           // test predicate
                                         (typeof v === contract) ||          // plain JS type
@@ -127,4 +129,9 @@ _.deferTest (['type', 'type matching'], function () {
                                     return value.constructor }
                                 return unifyType (_.map2 (value, pred)) })
 
-        return operator (value, _.typeOf2) } })
+        return operator (value, function (value) {
+            if (_.isPrototypeInstance (value)) {
+                return value.constructor }
+            else {
+                return _.isEmptyArray (value) ? value : (typeof value) } }) } }) // TODO: fix hyperOperator to remove additional check for []
+

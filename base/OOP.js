@@ -385,7 +385,7 @@ _.withTest ('OOP', {
                 return def },
 
             extendWithTags: function (def) {                    
-                return _.extendWith (Tags.unwrap (def), _.objectMap (Tags.get (def), $static)) },
+                return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static)) },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
@@ -445,7 +445,7 @@ _.withTest ('OOP', {
                 return def } },
 
             expandAliases: function (def) {
-                return _.objectMap (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
+                return _.mapObject (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
 
             flatten: function (def) {
                 var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
@@ -487,7 +487,7 @@ _.withTest ('OOP', {
         $assertThrows (function () { new Closeable () },
             _.matches ({ message: 'Traits are not instantiable (what for?)' }))
 
-        $assertTypeof (movableEnumerable, {
+        $assertTypeMatches (movableEnumerable, {
             move: 'function',
             each: 'function',
             length: 'number' })
@@ -585,7 +585,7 @@ _.withTest ('OOP', {
             var Outside = $singleton ({
                 Inside: $prototype ({ foo: function () {} }) })
 
-            $assertTypeof ((new Outside.Inside ()).foo,  'function')              }, function () {
+            $assertTypeMatches ((new Outside.Inside ()).foo,  'function')           }, function () {
 
         /*  IMPLEMENTATION
             ==================================================================== */

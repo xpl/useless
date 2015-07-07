@@ -125,7 +125,7 @@ RemoteCollection = $extends (Collection, {
 
 		initSchemaExtensions: function () {
 			if (this.fields) {
-				this.fields = _.objectMap (this.fields, function (field) {
+				this.fields = _.mapObject (this.fields, function (field) {
 					return _.extend ({}, field, {
 						values:		field.values && Collection.coerce (field.values),	// field.values as Collection
 						text:		RemoteCollection.fieldStringifier (field),		// field.html/text with databindings

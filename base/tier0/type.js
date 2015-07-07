@@ -23,9 +23,6 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return (x && (x.$definition !== undefined)) || false }
 
-_.typeOf2 = function (x) {
-    return _.isEmptyArray (x) ? x : (typeof x) }
-
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
 

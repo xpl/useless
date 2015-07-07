@@ -312,7 +312,7 @@ _.tests.component = {
                         position: $observableProperty (Vec2.zero),
                         init: function () {
                             this.positionChange (function (v) {
-                                $assertTypeof (v, Vec2)
+                                $assertTypeMatches (v, Vec2)
                                 $assert (v.y, 42) }) } })
 
         var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
@@ -402,7 +402,7 @@ _.tests.component = {
         var Bar = $extends (Foo.InnerCompo, { bar: $observableProperty () })
         var bar = new Bar ()
 
-        $assertTypeof (_.pick (bar, 'fooChange', 'barChange'), { fooChange: 'function', barChange: 'function' }) },
+        $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
     '(regression) properties were evaluated before init': function () {
         $singleton (Component, { fail: $property (function () { $fail }) }) },
@@ -584,7 +584,7 @@ Component = $prototype ({
          */
         if (_.hasAsserts) {
             _.each (this.constructor.$requires, function (contract, name) {
-                $assertTypeof (this[name], contract) }, this) }
+                $assertTypeMatches (this[name], contract) }, this) }
 
 
         /*  Call init (if not marked as deferred)
