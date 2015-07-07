@@ -181,7 +181,7 @@ Using components:
 ```javascript
 Compo = $component ({
 
-    layoutChanged: $trigger (),             // calls on layout change
+    didLayout:     $trigger (),
     layoutReady:   $barrier (),             // it's like document.ready
     value:         $observableProperty (),  // for property change notifications
     
@@ -190,17 +190,20 @@ Compo = $component ({
            this.layoutReady () }) }, // signals that layout is ready
 
     doLayout: function () {
-        this.layoutChanged () } })   // signals that layout has changed
+        this.didLayout () } })       // simply call to perform multicast
 ```
 ```javascript
 compo = new Compo ()
 
-compo.layoutReady (function () {
-    /* Postpones until DOM is ready.
-       If already, calls immediately (like document.ready) */ })
+compo.didLayout (function () {
+    /*  Gets called whenether layout has rebuilt */ })
 
-compo.valueChange (function (x) {
-   log (x) })
+compo.layoutReady (function () {
+    /*  Postpones until DOM is ready.
+        If already, calls immediately (like document.ready) */ })
+
+compo.valueChange (function (value, oldValue) {
+    /*  Gets called whenether property has assigned distinct value */ })
 
 compo.value = 10 // simply assign a value to notify listeners
 compo.value = 10 // won't trigger, as not changed
