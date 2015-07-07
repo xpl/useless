@@ -108,10 +108,10 @@ Testosterone = $singleton ({
         /*  Configuration
          */
         var defaults = {
-            silent: true,
+            silent:  true,
             verbose: false,
             timeout: 2000,
-            testStarted: function (test) {},
+            testStarted:  function (test) {},
             testComplete: function (test) {} }
 
         var cfg = this.runConfig = _.extend (defaults, cfg_)
@@ -182,7 +182,7 @@ Testosterone = $singleton ({
                 then (this.testSuite (meta.name, def[1])) })) }), then) },
 
     testSuite: function (name, tests, context) { return { 
-        name: name,
+        name: name || '',
         tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
                         return new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context }) }) } },
@@ -443,11 +443,11 @@ Test = $prototype ({
 
                                     then () }) }) }) },
 
-    printLog: function () {
+    printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
 
         log.write (log.color.blue,
             '\n' + log.boldLine,
-            '\n' + _.nonempty ([((this.suite !== this.name && this.suite.quote ('[]')) || ''), this.name]).join (' '),
+            '\n' + _.nonempty ([suiteName, this.name]).join (' '),
             (this.index + ' of ' + Testosterone.runningTests.length).quote ('()') +
             (this.failed ? ' FAILED' : '') + ':',
             '\n')

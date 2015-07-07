@@ -1636,6 +1636,9 @@ _.extend(_.cps, {
     }
 });
 _.extend(_.cps, {
+    memoize: function (fn) {
+        return _.barrier ? _.cps._betterMemoize(fn) : _.cps._poorMemoize(fn);
+    },
     _poorMemoize: function (fn) {
         var cache = {};
         return function (value, then) {
@@ -1650,15 +1653,25 @@ _.extend(_.cps, {
     },
     _betterMemoize: function (fn) {
         var cache = {};
-        return function (value, then) {
-            if (!(value in cache)) {
-                fn.call(this, value, cache[value] = _.barrier());
-            }
-            cache[value](then);
-        };
-    },
-    memoize: function (fn) {
-        return _.barrier ? _.cps._betterMemoize(fn) : _.cps._poorMemoize(fn);
+        switch (_.numArgs(fn)) {
+        case 1:
+            return function (then) {
+                if (!cache.already) {
+                    fn.call(this, cache = _.barrier());
+                }
+                cache(then);
+            };
+        case 2:
+            cache = {};
+            return function (value, then) {
+                if (!(value in cache)) {
+                    fn.call(this, value, cache[value] = _.barrier());
+                }
+                cache[value](then);
+            };
+        default:
+            throw new Error('_.cps.memoize: unsupported number of arguments');
+        }
     }
 });
 (function () {
@@ -4134,7 +4147,7 @@ Testosterone = $singleton({
     },
     testSuite: function (name, tests, context) {
         return {
-            name: name,
+            name: name || '',
             tests: _(_.pairs(typeof tests === 'function' && _.object([[
                     name,
                     tests
@@ -4425,8 +4438,9 @@ Test = $prototype({
         });
     },
     printLog: function () {
+        var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
         log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([
-            this.suite !== this.name && this.suite.quote('[]') || '',
+            suiteName,
             this.name
         ]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
         this.evalLogCalls();

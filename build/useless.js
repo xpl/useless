@@ -773,10 +773,10 @@ _.withTest ('argcount tracking', function () {
     /*  Querying
      */
     numArgs: function (fn) {
-                return fn._ac === undefined ? fn.length : fn._ac },     // short name for speed (it's now invisible, so pofig)
+                return fn._ac === undefined ? fn.length : fn._ac },     // short name for speed
 
     restArg: function (fn) {
-                return fn._ra || false },                               // short name for speed (it's now invisible, so pofig)
+                return fn._ra || false },                               // short name for speed
 
     noArgs: function (fn) {
                 return (_.numArgs (fn) === 0) && !fn._ra },
@@ -2773,6 +2773,11 @@ _.withTest (['cps', 'memoize'], function () {
 
 function () { _.extend (_.cps, {
 
+    memoize: function (fn) {
+        return _.barrier ? _.cps._betterMemoize (fn) : _.cps._poorMemoize (fn) }, 
+
+    /*  This simplified version is used to bootstrap Useless.js code base (where _.barrier not available)
+     */
     _poorMemoize: function (fn) { var cache = {}
         return function (value, then) {
             if (value in cache) {                   //  there's a flaw: cache updates after fetch completes, so while fetch is running,
@@ -2781,14 +2786,24 @@ function () { _.extend (_.cps, {
                 fn.call (this, value, function (result) {
                     then (cache[value] = result) }) } } },
 
+    /*  UPD: added support for 0-arity semantics
+     */
     _betterMemoize: function (fn) { var cache = {}  // barrier-enabled impl, eliminates redundant fetches
-        return function (value, then) {             // in this version, any subsequent calls join at barrier (which opens when result is fetched)
-            if (!(value in cache)) {
-                fn.call (this, value, (cache[value] = _.barrier ())) }
-            cache[value] (then) } },
-    
-    memoize: function (fn) {
-        return _.barrier ? _.cps._betterMemoize (fn) : _.cps._poorMemoize (fn) } }) })
+                                                    // in this version, any subsequent calls join at barrier (which opens when result is fetched)
+        switch (_.numArgs (fn)) {
+            case 1:
+                return function (then) {             
+                    if (!cache.already) {
+                        fn.call (this, (cache = _.barrier ())) }
+                    cache (then) }
+            case 2:
+                cache = {}
+                return function (value, then) {             
+                    if (!(value in cache)) {
+                        fn.call (this, value, (cache[value] = _.barrier ())) }
+                    cache[value] (then) }
+            default:
+                throw new Error ('_.cps.memoize: unsupported number of arguments') } } }) })
 
 
 /*  reduce
@@ -3481,7 +3496,7 @@ _.deferTest ('bindable', function () {
 
                 return result } )) } }) })
 
-/*  A generic functional primitives for dynamic code binding
+/*  Generic functional primitives for dynamic code binding
     ======================================================================== */
 
 _.tests.stream = {
@@ -6776,10 +6791,10 @@ Testosterone = $singleton ({
         /*  Configuration
          */
         var defaults = {
-            silent: true,
+            silent:  true,
             verbose: false,
             timeout: 2000,
-            testStarted: function (test) {},
+            testStarted:  function (test) {},
             testComplete: function (test) {} }
 
         var cfg = this.runConfig = _.extend (defaults, cfg_)
@@ -6850,7 +6865,7 @@ Testosterone = $singleton ({
                 then (this.testSuite (meta.name, def[1])) })) }), then) },
 
     testSuite: function (name, tests, context) { return { 
-        name: name,
+        name: name || '',
         tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
                         return new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context }) }) } },
@@ -7111,11 +7126,11 @@ Test = $prototype ({
 
                                     then () }) }) }) },
 
-    printLog: function () {
+    printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
 
         log.write (log.color.blue,
             '\n' + log.boldLine,
-            '\n' + _.nonempty ([((this.suite !== this.name && this.suite.quote ('[]')) || ''), this.name]).join (' '),
+            '\n' + _.nonempty ([suiteName, this.name]).join (' '),
             (this.index + ' of ' + Testosterone.runningTests.length).quote ('()') +
             (this.failed ? ' FAILED' : '') + ':',
             '\n')

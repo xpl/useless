@@ -2,6 +2,6 @@ require ('./useless')
 
 Testosterone.run ({                             
     codebase: true,
-    verbose:  false,
+    verbose:  true,
     silent:   false },
     function (okay) { if (!okay) { process.exit(1) } })

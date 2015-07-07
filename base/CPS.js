@@ -177,6 +177,11 @@ _.withTest (['cps', 'memoize'], function () {
 
 function () { _.extend (_.cps, {
 
+    memoize: function (fn) {
+        return _.barrier ? _.cps._betterMemoize (fn) : _.cps._poorMemoize (fn) }, 
+
+    /*  This simplified version is used to bootstrap Useless.js code base (where _.barrier not available)
+     */
     _poorMemoize: function (fn) { var cache = {}
         return function (value, then) {
             if (value in cache) {                   //  there's a flaw: cache updates after fetch completes, so while fetch is running,
@@ -185,14 +190,24 @@ function () { _.extend (_.cps, {
                 fn.call (this, value, function (result) {
                     then (cache[value] = result) }) } } },
 
+    /*  UPD: added support for 0-arity semantics
+     */
     _betterMemoize: function (fn) { var cache = {}  // barrier-enabled impl, eliminates redundant fetches
-        return function (value, then) {             // in this version, any subsequent calls join at barrier (which opens when result is fetched)
-            if (!(value in cache)) {
-                fn.call (this, value, (cache[value] = _.barrier ())) }
-            cache[value] (then) } },
-    
-    memoize: function (fn) {
-        return _.barrier ? _.cps._betterMemoize (fn) : _.cps._poorMemoize (fn) } }) })
+                                                    // in this version, any subsequent calls join at barrier (which opens when result is fetched)
+        switch (_.numArgs (fn)) {
+            case 1:
+                return function (then) {             
+                    if (!cache.already) {
+                        fn.call (this, (cache = _.barrier ())) }
+                    cache (then) }
+            case 2:
+                cache = {}
+                return function (value, then) {             
+                    if (!(value in cache)) {
+                        fn.call (this, value, (cache[value] = _.barrier ())) }
+                    cache[value] (then) }
+            default:
+                throw new Error ('_.cps.memoize: unsupported number of arguments') } } }) })
 
 
 /*  reduce
