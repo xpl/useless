@@ -4,9 +4,6 @@
     client and server ways to access and modify data in our DB.
  */
 
-require ('./foundation')
-
-
 _.tests.dal = {
     escape: function () {
         var id = { _bsontype: 'ObjectID', id: 'blabla' }
