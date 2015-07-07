@@ -192,8 +192,9 @@ Working with ranges:
 Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 
 ```javascript
-   var offsetVec   = this.anchor.sub (this.center).normal.perp.scale (
-                       Bezier.cubic1D (Vec2.dot (direction.normal, upVector), 0, 1.22, 0, 1.9))
+   var offsetVec = this.anchor.sub (this.center).normal.perp.scale (
+                       Bezier.cubic1D (
+                           Vec2.dot (direction.normal, upVector), 0, 1.22, 0, 1.9))
 ```
 ```javascript
    var where = this.bodyBBox.nearestPointTo (this.anchor, this.borderRadius)
