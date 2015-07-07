@@ -163,11 +163,23 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
 
 ## Bindable methods for ad-hoc code injection
 
-```
+Raw API:
+```javascript
 _.onAfter   (Player.prototype, 'move', function (x, y) { /* this will execute after move calls */ })
 _.onBefore  (Player.prototype, 'move', function (x, y) { /* this will execute before */ })
 _.intercept (Player.prototype, 'move', function (x, y, originalMethod) {
     originalMethod.call (this, x, y) })
+```
+
+Using components:
+```javascript
+Button = $component ({
+    layout: $bindable (function () { log ('layout') }) })
+    
+button = new Button ()
+button.layout.onceBefore (function () { log ("I'm called before next layout()") })
+button.layout ()
+button.layout () // won't print anything
 ```
 
 ## Advanced type detection / pattern matching
