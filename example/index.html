@@ -113,9 +113,8 @@
 				max:   100,
 				value: 42,								            // inits $observableProperty from config
 				valueChange: function (x) {                         // binds to $trigger from config
-					this.handle.text (x.toFixed (0))                // 'this' passed to trigger callback
-					$(document.body).css ('background') } })  
-
+					this.handle.text (x.toFixed (0))  } })          // 'this' passed to trigger callback
+				  
 			var slider2 = new Sliddah ({ min: 0, max: 1, value: 1,
 				valueChange: function (x) {
 					$(document.body).css ('background',
