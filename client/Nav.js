@@ -147,7 +147,7 @@ Nav = $singleton (Component, {
 	======================================================================== */
 
 	initOnlineStatus: function () {
-		DataManager.onlineStatus.readWith (function (status) {
+		DataManager.onlineStatus (function (status) {
 			$('.nav-item.online-status').attr ('class', 'nav-item online-status ' + status)
 			$('.nav-item.online-status span').empty () })
 

@@ -17,11 +17,11 @@ _.tests.stream = {
         var initedWithValue = _.observable (555)
         $assert (initedWithValue.value, 555)
 
-        /*  Should not call if something changed before callback is bound
+        /*  Should call with current value when upon binding
          */
-        $assertCalls (0, function (mkay) { var valueChanged = _.observable ()
+        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
             valueChanged (999)
-            valueChanged (mkay) })
+            valueChanged (function (_999) { $assert (_999, 999); mkay () }) })
 
         /*  Should call previously bound callback if changed
          */
@@ -42,12 +42,8 @@ _.tests.stream = {
 
         /*  Should pass previous value as second argument
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
-            valueChanged (444)
-            valueChanged (function (_666, _444) {
-                            $assert (_666, 666)
-                            $assert (_444, 444)
-                            mkay () })
+        $assertCalls (1, function (mkay) { var valueChanged = _.observable (444)
+            valueChanged (function (_666, _444) { if (_444) { $assert ([_666, _444], [666, 444]); mkay () } })
             valueChanged (666) }) },
 
     'observable.when': function () {
@@ -73,6 +69,13 @@ _.tests.stream = {
                 value ('foo')
                 value ('bar') }) },
 
+    'once': function () { $assertCalls (1, function (mkay) {
+
+        var whenSomething = _.trigger ()
+            whenSomething.once (mkay)
+            whenSomething ()
+            whenSomething () }) },
+
     '_.gatherChanges': function () {
 
         var valueA   = _.observable (),
@@ -85,8 +88,7 @@ _.tests.stream = {
         valueA (123)
         valueB (777)
 
-        $assert (changes, [[123, undefined], [123, 777]])
-    },
+        $assert (changes, [[123, undefined], [123, 777]]) },
 
     'context': function () {
         var trigger = _.extend (_.trigger (), { context: 42 })
@@ -216,9 +218,16 @@ _.extend (_, {
 
     observable: function (value) {
         var stream = _.stream ({
-                        hasValue: false,
-                        value: undefined,
-                        read: _.identity,
+                        hasValue: arguments.length > 0,
+                        value:    value,
+                        read:   _.identity,
+
+                        read: function (schedule) {
+                                return function (returnResult) {
+                                    if (stream.hasValue) {
+                                        returnResult.call (this, stream.value) }
+                                    schedule.call (this, returnResult) } },
+
                         write: function (returnResult) {
                                     return function (value) {
 
@@ -250,17 +259,10 @@ _.extend (_, {
                 stream (value || stream.value) },
                 
             when: function (matchFn, then) {
-                stream.readWith (function (val) {
+                stream (function (val) {
                     if (matchFn (val)) {
                         stream.off (arguments.callee)
-                        then (val) } }) },
-
-            readWith: function (fn) { // TODO: this is should be general read behavior, rather than special method
-                if (this.hasValue) {
-                    fn.call (this.context, this.value) }
-                else {
-                    fn.call (this.context) }
-                this (fn) } }) },
+                        then (val) } }) } }) },
 
 
     barrier: function () {
@@ -336,7 +338,7 @@ _.extend (_, {
 
                     if (flush) {
                         queue.off () }  // resets queue
-                    
+
                     _.each (schedule, function (fn) {
                         fn.apply (this, args) }, context || this) }
 
@@ -362,15 +364,21 @@ _.extend (_, {
                                                                  function () {
                                                                     postponed = false })) }})
 
+                /*  Once semantics
+                 */
+                var once = function (then) {
+                                read (function (val) {
+                                    _.off (self, arguments.callee); then (val) }) }
 
                 /*  Constructor
                  */
                 return (self = _.extend ($restArg (frontEnd), {
-                    queue: queue,
-                    off: _.off.asMethod,
+                    queue:    queue,
+                    once:     once,
+                    off:    _.off.asMethod,
                     postpone: postpone,
-                    read: read,
-                    write: write })) } })
+                    read:     read,
+                    write:    write })) } })
 
 
 

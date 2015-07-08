@@ -83,7 +83,8 @@
 
 			    $requires: {
 			        min:   'number',
-			        max:   'number' },
+			        max:   'number',
+			        value: 'number' },
 
 			    value: $observableProperty (),
 
@@ -96,7 +97,7 @@
 			                    this.value = _.rescale (offset.x, [0, this.dom.width ()], [this.min, this.max], { clamp: true }) }) })
 
 			        _.delay (this.$ (function () {
-			            this.valueChange.readWith (this.$ (function (v) {
+			            this.valueChange (this.$ (function (v) {
 			                this.handle.css ({
 			                    left: Math.round (_.rescale (v,
 			                                        [this.min, this.max],
@@ -111,14 +112,14 @@
 				min:   10,
 				max:   100,
 				value: 42,								            // inits $observableProperty from config
-				valueChange: function () {                          // binds to $trigger from config
-					this.handle.text (this.value.toFixed (0))       // 'this' passed to trigger callback
+				valueChange: function (x) {                         // binds to $trigger from config
+					this.handle.text (x.toFixed (0))                // 'this' passed to trigger callback
 					$(document.body).css ('background') } })  
 
 			var slider2 = new Sliddah ({ min: 0, max: 1, value: 1,
-				valueChange: function () {
+				valueChange: function (x) {
 					$(document.body).css ('background',
-						_.RGB2CSS ([this.value, 1, 1])) } })
+						_.RGB2CSS ([x, 1, 1])) } })
 
 			/*	Appends slider to DOM tree
 			 */

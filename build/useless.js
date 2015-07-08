@@ -3500,11 +3500,11 @@ _.tests.stream = {
         var initedWithValue = _.observable (555)
         $assert (initedWithValue.value, 555)
 
-        /*  Should not call if something changed before callback is bound
+        /*  Should call with current value when upon binding
          */
-        $assertCalls (0, function (mkay) { var valueChanged = _.observable ()
+        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
             valueChanged (999)
-            valueChanged (mkay) })
+            valueChanged (function (_999) { $assert (_999, 999); mkay () }) })
 
         /*  Should call previously bound callback if changed
          */
@@ -3525,12 +3525,8 @@ _.tests.stream = {
 
         /*  Should pass previous value as second argument
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
-            valueChanged (444)
-            valueChanged (function (_666, _444) {
-                            $assert (_666, 666)
-                            $assert (_444, 444)
-                            mkay () })
+        $assertCalls (1, function (mkay) { var valueChanged = _.observable (444)
+            valueChanged (function (_666, _444) { if (_444) { $assert ([_666, _444], [666, 444]); mkay () } })
             valueChanged (666) }) },
 
     'observable.when': function () {
@@ -3556,6 +3552,13 @@ _.tests.stream = {
                 value ('foo')
                 value ('bar') }) },
 
+    'once': function () { $assertCalls (1, function (mkay) {
+
+        var whenSomething = _.trigger ()
+            whenSomething.once (mkay)
+            whenSomething ()
+            whenSomething () }) },
+
     '_.gatherChanges': function () {
 
         var valueA   = _.observable (),
@@ -3568,8 +3571,7 @@ _.tests.stream = {
         valueA (123)
         valueB (777)
 
-        $assert (changes, [[123, undefined], [123, 777]])
-    },
+        $assert (changes, [[123, undefined], [123, 777]]) },
 
     'context': function () {
         var trigger = _.extend (_.trigger (), { context: 42 })
@@ -3699,9 +3701,16 @@ _.extend (_, {
 
     observable: function (value) {
         var stream = _.stream ({
-                        hasValue: false,
-                        value: undefined,
-                        read: _.identity,
+                        hasValue: arguments.length > 0,
+                        value:    value,
+                        read:   _.identity,
+
+                        read: function (schedule) {
+                                return function (returnResult) {
+                                    if (stream.hasValue) {
+                                        returnResult.call (this, stream.value) }
+                                    schedule.call (this, returnResult) } },
+
                         write: function (returnResult) {
                                     return function (value) {
 
@@ -3733,17 +3742,10 @@ _.extend (_, {
                 stream (value || stream.value) },
                 
             when: function (matchFn, then) {
-                stream.readWith (function (val) {
+                stream (function (val) {
                     if (matchFn (val)) {
                         stream.off (arguments.callee)
-                        then (val) } }) },
-
-            readWith: function (fn) { // TODO: this is should be general read behavior, rather than special method
-                if (this.hasValue) {
-                    fn.call (this.context, this.value) }
-                else {
-                    fn.call (this.context) }
-                this (fn) } }) },
+                        then (val) } }) } }) },
 
 
     barrier: function () {
@@ -3819,7 +3821,7 @@ _.extend (_, {
 
                     if (flush) {
                         queue.off () }  // resets queue
-                    
+
                     _.each (schedule, function (fn) {
                         fn.apply (this, args) }, context || this) }
 
@@ -3845,15 +3847,21 @@ _.extend (_, {
                                                                  function () {
                                                                     postponed = false })) }})
 
+                /*  Once semantics
+                 */
+                var once = function (then) {
+                                read (function (val) {
+                                    _.off (self, arguments.callee); then (val) }) }
 
                 /*  Constructor
                  */
                 return (self = _.extend ($restArg (frontEnd), {
-                    queue: queue,
-                    off: _.off.asMethod,
+                    queue:    queue,
+                    once:     once,
+                    off:    _.off.asMethod,
                     postpone: postpone,
-                    read: read,
-                    write: write })) } })
+                    read:     read,
+                    write:    write })) } })
 
 
 
@@ -6195,6 +6203,14 @@ _.tests.component = {
         compo.mouseMoved (7, 12)
         compo.mouseMoved (7, 12) }) },
 
+    'init streams from config': function () { $assertCalls (2, function (mkay) {
+
+        var Compo = $component ({
+                        mouseMoved: $trigger (mkay), // should call this one
+                        init: function () {
+                            this.mouseMoved () } })  // here we go
+
+        new Compo ({ mouseMoved: mkay }) }) },       // should call this one
 
     /*  A variation of trigger. On 'write' operation, it flushes wait queue, so
         no callback bound previously gets called in future (until explicitly
@@ -6238,23 +6254,29 @@ _.tests.component = {
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () { $assertCalls (2, function (mkay) {
+    '$observableProperty': function () {    $assertCalls (1, function (fromConstructor) {
+                                            $assertCalls (1, function (fromConfig) {
+                                            $assertCalls (1, function (fromLateBoundListener) {
 
         var Compo = $component ({
-                        color: $observableProperty ('red'),
+                        color: $observableProperty (),
                         smell: $observableProperty (),
                         init: function () {
-                            this.colorChange (function (now, prev) { mkay ()
-                                $assert ([now, prev], ['blue', 'red']) }) } })
+                            this.colorChange (function (now, was) { if (was) { fromConstructor ()
+                                $assert ([now, was], ['green', 'blue']) } }) } })
 
         var compo = new Compo ({
-            color: 'blue' })
+            color: 'blue',
+            colorChange: function (now, was) { if (was) { fromConfig ()
+                $assert ([now, was], ['green', 'blue']) } } })
 
-        compo.smellChange (function (now, was) { mkay ()
+        compo.smellChange (function (now, was) { fromLateBoundListener ()
             $assert (compo.smell, now, 'bad')
             $assert (undefined,   was) })
 
-        compo.smell = 'bad' }) },
+        compo.color = 'green'
+        compo.smell = 'bad' }) }) }) },
+
 
     /*  $observableProperty automatically calls prototype constructor if supplied with non-prototype instance data
      */
@@ -6268,6 +6290,7 @@ _.tests.component = {
 
         var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
         compo.position = { x: 20, y: 42 } },                  // supply POD value from property accessor
+
 
     'hierarchy management': function () { $assertCalls (9, function (mkay) {
         
@@ -6304,7 +6327,7 @@ _.tests.component = {
         compo.trig.call ({}) },
 
 
-    'observableProperty.force (regression)': function () { $assertCalls (1, function (mkay) {
+    'observableProperty.force (regression)': function () { $assertCalls (2, function (mkay) {
         
         var compo = $singleton (Component, {
             prop: $observableProperty () })
@@ -6458,16 +6481,16 @@ Component = $prototype ({
 
             /*  Expand $observableProperty
              */
-            if (def.$observableProperty) { var value = this[name]
-
+            if (def.$observableProperty) {  var definitionValue = this[name] // from $component definition
+                                                defaultValue    = (name in cfg ? cfg[name] : definitionValue)
                 /*  xxxChange stream
                  */
-                var observable         = this[name + 'Change'] = value ? _.observable (value) : _.observable ()
+                var observable         = this[name + 'Change'] = _.observable ()
                     observable.context = this
 
                 /*  auto-coercion of incoming values to prototype instance
                  */
-                if (_.isPrototypeInstance (value)) { var constructor = value.constructor
+                if (definitionValue && _.isPrototypeInstance (definitionValue)) { var constructor = definitionValue.constructor
                     observable.beforeWrite = function (value) {
                         return constructor.isTypeOf (value) ? value : (new constructor (value)) } }
 
@@ -6475,7 +6498,12 @@ Component = $prototype ({
                  */
                 _.defineProperty (this, name, {
                         get: function ()  { return observable.value },
-                        set: function (x) { observable.call (this, x) } }) }
+                        set: function (x) { observable.call (this, x) } })
+
+                /*  write default value (using explicit .write method, to handle situations where defaultValue is function)
+                 */
+                if (defaultValue) {
+                    observable.write (defaultValue) } }
 
             /*  Expand streams
              */
@@ -6485,7 +6513,11 @@ Component = $prototype ({
                                 (def.$observable    ? _.observable :
                                 (def.$barrier       ? _.barrier : undefined)))) (this[name])
 
-                this[name] = _.extend (stream, { context: this }) }
+                this[name] = _.extend (stream, { context: this })
+
+                var defaultListener = cfg[name]                
+                if (defaultListener) {
+                    stream (defaultListener) } }
 
             /*  Expand $bindable
              */
@@ -6509,7 +6541,6 @@ Component = $prototype ({
             else if (def.$memoizeCPS) {
                 this[name] = _.cps.memoize (this[name]) } }, this)
 
-        
 
         /*  Bind stuff to init (either in CPS, or in sequential flow control style)
          */
@@ -6582,20 +6613,21 @@ Component = $prototype ({
         if (cfg.attachTo && !_.isFunction (cfg.attachTo)) {
             this.attachTo (cfg.attachTo) }
 
-        /*  Push initial values from cfg to target streams
-         */
-        _.each (this.constructor.$definition, function (def, name) {
-            if (def.$observableProperty) { var change = name + 'Change'
-                if (cfg[change])
-                    this[change] (cfg[change])
-                if (cfg[name]) {
-                    this[name] = cfg[name] } }
-            else if (Component.isStreamDefinition (def) && cfg[name]) {
-                this[name] (cfg[name]) } }, this)
-
         this.callTraitsMethod ('afterInit', then)
 
-        this.initialized (true) },
+        this.initialized (true)
+
+        /*  Bind default property listeners. Doing this after init, because property listeners
+            get called immediately after bind (observable semantics), and we're want to make
+            sure that component is initialized at the moment of call.
+
+            We do not do this for other streams, as their execution is up to component logic,
+            and they're might get called at init, so their default values get bound before init.
+         */
+        _.each (this.constructor.$definition, function (def, name) { name += 'Change'
+            if (def.$observableProperty) { var defaultListener = cfg[name]
+                if (_.isFunction (defaultListener)) {
+                    this[name] (defaultListener) } } }, this) },
     
     initialized: $barrier (),
 
