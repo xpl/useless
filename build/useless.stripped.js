@@ -2156,9 +2156,17 @@ _.extend(_, {
     },
     observable: function (value) {
         var stream = _.stream({
-            hasValue: false,
-            value: undefined,
+            hasValue: arguments.length > 0,
+            value: value,
             read: _.identity,
+            read: function (schedule) {
+                return function (returnResult) {
+                    if (stream.hasValue) {
+                        returnResult.call(this, stream.value);
+                    }
+                    schedule.call(this, returnResult);
+                };
+            },
             write: function (returnResult) {
                 return function (value) {
                     if (stream.beforeWrite) {
@@ -2187,20 +2195,12 @@ _.extend(_, {
                 stream(value || stream.value);
             },
             when: function (matchFn, then) {
-                stream.readWith(function (val) {
+                stream(function (val) {
                     if (matchFn(val)) {
                         stream.off(arguments.callee);
                         then(val);
                     }
                 });
-            },
-            readWith: function (fn) {
-                if (this.hasValue) {
-                    fn.call(this.context, this.value);
-                } else {
-                    fn.call(this.context);
-                }
-                this(fn);
             }
         });
     },
@@ -2318,8 +2318,15 @@ _.extend(_, {
                 }));
             }
         });
+        var once = function (then) {
+            read(function (val) {
+                _.off(self, arguments.callee);
+                then(val);
+            });
+        };
         return self = _.extend($restArg(frontEnd), {
             queue: queue,
+            once: once,
             off: _.off.asMethod,
             postpone: postpone,
             read: read,
@@ -3882,11 +3889,12 @@ Component = $prototype({
         }, this));
         _.each(componentDefinition, function (def, name) {
             if (def.$observableProperty) {
-                var value = this[name];
-                var observable = this[name + 'Change'] = value ? _.observable(value) : _.observable();
+                var definitionValue = this[name];
+                defaultValue = name in cfg ? cfg[name] : definitionValue;
+                var observable = this[name + 'Change'] = _.observable();
                 observable.context = this;
-                if (_.isPrototypeInstance(value)) {
-                    var constructor = value.constructor;
+                if (definitionValue && _.isPrototypeInstance(definitionValue)) {
+                    var constructor = definitionValue.constructor;
                     observable.beforeWrite = function (value) {
                         return constructor.isTypeOf(value) ? value : new constructor(value);
                     };
@@ -3899,9 +3907,16 @@ Component = $prototype({
                         observable.call(this, x);
                     }
                 });
+                if (defaultValue) {
+                    observable.write(defaultValue);
+                }
             } else if (Component.isStreamDefinition(def)) {
                 var stream = (def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(this[name]);
                 this[name] = _.extend(stream, { context: this });
+                var defaultListener = cfg[name];
+                if (defaultListener) {
+                    stream(defaultListener);
+                }
             }
             if (def.$bindable) {
                 if (_.hasAsserts) {
@@ -3974,20 +3989,17 @@ Component = $prototype({
         if (cfg.attachTo && !_.isFunction(cfg.attachTo)) {
             this.attachTo(cfg.attachTo);
         }
-        _.each(this.constructor.$definition, function (def, name) {
-            if (def.$observableProperty) {
-                var change = name + 'Change';
-                if (cfg[change])
-                    this[change](cfg[change]);
-                if (cfg[name]) {
-                    this[name] = cfg[name];
-                }
-            } else if (Component.isStreamDefinition(def) && cfg[name]) {
-                this[name](cfg[name]);
-            }
-        }, this);
         this.callTraitsMethod('afterInit', then);
         this.initialized(true);
+        _.each(this.constructor.$definition, function (def, name) {
+            name += 'Change';
+            if (def.$observableProperty) {
+                var defaultListener = cfg[name];
+                if (_.isFunction(defaultListener)) {
+                    this[name](defaultListener);
+                }
+            }
+        }, this);
     },
     initialized: $barrier(),
     beforeDestroy: function () {
