@@ -338,6 +338,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 * Tests as documentantion
 * Rich library of assertions
 * Asynchronous / nested assertions
+* Intercepts global log, displaying it in running assertion context
 * Custom assertions
 * Humane error reporting
 
