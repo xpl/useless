@@ -2976,13 +2976,29 @@ _.tests.Function = {
      */
     'asContinuation': function () { $assertCalls (2, function (mkay) {
 
-        var twoPlusTwo = function () { return 2 + 2 }
+        var twoPlusTwo   = function () { return 2 + 2 }
         var shouldBeFour = function (result) {
             $assert (result == 4)
             mkay () }
 
         twoPlusTwo.asContinuation (shouldBeFour)
         _.asContinuation (twoPlusTwo) (shouldBeFour) }) },
+
+    /*  Postpones execution
+     */
+    'postpone': function (testDone) {
+        $assertCalls (2, function (mkay, done) { var testSecondCall = false
+            var callMeLater = function () {
+                if (testSecondCall) {
+                    mkay ()
+                    done ()
+                    testDone () }
+                else {
+                    mkay ()
+                    testSecondCall = true
+                    callMeLater.postpone () } } // should be postponed again
+            callMeLater.postpone ()
+            callMeLater.postpone () }) },       // should not trigger double call
 
     /*  Returns function that executed after _.delay
      */
@@ -3069,6 +3085,13 @@ $extensionMethods (Function, {
             func.apply (context, args) }
 
         return debouncedFn },
+
+    postpone: $method (function (fn) { var args = _.rest (arguments)
+        if (!fn._postponed) {
+            fn._postponed = true
+            _.delay (function () {
+                fn._postponed = false
+                fn.apply (null, args) }) } }),
 
     delay: _.delay,
     delayed: function (fn, time) {
@@ -3652,22 +3675,8 @@ _.tests.stream = {
         $assertCalls (1, function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
 
-
-        /*  Test .postpone
-         */
-        if (testDone) { $assertCalls (1, function (mkay, assertMkayCalledOnlyOnce) {
-
-                var signal = _.trigger ()
-                
-                signal (function (x) {
-                    $assert (x === 'foo')
-                    mkay (); assertMkayCalledOnlyOnce ()
-                    testDone () })
-                
-                signal.postpone ('foo')     // schedules postpone triggering
-                signal.postpone ('foo')     // swallows immediate subsequent invocations
-                signal          ('foo')     // and non-postponed ones too
-            })
+        if (testDone) {
+            testDone ()
         }
     }
 }
@@ -3793,7 +3802,6 @@ _.extend (_, {
     stream: function (cfg_) {
 
                 var cfg         = cfg_ || {}
-                var postponed   = false
                 var queue       = _.extend ([], { off: function (fn) { if (this.length) {
                                                     if (arguments.length === 0) {
                                                         _.each (this, function (fn) {
@@ -3834,18 +3842,10 @@ _.extend (_, {
                                     if (_.isFunction (fn)) {
                                         read.call (this, fn) }
 
-                                    else if (!postponed) {
+                                    else {
                                         write.apply (this, arguments) }
 
                                     return arguments.callee }
-
-                /*  Postpones
-                 */
-                var postpone = $restArg (function () { if (!postponed) {
-                                                        postponed = true
-                                                        _.delay (_.applies (write, self, arguments).arity0.then (
-                                                                 function () {
-                                                                    postponed = false })) }})
 
                 /*  Once semantics
                  */
@@ -3859,7 +3859,6 @@ _.extend (_, {
                     queue:    queue,
                     once:     once,
                     off:    _.off.asMethod,
-                    postpone: postpone,
                     read:     read,
                     write:    write })) } })
 
@@ -6368,6 +6367,12 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
+    '(regression) $observableProperty (false)': function () {
+        $assertCalls (1, function (mkay) {
+            $singleton (Component, {
+                foo: $observableProperty (false),
+                init: function () { this.fooChange (mkay) } }) }) },
+
     '(regression) was not able to define inner compos at singleton compos': function () {
         var Foo = $singleton (Component, {
             InnerCompo: $component ({
@@ -6490,7 +6495,7 @@ Component = $prototype ({
 
                 /*  auto-coercion of incoming values to prototype instance
                  */
-                if (definitionValue && _.isPrototypeInstance (definitionValue)) { var constructor = definitionValue.constructor
+                if (_.isPrototypeInstance (definitionValue)) { var constructor = definitionValue.constructor
                     observable.beforeWrite = function (value) {
                         return constructor.isTypeOf (value) ? value : (new constructor (value)) } }
 
@@ -6502,7 +6507,7 @@ Component = $prototype ({
 
                 /*  write default value (using explicit .write method, to handle situations where defaultValue is function)
                  */
-                if (defaultValue) {
+                if (defaultValue !== undefined) {
                     observable.write (defaultValue) } }
 
             /*  Expand streams

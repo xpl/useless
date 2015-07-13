@@ -133,10 +133,11 @@ function stripCommentsAndTests (src, name, path) {
 function compile (cfg) {
     var name = _.initial (path.basename (cfg.file).split ('.')).join ('.')
     var compiledSrc = compileMacros (cfg.file)
+    var strippedSrc = stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, cfg.path)
 
     if (!cfg['no-compress']) {
         compileWithGoogle (
-            stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, cfg.path),
+            strippedSrc,
             writeCompiled.partial (name + '.min.js', cfg.path)) }
 
     writeCompiled (name + '.js', cfg.path, compiledSrc) }

@@ -169,22 +169,8 @@ _.tests.stream = {
         $assertCalls (1, function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
 
-
-        /*  Test .postpone
-         */
-        if (testDone) { $assertCalls (1, function (mkay, assertMkayCalledOnlyOnce) {
-
-                var signal = _.trigger ()
-                
-                signal (function (x) {
-                    $assert (x === 'foo')
-                    mkay (); assertMkayCalledOnlyOnce ()
-                    testDone () })
-                
-                signal.postpone ('foo')     // schedules postpone triggering
-                signal.postpone ('foo')     // swallows immediate subsequent invocations
-                signal          ('foo')     // and non-postponed ones too
-            })
+        if (testDone) {
+            testDone ()
         }
     }
 }
@@ -310,7 +296,6 @@ _.extend (_, {
     stream: function (cfg_) {
 
                 var cfg         = cfg_ || {}
-                var postponed   = false
                 var queue       = _.extend ([], { off: function (fn) { if (this.length) {
                                                     if (arguments.length === 0) {
                                                         _.each (this, function (fn) {
@@ -351,18 +336,10 @@ _.extend (_, {
                                     if (_.isFunction (fn)) {
                                         read.call (this, fn) }
 
-                                    else if (!postponed) {
+                                    else {
                                         write.apply (this, arguments) }
 
                                     return arguments.callee }
-
-                /*  Postpones
-                 */
-                var postpone = $restArg (function () { if (!postponed) {
-                                                        postponed = true
-                                                        _.delay (_.applies (write, self, arguments).arity0.then (
-                                                                 function () {
-                                                                    postponed = false })) }})
 
                 /*  Once semantics
                  */
@@ -376,7 +353,6 @@ _.extend (_, {
                     queue:    queue,
                     once:     once,
                     off:    _.off.asMethod,
-                    postpone: postpone,
                     read:     read,
                     write:    write })) } })
 

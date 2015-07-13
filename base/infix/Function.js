@@ -7,13 +7,29 @@ _.tests.Function = {
      */
     'asContinuation': function () { $assertCalls (2, function (mkay) {
 
-        var twoPlusTwo = function () { return 2 + 2 }
+        var twoPlusTwo   = function () { return 2 + 2 }
         var shouldBeFour = function (result) {
             $assert (result == 4)
             mkay () }
 
         twoPlusTwo.asContinuation (shouldBeFour)
         _.asContinuation (twoPlusTwo) (shouldBeFour) }) },
+
+    /*  Postpones execution
+     */
+    'postpone': function (testDone) {
+        $assertCalls (2, function (mkay, done) { var testSecondCall = false
+            var callMeLater = function () {
+                if (testSecondCall) {
+                    mkay ()
+                    done ()
+                    testDone () }
+                else {
+                    mkay ()
+                    testSecondCall = true
+                    callMeLater.postpone () } } // should be postponed again
+            callMeLater.postpone ()
+            callMeLater.postpone () }) },       // should not trigger double call
 
     /*  Returns function that executed after _.delay
      */
@@ -100,6 +116,13 @@ $extensionMethods (Function, {
             func.apply (context, args) }
 
         return debouncedFn },
+
+    postpone: $method (function (fn) { var args = _.rest (arguments)
+        if (!fn._postponed) {
+            fn._postponed = true
+            _.delay (function () {
+                fn._postponed = false
+                fn.apply (null, args) }) } }),
 
     delay: _.delay,
     delayed: function (fn, time) {

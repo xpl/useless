@@ -1846,6 +1846,16 @@ $extensionMethods(Function, {
         };
         return debouncedFn;
     },
+    postpone: $method(function (fn) {
+        var args = _.rest(arguments);
+        if (!fn._postponed) {
+            fn._postponed = true;
+            _.delay(function () {
+                fn._postponed = false;
+                fn.apply(null, args);
+            });
+        }
+    }),
     delay: _.delay,
     delayed: function (fn, time) {
         return function () {
@@ -2262,7 +2272,6 @@ _.extend(_, {
     },
     stream: function (cfg_) {
         var cfg = cfg_ || {};
-        var postponed = false;
         var queue = _.extend([], {
             off: function (fn) {
                 if (this.length) {
@@ -2305,19 +2314,11 @@ _.extend(_, {
         var frontEnd = function (fn) {
             if (_.isFunction(fn)) {
                 read.call(this, fn);
-            } else if (!postponed) {
+            } else {
                 write.apply(this, arguments);
             }
             return arguments.callee;
         };
-        var postpone = $restArg(function () {
-            if (!postponed) {
-                postponed = true;
-                _.delay(_.applies(write, self, arguments).arity0.then(function () {
-                    postponed = false;
-                }));
-            }
-        });
         var once = function (then) {
             read(function (val) {
                 _.off(self, arguments.callee);
@@ -2328,7 +2329,6 @@ _.extend(_, {
             queue: queue,
             once: once,
             off: _.off.asMethod,
-            postpone: postpone,
             read: read,
             write: write
         });
@@ -3893,7 +3893,7 @@ Component = $prototype({
                 defaultValue = name in cfg ? cfg[name] : definitionValue;
                 var observable = this[name + 'Change'] = _.observable();
                 observable.context = this;
-                if (definitionValue && _.isPrototypeInstance(definitionValue)) {
+                if (_.isPrototypeInstance(definitionValue)) {
                     var constructor = definitionValue.constructor;
                     observable.beforeWrite = function (value) {
                         return constructor.isTypeOf(value) ? value : new constructor(value);
@@ -3907,7 +3907,7 @@ Component = $prototype({
                         observable.call(this, x);
                     }
                 });
-                if (defaultValue) {
+                if (defaultValue !== undefined) {
                     observable.write(defaultValue);
                 }
             } else if (Component.isStreamDefinition(def)) {

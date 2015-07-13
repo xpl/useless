@@ -409,6 +409,12 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
+    '(regression) $observableProperty (false)': function () {
+        $assertCalls (1, function (mkay) {
+            $singleton (Component, {
+                foo: $observableProperty (false),
+                init: function () { this.fooChange (mkay) } }) }) },
+
     '(regression) was not able to define inner compos at singleton compos': function () {
         var Foo = $singleton (Component, {
             InnerCompo: $component ({
@@ -531,7 +537,7 @@ Component = $prototype ({
 
                 /*  auto-coercion of incoming values to prototype instance
                  */
-                if (definitionValue && _.isPrototypeInstance (definitionValue)) { var constructor = definitionValue.constructor
+                if (_.isPrototypeInstance (definitionValue)) { var constructor = definitionValue.constructor
                     observable.beforeWrite = function (value) {
                         return constructor.isTypeOf (value) ? value : (new constructor (value)) } }
 
@@ -543,7 +549,7 @@ Component = $prototype ({
 
                 /*  write default value (using explicit .write method, to handle situations where defaultValue is function)
                  */
-                if (defaultValue) {
+                if (defaultValue !== undefined) {
                     observable.write (defaultValue) } }
 
             /*  Expand streams
