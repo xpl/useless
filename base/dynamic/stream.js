@@ -108,7 +108,7 @@ _.tests.stream = {
 
     /*  Need to rewrite it for clariy
      */
-    'all shit': function (testDone) {
+    'all shit': function () {
 
         var obj = {
             somethingReady: _.barrier (),
@@ -168,10 +168,6 @@ _.tests.stream = {
 
         $assertCalls (1, function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
-
-        if (testDone) {
-            testDone ()
-        }
     }
 }
 

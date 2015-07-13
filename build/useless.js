@@ -1506,7 +1506,7 @@ _.deferTest (['type', 'stringify'], function () {
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
 
-                            else if (_.isObject (x) && $atom.isNot (x)) { var isArray = _.isArray (x)
+                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
 
                                 var pretty = cfg.pretty || false
 
@@ -3614,7 +3614,7 @@ _.tests.stream = {
 
     /*  Need to rewrite it for clariy
      */
-    'all shit': function (testDone) {
+    'all shit': function () {
 
         var obj = {
             somethingReady: _.barrier (),
@@ -3674,10 +3674,6 @@ _.tests.stream = {
 
         $assertCalls (1, function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
-
-        if (testDone) {
-            testDone ()
-        }
     }
 }
 

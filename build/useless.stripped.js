@@ -995,7 +995,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg, prevIndent) {
         return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) ? '<prototype>' : '<function>';
     } else if (typeof x === 'string') {
         return _.quoteWith('"', x);
-    } else if (_.isObject(x) && $atom.isNot(x)) {
+    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
         var isArray = _.isArray(x);
         var pretty = cfg.pretty || false;
         if (x.toJSON) {

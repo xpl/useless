@@ -59,7 +59,7 @@ _.deferTest (['type', 'stringify'], function () {
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
 
-                            else if (_.isObject (x) && $atom.isNot (x)) { var isArray = _.isArray (x)
+                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
 
                                 var pretty = cfg.pretty || false
 
