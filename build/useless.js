@@ -308,7 +308,7 @@ if (_.platform ().engine !== 'browser') {
         print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) }) }
 
 _.defineGlobalProperty ('alert2', function (args) {
-    alert (_.map (arguments, _.stringify).join (', ')) })
+    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })
 
 /*  Uncaught exception handling facility
     ======================================================================== */
@@ -929,7 +929,7 @@ _.withTest (['function', 'Y combinator'], function () {
     map/filter/zip/reduce/etc.
 
     Example:    hyperMap = _.hyperOperator (_.unary,  _.map2)
-                hyperZip = _.hyperOperator (_.binary, _.zip2, _.goDeeperOnlyWhenNessesary)
+                hyperZip = _.hyperOperator (_.binary, _.zip2)
  */
 
  (function () {
@@ -1135,6 +1135,18 @@ _.withTest (['function', 'sequence / then'], function () {
 
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
+
+_.makes = function (constructor) {
+    return function () {
+        switch (arguments.length) { /* cant use .apply or .call with 'new' syntax */
+            case 0:
+                return new constructor ()
+            case 1:
+                return new constructor (arguments[0])
+            case 2:
+                return new constructor (arguments[0], arguments[1])
+            default:
+                 throw new Error ('not supported') } } }
 
 _.asString = function (what) { return what + '' }
 
@@ -2931,7 +2943,60 @@ _.withTest (['cps', 'sequence / compose'], function () { $assertCalls (4, functi
                             return _.cps.sequence (functions.slice ().reverse ()) }) })
 
 
+/*  _.cps.sequence with error handling (kind of a simplified Promise)
+    ======================================================================== */
 
+_.deferTest (['cps', 'trySequence'], function () {
+
+    var testErr = new Error ()
+
+    /*  No error
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            _.cps.constant ('foo'),
+            _.appends ('bar').asContinuation],
+                function (result) { $assert (result, 'foobar'); mkay () }) })
+
+    /*  Throwing error
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            function () { throw testErr },
+            function () { $fail }],
+                function (result) { $assert (result === testErr); mkay () }) })
+
+    /*  Returning error to continuation
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            function (then) { then (testErr) },
+            function () { $fail }],
+                function (result) { $assert (result === testErr); mkay () }) })
+
+    /*  Reading error in separate callback
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            function (then) { then (testErr) },
+            function () { $fail }],
+                function (result) { $fail },
+                function (err)    { $assert (err === testErr); mkay () }) })
+
+}, function () {
+
+    _.cps.trySequence = function (functions, then, err) {
+        _.reduceRight (functions, function (a, b) {
+            return function (e) {
+                if (_.isTypeOf (Error, e)) {
+                    return (err || then) (e) }
+                else {
+                    try {
+                        return b.apply (this, _.asArray (arguments).concat (a)) }
+                    catch (e) {
+                        return (err || then) (e) } } } }, then) () }
+
+})
 
 
 /*  Provides infix notation for stdlib utility
@@ -6379,8 +6444,15 @@ _.tests.component = {
 
         $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
+    '(regression) postpone': function (testDone) { $assertCalls (1, function (mkay, done) {
+        $singleton (Component, {
+            foo: function () { mkay (); done (); testDone () },
+            init: function () {
+                this.foo.postpone () } }) }) },
+
     '(regression) properties were evaluated before init': function () {
-        $singleton (Component, { fail: $property (function () { $fail }) }) },
+        $singleton (Component, {
+            fail: $property (function () { $fail }) }) },
 
     '(regression) misinterpretation of definition': function () {
         $singleton (Component, { get: function () { $fail } }) },
@@ -6501,10 +6573,10 @@ Component = $prototype ({
                         get: function ()  { return observable.value },
                         set: function (x) { observable.call (this, x) } })
 
-                /*  write default value (using explicit .write method, to handle situations where defaultValue is function)
+                /*  write default value
                  */
                 if (defaultValue !== undefined) {
-                    observable.write (defaultValue) } }
+                    observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
 
             /*  Expand streams
              */
@@ -6518,7 +6590,7 @@ Component = $prototype ({
 
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
-                    stream (defaultListener) } }
+                    stream (this.$ (defaultListener)) } }
 
             /*  Expand $bindable
              */

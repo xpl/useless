@@ -425,8 +425,15 @@ _.tests.component = {
 
         $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
+    '(regression) postpone': function (testDone) { $assertCalls (1, function (mkay, done) {
+        $singleton (Component, {
+            foo: function () { mkay (); done (); testDone () },
+            init: function () {
+                this.foo.postpone () } }) }) },
+
     '(regression) properties were evaluated before init': function () {
-        $singleton (Component, { fail: $property (function () { $fail }) }) },
+        $singleton (Component, {
+            fail: $property (function () { $fail }) }) },
 
     '(regression) misinterpretation of definition': function () {
         $singleton (Component, { get: function () { $fail } }) },
@@ -547,10 +554,10 @@ Component = $prototype ({
                         get: function ()  { return observable.value },
                         set: function (x) { observable.call (this, x) } })
 
-                /*  write default value (using explicit .write method, to handle situations where defaultValue is function)
+                /*  write default value
                  */
                 if (defaultValue !== undefined) {
-                    observable.write (defaultValue) } }
+                    observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
 
             /*  Expand streams
              */
@@ -564,7 +571,7 @@ Component = $prototype ({
 
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
-                    stream (defaultListener) } }
+                    stream (this.$ (defaultListener)) } }
 
             /*  Expand $bindable
              */

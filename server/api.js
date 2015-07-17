@@ -80,13 +80,13 @@ module.exports = $trait ({
 
     afterInit: function (then) {
 
+        if (_.isFunction (this.api)) {
+            this.defineAPIs (this.api ()) }
+
         if (this.apiDebug) {
             log.write ('\nCurrent API schema:', '\n' + log.thinLine, '\n')
             APISchema.prettyPrint (this.apiSchema)
             log.write (log.thinLine, '\n') }
-
-        if (_.isFunction (this.api)) {
-            this.defineAPIs (this.api ()) }
 
         then () },
 

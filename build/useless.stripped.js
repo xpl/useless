@@ -222,6 +222,7 @@ if (_.platform().engine !== 'browser') {
 }
 _.defineGlobalProperty('alert2', function (args) {
     alert(_.map(arguments, _.stringify).join(', '));
+    return arguments[0];
 });
 var globalUncaughtExceptionHandler = function (e) {
     var chain = arguments.callee.chain;
@@ -775,6 +776,20 @@ _.seq = _.sequence;
 _.then = function (fn1, fn2) {
     return function (args) {
         return fn2.call(this, fn1.apply(this, arguments));
+    };
+};
+_.makes = function (constructor) {
+    return function () {
+        switch (arguments.length) {
+        case 0:
+            return new constructor();
+        case 1:
+            return new constructor(arguments[0]);
+        case 2:
+            return new constructor(arguments[0], arguments[1]);
+        default:
+            throw new Error('not supported');
+        }
     };
 };
 _.asString = function (what) {
@@ -1740,6 +1755,21 @@ _.cps.compose = $restArg(function (arr) {
     var functions = _.isArray(arr) && arr || _.asArray(arguments);
     return _.cps.sequence(functions.slice().reverse());
 });
+_.cps.trySequence = function (functions, then, err) {
+    _.reduceRight(functions, function (a, b) {
+        return function (e) {
+            if (_.isTypeOf(Error, e)) {
+                return (err || then)(e);
+            } else {
+                try {
+                    return b.apply(this, _.asArray(arguments).concat(a));
+                } catch (e) {
+                    return (err || then)(e);
+                }
+            }
+        };
+    }, then)();
+};
 _([
     'method',
     'property',
@@ -3908,14 +3938,14 @@ Component = $prototype({
                     }
                 });
                 if (defaultValue !== undefined) {
-                    observable.write(defaultValue);
+                    observable(_.isFunction(defaultValue) ? this.$(defaultValue) : defaultValue);
                 }
             } else if (Component.isStreamDefinition(def)) {
                 var stream = (def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(this[name]);
                 this[name] = _.extend(stream, { context: this });
                 var defaultListener = cfg[name];
                 if (defaultListener) {
-                    stream(defaultListener);
+                    stream(this.$(defaultListener));
                 }
             }
             if (def.$bindable) {

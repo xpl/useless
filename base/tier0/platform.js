@@ -48,4 +48,4 @@ if (_.platform ().engine !== 'browser') {
         print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) }) }
 
 _.defineGlobalProperty ('alert2', function (args) {
-    alert (_.map (arguments, _.stringify).join (', ')) })
+    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })

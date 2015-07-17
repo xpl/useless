@@ -350,3 +350,57 @@ _.withTest (['cps', 'sequence / compose'], function () { $assertCalls (4, functi
                             return _.cps.sequence (functions.slice ().reverse ()) }) })
 
 
+/*  _.cps.sequence with error handling (kind of a simplified Promise)
+    ======================================================================== */
+
+_.deferTest (['cps', 'trySequence'], function () {
+
+    var testErr = new Error ()
+
+    /*  No error
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            _.cps.constant ('foo'),
+            _.appends ('bar').asContinuation],
+                function (result) { $assert (result, 'foobar'); mkay () }) })
+
+    /*  Throwing error
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            function () { throw testErr },
+            function () { $fail }],
+                function (result) { $assert (result === testErr); mkay () }) })
+
+    /*  Returning error to continuation
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            function (then) { then (testErr) },
+            function () { $fail }],
+                function (result) { $assert (result === testErr); mkay () }) })
+
+    /*  Reading error in separate callback
+     */
+    $assertCalls (1, function (mkay) {
+        _.cps.trySequence ([
+            function (then) { then (testErr) },
+            function () { $fail }],
+                function (result) { $fail },
+                function (err)    { $assert (err === testErr); mkay () }) })
+
+}, function () {
+
+    _.cps.trySequence = function (functions, then, err) {
+        _.reduceRight (functions, function (a, b) {
+            return function (e) {
+                if (_.isTypeOf (Error, e)) {
+                    return (err || then) (e) }
+                else {
+                    try {
+                        return b.apply (this, _.asArray (arguments).concat (a)) }
+                    catch (e) {
+                        return (err || then) (e) } } } }, then) () }
+
+})

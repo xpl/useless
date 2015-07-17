@@ -192,13 +192,6 @@ $.fn.extend ({
             (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
             (cfg.scale ? ('scale(' + cfg.scale.x + ',' + cfg.scale.y + ')') : '')) },
 
-    disappear: function (fade) {
-        if (fade) {
-            return this.addClass ('disappear').on ('transitionend', function () {
-                $(this).remove () }) }
-        else {
-            return this.remove () } },
-
     outerExtent:  function () { return new Vec2 (this.outerWidth (), this.outerHeight ()) },
     extent:       function () { return new Vec2 (this.width (),      this.height ()) },
     innerExtent:  function () { return new Vec2 (this.innerWidth (), this.innerHeight ()) },

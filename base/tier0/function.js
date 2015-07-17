@@ -94,7 +94,7 @@ _.withTest (['function', 'Y combinator'], function () {
     map/filter/zip/reduce/etc.
 
     Example:    hyperMap = _.hyperOperator (_.unary,  _.map2)
-                hyperZip = _.hyperOperator (_.binary, _.zip2, _.goDeeperOnlyWhenNessesary)
+                hyperZip = _.hyperOperator (_.binary, _.zip2)
  */
 
  (function () {
