@@ -6,6 +6,7 @@ $(document).ready (function () {
 	// conditional css
 	$('html').addClass (_.platform ().system)
 	$('html').addClass (_.platform ().device)
+	$('html').toggleClass ('touch', _.platform ().touch || false)
 
 	// somehow on iPad whole page gets scrolled by ~20px down on load
 	$(document.body).scrollTop (0)
