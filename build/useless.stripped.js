@@ -3918,54 +3918,56 @@ Component = $prototype({
             return Component.isStreamDefinition(componentDefinition[k]);
         }, this));
         _.each(componentDefinition, function (def, name) {
-            if (def.$observableProperty) {
-                var definitionValue = this[name];
-                defaultValue = name in cfg ? cfg[name] : definitionValue;
-                var observable = this[name + 'Change'] = _.observable();
-                observable.context = this;
-                if (_.isPrototypeInstance(definitionValue)) {
-                    var constructor = definitionValue.constructor;
-                    observable.beforeWrite = function (value) {
-                        return constructor.isTypeOf(value) ? value : new constructor(value);
-                    };
-                }
-                _.defineProperty(this, name, {
-                    get: function () {
-                        return observable.value;
-                    },
-                    set: function (x) {
-                        observable.call(this, x);
+            if (def !== undefined) {
+                if (def.$observableProperty) {
+                    var definitionValue = this[name];
+                    defaultValue = name in cfg ? cfg[name] : definitionValue;
+                    var observable = this[name + 'Change'] = _.observable();
+                    observable.context = this;
+                    if (_.isPrototypeInstance(definitionValue)) {
+                        var constructor = definitionValue.constructor;
+                        observable.beforeWrite = function (value) {
+                            return constructor.isTypeOf(value) ? value : new constructor(value);
+                        };
                     }
-                });
-                if (defaultValue !== undefined) {
-                    observable(_.isFunction(defaultValue) ? this.$(defaultValue) : defaultValue);
+                    _.defineProperty(this, name, {
+                        get: function () {
+                            return observable.value;
+                        },
+                        set: function (x) {
+                            observable.call(this, x);
+                        }
+                    });
+                    if (defaultValue !== undefined) {
+                        observable(_.isFunction(defaultValue) ? this.$(defaultValue) : defaultValue);
+                    }
+                } else if (Component.isStreamDefinition(def)) {
+                    var stream = (def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(this[name]);
+                    this[name] = _.extend(stream, { context: this });
+                    var defaultListener = cfg[name];
+                    if (defaultListener) {
+                        stream(this.$(defaultListener));
+                    }
                 }
-            } else if (Component.isStreamDefinition(def)) {
-                var stream = (def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(this[name]);
-                this[name] = _.extend(stream, { context: this });
-                var defaultListener = cfg[name];
-                if (defaultListener) {
-                    stream(this.$(defaultListener));
+                if (def.$bindable) {
+                    if (_.hasAsserts) {
+                        $assert(_.isFunction(this[name]));
+                    }
+                    this[name] = _.bindable(this[name], this);
                 }
-            }
-            if (def.$bindable) {
-                if (_.hasAsserts) {
-                    $assert(_.isFunction(this[name]));
+                if (def.$debounce) {
+                    var fn = this[name];
+                    this[name] = _.debounce(fn, fn.wait || 500, fn.immediate);
                 }
-                this[name] = _.bindable(this[name], this);
-            }
-            if (def.$debounce) {
-                var fn = this[name];
-                this[name] = _.debounce(fn, fn.wait || 500, fn.immediate);
-            }
-            if (def.$throttle) {
-                var fn = this[name];
-                this[name] = _.throttle(fn, fn.wait || 500, _.pick(fn, 'leading', 'trailing'));
-            }
-            if (def.$memoize) {
-                this[name] = _.memoize(this[name]);
-            } else if (def.$memoizeCPS) {
-                this[name] = _.cps.memoize(this[name]);
+                if (def.$throttle) {
+                    var fn = this[name];
+                    this[name] = _.throttle(fn, fn.wait || 500, _.pick(fn, 'leading', 'trailing'));
+                }
+                if (def.$memoize) {
+                    this[name] = _.memoize(this[name]);
+                } else if (def.$memoizeCPS) {
+                    this[name] = _.cps.memoize(this[name]);
+                }
             }
         }, this);
         _.intercept(this, 'init', function (init) {
@@ -3977,7 +3979,7 @@ Component = $prototype({
             ]).call(this);
         });
         _.each(componentDefinition, function (def, name) {
-            if (def.$alias) {
+            if (def && def.$alias) {
                 this[name] = this[Tags.unwrap(def)];
             }
         }, this);
@@ -4023,7 +4025,7 @@ Component = $prototype({
         this.initialized(true);
         _.each(this.constructor.$definition, function (def, name) {
             name += 'Change';
-            if (def.$observableProperty) {
+            if (def && def.$observableProperty) {
                 var defaultListener = cfg[name];
                 if (_.isFunction(defaultListener)) {
                     this[name](defaultListener);

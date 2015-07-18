@@ -431,6 +431,8 @@ _.tests.component = {
             init: function () {
                 this.foo.postpone () } }) }) },
 
+    '(regression) undefined at definition': function () { $singleton (Component, { fail: undefined }) },
+
     '(regression) properties were evaluated before init': function () {
         $singleton (Component, {
             fail: $property (function () { $fail }) }) },
@@ -531,7 +533,7 @@ Component = $prototype ({
         /*  Expand macros
             TODO: execute this substitution at $prototype code-gen level, not at instance level
          */
-        _.each (componentDefinition, function (def, name) {
+        _.each (componentDefinition, function (def, name) { if (def !== undefined) {
 
             /*  Expand $observableProperty
              */
@@ -593,7 +595,7 @@ Component = $prototype ({
                  if (def.$memoize) {
                 this[name] = _.memoize (this[name]) }
             else if (def.$memoizeCPS) {
-                this[name] = _.cps.memoize (this[name]) } }, this)
+                this[name] = _.cps.memoize (this[name]) } } }, this)
 
 
         /*  Bind stuff to init (either in CPS, or in sequential flow control style)
@@ -605,7 +607,7 @@ Component = $prototype ({
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
         _.each (componentDefinition, function (def, name) {
-            if (def.$alias) {
+            if (def && def.$alias) {
                 this[name] = this[Tags.unwrap (def)] } }, this)
 
 
@@ -679,7 +681,7 @@ Component = $prototype ({
             and they're might get called at init, so their default values get bound before init.
          */
         _.each (this.constructor.$definition, function (def, name) { name += 'Change'
-            if (def.$observableProperty) { var defaultListener = cfg[name]
+            if (def && def.$observableProperty) { var defaultListener = cfg[name]
                 if (_.isFunction (defaultListener)) {
                     this[name] (defaultListener) } } }, this) },
     
