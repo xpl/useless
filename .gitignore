@@ -12,3 +12,5 @@ build/useless.micro.js
 build/useless.micro.min.js
 
 build/useless.micro.stripped.js
+
+npm-debug.log
