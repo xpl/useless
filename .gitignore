@@ -3,14 +3,5 @@ build/es-test.js
 build/es-test.min.js
 build/es-test.stripped.js
 es-test.js
-
-
 example2.js
-
-build/useless.micro.js
-
-build/useless.micro.min.js
-
-build/useless.micro.stripped.js
-
 npm-debug.log
