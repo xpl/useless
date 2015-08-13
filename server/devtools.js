@@ -2,9 +2,12 @@
     exec = require ('child_process').exec
 */
 
-var fs = require ('fs')
+var fs      = require ('fs'),
+    process = require ('process')
 
 module.exports = $trait ({
+
+    sourceRoot: process.cwd (),
 
     api: function () {
 
@@ -37,10 +40,10 @@ module.exports = $trait ({
     /*  Access to source code of server (requires developer privileges)
      */
     readSource: function (context) {
-        _.readSource (context.env.file, function (text) { context.success (text) }) },
+        _.readSource (path.join (this.sourceRoot, context.env.file), function (text) { context.success (text) }) },
         
     writeSource: function (context) {
-        _.readSource (context.env.file, function (text) { console.log (text)
+        _.readSource (path.join (this.sourceRoot, context.env.file), function (text) { console.log (text)
             try { fs.mkdirSync (context.env.file + '.backups') }
             catch (e) {}
             fs.writeFileSync (context.env.file + '.backups/' + Date.now (), text, { encoding: 'utf8' })
