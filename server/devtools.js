@@ -39,11 +39,13 @@ module.exports = $trait ({
 
     /*  Access to source code of server (requires developer privileges)
      */
-    readSource: function (context) {
+    readSource: function (context) { log.info ('Reading', context.env.file)
+
         _.readSource (path.join (this.sourceRoot, context.env.file), function (text) { context.success (text) }) },
         
-    writeSource: function (context) {
-        _.readSource (path.join (this.sourceRoot, context.env.file), function (text) { console.log (text)
+    writeSource: function (context) { log.warn ('Writing', context.env.file)
+
+        _.readSource (path.join (this.sourceRoot, context.env.file), function (text) {
             try { fs.mkdirSync (context.env.file + '.backups') }
             catch (e) {}
             fs.writeFileSync (context.env.file + '.backups/' + Date.now (), text, { encoding: 'utf8' })

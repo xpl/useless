@@ -4,7 +4,9 @@ var http    = require ('http'),
 
 module.exports = $trait ({
 
-    beforeInit: function (then) { log.info ('Starting HTTP')
+    beforeInit: function (then) { var portNumber = this.port || 1333
+
+        log.info ('Starting HTTP @ localhost:' + portNumber)
 
         this.httpServer = http
             .createServer (this.$ (function (request, response) {
