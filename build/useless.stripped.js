@@ -2631,6 +2631,36 @@ _.rescale = function (v, from, to, opts) {
 _.sqr = function (x) {
     return x * x;
 };
+Intersect = {
+    rayCircle: function (origin, d, center, r) {
+        var f = origin.sub(center);
+        var a = d.dot(d);
+        var b = 2 * f.dot(d);
+        var c = f.dot(f) - r * r;
+        var discriminant = b * b - 4 * a * c;
+        if (discriminant < 0) {
+            return undefined;
+        } else {
+            discriminant = Math.sqrt(discriminant);
+            var t1 = (-b - discriminant) / (2 * a);
+            var t2 = (-b + discriminant) / (2 * a);
+            if (t1 >= 0 && t1 <= 1) {
+                return {
+                    time: t1,
+                    where: origin.add(d.scale(t1))
+                };
+            }
+            if (t2 >= 0 && t2 <= 1) {
+                return {
+                    time: t2,
+                    where: origin.add(d.scale(t2)),
+                    insideOut: true
+                };
+            }
+            return undefined;
+        }
+    }
+};
 Vec2 = $prototype({
     $static: {
         zero: $property(function () {
@@ -2648,9 +2678,6 @@ Vec2 = $prototype({
         },
         fromLeftTop: $alias('fromLT'),
         fromWidthHeight: $alias('fromWH'),
-        dot: function (a, b) {
-            return a.x * b.x + a.y * b.y;
-        },
         lerp: function (t, a, b) {
             return new Vec2(_.lerp(t, a.x, b.x), _.lerp(t, a.y, b.y));
         },
@@ -2684,6 +2711,9 @@ Vec2 = $prototype({
             return new Vec2(this.x + a, this.y + b);
         }
     },
+    dot: function (other) {
+        return this.x * other.x + this.y * other.y;
+    },
     sub: function (other) {
         return new Vec2(this.x - other.x, this.y - other.y);
     },
@@ -2710,21 +2740,24 @@ Vec2 = $prototype({
     }),
     asLeftTop: $property(function () {
         return {
-            left: Math.floor(this.x),
-            top: Math.floor(this.y)
+            left: this.x,
+            top: this.y
         };
     }),
     asLeftTopMargin: $property(function () {
         return {
-            marginLeft: Math.floor(this.x),
-            marginTop: Math.floor(this.y)
+            marginLeft: this.x,
+            marginTop: this.y
         };
     }),
     asWidthHeight: $property(function () {
         return {
-            width: Math.floor(this.x),
-            height: Math.floor(this.y)
+            width: this.x,
+            height: this.y
         };
+    }),
+    asTranslate: $property(function () {
+        return 'translate(' + this.x + ' ' + this.y + ')';
     }),
     floor: $property(function () {
         return new Vec2(Math.floor(this.x), Math.floor(this.y));
@@ -2745,7 +2778,7 @@ Vec2 = $prototype({
         var l2 = wv.lengthSquared;
         if (l2 == 0)
             return v;
-        var t = Vec2.dot(this.sub(v), wv) / l2;
+        var t = this.sub(v).dot(wv) / l2;
         if (t < 0)
             return v;
         if (t > 1)
@@ -2845,19 +2878,17 @@ BBox = $prototype({
         var sides = _.extend(pt.x > this.right ? { right: true } : {}, pt.x < this.left ? { left: true } : {}, pt.y > this.bottom ? { bottom: true } : {}, pt.y < this.top ? { top: true } : {});
         return _.extend(sides, !sides.left && !sides.right && !sides.bottom && !sides.top ? { inside: true } : {});
     },
-    classifyRay: function (pos, delta, paddingX, paddingY) {
-        paddingX = paddingX || 0;
-        paddingY = paddingY || 0;
+    classifyRay: function (origin, delta, cornerRadius) {
         var half = this.size.half;
-        var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+        var farTime, farTimeX, farTimeY, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
         scaleX = 1 / delta.x;
         scaleY = 1 / delta.y;
         signX = Math.sign(scaleX);
         signY = Math.sign(scaleY);
-        nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
-        nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
-        farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
-        farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
+        nearTimeX = (this.x - signX * half.x - origin.x) * scaleX;
+        nearTimeY = (this.y - signY * half.y - origin.y) * scaleY;
+        farTimeX = (this.x + signX * half.x - origin.x) * scaleX;
+        farTimeY = (this.y + signY * half.y - origin.y) * scaleY;
         if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
             return undefined;
         }
@@ -2873,7 +2904,26 @@ BBox = $prototype({
             hit.normal = new Vec2(0, -signY);
         }
         hit.delta = delta.scale(hit.time);
-        hit.where = pos.add(hit.delta);
+        hit.where = origin.add(hit.delta);
+        if (cornerRadius) {
+            var inner = this.grow(-cornerRadius);
+            if (hit.where.x > inner.right) {
+                if (hit.where.y < inner.top) {
+                    hit = Intersect.rayCircle(origin, delta, inner.rightTop, cornerRadius);
+                } else if (hit.where.y > inner.bottom) {
+                    hit = Intersect.rayCircle(origin, delta, inner.rightBottom, cornerRadius);
+                }
+            } else if (hit.where.x < inner.left) {
+                if (hit.where.y < inner.top) {
+                    hit = Intersect.rayCircle(origin, delta, inner.leftTop, cornerRadius);
+                } else if (hit.where.y > inner.bottom) {
+                    hit = Intersect.rayCircle(origin, delta, inner.leftBottom, cornerRadius);
+                }
+            }
+            if (hit && hit.insideOut) {
+                hit.where = origin;
+            }
+        }
         return hit;
     },
     nearestPointTo: function (pt, cornerRadius) {
@@ -2910,8 +2960,14 @@ BBox = $prototype({
     leftTop: $property(function () {
         return new Vec2(this.left, this.top);
     }),
+    leftBottom: $property(function () {
+        return new Vec2(this.left, this.bottom);
+    }),
     rightBottom: $property(function () {
         return new Vec2(this.right, this.bottom);
+    }),
+    rightTop: $property(function () {
+        return new Vec2(this.right, this.top);
     }),
     left: $property(function () {
         return this.x - this.width / 2;
@@ -2938,7 +2994,10 @@ BBox = $prototype({
         return new BBox(this.x - (width - this.width) / 2, this.y, width, this.height);
     },
     grow: function (amount) {
-        return new BBox(this.x, this.y, this.width + amount, this.height + amount);
+        return new BBox(this.x, this.y, this.width + amount * 2, this.height + amount * 2);
+    },
+    shrink: function (amount) {
+        return this.grow(-amount);
     },
     area: $property(function () {
         return Math.abs(this.width * this.height);
@@ -4515,6 +4574,36 @@ _.rescale = function (v, from, to, opts) {
 _.sqr = function (x) {
     return x * x;
 };
+Intersect = {
+    rayCircle: function (origin, d, center, r) {
+        var f = origin.sub(center);
+        var a = d.dot(d);
+        var b = 2 * f.dot(d);
+        var c = f.dot(f) - r * r;
+        var discriminant = b * b - 4 * a * c;
+        if (discriminant < 0) {
+            return undefined;
+        } else {
+            discriminant = Math.sqrt(discriminant);
+            var t1 = (-b - discriminant) / (2 * a);
+            var t2 = (-b + discriminant) / (2 * a);
+            if (t1 >= 0 && t1 <= 1) {
+                return {
+                    time: t1,
+                    where: origin.add(d.scale(t1))
+                };
+            }
+            if (t2 >= 0 && t2 <= 1) {
+                return {
+                    time: t2,
+                    where: origin.add(d.scale(t2)),
+                    insideOut: true
+                };
+            }
+            return undefined;
+        }
+    }
+};
 Vec2 = $prototype({
     $static: {
         zero: $property(function () {
@@ -4532,9 +4621,6 @@ Vec2 = $prototype({
         },
         fromLeftTop: $alias('fromLT'),
         fromWidthHeight: $alias('fromWH'),
-        dot: function (a, b) {
-            return a.x * b.x + a.y * b.y;
-        },
         lerp: function (t, a, b) {
             return new Vec2(_.lerp(t, a.x, b.x), _.lerp(t, a.y, b.y));
         },
@@ -4568,6 +4654,9 @@ Vec2 = $prototype({
             return new Vec2(this.x + a, this.y + b);
         }
     },
+    dot: function (other) {
+        return this.x * other.x + this.y * other.y;
+    },
     sub: function (other) {
         return new Vec2(this.x - other.x, this.y - other.y);
     },
@@ -4594,21 +4683,24 @@ Vec2 = $prototype({
     }),
     asLeftTop: $property(function () {
         return {
-            left: Math.floor(this.x),
-            top: Math.floor(this.y)
+            left: this.x,
+            top: this.y
         };
     }),
     asLeftTopMargin: $property(function () {
         return {
-            marginLeft: Math.floor(this.x),
-            marginTop: Math.floor(this.y)
+            marginLeft: this.x,
+            marginTop: this.y
         };
     }),
     asWidthHeight: $property(function () {
         return {
-            width: Math.floor(this.x),
-            height: Math.floor(this.y)
+            width: this.x,
+            height: this.y
         };
+    }),
+    asTranslate: $property(function () {
+        return 'translate(' + this.x + ' ' + this.y + ')';
     }),
     floor: $property(function () {
         return new Vec2(Math.floor(this.x), Math.floor(this.y));
@@ -4629,7 +4721,7 @@ Vec2 = $prototype({
         var l2 = wv.lengthSquared;
         if (l2 == 0)
             return v;
-        var t = Vec2.dot(this.sub(v), wv) / l2;
+        var t = this.sub(v).dot(wv) / l2;
         if (t < 0)
             return v;
         if (t > 1)
@@ -4729,19 +4821,17 @@ BBox = $prototype({
         var sides = _.extend(pt.x > this.right ? { right: true } : {}, pt.x < this.left ? { left: true } : {}, pt.y > this.bottom ? { bottom: true } : {}, pt.y < this.top ? { top: true } : {});
         return _.extend(sides, !sides.left && !sides.right && !sides.bottom && !sides.top ? { inside: true } : {});
     },
-    classifyRay: function (pos, delta, paddingX, paddingY) {
-        paddingX = paddingX || 0;
-        paddingY = paddingY || 0;
+    classifyRay: function (origin, delta, cornerRadius) {
         var half = this.size.half;
-        var farTime, farTimeX, farTimeY, hit, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+        var farTime, farTimeX, farTimeY, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
         scaleX = 1 / delta.x;
         scaleY = 1 / delta.y;
         signX = Math.sign(scaleX);
         signY = Math.sign(scaleY);
-        nearTimeX = (this.x - signX * (half.x + paddingX) - pos.x) * scaleX;
-        nearTimeY = (this.y - signY * (half.y + paddingY) - pos.y) * scaleY;
-        farTimeX = (this.x + signX * (half.x + paddingX) - pos.x) * scaleX;
-        farTimeY = (this.y + signY * (half.y + paddingY) - pos.y) * scaleY;
+        nearTimeX = (this.x - signX * half.x - origin.x) * scaleX;
+        nearTimeY = (this.y - signY * half.y - origin.y) * scaleY;
+        farTimeX = (this.x + signX * half.x - origin.x) * scaleX;
+        farTimeY = (this.y + signY * half.y - origin.y) * scaleY;
         if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
             return undefined;
         }
@@ -4757,7 +4847,26 @@ BBox = $prototype({
             hit.normal = new Vec2(0, -signY);
         }
         hit.delta = delta.scale(hit.time);
-        hit.where = pos.add(hit.delta);
+        hit.where = origin.add(hit.delta);
+        if (cornerRadius) {
+            var inner = this.grow(-cornerRadius);
+            if (hit.where.x > inner.right) {
+                if (hit.where.y < inner.top) {
+                    hit = Intersect.rayCircle(origin, delta, inner.rightTop, cornerRadius);
+                } else if (hit.where.y > inner.bottom) {
+                    hit = Intersect.rayCircle(origin, delta, inner.rightBottom, cornerRadius);
+                }
+            } else if (hit.where.x < inner.left) {
+                if (hit.where.y < inner.top) {
+                    hit = Intersect.rayCircle(origin, delta, inner.leftTop, cornerRadius);
+                } else if (hit.where.y > inner.bottom) {
+                    hit = Intersect.rayCircle(origin, delta, inner.leftBottom, cornerRadius);
+                }
+            }
+            if (hit && hit.insideOut) {
+                hit.where = origin;
+            }
+        }
         return hit;
     },
     nearestPointTo: function (pt, cornerRadius) {
@@ -4794,8 +4903,14 @@ BBox = $prototype({
     leftTop: $property(function () {
         return new Vec2(this.left, this.top);
     }),
+    leftBottom: $property(function () {
+        return new Vec2(this.left, this.bottom);
+    }),
     rightBottom: $property(function () {
         return new Vec2(this.right, this.bottom);
+    }),
+    rightTop: $property(function () {
+        return new Vec2(this.right, this.top);
     }),
     left: $property(function () {
         return this.x - this.width / 2;
@@ -4822,7 +4937,10 @@ BBox = $prototype({
         return new BBox(this.x - (width - this.width) / 2, this.y, width, this.height);
     },
     grow: function (amount) {
-        return new BBox(this.x, this.y, this.width + amount, this.height + amount);
+        return new BBox(this.x, this.y, this.width + amount * 2, this.height + amount * 2);
+    },
+    shrink: function (amount) {
+        return this.grow(-amount);
     },
     area: $property(function () {
         return Math.abs(this.width * this.height);

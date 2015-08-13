@@ -1,0 +1,61 @@
+<html>
+	<head>
+		<title>Cubic</title>
+		<script src="lib/underscore-min.js"></script>
+		<script src="lib/jquery-2.0.3.min.js"></script>
+		<script src="../build/useless.js"></script>
+		<script src="../client/jQueryPlus.js"></script>
+
+		<script src="../client/UI.error.js"></script>
+		<link rel="stylesheet" href="../client/UI.error.css" type="text/css">
+
+		<script src="../client/boot.js"></script>
+	</head>
+	<style>
+		body     { position: relative; background: #cccccc; width: 800px; height: 600px; padding: 0; margin: 0; }
+		.rect    { position: absolute; border: 1px solid black; border-radius: 50px; width: 100px; height: 100px; left: 200px; top: 200px; }
+		.handle  { position: absolute; width: 16px; height: 16px; border-radius: 16px; margin-top: -8px; margin-left: -8px; }
+		.handle2 { top:  253px;  left: 250px; background: red;   }
+		.handle1 { top:  162px;  left: 425px; background: blue;  }
+		.handle3 { background: green; }
+
+		.handle3.inside-out { background: yellow; }
+
+	</style>
+	<script>
+		$(document).ready (function () {
+
+			var bbox   = $('.rect').outerBBox ()
+
+			var update = function () {
+				var pt1 = $('.handle1').outerBBox ().center
+				var pt2 = $('.handle2').outerBBox ().center
+
+				var hit = Intersect.rayCircle (pt1, pt2.sub (pt1), bbox.center, bbox.size.half.x)
+
+				if (hit) {
+					$('.handle3').show ().css (hit.where.asLeftTop).toggleClass ('inside-out', hit.insideOut || false) }
+				else {
+					$('.handle3').hide () } }
+
+			update ()
+
+			$('.handle').each (function (i, handle) {
+
+				$(handle).drag ({
+
+					start: function () {
+							return this.outerBBox ().center },
+
+					move: function (memo, offset) {
+							update ()
+							this.css (memo.add (offset).asLeftTop) } }) }) })
+
+		</script>
+	<body>
+		<div class="rect"></div>
+		<div class="handle handle1"></div>
+		<div class="handle handle2"></div>
+		<div class="handle handle3"></div>
+	</body>
+</html>

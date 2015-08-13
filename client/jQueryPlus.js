@@ -195,7 +195,7 @@ $.fn.extend ({
     outerExtent:  function () { return new Vec2 (this.outerWidth (), this.outerHeight ()) },
     extent:       function () { return new Vec2 (this.width (),      this.height ()) },
     innerExtent:  function () { return new Vec2 (this.innerWidth (), this.innerHeight ()) },
-    outerBBox:    function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ())) },
+    outerBBox:    function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ().asWidthHeight)) },
 
     leftTop:      function () { return new Vec2.fromLT (this.offset ()) },
 
