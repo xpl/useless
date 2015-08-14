@@ -111,46 +111,55 @@ _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPat
 
 /*  Source code access (cross-platform)
  */
-_.readSourceLine = function (file, line, then) {
-    _.readSource (file, function (data) {
-        then ((data.split ('\n')[line] || '').trimmed) }) }
+SourceFiles = $singleton (Component, {
 
+    apiConfig: {
+        /* port:      1338,
+           hostname: 'locahost',
+           protocol: 'http:' */ },
 
-_.readSource = _.cps.memoize (function (file, then) {
-                                if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
-                                    try {
-                                        if (Platform.NodeJS) {
-                                            then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
-                                        else {
-                                            jQuery.get (file, then, 'text') } }
-                                    catch (e) {
-                                        then ('') } }
-                                else {
-                                    then ('') } })
+    line: function (file, line, then) {
+        SourceFiles.read (file, function (data) {
+            then ((data.split ('\n')[line] || '').trimmed) }) },
 
-/*  Requires APIs defined in server/devtools.js (a server trait)
+    read: $memoizeCPS (function (file, then) {
+        if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
+            try {
+                if (Platform.NodeJS) {
+                    then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
+                else {
+                    jQuery.get (file, then, 'text') } }
+            catch (e) {
+                then ('') } }
+        else {
+            then ('') } }),
+
+    write: function (file, text, then) {
+
+        if (Platform.NodeJS) {
+
+            this.read (file, function (prevText) { // save previous version at <file>.backups/<date>
+
+                var fs   = require ('fs'),
+                    opts = { encoding: 'utf8' }
+
+          try { fs.mkdirSync     (file + '.backups') } catch (e) {}
+                fs.writeFileSync (file + '.backups/' + Date.now (), prevText, opts)
+                fs.writeFileSync (file,                             text,     opts)
+
+                then () }) }
+            
+        else {
+            API.post ('source/' + file, _.extend2 ({}, this.apiConfig, {
+                what:    { text: text },
+                failure: UI.error,
+                success: function () { log.ok (file, '— successfully saved'); if (then) { then () } } })) }} })
+
+/*  Old API
  */
-_.writeSource = function (file, text, cfgOrThen) { var then = (_.isFunction       (cfgOrThen) ? cfgOrThen : cfgOrThen.success) || _.identity
-                                                   var cfg  = (_.isStrictlyObject (cfgOrThen) && cfgOrThen) || {}
-
-    if (Platform.NodeJS) {
-
-        _.readSource (file, function (prevText) { // save previous version at <file>.backups/<date>
-
-            var fs   = require ('fs'),
-                opts = { encoding: 'utf8' }
-
-      try { fs.mkdirSync     (file + '.backups') } catch (e) {}
-            fs.writeFileSync (file + '.backups/' + Date.now (), prevText, opts)
-            fs.writeFileSync (file,                             text,     opts)
-
-            then () }) }
-        
-    else {
-        API.post ('source/' + file, _.extend2 ({}, cfg, {
-            what:    { text: text },
-            failure: cfg.failure || UI.error,
-            success: function () { log.ok (file, '— successfully saved'); if (then) { then () } } })) } }
+_.readSourceLine = SourceFiles.line
+_.readSource     = SourceFiles.read
+_.writeSource    = SourceFiles.write
 
 
 /*  Callstack API

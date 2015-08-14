@@ -19,14 +19,14 @@ API = $singleton (Component, {
 	request: function (type, path, cfg, then) {
 
 		var prePath = (cfg.protocol || cfg.hostname || cfg.port) ?
-						 	((cfg.protocol || window.location.protocol) + '://' +
+						 	((cfg.protocol || window.location.protocol) + '//' +
 						 	 (cfg.hostname || window.location.hostname) + ':' +
 						 	 (cfg.port     || window.location.port)) : ''
 
 		var success = cfg.success   || _.identity
 		var progress = cfg.progress || _.identity
 		var failure = cfg.failure   || _.identity
-
+		
 		var retry = Http.request (type, prePath + '/api/' + path, _.extend ({}, cfg, {
 			data: cfg.data || (cfg.what && JSON.stringify (cfg.what)),
 			dataType: cfg.what ? 'json' : (cfg.data || undefined),

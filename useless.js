@@ -105,31 +105,26 @@ _ = (function () {
         iOS:    _.platform ().system === 'iOS' } })
 
 
-/*  Otherwise basic utility (actually a bug-ridden clumsy legacy code)
+/*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/math')      // clumsy math utils
-    $include ('./base/Parse')     // clumsy parsing utils
-    $include ('./base/Format')    // clumsy formatting utils
-    $include ('./base/Sort')      // (this one is normal)
+    $include ('./base/Parse')           // clumsy parsing utils
+    $include ('./base/Format')          // clumsy formatting utils
+    $include ('./base/Sort')            // (this one is normal)
+
+    $include ('./base/log')             // logging facility
+    $include ('./base/concurrency')     // concurrency utility
+    $include ('./base/math')            // math utility
+    $include ('./base/Component')       // component facility
+    $include ('./base/Rx')              // regular expressions helper
 
 
 /*  Self-awareness utils
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/reflection')  // callstack access + source code access
-    $include ('./base/profiling')   // performance measurement utility
-
-
-/*  Otherwise basic utility
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $include ('./base/log')             // logging facility
-    $include ('./base/concurrency')     // concurrency utility
-    $include ('./base/component')       // component model
+    $include ('./base/reflection')      // callstack access + source code access
+    $include ('./base/profiling')       // performance measurement utility
     $include ('./base/Testosterone')    // unit test shell
-    $include ('./base/math')            // math utility
-    $include ('./base/Rx')              // regular expressions helper
 
 
 /*  Experimental stuff

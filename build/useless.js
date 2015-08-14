@@ -4548,9 +4548,654 @@ _.withTest ('OOP', {
         iOS:    _.platform ().system === 'iOS' } })
 
 
-/*  Otherwise basic utility (actually a bug-ridden clumsy legacy code)
+/*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+/*  Parsers (TODO: REFACTOR)
+    ======================================================================== */
+
+_.tests.parse = {
+    fileName: function () {
+        $assert (Parse.fileName ('блабла'), 'блабла')
+        $assert (Parse.fileName ('блабла.jpg'), 'блабла')
+        $assert (Parse.fileName ('c:\\блабла/path/path2/блабла.jpg'), 'блабла')
+    }
+}
+
+Parse = {
+
+    keyCodeAsString: function (key) {
+        return String.fromCharCode ((96 <= key && key <= 105) ? key - 48 : key) },
+
+    fileName: function (path) {
+        return _.first (_.last (path.split (/\\|\//)).split ('.')) },
+
+    phoneNumber: function (input) {
+        var numeric = input.numericValue
+        if (numeric.length && numeric[0] === '8') {
+            return ('7' + numeric.slice (1)) }
+        else {
+            return numeric } },
+
+    sqlDate: function (date) {
+        if (!date) {
+            return undefined }
+        var dateTime = date.split (' ')
+        var date = dateTime[0].split ('-')
+        var time = dateTime.length > 1 ? dateTime[1].split (':') : ['0', '0', '0']
+        var seconds = parseFloat (time[2])
+        return new Date (
+            parseInt (date[0], 10), parseInt (date[1], 10) - 1, parseInt (date[2], 10),
+            parseInt (time[0], 10), parseInt (time[1], 10), Math.floor (seconds),
+            (seconds - Math.floor (seconds)) * 1000) },
+
+    timestampFromDateTimeString: function (date) {
+        if (!date)
+            return undefined
+
+        var dateTime = date.split (' ')
+        var date = dateTime[0].split ('.')
+        var time = dateTime.length > 1 ? dateTime[1].split (':') : ['0', '0', '0']
+        return (new Date (
+            (date[2].length > 2 ? 0 : 2000) + parseInt (date[2], 10),   // year
+            parseInt (date[1], 10) - 1,                                 // month
+            parseInt (date[0], 10),                                     // day
+            parseInt (time[0], 10),                                     // hour
+            parseInt (time[1], 10))).getTime () }                       // minute
+}
+
+Format = {
+
+    /*  Use this to print objects as JavaScript (supports functions and $-tags output)
+     */
+    javascript: function (obj) {
+        return _.stringify (obj, {
+                    pretty: true,
+                    pure: true,
+                    formatter: function (x) {
+                                    if (_.isTypeOf (Tags, x)) {
+                                        return _.reduce (
+                                                    _.keys (_.pick (x, _.keyIsKeyword)),
+                                                        function (memo, key) { return key + ' ' + _.quote (memo, '()') },
+                                                            _.stringify (Tags.unwrap (x))) }
+
+                                    else if (_.isFunction (x)) {
+                                        return x.toString () }
+
+                                    else {
+                                        return undefined } } }) },
+
+    randomHexString: function (length) {
+        var string = '';
+        for (var i = 0; i < length; i++) {
+            string += Math.floor (Math.random () * 16).toString (16) }
+        return string },
+
+    leadingZero: function (x) {
+        return x < 10 ? '0' + x : x.toString () },
+
+    plural: function (n, a, b, c) /* ex.: plural (21, 'час', 'часа', 'часов') */ {
+        if (_.isArray (a)) {
+            c = a[2]
+            b = a[1]
+            a = a[0] }
+        var cases = [c, a, b, b, b, c]
+        return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) }
+}
+
+
+/*  Sorting utilities (TODO: REFACTOR)
+    ======================================================================== */
+
+Sort = {
+    Ascending: 1,
+    Descending: -1,
+    strings: function (a, b) {
+        a = $.trim (a).toLowerCase ()
+        b = $.trim (b).toLowerCase ()
+        if (a.length == 0 && b.length > 0) {
+            return 1;
+        } else if (a.length > 0 && b.length == 0) {
+            return -1;
+        } else {
+            return a == b ? 0 : (a < b ? -1 : 1)
+        }
+    },
+    numbers: function (a, b) {
+        if (isNaN (a) && isNaN (b)) {
+            return 0
+        } else if (isNaN (a)) {
+            return -1
+        } else if (isNaN (b)) {
+            return 1
+        } else {
+            return a < b ? -1 : (a > b ? 1 : 0)
+        }
+    },
+    generic: function (a, b) {
+        if (!a && !b) {
+            return 0
+        } else if (!a) {
+            return -1
+        } else if (!b) {
+            return 1
+        } else {
+            return a < b ? -1 : (a > b ? 1 : 0)
+        }
+    },
+    inverse: function (sort) {
+        return function (a, b) {
+            return -(sort (a, b))
+        }
+    },
+    field: function (name, sort, order) {
+        return function (a, b) {
+            return sort (a[name], b[name]) * order
+        }
+    }
+}
+
+
+_.hasLog = true
+
+_.tests.log = function () {
+
+    log         ('log (x)')         //  Basic API
+
+    log.green   ('log.green')       //  Use for plain colored output.
+    log.blue    ('log.blue')
+    log.orange  ('log.orange')
+    log.red     ('log.red')
+
+    log.success ('log.success')     //  Use for quality production logging (logging that lasts).
+    log.ok      ('log.ok')
+    log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
+    log.i       ('log.i')
+    log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
+    log.warn    ('log.warn')
+    log.w       ('log.w')
+    log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
+                                    //  to where {success:fn,failure:fn} config expected.
+    log.error   ('log.error')
+    log.e       ('log.e')
+
+    $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
+                                                        // (as it returns it first argument, like in _.identity)
+
+    log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
+
+    log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
+
+    log.write   (log.boldLine)  //  ASCII art <hr>
+    log.write   (log.thinLine)
+    log.write   (log.line)
+
+    log.write   (log.color.green,
+                    ['You can set indentation',
+                     'that is nicely handled',
+                     'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
+
+    log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
+    log.orange  (log.config ({ indent: 2, table: true }), [
+        { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
+        { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
+
+    log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
+    log.write ('Array:', [1, 2, 3])                             //  Arrays too
+    log.write ('Function:', _.identity)                         //  Prints code of a function
+
+    log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') }
+
+_.extend (
+
+    /*  Basic API
+     */
+    log = function () {                         
+        return log.write.apply (this, arguments) }, {
+
+
+    Color: $prototype (),
+    Config: $prototype (),
+
+
+    /*  Returns arguments clean of config (non-value) parameters
+     */
+    cleanArgs: function (args) {
+        return _.reject (args, _.or (log.Color.isTypeOf, log.Config.isTypeOf)) },
+
+
+    /*  Monadic operators to help read and modify those control structures 
+        in argument lists (internal impl.)
+     */
+    read: function (type, args) {
+        return _.find (args, type.isTypeOf) || new type ({}) },
+
+    modify: function (type, args, operator) {
+                return _.reject (args, type.isTypeOf)
+                            .concat (
+                                operator (log.read (type, args))) } })
+
+
+_.extend (log, {
+
+    /*  Could be passed as any argument to any write function.
+     */
+    config: function (cfg) {
+        return new log.Config (cfg) },
+
+
+    /*  Shortcut for common case
+     */
+    indent: function (n) {
+        return log.config ({ indent: n }) },
+
+
+    /*  There could be many colors in log message (NOT YET), therefore it's a separate from config entity.
+     */
+    color: {
+        red:    new log.Color ({ shell: '\u001b[31m', css: 'crimson' }),
+        blue:   new log.Color ({ shell: '\u001b[36m', css: 'royalblue' }),
+        orange: new log.Color ({ shell: '\u001b[33m', css: 'saddlebrown' }),
+        green:  new log.Color ({ shell: '\u001b[32m', css: 'forestgreen' }) },
+
+
+    /*  Actual arguments API
+     */
+    readColor:      log.read.partial (log.Color),
+    readConfig:     log.read.partial (log.Config),
+    modifyColor:    log.modify.partial (log.Color),
+    modifyConfig:   log.modify.partial (log.Config),
+
+
+    /*  Need one? Take! I have plenty of them!
+     */
+    boldLine:   '======================================',
+    line:       '--------------------------------------',
+    thinLine:   '......................................',
+
+
+    /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
+     */
+    withCustomWriteBackend: function (backend, contextFn, then) {
+        var previousBackend = log.impl.writeBackend
+        log.impl.writeBackend = backend
+        contextFn (function () {
+            log.impl.writeBackend = previousBackend
+            if (then) {
+                then () } }) },
+
+    /*  For writing with forced default backend
+     */
+    writeUsingDefaultBackend: function () { var args = arguments
+        log.withCustomWriteBackend (
+            log.impl.defaultWriteBackend,
+            function (done) {
+                log.write.apply (null, args); done () }) },
+    
+    /*  Internals
+     */
+    impl: {
+
+        /*  Nuts & guts
+         */
+        write: function (defaultCfg) { return $restArg (function () {
+
+            var args            = _.asArray (arguments)
+            var cleanArgs       = log.cleanArgs (args)
+
+            var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
+            var stackOffset     = Platform.NodeJS ? 3 : 2
+
+            var indent          = (log.impl.writeBackend.indent || 0) + config.indent
+
+            var text            = log.impl.stringifyArguments (cleanArgs, config)
+            var indentation     = _.times (indent, _.constant ('\t')).join ('')
+            var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
+
+            var location = (
+                config.location &&
+                log.impl.location (config.where || $callStack[stackOffset + (config.stackOffset || 0)])) || ''
+
+            var backendParams = {
+                color: log.readColor (args),
+                indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
+                trailNewlines: match[1],
+                codeLocation: location }
+
+            log.impl.writeBackend (backendParams)
+
+            return cleanArgs[0] }) },
+        
+        defaultWriteBackend: function (params) {
+            var color           = params.color,
+                indentedText    = params.indentedText,
+                codeLocation    = params.codeLocation,
+                trailNewlines   = params.trailNewlines
+
+            var colorValue = color && (Platform.NodeJS ? color.shell : color.css)
+                
+            if (colorValue) {
+                if (Platform.NodeJS) {
+                    console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
+                else {
+                    var lines = indentedText.split ('\n')
+                    var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
+                            [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
+
+                    console.log ('%c'      + allButFirstLinePaddedWithSpace.join ('\n'),
+                                 'color: ' + colorValue, codeLocation, trailNewlines) }}
+            else {
+                console.log (indentedText, codeLocation, trailNewlines) } },
+
+
+        /*  Formats that "function @ source.js:321" thing
+         */
+        location: function (where) {
+            return _.quoteWith ('()', _.nonempty ([where.calleeShort, where.fileName + ':' + where.line]).join (' @ ')) },
+
+
+        /*  This could be re-used by outer code for turning arbitrary argument lists into string
+         */
+        stringifyArguments: function (args, cfg) {
+            return _.map (args, log.impl.stringify.tails2 (cfg)).join (' ') },
+
+        /*  Smart object stringifier
+         */
+        stringify: function (what, cfg) { cfg = cfg || {}
+            if (_.isTypeOf (Error, what)) {
+                var str = log.impl.stringifyError (what)
+                if (what.originalError) {
+                    return str + '\n\n' + log.impl.stringify (what.originalError) }
+                else {
+                    return str } }
+
+            else if (_.isTypeOf (CallStack, what)) {
+                return log.impl.stringifyCallStack (what) }
+
+            else if (typeof what === 'object') {
+                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
+                    return log.asTable (what) }
+                else {
+                    return _.stringify (what, cfg) } }
+                    
+            else if (typeof what === 'string') {
+                return what }
+
+            else {
+                return _.stringify (what) } },
+        
+        stringifyError: function (e) {
+            try {       
+                var stack   = CallStack.fromError (e).clean.offset (e.stackOffset || 0)
+                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
+
+                return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }
+            catch (sub) {
+                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
+                    '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
+
+        stringifyCallStack: function (stack) {
+            return log.columns (stack.map (
+                function (entry) { return [
+                    '\t' + 'at ' + entry.calleeShort.first (30),
+                    _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
+                    (entry.source || '').first (80)] })).join ('\n') }
+} })
+
+
+/*  Printing API
+ */
+_.extend (log, log.printAPI = {
+
+    newline:    log.impl.write ().partial (''),
+    write:      log.impl.write (),
+    red:        log.impl.write ().partial (log.color.red),
+    blue:       log.impl.write ().partial (log.color.blue),
+    orange:     log.impl.write ().partial (log.color.orange),
+    green:      log.impl.write ().partial (log.color.green),
+
+    failure:    log.impl.write ({ location: true }).partial (log.color.red),
+    error:      log.impl.write ({ location: true }).partial (log.color.red),
+    e:          log.impl.write ({ location: true }).partial (log.color.red),
+    info:       log.impl.write ({ location: true }).partial (log.color.blue),
+    i:          log.impl.write ({ location: true }).partial (log.color.blue),
+    w:          log.impl.write ({ location: true }).partial (log.color.orange),
+    warn:       log.impl.write ({ location: true }).partial (log.color.orange),
+    warning:    log.impl.write ({ location: true }).partial (log.color.orange),
+    success:    log.impl.write ({ location: true }).partial (log.color.green),
+    ok:         log.impl.write ({ location: true }).partial (log.color.green) }) 
+
+log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
+
+log.impl.writeBackend = log.impl.defaultWriteBackend
+
+/*  Experimental formatting shit.
+ */
+_.extend (log, {
+
+    asTable: function (arrayOfObjects) {
+        var columnsDef  = arrayOfObjects.map (_.keys.arity1).reduce (_.union.arity2, []) // makes ['col1', 'col2', 'col3'] by unifying objects keys
+        var lines       = log.columns ( [columnsDef].concat (
+                                            _.map (arrayOfObjects, function (object) {
+                                                                        return columnsDef.map (_.propertyOf (object)) })), {
+                                        maxTotalWidth: 120,
+                                        minColumnWidths: columnsDef.map (_.property ('length')) })
+
+        return [lines[0], log.thinLine[0].repeats (lines[0].length), _.rest (lines)].flat.join ('\n') },
+
+    /*  Layout algorithm for ASCII sheets (v 2.0)
+     */
+    columns: function (rows, cfg_) {
+        if (rows.length === 0) {
+            return [] }
+        else {
+            
+            /*  convert column data to string, taking first line
+             */
+            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return (col + '').split ('\n')[0] }))
+
+            /*  compute column widths (per row) and max widths (per column)
+             */
+            var columnWidths    = rowsToStr.map (_.map.tails2 (_.property ('length')))
+            var maxWidths       = columnWidths.zip (_.largest)
+
+            /*  default config
+             */
+            var cfg             = cfg_ || { minColumnWidths: maxWidths, maxTotalWidth: 0 }
+
+            /*  project desired column widths, taking maxTotalWidth and minColumnWidths in account
+             */
+            var totalWidth      = _.reduce (maxWidths, _.sum, 0)
+            var relativeWidths  = _.map (maxWidths, _.muls (1.0 / totalWidth))
+            var excessWidth     = Math.max (0, totalWidth - cfg.maxTotalWidth)
+            var computedWidths  = _.map (maxWidths, function (w, i) {
+                                                        return Math.max (cfg.minColumnWidths[i], Math.floor (w - excessWidth * relativeWidths[i])) })
+
+            /*  this is how many symbols we should pad or cut (per column)
+             */
+            var restWidths      = columnWidths.map (function (widths) { return [computedWidths, widths].zip (_.subtract) })
+
+            /*  perform final composition
+             */
+            return [rowsToStr, restWidths].zip (
+                 _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
+                 .then (_.joinsWith ('  ')) ) } }
+})
+
+
+if (Platform.NodeJS) {
+    module.exports = log }
+
+
+
+/*  Concurrency primitives
+ */
+
+/*  Unit test / documentation / specification / how-to.
+    ======================================================================== */
+
+_.tests.concurrency = {
+
+    'mapReduce': function (testDone) {
+
+        var data = _.times (42, Format.randomHexString)
+        var numItems = 0
+
+        /*  Keep in mind that mapReduce is not linear! It does not guaranteee sequential order of execution,
+            it allows out-of-order, and it happens. Of course, you can set maxConcurrency=1, but what's the
+            point? For sequential processing, use _.enumerate, as it's way more simple.
+
+            maxConcurrency forbids execution of more than N tasks at once (useful when you have depend on
+            limited system resources, e.g. a number of simultaneously open connections / file system handles.
+
+            By default it's equal to array's length, meaning *everything* will be triggered at once. This
+            behavior was chosen to force utility user to make decision on it's value, cuz no 'common value'
+            exists to be the default one.
+
+            Also, it does not share standard 'reduce' semantics. Reduce operator from FP is known to be
+            linear and referentially transparent, and that's neither feasible nor sensible if you need
+            to parallelize your tasks. So it's memo is a shared state object/array that is kept until
+            execution ends, which you can use as execution context (to not explicitly specify one externally).
+         */
+        _.mapReduce (data, {
+            maxConcurrency: 10,
+            memo: {                                 // memo is optional
+                processedItems: [],
+                skippedItems: [] },
+
+            next: function (item, itemIndex, then, skip, memo) {
+                numItems++
+                $assert (!_.find (memo.processedItems, item))
+                $assert (!_.find (memo.skippedItems, item))
+
+                if (_.random (7) === 0) {
+                    memo.skippedItems.push (item)
+                    skip () }                       // for short circuiting (not delegating execution to some
+                                                    // scheduled utility) use skip (otherwise, a call stack
+                                                    // overrun may occur)
+                else {
+                    _.delay (function () {
+                    memo.processedItems.push (item)
+                    then () }, _.random (10)) }},   // simulate job
+
+            complete: function (memo) {
+                $assert ((memo.processedItems.length + memo.skippedItems.length), data.length)
+                testDone () } }) },
+
+
+    'asyncJoin': function (testDone) {
+        var tasksDone = []
+
+        _.asyncJoin ([
+            function (done) { _.delay (function () { tasksDone[0] = true; done () }, _.random (20)) },
+            function (done) { _.delay (function () { tasksDone[1] = true; done () }, _.random (20)) },
+            function (done) { _.delay (function () { tasksDone[2] = true; done () }, _.random (20)) } ],
+            function (/* complete */) {
+                $assert (_.filter (tasksDone, _.identity).length === 3)
+                testDone () }) },
+
+
+    'interlocked': function (testDone) { var isNowRunning = false
+        _.mapReduce (_.times (30, Format.randomHexString), {
+                complete: testDone,
+                maxConcurrency: 10,
+                next: $interlocked (function (item, itemIndex, then, skip, memo, releaseLock) { $assert (!isNowRunning)
+                                        isNowRunning = true
+                                        _.delay (function () {
+                                            then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
+
+
+/*  Actual impl
+    ======================================================================== */
+
+_.enumerate = _.cps.each
+
+_.mapReduce = function (array, cfg) {
+    
+    var cursor = 0
+    var complete = false
+    var length = (array && array.length) || 0
+    var maxPoolSize = cfg.maxConcurrency || length
+    var poolSize = 0
+    var memo = cfg.memo
+
+    if (length === 0) {
+        cfg.complete (cfg.memo || array) }
+
+    else { var fetch = function () {
+            while ((cursor < length) && (poolSize < maxPoolSize)) {
+                poolSize += 1
+                cfg.next (
+                    /* item */  array[cursor],
+                    /* index */ cursor++,
+                    /* done */  function () {
+                                    poolSize--
+                                    if (!complete) {
+                                        if (cursor >= length) {
+                                            if (poolSize === 0) {
+                                                setTimeout (function () { cfg.complete (cfg.memo || array) }, 0)
+                                                complete = true }}
+                                            else {
+                                                fetch () }} },
+
+                    /* skip */  function () { poolSize-- },
+                    /* memo */  memo) }
+
+            if (!complete && (cursor >= length) && (poolSize == 0)) {
+                cfg.complete (cfg.memo || array) }}
+
+        fetch () }}
+
+
+_.asyncJoin = function (functions, complete, context) {
+    _.mapReduce (functions, {
+        complete: complete.bind (context),
+        next: function (fn, i, next, skip) {
+            fn.call (context, next, skip) } }) }
+
+
+/*  Mutex/lock (now supports stand-alone operation, and it's re-usable)
+ */
+Lock = $prototype ({
+    acquire: function (then) {
+        this.wait (this.$ (function () {
+            if (!this.waitQueue) {
+                this.waitQueue = [] }
+            then () })) },
+
+    acquired: function () {
+        return this.waitQueue !== undefined },
+
+    wait: function (then) {
+        if (this.acquired ()) {     
+            this.waitQueue.push (then) }
+        else {
+            then () }},
+
+    release: function () {
+        if (this.waitQueue.length) {
+            var queueFirst = _.first (this.waitQueue)
+            this.waitQueue = _.rest (this.waitQueue)
+            queueFirst () }
+        else
+            delete this.waitQueue } })
+
+   
+/*  Adds $interlocked(fn) utility that wraps passed function into lock. Unfortunately,
+    it cannot be released automagically © at the moment, because $interlocked does
+    not know how to bind to your chains of continuations, and no general mechanism
+    exist. Should look into Promise concept (as its now core JS feature)...
+
+    'Release' trigger passed as last argument to your target function.
+ */
+_.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
+    return _.wrapper (Tags.unwrap (fn), function (fn) {
+        lock.acquire (function () {
+            fn (lock.$ (lock.release)) }) }) })
+
+
+if (Platform.NodeJS) {
+    module.exports = _ }
 /*  Context-free math functions
     ======================================================================== */
 
@@ -5113,978 +5758,6 @@ _.extend (Math, (function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }))
-/*  Parsers (TODO: REFACTOR)
-    ======================================================================== */
-
-_.tests.parse = {
-    fileName: function () {
-        $assert (Parse.fileName ('блабла'), 'блабла')
-        $assert (Parse.fileName ('блабла.jpg'), 'блабла')
-        $assert (Parse.fileName ('c:\\блабла/path/path2/блабла.jpg'), 'блабла')
-    }
-}
-
-Parse = {
-
-    keyCodeAsString: function (key) {
-        return String.fromCharCode ((96 <= key && key <= 105) ? key - 48 : key) },
-
-    fileName: function (path) {
-        return _.first (_.last (path.split (/\\|\//)).split ('.')) },
-
-    phoneNumber: function (input) {
-        var numeric = input.numericValue
-        if (numeric.length && numeric[0] === '8') {
-            return ('7' + numeric.slice (1)) }
-        else {
-            return numeric } },
-
-    sqlDate: function (date) {
-        if (!date) {
-            return undefined }
-        var dateTime = date.split (' ')
-        var date = dateTime[0].split ('-')
-        var time = dateTime.length > 1 ? dateTime[1].split (':') : ['0', '0', '0']
-        var seconds = parseFloat (time[2])
-        return new Date (
-            parseInt (date[0], 10), parseInt (date[1], 10) - 1, parseInt (date[2], 10),
-            parseInt (time[0], 10), parseInt (time[1], 10), Math.floor (seconds),
-            (seconds - Math.floor (seconds)) * 1000) },
-
-    timestampFromDateTimeString: function (date) {
-        if (!date)
-            return undefined
-
-        var dateTime = date.split (' ')
-        var date = dateTime[0].split ('.')
-        var time = dateTime.length > 1 ? dateTime[1].split (':') : ['0', '0', '0']
-        return (new Date (
-            (date[2].length > 2 ? 0 : 2000) + parseInt (date[2], 10),   // year
-            parseInt (date[1], 10) - 1,                                 // month
-            parseInt (date[0], 10),                                     // day
-            parseInt (time[0], 10),                                     // hour
-            parseInt (time[1], 10))).getTime () }                       // minute
-}
-
-Format = {
-
-    /*  Use this to print objects as JavaScript (supports functions and $-tags output)
-     */
-    javascript: function (obj) {
-        return _.stringify (obj, {
-                    pretty: true,
-                    pure: true,
-                    formatter: function (x) {
-                                    if (_.isTypeOf (Tags, x)) {
-                                        return _.reduce (
-                                                    _.keys (_.pick (x, _.keyIsKeyword)),
-                                                        function (memo, key) { return key + ' ' + _.quote (memo, '()') },
-                                                            _.stringify (Tags.unwrap (x))) }
-
-                                    else if (_.isFunction (x)) {
-                                        return x.toString () }
-
-                                    else {
-                                        return undefined } } }) },
-
-    randomHexString: function (length) {
-        var string = '';
-        for (var i = 0; i < length; i++) {
-            string += Math.floor (Math.random () * 16).toString (16) }
-        return string },
-
-    leadingZero: function (x) {
-        return x < 10 ? '0' + x : x.toString () },
-
-    plural: function (n, a, b, c) /* ex.: plural (21, 'час', 'часа', 'часов') */ {
-        if (_.isArray (a)) {
-            c = a[2]
-            b = a[1]
-            a = a[0] }
-        var cases = [c, a, b, b, b, c]
-        return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) }
-}
-
-
-/*  Sorting utilities (TODO: REFACTOR)
-    ======================================================================== */
-
-Sort = {
-    Ascending: 1,
-    Descending: -1,
-    strings: function (a, b) {
-        a = $.trim (a).toLowerCase ()
-        b = $.trim (b).toLowerCase ()
-        if (a.length == 0 && b.length > 0) {
-            return 1;
-        } else if (a.length > 0 && b.length == 0) {
-            return -1;
-        } else {
-            return a == b ? 0 : (a < b ? -1 : 1)
-        }
-    },
-    numbers: function (a, b) {
-        if (isNaN (a) && isNaN (b)) {
-            return 0
-        } else if (isNaN (a)) {
-            return -1
-        } else if (isNaN (b)) {
-            return 1
-        } else {
-            return a < b ? -1 : (a > b ? 1 : 0)
-        }
-    },
-    generic: function (a, b) {
-        if (!a && !b) {
-            return 0
-        } else if (!a) {
-            return -1
-        } else if (!b) {
-            return 1
-        } else {
-            return a < b ? -1 : (a > b ? 1 : 0)
-        }
-    },
-    inverse: function (sort) {
-        return function (a, b) {
-            return -(sort (a, b))
-        }
-    },
-    field: function (name, sort, order) {
-        return function (a, b) {
-            return sort (a[name], b[name]) * order
-        }
-    }
-}
-
-
-
-/*  Self-awareness utils
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-/*  Self-awareness module
-    ======================================================================== */
-
-_.tests.reflection = {
-
-    'file paths': function () {
-        $assert ($sourcePath .length > 0)
-        $assert ($uselessPath.length > 0) },
-
-    'readSource': function () {
-        _.readSource ($uselessPath + 'useless.js', function (text) {
-            $assert (text.length > 0) })
-
-        _.readSourceLine ($uselessPath + 'useless.js', 0, function (line) {
-            $assert (line.length > 0) }) },
-
-    'CallStack from error': function () {
-        try {
-            throw new Error ('oh fock') }
-        catch (e) {
-            $assertTypeMatches (CallStack.fromError (e), CallStack) } },
-
-    '$callStack': function () {
-
-        /*  That's how you access call stack at current location
-         */
-        var stack = $callStack
-
-        /*  It is an array of entries...
-         */
-        $assert (_.isArray (stack))
-
-        /*  ...each having following members
-         */
-        $assertTypeMatches (stack[0], {
-            callee:         'string',       // function name
-            calleeShort:    'string',       // short function name (only the last part of dot-sequence)
-            file:           'string',       // full path to source file at which call occurred
-            fileName:       'string',       // name only (with extension)
-            fileShort:      'string',       // path relative to $sourcePath
-            thirdParty:     'boolean',      // denotes whether the call location occured at 3rd party library
-            line:           'number',       // line number
-            column:         'number',       // character number
-            source:         'string',       // source code (may be not ready right away)
-            sourceReady:    'function' })   // a barrier, opened when source is loaded (see dynamic/stream.js on how-to use)
-
-        /*  $callStack is CallStack instance, providing some helpful utility:
-         */
-        $assert (_.isTypeOf (CallStack, stack))
-
-        /*  1. clean CallStack (with 3rdparty calls stripped)
-         */
-        $assert (_.isTypeOf (CallStack, stack.clean))
-
-        /*  2. shifted by some N (useful for error reporting, to strip error reporter calls)
-         */
-        $assert (_.isTypeOf (CallStack, stack.offset (2)))
-
-        /*  3. filter and reject semantics supported, returning CallStack instances
-         */
-        $assert (_.isTypeOf (CallStack, stack.filter (_.identity)))
-        $assert (_.isTypeOf (CallStack, stack.reject (_.identity)))
-
-        /*  4. source code access, either per entry..
-         */
-        if (Platform.NodeJS) { // on client it's async so to test it properly, need to extract this test part to separate async routine
-            $assertCalls (1, function (mkay) {
-                stack[0].sourceReady (function (src) { mkay ()  // sourceReady is barrier, i.e. if ready, called immediately
-                    $assert (typeof src, 'string') }) })
-
-        /*  5. ..or for all stack
-         */
-            $assertCalls (1, function (mkay) {
-                stack.sourcesReady (function () { mkay ()       // sourcesReady is barrier, i.e. if ready, called immediately
-                    _.each (stack, function (entry) {
-                        $assert (typeof entry.source, 'string') }) }) })
-
-        /*  Safe location querying
-         */
-        $assertCPS (stack.safeLocation (7777).sourceReady, '??? WRONG LOCATION ???') } },
-
-    'Prototype.$meta': function (done) {
-        var Dummy = $prototype ()
-
-        Dummy.$meta (function (meta) {
-            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
-            done () }) },
-
-    'Trait.$meta': function (done) {
-        var Dummy = $trait ()
-        Dummy.$meta (function (meta) {
-            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
-            done () }) },
-}
-
-
-/*  Custom syntax (defined in a way that avoids cross-dependency loops)
- */
-_.defineKeyword ('callStack',   function () {
-    return CallStack.fromRawString (CallStack.currentAsRawString).offset (Platform.NodeJS ? 1 : 0) })
-
-_.defineKeyword ('currentFile', function () {
-    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
-
-_.defineKeyword ('uselessPath', _.memoize (function () {
-    return _.initial ($currentFile.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
-
-_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
-    return local ? (local + '/') : $uselessPath }))
-
-
-/*  Source code access (cross-platform)
- */
-_.readSourceLine = function (file, line, then) {
-    _.readSource (file, function (data) {
-        then ((data.split ('\n')[line] || '').trimmed) }) }
-
-
-_.readSource = _.cps.memoize (function (file, then) {
-                                if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
-                                    try {
-                                        if (Platform.NodeJS) {
-                                            then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
-                                        else {
-                                            jQuery.get (file, then, 'text') } }
-                                    catch (e) {
-                                        then ('') } }
-                                else {
-                                    then ('') } })
-
-
-/*  Callstack API
- */
-CallStack = $extends (Array, {
-
-    current: $static ($property (function () {
-        return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
-
-    fromError: $static (function (e) {
-        if (e.parsedStack) {
-            return CallStack.fromParsedArray (_.map (e.parsedStack, function (entry) {
-                return _.extend (entry, { sourceReady: _.constant (entry.source) }) })) }
-        else {
-            return CallStack.fromRawString (e.stack) } }),
-
-    locationEquals: $static (function (a, b) {
-        return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
-
-    safeLocation: function (n) {
-        return this[n] || {
-            callee: '', calleeShort: '', file: '',
-            fileName: '', fileShort: '', thirdParty:    false,
-            source: '??? WRONG LOCATION ???',
-            sourceReady: _.cps.constant ('??? WRONG LOCATION ???') } },
-
-    clean: $property (function () {
-        return this.reject (_.property ('thirdParty')) }),
-
-    asArray: $property (function () {
-        return _.asArray (this) }),
-
-    offset: function (N) {
-        return CallStack.fromParsedArray (_.rest (this, N)) },
-
-    filter: function (fn) {
-        return CallStack.fromParsedArray (_.filter (this, fn)) },
-
-    reject: function (fn) {
-        return CallStack.fromParsedArray (_.reject (this, fn)) },
-
-    reversed: $property (function () {
-        return CallStack.fromParsedArray (_.reversed (this)) }),
-
-    sourcesReady: function (then) {
-        return _.allTriggered (_.pluck (this, 'sourceReady'), then) },
-
-    /*  Internal impl.
-     */
-    constructor: function (arr) { Array.prototype.constructor.call (this)
-        for (var i = 0, n = arr.length; i < n; i++) {
-            this.push (arr[i]) } },
-
-    fromParsedArray: $static (function (arr) {
-        return new CallStack (arr) }),
-
-    currentAsRawString: $static ($property (function () {
-        var cut = _.platform ().engine === 'browser' ? 3 : 2
-        return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
-
-    shortenPath: $static (function (file) {
-                    return file.replace ($uselessPath, '')
-                               .replace ($sourcePath,  '') }),
-
-    isThirdParty: $static (function (file) { var local = file.replace ($sourcePath, '')
-                    return (local.indexOf ('/node_modules/') >= 0) ||
-                           (file.indexOf  ('/node_modules/') >= 0 && !local) ||
-                           (local.indexOf ('underscore') >= 0) ||
-                           (local.indexOf ('jquery') >= 0) }),
-
-    fromRawString: $static (_.sequence (
-        function (rawString) {
-            return CallStack.rawStringToArray (rawString) },
-
-        function (array) {
-            return _.map (array, function (entry) {
-                return _.extend (entry, {
-                            calleeShort:    _.last (entry.callee.split ('.')),
-                            fileName:       _.last (entry.file.split ('/')),
-                            fileShort:      CallStack.shortenPath (entry.file),
-                            thirdParty:     CallStack.isThirdParty (entry.file) }) }) },
-
-        function (parsedArray) {
-            return _.map (parsedArray, function (entry) {
-                    entry.source = ''
-                    entry.sourceReady = _.barrier ()
-
-                    _.readSourceLine (entry.file, entry.line - 1, function (src) {
-                        entry.source = src
-                        entry.sourceReady (src) })
-
-                    return entry }) },
-
-        function (parsedArrayWithSourceLines) { return CallStack.fromParsedArray (parsedArrayWithSourceLines) })),
-
-    rawStringToArray: $static (function (rawString) {
-        var lines = _.rest ((rawString || '').split ('\n'), _.platform ().engine === 'browser' ? 1 : 0)
-        return _.map (lines, function (line_) {
-            var line = line_.trimmed
-            var callee, fileLineColumn = []
-            var match = line.match (/at (.+) \((.+)\)/)
-            if (match) {
-                callee = match[1]
-                fileLineColumn = _.rest (match[2].match (/(.*):(.+):(.+)/) || []) }
-            else {
-                var planB = line.match (/at (.+)/)
-                if (planB && planB[1]) {
-                    fileLineColumn = _.rest (planB[1].match (/(.*):(.+):(.+)/) || []) }}
-            return {
-                beforeParse: line,
-                callee: callee || '',
-                file: fileLineColumn[0] || '',
-                line: (fileLineColumn[1] || '').integerValue,
-                column: (fileLineColumn[2] || '').integerValue } }) }) })
-
-/*  Reflection for $prototypes
- */
-$prototype.macro (function (def, base) {
-
-    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
-
-    if (!def.$meta) {
-        def.$meta = $static (_.cps.memoize (function (then) { _.cps.find (CallStack.fromRawString (stack).reversed,
-
-                function (entry, found) {
-                    entry.sourceReady (function (text) { var match = (text || '').match (
-                                                                         /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
-                        found ((match && {
-                            name: match[1],
-                            type: match[2],
-                            file: entry.fileShort }) || false) }) },
-
-                function (found) {
-                    then (found || {}) }) })) }
-
-    return def })
-
-
-
-
-
-/*  Measures run time of a routine (either sync or async)
-    ======================================================================== */
-
-_.measure = function (routine, then) {
-    if (then) {                             // async
-        var now = _.now ()
-        routine (function () {
-            then (_.now () - now) }) }
-    else {                                  // sync
-        var now = _.now ()
-        routine ()
-        return _.now () - now } }
-
-
-/*  Measures performance: perfTest (fn || { fn1: .., fn2: ... }, then)
-    ======================================================================== */
-
-_.perfTest = function (arg, then) {
-    var rounds = 500
-    var routines = _.isFunction (arg) ? { test: arg } : arg
-    var timings = {}
-
-    _.cps.each (routines, function (fn, name, then) {
-
-        /*  Define test routine (we store and print result, to assure our routine
-            won't be throwed away by optimizing JIT)
-         */
-        var result = []
-        var run = function () {
-            for (var i = 0; i < rounds; i++) {
-                result.push (fn ()) }
-            console.log (name, result) }
-
-        /*  Warm-up run, to force JIT work its magic (not sure if 500 rounds is enough)
-         */
-        run ()
-
-        /*  Measure (after some delay)
-         */
-        _.delay (function () {
-            timings[name] = _.measure (run) / rounds
-            then () }, 100) },
-
-        /*  all done
-         */
-        function () {
-            then (timings) }) }
-
-
-
-/*  Otherwise basic utility
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_.hasLog = true
-
-_.tests.log = function () {
-
-    log         ('log (x)')         //  Basic API
-
-    log.green   ('log.green')       //  Use for plain colored output.
-    log.blue    ('log.blue')
-    log.orange  ('log.orange')
-    log.red     ('log.red')
-
-    log.success ('log.success')     //  Use for quality production logging (logging that lasts).
-    log.ok      ('log.ok')
-    log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
-    log.i       ('log.i')
-    log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
-    log.warn    ('log.warn')
-    log.w       ('log.w')
-    log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
-                                    //  to where {success:fn,failure:fn} config expected.
-    log.error   ('log.error')
-    log.e       ('log.e')
-
-    $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
-                                                        // (as it returns it first argument, like in _.identity)
-
-    log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
-
-    log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
-
-    log.write   (log.boldLine)  //  ASCII art <hr>
-    log.write   (log.thinLine)
-    log.write   (log.line)
-
-    log.write   (log.color.green,
-                    ['You can set indentation',
-                     'that is nicely handled',
-                     'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
-
-    log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
-    log.orange  (log.config ({ indent: 2, table: true }), [
-        { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
-        { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
-
-    log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
-    log.write ('Array:', [1, 2, 3])                             //  Arrays too
-    log.write ('Function:', _.identity)                         //  Prints code of a function
-
-    log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') }
-
-_.extend (
-
-    /*  Basic API
-     */
-    log = function () {                         
-        return log.write.apply (this, arguments) }, {
-
-
-    Color: $prototype (),
-    Config: $prototype (),
-
-
-    /*  Returns arguments clean of config (non-value) parameters
-     */
-    cleanArgs: function (args) {
-        return _.reject (args, _.or (log.Color.isTypeOf, log.Config.isTypeOf)) },
-
-
-    /*  Monadic operators to help read and modify those control structures 
-        in argument lists (internal impl.)
-     */
-    read: function (type, args) {
-        return _.find (args, type.isTypeOf) || new type ({}) },
-
-    modify: function (type, args, operator) {
-                return _.reject (args, type.isTypeOf)
-                            .concat (
-                                operator (log.read (type, args))) } })
-
-
-_.extend (log, {
-
-    /*  Could be passed as any argument to any write function.
-     */
-    config: function (cfg) {
-        return new log.Config (cfg) },
-
-
-    /*  Shortcut for common case
-     */
-    indent: function (n) {
-        return log.config ({ indent: n }) },
-
-
-    /*  There could be many colors in log message (NOT YET), therefore it's a separate from config entity.
-     */
-    color: {
-        red:    new log.Color ({ shell: '\u001b[31m', css: 'crimson' }),
-        blue:   new log.Color ({ shell: '\u001b[36m', css: 'royalblue' }),
-        orange: new log.Color ({ shell: '\u001b[33m', css: 'saddlebrown' }),
-        green:  new log.Color ({ shell: '\u001b[32m', css: 'forestgreen' }) },
-
-
-    /*  Actual arguments API
-     */
-    readColor:      log.read.partial (log.Color),
-    readConfig:     log.read.partial (log.Config),
-    modifyColor:    log.modify.partial (log.Color),
-    modifyConfig:   log.modify.partial (log.Config),
-
-
-    /*  Need one? Take! I have plenty of them!
-     */
-    boldLine:   '======================================',
-    line:       '--------------------------------------',
-    thinLine:   '......................................',
-
-
-    /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
-     */
-    withCustomWriteBackend: function (backend, contextFn, then) {
-        var previousBackend = log.impl.writeBackend
-        log.impl.writeBackend = backend
-        contextFn (function () {
-            log.impl.writeBackend = previousBackend
-            if (then) {
-                then () } }) },
-
-    /*  For writing with forced default backend
-     */
-    writeUsingDefaultBackend: function () { var args = arguments
-        log.withCustomWriteBackend (
-            log.impl.defaultWriteBackend,
-            function (done) {
-                log.write.apply (null, args); done () }) },
-    
-    /*  Internals
-     */
-    impl: {
-
-        /*  Nuts & guts
-         */
-        write: function (defaultCfg) { return $restArg (function () {
-
-            var args            = _.asArray (arguments)
-            var cleanArgs       = log.cleanArgs (args)
-
-            var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
-            var stackOffset     = Platform.NodeJS ? 3 : 2
-
-            var indent          = (log.impl.writeBackend.indent || 0) + config.indent
-
-            var text            = log.impl.stringifyArguments (cleanArgs, config)
-            var indentation     = _.times (indent, _.constant ('\t')).join ('')
-            var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
-
-            var location = (
-                config.location &&
-                log.impl.location (config.where || $callStack[stackOffset + (config.stackOffset || 0)])) || ''
-
-            var backendParams = {
-                color: log.readColor (args),
-                indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
-                trailNewlines: match[1],
-                codeLocation: location }
-
-            log.impl.writeBackend (backendParams)
-
-            return cleanArgs[0] }) },
-        
-        defaultWriteBackend: function (params) {
-            var color           = params.color,
-                indentedText    = params.indentedText,
-                codeLocation    = params.codeLocation,
-                trailNewlines   = params.trailNewlines
-
-            var colorValue = color && (Platform.NodeJS ? color.shell : color.css)
-                
-            if (colorValue) {
-                if (Platform.NodeJS) {
-                    console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
-                else {
-                    var lines = indentedText.split ('\n')
-                    var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
-                            [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
-
-                    console.log ('%c'      + allButFirstLinePaddedWithSpace.join ('\n'),
-                                 'color: ' + colorValue, codeLocation, trailNewlines) }}
-            else {
-                console.log (indentedText, codeLocation, trailNewlines) } },
-
-
-        /*  Formats that "function @ source.js:321" thing
-         */
-        location: function (where) {
-            return _.quoteWith ('()', _.nonempty ([where.calleeShort, where.fileName + ':' + where.line]).join (' @ ')) },
-
-
-        /*  This could be re-used by outer code for turning arbitrary argument lists into string
-         */
-        stringifyArguments: function (args, cfg) {
-            return _.map (args, log.impl.stringify.tails2 (cfg)).join (' ') },
-
-        /*  Smart object stringifier
-         */
-        stringify: function (what, cfg) { cfg = cfg || {}
-            if (_.isTypeOf (Error, what)) {
-                var str = log.impl.stringifyError (what)
-                if (what.originalError) {
-                    return str + '\n\n' + log.impl.stringify (what.originalError) }
-                else {
-                    return str } }
-
-            else if (_.isTypeOf (CallStack, what)) {
-                return log.impl.stringifyCallStack (what) }
-
-            else if (typeof what === 'object') {
-                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
-                    return log.asTable (what) }
-                else {
-                    return _.stringify (what, cfg) } }
-                    
-            else if (typeof what === 'string') {
-                return what }
-
-            else {
-                return _.stringify (what) } },
-        
-        stringifyError: function (e) {
-            try {       
-                var stack   = CallStack.fromError (e).clean.offset (e.stackOffset || 0)
-                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
-
-                return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }
-            catch (sub) {
-                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
-                    '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
-
-        stringifyCallStack: function (stack) {
-            return log.columns (stack.map (
-                function (entry) { return [
-                    '\t' + 'at ' + entry.calleeShort.first (30),
-                    _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-                    (entry.source || '').first (80)] })).join ('\n') }
-} })
-
-
-/*  Printing API
- */
-_.extend (log, log.printAPI = {
-
-    newline:    log.impl.write ().partial (''),
-    write:      log.impl.write (),
-    red:        log.impl.write ().partial (log.color.red),
-    blue:       log.impl.write ().partial (log.color.blue),
-    orange:     log.impl.write ().partial (log.color.orange),
-    green:      log.impl.write ().partial (log.color.green),
-
-    failure:    log.impl.write ({ location: true }).partial (log.color.red),
-    error:      log.impl.write ({ location: true }).partial (log.color.red),
-    e:          log.impl.write ({ location: true }).partial (log.color.red),
-    info:       log.impl.write ({ location: true }).partial (log.color.blue),
-    i:          log.impl.write ({ location: true }).partial (log.color.blue),
-    w:          log.impl.write ({ location: true }).partial (log.color.orange),
-    warn:       log.impl.write ({ location: true }).partial (log.color.orange),
-    warning:    log.impl.write ({ location: true }).partial (log.color.orange),
-    success:    log.impl.write ({ location: true }).partial (log.color.green),
-    ok:         log.impl.write ({ location: true }).partial (log.color.green) }) 
-
-log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
-
-log.impl.writeBackend = log.impl.defaultWriteBackend
-
-/*  Experimental formatting shit.
- */
-_.extend (log, {
-
-    asTable: function (arrayOfObjects) {
-        var columnsDef  = arrayOfObjects.map (_.keys.arity1).reduce (_.union.arity2, []) // makes ['col1', 'col2', 'col3'] by unifying objects keys
-        var lines       = log.columns ( [columnsDef].concat (
-                                            _.map (arrayOfObjects, function (object) {
-                                                                        return columnsDef.map (_.propertyOf (object)) })), {
-                                        maxTotalWidth: 120,
-                                        minColumnWidths: columnsDef.map (_.property ('length')) })
-
-        return [lines[0], log.thinLine[0].repeats (lines[0].length), _.rest (lines)].flat.join ('\n') },
-
-    /*  Layout algorithm for ASCII sheets (v 2.0)
-     */
-    columns: function (rows, cfg_) {
-        if (rows.length === 0) {
-            return [] }
-        else {
-            
-            /*  convert column data to string, taking first line
-             */
-            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return (col + '').split ('\n')[0] }))
-
-            /*  compute column widths (per row) and max widths (per column)
-             */
-            var columnWidths    = rowsToStr.map (_.map.tails2 (_.property ('length')))
-            var maxWidths       = columnWidths.zip (_.largest)
-
-            /*  default config
-             */
-            var cfg             = cfg_ || { minColumnWidths: maxWidths, maxTotalWidth: 0 }
-
-            /*  project desired column widths, taking maxTotalWidth and minColumnWidths in account
-             */
-            var totalWidth      = _.reduce (maxWidths, _.sum, 0)
-            var relativeWidths  = _.map (maxWidths, _.muls (1.0 / totalWidth))
-            var excessWidth     = Math.max (0, totalWidth - cfg.maxTotalWidth)
-            var computedWidths  = _.map (maxWidths, function (w, i) {
-                                                        return Math.max (cfg.minColumnWidths[i], Math.floor (w - excessWidth * relativeWidths[i])) })
-
-            /*  this is how many symbols we should pad or cut (per column)
-             */
-            var restWidths      = columnWidths.map (function (widths) { return [computedWidths, widths].zip (_.subtract) })
-
-            /*  perform final composition
-             */
-            return [rowsToStr, restWidths].zip (
-                 _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
-                 .then (_.joinsWith ('  ')) ) } }
-})
-
-
-if (Platform.NodeJS) {
-    module.exports = log }
-
-
-
-/*  Concurrency primitives
- */
-
-/*  Unit test / documentation / specification / how-to.
-    ======================================================================== */
-
-_.tests.concurrency = {
-
-    'mapReduce': function (testDone) {
-
-        var data = _.times (42, Format.randomHexString)
-        var numItems = 0
-
-        /*  Keep in mind that mapReduce is not linear! It does not guaranteee sequential order of execution,
-            it allows out-of-order, and it happens. Of course, you can set maxConcurrency=1, but what's the
-            point? For sequential processing, use _.enumerate, as it's way more simple.
-
-            maxConcurrency forbids execution of more than N tasks at once (useful when you have depend on
-            limited system resources, e.g. a number of simultaneously open connections / file system handles.
-
-            By default it's equal to array's length, meaning *everything* will be triggered at once. This
-            behavior was chosen to force utility user to make decision on it's value, cuz no 'common value'
-            exists to be the default one.
-
-            Also, it does not share standard 'reduce' semantics. Reduce operator from FP is known to be
-            linear and referentially transparent, and that's neither feasible nor sensible if you need
-            to parallelize your tasks. So it's memo is a shared state object/array that is kept until
-            execution ends, which you can use as execution context (to not explicitly specify one externally).
-         */
-        _.mapReduce (data, {
-            maxConcurrency: 10,
-            memo: {                                 // memo is optional
-                processedItems: [],
-                skippedItems: [] },
-
-            next: function (item, itemIndex, then, skip, memo) {
-                numItems++
-                $assert (!_.find (memo.processedItems, item))
-                $assert (!_.find (memo.skippedItems, item))
-
-                if (_.random (7) === 0) {
-                    memo.skippedItems.push (item)
-                    skip () }                       // for short circuiting (not delegating execution to some
-                                                    // scheduled utility) use skip (otherwise, a call stack
-                                                    // overrun may occur)
-                else {
-                    _.delay (function () {
-                    memo.processedItems.push (item)
-                    then () }, _.random (10)) }},   // simulate job
-
-            complete: function (memo) {
-                $assert ((memo.processedItems.length + memo.skippedItems.length), data.length)
-                testDone () } }) },
-
-
-    'asyncJoin': function (testDone) {
-        var tasksDone = []
-
-        _.asyncJoin ([
-            function (done) { _.delay (function () { tasksDone[0] = true; done () }, _.random (20)) },
-            function (done) { _.delay (function () { tasksDone[1] = true; done () }, _.random (20)) },
-            function (done) { _.delay (function () { tasksDone[2] = true; done () }, _.random (20)) } ],
-            function (/* complete */) {
-                $assert (_.filter (tasksDone, _.identity).length === 3)
-                testDone () }) },
-
-
-    'interlocked': function (testDone) { var isNowRunning = false
-        _.mapReduce (_.times (30, Format.randomHexString), {
-                complete: testDone,
-                maxConcurrency: 10,
-                next: $interlocked (function (item, itemIndex, then, skip, memo, releaseLock) { $assert (!isNowRunning)
-                                        isNowRunning = true
-                                        _.delay (function () {
-                                            then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
-
-
-/*  Actual impl
-    ======================================================================== */
-
-_.enumerate = _.cps.each
-
-_.mapReduce = function (array, cfg) {
-    
-    var cursor = 0
-    var complete = false
-    var length = (array && array.length) || 0
-    var maxPoolSize = cfg.maxConcurrency || length
-    var poolSize = 0
-    var memo = cfg.memo
-
-    if (length === 0) {
-        cfg.complete (cfg.memo || array) }
-
-    else { var fetch = function () {
-            while ((cursor < length) && (poolSize < maxPoolSize)) {
-                poolSize += 1
-                cfg.next (
-                    /* item */  array[cursor],
-                    /* index */ cursor++,
-                    /* done */  function () {
-                                    poolSize--
-                                    if (!complete) {
-                                        if (cursor >= length) {
-                                            if (poolSize === 0) {
-                                                setTimeout (function () { cfg.complete (cfg.memo || array) }, 0)
-                                                complete = true }}
-                                            else {
-                                                fetch () }} },
-
-                    /* skip */  function () { poolSize-- },
-                    /* memo */  memo) }
-
-            if (!complete && (cursor >= length) && (poolSize == 0)) {
-                cfg.complete (cfg.memo || array) }}
-
-        fetch () }}
-
-
-_.asyncJoin = function (functions, complete, context) {
-    _.mapReduce (functions, {
-        complete: complete.bind (context),
-        next: function (fn, i, next, skip) {
-            fn.call (context, next, skip) } }) }
-
-
-/*  Mutex/lock (now supports stand-alone operation, and it's re-usable)
- */
-Lock = $prototype ({
-    acquire: function (then) {
-        this.wait (this.$ (function () {
-            if (!this.waitQueue) {
-                this.waitQueue = [] }
-            then () })) },
-
-    acquired: function () {
-        return this.waitQueue !== undefined },
-
-    wait: function (then) {
-        if (this.acquired ()) {     
-            this.waitQueue.push (then) }
-        else {
-            then () }},
-
-    release: function () {
-        if (this.waitQueue.length) {
-            var queueFirst = _.first (this.waitQueue)
-            this.waitQueue = _.rest (this.waitQueue)
-            queueFirst () }
-        else
-            delete this.waitQueue } })
-
-   
-/*  Adds $interlocked(fn) utility that wraps passed function into lock. Unfortunately,
-    it cannot be released automagically © at the moment, because $interlocked does
-    not know how to bind to your chains of continuations, and no general mechanism
-    exist. Should look into Promise concept (as its now core JS feature)...
-
-    'Release' trigger passed as last argument to your target function.
- */
-_.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
-    return _.wrapper (Tags.unwrap (fn), function (fn) {
-        lock.acquire (function () {
-            fn (lock.$ (lock.release)) }) }) })
-
-
-if (Platform.NodeJS) {
-    module.exports = _ }
 /*  What for:
 
     -   Hierarchy management (parent-child relationship)
@@ -6843,6 +6516,498 @@ Component = $prototype ({
 })
 
 
+/*  Implementation
+ */
+R = $singleton ({
+
+    $test: function () {
+
+        var $assertExpr = function (a, b) { $assert (a, _.quote (b.str, '//')) }
+
+        /*  R should be used for code clarity purposes when one needs to generate a
+            complex regular expression that is hard to read and maintain.
+         */
+        $assertExpr ('/[^\\s]*/',        $r.anyOf.except.space.$)
+        $assertExpr ('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$)
+
+        var expr = $r.expr ('before',    $r.anything.text ('$print').something).then (
+                   $r.expr ('argument',  $r.someOf.except.text (',)')).inParentheses.then (
+                   $r.expr ('tail',      $r.anything))).$
+
+        /*  Above construction generates the following regular expression
+         */
+        $assertExpr ('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr)
+
+        /*  Main feature: named groups, easily accessible as dictionary elements.
+         */
+        $assert (expr.parse ( ' var x = $print (blabla) // lalala '),
+
+                  {  before:  ' var x = $print ',
+                   argument:  'blabla',              
+                       tail:  ' // lalala ',        })
+
+        /*  Based on Lisp-like list based syntax, for easy programmatic generation and stuff
+         */
+        $assert ([['[^', '\\s', "\]"], '*'], R.anyOf (R.except (R.space))) },
+
+
+    constructor: function () {
+
+        this.reduce = _.hyperOperator (_.binary, _.reduce2,
+                                        _.goDeeperAlwaysIfPossible,
+                                        _.isNonTrivial.and (_.not (this.isSubexpr)))
+
+        this.initDSL () },
+
+    expr: function (expr, subexprs) { subexprs = subexprs || []
+            return new R.Expr (R.reduce (expr, '', function (s, memo) {
+                                                        if (R.isSubexpr (s)) { subexprs.push (s)
+                                                            return memo + R.expr (R.root (s.value), subexprs).str }
+                                                        else {
+                                                            return memo + s } }), subexprs) },
+
+    Expr: $prototype ({
+
+        constructor: function (str, subexprs) {
+                        this.rx = new RegExp ()
+                        this.rx.compile (str)
+                        this.str = str
+                        this.subexprs = subexprs },
+
+        parse: function (str) {
+                var match = str.match (this.rx)
+            return (match && _.extend.apply (null,
+                                _.zipWith ([_.rest (match), this.subexprs], function (match, subexpr) {
+                                                                                return _.object ([[ subexpr.name, match ]]) }))) || {} } }),
+
+    metacharacters: $property (_.index ('\\^$.|?*+()[{')),
+
+    escape:       function (s)    { return _.map (s, function (x) { return R.metacharacters[x] ? ('\\' + x) : x }).join ('') },
+
+    text:         $alias ('escape'),
+
+    subexpr:      function (name, s) { return { name: name, value: ['(', s, ')'] } },
+ 
+    maybe:        function (s)    { return [s, '?'] },
+
+    anyOf:        function (s)    { return [s, '*'] },
+    someOf:       function (s)    { return [s, '+'] },
+
+    oneOf:        function (s)    { return ['[',  s, ']'] },
+    except:       function (s)    { return ['[^', s, ']'] },
+
+    or:           function (a, b) { return [a, '|', b] },
+
+    begin:       $property ('^'),
+    end:         $property ('$'),
+    space:       $property ('\\s'),
+    maybeSpaces: $property ('\\s*'),
+    spaces:      $property ('\\s+'),
+    anything:    $property ('.*'),
+    something:   $property ('.+'),
+    comma:       $property (','),
+
+    parentheses: function (s) { return ['\\(', s, '\\)'] },
+    brackets:    function (s) { return ['\\[', s, '\\]'] },
+
+    isSubexpr: function (s) { return (_.isStrictlyObject (s) && !_.isArray (s)) ? true : false },
+
+    root: function (r) { return (r && r.$$) ? r.$$ : r },
+
+    initDSL: function () {
+
+        _.defineKeyword ( 'r', function ()       { return $$r ([]) })
+        _.defineKeyword ('$r', function (cursor) {
+
+            var shift = function (x) { cursor.push (x); return cursor.forward }
+
+            _.defineHiddenProperty (cursor, 'then', function (x)    { cursor.push (R.root (x));                return cursor })
+            _.defineHiddenProperty (cursor, 'text', function (x)    { cursor.push (R.text (x));                return cursor })
+            _.defineHiddenProperty (cursor, 'expr', function (x, s) { cursor.push (R.subexpr (x, R.root (s))); return cursor })
+
+            _.defineHiddenProperty (cursor, 'forward', function () {
+                return cursor.next || ((cursor.next = $r).prev = cursor).next })
+
+            _.each (['maybe', 'anyOf', 'someOf', 'oneOf', 'except'], function (key) {
+                _.defineHiddenProperty (cursor, key, function () {
+                    return shift (R[key] (cursor.forward)) }) })
+
+            _.each (['parentheses', 'brackets'], function (key) {
+                _.defineHiddenProperty (cursor, 'in' + key.capitalized, function () {
+                    return (cursor.$$.prev = $$r (R[key] (cursor.$$))) }) })
+
+            _.each (['or'], function (key) {
+                _.defineHiddenProperty (cursor, key, function () { var next = $r
+                    return (next.prev = (cursor.$$.prev = $$r (R[key] (cursor.$$, next)))).next = next }) })
+
+            _.each (['begin', 'end', 'space', 'anything', 'something'], function (key) {
+                _.defineHiddenProperty (cursor, key, function () {
+                    return shift ([R[key], cursor.forward]); }) })
+
+            _.defineHiddenProperty (cursor, '$$', function () { var root = cursor
+                while (root.prev) { root = root.prev }
+                return root })
+
+            _.defineHiddenProperty (cursor, '$', function () {
+                return R.expr (cursor.$$) })
+
+            return cursor }) } })
+
+
+/*  Self-awareness utils
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/*  Self-awareness module
+    ======================================================================== */
+
+_.tests.reflection = {
+
+    'file paths': function () {
+        $assert ($sourcePath .length > 0)
+        $assert ($uselessPath.length > 0) },
+
+    'readSource': function () {
+        _.readSource ($uselessPath + 'useless.js', function (text) {
+            $assert (text.length > 0) })
+
+        _.readSourceLine ($uselessPath + 'useless.js', 0, function (line) {
+            $assert (line.length > 0) }) },
+
+    'CallStack from error': function () {
+        try {
+            throw new Error ('oh fock') }
+        catch (e) {
+            $assertTypeMatches (CallStack.fromError (e), CallStack) } },
+
+    '$callStack': function () {
+
+        /*  That's how you access call stack at current location
+         */
+        var stack = $callStack
+
+        /*  It is an array of entries...
+         */
+        $assert (_.isArray (stack))
+
+        /*  ...each having following members
+         */
+        $assertTypeMatches (stack[0], {
+            callee:         'string',       // function name
+            calleeShort:    'string',       // short function name (only the last part of dot-sequence)
+            file:           'string',       // full path to source file at which call occurred
+            fileName:       'string',       // name only (with extension)
+            fileShort:      'string',       // path relative to $sourcePath
+            thirdParty:     'boolean',      // denotes whether the call location occured at 3rd party library
+            line:           'number',       // line number
+            column:         'number',       // character number
+            source:         'string',       // source code (may be not ready right away)
+            sourceReady:    'function' })   // a barrier, opened when source is loaded (see dynamic/stream.js on how-to use)
+
+        /*  $callStack is CallStack instance, providing some helpful utility:
+         */
+        $assert (_.isTypeOf (CallStack, stack))
+
+        /*  1. clean CallStack (with 3rdparty calls stripped)
+         */
+        $assert (_.isTypeOf (CallStack, stack.clean))
+
+        /*  2. shifted by some N (useful for error reporting, to strip error reporter calls)
+         */
+        $assert (_.isTypeOf (CallStack, stack.offset (2)))
+
+        /*  3. filter and reject semantics supported, returning CallStack instances
+         */
+        $assert (_.isTypeOf (CallStack, stack.filter (_.identity)))
+        $assert (_.isTypeOf (CallStack, stack.reject (_.identity)))
+
+        /*  4. source code access, either per entry..
+         */
+        if (Platform.NodeJS) { // on client it's async so to test it properly, need to extract this test part to separate async routine
+            $assertCalls (1, function (mkay) {
+                stack[0].sourceReady (function (src) { mkay ()  // sourceReady is barrier, i.e. if ready, called immediately
+                    $assert (typeof src, 'string') }) })
+
+        /*  5. ..or for all stack
+         */
+            $assertCalls (1, function (mkay) {
+                stack.sourcesReady (function () { mkay ()       // sourcesReady is barrier, i.e. if ready, called immediately
+                    _.each (stack, function (entry) {
+                        $assert (typeof entry.source, 'string') }) }) })
+
+        /*  Safe location querying
+         */
+        $assertCPS (stack.safeLocation (7777).sourceReady, '??? WRONG LOCATION ???') } },
+
+    'Prototype.$meta': function (done) {
+        var Dummy = $prototype ()
+
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
+            done () }) },
+
+    'Trait.$meta': function (done) {
+        var Dummy = $trait ()
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
+            done () }) },
+}
+
+
+/*  Custom syntax (defined in a way that avoids cross-dependency loops)
+ */
+_.defineKeyword ('callStack',   function () {
+    return CallStack.fromRawString (CallStack.currentAsRawString).offset (Platform.NodeJS ? 1 : 0) })
+
+_.defineKeyword ('currentFile', function () {
+    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
+
+_.defineKeyword ('uselessPath', _.memoize (function () {
+    return _.initial ($currentFile.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
+
+_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+    return local ? (local + '/') : $uselessPath }))
+
+
+/*  Source code access (cross-platform)
+ */
+SourceFiles = $singleton (Component, {
+
+    apiConfig: {
+        /* port:      1338,
+           hostname: 'locahost',
+           protocol: 'http:' */ },
+
+    line: function (file, line, then) {
+        SourceFiles.read (file, function (data) {
+            then ((data.split ('\n')[line] || '').trimmed) }) },
+
+    read: $memoizeCPS (function (file, then) {
+        if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
+            try {
+                if (Platform.NodeJS) {
+                    then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
+                else {
+                    jQuery.get (file, then, 'text') } }
+            catch (e) {
+                then ('') } }
+        else {
+            then ('') } }),
+
+    write: function (file, text, then) {
+
+        if (Platform.NodeJS) {
+
+            this.read (file, function (prevText) { // save previous version at <file>.backups/<date>
+
+                var fs   = require ('fs'),
+                    opts = { encoding: 'utf8' }
+
+          try { fs.mkdirSync     (file + '.backups') } catch (e) {}
+                fs.writeFileSync (file + '.backups/' + Date.now (), prevText, opts)
+                fs.writeFileSync (file,                             text,     opts)
+
+                then () }) }
+            
+        else {
+            API.post ('source/' + file, _.extend2 ({}, this.apiConfig, {
+                what:    { text: text },
+                failure: UI.error,
+                success: function () { log.ok (file, '— successfully saved'); if (then) { then () } } })) }} })
+
+/*  Old API
+ */
+_.readSourceLine = SourceFiles.line
+_.readSource     = SourceFiles.read
+_.writeSource    = SourceFiles.write
+
+
+/*  Callstack API
+ */
+CallStack = $extends (Array, {
+
+    current: $static ($property (function () {
+        return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
+
+    fromError: $static (function (e) {
+        if (e.parsedStack) {
+            return CallStack.fromParsedArray (_.map (e.parsedStack, function (entry) {
+                return _.extend (entry, { sourceReady: _.constant (entry.source) }) })) }
+        else {
+            return CallStack.fromRawString (e.stack) } }),
+
+    locationEquals: $static (function (a, b) {
+        return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
+
+    safeLocation: function (n) {
+        return this[n] || {
+            callee: '', calleeShort: '', file: '',
+            fileName: '', fileShort: '', thirdParty:    false,
+            source: '??? WRONG LOCATION ???',
+            sourceReady: _.cps.constant ('??? WRONG LOCATION ???') } },
+
+    clean: $property (function () {
+        return this.reject (_.property ('thirdParty')) }),
+
+    asArray: $property (function () {
+        return _.asArray (this) }),
+
+    offset: function (N) {
+        return CallStack.fromParsedArray (_.rest (this, N)) },
+
+    filter: function (fn) {
+        return CallStack.fromParsedArray (_.filter (this, fn)) },
+
+    reject: function (fn) {
+        return CallStack.fromParsedArray (_.reject (this, fn)) },
+
+    reversed: $property (function () {
+        return CallStack.fromParsedArray (_.reversed (this)) }),
+
+    sourcesReady: function (then) {
+        return _.allTriggered (_.pluck (this, 'sourceReady'), then) },
+
+    /*  Internal impl.
+     */
+    constructor: function (arr) { Array.prototype.constructor.call (this)
+        for (var i = 0, n = arr.length; i < n; i++) {
+            this.push (arr[i]) } },
+
+    fromParsedArray: $static (function (arr) {
+        return new CallStack (arr) }),
+
+    currentAsRawString: $static ($property (function () {
+        var cut = _.platform ().engine === 'browser' ? 3 : 2
+        return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
+
+    shortenPath: $static (function (file) {
+                    return file.replace ($uselessPath, '')
+                               .replace ($sourcePath,  '') }),
+
+    isThirdParty: $static (function (file) { var local = file.replace ($sourcePath, '')
+                    return (local.indexOf ('/node_modules/') >= 0) ||
+                           (file.indexOf  ('/node_modules/') >= 0 && !local) ||
+                           (local.indexOf ('underscore') >= 0) ||
+                           (local.indexOf ('jquery') >= 0) }),
+
+    fromRawString: $static (_.sequence (
+        function (rawString) {
+            return CallStack.rawStringToArray (rawString) },
+
+        function (array) {
+            return _.map (array, function (entry) {
+                return _.extend (entry, {
+                            calleeShort:    _.last (entry.callee.split ('.')),
+                            fileName:       _.last (entry.file.split ('/')),
+                            fileShort:      CallStack.shortenPath (entry.file),
+                            thirdParty:     CallStack.isThirdParty (entry.file) }) }) },
+
+        function (parsedArray) {
+            return _.map (parsedArray, function (entry) {
+                    entry.source = ''
+                    entry.sourceReady = _.barrier ()
+
+                    _.readSourceLine (entry.file, entry.line - 1, function (src) {
+                        entry.source = src
+                        entry.sourceReady (src) })
+
+                    return entry }) },
+
+        function (parsedArrayWithSourceLines) { return CallStack.fromParsedArray (parsedArrayWithSourceLines) })),
+
+    rawStringToArray: $static (function (rawString) {
+        var lines = _.rest ((rawString || '').split ('\n'), _.platform ().engine === 'browser' ? 1 : 0)
+        return _.map (lines, function (line_) {
+            var line = line_.trimmed
+            var callee, fileLineColumn = []
+            var match = line.match (/at (.+) \((.+)\)/)
+            if (match) {
+                callee = match[1]
+                fileLineColumn = _.rest (match[2].match (/(.*):(.+):(.+)/) || []) }
+            else {
+                var planB = line.match (/at (.+)/)
+                if (planB && planB[1]) {
+                    fileLineColumn = _.rest (planB[1].match (/(.*):(.+):(.+)/) || []) }}
+            return {
+                beforeParse: line,
+                callee: callee || '',
+                file: fileLineColumn[0] || '',
+                line: (fileLineColumn[1] || '').integerValue,
+                column: (fileLineColumn[2] || '').integerValue } }) }) })
+
+/*  Reflection for $prototypes
+ */
+$prototype.macro (function (def, base) {
+
+    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
+
+    if (!def.$meta) {
+        def.$meta = $static (_.cps.memoize (function (then) { _.cps.find (CallStack.fromRawString (stack).reversed,
+
+                function (entry, found) {
+                    entry.sourceReady (function (text) { var match = (text || '').match (
+                                                                         /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
+                        found ((match && {
+                            name: match[1],
+                            type: match[2],
+                            file: entry.fileShort }) || false) }) },
+
+                function (found) {
+                    then (found || {}) }) })) }
+
+    return def })
+
+
+
+
+
+/*  Measures run time of a routine (either sync or async)
+    ======================================================================== */
+
+_.measure = function (routine, then) {
+    if (then) {                             // async
+        var now = _.now ()
+        routine (function () {
+            then (_.now () - now) }) }
+    else {                                  // sync
+        var now = _.now ()
+        routine ()
+        return _.now () - now } }
+
+
+/*  Measures performance: perfTest (fn || { fn1: .., fn2: ... }, then)
+    ======================================================================== */
+
+_.perfTest = function (arg, then) {
+    var rounds = 500
+    var routines = _.isFunction (arg) ? { test: arg } : arg
+    var timings = {}
+
+    _.cps.each (routines, function (fn, name, then) {
+
+        /*  Define test routine (we store and print result, to assure our routine
+            won't be throwed away by optimizing JIT)
+         */
+        var result = []
+        var run = function () {
+            for (var i = 0; i < rounds; i++) {
+                result.push (fn ()) }
+            console.log (name, result) }
+
+        /*  Warm-up run, to force JIT work its magic (not sure if 500 rounds is enough)
+         */
+        run ()
+
+        /*  Measure (after some delay)
+         */
+        _.delay (function () {
+            timings[name] = _.measure (run) / rounds
+            then () }, 100) },
+
+        /*  all done
+         */
+        function () {
+            then (timings) }) }
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -7315,704 +7480,6 @@ Test = $prototype ({
 
 if (Platform.NodeJS) {
     module.exports = Testosterone }
-/*  Context-free math functions
-    ======================================================================== */
-
-_.clamp = function (n, min, max) {
-    return Math.max (min, Math.min (max, n)) }
-
-_.lerp = function (t, min, max) {
-    return min + (max - min) * t }
-
-_.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
-    return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
-
-_.sqr = function (x) { return x * x }
-
-
-/*  Intersections (draft)
-    ======================================================================== */
-
-Intersect = {
-
-    rayCircle: function (origin, d, center, r) {
-
-        var f = origin.sub (center)
-        var a = d.dot (d)
-
-        var b = 2.0 * f.dot (d)
-        var c = f.dot (f) - r*r
-
-        var discriminant = b*b - 4.0*a*c
-        if (discriminant < 0) {
-            return undefined }
-
-        else {
-            discriminant = Math.sqrt (discriminant)
-
-            var t1 = (-b - discriminant) / (2.0 * a)
-            var t2 = (-b + discriminant) / (2.0 * a)
-
-            if ((t1 >= 0) && (t1 <= 1)) {
-                return { time: t1, where: origin.add (d.scale (t1)) } }
-
-            if ((t2 >= 0) && (t2 <= 1)) {
-                return { time: t2, where: origin.add (d.scale (t2)), insideOut: true } }
-
-            return undefined } }
-}
-
-/*  2-dimensional vector
-    ======================================================================== */
-
-Vec2 = $prototype ({
-
-    $static: {
-        zero:        $property (function () { return new Vec2 (0, 0) }),
-        unit:        $property (function () { return new Vec2 (1, 1) }),
-        one:         $alias ('unit'),
-        fromLT:      function (lt) { return new Vec2 (lt.left, lt.top) },
-        fromWH:      function (wh) { return new Vec2 (wh.width, wh.height) },
-        fromLeftTop:     $alias ('fromLT'),
-        fromWidthHeight: $alias ('fromWH'),
-        lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
-
-    constructor: function (x, y) {
-        if (arguments.length === 1) {
-            if (_.isNumber (x)) {
-                this.x = this.y = x }
-            else {
-                this.x = x.x
-                this.y = x.y } }
-        else {
-            this.x = x
-            this.y = y } },
-
-    length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
-    lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
-
-    add: function (a, b) {
-        if (b === undefined) {
-            return new Vec2 (this.x + a.x, this.y + a.y) }
-        else {
-            return new Vec2 (this.x + a, this.y + b) } },
-
-    dot: function (other) {
-        return this.x * other.x + this.y * other.y },
-
-    sub: function (other) {
-        return new Vec2 (this.x - other.x, this.y - other.y) },
-
-    scale: function (tx, ty) {
-        return new Vec2 (this.x * tx, this.y * (ty === undefined ? tx : ty)) },
-
-    mul: function (other) {
-        return new Vec2 (this.x * other.x, this.y * other.y) },
-
-    divide: function (other) {
-        return new Vec2 (this.x / other.x, this.y / other.y) },
-
-    normal: $property (function () {
-        return this.scale (1.0 / this.length) }),
-
-    perp: $property (function () {
-        return new Vec2 (this.y, -this.x) }),
-
-    half: $property (function () {
-        return new Vec2 (this.x * 0.5, this.y * 0.5) }),
-
-    inverse: $property (function () {
-        return new Vec2 (-this.x, -this.y) }),
-
-    asLeftTop: $property (function () {
-        return { left: this.x, top: this.y } }),
-
-    asLeftTopMargin: $property (function () {
-        return { marginLeft: this.x, marginTop: this.y } }),
-
-    asWidthHeight: $property (function () {
-        return { width: this.x, height: this.y } }),
-
-    asTranslate: $property (function () {
-        return 'translate(' + this.x + ' ' + this.y + ')' }),
-
-    floor: $property (function () {
-        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
-
-    sum: $static (function (arr) {
-        return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
-            function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
-
-    toString: function () {
-        return '{' + this.x + ',' + this.y + '}' },
-
-    projectOnCircle: function (center, r) {
-        return center.add (this.sub (center).normal.scale (r)) },
-
-    projectOnLineSegment: function (v, w) {
-        var wv = w.sub (v)
-        var l2 = wv.lengthSquared
-        if (l2 == 0) return v
-        var t = this.sub (v).dot (wv) / l2
-        if (t < 0) return v
-        if (t > 1) return w
-        return v.add (wv.scale (t)) } })
-
-
-/*  Cubic bezier
-    ======================================================================== */
-
-Bezier = {
-
-    cubic: function (t, p0, p1, p2, p3) {
-        var cube = t * t * t
-        var square = t * t
-        var ax = 3.0 * (p1.x - p0.x);
-        var ay = 3.0 * (p1.y - p0.y);
-        var bx = 3.0 * (p2.x - p1.x) - ax;
-        var by = 3.0 * (p2.y - p1.y) - ay;
-        var cx = p3.x - p0.x - ax - bx;
-        var cy = p3.y - p0.y - ay - by;
-        var x = (cx * cube) + (bx * square) + (ax * t) + p0.x;
-        var y = (cy * cube) + (by * square) + (ay * t) + p0.y;
-        return new Vec2 (x, y) },
-        
-    cubic1D: function (t, a, b, c, d) {
-        return Bezier.cubic (t, Vec2.zero, new Vec2 (a, b), new Vec2 (c, d), Vec2.one).y },
-
-    make: {
-        
-        cubic:   function (a,b,c,d) { return function (t) { return Bezier.cubic   (t,a,b,c,d) } },
-        cubic1D: function (a,b,c,d) { return function (t) { return Bezier.cubic1D (t,a,b,c,d) } } } }
-
-
-/*  Bounding box (2D)
-    ======================================================================== */
-
-BBox = $prototype ({
-
-    $static: {
-
-        zero: $property (function () {
-            return new BBox (0, 0, 0, 0) }),
-
-        unit: $property (function () {
-            return new BBox (0, 0, 1, 1) }),
-
-        fromLeftTopAndSize: function (pt, size) {
-            return BBox.fromLTWH ({ left: pt.x, top: pt.y, width: size.x, height: size.y }) },
-
-        fromLTWH: function (r) {
-            return new BBox (r.left + r.width / 2.0, r.top + r.height / 2.0, r.width, r.height) },
-
-        fromLTRB: function (r) {
-            return new BBox (_.lerp (0.5, r.left, r.right), _.lerp (0.5, r.top, r.bottom), r.right - r.left, r.bottom - r.top) },
-
-        fromSizeAndCenter: function (size, center) {
-            return new BBox (center.x - size.x / 2.0, center.y - size.y / 2.0, size.x, size.y) },
-
-        fromSize: function (a, b) {
-            if (b) {
-                return new BBox (-a / 2.0, -b / 2.0, a, b) }
-            else {
-                return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
-        
-        fromPoints: function (pts) { var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE
-            _.each (pts, function (pt) {
-                l = Math.min (pt.x, l)
-                t = Math.min (pt.y, t)
-                r = Math.max (pt.x, r)
-                b = Math.max (pt.y, b) })
-            return BBox.fromLTRB ({ left: l, top: t, right: r, bottom: b }) } },
-
-    constructor: function (x, y, w, h) {
-        if (arguments.length == 4) {
-            this.x = x
-            this.y = y
-            this.width = w
-            this.height = h }
-        else {
-            _.extend (this, x) } },
-
-    classifyPoint: function (pt) {
-        
-        var sides = _.extend (
-
-            (pt.x > this.right)   ? { right   : true } : {},
-            (pt.x < this.left)    ? { left    : true } : {},
-            (pt.y > this.bottom)  ? { bottom  : true } : {},
-            (pt.y < this.top)     ? { top     : true } : {})
-        
-        return _.extend (sides,
-
-            (!sides.left &&
-             !sides.right &&
-             !sides.bottom && !sides.top) ? { inside: true } : {}) },
-
-    classifyRay: function (origin, delta, cornerRadius) {
-
-        var half = this.size.half
-        var farTime, farTimeX, farTimeY, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY
-
-        scaleX = 1.0 / delta.x
-        scaleY = 1.0 / delta.y
-        signX  = Math.sign (scaleX)
-        signY  = Math.sign (scaleY)
-
-        nearTimeX = (this.x - signX * half.x - origin.x) * scaleX
-        nearTimeY = (this.y - signY * half.y - origin.y) * scaleY
-        farTimeX =  (this.x + signX * half.x - origin.x) * scaleX
-        farTimeY =  (this.y + signY * half.y - origin.y) * scaleY
-
-        if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
-            return undefined }
-
-        nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY
-        farTime  = farTimeX  < farTimeY  ? farTimeX  : farTimeY
-
-        if (nearTime >= 1 || farTime <= 0) {
-            return undefined }
-
-        var hit = { time: _.clamp (nearTime, 0, 1) }
-        
-        if (nearTimeX > nearTimeY) {
-            hit.normal = new Vec2 (-signX, 0) }
-        else {
-            hit.normal = new Vec2 (0, -signY) }
-
-        hit.delta = delta.scale (hit.time)
-        hit.where = origin.add (hit.delta)
-
-        if (cornerRadius) { var inner = this.grow (-cornerRadius)
-
-            if (hit.where.x > inner.right) {
-                if (hit.where.y < inner.top) {
-                    hit = Intersect.rayCircle (origin, delta, inner.rightTop, cornerRadius) }
-                else if (hit.where.y > inner.bottom) {
-                    hit = Intersect.rayCircle (origin, delta, inner.rightBottom, cornerRadius) } }
-
-            else if (hit.where.x < inner.left) {
-                if (hit.where.y < inner.top) {
-                    hit = Intersect.rayCircle (origin, delta, inner.leftTop, cornerRadius) }
-                else if (hit.where.y > inner.bottom) {
-                    hit = Intersect.rayCircle (origin, delta, inner.leftBottom, cornerRadius) } }
-
-            if (hit && hit.insideOut) {
-                hit.where = origin } }
-
-        return hit
-    },
-
-    nearestPointTo: function (pt, cornerRadius) { var r = cornerRadius || 0
-
-        var a = new Vec2 (this.left,  this.top),
-            b = new Vec2 (this.right, this.top),
-            c = new Vec2 (this.right, this.bottom),
-            d = new Vec2 (this.left,  this.bottom)
-
-        var pts = [ pt.projectOnLineSegment (a.add (r, 0),  b.add (-r, 0)),  // top
-                    pt.projectOnLineSegment (b.add (0, r),  c.add (0, -r)),  // right
-                    pt.projectOnLineSegment (c.add (-r, 0), d.add (r, 0)),   // bottom
-                    pt.projectOnLineSegment (d.add (0, -r), a.add (0, r)),   // left
-
-                    pt.projectOnCircle (a.add ( r,  r), r),
-                    pt.projectOnCircle (b.add (-r,  r), r),
-                    pt.projectOnCircle (c.add (-r, -r), r),
-                    pt.projectOnCircle (d.add ( r, -r), r) ]
-
-        return _.min (pts, function (test) { return pt.sub (test).length }) },
-
-    clone: $property (function () {
-        return new BBox (this.x, this.y, this.width, this.height) }),
-    
-    floor: $property (function () {
-        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
-
-    css: $property (function () {
-        return { left: this.left, top: this.top, width: this.width, height: this.height } }),
-
-    leftTop: $property (function () {
-        return new Vec2 (this.left, this.top) }),
-
-    leftBottom: $property (function () {
-        return new Vec2 (this.left, this.bottom) }),
-
-    rightBottom: $property (function () {
-        return new Vec2 (this.right, this.bottom) }),
-    
-    rightTop: $property (function () {
-        return new Vec2 (this.right, this.top) }),
-
-    left: $property (function () {
-        return this.x - this.width / 2.0 }),
-
-    right: $property (function () {
-        return this.x + this.width / 2.0 }),
-
-    top: $property (function () {
-        return this.y - this.height / 2.0 }),
-
-    bottom: $property (function () {
-        return this.y + this.height / 2.0 }),
-
-    center: $property (function () {
-        return new Vec2 (this.x, this.y) }),
-
-    size: $property (function () {
-        return new Vec2 (this.width, this.height) }),
-
-    offset: function (amount) {
-        return new BBox (this.x + amount.x, this.y + amount.y, this.width, this.height) },
-
-    newWidth: function (width) {
-        return new BBox (this.x - (width - this.width) / 2.0, this.y, width, this.height) },
-
-    grow: function (amount) {
-        return new BBox (this.x, this.y, this.width + amount * 2, this.height + amount * 2) },
-
-    shrink: function (amount) {
-        return this.grow (-amount) },
-
-    area: $property (function () {
-        return Math.abs (this.width * this.height) }),
-
-    toString: function () {
-        return '{' + this.x + ',' + this.y + ':' + this.width + '×' + this.height + '}' } })
-
-
-/*  3x3 affine transform matrix, encoding scale/offset/rotate/skew in 2D
-    ======================================================================== */
-
-Transform = $prototype ({
-
-    svgMatrix: $static (function (m) {
-                            return new Transform ([
-                                [m.a, m.c, m.e],
-                                [m.b, m.d, m.f],
-                                [0.0, 0.0, 1.0] ]) }),
-
-    constructor: function (components) {
-                    this.components = components || [
-                        [1.0, 0.0, 0.0],
-                        [0.0, 1.0, 0.0],
-                        [0.0, 0.0, 1.0]] },
-
-    multiply: function (m) {
-                    var result = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-                    var i, j, k, a = this.components, b = m.components;
-                    for (i = 0; i < 3; i++) {
-                        for (j = 0; j < 3; j++) {
-                            for (k = 0; k < 3; k++) {
-                                   result[i][j] += a[i][k] * b[k][j] } } }
-
-                    return new Transform (result) },
-
-    translate: function (v) {
-                    return this.multiply (new Transform ([
-                        [1.0, 0.0, v.x],
-                        [0.0, 1.0, v.y],
-                        [0.0, 0.0, 1.0] ])) },
-
-    scale: function (s) {
-                return this.multiply (new Transform ([
-                    [s,   0.0, 0.0],
-                    [0.0, s,   0.0],
-                    [0.0, 0.0, 1.0] ])) },
-
-    inverse: $property ($memoized (function () { var m = this.components
-                                        var id = (1.0 / 
-                                                    (m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
-                                                     m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
-                                                     m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])))
-
-                                        return new Transform ([[
-
-                                                 (m[1][1]*m[2][2]-m[2][1]*m[1][2])*id,          // 0 0
-                                                -(m[0][1]*m[2][2]-m[0][2]*m[2][1])*id,          // 0 1
-                                                 (m[0][1]*m[1][2]-m[0][2]*m[1][1])*id],         // 0 2
-
-                                                [(m[1][0]*m[2][2]-m[1][2]*m[2][0])*id,          // 1 0
-                                                 (m[0][0]*m[2][2]-m[0][2]*m[2][0])*id,          // 1 1
-                                                -(m[0][0]*m[1][2]-m[1][0]*m[0][2])*id],         // 1 2
-
-                                                [(m[1][0]*m[2][1]-m[2][0]*m[1][1])*id,          // 2 0
-                                                -(m[0][0]*m[2][1]-m[2][0]*m[0][1])*id,          // 2 1
-                                                 (m[0][0]*m[1][1]-m[1][0]*m[0][1])*id] ]) })),  // 2 2
-        
-    unproject: function (v) {
-                    var m = this.components
-                    return new Vec2 (
-                        v.x * m[0][0] + v.y * m[0][1] + m[0][2],
-                        v.x * m[1][0] + v.y * m[1][1] + m[1][2]) },
-
-    project: function (v) {
-                return this.inverse.unproject (v) } })
-
-
-/*  Generates random number generator
-    ======================================================================== */
-
-_.rng = function (seed, from, to) {
-    var m_w = seed;
-    var m_z = 987654321;
-    var mask = 0xffffffff;
-    return function () {
-        m_z = (36969 * (m_z & 65535) + (m_z >> 16)) & mask;
-        m_w = (18000 * (m_w & 65535) + (m_w >> 16)) & mask;
-        var result = ((m_z << 16) + m_w) & mask;
-        result /= 4294967296;
-        result += 0.5
-        if (from === undefined && to === undefined) {
-            return result }
-        else {
-            return Math.round (from + result * (to - from)) } } }
-
-
-/*  Kind of Brezenham algorithm for 1D
-    ======================================================================== */
-
-_.equalDistribution = function (value, n) {
-    var average = value / n
-    var realLeft = 0.0
-    return _.times (n, function () {
-        var left = Math.round (realLeft)
-        var right = Math.round (realLeft += average)
-        var rough = Math.floor (right - left)
-        return rough }) }
-
-
-/*  DEPRECATED: use BBox utility
-    ======================================================================== */
-
-_.ptInRect = function (pt, rect) {
-    return ((pt.x >= rect.left) && (pt.y >= rect.top) && (pt.x < rect.right) && (pt.y < rect.bottom)) }
-
-
-/*  Color utility
-    ======================================================================== */
-
-_.hue2CSS = function (H, a)   { return _.RGB2CSS (_.hue2RGB (H), a)       }
-_.HSL2CSS = function (hsl, a) { return _.RGB2CSS (_.HSL2RGB (hsl), a) }
-
-_.HSL2RGB = function (hsl) { var h = hsl[0], s = hsl[1], l = hsl[2]
-    var rgb = _.hue2RGB (h)
-    var c = (1.0 - Math.abs (2.0 * l - 1.0)) * s
-    return [(rgb[0] - 0.5) * c + l,
-            (rgb[1] - 0.5) * c + l,
-            (rgb[2] - 0.5) * c + l] }
-
-_.hue2RGB = function (hue) {
-    return [Math.max (0.0, Math.min (1.0, Math.abs (hue * 6.0 - 3.0) - 1.0)),
-            Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (hue * 6.0 - 2.0))),
-            Math.max (0.0, Math.min (1.0, 2.0 - Math.abs (hue * 6.0 - 4.0)))] }
-
-_.RGB2CSS = function (rgb, a) {
-    return 'rgba(' +
-        Math.round (rgb[0] * 255) + ',' +
-        Math.round (rgb[1] * 255) + ',' +
-        Math.round (rgb[2] * 255) + ',' + (a === undefined ? (rgb[3] === undefined ? 1.0 : rgb[3]) : a) + ')' }
-
-_.RGB2HSL = function (rgb, a_) {
-    var r = rgb[0], g = rgb[1], b = rgb[2], a = (a_ === undefined ? rgb[3] : a_)
-    var max = Math.max (r, g, b), min = Math.min (r, g, b);
-    var h, s, l = (max + min) / 2;
-
-    if (max == min) {
-        h = s = 0 }
-    else {
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch(max){
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break; }
-        h /= 6 }
-    return a === undefined ? [h, s, l] : [h, s, l, a] }
-    
-
-/*  Advanced rounding utility
-    ======================================================================== */
-
-_.extend (Math, (function (decimalAdjust) {
-    return {
-        roundTo: function (value, precision) {
-            return value - (value % precision)
-        },
-        round10: function(value, exp) {
-            return decimalAdjust ('round', value, exp);
-        },
-        floor10: function(value, exp) {
-            return decimalAdjust ('floor', value, exp);
-        },
-        ceil10: function(value, exp) {
-            return decimalAdjust ('ceil', value, exp);
-        }
-    }
-}) (function /* decimalAdjust */ (type, value, exp) {
-
-    /**
-     * Decimal adjustment of a number.
-     *
-     * @param   {String}    type    The type of adjustment.
-     * @param   {Number}    value   The number.
-     * @param   {Integer}   exp     The exponent (the 10 logarithm of the adjustment base).
-     * @returns {Number}            The adjusted value.
-     */
-
-    // If the exp is undefined or zero...
-    if (typeof exp === 'undefined' || +exp === 0) {
-        return Math[type](value);
-    }
-    value = +value;
-    exp = +exp;
-    // If the value is not a number or the exp is not an integer...
-    if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
-        return NaN;
-    }
-    // Shift
-    value = value.toString().split('e');
-    value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
-    // Shift back
-    value = value.toString().split('e');
-    return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
-}))
-/*  Implementation
- */
-R = $singleton ({
-
-    $test: function () {
-
-        var $assertExpr = function (a, b) { $assert (a, _.quote (b.str, '//')) }
-
-        /*  R should be used for code clarity purposes when one needs to generate a
-            complex regular expression that is hard to read and maintain.
-         */
-        $assertExpr ('/[^\\s]*/',        $r.anyOf.except.space.$)
-        $assertExpr ('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$)
-
-        var expr = $r.expr ('before',    $r.anything.text ('$print').something).then (
-                   $r.expr ('argument',  $r.someOf.except.text (',)')).inParentheses.then (
-                   $r.expr ('tail',      $r.anything))).$
-
-        /*  Above construction generates the following regular expression
-         */
-        $assertExpr ('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr)
-
-        /*  Main feature: named groups, easily accessible as dictionary elements.
-         */
-        $assert (expr.parse ( ' var x = $print (blabla) // lalala '),
-
-                  {  before:  ' var x = $print ',
-                   argument:  'blabla',              
-                       tail:  ' // lalala ',        })
-
-        /*  Based on Lisp-like list based syntax, for easy programmatic generation and stuff
-         */
-        $assert ([['[^', '\\s', "\]"], '*'], R.anyOf (R.except (R.space))) },
-
-
-    constructor: function () {
-
-        this.reduce = _.hyperOperator (_.binary, _.reduce2,
-                                        _.goDeeperAlwaysIfPossible,
-                                        _.isNonTrivial.and (_.not (this.isSubexpr)))
-
-        this.initDSL () },
-
-    expr: function (expr, subexprs) { subexprs = subexprs || []
-            return new R.Expr (R.reduce (expr, '', function (s, memo) {
-                                                        if (R.isSubexpr (s)) { subexprs.push (s)
-                                                            return memo + R.expr (R.root (s.value), subexprs).str }
-                                                        else {
-                                                            return memo + s } }), subexprs) },
-
-    Expr: $prototype ({
-
-        constructor: function (str, subexprs) {
-                        this.rx = new RegExp ()
-                        this.rx.compile (str)
-                        this.str = str
-                        this.subexprs = subexprs },
-
-        parse: function (str) {
-                var match = str.match (this.rx)
-            return (match && _.extend.apply (null,
-                                _.zipWith ([_.rest (match), this.subexprs], function (match, subexpr) {
-                                                                                return _.object ([[ subexpr.name, match ]]) }))) || {} } }),
-
-    metacharacters: $property (_.index ('\\^$.|?*+()[{')),
-
-    escape:       function (s)    { return _.map (s, function (x) { return R.metacharacters[x] ? ('\\' + x) : x }).join ('') },
-
-    text:         $alias ('escape'),
-
-    subexpr:      function (name, s) { return { name: name, value: ['(', s, ')'] } },
- 
-    maybe:        function (s)    { return [s, '?'] },
-
-    anyOf:        function (s)    { return [s, '*'] },
-    someOf:       function (s)    { return [s, '+'] },
-
-    oneOf:        function (s)    { return ['[',  s, ']'] },
-    except:       function (s)    { return ['[^', s, ']'] },
-
-    or:           function (a, b) { return [a, '|', b] },
-
-    begin:       $property ('^'),
-    end:         $property ('$'),
-    space:       $property ('\\s'),
-    maybeSpaces: $property ('\\s*'),
-    spaces:      $property ('\\s+'),
-    anything:    $property ('.*'),
-    something:   $property ('.+'),
-    comma:       $property (','),
-
-    parentheses: function (s) { return ['\\(', s, '\\)'] },
-    brackets:    function (s) { return ['\\[', s, '\\]'] },
-
-    isSubexpr: function (s) { return (_.isStrictlyObject (s) && !_.isArray (s)) ? true : false },
-
-    root: function (r) { return (r && r.$$) ? r.$$ : r },
-
-    initDSL: function () {
-
-        _.defineKeyword ( 'r', function ()       { return $$r ([]) })
-        _.defineKeyword ('$r', function (cursor) {
-
-            var shift = function (x) { cursor.push (x); return cursor.forward }
-
-            _.defineHiddenProperty (cursor, 'then', function (x)    { cursor.push (R.root (x));                return cursor })
-            _.defineHiddenProperty (cursor, 'text', function (x)    { cursor.push (R.text (x));                return cursor })
-            _.defineHiddenProperty (cursor, 'expr', function (x, s) { cursor.push (R.subexpr (x, R.root (s))); return cursor })
-
-            _.defineHiddenProperty (cursor, 'forward', function () {
-                return cursor.next || ((cursor.next = $r).prev = cursor).next })
-
-            _.each (['maybe', 'anyOf', 'someOf', 'oneOf', 'except'], function (key) {
-                _.defineHiddenProperty (cursor, key, function () {
-                    return shift (R[key] (cursor.forward)) }) })
-
-            _.each (['parentheses', 'brackets'], function (key) {
-                _.defineHiddenProperty (cursor, 'in' + key.capitalized, function () {
-                    return (cursor.$$.prev = $$r (R[key] (cursor.$$))) }) })
-
-            _.each (['or'], function (key) {
-                _.defineHiddenProperty (cursor, key, function () { var next = $r
-                    return (next.prev = (cursor.$$.prev = $$r (R[key] (cursor.$$, next)))).next = next }) })
-
-            _.each (['begin', 'end', 'space', 'anything', 'something'], function (key) {
-                _.defineHiddenProperty (cursor, key, function () {
-                    return shift ([R[key], cursor.forward]); }) })
-
-            _.defineHiddenProperty (cursor, '$$', function () { var root = cursor
-                while (root.prev) { root = root.prev }
-                return root })
-
-            _.defineHiddenProperty (cursor, '$', function () {
-                return R.expr (cursor.$$) })
-
-            return cursor }) } })
 
 
 /*  Experimental stuff
