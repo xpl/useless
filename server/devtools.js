@@ -3,6 +3,7 @@
 */
 
 var fs      = require ('fs'),
+    path    = require ('path'),
     process = require ('process')
 
 module.exports = $trait ({
@@ -19,8 +20,8 @@ module.exports = $trait ({
         return {
             'echo':             { post: this.echo },
             'api': {
-                'source/:file': { get:  this.developerAccess (this.readSource),
-                                  post: this.developerAccess (this.jsonInput (this.writeSource)) },
+                'source/:file': { get:  this.developerAccess (this.allowOrigin ('*', this.readSource)),
+                                  post: this.developerAccess (this.allowOrigin ('*', this.jsonInput (this.writeSource))) },
                 'git-commits':  { get:  this.developerAccess (this.gitCommits) },
                 'git-pull':     { post: this.developerAccess (this.gitPull) } } } },
 
@@ -41,16 +42,11 @@ module.exports = $trait ({
      */
     readSource: function (context) { log.info ('Reading', context.env.file)
 
-        _.readSource (path.join (this.sourceRoot, context.env.file), function (text) { context.success (text) }) },
+        _.readSource  (path.join (this.sourceRoot, context.env.file), function (text) { context.success (text) }) },
         
     writeSource: function (context) { log.warn ('Writing', context.env.file)
 
-        _.readSource (path.join (this.sourceRoot, context.env.file), function (text) {
-            try { fs.mkdirSync (context.env.file + '.backups') }
-            catch (e) {}
-            fs.writeFileSync (context.env.file + '.backups/' + Date.now (), text, { encoding: 'utf8' })
-            fs.writeFileSync (context.env.file, context.env.text, { encoding: 'utf8' })
-            context.jsonSuccess () }) },
+        _.writeSource (path.join (this.sourceRoot, context.env.file), context.env.text, context.$ (context.jsonSuccess)) },
 
     /*  Git tools
      */

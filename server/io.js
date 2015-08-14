@@ -31,6 +31,19 @@ module.exports = $trait ({
             then.call (this, context) })) },
 
 
+    /*  CORS
+     */
+    allowOrigin: function (value, then) {
+        return function (context) {
+            then.call (this, context.header ('Access-Control-Allow-Origin', value)) } },
+
+
+    /*  Text output
+     */
+    text: function (textOrFnThatReturnsText) { return this.$ (function (context) {
+        context.success (_.eval (textOrFnThatReturnsText)) }) },
+
+
     /*  JSON I/O
      */
     jsonInput: function (then) { return this.$ (function (context) {

@@ -39,6 +39,12 @@ Context = $prototype ({
         headers: { 'Set-Cookie': _.map (cookies, function (name) {
                                     return name + '=<<deleted>>; Expires=Wed, 13-Jan-1970 22:23:01 GMT; Path=/' }) } } ) },
 
+    header: function (name, value) {
+        if (value) {
+            this.headers[name] = value }
+        else {
+            delete this.headers[name] } return this },
+
     head: function (code, headers) {
         this.response.writeHead (code, _.extend (this.headers, headers)) },
 

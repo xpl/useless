@@ -128,6 +128,30 @@ _.readSource = _.cps.memoize (function (file, then) {
                                 else {
                                     then ('') } })
 
+/*  Requires APIs defined in server/devtools.js (a server trait)
+ */
+_.writeSource = function (file, text, cfgOrThen) { var then = (_.isFunction       (cfgOrThen) ? cfgOrThen : cfgOrThen.success) || _.identity
+                                                   var cfg  = (_.isStrictlyObject (cfgOrThen) && cfgOrThen) || {}
+
+    if (Platform.NodeJS) {
+
+        _.readSource (file, function (prevText) { // save previous version at <file>.backups/<date>
+
+            var fs   = require ('fs'),
+                opts = { encoding: 'utf8' }
+
+      try { fs.mkdirSync     (file + '.backups') } catch (e) {}
+            fs.writeFileSync (file + '.backups/' + Date.now (), prevText, opts)
+            fs.writeFileSync (file,                             text,     opts)
+
+            then () }) }
+        
+    else {
+        API.post ('source/' + file, _.extend2 ({}, cfg, {
+            what:    { text: text },
+            failure: cfg.failure || UI.error,
+            success: function () { log.ok (file, '— successfully saved'); if (then) { then () } } })) } }
+
 
 /*  Callstack API
  */
