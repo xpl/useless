@@ -6,6 +6,8 @@ Error reporting UI
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+(function ($ /* JQUERY */) {
+
 if (typeof UI === 'undefined') {
 	UI = {} }
 
@@ -113,3 +115,7 @@ ErrorOverlay = $singleton (Component, {
 					dom.find ('.src').text (text) })
 
 				return dom })) ] } })
+
+// -- end of namespace
+
+}) (jQuery)
