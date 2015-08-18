@@ -2149,6 +2149,11 @@ _.rescale = function (v, from, to, opts) {
 _.sqr = function (x) {
     return x * x;
 };
+if (!Math.sign) {
+    Math.sign = function (x) {
+        return x < 0 ? -1 : x > 0 ? 1 : 0;
+    };
+}
 Intersect = {
     rayCircle: function (origin, d, center, r) {
         var f = origin.sub(center);
@@ -2793,6 +2798,9 @@ Format = {
                 }
             }
         });
+    },
+    progressPercents: function (value, max) {
+        return Math.floor(value / max * 100) + '%';
     },
     randomHexString: function (length) {
         var string = '';

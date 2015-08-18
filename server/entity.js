@@ -1,9 +1,29 @@
 module.exports = $trait ({
 
+    entitySchema: undefined, // define this
+
+    api: function () {
+        return {
+            '/api/dropdb': this.developerAccess (this.dropDb) } },
+
+
     beforeInit: function (then) {
-        require ('./base/db').init (this.dbName, this.$ (function (db) {
-                                                            this.db = db
-                                                            then () })) },
+        require ('./base/db').init (
+            this.dbName,
+            this.entitySchema, this.$ (function (db) {
+                                        this.db = db
+                                        then () })) },
+
+
+    dropDb: function (context) { var app = this
+                                 var messageToPeers = this.messageToPeers || _.identity
+
+                                log.red ('Dropping db')
+
+        messageToPeers ({ what: 'dropdb-begin' })
+        this.db.drop (function () {
+            messageToPeers ({ what: 'dropdb-end' })
+            context.jsonSuccess () }) },
 
 
     /*  Defines common CRUD API for collections (for use in URL schema definition)

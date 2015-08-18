@@ -38,7 +38,7 @@ Db = $prototype ({
     /*  acquires handles to mongodb 'tables' (im not sure if it's safe to keep them persistent)
      */
     openCollections: function (complete) {
-        _.enumerate (_.keys (Collections), this.$ (function (id, i, next) {
+        _.enumerate (_.keys (this.entitySchema), this.$ (function (id, i, next) {
             this.db.collection (id, this.$ (function (err, collection) {
                 if (!err) {
                     this.initCollection (id, collection)
@@ -201,17 +201,11 @@ Db = $prototype ({
             complete: function () {
                 then (results) } }) },
 
-    /* erases everything (preserving worktime, only needed in pre-release stage)
+    /*  erases everything
      */
     drop: function (complete) {
-        this.worktime.find ().toArray (this.$ (function (e, worktime) {
-            this.todos.find ().toArray (this.$ (function (e, todos) {
-                this.db.dropDatabase (_.bind (this.openCollections, this, this.$ (function () {
-                    _.asyncJoin ([
-                        this.$ (function (done) { if (worktime.length) { this.worktime.insert (worktime, done) } else { done () } }),
-                        this.$ (function (done) { if (todos.length) { this.todos.insert (todos, done) } else { done () } }) ],
-                        complete) }))) })) })) } })
+        this.db.dropDatabase (_.bind (this.openCollections, this, complete)) } })
 
 module.exports = {
-    init: function (name, then) {
-        return new Db (name, then) } }
+    init: function (name, schema, then) {
+        return new Db (name, schema, then) } }

@@ -1,11 +1,11 @@
-.useless-bootstrap .modal { font-family: Helvetica, sans-serif; font-size: 14px; }
-.useless-bootstrap .modal a { color: #08c; text-decoration: none; }
-.useless-bootstrap .modal li { line-height: 20px; }
-.useless-bootstrap .modal ul { padding: 0; margin: 0 0 10px 25px; }
-.useless-bootstrap .modal h5 {   margin: 10px 0; font-family: inherit; font-weight: bold; line-height: 1; color: inherit; text-rendering: optimizelegibility; }
-.useless-bootstrap .modal h5 { font-size: 14px; line-height: 20px; }
+.ui-error-modal { font-family: Helvetica, sans-serif; font-size: 14px; }
+.ui-error-modal a { color: #08c; text-decoration: none; }
+.ui-error-modal li { line-height: 20px; }
+.ui-error-modal ul { padding: 0; margin: 0 0 10px 25px; }
+.ui-error-modal h5 {   margin: 10px 0; font-family: inherit; font-weight: bold; line-height: 1; color: inherit; text-rendering: optimizelegibility; }
+.ui-error-modal h5 { font-size: 14px; line-height: 20px; }
 
-.useless-bootstrap .btn {
+.ui-error-btn {
   display: inline-block;
   *display: inline;
   padding: 4px 14px;
@@ -43,26 +43,26 @@
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.useless-bootstrap .btn:hover,
-.useless-bootstrap .btn:active,
-.useless-bootstrap .btn.active,
-.useless-bootstrap .btn.disabled,
-.useless-bootstrap .btn[disabled] {
+.ui-error-btn:hover,
+.ui-error-btn:active,
+.ui-error-btn.active,
+.ui-error-btn.disabled,
+.ui-error-btn[disabled] {
   color: #333333;
   background-color: #e6e6e6;
   *background-color: #d9d9d9;
 }
 
-.useless-bootstrap .btn:active,
-.useless-bootstrap .btn.active {
+.ui-error-btn:active,
+.ui-error-btn.active {
   background-color: #cccccc \9;
 }
 
-.useless-bootstrap .btn:first-child {
+.ui-error-btn:first-child {
   *margin-left: 0;
 }
 
-.useless-bootstrap .btn:hover {
+.ui-error-btn:hover {
   color: #333333;
   text-decoration: none;
   background-color: #e6e6e6;
@@ -76,14 +76,14 @@
           transition: background-position 0.1s linear;
 }
 
-.useless-bootstrap .btn:focus {
+.ui-error-btn:focus {
   outline: thin dotted #333;
   outline: 5px auto -webkit-focus-ring-color;
   outline-offset: -2px;
 }
 
-.useless-bootstrap .btn.active,
-.useless-bootstrap .btn:active {
+.ui-error-btn.active,
+.ui-error-btn:active {
   background-color: #e6e6e6;
   background-color: #d9d9d9 \9;
   background-image: none;
@@ -93,8 +93,8 @@
           box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.useless-bootstrap .btn.disabled,
-.useless-bootstrap .btn[disabled] {
+.ui-error-btn.disabled,
+.ui-error-btn[disabled] {
   cursor: default;
   background-color: #e6e6e6;
   background-image: none;
@@ -105,7 +105,7 @@
           box-shadow: none;
 }
 
-.useless-bootstrap .btn-large {
+.ui-error-btn-large {
   padding: 9px 14px;
   font-size: 16px;
   line-height: normal;
@@ -114,27 +114,27 @@
           border-radius: 5px;
 }
 
-.useless-bootstrap .btn-large [class^="icon-"] {
+.ui-error-btn-large [class^="icon-"] {
   margin-top: 2px;
 }
 
-.useless-bootstrap .btn-small {
+.ui-error-btn-small {
   padding: 3px 9px;
   font-size: 12px;
   line-height: 18px;
 }
 
-.useless-bootstrap .btn-small [class^="icon-"] {
+.ui-error-btn-small [class^="icon-"] {
   margin-top: 0;
 }
 
-.useless-bootstrap .btn-mini {
+.ui-error-btn-mini {
   padding: 2px 6px;
   font-size: 11px;
   line-height: 17px;
 }
 
-.useless-bootstrap .btn-block {
+.ui-error-btn-block {
   display: block;
   width: 100%;
   padding-right: 0;
@@ -144,7 +144,7 @@
           box-sizing: border-box;
 }
 
-.useless-bootstrap .btn-block + .btn-block {
+.ui-error-btn-block + .ui-error-btn-block {
   margin-top: 5px;
 }
 
@@ -154,21 +154,21 @@
   width: 100%;
 }
 
-.useless-bootstrap .btn-primary.active,
-.useless-bootstrap .btn-warning.active,
-.useless-bootstrap .btn-danger.active,
-.useless-bootstrap .btn-success.active,
-.useless-bootstrap .btn-info.active,
-.useless-bootstrap .btn-inverse.active {
+.ui-error-btn-primary.active,
+.ui-error-btn-warning.active,
+.ui-error-btn-danger.active,
+.ui-error-btn-success.active,
+.ui-error-btn-info.active,
+.ui-error-btn-inverse.active {
   color: rgba(255, 255, 255, 0.75);
 }
 
-.useless-bootstrap .btn {
+.ui-error-btn {
   border-color: #c5c5c5;
   border-color: rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.25);
 }
 
-.useless-bootstrap .btn-primary {
+.ui-error-btn-primary {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #006dcc;
@@ -185,22 +185,22 @@
   filter: progid:dximagetransform.microsoft.gradient(enabled=false);
 }
 
-.useless-bootstrap .btn-primary:hover,
-.useless-bootstrap .btn-primary:active,
-.useless-bootstrap .btn-primary.active,
-.useless-bootstrap .btn-primary.disabled,
-.useless-bootstrap .btn-primary[disabled] {
+.ui-error-btn-primary:hover,
+.ui-error-btn-primary:active,
+.ui-error-btn-primary.active,
+.ui-error-btn-primary.disabled,
+.ui-error-btn-primary[disabled] {
   color: #ffffff;
   background-color: #0044cc;
   *background-color: #003bb3;
 }
 
-.useless-bootstrap .btn-primary:active,
-.useless-bootstrap .btn-primary.active {
+.ui-error-btn-primary:active,
+.ui-error-btn-primary.active {
   background-color: #003399 \9;
 }
 
-.useless-bootstrap .btn-warning {
+.ui-error-btn-warning {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #faa732;
@@ -217,22 +217,22 @@
   filter: progid:dximagetransform.microsoft.gradient(enabled=false);
 }
 
-.useless-bootstrap .btn-warning:hover,
-.useless-bootstrap .btn-warning:active,
-.useless-bootstrap .btn-warning.active,
-.useless-bootstrap .btn-warning.disabled,
-.useless-bootstrap .btn-warning[disabled] {
+.ui-error-btn-warning:hover,
+.ui-error-btn-warning:active,
+.ui-error-btn-warning.active,
+.ui-error-btn-warning.disabled,
+.ui-error-btn-warning[disabled] {
   color: #ffffff;
   background-color: #f89406;
   *background-color: #df8505;
 }
 
-.useless-bootstrap .btn-warning:active,
-.useless-bootstrap .btn-warning.active {
+.ui-error-btn-warning:active,
+.ui-error-btn-warning.active {
   background-color: #c67605 \9;
 }
 
-.useless-bootstrap .btn-danger {
+.ui-error-btn-danger {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #da4f49;
@@ -249,22 +249,22 @@
   filter: progid:dximagetransform.microsoft.gradient(enabled=false);
 }
 
-.useless-bootstrap .btn-danger:hover,
-.useless-bootstrap .btn-danger:active,
-.useless-bootstrap .btn-danger.active,
-.useless-bootstrap .btn-danger.disabled,
-.useless-bootstrap .btn-danger[disabled] {
+.ui-error-btn-danger:hover,
+.ui-error-btn-danger:active,
+.ui-error-btn-danger.active,
+.ui-error-btn-danger.disabled,
+.ui-error-btn-danger[disabled] {
   color: #ffffff;
   background-color: #bd362f;
   *background-color: #a9302a;
 }
 
-.useless-bootstrap .btn-danger:active,
-.useless-bootstrap .btn-danger.active {
+.ui-error-btn-danger:active,
+.ui-error-btn-danger.active {
   background-color: #942a25 \9;
 }
 
-.useless-bootstrap .btn-success {
+.ui-error-btn-success {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #5bb75b;
@@ -281,22 +281,22 @@
   filter: progid:dximagetransform.microsoft.gradient(enabled=false);
 }
 
-.useless-bootstrap .btn-success:hover,
-.useless-bootstrap .btn-success:active,
-.useless-bootstrap .btn-success.active,
-.useless-bootstrap .btn-success.disabled,
-.useless-bootstrap .btn-success[disabled] {
+.ui-error-btn-success:hover,
+.ui-error-btn-success:active,
+.ui-error-btn-success.active,
+.ui-error-btn-success.disabled,
+.ui-error-btn-success[disabled] {
   color: #ffffff;
   background-color: #51a351;
   *background-color: #499249;
 }
 
-.useless-bootstrap .btn-success:active,
-.useless-bootstrap .btn-success.active {
+.ui-error-btn-success:active,
+.ui-error-btn-success.active {
   background-color: #408140 \9;
 }
 
-.useless-bootstrap .btn-info {
+.ui-error-btn-info {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #49afcd;
@@ -313,22 +313,22 @@
   filter: progid:dximagetransform.microsoft.gradient(enabled=false);
 }
 
-.useless-bootstrap .btn-info:hover,
-.useless-bootstrap .btn-info:active,
-.useless-bootstrap .btn-info.active,
-.useless-bootstrap .btn-info.disabled,
-.useless-bootstrap .btn-info[disabled] {
+.ui-error-btn-info:hover,
+.ui-error-btn-info:active,
+.ui-error-btn-info.active,
+.ui-error-btn-info.disabled,
+.ui-error-btn-info[disabled] {
   color: #ffffff;
   background-color: #2f96b4;
   *background-color: #2a85a0;
 }
 
-.useless-bootstrap .btn-info:active,
-.useless-bootstrap .btn-info.active {
+.ui-error-btn-info:active,
+.ui-error-btn-info.active {
   background-color: #24748c \9;
 }
 
-.useless-bootstrap .btn-inverse {
+.ui-error-btn-inverse {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #363636;
@@ -345,18 +345,18 @@
   filter: progid:dximagetransform.microsoft.gradient(enabled=false);
 }
 
-.useless-bootstrap .btn-inverse:hover,
-.useless-bootstrap .btn-inverse:active,
-.useless-bootstrap .btn-inverse.active,
-.useless-bootstrap .btn-inverse.disabled,
-.useless-bootstrap .btn-inverse[disabled] {
+.ui-error-btn-inverse:hover,
+.ui-error-btn-inverse:active,
+.ui-error-btn-inverse.active,
+.ui-error-btn-inverse.disabled,
+.ui-error-btn-inverse[disabled] {
   color: #ffffff;
   background-color: #222222;
   *background-color: #151515;
 }
 
-.useless-bootstrap .btn-inverse:active,
-.useless-bootstrap .btn-inverse.active {
+.ui-error-btn-inverse:active,
+.ui-error-btn-inverse.active {
   background-color: #080808 \9;
 }
 
@@ -390,9 +390,9 @@
   *padding-bottom: 1px;
 }
 
-.useless-bootstrap .btn-link,
-.useless-bootstrap .btn-link:active,
-.useless-bootstrap .btn-link[disabled] {
+.ui-error-btn-link,
+.ui-error-btn-link:active,
+.ui-error-btn-link[disabled] {
   background-color: transparent;
   background-image: none;
   -webkit-box-shadow: none;
@@ -400,7 +400,7 @@
           box-shadow: none;
 }
 
-.useless-bootstrap .btn-link {
+.ui-error-btn-link {
   color: #0088cc;
   cursor: pointer;
   border-color: transparent;
@@ -409,45 +409,45 @@
           border-radius: 0;
 }
 
-.useless-bootstrap .btn-link:hover {
+.ui-error-btn-link:hover {
   color: #005580;
   text-decoration: underline;
   background-color: transparent;
 }
 
-.useless-bootstrap .btn-link[disabled]:hover {
+.ui-error-btn-link[disabled]:hover {
   color: #333333;
   text-decoration: none;
 }
 
-.useless-bootstrap .btn .caret {
+.ui-error-btn .caret {
   margin-top: 8px;
   margin-left: 0;
 }
 
-.useless-bootstrap .btn-mini .caret,
-.useless-bootstrap .btn-small .caret,
-.useless-bootstrap .btn-large .caret {
+.ui-error-btn-mini .caret,
+.ui-error-btn-small .caret,
+.ui-error-btn-large .caret {
   margin-top: 6px;
 }
 
-.useless-bootstrap .btn-large .caret {
+.ui-error-btn-large .caret {
   border-top-width: 5px;
   border-right-width: 5px;
   border-left-width: 5px;
 }
 
-.useless-bootstrap .btn-primary .caret,
-.useless-bootstrap .btn-warning .caret,
-.useless-bootstrap .btn-danger .caret,
-.useless-bootstrap .btn-info .caret,
-.useless-bootstrap .btn-success .caret,
-.useless-bootstrap .btn-inverse .caret {
+.ui-error-btn-primary .caret,
+.ui-error-btn-warning .caret,
+.ui-error-btn-danger .caret,
+.ui-error-btn-info .caret,
+.ui-error-btn-success .caret,
+.ui-error-btn-inverse .caret {
   border-top-color: #ffffff;
   border-bottom-color: #ffffff;
 }
 
-.useless-bootstrap .alert {
+.ui-error-alert {
   padding: 8px 35px 8px 14px;
   margin-bottom: 20px;
   color: #c09853;
@@ -459,52 +459,52 @@
           border-radius: 4px;
 }
 
-.useless-bootstrap .alert h4 {
+.ui-error-alert h4 {
   margin: 0;
 }
 
-.useless-bootstrap .alert .close {
+.ui-error-alert .close {
   position: relative;
   top: -2px;
   right: -21px;
   line-height: 20px;
 }
 
-.useless-bootstrap .alert-success {
+.ui-error-alert-success {
   color: #468847;
   background-color: #dff0d8;
   border-color: #d6e9c6;
 }
 
-.useless-bootstrap .alert-danger,
-.useless-bootstrap .alert-error {
+.ui-error-alert-danger,
+.ui-error-alert-error {
   color: #b94a48;
   background-color: #f2dede;
   border-color: #eed3d7;
 }
 
-.useless-bootstrap .alert-info {
+.ui-error-alert-info {
   color: #3a87ad;
   background-color: #d9edf7;
   border-color: #bce8f1;
 }
 
-.useless-bootstrap .alert-block {
+.ui-error-alert-block {
   padding-top: 14px;
   padding-bottom: 14px;
 }
 
-.useless-bootstrap .alert-block > p,
-.useless-bootstrap .alert-block > ul {
+.ui-error-alert-block > p,
+.ui-error-alert-block > ul {
   margin-bottom: 0;
 }
 
-.useless-bootstrap .alert-block p + p {
+.ui-error-alert-block p + p {
   margin-top: 5px;
 }
 
 
-.useless-bootstrap .modal {
+.ui-error-modal {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -527,7 +527,7 @@
           background-clip: padding-box;
 }
 
-.useless-bootstrap .modal.fade {
+.ui-error-modal.fade {
   top: -25%;
   -webkit-transition: opacity 0.3s linear, top 0.3s ease-out;
      -moz-transition: opacity 0.3s linear, top 0.3s ease-out;
@@ -535,35 +535,35 @@
           transition: opacity 0.3s linear, top 0.3s ease-out;
 }
 
-.useless-bootstrap .modal.fade.in {
+.ui-error-modal.fade.in {
   top: 50%;
 }
 
-.useless-bootstrap .modal-header {
+.ui-error-modal-header {
   padding: 9px 15px;
   border-bottom: 1px solid #eee;
 }
 
-.useless-bootstrap .modal-header .close {
+.ui-error-modal-header .close {
   margin-top: 2px;
 }
 
-.useless-bootstrap .modal-header h3 {
+.ui-error-modal-header h3 {
   margin: 0;
   line-height: 30px;
 }
 
-.useless-bootstrap .modal-body {
+.ui-error-modal-body {
   max-height: 400px;
   padding: 15px;
   overflow-y: auto;
 }
 
-.useless-bootstrap .modal-form {
+.ui-error-modal-form {
   margin-bottom: 0;
 }
 
-.useless-bootstrap .modal-footer {
+.ui-error-modal-footer {
   padding: 14px 15px 15px;
   margin-bottom: 0;
   text-align: right;
@@ -578,57 +578,57 @@
           box-shadow: inset 0 1px 0 #ffffff;
 }
 
-.useless-bootstrap .modal-footer:before,
-.useless-bootstrap .modal-footer:after {
+.ui-error-modal-footer:before,
+.ui-error-modal-footer:after {
   display: table;
   line-height: 0;
   content: "";
 }
 
-.useless-bootstrap .modal-footer:after {
+.ui-error-modal-footer:after {
   clear: both;
 }
 
-.useless-bootstrap .modal-footer .btn + .btn {
+.ui-error-modal-footer .btn + .btn {
   margin-bottom: 0;
   margin-left: 5px;
 }
 
-.useless-bootstrap .modal-footer .btn-group .btn + .btn {
+.ui-error-modal-footer .btn-group .btn + .btn {
   margin-left: -1px;
 }
 
 /* modal stuff */
-.useless-bootstrap.modal-overlay { position: fixed; left: 0; right: 0; top: 0; bottom: 0; display: -webkit-box; -webkit-box-orient: horizontal; -webkit-box-pack: center; -webkit-box-align: center; }
-.useless-bootstrap.modal-overlay > .background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }
-.useless-bootstrap.modal-overlay .modal { position: relative; margin: 0; left: 0; top: 0; }
+.ui-error-modal-overlay { position: fixed; left: 0; right: 0; top: 0; bottom: 0; display: -webkit-box; -webkit-box-orient: horizontal; -webkit-box-pack: center; -webkit-box-align: center; }
+.ui-error-modal-overlay > .background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }
+.ui-error-modal-overlay .modal { position: relative; margin: 0; left: 0; top: 0; }
 
-.useless-bootstrap.modal-overlay.topmost > .background { z-index: 200; }
+.ui-error-modal-overlay.topmost > .background { z-index: 200; }
 
-.useless-bootstrap .modal.loading h5 { text-align: center; margin-top: -0.4em; }
-.useless-bootstrap .modal.loading .progress, 
-.useless-bootstrap .modal.loading .alert { margin-bottom: 0; }
+.ui-error-modal.loading h5 { text-align: center; margin-top: -0.4em; }
+.ui-error-modal.loading .progress, 
+.ui-error-modal.loading .alert { margin-bottom: 0; }
 
-.useless-bootstrap .modal.loading .progress:not(:first-child), 
-.useless-bootstrap .modal.loading .alert:not(:first-child) { margin-top: 10px; }
+.ui-error-modal.loading .progress:not(:first-child), 
+.ui-error-modal.loading .alert:not(:first-child) { margin-top: 10px; }
 
-.useless-bootstrap .modal.loading.error .progress { display: none; }
-.useless-bootstrap .modal.loading.error .alert { display: block; }
-.useless-bootstrap .modal.loading.error .modal-footer { display: block; }
+.ui-error-modal.loading.error .progress { display: none; }
+.ui-error-modal.loading.error .alert { display: block; }
+.ui-error-modal.loading.error .modal-footer { display: block; }
 
 /* stacktrace in UI.error */
 
-.useless-bootstrap .alert-error { position: relative; }
-.useless-bootstrap .alert-error:not(.all) .callstack-entry.third-party { display: none; }
-.useless-bootstrap .alert-error .clean-toggle { position: absolute; right: 10px; opacity: 0.25; color: black; }
-.useless-bootstrap .alert-error .clean-toggle:before { content: 'more'; }
-.useless-bootstrap .alert-error.all .clean-toggle:before { content: 'less'; }
+.ui-error-alert-error { position: relative; }
+.ui-error-alert-error:not(.all) .callstack-entry.third-party { display: none; }
+.ui-error-alert-error .clean-toggle { position: absolute; right: 10px; opacity: 0.25; color: black; }
+.ui-error-alert-error .clean-toggle:before { content: 'more'; }
+.ui-error-alert-error.all .clean-toggle:before { content: 'less'; }
 
-.useless-bootstrap .alert-error .callstack { margin-top: 10px; }
-.useless-bootstrap .alert-error .callstack .callstack-entry { margin-top: 10px; list-style-type: circle;  }
-.useless-bootstrap .alert-error .callstack .callstack-entry .file { }
-.useless-bootstrap .alert-error .callstack .callstack-entry .callee:not(:empty):before { content: ' → '; }
-.useless-bootstrap .alert-error .callstack .callstack-entry .src { cursor: pointer; margin-top: 2px; font-size: 12px; white-space: pre; overflow: hidden; display: block; color: black; background: rgba(255,255,255,0.75); padding: 2px; overflow: hidden; font-family: Menlo, monospace; }
-.useless-bootstrap .alert-error .callstack .callstack-entry .src.full { font-size: 10px; height: 200px; overflow: scroll; }
-.useless-bootstrap .alert-error .callstack .callstack-entry .src.full .line.hili { background: yellow; }
+.ui-error-alert-error .callstack { margin-top: 10px; }
+.ui-error-alert-error .callstack .callstack-entry { margin-top: 10px; list-style-type: circle;  }
+.ui-error-alert-error .callstack .callstack-entry .file { }
+.ui-error-alert-error .callstack .callstack-entry .callee:not(:empty):before { content: ' → '; }
+.ui-error-alert-error .callstack .callstack-entry .src { cursor: pointer; margin-top: 2px; font-size: 12px; white-space: pre; overflow: hidden; display: block; color: black; background: rgba(255,255,255,0.75); padding: 2px; overflow: hidden; font-family: Menlo, monospace; }
+.ui-error-alert-error .callstack .callstack-entry .src.full { font-size: 10px; height: 200px; overflow: scroll; }
+.ui-error-alert-error .callstack .callstack-entry .src.full .line.hili { background: yellow; }
 

@@ -27,14 +27,14 @@ ErrorOverlay = $singleton (Component, {
 	closeTriggered: $triggerOnce (),
 
 	el: $memoized ($property (function () {
-		var el = $('<div class="modal-overlay useless-bootstrap" style="z-index:5000;">').append ([
+		var el = $('<div class="ui-error-modal-overlay" style="z-index:5000;">').append ([
 			$('<div class="background">'),
-			$('<div class="modal loading error">').append ([
-				this.modalBody = $('<div class="modal-body">').append ('<h5>Now panic!</h5>'),
+			$('<div class="ui-error-modal loading error">').append ([
+				this.modalBody = $('<div class="ui-error-modal-body">').append ('<h5>Now panic!</h5>'),
 				$('<div class="modal-footer">').append ([
-					this.btnRetry = $('<button type="button" class="btn btn-warning" style="display:none;">Try again</button>')
+					this.btnRetry = $('<button type="button" class="ui-error-btn ui-error-btn-warning" style="display:none;">Try again</button>')
 						.touchClick (this.retry),
-					this.btnClose = $('<button type="button" class="btn btn-danger" style="display:none;">Close</button>')
+					this.btnClose = $('<button type="button" class="ui-error-btn ui-error-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ]).appendTo (document.body)
 		return el })),
 
@@ -64,8 +64,8 @@ ErrorOverlay = $singleton (Component, {
 		this.btnClose.hide () },
 
 	append: function (what) {
-		this.el.find ('.modal-body')
-			.append ($('<div class="loading-error alert alert-error fade in">').append (
+		this.el.find ('.ui-error-modal-body')
+			.append ($('<div class="alert ui-error-alert-error fade in">').append (
 				$('<span class="message">').append (
 					_.isTypeOf (Error, what) ? ErrorOverlay.printError (what) : log.impl.stringify (what))))
 		this.el.fadeIn (500)

@@ -19,6 +19,9 @@ Format = {
                                     else {
                                         return undefined } } }) },
 
+    progressPercents: function (value, max) {
+        return Math.floor ((value / max) * 100) + '%' },
+
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {

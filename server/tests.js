@@ -81,11 +81,12 @@ module.exports = $trait ({
         else {
             log.warn ('Preparing Test DB')
 
-            require ('./base/db').init (this.dbName + '_test',
-                             this.$ (function (testDb) { var productionDb = this.db;
+            require ('./base/db').init (
+                            this.dbName + '_test',
+                            this.entitySchema,
+                            this.$ (function (testDb) { var productionDb = this.db;
                                                                             this.db = testDb
                 this.dropDb (this.newContext ({
-                    minimal: true,
                     success: this.$ (function () { 
                        what (this.$ (function () { this.db = productionDb })) }) })) })) } },
     

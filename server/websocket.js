@@ -19,10 +19,8 @@ module.exports = $trait ({
             else {
                 drop ('missing auth credentials') } } },
 
-    websocketStringifyUser:
-        (typeof Collections !== 'undefined') ?
-            Collections.users.text :
-            _.stringify,
+    websocketStringifyUser: function (user) {
+        return ((this.entitySchema && this.entitySchema.users && this.entitySchema.users.text) || _.stringify) (user) },
 
     /*  Sends a message to connected peers via WebSocket
      */

@@ -4625,6 +4625,9 @@ Format = {
                                     else {
                                         return undefined } } }) },
 
+    progressPercents: function (value, max) {
+        return Math.floor ((value / max) * 100) + '%' },
+
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {
@@ -5210,6 +5213,13 @@ _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] -
 
 _.sqr = function (x) { return x * x }
 
+
+/*  Math.sign (missing from Safari)
+    ======================================================================== */
+
+if (!Math.sign) {
+    Math.sign = function (x) {
+        return (x < 0) ? -1 : ((x > 0) ? 1 : 0) } }
 
 /*  Intersections (draft)
     ======================================================================== */
