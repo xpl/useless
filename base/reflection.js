@@ -225,7 +225,8 @@ CallStack = $extends (Array, {
                                .replace ($sourcePath,  '') }),
 
     isThirdParty: $static (function (file) { var local = file.replace ($sourcePath, '')
-                    return (local.indexOf ('/node_modules/') >= 0) ||
+                    return (Platform.NodeJS && (file[0] !== '/')) || // from Node source
+                           (local.indexOf ('/node_modules/') >= 0) ||
                            (file.indexOf  ('/node_modules/') >= 0 && !local) ||
                            (local.indexOf ('underscore') >= 0) ||
                            (local.indexOf ('jquery') >= 0) }),

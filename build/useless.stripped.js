@@ -86,6 +86,7 @@ unicode_hack = function () {
         return new RegExp(regexpString, modifiers);
     };
 }();
+;
 Base64 = {
     _keyStr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
     encode: function (input) {
@@ -262,6 +263,7 @@ case 'browser':
         globalUncaughtExceptionHandler(e.error);
     });
 }
+;
 _.hasAsserts = true;
 _.extend(_, {
     tests: {},
@@ -1261,17 +1263,6 @@ _.extend(_, {
         var result = {};
         for (var i = 0, n = list.length; i < n; i++) {
             result[list[i]] = true;
-        }
-        return result;
-    }
-});
-_.extend(_, {
-    filterMap: function (arr, map_, filter_) {
-        for (var i = 0, n = arr && arr.length || 0, map = map_ || _.identity, filter = filter_ || _.isNonempty, result = []; i < n; i++) {
-            var x = map.call(this, arr[i]);
-            if (filter.call(this, x)) {
-                result.push(x);
-            }
         }
         return result;
     }
@@ -2985,6 +2976,7 @@ _.extend(log, {
 if (Platform.NodeJS) {
     module.exports = log;
 }
+;
 _.enumerate = _.cps.each;
 _.mapReduce = function (array, cfg) {
     var cursor = 0;
@@ -3071,6 +3063,7 @@ _.defineKeyword('interlocked', function (fn) {
 if (Platform.NodeJS) {
     module.exports = _;
 }
+;
 _.clamp = function (n, min, max) {
     return Math.max(min, Math.min(max, n));
 };
@@ -3857,15 +3850,15 @@ Component = $prototype({
     }),
     callTraitsMethod: function (name, then) {
         if (_.isFunction(then)) {
-            _.cps.sequence(_.filterMap.call(this, this.constructor.$traits, function (Trait) {
+            _.cps.sequence(_.filter2(this.constructor.$traits || [], this.$(function (Trait) {
                 var method = Trait.prototype[name];
-                return method && _.cps.arity0(_.noArgs(method) ? method.asContinuation : method).bind(this);
-            }).concat(then.arity0))();
+                return method && _.cps.arity0(_.noArgs(method) ? method.asContinuation : method).bind(this) || false;
+            })).concat(then.arity0))();
         } else {
-            _.sequence(_.filterMap.call(this, this.constructor.$traits, function (Trait) {
+            _.sequence(_.filter2(this.constructor.$traits || [], this.$(function (Trait) {
                 var method = Trait.prototype[name];
-                return method && (_.hasArgs(method) ? method.bind(this, _.identity) : method.bind(this));
-            }))();
+                return method && (_.hasArgs(method) ? method.bind(this, _.identity) : method.bind(this)) || false;
+            })))();
         }
     },
     _beforeInit: function (then) {
@@ -4314,7 +4307,7 @@ CallStack = $extends(Array, {
     }),
     isThirdParty: $static(function (file) {
         var local = file.replace($sourcePath, '');
-        return local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
+        return Platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
     }),
     fromRawString: $static(_.sequence(function (rawString) {
         return CallStack.rawStringToArray(rawString);
@@ -4819,6 +4812,7 @@ Test = $prototype({
 if (Platform.NodeJS) {
     module.exports = Testosterone;
 }
+;
 (function () {
     var fnNameExpr = $r.expr('how', $r.text('before').or.text('after')).expr('name', $r.anything).$;
     var tryBind = function (target, methodName, bind, boundMethod) {

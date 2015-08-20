@@ -601,6 +601,7 @@ Component = $prototype ({
         /*  Bind stuff to init (either in CPS, or in sequential flow control style)
          */
         _.intercept (this, 'init', function (init) {
+
             var evalChain = _.hasArgs (this.constructor.prototype.init) ? _.cps.sequence : _.sequence
                 evalChain ([this._beforeInit, init.bind (this), this._afterInit]).call (this) })
 
@@ -636,20 +637,20 @@ Component = $prototype ({
 
         //  Continuation-passing style chain
         if (_.isFunction (then)) {
-            _.cps.sequence (_.filterMap.call (this, this.constructor.$traits, function (Trait) {
+            _.cps.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
                 var method = Trait.prototype[name]
-                return method && _.cps.arity0 ((
+                return (method && _.cps.arity0 ((
                     _.noArgs (method) ?             // convert to CPS convention if needed
                         method.asContinuation :
-                        method)).bind (this) }).concat (then.arity0)) () }
+                        method)).bind (this)) || false })).concat (then.arity0)) () }
 
         //  Sequential style chain
         else {
-            _.sequence (_.filterMap.call (this, this.constructor.$traits, function (Trait) {
+            _.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
                 var method = Trait.prototype[name]
-                return method && (_.hasArgs (method) ?
+                return (method && (_.hasArgs (method) ?
                                     method.bind (this, _.identity) : // if method is CPS, give identity function as (unused) 'then' argument,
-                                    method.bind (this)) })) () } },  // (to prevent errors, as trait methods not required to support both calling styles)
+                                    method.bind (this))) || false }))) () } },  // (to prevent errors, as trait methods not required to support both calling styles)
 
     /*  Lifecycle
      */

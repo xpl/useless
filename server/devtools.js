@@ -42,7 +42,9 @@ module.exports = $trait ({
      */
     readSource: function (context) { log.info ('Reading', context.env.file)
 
-        _.readSource  (path.join (this.sourceRoot, context.env.file), function (text) { context.success (text) }) },
+        _.readSource (context.env.file[0] === '/'
+            ? context.env.file
+            : path.join (this.sourceRoot, context.env.file), function (text) { context.success (text) }) },
         
     writeSource: function (context) { log.warn ('Writing', context.env.file)
 

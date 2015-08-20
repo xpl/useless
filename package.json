@@ -58,6 +58,7 @@
     "process": ">= 0.9.0",
     "iconv": ">= 2.1.7",
     "websocket": ">= 1.0.19",
-    "mongodb": ">= 2.0.41"
+    "mongodb": ">= 2.0.41",
+    "js-string-escape": ">= 1.0.0"
   }
 }

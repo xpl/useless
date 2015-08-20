@@ -875,17 +875,6 @@ _.extend(_, {
         return result;
     }
 });
-_.extend(_, {
-    filterMap: function (arr, map_, filter_) {
-        for (var i = 0, n = arr && arr.length || 0, map = map_ || _.identity, filter = filter_ || _.isNonempty, result = []; i < n; i++) {
-            var x = map.call(this, arr[i]);
-            if (filter.call(this, x)) {
-                result.push(x);
-            }
-        }
-        return result;
-    }
-});
 _.quote = function (s, pattern_) {
     var pattern = pattern_ || '"';
     var before = pattern.slice(0, Math.floor(pattern.length / 2 + pattern.length % 2));
@@ -2915,6 +2904,7 @@ _.defineKeyword('interlocked', function (fn) {
 if (Platform.NodeJS) {
     module.exports = _;
 }
+;
 _([
     'bindable',
     'trigger',
@@ -3056,15 +3046,15 @@ Component = $prototype({
     }),
     callTraitsMethod: function (name, then) {
         if (_.isFunction(then)) {
-            _.cps.sequence(_.filterMap.call(this, this.constructor.$traits, function (Trait) {
+            _.cps.sequence(_.filter2(this.constructor.$traits || [], this.$(function (Trait) {
                 var method = Trait.prototype[name];
-                return method && _.cps.arity0(_.noArgs(method) ? method.asContinuation : method).bind(this);
-            }).concat(then.arity0))();
+                return method && _.cps.arity0(_.noArgs(method) ? method.asContinuation : method).bind(this) || false;
+            })).concat(then.arity0))();
         } else {
-            _.sequence(_.filterMap.call(this, this.constructor.$traits, function (Trait) {
+            _.sequence(_.filter2(this.constructor.$traits || [], this.$(function (Trait) {
                 var method = Trait.prototype[name];
-                return method && (_.hasArgs(method) ? method.bind(this, _.identity) : method.bind(this));
-            }))();
+                return method && (_.hasArgs(method) ? method.bind(this, _.identity) : method.bind(this)) || false;
+            })))();
         }
     },
     _beforeInit: function (then) {
@@ -3465,3 +3455,4 @@ if (jQuery) {
         });
     }(jQuery));
 }
+;

@@ -11,7 +11,9 @@ Examples = $singleton (Component, {
         '/':               this.file ('./example/index.html'),
         'useless.js':      this.file ('./build/useless.js'),
         'useless/:file':   this.file ('./client/'),
-        'example/:file':   this.file ('./example/') } },
+        'example/:file':   this.file ('./example/'),
+
+        'api/erroneous-method': { post: this.erroneousMethod } } },
 
     $traits: [
         
@@ -25,5 +27,7 @@ Examples = $singleton (Component, {
         require ('./server/websocket'),
         require ('./server/devtools'),
         require ('./server/uptime') ],
+
+    erroneousMethod: function (context) { 2 + 2 = 5 },
 
     init: function (then) { log.green ('Example app is running at http://localhost:1333'); then () } })

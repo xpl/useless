@@ -73,9 +73,8 @@ module.exports = $trait ({
     beforeInit: function (then) { log.info ('Reading API schema')
 
         this.apiSchema = APISchema.collapse (
-            _.flat (_.filterMap.call (this, (this.constructor.$traits || []).reversed, function (Trait) {
-                if (Trait.prototype.api) {
-                    return APISchema.canonicalize (Trait.prototype.api.call (this)) } })))
+            _.flat (_.filter2 ((this.constructor.$traits || []).reversed, this.$ (function (Trait) {
+                return (Trait.prototype.api ? APISchema.canonicalize (Trait.prototype.api.call (this)) : false) }))))
         then () },
 
     afterInit: function (then) {
@@ -146,7 +145,7 @@ APISchema = {
         var groups = _.groupBy (routes, function (route) {
             return route[0] })
 
-        return _.reversed (_.filterMap (routes.reversed, function (route) {
+        return _.reversed (_.filter2 (routes.reversed, function (route) {
             if (!_.isArray (route)) {
                 return route }
             var name = route[0]
@@ -154,7 +153,8 @@ APISchema = {
             if (group) {
                 delete groups[name]
                 var merged = _.flatten (_.map (group, function (route) { return route[1] }), true)
-                return [name, APISchema.collapse (merged)] } })) },
+                return [name, APISchema.collapse (merged)] }
+            return false })) },
 
     match: function (context, routes, then, debug, depth, virtualTrailSlashCase) {
 

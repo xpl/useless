@@ -7,7 +7,9 @@ var path        = require ('path'),
     exec        = require ('child_process').exec,
     Buffer      = require ('buffer').Buffer,
     Iconv       = require ('iconv').Iconv,
-    _           = require ('underscore')
+    _           = require ('underscore'),
+    jsStrEscape = require ('js-string-escape')
+
 
 _.tests.util = {
 
@@ -74,20 +76,27 @@ module.exports = {
                     then.apply (null, _.coerceToArray (modules)) }) },
 
     compileScript: function (cfg) {
-                        return _.map (cfg.source.split ('\n'),
-                                    function (line) {
-                                        var moduleName = (line.match (/\$include \(\'(.+)\'\).*/) || [])[1]
-                                        if (moduleName) {
-                                            if (line.match (/^\s*\/\/.*/)) {
-                                                return '' }
-                                            else {
-                                                var file = path.join (cfg.includePath, moduleName + '.js')
 
-                                                try       { return fs.readFileSync (file, { encoding: 'utf-8' }) }
-                                                catch (e) { return module.exports.fatalError ('\nCannot read:', file) } } }
+                        var read = function (what) { var file = path.join (cfg.includePath, what)
 
-                                        else {
-                                            return line } }).join ('\n') },
+                            try       { return module.exports.compileScript ({
+                                                    includePath: path.dirname (file), 
+                                                    source:      fs.readFileSync (file, { encoding: 'utf-8' }) }) }
+
+                            catch (e) { module.exports.fatalError ('\nCannot read:', file) } }
+
+                        return _.map (cfg.source.split ('\n'), function (line) {
+
+                            var includeStrMatch = line.match (/^(.*)\$includeStr \(\'(.+)\'\)(.*)$/)
+                            if (includeStrMatch) {
+                                return includeStrMatch[1] + '\"' +
+                                    jsStrEscape (read (includeStrMatch[2])) + '\"' + includeStrMatch[3] }
+
+                            var moduleName = (line.match (/\$include \(\'(.+)\'\).*/) || [])[1]
+                            if (moduleName) {
+                                return line.match (/^\s*\/\/.*/) ? '' : (read (moduleName + '.js') + ';') }
+                            else {
+                                return line } }).join ('\n') },
 
     fatalError: function (explain) {
                     log.error.apply (null, _.asArray (arguments).concat ('\n'))

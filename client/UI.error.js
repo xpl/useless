@@ -11,7 +11,8 @@ Error reporting UI
 if (typeof UI === 'undefined') {
 	UI = {} }
 
-UI.error = function (what, retry, dismiss) {
+UI.error = function (what, retry, dismiss) { if (arguments.length < 3) { dismiss = _.identity }
+
 	if (_.isTypeOf (Error, what)) {
 		retry   = retry   || what.retry
 		dismiss = dismiss || what.dismiss }
@@ -20,8 +21,14 @@ UI.error = function (what, retry, dismiss) {
 	
 	if (_.isFunction (retry)) {
 		ErrorOverlay.onRetry (retry) }
+
 	if (_.isFunction (dismiss)) {
 		ErrorOverlay.onClose (dismiss) } }
+
+UI.error.init = function () {
+	if (!UI.error._initialized) {
+		 UI.error._initialized = true
+		_.withUncaughtExceptionHandler (function (e) { UI.error (e, undefined, _.identity) }) } }
 
 ErrorOverlay = $singleton (Component, {
 
@@ -29,16 +36,25 @@ ErrorOverlay = $singleton (Component, {
 	closeTriggered: $triggerOnce (),
 
 	el: $memoized ($property (function () {
-		var el = $('<div class="ui-error-modal-overlay" style="z-index:5000;">').append ([
-			$('<div class="background">'),
-			$('<div class="ui-error-modal loading error">').append ([
-				this.modalBody = $('<div class="ui-error-modal-body">').append ('<h5>Now panic!</h5>'),
-				$('<div class="modal-footer">').append ([
+		var el = $('<div class="ui-error-modal-overlay" style="z-index:5000; display:none;">').append ([
+			$('<div class="ui-error-modal-overlay-background">'),
+			$('<div class="ui-error-modal">').append ([
+				this.modalBody = $('<div class="ui-error-modal-body">').append (
+					this.title = $('<div class="ui-error-modal-title">Now panic!</div>')),
+				$('<div class="ui-error-modal-footer">').append ([
 					this.btnRetry = $('<button type="button" class="ui-error-btn ui-error-btn-warning" style="display:none;">Try again</button>')
 						.touchClick (this.retry),
 					this.btnClose = $('<button type="button" class="ui-error-btn ui-error-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ]).appendTo (document.body)
 		return el })),
+
+	toggleVisibility: function (yes) {
+		if (yes !== !(this.el.css ('display') === 'none')) {
+	        if (yes) {
+	            this.el.css ('display', '') }
+	        this.el.animateWith (yes ? 'ui-error-modal-appear' : 'ui-error-modal-disappear', this.$ (function () {
+	            if (!yes) {
+	                this.el.css ('display', 'none') } })) } },
 
 	onRetry: function (retry) {
 		this.retryTriggered (retry)
@@ -51,42 +67,41 @@ ErrorOverlay = $singleton (Component, {
 	retry: function () {
 		this._clean ()
 		this.closeTriggered.off ()
-		this.el.fadeOut (500)
+		this.toggleVisibility (false)
 		this.retryTriggered () },
 
 	close: function () {
 		this._clean ()
 		this.retryTriggered.off ()
-		this.el.fadeOut (500)
+		this.toggleVisibility (false)
 		this.closeTriggered () },
 
 	_clean: function () {
-		this.modalBody.find ('.alert').remove ()
+		this.modalBody.find ('.ui-error-alert-error').remove ()
 		this.btnRetry.hide ()
 		this.btnClose.hide () },
 
 	append: function (what) {
-		this.el.find ('.ui-error-modal-body')
-			.append ($('<div class="alert ui-error-alert-error fade in">').append (
-				$('<span class="message">').append (
-					_.isTypeOf (Error, what) ? ErrorOverlay.printError (what) : log.impl.stringify (what))))
-		this.el.fadeIn (500)
-		_.delay (this.$ (function () {
-			this.modalBody.scrollTop (this.modalBody[0].scrollHeight) }))  },
+		$('<div class="ui-error-alert-error">').append (
+			$('<span class="message">').append (
+				_.isTypeOf (Error, what) ? ErrorOverlay.printError (what) : log.impl.stringify (what))).insertAfter (
+					this.el.find ('.ui-error-modal-title'))
+		this.toggleVisibility (true)  },
 
 	readRemoteSource: _.cps.memoize (function (file, then) {
-		$.get ('/api/source/' + encodeURIComponent (file), then, 'text') }),
+		$.get ('/api/source/' + file, then, 'text') }),
 
-	printError: function (e) {
-		var stackEntries = CallStack.fromError (e)
-		var readSource = (e.remote ? ErrorOverlay.readRemoteSource : _.readSource)
-
+	printError: function (e) { var stackEntries = CallStack.fromError (e),
+								   readSource = (e.remote ? ErrorOverlay.readRemoteSource : _.readSource)
 		return [
+
 			$('<div class="message" style="font-weight: bold;">')
 				.text (e.message)
 				.append ('<a class="clean-toggle" href="javascript:{}"></a>').click (function (e) {
 					$(e.delegateTarget).parent ().parent ().toggleClass ('all') }),
+
 			$('<ul class="callstack">').append (_.map (stackEntries, function (entry) {
+
 				var dom = $('<li class="callstack-entry">')
 						.toggleClass ('third-party', entry.thirdParty)
 						.append ([
@@ -104,12 +119,9 @@ ErrorOverlay = $singleton (Component, {
 											}))
 											_.delay (function () {
 												var line = el.find ('.line').eq (entry.line - 1).addClass ('hili')
-												var offset = line.offset ().top - el.offset ().top
-												el.scrollTop (offset - 100)
-											})
-										}
-									})
-							})])
+												if (line.length) {
+													var offset = line.offset ().top - el.offset ().top
+													el.scrollTop (offset - 100) } }) } }) })])
 
 				entry.sourceReady (function (text) {
 					dom.find ('.src').text (text) })
@@ -118,4 +130,4 @@ ErrorOverlay = $singleton (Component, {
 
 // -- end of namespace
 
-}) (jQuery)
+}) (jQuery);

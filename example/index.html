@@ -7,6 +7,7 @@
         <script src="/example/lib/jquery-2.0.3.min.js"></script>
         <script src="/useless.js"></script>
         <script src="/useless/jQueryPlus.js"></script>
+        <script src="/useless/API.js"></script>
 
         <!-- UI.error -->
         <script src="/useless/UI.error.js"></script>
@@ -63,8 +64,7 @@
 
             /*  Bind UI.error as default exception handler
              */
-            _.withUncaughtExceptionHandler (function (e) {
-                UI.error (e, undefined, _.identity) })
+            UI.error.init ()
 
             /*  Define some function that throws error
              */
@@ -73,7 +73,11 @@
 
             /*  Bind to button to trigger that function
              */
-            $('#ui-error-demo').click (erroneousFunction) }
+            $('#ui-error-demo-1').click (erroneousFunction)
+
+            /*  Bind to button to trigger server's method
+             */
+            $('#ui-error-demo-2').click (function () { API.post ('erroneous-method') }) }
 
         function initComponentDemo () {
 
@@ -137,7 +141,8 @@
     <body>
 
         <h1># UI.error demo</h1>
-        <button id="ui-error-demo">Call erroneousFunction</button>
+        <button id="ui-error-demo-1">Call erroneousFunction</button>
+        <button id="ui-error-demo-2">POST /api/erroneous-method</button>
 
         <h1># $component demo</h1>
         <div id="component-demo" style="width: 400px;"></div>

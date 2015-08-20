@@ -94,7 +94,7 @@ if (_.platform ().engine !== 'browser') {
 
 _.defineGlobalProperty ('alert2', function (args) {
     alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })
-
+;
 
 
 /*  converts 'arguments' (and any other array mimick) to real Array
@@ -209,7 +209,7 @@ $overrideUnderscore ('bind',
                                 Math.max (0, _.numArgs (fn) - (arguments.length - 2)), fn._ra,
                                     bind.apply (this, arguments)) }) })
 
-
+;
 /*  Limits function to given number of arguments
     ======================================================================== */
 
@@ -509,7 +509,7 @@ _.withTest (['function', 'sequence / then'], function () {
                                             return fn2.call (this, fn1.apply (this, arguments)) }} })
 
 
-
+;
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
 
@@ -593,7 +593,7 @@ _.notZero = function (x) { return x !== 0 }
 _.propertyOf = function (obj) { return function (prop) {            // inverted version of _.property
                                             return obj[prop] }}
 
-
+;
 /*  isTypeOf (bootstrap for OOP.js)
     ======================================================================== */
 
@@ -833,7 +833,7 @@ _.withTest (['type', 'empty-centric routines'], function () {
 
 
 
-
+;
 /*  Tired of wrapping JSON.parse to try/catch? Here's solution.
     Also, it's two-way (can either parse, or stringify).
     ======================================================================== */
@@ -947,7 +947,7 @@ _.toFixed2 = function (x) {
 _.toFixed3 = function (x) {
     return _.toFixed (x, 3) }
 
-
+;
 _.hasStdlib = true
 
 /*  _.throwsError
@@ -1440,38 +1440,6 @@ _.withTest (['stdlib', 'index'], function () {
                 result[list[i]] = true }
             return result } }) })
 
-/*  A shorthand to _.filter + _.map (map with filter behavior).
-    ======================================================================== */
-
-_.withTest (['stdlib', 'filterMap'], function () {
-
-    var input     = ['foo', undefined, 'bar']
-    var plusBar   = function (x) { return x && (x + 'bar') }
-    var notFoobar = function (x) { return x !== 'foobar' }
-
-    $assert (_.filterMap (input, plusBar),            ['foobar', 'barbar'])
-    $assert (_.filterMap (input, plusBar, notFoobar), [undefined, 'barbar'])
-
-    _.filterMap.call (42, ['foo'],
-        function (x) { $assert (this, 42) },
-        function (x) { $assert (this, 42) })
-
-}, function () { _.extend (_, {
-
-    filterMap: function (arr, map_, filter_) { // shit's for performance sake
-
-                    for (var i = 0,
-                             n = (arr && arr.length) || 0,
-                             map = map_ || _.identity,
-                             filter = filter_ || _.isNonempty,
-                             result = []; i < n; i++) {
-                        
-                        var x = map.call (this, arr[i])
-
-                        if (filter.call (this, x)) {
-                            result.push (x) } }
-
-                    return result } }) })
 
 /*  For string wrapping
     ======================================================================== */
@@ -1542,7 +1510,7 @@ _.omitKeys = function (obj, predicate) {
                     return _.omit (obj, function (v, k) { return predicate (k) }) }
 
 
-
+;
 /*  Properties
     ======================================================================== */
 
@@ -1629,7 +1597,7 @@ _.withTest ('properties', function () { var obj = {}
         return (obj && _.pickKeys (obj, obj.hasOwnProperty.bind (obj))) || {} }  }) })
 
 
-
+;
 /*  Keywords
     ======================================================================== */
 
@@ -1824,7 +1792,7 @@ _.withTest ('keywords', function () {
     _.deleteKeyword = function (name) {
                         delete $global[_.keyword (name)] } } )
 
-
+;
 
 
 /*  CPS primitives module
@@ -2232,7 +2200,7 @@ _.deferTest (['cps', 'trySequence'], function () {
                     catch (e) {
                         return (err || then) (e) } } } }, then) () }
 
-})
+});
 
 /*  Extensions methods
     ======================================================================== */
@@ -2263,7 +2231,7 @@ $extensionMethods = function (Type, methods) {
                 Type.prototype[name] = _.asMethod (tags.$flipped ? _.flip (fn) : fn) } }
 
         else {
-            throw new Error ('$extensionMethods: crazy input, unable to match') } })}
+            throw new Error ('$extensionMethods: crazy input, unable to match') } })};
 /*  Function extensions
     ======================================================================== */
 
@@ -2395,7 +2363,7 @@ $extensionMethods (Function, {
         return function () {
             var args = arguments, context = this
             _.delay (function () { fn.apply (context, args) }, time) } } })
-
+;
 /*  Array extensions
     ======================================================================== */
 
@@ -2479,7 +2447,7 @@ _.withTest ('Array extensions', function () {
                         return _.times (Math.max (memo.length, row.length), function (i) {
                             return zippo (memo[i], row[i]) }) }, firstArg) } })
 
-
+;
 /*  String extensions
     ======================================================================== */
 
@@ -2651,7 +2619,7 @@ _.deferTest ('String extensions', function () {
 
 
 
-
+;
 
 /*  Interceptable/observable methods
     ======================================================================== */
@@ -2796,7 +2764,7 @@ _.deferTest ('bindable', function () {
                         onceAfter.removeAll () } }
 
                 return result } )) } }) })
-
+;
 /*  Generic functional primitives for dynamic code binding
     ======================================================================== */
 
@@ -3153,7 +3121,7 @@ _.extend (_, {
 
 
 
-
+;
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
@@ -3753,7 +3721,7 @@ _.withTest ('OOP', {
 
 
 
-        
+        ;
 
     Platform = $singleton ({ $property: {
         
@@ -4335,7 +4303,7 @@ _.extend (Math, (function (decimalAdjust) {
     // Shift back
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
-}))
+}));
 
 Format = {
 
@@ -4379,7 +4347,7 @@ Format = {
         return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) }
 }
 
-
+;
 
 
 
@@ -4561,7 +4529,7 @@ _.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
 
 
 if (Platform.NodeJS) {
-    module.exports = _ }
+    module.exports = _ };
 /*  What for:
 
     -   Hierarchy management (parent-child relationship)
@@ -5165,6 +5133,7 @@ Component = $prototype ({
         /*  Bind stuff to init (either in CPS, or in sequential flow control style)
          */
         _.intercept (this, 'init', function (init) {
+
             var evalChain = _.hasArgs (this.constructor.prototype.init) ? _.cps.sequence : _.sequence
                 evalChain ([this._beforeInit, init.bind (this), this._afterInit]).call (this) })
 
@@ -5200,20 +5169,20 @@ Component = $prototype ({
 
         //  Continuation-passing style chain
         if (_.isFunction (then)) {
-            _.cps.sequence (_.filterMap.call (this, this.constructor.$traits, function (Trait) {
+            _.cps.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
                 var method = Trait.prototype[name]
-                return method && _.cps.arity0 ((
+                return (method && _.cps.arity0 ((
                     _.noArgs (method) ?             // convert to CPS convention if needed
                         method.asContinuation :
-                        method)).bind (this) }).concat (then.arity0)) () }
+                        method)).bind (this)) || false })).concat (then.arity0)) () }
 
         //  Sequential style chain
         else {
-            _.sequence (_.filterMap.call (this, this.constructor.$traits, function (Trait) {
+            _.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
                 var method = Trait.prototype[name]
-                return method && (_.hasArgs (method) ?
+                return (method && (_.hasArgs (method) ?
                                     method.bind (this, _.identity) : // if method is CPS, give identity function as (unused) 'then' argument,
-                                    method.bind (this)) })) () } },  // (to prevent errors, as trait methods not required to support both calling styles)
+                                    method.bind (this))) || false }))) () } },  // (to prevent errors, as trait methods not required to support both calling styles)
 
     /*  Lifecycle
      */
@@ -5319,7 +5288,7 @@ Component = $prototype ({
 
 })
 
-
+;
 
 
 
@@ -5619,5 +5588,5 @@ $.fn.extend ({
         var rect = this[0].getBoundingClientRect ()
         return new BBox (rect.left, rect.top, rect.width, rect.height) } })
 
-}) (jQuery) }
+}) (jQuery) };
 

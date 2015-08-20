@@ -490,38 +490,6 @@ _.withTest (['stdlib', 'index'], function () {
                 result[list[i]] = true }
             return result } }) })
 
-/*  A shorthand to _.filter + _.map (map with filter behavior).
-    ======================================================================== */
-
-_.withTest (['stdlib', 'filterMap'], function () {
-
-    var input     = ['foo', undefined, 'bar']
-    var plusBar   = function (x) { return x && (x + 'bar') }
-    var notFoobar = function (x) { return x !== 'foobar' }
-
-    $assert (_.filterMap (input, plusBar),            ['foobar', 'barbar'])
-    $assert (_.filterMap (input, plusBar, notFoobar), [undefined, 'barbar'])
-
-    _.filterMap.call (42, ['foo'],
-        function (x) { $assert (this, 42) },
-        function (x) { $assert (this, 42) })
-
-}, function () { _.extend (_, {
-
-    filterMap: function (arr, map_, filter_) { // shit's for performance sake
-
-                    for (var i = 0,
-                             n = (arr && arr.length) || 0,
-                             map = map_ || _.identity,
-                             filter = filter_ || _.isNonempty,
-                             result = []; i < n; i++) {
-                        
-                        var x = map.call (this, arr[i])
-
-                        if (filter.call (this, x)) {
-                            result.push (x) } }
-
-                    return result } }) })
 
 /*  For string wrapping
     ======================================================================== */

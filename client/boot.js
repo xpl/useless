@@ -1,5 +1,4 @@
-_.withUncaughtExceptionHandler (function (e) {
-	UI.error (e, undefined, _.identity) }) // bind UI.error as default unhandled exception handler
+UI.error.init ()
 
 $(document).ready (function () {
 	

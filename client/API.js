@@ -16,7 +16,7 @@ API = $singleton (Component, {
 	post: function (path, cfg, then) {
 		this.request ('POST', path, cfg, then) },
 
-	request: function (type, path, cfg, then) {
+	request: function (type, path, cfg, then) { cfg = cfg || {}
 
 		var prePath = (cfg.protocol || cfg.hostname || cfg.port) ?
 						 	((cfg.protocol || window.location.protocol) + '//' +
@@ -123,7 +123,7 @@ API = $singleton (Component, {
 		alert ('Произошла непредвиденная ошибка. Во избежание потери данных, перезагрузите страницу.\n\n(' + what + ')') },
 
 	init: function () {
-		$(window).on ('beforeunload', function () {
+		jQuery (window).on ('beforeunload', function () {
 			if (API.commitingRequests > 0) {
 				return 'Некоторые изменения ещё не были синхронизированы с сервером.' } }) } })
 
@@ -166,12 +166,12 @@ Http = $singleton (Component, {
 	request: function (type, url, cfg) {
 		var retry = function () {
 			Http.request (cfg) }
-		$.ajax (_.extend ({
+		jQuery.ajax (_.extend ({
 			type: type,
 			url: url,
 			// TODO: doesnt work in modern browsers except Chrome??
 			/*xhr: function() {
-			    var xhr = $.ajaxSettings.xhr ()
+			    var xhr = jQuery.ajaxSettings.xhr ()
 	        	var addListener = ((type == 'POST' && xhr.upload) ? xhr.upload.addEventListener : xhr.addEventListener)
 	        	addListener ('progress', Http.progressCallbackWithSimulation (cfg.progress), false)
 		        return xhr
