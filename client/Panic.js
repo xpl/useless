@@ -11,24 +11,23 @@ Error reporting UI
 if (typeof UI === 'undefined') {
 	UI = {} }
 
-Panic = function (what, retry, dismiss) { if (arguments.length < 3) { dismiss = _.identity }
+Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity })
 
 	if (_.isTypeOf (Error, what)) {
-		retry   = retry   || what.retry
-		dismiss = dismiss || what.dismiss }
+		_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
 
 	Panic.widget.append (what)
 	
-	if (_.isFunction (retry)) {
-		Panic.widget.onRetry (retry) }
+	if (_.isFunction (cfg.retry)) {
+		Panic.widget.onRetry (cfg.retry) }
 
-	if (_.isFunction (dismiss)) {
-		Panic.widget.onClose (dismiss) } }
+	if (_.isFunction (cfg.dismiss)) {
+		Panic.widget.onClose (cfg.dismiss) } }
 
 Panic.init = function () {
 	if (!Panic._initialized) {
 		 Panic._initialized = true
-		_.withUncaughtExceptionHandler (function (e) { Panic (e, undefined, _.identity) }) } }
+		_.withUncaughtExceptionHandler (Panic.arity1) } }
 
 Panic.widget = $singleton (Component, {
 
@@ -37,15 +36,15 @@ Panic.widget = $singleton (Component, {
 
 	el: $memoized ($property (function () {
 
-		var el = $('<div class="ui-error-modal-overlay" style="z-index:5000; display:none;">').append ([
-			this.bg    = $('<div class="ui-error-modal-overlay-background">'),
-			this.modal = $('<div class="ui-error-modal">').append ([
-				this.modalBody = $('<div class="ui-error-modal-body">').append (
-					this.title = $('<div class="ui-error-modal-title">Now panic!</div>')),
-				$('<div class="ui-error-modal-footer">').append ([
-					this.btnRetry = $('<button type="button" class="ui-error-btn ui-error-btn-warning" style="display:none;">Try again</button>')
+		var el = $('<div class="panic-modal-overlay" style="z-index:5000; display:none;">').append ([
+			this.bg    = $('<div class="panic-modal-overlay-background">'),
+			this.modal = $('<div class="panic-modal">').append ([
+				this.modalBody = $('<div class="panic-modal-body">').append (
+					this.title = $('<div class="panic-modal-title">Now panic!</div>')),
+				$('<div class="panic-modal-footer">').append ([
+					this.btnRetry = $('<button type="button" class="panic-btn panic-btn-warning" style="display:none;">Try again</button>')
 						.touchClick (this.retry),
-					this.btnClose = $('<button type="button" class="ui-error-btn ui-error-btn-danger" style="display:none;">Close</button>')
+					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ]).appendTo (document.body)
 
 					  var setMaxHeight = this.$ (function () { this.modal.css ('max-height', $(window).height () - 100) })
@@ -58,7 +57,7 @@ Panic.widget = $singleton (Component, {
 		if (yes !== !(this.el.css ('display') === 'none')) {
 	        if (yes) {
 	            this.el.css ('display', '') }
-	        this.el.animateWith (yes ? 'ui-error-modal-appear' : 'ui-error-modal-disappear', this.$ (function () {
+	        this.el.animateWith (yes ? 'panic-modal-appear' : 'panic-modal-disappear', this.$ (function () {
 	            if (!yes) {
 	                this.el.css ('display', 'none') } })) } },
 
@@ -83,15 +82,15 @@ Panic.widget = $singleton (Component, {
 		this.closeTriggered () },
 
 	_clean: function () {
-		this.modalBody.find ('.ui-error-alert-error').remove ()
+		this.modalBody.find ('.panic-alert-error').remove ()
 		this.btnRetry.hide ()
 		this.btnClose.hide () },
 
 	append: function (what) {
-		$('<div class="ui-error-alert-error">').append (
+		$('<div class="panic-alert-error">').append (
 			$('<span class="message">').append (
 				_.isTypeOf (Error, what) ? Panic.widget.printError (what) : log.impl.stringify (what))).insertAfter (
-					this.el.find ('.ui-error-modal-title'))
+					this.el.find ('.panic-modal-title'))
 		this.toggleVisibility (true)  },
 
 	readRemoteSource: _.cps.memoize (function (file, then) {

@@ -73,11 +73,11 @@
 
             /*  Bind to button to trigger that function
              */
-            $('#ui-error-demo-1').click (erroneousFunction)
+            $('#panic-demo-1').click (erroneousFunction)
 
             /*  Bind to button to trigger server's method
              */
-            $('#ui-error-demo-2').click (function () { API.post ('erroneous-method') }) }
+            $('#panic-demo-2').click (function () { API.post ('erroneous-method') }) }
 
         function initComponentDemo () {
 
@@ -141,8 +141,8 @@
     <body>
 
         <h1># Panic demo</h1>
-        <button id="ui-error-demo-1">Call erroneousFunction</button>
-        <button id="ui-error-demo-2">POST /api/erroneous-method</button>
+        <button id="panic-demo-1">Call erroneousFunction</button>
+        <button id="panic-demo-2">POST /api/erroneous-method</button>
 
         <h1># $component demo</h1>
         <div id="component-demo" style="width: 400px;"></div>

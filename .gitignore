@@ -5,3 +5,7 @@ build/es-test.stripped.js
 es-test.js
 example2.js
 npm-debug.log
+
+build.sh
+
+lepro-build.sh
