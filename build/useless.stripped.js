@@ -4226,7 +4226,7 @@ SourceFiles = $singleton(Component, {
         } else {
             API.post('source/' + file, _.extend2({}, this.apiConfig, {
                 what: { text: text },
-                failure: UI.error,
+                failure: Panic,
                 success: function () {
                     log.ok(file, '\u2014 successfully saved');
                     if (then) {
@@ -4305,10 +4305,10 @@ CallStack = $extends(Array, {
     shortenPath: $static(function (file) {
         return file.replace($uselessPath, '').replace($sourcePath, '');
     }),
-    isThirdParty: $static(function (file) {
+    isThirdParty: $static(_.bindable(function (file) {
         var local = file.replace($sourcePath, '');
         return Platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
-    }),
+    })),
     fromRawString: $static(_.sequence(function (rawString) {
         return CallStack.rawStringToArray(rawString);
     }, function (array) {

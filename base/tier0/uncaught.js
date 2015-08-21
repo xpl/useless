@@ -1,7 +1,7 @@
 /*  Uncaught exception handling facility
     ======================================================================== */
 
-var globalUncaughtExceptionHandler = function (e) { var chain = arguments.callee.chain
+var globalUncaughtExceptionHandler = function (e) { var chain = arguments.callee.chain    
     if (chain.length) {
         for (var i = 0, n = chain.length; i < n; i++) {
             try {

@@ -1,4 +1,4 @@
-UI.error.init ()
+Panic.init ()
 
 $(document).ready (function () {
 	

@@ -9,9 +9,9 @@
         <script src="/useless/jQueryPlus.js"></script>
         <script src="/useless/API.js"></script>
 
-        <!-- UI.error -->
-        <script src="/useless/UI.error.js"></script>
-        <link rel="stylesheet" href="/useless/UI.error.css" type="text/css">
+        <!-- Panic -->
+        <script src="/useless/Panic.js"></script>
+        <link rel="stylesheet" href="/useless/Panic.css" type="text/css">
 
         <!-- Data access -->
         <script src="/useless/DataManager.js"></script>
@@ -62,9 +62,9 @@
 
         function initErrorHandlingDemo () {
 
-            /*  Bind UI.error as default exception handler
+            /*  Bind Panic as default exception handler
              */
-            UI.error.init ()
+            Panic.init ()
 
             /*  Define some function that throws error
              */
@@ -140,7 +140,7 @@
 
     <body>
 
-        <h1># UI.error demo</h1>
+        <h1># Panic demo</h1>
         <button id="ui-error-demo-1">Call erroneousFunction</button>
         <button id="ui-error-demo-2">POST /api/erroneous-method</button>
 

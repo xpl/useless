@@ -11,34 +11,35 @@ Error reporting UI
 if (typeof UI === 'undefined') {
 	UI = {} }
 
-UI.error = function (what, retry, dismiss) { if (arguments.length < 3) { dismiss = _.identity }
+Panic = function (what, retry, dismiss) { if (arguments.length < 3) { dismiss = _.identity }
 
 	if (_.isTypeOf (Error, what)) {
 		retry   = retry   || what.retry
 		dismiss = dismiss || what.dismiss }
 
-	ErrorOverlay.append (what)
+	Panic.widget.append (what)
 	
 	if (_.isFunction (retry)) {
-		ErrorOverlay.onRetry (retry) }
+		Panic.widget.onRetry (retry) }
 
 	if (_.isFunction (dismiss)) {
-		ErrorOverlay.onClose (dismiss) } }
+		Panic.widget.onClose (dismiss) } }
 
-UI.error.init = function () {
-	if (!UI.error._initialized) {
-		 UI.error._initialized = true
-		_.withUncaughtExceptionHandler (function (e) { UI.error (e, undefined, _.identity) }) } }
+Panic.init = function () {
+	if (!Panic._initialized) {
+		 Panic._initialized = true
+		_.withUncaughtExceptionHandler (function (e) { Panic (e, undefined, _.identity) }) } }
 
-ErrorOverlay = $singleton (Component, {
+Panic.widget = $singleton (Component, {
 
 	retryTriggered: $triggerOnce (),
 	closeTriggered: $triggerOnce (),
 
 	el: $memoized ($property (function () {
+
 		var el = $('<div class="ui-error-modal-overlay" style="z-index:5000; display:none;">').append ([
-			$('<div class="ui-error-modal-overlay-background">'),
-			$('<div class="ui-error-modal">').append ([
+			this.bg    = $('<div class="ui-error-modal-overlay-background">'),
+			this.modal = $('<div class="ui-error-modal">').append ([
 				this.modalBody = $('<div class="ui-error-modal-body">').append (
 					this.title = $('<div class="ui-error-modal-title">Now panic!</div>')),
 				$('<div class="ui-error-modal-footer">').append ([
@@ -46,6 +47,11 @@ ErrorOverlay = $singleton (Component, {
 						.touchClick (this.retry),
 					this.btnClose = $('<button type="button" class="ui-error-btn ui-error-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ]).appendTo (document.body)
+
+					  var setMaxHeight = this.$ (function () { this.modal.css ('max-height', $(window).height () - 100) })
+						  setMaxHeight ()
+		$(window).resize (setMaxHeight)
+
 		return el })),
 
 	toggleVisibility: function (yes) {
@@ -84,7 +90,7 @@ ErrorOverlay = $singleton (Component, {
 	append: function (what) {
 		$('<div class="ui-error-alert-error">').append (
 			$('<span class="message">').append (
-				_.isTypeOf (Error, what) ? ErrorOverlay.printError (what) : log.impl.stringify (what))).insertAfter (
+				_.isTypeOf (Error, what) ? Panic.widget.printError (what) : log.impl.stringify (what))).insertAfter (
 					this.el.find ('.ui-error-modal-title'))
 		this.toggleVisibility (true)  },
 
@@ -92,7 +98,7 @@ ErrorOverlay = $singleton (Component, {
 		$.get ('/api/source/' + file, then, 'text') }),
 
 	printError: function (e) { var stackEntries = CallStack.fromError (e),
-								   readSource = (e.remote ? ErrorOverlay.readRemoteSource : _.readSource)
+								   readSource = (e.remote ? Panic.widget.readRemoteSource : _.readSource)
 		return [
 
 			$('<div class="message" style="font-weight: bold;">')

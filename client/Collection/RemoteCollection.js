@@ -102,7 +102,7 @@ RemoteCollection = $extends (Collection, {
 
 		get: function (url, then) {
 			API.get (this.name + '/' + url, {
-				failure: UI.error,
+				failure: Panic,
 				success: then || _.noop }) },
 
 		post: function (url, changes, arg1, arg2) {
@@ -111,7 +111,7 @@ RemoteCollection = $extends (Collection, {
 
 			API.post (this.name + '/' + url, {
 				what: _.extend ({ changes: changes, nonce: Live.nonce }, options),
-				failure: UI.error,
+				failure: Panic,
 				success: function (updates) {
 					Live.commit (updates)
 					if (then) {
@@ -191,7 +191,7 @@ RemoteCollection = $extends (Collection, {
 		restoreFromRemoteOrigin: function () {
 			if (this.supressRemoting !== true) {
 				API.get (this.name + '/', {
-					failure: UI.error,
+					failure: Panic,
 					success: this.$ (function (items) {
 						log.green ('RemoteCollection: restored', this.name, 'from remote origin')
 						Collection.prototype.update.call (this, items)

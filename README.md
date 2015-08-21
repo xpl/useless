@@ -326,7 +326,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 - Fetches source code (local/remote)
 - Nice output
     - Console mode (replaces default Node.js exception printer)
-    - GUI mode (a pop-up dialog with expandable source lines, `./client/UI.error.js` feature)
+    - GUI mode (a pop-up dialog with expandable source lines, `./client/Panic.js` feature)
 
 ## Test framework
 
@@ -376,11 +376,11 @@ $(handle).drag ({
 	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
 ```
 
-### UI.error.js
+### Panic.js
 
 A pop-up alert that shows errors / stack traces. See example app for demo & how-to. **Notice**: not works if running from local HTML file (because it reads back JavaScript sources via XHR requests).
 
-[![UI.error.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://github.com/xpl/useless/blob/master/example/index.html)
+[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://github.com/xpl/useless/blob/master/example/index.html)
 
 ### API.js
 

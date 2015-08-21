@@ -162,7 +162,7 @@ Nav = $singleton (Component, {
 			if (confirm ('Are you sure?')) {
 				$(e.delegateTarget).waitUntil (API.post.partial ('logout', {
 					success: function () { window.location = '/' },
-					failure: UI.error })) } }) },
+					failure: Panic })) } }) },
 
 /*	ENTRY POINT
 	======================================================================== */
