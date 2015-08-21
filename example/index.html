@@ -71,9 +71,13 @@
             function erroneousFunction () {
                 _.map ([1,2,3], callMe) }
 
+            function callErroneousFunctionTwoTimes () {
+                _.delay (erroneousFunction)
+                _.delay (erroneousFunction) }
+
             /*  Bind to button to trigger that function
              */
-            $('#panic-demo-1').click (erroneousFunction)
+            $('#panic-demo-1').click (callErroneousFunctionTwoTimes)
 
             /*  Bind to button to trigger server's method
              */
@@ -141,7 +145,7 @@
     <body>
 
         <h1># Panic demo</h1>
-        <button id="panic-demo-1">Call erroneousFunction</button>
+        <button id="panic-demo-1">Call erroneousFunction (2 times)</button>
         <button id="panic-demo-2">POST /api/erroneous-method</button>
 
         <h1># $component demo</h1>

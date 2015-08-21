@@ -86,15 +86,25 @@ Panic.widget = $singleton (Component, {
 		this.btnRetry.hide ()
 		this.btnClose.hide () },
 
-	append: function (what) {
-		$('<div class="panic-alert-error">').append (
-			$('<span class="message">').append (
-				_.isTypeOf (Error, what) ? Panic.widget.printError (what) : log.impl.stringify (what))).insertAfter (
-					this.el.find ('.panic-modal-title'))
+	append: function (what) { var id = 'panic' + this.hash (what)
+
+		var counter = $('#' + id + ' .panic-alert-counter')
+		if (counter.length) {
+			counter.text ((counter.text () || '1').parsedInt + 1) }
+		else {
+			$('<div class="panic-alert-error">').attr ('id', id)
+				.append ('<span class="panic-alert-counter">')
+				.append (
+					_.isTypeOf (Error, what) ? this.printError (what) : log.impl.stringify (what)).insertAfter (
+						this.el.find ('.panic-modal-title'))}
+
 		this.toggleVisibility (true)  },
 
 	readRemoteSource: _.cps.memoize (function (file, then) {
 		$.get ('/api/source/' + file, then, 'text') }),
+
+	hash: function (what) {
+		return ((_.isTypeOf (Error, what) ? (what && what.stack) : what) || '').hash },
 
 	printError: function (e) { var stackEntries = CallStack.fromError (e),
 								   readSource = (e.remote ? Panic.widget.readRemoteSource : _.readSource)
