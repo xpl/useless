@@ -468,7 +468,7 @@ This version includes only the platform-independent part of the library, not inc
 Build command:
 
 ```bash
-node build.js <header-file> <output-folder>
+node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress]
 ```
 
 For generic build, run `node build.js ./useless.js ./build`, or simply
@@ -481,7 +481,7 @@ It will generate `./build/useless.js` by substituting `$include` directives foun
 
 ## Custom build
 
-To make reduced/extended distribution (with some submodules disabled or enabled), you can create your own version of default header file, commenting out unneeded `$include` directives.
+To make reduced/extended distribution (with some submodules disabled or enabled), you can create your own version of default header file, commenting out unneeded `$include` directives or including additional ones.
 
 There exists `./useless.micro.js` as an example of reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
 

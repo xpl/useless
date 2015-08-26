@@ -145,8 +145,12 @@
     <body>
 
         <h1># Panic demo</h1>
-        <button id="panic-demo-1">Call erroneousFunction (2 times)</button>
-        <button id="panic-demo-2">POST /api/erroneous-method</button>
+
+            Demonstrates error traces with _.delay handling. Also shows grouping of message duplicates.<br/><br/>
+            <button id="panic-demo-1">Call erroneousFunction (2 times)</button><br/><br/>
+
+            Demonstrates cross-machine exception throwing (displays server exception).<br/><br/>
+            <button id="panic-demo-2">POST /api/erroneous-method</button><br/><br/>
 
         <h1># $component demo</h1>
         <div id="component-demo" style="width: 400px;"></div>

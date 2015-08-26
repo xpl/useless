@@ -9,3 +9,5 @@ npm-debug.log
 build.sh
 
 lepro-build.sh
+
+lepro-build-production.sh

@@ -130,9 +130,10 @@ function stripCommentsAndTests (src, name, path) {
     return output
 }
 
-function compile (cfg) {
-    var name = _.initial (path.basename (cfg.file).split ('.')).join ('.')
-    var compiledSrc = compileMacros (cfg.file)
+function compile (cfg) { _.each (cfg.files, function (file) {
+
+    var name = _.initial (path.basename (file).split ('.')).join ('.')
+    var compiledSrc = compileMacros (file)
     var strippedSrc = stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, cfg.path)
 
     if (!cfg['no-compress']) {
@@ -140,7 +141,7 @@ function compile (cfg) {
             strippedSrc,
             writeCompiled.partial (name + '.min.js', cfg.path)) }
 
-    writeCompiled (name + '.js', cfg.path, compiledSrc) }
+    writeCompiled (name + '.js', cfg.path, compiledSrc) }) }
 
 console.log ('Running code base tests...')
 
@@ -156,8 +157,8 @@ Testosterone.run ({
         var filePath      = _.without.apply (null, [arguments].concat (optionNames))
         var options       = _.index (_.intersection (arguments, optionNames))
 
-        var cfg = _.extend ({ file: filePath[0] || './useless.js',
-                              path: filePath[1] || './build' }, options)
+        var cfg = _.extend ({ files: _.coerceToUndefined (_.initial (filePath)) || ['./useless.js'],
+                              path:                       _.last    (filePath)  ||  './build' }, options)
 
         console.log ('Checking dependencies')
 

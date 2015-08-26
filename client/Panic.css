@@ -49,7 +49,7 @@
 .panic-modal-body { overflow-y: auto; width: 100%; }
 .panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }
 
-.panic-btn { margin-right: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }
+.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }
 .panic-btn:focus { outline: none; }
 .panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }
 
@@ -61,8 +61,6 @@
 
 .panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }
 
-/* stacktrace in Panic */
-
 .panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }
 .panic-alert-error:not(.all) .callstack-entry.third-party { display: none; }
 .panic-alert-error .clean-toggle { text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 1.2em; left: 0; top: 1em; display: block; text-align: right; }
@@ -70,6 +68,8 @@
 .panic-alert-error .clean-toggle:before { content: 'more'; }
 .panic-alert-error.all .clean-toggle:before { content: 'less'; }
 .panic-alert-error:last-child { margin-bottom: 0; }
+
+.panic-alert-error-message { line-height: 1.2em; }
 
 .panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0 0 0 1.2em; }
 .panic-alert-error .callstack .callstack-entry { margin-top: 10px; list-style-type: circle;  }

@@ -166,10 +166,25 @@ _.writeSource    = SourceFiles.write
  */
 CallStack = $extends (Array, {
 
+    /*  Enables CallStack persistence through async call boundaries
+     */
+    enableSetTimeoutHook: $static (function () { var setTimeout = $global.setTimeout
+        $global.setTimeout = function (fn, t) {  var stackBeforeTimeout = CallStack.current
+            return setTimeout (function () {
+                _.withUncaughtExceptionHandler (
+                    function (e) {
+                        throw _.extend (e, {
+                            parsedStack: CallStack.fromParsedArray (
+                                _.initial (CallStack.fromError (e).asArray, 3).concat (
+                                    stackBeforeTimeout.asArray)) }) },
+                    function (doneWithUncaughtExceptionHandler) {
+                        fn ()
+                        doneWithUncaughtExceptionHandler () }) }, t) } }),
+
     current: $static ($property (function () {
         return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
 
-    fromError: $static (function (e) {
+    fromError: $static (function (e) { $global.xxx = e
         if (e.parsedStack) {
             return CallStack.fromParsedArray (_.map (e.parsedStack, function (entry) {
                 return _.extend (entry, { sourceReady: _.constant (entry.source) }) })) }
