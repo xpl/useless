@@ -27,7 +27,11 @@ module.exports = $trait ({
             if (context.htmlErrors) {
                 context.html ('<html><body><pre>' + _.escape (log.impl.stringifyError (e)) + '</pre></body></html>') }
             else {
-                context.json ({ success: false, error: e.message, parsedStack: CallStack.fromError (e).offset (1).asArray }) } }
+                context.json ({
+                    success: false,
+                    error: e.message,
+                    parsedStack: _.map (CallStack.fromError (e).asArray,
+                                        function (e) { return _.extend (e, { remote: true }) }) }) } }
 
         _.withUncaughtExceptionHandler (onError, function (off) {
             _.onAfter (context, 'end', off) }) } })

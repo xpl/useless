@@ -27,7 +27,7 @@ Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss:
 Panic.init = function () {
 	if (!Panic._initialized) {
 		 Panic._initialized = true
-		 CallStack.enableSetTimeoutHook ()
+		 CallStack.enableAsyncPersistence ()
 	   _.withUncaughtExceptionHandler (Panic.arity1) } }
 
 Panic.widget = $singleton (Component, {
@@ -101,30 +101,31 @@ Panic.widget = $singleton (Component, {
 
 		this.toggleVisibility (true)  },
 
-	readRemoteSource: _.cps.memoize (function (file, then) {
-		$.get ('/api/source/' + file, then, 'text') }),
-
 	hash: function (what) {
 		return ((_.isTypeOf (Error, what) ? (what && what.stack) : what) || '').hash },
 
-	printError: function (e) { var stackEntries = CallStack.fromError (e),
-								   readSource = (e.remote ? Panic.widget.readRemoteSource : _.readSource)
+	printError: function (e) { var stackEntries = CallStack.fromError (e)
+
 		return [
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
 				.text (e.message)
-				.append ('<a class="clean-toggle" href="javascript:{}"></a>').click (function (e) {
-					$(e.delegateTarget).parent ().parent ().toggleClass ('all') }),
+				.append (_.any (stackEntries, function (e) { return e.thirdParty || e['native'] })
+							? '<a class="clean-toggle" href="javascript:{}"></a>'
+							: '')
+				.click (function (e) {
+					$(e.delegateTarget).parent ().toggleClass ('all') }),
 
 			$('<ul class="callstack">').append (_.map (stackEntries, function (entry) {
 
 				var dom = $('<li class="callstack-entry">')
 						.toggleClass ('third-party', entry.thirdParty)
+						.toggleClass ('native', entry['native'])
 						.append ([
-							$('<span class="file">').text (_.nonempty ([entry.fileShort || '(index)', ':', entry.line]).join ('')),
+							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort, entry.line]).join (':')),
 							$('<span class="callee">').text (entry.calleeShort),
-							$('<span class="src">').text (entry.source || '').click (function (e) { var el = $(e.delegateTarget)
-								el.waitUntil (readSource.partial (entry.file), function (text) {
+							$('<span class="src i-am-busy">').click (function (e) { var el = $(e.delegateTarget)
+								el.waitUntil (_.readSource.partial ((entry.remote ? 'api/source/' : '') + entry.file), function (text) {
 									if (el.is ('.full')) {
 										el.removeClass ('full').text (entry.source) }
 									else {
@@ -137,7 +138,7 @@ Panic.widget = $singleton (Component, {
 												el.scrollTop (offset - 100) } }) } }) })])
 
 				entry.sourceReady (function (text) {
-					dom.find ('.src').text (text) })
+					dom.find ('.src').removeClass ('i-am-busy').text (text) })
 
 				return dom })) ] } })
 

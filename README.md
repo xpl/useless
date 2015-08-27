@@ -356,9 +356,45 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 + Hookable/interceptable
 + [Displays server's log in browser console](https://github.com/xpl/useless/wiki/Cross-machine-logging)
 
+## Platform Abstraction Layer
+
+```javascript
+/*  A cross-platform alias for the object representing global namespace.
+    Use instead of `window` for cross-platform code.
+ */
+$global.foo = 5 
+
+/*  Implements `alert` for NodeJS platform.
+ */
+alert ('foo')
+
+/*  Working with uncaught exceptions
+ */
+_.withUncaughtExceptionHandler (function (e) { throw e /* re-throw */ }, // adds handler to chain
+                                function (done) {
+                                    ...
+                                    done () })                           // removes handler from chain
+```
+
+### Platform detection
+
+```javascript
+Platform = $singleton ({ $property: {
+    
+    engine: ... // 'browser' / 'node'
+    system: ... // 'iOS' / 'Android' / undefined for everything else
+    device: ... // 'iPad' / 'iPhone' / undefined for everything else
+    touch:  ... // true for touch-enabled devices
+
+    Browser: ... // true in browser
+    NodeJS:  ... // true in Node
+    iPad:    ... // true on iPad,
+    iPhone:  ... // true on iPhone,
+    iOS:     ... // true on any iOS device } })
+```
+
 ## And more..
 
-- Platform detection/abstraction layer
 - Performance measurement
 - [DSL for writing regexps in JS + named subexpressions](https://github.com/xpl/useless/blob/master/base/Rx.js)
 - Unicode regexp hack (3rd party)

@@ -1,6 +1,8 @@
 /*  Self-awareness module
     ======================================================================== */
 
+_.hasReflection = true
+
 _.tests.reflection = {
 
     'file paths': function () {
@@ -39,6 +41,8 @@ _.tests.reflection = {
             fileName:       'string',       // name only (with extension)
             fileShort:      'string',       // path relative to $sourcePath
             thirdParty:     'boolean',      // denotes whether the call location occured at 3rd party library
+            index:          'boolean',      // denotes whether the call location occured at index page
+           'native':        'boolean',      // denotes whether the call location occured in native impl.
             line:           'number',       // line number
             column:         'number',       // character number
             source:         'string',       // source code (may be not ready right away)
@@ -90,7 +94,7 @@ _.tests.reflection = {
         var Dummy = $trait ()
         Dummy.$meta (function (meta) {
             $assertMatches (meta, { name: 'Dummy', type: 'trait' })
-            done () }) },
+            done () }) }
 }
 
 
@@ -168,26 +172,19 @@ CallStack = $extends (Array, {
 
     /*  Enables CallStack persistence through async call boundaries
      */
-    enableSetTimeoutHook: $static (function () { var setTimeout = $global.setTimeout
-        $global.setTimeout = function (fn, t) {  var stackBeforeTimeout = CallStack.current
+    enableAsyncPersistence: $static (function () { var setTimeout    = $global.setTimeout
+        $global.setTimeout = function (fn, t) {    var beforeTimeout =  CallStack.current
             return setTimeout (function () {
                 _.withUncaughtExceptionHandler (
-                    function (e) {
-                        throw _.extend (e, {
-                            parsedStack: CallStack.fromParsedArray (
-                                _.initial (CallStack.fromError (e).asArray, 3).concat (
-                                    stackBeforeTimeout.asArray)) }) },
-                    function (doneWithUncaughtExceptionHandler) {
-                        fn ()
-                        doneWithUncaughtExceptionHandler () }) }, t) } }),
+                    function (e) { throw _.extend (e, { parsedStack: CallStack.fromError (e).initial (4).concat (beforeTimeout) }) },
+                    function (release) { fn (); release () }) }, t) } }),
 
     current: $static ($property (function () {
         return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
 
-    fromError: $static (function (e) { $global.xxx = e
+    fromError: $static (function (e) {
         if (e.parsedStack) {
-            return CallStack.fromParsedArray (_.map (e.parsedStack, function (entry) {
-                return _.extend (entry, { sourceReady: _.constant (entry.source) }) })) }
+            return CallStack.fromParsedArray (e.parsedStack) }
         else {
             return CallStack.fromRawString (e.stack) } }),
 
@@ -199,7 +196,7 @@ CallStack = $extends (Array, {
             callee: '', calleeShort: '', file: '',
             fileName: '', fileShort: '', thirdParty:    false,
             source: '??? WRONG LOCATION ???',
-            sourceReady: _.cps.constant ('??? WRONG LOCATION ???') } },
+            sourceReady: _.barrier ('??? WRONG LOCATION ???') } },
 
     clean: $property (function () {
         return this.reject (_.property ('thirdParty')) }),
@@ -209,6 +206,12 @@ CallStack = $extends (Array, {
 
     offset: function (N) {
         return CallStack.fromParsedArray (_.rest (this, N)) },
+
+    initial: function (N) {
+        return CallStack.fromParsedArray (_.initial (this, N)) },
+
+    concat: function (stack) {
+        return CallStack.fromParsedArray (this.asArray.concat (stack.asArray)) },
 
     filter: function (fn) {
         return CallStack.fromParsedArray (_.filter (this, fn)) },
@@ -225,14 +228,20 @@ CallStack = $extends (Array, {
     /*  Internal impl.
      */
     constructor: function (arr) { Array.prototype.constructor.call (this)
-        for (var i = 0, n = arr.length; i < n; i++) {
-            this.push (arr[i]) } },
+
+        _.each (arr, function (entry) {
+            if (!entry.sourceReady) {
+                 entry.sourceReady = _.barrier ()
+                 SourceFiles.line ((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
+                    entry.sourceReady (entry.source = src) }) }
+
+            this.push (entry) }, this) },
 
     fromParsedArray: $static (function (arr) {
         return new CallStack (arr) }),
 
     currentAsRawString: $static ($property (function () {
-        var cut = _.platform ().engine === 'browser' ? 3 : 2
+        var cut = Platform.Browser ? 3 : 2
         return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
 
     shortenPath: $static (function (file) {
@@ -258,38 +267,33 @@ CallStack = $extends (Array, {
                             fileShort:      CallStack.shortenPath (entry.file),
                             thirdParty:     CallStack.isThirdParty (entry.file) }) }) },
 
-        function (parsedArray) {
-            return _.map (parsedArray, function (entry) {
-                    entry.source = ''
-                    entry.sourceReady = _.barrier ()
-
-                    _.readSourceLine (entry.file, entry.line - 1, function (src) {
-                        entry.source = src
-                        entry.sourceReady (src) })
-
-                    return entry }) },
-
         function (parsedArrayWithSourceLines) { return CallStack.fromParsedArray (parsedArrayWithSourceLines) })),
 
-    rawStringToArray: $static (function (rawString) {
-        var lines = _.rest ((rawString || '').split ('\n'), _.platform ().engine === 'browser' ? 1 : 0)
-        return _.map (lines, function (line_) {
-            var line = line_.trimmed
-            var callee, fileLineColumn = []
-            var match = line.match (/at (.+) \((.+)\)/)
-            if (match) {
-                callee = match[1]
-                fileLineColumn = _.rest (match[2].match (/(.*):(.+):(.+)/) || []) }
+    rawStringToArray: $static (function (rawString) { var lines = (rawString || '').split ('\n')
+
+        return _.filter2 (lines, function (line) { line = line.trimmed
+
+            var callee, fileLineColumn = [], native_
+            var planA = line.match (/at (.+) \((.+)\)/)
+            var planB = line.match (/at (.+)/)
+
+            if (planA) {
+                callee         =         planA[1]
+                native_        =        (planA[2] === 'native')
+                fileLineColumn = _.rest (planA[2].match (/(.*):(.+):(.+)/) || []) }
+            else if (planB) {
+                fileLineColumn = _.rest (planB[1].match (/(.*):(.+):(.+)/) || []) }
             else {
-                var planB = line.match (/at (.+)/)
-                if (planB && planB[1]) {
-                    fileLineColumn = _.rest (planB[1].match (/(.*):(.+):(.+)/) || []) }}
+                return false } // filter this shit out
+
             return {
                 beforeParse: line,
-                callee: callee || '',
-                file: fileLineColumn[0] || '',
-                line: (fileLineColumn[1] || '').integerValue,
-                column: (fileLineColumn[2] || '').integerValue } }) }) })
+                callee:      callee || '',
+                index:       Platform.Browser && (fileLineColumn[0] === window.location.href),
+               'native':     native_,
+                file:        fileLineColumn[0] || '',
+                line:       (fileLineColumn[1] || '').integerValue,
+                column:     (fileLineColumn[2] || '').integerValue } }) }) })
 
 /*  Reflection for $prototypes
  */

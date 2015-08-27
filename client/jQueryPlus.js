@@ -20,9 +20,9 @@ $.fn.extend ({
         else {                                                      // getter
             return this.length ? this[0]._item : undefined } },
     
-    waitUntil: function (fn, then) { this.addClass ('wait').attr ('disabled', true)
+    waitUntil: function (fn, then) { this.addClass ('i-am-busy').attr ('disabled', true)
         fn (this.$ (function () {
-            this.removeClass ('wait').removeAttr ('disabled')
+            this.removeClass ('i-am-busy').removeAttr ('disabled')
             if (then) {
                 then.apply (null, arguments) } })); return this },
 

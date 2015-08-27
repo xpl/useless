@@ -99,10 +99,11 @@ _ = (function () {
         device: _.platform ().device,
         touch:  _.platform ().touch || false,
 
-        NodeJS: _.platform ().engine === 'node',
-        iPad:   _.platform ().device === 'iPad',
-        iPhone: _.platform ().device === 'iPhone',
-        iOS:    _.platform ().system === 'iOS' } })
+        Browser: _.platform ().engine === 'browser',
+        NodeJS:  _.platform ().engine === 'node',
+        iPad:    _.platform ().device === 'iPad',
+        iPhone:  _.platform ().device === 'iPhone',
+        iOS:     _.platform ().system === 'iOS' } })
 
 
 /*  Otherwise basic utility
@@ -112,19 +113,19 @@ _ = (function () {
     $include ('./base/Format')          // clumsy formatting utils
     $include ('./base/Sort')            // (this one is normal)
 
-    $include ('./base/log')             // logging facility
     $include ('./base/concurrency')     // concurrency utility
     $include ('./base/math')            // math utility
     $include ('./base/Component')       // component facility
     $include ('./base/Rx')              // regular expressions helper
 
 
-/*  Self-awareness utils
+/*  Developer tools
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $include ('./base/reflection')      // callstack access + source code access
-    $include ('./base/profiling')       // performance measurement utility
+    $include ('./base/log')             // logging facility
     $include ('./base/Testosterone')    // unit test shell
+    $include ('./base/profiling')       // performance measurement utility
 
 
 /*  Experimental stuff

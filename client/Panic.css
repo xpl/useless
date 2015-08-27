@@ -22,6 +22,8 @@
   100% { opacity: 0.5; }
 }
 
+.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }
+
 .panic-modal-appear {
   -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);
   animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }
@@ -62,7 +64,8 @@
 .panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }
 
 .panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }
-.panic-alert-error:not(.all) .callstack-entry.third-party { display: none; }
+.panic-alert-error:not(.all) .callstack-entry.third-party,
+.panic-alert-error:not(.all) .callstack-entry.native { display: none; }
 .panic-alert-error .clean-toggle { text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 1.2em; left: 0; top: 1em; display: block; text-align: right; }
 .panic-alert-error .clean-toggle:hover { text-decoration: underline; }
 .panic-alert-error .clean-toggle:before { content: 'more'; }
@@ -72,17 +75,16 @@
 .panic-alert-error-message { line-height: 1.2em; }
 
 .panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0 0 0 1.2em; }
-.panic-alert-error .callstack .callstack-entry { margin-top: 10px; list-style-type: circle;  }
-.panic-alert-error .callstack .callstack-entry .file { }
-.panic-alert-error .callstack .callstack-entry .callee:not(:empty):before { content: ' → '; }
-.panic-alert-error .callstack .callstack-entry .src { border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; overflow: hidden; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; overflow: hidden; }
-.panic-alert-error .callstack .callstack-entry .src.full { font-size: 12px; height: 200px; overflow: scroll; }
-.panic-alert-error .callstack .callstack-entry .src.full .line.hili { background: yellow; }
+.panic-alert-error .callstack-entry { margin-top: 10px; list-style-type: circle;  }
+.panic-alert-error .callstack-entry .file { }
+.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: ' → '; }
 
-.panic-alert-error .callstack .callstack-entry .src:empty:before { content: '<< SOURCE NOT LOADED >>'; color: rgba(0,0,0,0.25); }
-.panic-alert-error .callstack .callstack-entry .src:empty { pointer-events: none; }
+.panic-alert-error .callstack-entry .src { border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; overflow: hidden; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; overflow: hidden; }
+.panic-alert-error .callstack-entry .src.full { font-size: 12px; height: 200px; overflow: scroll; }
+.panic-alert-error .callstack-entry .src.full .line.hili { background: yellow; }
 
-.panic-alert-error .callstack .callstack-entry .line:after { content: ' '; }
+.panic-alert-error .callstack-entry        .src:empty:before { content: '<< SOURCE NOT LOADED >>'; color: rgba(0,0,0,0.25); }
+.panic-alert-error .callstack-entry.native .src:empty:before { content: '<< NATIVE CODE >>'; color: rgba(0,0,0,0.25); }
+.panic-alert-error .callstack-entry .src:empty { pointer-events: none; }
 
-.panic-alert-error .callstack .callstack-entry .src.wait { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }
-
+.panic-alert-error .callstack-entry .line:after { content: ' '; }

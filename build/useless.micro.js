@@ -34,7 +34,7 @@ _ = (function () {
 /*  Tests stub
  */
 _.tests = {}
-_.deferTest = function (name, test, subj) { subj () }
+_.deferTest = _.withTest = function (name, test, subj) { subj () }
 
 /*  Internal dependencies
     ======================================================================== */
@@ -1999,7 +1999,7 @@ function () { _.extend (_.cps, {
                     cache (then) }
             case 2:
                 cache = {}
-                return function (value, then) {             
+                return function (value, then) {    
                     if (!(value in cache)) {
                         fn.call (this, value, (cache[value] = _.barrier ())) }
                     cache[value] (then) }
@@ -2935,7 +2935,12 @@ _.tests.stream = {
 
         $assertCalls (1, function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
-    }
+    },
+
+    '_.barrier (value)': function () { $assertCalls (1, function (mkay) {
+             var willBe42 = _.barrier (42)
+        $assert (willBe42.already)
+                 willBe42 (function (_42) { $assert (_42, 42); mkay () }) }) },
 }
 
 _.extend (_, {
@@ -3014,10 +3019,11 @@ _.extend (_, {
                         then (val) } }) } }) },
 
 
-    barrier: function () {
+    barrier: function (value) {
+
         var barrier = _.stream ({
-                    already: false,
-                    value: undefined,
+                    already: value !== undefined,
+                    value: value,
                     write: function (returnResult) {
                                 return function (value) {
                                     if (!barrier.already) {
@@ -3112,7 +3118,7 @@ _.extend (_, {
 
                 /*  Constructor
                  */
-                return (self = _.extend ($restArg (frontEnd), {
+                return (self = _.extend ($restArg (frontEnd), cfg, {
                     queue:    queue,
                     once:     once,
                     off:    _.off.asMethod,
@@ -5323,9 +5329,9 @@ $.fn.extend ({
         else {                                                      // getter
             return this.length ? this[0]._item : undefined } },
     
-    waitUntil: function (fn, then) { this.addClass ('wait').attr ('disabled', true)
+    waitUntil: function (fn, then) { this.addClass ('i-am-busy').attr ('disabled', true)
         fn (this.$ (function () {
-            this.removeClass ('wait').removeAttr ('disabled')
+            this.removeClass ('i-am-busy').removeAttr ('disabled')
             if (then) {
                 then.apply (null, arguments) } })); return this },
 

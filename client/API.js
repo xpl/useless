@@ -11,21 +11,23 @@ TODO: refactor, l10n for messages
 API = $singleton (Component, {
 
 	get: function (path, cfg, then) {
-		this.request ('GET', path, cfg, then) },
+		this.request ('GET', path, _.extend ({ stackOffset: 1 }, cfg), then) },
 
 	post: function (path, cfg, then) {
-		this.request ('POST', path, cfg, then) },
+		this.request ('POST', path, _.extend ({ stackOffset: 1 }, cfg), then) },
 
 	request: function (type, path, cfg, then) { cfg = cfg || {}
+
+		var stackBeforeCall = _.hasReflection && $callStack.offset ((cfg.stackOffset || 0) + 1).asArray
 
 		var prePath = (cfg.protocol || cfg.hostname || cfg.port) ?
 						 	((cfg.protocol || window.location.protocol) + '//' +
 						 	 (cfg.hostname || window.location.hostname) + ':' +
 						 	 (cfg.port     || window.location.port)) : ''
 
-		var success = cfg.success   || _.identity
-		var progress = cfg.progress || _.identity
-		var failure = cfg.failure   || _.identity
+		var success  = cfg.success   || _.identity
+		var progress = cfg.progress  || _.identity
+		var failure  = cfg.failure   || _.identity
 		
 		var retry = Http.request (type, prePath + '/api/' + path, _.extend ({}, cfg, {
 			data: cfg.data || (cfg.what && JSON.stringify (cfg.what)),
@@ -41,7 +43,9 @@ API = $singleton (Component, {
             			then (response.value) } }
             	else {
 					if (response.parsedStack) { // cross-machine exception throwing
-						throw _.extend (new Error ('SERVER: ' + response.error), { remote: true, parsedStack: response.parsedStack }) }
+						throw _.extend (new Error ('SERVER: ' + response.error), {
+							remote: true,
+							parsedStack: response.parsedStack.concat (stackBeforeCall || []) }) }
 					else {
 						failure (response.error, retry) } } } })) },
 

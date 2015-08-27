@@ -168,7 +168,12 @@ _.tests.stream = {
 
         $assertCalls (1, function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
-    }
+    },
+
+    '_.barrier (value)': function () { $assertCalls (1, function (mkay) {
+             var willBe42 = _.barrier (42)
+        $assert (willBe42.already)
+                 willBe42 (function (_42) { $assert (_42, 42); mkay () }) }) },
 }
 
 _.extend (_, {
@@ -247,10 +252,11 @@ _.extend (_, {
                         then (val) } }) } }) },
 
 
-    barrier: function () {
+    barrier: function (value) {
+
         var barrier = _.stream ({
-                    already: false,
-                    value: undefined,
+                    already: value !== undefined,
+                    value: value,
                     write: function (returnResult) {
                                 return function (value) {
                                     if (!barrier.already) {
@@ -345,7 +351,7 @@ _.extend (_, {
 
                 /*  Constructor
                  */
-                return (self = _.extend ($restArg (frontEnd), {
+                return (self = _.extend ($restArg (frontEnd), cfg, {
                     queue:    queue,
                     once:     once,
                     off:    _.off.asMethod,

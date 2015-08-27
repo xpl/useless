@@ -227,6 +227,7 @@ _.defineGlobalProperty('alert2', function (args) {
 });
 var globalUncaughtExceptionHandler = function (e) {
     var chain = arguments.callee.chain;
+    arguments.callee.chain = _.reject(chain, _.property('catchesOnce'));
     if (chain.length) {
         for (var i = 0, n = chain.length; i < n; i++) {
             try {
@@ -246,8 +247,11 @@ var globalUncaughtExceptionHandler = function (e) {
         throw e;
     }
 };
-_.withUncaughtExceptionHandler = function (handler, context) {
-    context = context || _.identity;
+_.withUncaughtExceptionHandler = function (handler, context_) {
+    var context = context_ || _.identity;
+    if (context_) {
+        handler.catchesOnce = true;
+    }
     globalUncaughtExceptionHandler.chain.unshift(handler);
     context(function () {
         globalUncaughtExceptionHandler.chain.remove(handler);
@@ -2235,10 +2239,10 @@ _.extend(_, {
             }
         });
     },
-    barrier: function () {
+    barrier: function (value) {
         var barrier = _.stream({
-            already: false,
-            value: undefined,
+            already: value !== undefined,
+            value: value,
             write: function (returnResult) {
                 return function (value) {
                     if (!barrier.already) {
@@ -2346,7 +2350,7 @@ _.extend(_, {
                 then(val);
             });
         };
-        return self = _.extend($restArg(frontEnd), {
+        return self = _.extend($restArg(frontEnd), cfg, {
             queue: queue,
             once: once,
             off: _.off.asMethod,
@@ -2603,6 +2607,7 @@ Platform = $singleton({
         system: _.platform().system,
         device: _.platform().device,
         touch: _.platform().touch || false,
+        Browser: _.platform().engine === 'browser',
         NodeJS: _.platform().engine === 'node',
         iPad: _.platform().device === 'iPad',
         iPhone: _.platform().device === 'iPhone',
@@ -2746,237 +2751,6 @@ Sort = {
         };
     }
 };
-_.hasLog = true;
-_.extend(log = function () {
-    return log.write.apply(this, arguments);
-}, {
-    Color: $prototype(),
-    Config: $prototype(),
-    cleanArgs: function (args) {
-        return _.reject(args, _.or(log.Color.isTypeOf, log.Config.isTypeOf));
-    },
-    read: function (type, args) {
-        return _.find(args, type.isTypeOf) || new type({});
-    },
-    modify: function (type, args, operator) {
-        return _.reject(args, type.isTypeOf).concat(operator(log.read(type, args)));
-    }
-});
-_.extend(log, {
-    config: function (cfg) {
-        return new log.Config(cfg);
-    },
-    indent: function (n) {
-        return log.config({ indent: n });
-    },
-    color: {
-        red: new log.Color({
-            shell: '\x1B[31m',
-            css: 'crimson'
-        }),
-        blue: new log.Color({
-            shell: '\x1B[36m',
-            css: 'royalblue'
-        }),
-        orange: new log.Color({
-            shell: '\x1B[33m',
-            css: 'saddlebrown'
-        }),
-        green: new log.Color({
-            shell: '\x1B[32m',
-            css: 'forestgreen'
-        })
-    },
-    readColor: log.read.partial(log.Color),
-    readConfig: log.read.partial(log.Config),
-    modifyColor: log.modify.partial(log.Color),
-    modifyConfig: log.modify.partial(log.Config),
-    boldLine: '======================================',
-    line: '--------------------------------------',
-    thinLine: '......................................',
-    withCustomWriteBackend: function (backend, contextFn, then) {
-        var previousBackend = log.impl.writeBackend;
-        log.impl.writeBackend = backend;
-        contextFn(function () {
-            log.impl.writeBackend = previousBackend;
-            if (then) {
-                then();
-            }
-        });
-    },
-    writeUsingDefaultBackend: function () {
-        var args = arguments;
-        log.withCustomWriteBackend(log.impl.defaultWriteBackend, function (done) {
-            log.write.apply(null, args);
-            done();
-        });
-    },
-    impl: {
-        write: function (defaultCfg) {
-            return $restArg(function () {
-                var args = _.asArray(arguments);
-                var cleanArgs = log.cleanArgs(args);
-                var config = _.extend({ indent: 0 }, defaultCfg, log.readConfig(args));
-                var stackOffset = Platform.NodeJS ? 3 : 2;
-                var indent = (log.impl.writeBackend.indent || 0) + config.indent;
-                var text = log.impl.stringifyArguments(cleanArgs, config);
-                var indentation = _.times(indent, _.constant('\t')).join('');
-                var match = text.reversed.match(/(\n*)([^]*)/);
-                var location = config.location && log.impl.location(config.where || $callStack[stackOffset + (config.stackOffset || 0)]) || '';
-                var backendParams = {
-                    color: log.readColor(args),
-                    indentedText: match[2].reversed.split('\n').map(_.prepends(indentation)).join('\n'),
-                    trailNewlines: match[1],
-                    codeLocation: location
-                };
-                log.impl.writeBackend(backendParams);
-                return cleanArgs[0];
-            });
-        },
-        defaultWriteBackend: function (params) {
-            var color = params.color, indentedText = params.indentedText, codeLocation = params.codeLocation, trailNewlines = params.trailNewlines;
-            var colorValue = color && (Platform.NodeJS ? color.shell : color.css);
-            if (colorValue) {
-                if (Platform.NodeJS) {
-                    console.log(colorValue + indentedText + '\x1B[0m', codeLocation, trailNewlines);
-                } else {
-                    var lines = indentedText.split('\n');
-                    var allButFirstLinePaddedWithSpace = [_.first(lines) || ''].concat(_.rest(lines).map(_.prepends(' ')));
-                    console.log('%c' + allButFirstLinePaddedWithSpace.join('\n'), 'color: ' + colorValue, codeLocation, trailNewlines);
-                }
-            } else {
-                console.log(indentedText, codeLocation, trailNewlines);
-            }
-        },
-        location: function (where) {
-            return _.quoteWith('()', _.nonempty([
-                where.calleeShort,
-                where.fileName + ':' + where.line
-            ]).join(' @ '));
-        },
-        stringifyArguments: function (args, cfg) {
-            return _.map(args, log.impl.stringify.tails2(cfg)).join(' ');
-        },
-        stringify: function (what, cfg) {
-            cfg = cfg || {};
-            if (_.isTypeOf(Error, what)) {
-                var str = log.impl.stringifyError(what);
-                if (what.originalError) {
-                    return str + '\n\n' + log.impl.stringify(what.originalError);
-                } else {
-                    return str;
-                }
-            } else if (_.isTypeOf(CallStack, what)) {
-                return log.impl.stringifyCallStack(what);
-            } else if (typeof what === 'object') {
-                if (_.isArray(what) && what.length > 1 && _.isObject(what[0]) && cfg.table) {
-                    return log.asTable(what);
-                } else {
-                    return _.stringify(what, cfg);
-                }
-            } else if (typeof what === 'string') {
-                return what;
-            } else {
-                return _.stringify(what);
-            }
-        },
-        stringifyError: function (e) {
-            try {
-                var stack = CallStack.fromError(e).clean.offset(e.stackOffset || 0);
-                var why = (e.message || '').replace(/\r|\n/g, '').trimmed.first(120);
-                return '[EXCEPTION] ' + why + '\n\n' + log.impl.stringifyCallStack(stack) + '\n';
-            } catch (sub) {
-                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n';
-            }
-        },
-        stringifyCallStack: function (stack) {
-            return log.columns(stack.map(function (entry) {
-                return [
-                    '\t' + 'at ' + entry.calleeShort.first(30),
-                    _.nonempty([
-                        entry.fileShort,
-                        ':',
-                        entry.line
-                    ]).join(''),
-                    (entry.source || '').first(80)
-                ];
-            })).join('\n');
-        }
-    }
-});
-_.extend(log, log.printAPI = {
-    newline: log.impl.write().partial(''),
-    write: log.impl.write(),
-    red: log.impl.write().partial(log.color.red),
-    blue: log.impl.write().partial(log.color.blue),
-    orange: log.impl.write().partial(log.color.orange),
-    green: log.impl.write().partial(log.color.green),
-    failure: log.impl.write({ location: true }).partial(log.color.red),
-    error: log.impl.write({ location: true }).partial(log.color.red),
-    e: log.impl.write({ location: true }).partial(log.color.red),
-    info: log.impl.write({ location: true }).partial(log.color.blue),
-    i: log.impl.write({ location: true }).partial(log.color.blue),
-    w: log.impl.write({ location: true }).partial(log.color.orange),
-    warn: log.impl.write({ location: true }).partial(log.color.orange),
-    warning: log.impl.write({ location: true }).partial(log.color.orange),
-    success: log.impl.write({ location: true }).partial(log.color.green),
-    ok: log.impl.write({ location: true }).partial(log.color.green)
-});
-log.writes = log.printAPI.writes = _.higherOrder(log.write);
-log.impl.writeBackend = log.impl.defaultWriteBackend;
-_.extend(log, {
-    asTable: function (arrayOfObjects) {
-        var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
-        var lines = log.columns([columnsDef].concat(_.map(arrayOfObjects, function (object) {
-            return columnsDef.map(_.propertyOf(object));
-        })), {
-            maxTotalWidth: 120,
-            minColumnWidths: columnsDef.map(_.property('length'))
-        });
-        return [
-            lines[0],
-            log.thinLine[0].repeats(lines[0].length),
-            _.rest(lines)
-        ].flat.join('\n');
-    },
-    columns: function (rows, cfg_) {
-        if (rows.length === 0) {
-            return [];
-        } else {
-            var rowsToStr = rows.map(_.map.tails2(function (col) {
-                return (col + '').split('\n')[0];
-            }));
-            var columnWidths = rowsToStr.map(_.map.tails2(_.property('length')));
-            var maxWidths = columnWidths.zip(_.largest);
-            var cfg = cfg_ || {
-                minColumnWidths: maxWidths,
-                maxTotalWidth: 0
-            };
-            var totalWidth = _.reduce(maxWidths, _.sum, 0);
-            var relativeWidths = _.map(maxWidths, _.muls(1 / totalWidth));
-            var excessWidth = Math.max(0, totalWidth - cfg.maxTotalWidth);
-            var computedWidths = _.map(maxWidths, function (w, i) {
-                return Math.max(cfg.minColumnWidths[i], Math.floor(w - excessWidth * relativeWidths[i]));
-            });
-            var restWidths = columnWidths.map(function (widths) {
-                return [
-                    computedWidths,
-                    widths
-                ].zip(_.subtract);
-            });
-            return [
-                rowsToStr,
-                restWidths
-            ].zip(_.zap.tails(function (str, w) {
-                return w >= 0 ? str + ' '.repeats(w) : _.initial(str, -w).join('');
-            }).then(_.joinsWith('  ')));
-        }
-    }
-});
-if (Platform.NodeJS) {
-    module.exports = log;
-}
-;
 _.enumerate = _.cps.each;
 _.mapReduce = function (array, cfg) {
     var cursor = 0;
@@ -4176,6 +3950,7 @@ R = $singleton({
         });
     }
 });
+_.hasReflection = true;
 _.defineKeyword('callStack', function () {
     return CallStack.fromRawString(CallStack.currentAsRawString).offset(Platform.NodeJS ? 1 : 0);
 });
@@ -4241,16 +4016,16 @@ _.readSourceLine = SourceFiles.line;
 _.readSource = SourceFiles.read;
 _.writeSource = SourceFiles.write;
 CallStack = $extends(Array, {
-    enableSetTimeoutHook: $static(function () {
+    enableAsyncPersistence: $static(function () {
         var setTimeout = $global.setTimeout;
         $global.setTimeout = function (fn, t) {
-            var stackBeforeTimeout = CallStack.current;
+            var beforeTimeout = CallStack.current;
             return setTimeout(function () {
                 _.withUncaughtExceptionHandler(function (e) {
-                    throw _.extend(e, { parsedStack: CallStack.fromParsedArray(_.initial(CallStack.fromError(e).asArray, 3).concat(stackBeforeTimeout.asArray)) });
-                }, function (doneWithUncaughtExceptionHandler) {
+                    throw _.extend(e, { parsedStack: CallStack.fromError(e).initial(4).concat(beforeTimeout) });
+                }, function (release) {
                     fn();
-                    doneWithUncaughtExceptionHandler();
+                    release();
                 });
             }, t);
         };
@@ -4259,11 +4034,8 @@ CallStack = $extends(Array, {
         return CallStack.fromRawString(CallStack.currentAsRawString).offset(1);
     })),
     fromError: $static(function (e) {
-        $global.xxx = e;
         if (e.parsedStack) {
-            return CallStack.fromParsedArray(_.map(e.parsedStack, function (entry) {
-                return _.extend(entry, { sourceReady: _.constant(entry.source) });
-            }));
+            return CallStack.fromParsedArray(e.parsedStack);
         } else {
             return CallStack.fromRawString(e.stack);
         }
@@ -4280,7 +4052,7 @@ CallStack = $extends(Array, {
             fileShort: '',
             thirdParty: false,
             source: '??? WRONG LOCATION ???',
-            sourceReady: _.cps.constant('??? WRONG LOCATION ???')
+            sourceReady: _.barrier('??? WRONG LOCATION ???')
         };
     },
     clean: $property(function () {
@@ -4291,6 +4063,12 @@ CallStack = $extends(Array, {
     }),
     offset: function (N) {
         return CallStack.fromParsedArray(_.rest(this, N));
+    },
+    initial: function (N) {
+        return CallStack.fromParsedArray(_.initial(this, N));
+    },
+    concat: function (stack) {
+        return CallStack.fromParsedArray(this.asArray.concat(stack.asArray));
     },
     filter: function (fn) {
         return CallStack.fromParsedArray(_.filter(this, fn));
@@ -4306,15 +4084,21 @@ CallStack = $extends(Array, {
     },
     constructor: function (arr) {
         Array.prototype.constructor.call(this);
-        for (var i = 0, n = arr.length; i < n; i++) {
-            this.push(arr[i]);
-        }
+        _.each(arr, function (entry) {
+            if (!entry.sourceReady) {
+                entry.sourceReady = _.barrier();
+                SourceFiles.line((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
+                    entry.sourceReady(entry.source = src);
+                });
+            }
+            this.push(entry);
+        }, this);
     },
     fromParsedArray: $static(function (arr) {
         return new CallStack(arr);
     }),
     currentAsRawString: $static($property(function () {
-        var cut = _.platform().engine === 'browser' ? 3 : 2;
+        var cut = Platform.Browser ? 3 : 2;
         return _.rest((new Error().stack || '').split('\n'), cut).join('\n');
     })),
     shortenPath: $static(function (file) {
@@ -4335,37 +4119,30 @@ CallStack = $extends(Array, {
                 thirdParty: CallStack.isThirdParty(entry.file)
             });
         });
-    }, function (parsedArray) {
-        return _.map(parsedArray, function (entry) {
-            entry.source = '';
-            entry.sourceReady = _.barrier();
-            _.readSourceLine(entry.file, entry.line - 1, function (src) {
-                entry.source = src;
-                entry.sourceReady(src);
-            });
-            return entry;
-        });
     }, function (parsedArrayWithSourceLines) {
         return CallStack.fromParsedArray(parsedArrayWithSourceLines);
     })),
     rawStringToArray: $static(function (rawString) {
-        var lines = _.rest((rawString || '').split('\n'), _.platform().engine === 'browser' ? 1 : 0);
-        return _.map(lines, function (line_) {
-            var line = line_.trimmed;
-            var callee, fileLineColumn = [];
-            var match = line.match(/at (.+) \((.+)\)/);
-            if (match) {
-                callee = match[1];
-                fileLineColumn = _.rest(match[2].match(/(.*):(.+):(.+)/) || []);
+        var lines = (rawString || '').split('\n');
+        return _.filter2(lines, function (line) {
+            line = line.trimmed;
+            var callee, fileLineColumn = [], native_;
+            var planA = line.match(/at (.+) \((.+)\)/);
+            var planB = line.match(/at (.+)/);
+            if (planA) {
+                callee = planA[1];
+                native_ = planA[2] === 'native';
+                fileLineColumn = _.rest(planA[2].match(/(.*):(.+):(.+)/) || []);
+            } else if (planB) {
+                fileLineColumn = _.rest(planB[1].match(/(.*):(.+):(.+)/) || []);
             } else {
-                var planB = line.match(/at (.+)/);
-                if (planB && planB[1]) {
-                    fileLineColumn = _.rest(planB[1].match(/(.*):(.+):(.+)/) || []);
-                }
+                return false;
             }
             return {
                 beforeParse: line,
                 callee: callee || '',
+                index: Platform.Browser && fileLineColumn[0] === window.location.href,
+                'native': native_,
                 file: fileLineColumn[0] || '',
                 line: (fileLineColumn[1] || '').integerValue,
                 column: (fileLineColumn[2] || '').integerValue
@@ -4393,39 +4170,237 @@ $prototype.macro(function (def, base) {
     }
     return def;
 });
-_.measure = function (routine, then) {
-    if (then) {
-        var now = _.now();
-        routine(function () {
-            then(_.now() - now);
-        });
-    } else {
-        var now = _.now();
-        routine();
-        return _.now() - now;
+_.hasLog = true;
+_.extend(log = function () {
+    return log.write.apply(this, arguments);
+}, {
+    Color: $prototype(),
+    Config: $prototype(),
+    cleanArgs: function (args) {
+        return _.reject(args, _.or(log.Color.isTypeOf, log.Config.isTypeOf));
+    },
+    read: function (type, args) {
+        return _.find(args, type.isTypeOf) || new type({});
+    },
+    modify: function (type, args, operator) {
+        return _.reject(args, type.isTypeOf).concat(operator(log.read(type, args)));
     }
-};
-_.perfTest = function (arg, then) {
-    var rounds = 500;
-    var routines = _.isFunction(arg) ? { test: arg } : arg;
-    var timings = {};
-    _.cps.each(routines, function (fn, name, then) {
-        var result = [];
-        var run = function () {
-            for (var i = 0; i < rounds; i++) {
-                result.push(fn());
+});
+_.extend(log, {
+    config: function (cfg) {
+        return new log.Config(cfg);
+    },
+    indent: function (n) {
+        return log.config({ indent: n });
+    },
+    color: {
+        red: new log.Color({
+            shell: '\x1B[31m',
+            css: 'crimson'
+        }),
+        blue: new log.Color({
+            shell: '\x1B[36m',
+            css: 'royalblue'
+        }),
+        orange: new log.Color({
+            shell: '\x1B[33m',
+            css: 'saddlebrown'
+        }),
+        green: new log.Color({
+            shell: '\x1B[32m',
+            css: 'forestgreen'
+        })
+    },
+    readColor: log.read.partial(log.Color),
+    readConfig: log.read.partial(log.Config),
+    modifyColor: log.modify.partial(log.Color),
+    modifyConfig: log.modify.partial(log.Config),
+    boldLine: '======================================',
+    line: '--------------------------------------',
+    thinLine: '......................................',
+    withCustomWriteBackend: function (backend, contextFn, then) {
+        var previousBackend = log.impl.writeBackend;
+        log.impl.writeBackend = backend;
+        contextFn(function () {
+            log.impl.writeBackend = previousBackend;
+            if (then) {
+                then();
             }
-            console.log(name, result);
-        };
-        run();
-        _.delay(function () {
-            timings[name] = _.measure(run) / rounds;
-            then();
-        }, 100);
-    }, function () {
-        then(timings);
-    });
-};
+        });
+    },
+    writeUsingDefaultBackend: function () {
+        var args = arguments;
+        log.withCustomWriteBackend(log.impl.defaultWriteBackend, function (done) {
+            log.write.apply(null, args);
+            done();
+        });
+    },
+    impl: {
+        write: function (defaultCfg) {
+            return $restArg(function () {
+                var args = _.asArray(arguments);
+                var cleanArgs = log.cleanArgs(args);
+                var config = _.extend({ indent: 0 }, defaultCfg, log.readConfig(args));
+                var stackOffset = Platform.NodeJS ? 3 : 2;
+                var indent = (log.impl.writeBackend.indent || 0) + config.indent;
+                var text = log.impl.stringifyArguments(cleanArgs, config);
+                var indentation = _.times(indent, _.constant('\t')).join('');
+                var match = text.reversed.match(/(\n*)([^]*)/);
+                var location = config.location && log.impl.location(config.where || $callStack[stackOffset + (config.stackOffset || 0)]) || '';
+                var backendParams = {
+                    color: log.readColor(args),
+                    indentedText: match[2].reversed.split('\n').map(_.prepends(indentation)).join('\n'),
+                    trailNewlines: match[1],
+                    codeLocation: location
+                };
+                log.impl.writeBackend(backendParams);
+                return cleanArgs[0];
+            });
+        },
+        defaultWriteBackend: function (params) {
+            var color = params.color, indentedText = params.indentedText, codeLocation = params.codeLocation, trailNewlines = params.trailNewlines;
+            var colorValue = color && (Platform.NodeJS ? color.shell : color.css);
+            if (colorValue) {
+                if (Platform.NodeJS) {
+                    console.log(colorValue + indentedText + '\x1B[0m', codeLocation, trailNewlines);
+                } else {
+                    var lines = indentedText.split('\n');
+                    var allButFirstLinePaddedWithSpace = [_.first(lines) || ''].concat(_.rest(lines).map(_.prepends(' ')));
+                    console.log('%c' + allButFirstLinePaddedWithSpace.join('\n'), 'color: ' + colorValue, codeLocation, trailNewlines);
+                }
+            } else {
+                console.log(indentedText, codeLocation, trailNewlines);
+            }
+        },
+        location: function (where) {
+            return _.quoteWith('()', _.nonempty([
+                where.calleeShort,
+                where.fileName + ':' + where.line
+            ]).join(' @ '));
+        },
+        stringifyArguments: function (args, cfg) {
+            return _.map(args, log.impl.stringify.tails2(cfg)).join(' ');
+        },
+        stringify: function (what, cfg) {
+            cfg = cfg || {};
+            if (_.isTypeOf(Error, what)) {
+                var str = log.impl.stringifyError(what);
+                if (what.originalError) {
+                    return str + '\n\n' + log.impl.stringify(what.originalError);
+                } else {
+                    return str;
+                }
+            } else if (_.isTypeOf(CallStack, what)) {
+                return log.impl.stringifyCallStack(what);
+            } else if (typeof what === 'object') {
+                if (_.isArray(what) && what.length > 1 && _.isObject(what[0]) && cfg.table) {
+                    return log.asTable(what);
+                } else {
+                    return _.stringify(what, cfg);
+                }
+            } else if (typeof what === 'string') {
+                return what;
+            } else {
+                return _.stringify(what);
+            }
+        },
+        stringifyError: function (e) {
+            try {
+                var stack = CallStack.fromError(e).clean.offset(e.stackOffset || 0);
+                var why = (e.message || '').replace(/\r|\n/g, '').trimmed.first(120);
+                return '[EXCEPTION] ' + why + '\n\n' + log.impl.stringifyCallStack(stack) + '\n';
+            } catch (sub) {
+                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n';
+            }
+        },
+        stringifyCallStack: function (stack) {
+            return log.columns(stack.map(function (entry) {
+                return [
+                    '\t' + 'at ' + entry.calleeShort.first(30),
+                    _.nonempty([
+                        entry.fileShort,
+                        ':',
+                        entry.line
+                    ]).join(''),
+                    (entry.source || '').first(80)
+                ];
+            })).join('\n');
+        }
+    }
+});
+_.extend(log, log.printAPI = {
+    newline: log.impl.write().partial(''),
+    write: log.impl.write(),
+    red: log.impl.write().partial(log.color.red),
+    blue: log.impl.write().partial(log.color.blue),
+    orange: log.impl.write().partial(log.color.orange),
+    green: log.impl.write().partial(log.color.green),
+    failure: log.impl.write({ location: true }).partial(log.color.red),
+    error: log.impl.write({ location: true }).partial(log.color.red),
+    e: log.impl.write({ location: true }).partial(log.color.red),
+    info: log.impl.write({ location: true }).partial(log.color.blue),
+    i: log.impl.write({ location: true }).partial(log.color.blue),
+    w: log.impl.write({ location: true }).partial(log.color.orange),
+    warn: log.impl.write({ location: true }).partial(log.color.orange),
+    warning: log.impl.write({ location: true }).partial(log.color.orange),
+    success: log.impl.write({ location: true }).partial(log.color.green),
+    ok: log.impl.write({ location: true }).partial(log.color.green)
+});
+log.writes = log.printAPI.writes = _.higherOrder(log.write);
+log.impl.writeBackend = log.impl.defaultWriteBackend;
+_.extend(log, {
+    asTable: function (arrayOfObjects) {
+        var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
+        var lines = log.columns([columnsDef].concat(_.map(arrayOfObjects, function (object) {
+            return columnsDef.map(_.propertyOf(object));
+        })), {
+            maxTotalWidth: 120,
+            minColumnWidths: columnsDef.map(_.property('length'))
+        });
+        return [
+            lines[0],
+            log.thinLine[0].repeats(lines[0].length),
+            _.rest(lines)
+        ].flat.join('\n');
+    },
+    columns: function (rows, cfg_) {
+        if (rows.length === 0) {
+            return [];
+        } else {
+            var rowsToStr = rows.map(_.map.tails2(function (col) {
+                return (col + '').split('\n')[0];
+            }));
+            var columnWidths = rowsToStr.map(_.map.tails2(_.property('length')));
+            var maxWidths = columnWidths.zip(_.largest);
+            var cfg = cfg_ || {
+                minColumnWidths: maxWidths,
+                maxTotalWidth: 0
+            };
+            var totalWidth = _.reduce(maxWidths, _.sum, 0);
+            var relativeWidths = _.map(maxWidths, _.muls(1 / totalWidth));
+            var excessWidth = Math.max(0, totalWidth - cfg.maxTotalWidth);
+            var computedWidths = _.map(maxWidths, function (w, i) {
+                return Math.max(cfg.minColumnWidths[i], Math.floor(w - excessWidth * relativeWidths[i]));
+            });
+            var restWidths = columnWidths.map(function (widths) {
+                return [
+                    computedWidths,
+                    widths
+                ].zip(_.subtract);
+            });
+            return [
+                rowsToStr,
+                restWidths
+            ].zip(_.zap.tails(function (str, w) {
+                return w >= 0 ? str + ' '.repeats(w) : _.initial(str, -w).join('');
+            }).then(_.joinsWith('  ')));
+        }
+    }
+});
+if (Platform.NodeJS) {
+    module.exports = log;
+}
+;
 _.defineTagKeyword('shouldFail');
 _.defineTagKeyword('async');
 _.defineTagKeyword('assertion');
@@ -4828,6 +4803,39 @@ if (Platform.NodeJS) {
     module.exports = Testosterone;
 }
 ;
+_.measure = function (routine, then) {
+    if (then) {
+        var now = _.now();
+        routine(function () {
+            then(_.now() - now);
+        });
+    } else {
+        var now = _.now();
+        routine();
+        return _.now() - now;
+    }
+};
+_.perfTest = function (arg, then) {
+    var rounds = 500;
+    var routines = _.isFunction(arg) ? { test: arg } : arg;
+    var timings = {};
+    _.cps.each(routines, function (fn, name, then) {
+        var result = [];
+        var run = function () {
+            for (var i = 0; i < rounds; i++) {
+                result.push(fn());
+            }
+            console.log(name, result);
+        };
+        run();
+        _.delay(function () {
+            timings[name] = _.measure(run) / rounds;
+            then();
+        }, 100);
+    }, function () {
+        then(timings);
+    });
+};
 (function () {
     var fnNameExpr = $r.expr('how', $r.text('before').or.text('after')).expr('name', $r.anything).$;
     var tryBind = function (target, methodName, bind, boundMethod) {

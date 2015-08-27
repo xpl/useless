@@ -33,7 +33,7 @@ _ = function () {
     return _;
 }();
 _.tests = {};
-_.deferTest = function (name, test, subj) {
+_.deferTest = _.withTest = function (name, test, subj) {
     subj();
 };
 _.platform = function () {
@@ -1751,10 +1751,10 @@ _.extend(_, {
             }
         });
     },
-    barrier: function () {
+    barrier: function (value) {
         var barrier = _.stream({
-            already: false,
-            value: undefined,
+            already: value !== undefined,
+            value: value,
             write: function (returnResult) {
                 return function (value) {
                     if (!barrier.already) {
@@ -1862,7 +1862,7 @@ _.extend(_, {
                 then(val);
             });
         };
-        return self = _.extend($restArg(frontEnd), {
+        return self = _.extend($restArg(frontEnd), cfg, {
             queue: queue,
             once: once,
             off: _.off.asMethod,
@@ -3175,9 +3175,9 @@ if (jQuery) {
                 }
             },
             waitUntil: function (fn, then) {
-                this.addClass('wait').attr('disabled', true);
+                this.addClass('i-am-busy').attr('disabled', true);
                 fn(this.$(function () {
-                    this.removeClass('wait').removeAttr('disabled');
+                    this.removeClass('i-am-busy').removeAttr('disabled');
                     if (then) {
                         then.apply(null, arguments);
                     }

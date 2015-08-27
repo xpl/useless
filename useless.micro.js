@@ -34,7 +34,7 @@ _ = (function () {
 /*  Tests stub
  */
 _.tests = {}
-_.deferTest = function (name, test, subj) { subj () }
+_.deferTest = _.withTest = function (name, test, subj) { subj () }
 
 /*  Internal dependencies
     ======================================================================== */

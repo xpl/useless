@@ -2,9 +2,9 @@ $include ('./base/tier0/uncaught')
 $include ('./base/tier0/typeMatch')
 $include ('./base/tier0/assert')
 $include ('./base/reflection')
-$include ('./base/profiling')
 $include ('./base/log')
 $include ('./base/Testosterone')
+$include ('./base/profiling')
 $include ('./client/Panic')
 
 (function ($ /* JQUERY */) {

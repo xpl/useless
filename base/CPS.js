@@ -202,7 +202,7 @@ function () { _.extend (_.cps, {
                     cache (then) }
             case 2:
                 cache = {}
-                return function (value, then) {             
+                return function (value, then) {    
                     if (!(value in cache)) {
                         fn.call (this, value, (cache[value] = _.barrier ())) }
                     cache[value] (then) }
