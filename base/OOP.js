@@ -594,6 +594,20 @@ _.withTest ('OOP', {
                     return new ($prototype.apply (null, arguments)) () } })
 
 
+/*  Ports platform.js to OOP terms 
+    ======================================================================== */
 
+    Platform = $singleton ({ $property: {
+        
+        engine: _.platform ().engine,
+        system: _.platform ().system,
+        device: _.platform ().device,
+        touch:  _.platform ().touch || false,
+
+        Browser: _.platform ().engine === 'browser',
+        NodeJS:  _.platform ().engine === 'node',
+        iPad:    _.platform ().device === 'iPad',
+        iPhone:  _.platform ().device === 'iPhone',
+        iOS:     _.platform ().system === 'iOS' } })
 
         

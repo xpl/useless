@@ -273,7 +273,7 @@ CallStack = $extends (Array, {
 
         return _.filter2 (lines, function (line) { line = line.trimmed
 
-            var callee, fileLineColumn = [], native_
+            var callee, fileLineColumn = [], native_ = false
             var planA = line.match (/at (.+) \((.+)\)/)
             var planB = line.match (/at (.+)/)
 

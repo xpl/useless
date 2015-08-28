@@ -3725,9 +3725,8 @@ _.withTest ('OOP', {
                     return new ($prototype.apply (null, arguments)) () } })
 
 
-
-
-        ;
+/*  Ports platform.js to OOP terms 
+    ======================================================================== */
 
     Platform = $singleton ({ $property: {
         
@@ -3736,10 +3735,13 @@ _.withTest ('OOP', {
         device: _.platform ().device,
         touch:  _.platform ().touch || false,
 
-        NodeJS: _.platform ().engine === 'node',
-        iPad:   _.platform ().device === 'iPad',
-        iPhone: _.platform ().device === 'iPhone',
-        iOS:    _.platform ().system === 'iOS' } })
+        Browser: _.platform ().engine === 'browser',
+        NodeJS:  _.platform ().engine === 'node',
+        iPad:    _.platform ().device === 'iPad',
+        iPhone:  _.platform ().device === 'iPhone',
+        iOS:     _.platform ().system === 'iOS' } })
+
+        ;
 
 /*  Context-free math functions
     ======================================================================== */

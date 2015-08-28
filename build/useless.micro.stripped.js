@@ -2119,6 +2119,7 @@ Platform = $singleton({
         system: _.platform().system,
         device: _.platform().device,
         touch: _.platform().touch || false,
+        Browser: _.platform().engine === 'browser',
         NodeJS: _.platform().engine === 'node',
         iPad: _.platform().device === 'iPad',
         iPhone: _.platform().device === 'iPhone',

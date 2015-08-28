@@ -68,18 +68,6 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 
     $include ('./base/OOP')
 
-    Platform = $singleton ({ $property: {
-        
-        engine: _.platform ().engine,
-        system: _.platform ().system,
-        device: _.platform ().device,
-        touch:  _.platform ().touch || false,
-
-        NodeJS: _.platform ().engine === 'node',
-        iPad:   _.platform ().device === 'iPad',
-        iPhone: _.platform ().device === 'iPhone',
-        iOS:    _.platform ().system === 'iOS' } })
-
     $include ('./base/math')      // clumsy math utils
 //  $include ('./base/Parse')     // clumsy parsing utils
     $include ('./base/Format')    // clumsy formatting utils

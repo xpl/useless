@@ -4509,13 +4509,8 @@ _.withTest ('OOP', {
                     return new ($prototype.apply (null, arguments)) () } })
 
 
-
-
-        ;
-
-
 /*  Ports platform.js to OOP terms 
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    ======================================================================== */
 
     Platform = $singleton ({ $property: {
         
@@ -4529,6 +4524,8 @@ _.withTest ('OOP', {
         iPad:    _.platform ().device === 'iPad',
         iPhone:  _.platform ().device === 'iPhone',
         iOS:     _.platform ().system === 'iOS' } })
+
+        ;
 
 
 /*  Otherwise basic utility
@@ -6594,7 +6591,7 @@ CallStack = $extends (Array, {
 
         return _.filter2 (lines, function (line) { line = line.trimmed
 
-            var callee, fileLineColumn = [], native_
+            var callee, fileLineColumn = [], native_ = false
             var planA = line.match (/at (.+) \((.+)\)/)
             var planB = line.match (/at (.+)/)
 

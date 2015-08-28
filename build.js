@@ -125,16 +125,16 @@ function stripCommentsAndTests (src, name, path) {
 
     var output = escodegen.generate (stripped)
 
-    writeCompiled (name + '.stripped.js', path, '/*    AUTO GENERATED from ' + name + '.js (stripped unit tests and comments) */\n\n' + output)
+    if (path) {
+        writeCompiled (name + '.stripped.js', path, '/*    AUTO GENERATED from ' + name + '.js (stripped unit tests and comments) */\n\n' + output) }
 
-    return output
-}
+    return output }
 
 function compile (cfg) { _.each (cfg.files, function (file) {
 
     var name = _.initial (path.basename (file).split ('.')).join ('.')
     var compiledSrc = compileMacros (file)
-    var strippedSrc = stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, cfg.path)
+    var strippedSrc = stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, !cfg['no-stripped'] && cfg.path)
 
     if (!cfg['no-compress']) {
         compileWithGoogle (
@@ -153,7 +153,7 @@ Testosterone.run ({
     function (okay) { if (okay) {
 
         var arguments     = _.rest (process.argv, 2)
-        var optionNames   = ['no-compress']
+        var optionNames   = ['no-compress', 'no-stripped']
         var filePath      = _.without.apply (null, [arguments].concat (optionNames))
         var options       = _.index (_.intersection (arguments, optionNames))
 

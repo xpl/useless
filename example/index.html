@@ -60,11 +60,11 @@
     </style>
     <script>
 
-        function initErrorHandlingDemo () {
+        /*  Bind Panic as default exception handler
+         */
+        Panic.init ()
 
-            /*  Bind Panic as default exception handler
-             */
-            Panic.init ()
+        function initErrorHandlingDemo () {
 
             /*  Define some function that throws error
              */
@@ -137,9 +137,10 @@
         /*  Init demos
          */
         $(document).ready (function () {
-            
+
             initErrorHandlingDemo ()
             initComponentDemo ()  })
+
         </script>
 
     <body>

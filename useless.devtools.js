@@ -17,6 +17,5 @@ $include ('./client/Panic')
 	           (file.indexOf ('useless') >= 0)    ||
 	           (file.indexOf ('mootools_essential') >= 0) })
 
-    $(document).ready (function () {
-        $('head').append (
-            $('<style type="text/css">').text ($includeStr ('client/Panic.css'))) }) }) (jQuery)
+    $('head').append (
+    	$('<style type="text/css">').text ($includeStr ('client/Panic.css'))) }) (jQuery);
