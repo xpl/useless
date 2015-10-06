@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <meta charset="utf-8"></meta>
+        <title>Panic.js Demo</title>
+
+        <!-- libs -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+
+        <!-- Panic.js -->
+        <script src="build/panic.min.js"></script>
+
+    </head>
+    <style>
+        body { font-family: Helvetica, sans-serif; padding: 20px; }
+        h1 { font-size: 40px; }
+
+        button { font-size: 20px; padding: 1em; }
+    </style>
+    <script>
+        function erroneousFunction () {
+            _.map ([1,2,3], callMe) }
+
+        function callErroneousFunctionTwoTimes () {
+            _.delay (erroneousFunction)
+            _.delay (erroneousFunction) }
+
+        function panicDemo () {
+            callErroneousFunctionTwoTimes ()
+            _.delay (erroneousFunction, 1000) } // demonstrates multiple errors
+
+        $(document).ready (function () {
+
+            $('#panic-demo-1').click (callErroneousFunctionTwoTimes)
+            callErroneousFunctionTwoTimes ()  })
+
+        </script>
+
+    <body>
+
+        <h1>Panic.js demo (pops at page load)</h1>
+
+            Brings panic to Chrome, Safari and Firefox. Demonstrates:<br/><br/>
+
+            <ol>
+            <li>Cross-platform uncaught exception handling (by hacking into EventListener prototype and wrapping virtually all the code into try/catch)
+            <li>Maintains callstack persistence across async call boundaries (addEventListener, setTimeout).
+            <li>Loads and displays expandable source lines for fast identification.
+            <li>Hides third party code by default (can be displayed by pressing "more").
+            <li>Grouping of message duplicates.
+            <li>Grouping of same source line repeated consequently.<br/><br/>
+            </ol>
+
+            <button id="panic-demo-1">Call erroneousFunction (2 times) with _.delay</button><br/><br/>
+
+        <h1>I want this</h1>
+
+        <div><a href="build/panic.min.js">Panic.min.js</a> (minified)</div>
+        <div><a href="build/panic.js">Panic.js</a> (readable source)</div><br/>
+
+        Simply link the script to a page, and it will configure itself automagically™.<br/><br/>
+
+       <b>Before use,</b> consider the fact, that the Panic itself is just a thin GUI over a set of basic tools implemented in <a href="https://github.com/xpl/useless">Useless</a>. Together, it's a shitload of code — and you definitely wouldn't want that as a random dependency. But if you don't plan using Panic.js on production server (why would you) — it doesn't matter that much.
+
+        <h1>Limitations</h1>
+
+        Does not display source lines if executed from local HTML file (as sources are read by XHR requests).
+
+    </body>
+</html>
