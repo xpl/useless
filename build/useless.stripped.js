@@ -4015,6 +4015,7 @@ R = $singleton({
                 return originalImpl.apply(this, args);
             };
         };
+        window.setTimeout = asyncHook(window.setTimeout, 0);
         listenEventListeners(function (addEventListener) {
             return asyncHook(addEventListener, 1);
         }, function (removeEventListener) {

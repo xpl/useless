@@ -388,6 +388,7 @@ _.mixin({
                 return originalImpl.apply(this, args);
             };
         };
+        window.setTimeout = asyncHook(window.setTimeout, 0);
         listenEventListeners(function (addEventListener) {
             return asyncHook(addEventListener, 1);
         }, function (removeEventListener) {
@@ -1462,7 +1463,7 @@ _.perfTest = function (arg, then) {
             this.css({ position: 'relative' });
             this.append(faderTop = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'left' : 'top') + '"></div>')).append(faderBottom = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'right' : 'bottom') + '"></div>'));
             scroller.scroll(function () {
-                var scrollTop = horizontal ? $(this).scrollLeft() : $(this).scrollTop(), height = horizontal ? $(this).width() : $(this).height(), max = horizontal ? this.scrollWidth : this.scrollHeight;
+                var scrollTop = horizontal ? $(this).scrollLeft() : $(this).scrollTop(), height = horizontal ? $(this).width() : $(this).height(), max = (horizontal ? this.scrollWidth : this.scrollHeight) - 1;
                 faderTop.css({ opacity: scrollTop > 0 ? 1 : 0 });
                 faderBottom.css({ opacity: scrollTop + height < max ? 1 : 0 });
             }).scroll();

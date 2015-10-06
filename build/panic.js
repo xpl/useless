@@ -6228,7 +6228,7 @@ _.mixin ({
 
                         return originalImpl.apply (this, args) } }
 
-            //window.setTimeout = asyncHook (window.setTimeout, 0)
+            window.setTimeout = asyncHook (window.setTimeout, 0)
 
             /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
              */ 
@@ -7611,7 +7611,7 @@ $.fn.extend ({
 		scroller.scroll (function () {
 				var scrollTop = horizontal ? $(this).scrollLeft () : $(this).scrollTop (),
 					height = horizontal ? $(this).width () : $(this).height (),
-					max = horizontal ? this.scrollWidth : this.scrollHeight
+					max = (horizontal ? this.scrollWidth : this.scrollHeight) - 1
 				faderTop.css ({ opacity: scrollTop > 0 ? 1 : 0 })
 				faderBottom.css ({ opacity: (scrollTop + height) < max ? 1 : 0 }) }).scroll ()
 
