@@ -6667,7 +6667,7 @@ CallStack = $extends (Array, {
                             calleeShort:    _.last (entry.callee.split ('.')),
                             fileName:       _.last (entry.file.split ('/')),
                             fileShort:      CallStack.shortenPath (entry.file),
-                            thirdParty:     CallStack.isThirdParty (entry.file) }) }) },
+                            thirdParty:     CallStack.isThirdParty (entry.file) && !entry.index }) }) },
 
         function (parsedArrayWithSourceLines) { return CallStack.fromParsedArray (parsedArrayWithSourceLines) })),
 
