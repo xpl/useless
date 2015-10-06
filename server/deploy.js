@@ -5,14 +5,18 @@ var fs              = require ('fs'),
 
 module.exports = $trait ({
 
+    buildScript: function (name) { log.info ('Building monolithic ' + name)
+
+        var includeFile = fs.readFileSync ($uselessPath + name, { encoding: 'utf8' })
+        var compiledSrc = util.compileScript ({ source: includeFile, includePath: $uselessPath })
+        fs.writeFileSync ($uselessPath + 'build/' + name, compiledSrc, { encoding: 'utf8' }) },
+
     /*  Self deployment protocol
      */
-    beforeInit: function (then) { log.info ('Building monolithic useless.js')
+    beforeInit: function (then) {
 
-        var includeFile = fs.readFileSync ($uselessPath + 'useless.js', { encoding: 'utf8' })
-        var compiledSrc = util.compileScript ({ source: includeFile, includePath: $uselessPath })
-
-        fs.writeFileSync ($uselessPath + 'build/useless.js', compiledSrc, { encoding: 'utf8' })
+        this.buildScript ('useless.js')
+        this.buildScript ('useless.devtools.js')
 
         then () } })
 

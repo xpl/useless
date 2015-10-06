@@ -1,6 +1,6 @@
-$include ('./base/tier0/uncaught')
 $include ('./base/tier0/typeMatch')
 $include ('./base/tier0/assert')
+$include ('./base/uncaught')
 $include ('./base/reflection')
 $include ('./base/log')
 $include ('./base/Testosterone')
@@ -15,7 +15,7 @@ $include ('./client/Panic')
 	    return (file.indexOf ('underscore') >= 0) ||
 	           (file.indexOf ('jquery') >= 0)     ||
 	           (file.indexOf ('useless') >= 0)    ||
-	           (file.indexOf ('mootools_essential') >= 0) })
+	           (file.indexOf ('mootools') >= 0) })
 
     $('head').append (
     	$('<style type="text/css">').text ($includeStr ('client/Panic.css'))) }) (jQuery);

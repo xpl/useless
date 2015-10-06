@@ -62,6 +62,3 @@ OwningDOM = $trait ({
 		this.el.remove () } })
 
 
-
-
-

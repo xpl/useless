@@ -310,44 +310,6 @@ if (_.platform ().engine !== 'browser') {
 _.defineGlobalProperty ('alert2', function (args) {
     alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })
 ;
-/*  Uncaught exception handling facility
-    ======================================================================== */
-
-var globalUncaughtExceptionHandler = function (e) {
-    
-    var chain = arguments.callee.chain
-                arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
-
-    if (chain.length) {
-        for (var i = 0, n = chain.length; i < n; i++) {
-            try {
-                chain[i] (e)
-                break }
-            catch (newE) {
-                if (i === n - 1) {
-                    throw newE }
-                else {
-                    newE.originalError = e
-                    e = newE } } } }
-    else {
-        console.log ('Uncaught exception: ', e)
-        throw e } }
-
-_.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity
-
-    if (context_) {
-        handler.catchesOnce = true }
-
-                           globalUncaughtExceptionHandler.chain.unshift (handler)
-    context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
-
-globalUncaughtExceptionHandler.chain = []
-
-switch (_.platform ().engine) {
-    case 'node':
-        require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
-    case 'browser':
-        window.addEventListener ('error', function (e) { globalUncaughtExceptionHandler (e.error) }) };
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -1530,6 +1492,12 @@ _.deferTest (['type', 'stringify'], function () {
 
                                 var pretty = cfg.pretty || false
 
+                                if ((_.platform ().engine === 'browser')) {
+                                    if (_.isTypeOf (Element, x)) {
+                                        return '<' + x.tagName.lowercase + '>' }
+                                    else if (_.isTypeOf (Text, x)) {
+                                        return '@' + x.wholeText } }
+
                                 if (x.toJSON) {
                                     return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
@@ -2397,7 +2365,8 @@ _.withTest ('keywords', function () {
     _.defineKeyword = function (name, value) {
                         _.defineProperty (_.global (), _.keyword (name), value) }
 
-    _.defineKeyword ('global', _.global)
+    _.defineKeyword ('global',   _.global)
+    _.defineKeyword ('platform', _.platform)
 
     _.defineTagKeyword = function (k) {
                             if (!(_.keyword (k) in $global)) { // tag keyword definitions may overlap
@@ -3289,6 +3258,9 @@ _.deferTest ('String extensions', function () {
     $assert  ('qux'.quote ('/'),    '/qux/')
     $assert  ('qux'.quote ('{  }'), '{ qux }')
 
+    $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
+    $assert  (_.asArray ('foo'.bytes), [102, 111, 111])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -3347,6 +3319,10 @@ _.deferTest ('String extensions', function () {
     parsedInt: function (s) {
         var result = parseInt (s, 10)
         return _.isFinite (result) ? result : undefined },
+
+    bytes: function (s) {                var bytes = new Uint8Array (s.length)
+        for (var i = 0; i < s.length; ++i) { bytes[i] = s.charCodeAt (i) }
+                                      return bytes },
 
     hash: function (s) { // unsecure, but fast, taken from Java's object hasher
         var hash = 0, i, chr, len
@@ -4931,9 +4907,13 @@ Vec2 = $prototype ({
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
 
+    aspect: $property (function () { return this.x / this.y }),
+
     add: function (a, b) {
         if (b === undefined) {
-            return new Vec2 (this.x + a.x, this.y + a.y) }
+            return (typeof a === 'number') ?
+                new Vec2 (this.x + a,   this.y + a) :
+                new Vec2 (this.x + a.x, this.y + a.y) }
         else {
             return new Vec2 (this.x + a, this.y + b) } },
 
@@ -4963,6 +4943,9 @@ Vec2 = $prototype ({
 
     inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
+
+    asArray: $property (function () {
+        return [this.x, this.y] }),
 
     asLeftTop: $property (function () {
         return { left: this.x, top: this.y } }),
@@ -6316,6 +6299,105 @@ R = $singleton ({
 /*  Developer tools
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+/*  Uncaught exception handling facility
+    ======================================================================== */
+
+(function () {
+
+    var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
+        
+        var chain = arguments.callee.chain
+                    arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
+
+        if (chain.length) {
+            for (var i = 0, n = chain.length; i < n; i++) {
+                try {
+                    chain[i] (e)
+                    break }
+                catch (newE) {
+                    if (i === n - 1) {
+                        throw newE }
+                    else {
+                        if (newE && (typeof newE === 'object')) { newE.originalError = e }
+                        e = newE } } } }
+        else {
+            console.log ('Uncaught exception: ', e)
+            throw e } }
+
+    _.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity
+
+        if (context_) {
+            handler.catchesOnce = true }
+
+                               globalUncaughtExceptionHandler.chain.unshift (handler)
+        context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
+
+    globalUncaughtExceptionHandler.chain = []
+
+    var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
+
+        var override = function (obj) {
+
+            obj.addEventListener    = genAddEventListener    (obj.addEventListener)
+            obj.removeEventListener = genRemoveEventListener (obj.removeEventListener) }
+
+        if (window.EventTarget) {
+            override (window.EventTarget.prototype) }
+
+        else {
+            override (Node.prototype)
+            override (XMLHttpRequest.prototype) } }
+
+    var globalAsyncContext = undefined
+
+    switch (Platform.engine) {
+        case 'node':
+            require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
+
+        case 'browser':
+            window.addEventListener ('error', function (e) {
+
+                if (e.error) {
+                    globalUncaughtExceptionHandler (e.error) }
+
+                else { // emulate missing .error (that's Safari)
+
+                    globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
+                        stub: true,
+                        stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } })
+
+            var asyncHook = function (originalImpl, callbackArgumentIndex) {
+                return __supressErrorReporting = function () {
+
+                        var asyncContext = {
+                            name: name,
+                            stack: (new Error ()).stack,
+                            asyncContext: globalAsyncContext }
+
+                        var args = _.asArray (arguments)
+                        var fn   = args[callbackArgumentIndex]
+
+                        args[callbackArgumentIndex] = _.extendWith ({ __uncaughtJS_wraps: fn }, __supressErrorReporting = function () {
+
+                            globalAsyncContext = asyncContext
+
+                            try       { return fn.apply (this, arguments) }
+                            catch (e) { globalUncaughtExceptionHandler (_.extend (e, {
+                                            asyncContext: asyncContext })) } })
+
+                        return originalImpl.apply (this, args) } }
+
+            //window.setTimeout = asyncHook (window.setTimeout, 0)
+
+            /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
+             */ 
+            listenEventListeners (
+                function (addEventListener) { return asyncHook (addEventListener, 1) },
+                function (removeEventListener) {
+                    return function (name, fn, bubble, untrusted) {
+                       return removeEventListener.call (this, name, fn.__uncaughtJS_wraps || fn, bubble) } }) }
+
+}) ();;
 /*  Self-awareness module
     ======================================================================== */
 
@@ -6488,23 +6570,16 @@ _.writeSource    = SourceFiles.write
  */
 CallStack = $extends (Array, {
 
-    /*  Enables CallStack persistence through async call boundaries
-     */
-    enableAsyncPersistence: $static (function () { var setTimeout    = $global.setTimeout
-        $global.setTimeout = function (fn, t) {    var beforeTimeout =  CallStack.current
-            return setTimeout (function () {
-                _.withUncaughtExceptionHandler (
-                    function (e) { throw _.extend (e, { parsedStack: CallStack.fromError (e).initial (4).concat (beforeTimeout) }) },
-                    function (release) { fn (); release () }) }, t) } }),
-
     current: $static ($property (function () {
         return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
 
     fromError: $static (function (e) {
-        if (e.parsedStack) {
-            return CallStack.fromParsedArray (e.parsedStack) }
+        if (e && e.parsedStack) {
+            return CallStack.fromParsedArray (e.parsedStack).offset (e.stackOffset || 0) }
+        else if (e && e.stack) {
+            return CallStack.fromRawString (e.stack).offset (e.stackOffset || 0) }
         else {
-            return CallStack.fromRawString (e.stack) } }),
+            return CallStack.fromParsedArray ([]) } }),
 
     locationEquals: $static (function (a, b) {
         return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
@@ -6516,17 +6591,26 @@ CallStack = $extends (Array, {
             source: '??? WRONG LOCATION ???',
             sourceReady: _.barrier ('??? WRONG LOCATION ???') } },
 
+    mergeDuplicateLines: $property (function () {
+        return CallStack.fromParsedArray (
+            _.map (_.partition2 (this, function (e) { return e.file + e.line }),
+                    function (group) {
+                        return _.reduce (_.rest (group), function (memo, entry) {
+                            memo.callee      += (' → ' + entry.callee)
+                            memo.calleeShort += (' → ' + entry.calleeShort)
+                            return memo }, _.clone (group[0])) })) }),
+
     clean: $property (function () {
-        return this.reject (_.property ('thirdParty')) }),
+        return this.mergeDuplicateLines.reject (_.property ('thirdParty')) }),
 
     asArray: $property (function () {
         return _.asArray (this) }),
 
     offset: function (N) {
-        return CallStack.fromParsedArray (_.rest (this, N)) },
+        return (N && CallStack.fromParsedArray (_.rest (this, N))) || this },
 
     initial: function (N) {
-        return CallStack.fromParsedArray (_.initial (this, N)) },
+        return (N && CallStack.fromParsedArray (_.initial (this, N))) || this },
 
     concat: function (stack) {
         return CallStack.fromParsedArray (this.asArray.concat (stack.asArray)) },
@@ -6592,17 +6676,23 @@ CallStack = $extends (Array, {
         return _.filter2 (lines, function (line) { line = line.trimmed
 
             var callee, fileLineColumn = [], native_ = false
-            var planA = line.match (/at (.+) \((.+)\)/)
-            var planB = line.match (/at (.+)/)
+            var planA = undefined, planB = undefined
 
-            if (planA) {
+            if ((planA = line.match (/at (.+) \((.+)\)/)) ||
+                (planA = line.match (/(.+)@(.+)/))) {
+
                 callee         =         planA[1]
                 native_        =        (planA[2] === 'native')
                 fileLineColumn = _.rest (planA[2].match (/(.*):(.+):(.+)/) || []) }
-            else if (planB) {
-                fileLineColumn = _.rest (planB[1].match (/(.*):(.+):(.+)/) || []) }
+
+            else if ((planB = line.match (/^(at\s+)*(.+):([0-9]+):([0-9]+)/) )) {
+                fileLineColumn = _.rest (planB, 2) }
+
             else {
                 return false } // filter this shit out
+
+            if ((callee || '').indexOf ('__supressErrorReporting') >= 0) {
+                return false }
 
             return {
                 beforeParse: line,

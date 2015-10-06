@@ -82,9 +82,13 @@ Vec2 = $prototype ({
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
 
+    aspect: $property (function () { return this.x / this.y }),
+
     add: function (a, b) {
         if (b === undefined) {
-            return new Vec2 (this.x + a.x, this.y + a.y) }
+            return (typeof a === 'number') ?
+                new Vec2 (this.x + a,   this.y + a) :
+                new Vec2 (this.x + a.x, this.y + a.y) }
         else {
             return new Vec2 (this.x + a, this.y + b) } },
 
@@ -114,6 +118,9 @@ Vec2 = $prototype ({
 
     inverse: $property (function () {
         return new Vec2 (-this.x, -this.y) }),
+
+    asArray: $property (function () {
+        return [this.x, this.y] }),
 
     asLeftTop: $property (function () {
         return { left: this.x, top: this.y } }),

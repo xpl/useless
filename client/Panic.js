@@ -13,6 +13,9 @@ if (typeof UI === 'undefined') {
 
 Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity })
 
+	if (what === null) {
+		return }
+		
 	if (_.isTypeOf (Error, what)) {
 		_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
 
@@ -27,7 +30,6 @@ Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss:
 Panic.init = function () {
 	if (!Panic._initialized) {
 		 Panic._initialized = true
-		 CallStack.enableAsyncPersistence ()
 	   _.withUncaughtExceptionHandler (Panic.arity1) } }
 
 Panic.widget = $singleton (Component, {
@@ -46,12 +48,12 @@ Panic.widget = $singleton (Component, {
 					this.btnRetry = $('<button type="button" class="panic-btn panic-btn-warning" style="display:none;">Try again</button>')
 						.touchClick (this.retry),
 					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
-						.touchClick (this.close) ]) ]) ]).appendTo (document.body)
+						.touchClick (this.close) ]) ]) ])
 
-					  var setMaxHeight = this.$ (function () { this.modal.css ('max-height', $(window).height () - 100)
-					  										   this.modalBody.scroll () })
-						  setMaxHeight ()
-		$(window).resize (setMaxHeight)
+		$(document).ready (function () {
+			el.appendTo (document.body) })
+
+		this.initAutosize ()
 
 		this.modal.enableScrollFaders ({ scroller: this.modalBody })
 
@@ -60,6 +62,10 @@ Panic.widget = $singleton (Component, {
 				this.toggleVisibility (false) } }))
 
 		return el })),
+
+	initAutosize: function () {
+		$(window).resize (this.$ (function () { this.modal.css ('max-height', $(window).height () - 100)
+					  		  					this.modalBody.scroll () })).resize () },
 
 	toggleVisibility: function (yes) {
 		if (yes !== !(this.el.css ('display') === 'none')) {
@@ -89,7 +95,7 @@ Panic.widget = $singleton (Component, {
 		this.toggleVisibility (false)
 		this.closeTriggered () },
 
-	_clean: function () {
+   _clean: function () {
 		this.modalBody.find ('.panic-alert-error').remove ()
 		this.modalBody.scroll ()
 		this.btnRetry.hide ()
@@ -113,13 +119,20 @@ Panic.widget = $singleton (Component, {
 	hash: function (what) {
 		return ((_.isTypeOf (Error, what) ? (what && what.stack) : what) || '').hash },
 
-	printError: function (e) { var stackEntries = CallStack.fromError (e)
+	printError: function (e) { var stackEntries = CallStack.fromError (e),
+								   asyncContext = e.asyncContext
+
+		while (asyncContext) {
+			stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
+			asyncContext = asyncContext.asyncContext }
+
+		stackEntries = stackEntries.mergeDuplicateLines
 
 		return [
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
 				.text (e.message)
-				.append (_.any (stackEntries, function (e) { return e.thirdParty || e['native'] })
+				.append (_.any (stackEntries, function (e, i) { return (e.thirdParty || e['native']) && (i !== 0) })
 							? '<a class="clean-toggle" href="javascript:{}"></a>'
 							: '')
 				.click (this.$ (function (e) {

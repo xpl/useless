@@ -63,6 +63,12 @@ _.deferTest (['type', 'stringify'], function () {
 
                                 var pretty = cfg.pretty || false
 
+                                if ((_.platform ().engine === 'browser')) {
+                                    if (_.isTypeOf (Element, x)) {
+                                        return '<' + x.tagName.lowercase + '>' }
+                                    else if (_.isTypeOf (Text, x)) {
+                                        return '@' + x.wholeText } }
+
                                 if (x.toJSON) {
                                     return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 

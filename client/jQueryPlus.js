@@ -20,6 +20,9 @@ $.fn.extend ({
         else {                                                      // getter
             return this.length ? this[0]._item : undefined } },
     
+    hasWait: function () {
+        return this.hasClass ('i-am-busy') },
+
     waitUntil: function (fn, then) { this.addClass ('i-am-busy').attr ('disabled', true)
         fn (this.$ (function () {
             this.removeClass ('i-am-busy').removeAttr ('disabled')
@@ -62,7 +65,7 @@ $.fn.extend ({
         return (this.attr (name) || '').integerValue },
 
     eachChild: function (selector, fn) {
-        _.each (this.children (selector), function (el) { fn ($(el)) }); return this },
+        _.each (this.find (selector), function (el) { fn ($(el)) }); return this },
 
     transitionend: function (fn) {
         return this.one ('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn) },

@@ -77,6 +77,7 @@
 
             /*  Bind to button to trigger that function
              */
+            $('#panic-demo-0').click (function () { erroneousFunction () })
             $('#panic-demo-1').click (callErroneousFunctionTwoTimes)
 
             /*  Bind to button to trigger server's method
@@ -147,8 +148,11 @@
 
         <h1># Panic demo</h1>
 
+            Simple error trace example.<br/><br/>
+            <button id="panic-demo-0">Call erroneousFunction</button><br/><br/>
+
             Demonstrates error traces with _.delay handling. Also shows grouping of message duplicates.<br/><br/>
-            <button id="panic-demo-1">Call erroneousFunction (2 times)</button><br/><br/>
+            <button id="panic-demo-1">Call erroneousFunction (2 times) with _.delay</button><br/><br/>
 
             Demonstrates cross-machine exception throwing (displays server exception).<br/><br/>
             <button id="panic-demo-2">POST /api/erroneous-method</button><br/><br/>

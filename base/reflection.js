@@ -170,23 +170,16 @@ _.writeSource    = SourceFiles.write
  */
 CallStack = $extends (Array, {
 
-    /*  Enables CallStack persistence through async call boundaries
-     */
-    enableAsyncPersistence: $static (function () { var setTimeout    = $global.setTimeout
-        $global.setTimeout = function (fn, t) {    var beforeTimeout =  CallStack.current
-            return setTimeout (function () {
-                _.withUncaughtExceptionHandler (
-                    function (e) { throw _.extend (e, { parsedStack: CallStack.fromError (e).initial (4).concat (beforeTimeout) }) },
-                    function (release) { fn (); release () }) }, t) } }),
-
     current: $static ($property (function () {
         return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
 
     fromError: $static (function (e) {
-        if (e.parsedStack) {
-            return CallStack.fromParsedArray (e.parsedStack) }
+        if (e && e.parsedStack) {
+            return CallStack.fromParsedArray (e.parsedStack).offset (e.stackOffset || 0) }
+        else if (e && e.stack) {
+            return CallStack.fromRawString (e.stack).offset (e.stackOffset || 0) }
         else {
-            return CallStack.fromRawString (e.stack) } }),
+            return CallStack.fromParsedArray ([]) } }),
 
     locationEquals: $static (function (a, b) {
         return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
@@ -198,17 +191,26 @@ CallStack = $extends (Array, {
             source: '??? WRONG LOCATION ???',
             sourceReady: _.barrier ('??? WRONG LOCATION ???') } },
 
+    mergeDuplicateLines: $property (function () {
+        return CallStack.fromParsedArray (
+            _.map (_.partition2 (this, function (e) { return e.file + e.line }),
+                    function (group) {
+                        return _.reduce (_.rest (group), function (memo, entry) {
+                            memo.callee      += (' → ' + entry.callee)
+                            memo.calleeShort += (' → ' + entry.calleeShort)
+                            return memo }, _.clone (group[0])) })) }),
+
     clean: $property (function () {
-        return this.reject (_.property ('thirdParty')) }),
+        return this.mergeDuplicateLines.reject (_.property ('thirdParty')) }),
 
     asArray: $property (function () {
         return _.asArray (this) }),
 
     offset: function (N) {
-        return CallStack.fromParsedArray (_.rest (this, N)) },
+        return (N && CallStack.fromParsedArray (_.rest (this, N))) || this },
 
     initial: function (N) {
-        return CallStack.fromParsedArray (_.initial (this, N)) },
+        return (N && CallStack.fromParsedArray (_.initial (this, N))) || this },
 
     concat: function (stack) {
         return CallStack.fromParsedArray (this.asArray.concat (stack.asArray)) },
@@ -274,17 +276,23 @@ CallStack = $extends (Array, {
         return _.filter2 (lines, function (line) { line = line.trimmed
 
             var callee, fileLineColumn = [], native_ = false
-            var planA = line.match (/at (.+) \((.+)\)/)
-            var planB = line.match (/at (.+)/)
+            var planA = undefined, planB = undefined
 
-            if (planA) {
+            if ((planA = line.match (/at (.+) \((.+)\)/)) ||
+                (planA = line.match (/(.+)@(.+)/))) {
+
                 callee         =         planA[1]
                 native_        =        (planA[2] === 'native')
                 fileLineColumn = _.rest (planA[2].match (/(.*):(.+):(.+)/) || []) }
-            else if (planB) {
-                fileLineColumn = _.rest (planB[1].match (/(.*):(.+):(.+)/) || []) }
+
+            else if ((planB = line.match (/^(at\s+)*(.+):([0-9]+):([0-9]+)/) )) {
+                fileLineColumn = _.rest (planB, 2) }
+
             else {
                 return false } // filter this shit out
+
+            if ((callee || '').indexOf ('__supressErrorReporting') >= 0) {
+                return false }
 
             return {
                 beforeParse: line,

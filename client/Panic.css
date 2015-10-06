@@ -47,7 +47,7 @@
 .panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }
 .panic-alert-counter:empty { display: none; }
 
-.panic-modal-title { font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }
+.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }
 .panic-modal-body { overflow-y: auto; width: 100%; }
 .panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }
 
@@ -80,12 +80,12 @@
 
 .panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }
 
-.panic-alert-error .callstack-entry { opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }
+.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }
 .panic-alert-error .callstack-entry .file { }
 .panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: ' → '; }
 
-.panic-alert-error:not(.all) .callstack-entry.third-party,
-.panic-alert-error:not(.all) .callstack-entry.native { max-height: 0; margin-top: 0; opacity: 0; }
+.panic-alert-error:not(.all) .callstack-entry.third-party:not(:first-child),
+.panic-alert-error:not(.all) .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }
 
 .panic-alert-error .callstack-entry,
 .panic-alert-error .callstack-entry * { line-height: initial; }

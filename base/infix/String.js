@@ -63,6 +63,9 @@ _.deferTest ('String extensions', function () {
     $assert  ('qux'.quote ('/'),    '/qux/')
     $assert  ('qux'.quote ('{  }'), '{ qux }')
 
+    $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
+    $assert  (_.asArray ('foo'.bytes), [102, 111, 111])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -121,6 +124,10 @@ _.deferTest ('String extensions', function () {
     parsedInt: function (s) {
         var result = parseInt (s, 10)
         return _.isFinite (result) ? result : undefined },
+
+    bytes: function (s) {                var bytes = new Uint8Array (s.length)
+        for (var i = 0; i < s.length; ++i) { bytes[i] = s.charCodeAt (i) }
+                                      return bytes },
 
     hash: function (s) { // unsecure, but fast, taken from Java's object hasher
         var hash = 0, i, chr, len

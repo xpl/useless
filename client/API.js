@@ -43,9 +43,14 @@ API = $singleton (Component, {
             			then (response.value) } }
             	else {
 					if (response.parsedStack) { // cross-machine exception throwing
-						throw _.extend (new Error ('SERVER: ' + response.error), {
+
+						_.globalUncaughtExceptionHandler (_.extend (new Error ('SERVER: ' + response.error), {
 							remote: true,
-							parsedStack: response.parsedStack.concat (stackBeforeCall || []) }) }
+							parsedStack: response.parsedStack.concat (stackBeforeCall || []) }))
+						
+						/*throw _.extend (new Error ('SERVER: ' + response.error), {
+							remote: true,
+							parsedStack: response.parsedStack.concat (stackBeforeCall || []) })*/ }
 					else {
 						failure (response.error, retry) } } } })) },
 

@@ -44,7 +44,6 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 //  $include ('./base/3rd/Base64')        // Base64 encoder/decoder
 
     $include ('./base/tier0/platform')    // platform abstraction layer
-//  $include ('./base/tier0/uncaught')    // uncaught exception facility
 //  $include ('./base/tier0/assert')      // $assert syntax
     $include ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)
     $include ('./base/tier0/function')    // function-centric utilities

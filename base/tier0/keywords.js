@@ -166,7 +166,8 @@ _.withTest ('keywords', function () {
     _.defineKeyword = function (name, value) {
                         _.defineProperty (_.global (), _.keyword (name), value) }
 
-    _.defineKeyword ('global', _.global)
+    _.defineKeyword ('global',   _.global)
+    _.defineKeyword ('platform', _.platform)
 
     _.defineTagKeyword = function (k) {
                             if (!(_.keyword (k) in $global)) { // tag keyword definitions may overlap
