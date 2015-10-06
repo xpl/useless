@@ -86,7 +86,7 @@
 
                         return originalImpl.apply (this, args) } }
 
-            //window.setTimeout = asyncHook (window.setTimeout, 0)
+            window.setTimeout = asyncHook (window.setTimeout, 0)
 
             /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
              */ 

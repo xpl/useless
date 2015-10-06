@@ -117,6 +117,13 @@ _ = (function () {
     $include ('./base/AOP')
 
 
+/*  Browser-related code
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (Platform.Browser) {
+        $include ('./client/jQueryPlus')
+    }
+
 /*  ==================================================================== */
 
     if (Platform.NodeJS) { // Should strip it from client with conditional macro in future...

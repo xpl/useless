@@ -604,7 +604,7 @@ _.mixin ({
 
                         return originalImpl.apply (this, args) } }
 
-            //window.setTimeout = asyncHook (window.setTimeout, 0)
+            window.setTimeout = asyncHook (window.setTimeout, 0)
 
             /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
              */ 
@@ -896,7 +896,7 @@ CallStack = $extends (Array, {
             var planA = undefined, planB = undefined
 
             if ((planA = line.match (/at (.+) \((.+)\)/)) ||
-                (planA = line.match (/(.+)@(.+)/))) {
+                (planA = line.match (/(.*)@(.*)/))) {
 
                 callee         =         planA[1]
                 native_        =        (planA[2] === 'native')
@@ -1858,13 +1858,13 @@ Panic.widget = $singleton (Component, {
 		this.modal.enableScrollFaders ({ scroller: this.modalBody })
 
 		$(document).keydown (this.$ (function (e) {
-			if (e.keyCode === 27) {
-				this.toggleVisibility (false) } }))
+			if (e.keyCode === 27 /* ESC */) {
+				this.close () } }))
 
 		return el })),
 
 	initAutosize: function () {
-		$(window).resize (this.$ (function () { this.modal.css ('max-height', $(window).height () - 100)
+		$(window).resize (this.$ (function () { this.modal.css ('max-height', $(document).height () - 100)
 					  		  					this.modalBody.scroll () })).resize () },
 
 	toggleVisibility: function (yes) {

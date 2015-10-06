@@ -279,7 +279,7 @@ CallStack = $extends (Array, {
             var planA = undefined, planB = undefined
 
             if ((planA = line.match (/at (.+) \((.+)\)/)) ||
-                (planA = line.match (/(.+)@(.+)/))) {
+                (planA = line.match (/(.*)@(.*)/))) {
 
                 callee         =         planA[1]
                 native_        =        (planA[2] === 'native')
