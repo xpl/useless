@@ -4,8 +4,8 @@
         <title>Panic.js Demo</title>
 
         <!-- libs -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+        <script src="example/lib/underscore-min.js"></script>
+        <script src="example/lib/jquery-2.0.3.min.js"></script>
 
         <!-- Panic.js -->
         <script src="build/panic.min.js"></script>
@@ -40,33 +40,41 @@
 
         <h1>Panic.js</h1>
 
-            Ever struggled with bugs in JavaScript? Then Panic.js is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.<br/><br/>
+            Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.<br/><br/>
 
             <ol>
-            <li>Cross-platform uncaught exception handling (by hacking into EventListener prototype and wrapping virtually all the code into try/catch)
-            <li>Maintains callstack persistence across async call boundaries (addEventListener, setTimeout).
-            <li>Loads and displays expandable source lines for fast identification.
-            <li>Hides third party code by default (can be displayed by pressing "more").
-            <li>Grouping of message duplicates.
-            <li>Grouping of same source line repeated consequently.<br/><br/>
+                <li>Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
+                <li>Maintains callstack persistence across async call boundaries (addEventListener, setTimeout).
+                <li>Loads and displays expandable source lines for fast identification.
+                <li>Hides third party code by default (can be displayed by pressing 'more').
+                <li>Grouping of message duplicates.
+                <li>Grouping of same source line repeated consequently.<br/><br/>
+                <li>Complete API for it's internals (exception handling / callstack access) — <i>TBD</i></li>
             </ol>
 
             <button id="panic-demo-1">Call erroneousFunction (2 times) with _.delay</button><br/><br/>
 
+        <h1>Err... isn't this what debug tools are for?</h1>
+
+        Yes, and this is "debug tools" too, but more specific. It is not a replacement to WebInspector, but a power-up. WebInspector is just not good enough for the quick identification of typical errors that occur often during development process. In most cases, they require no detailed inspection of the full source code — you can identify problem cause just by briefly looking at the source line. Displaying full info, as WebInspector does, would slow down things: you need to scroll through tons of text, expand cryptic traces by clicking, and then clicking and waiting again to load sources in separate window.
+
+        And because WebInspector is a separate tool, you might not even know that something's broken, until its opened. You can imagine Panic.js as a small and fast subset of WebInspector, inlined into your page until it goes to the production, like a scaffolding.
+
         <h1>Configuring</h1>
 
-        Simply link the script to a page, and it will configure itself automagically™.<br/><br/>
+        Simply link the script to a page, and it will configure itself automagically™. Requires <a href="http://underscorejs.org">underscore</a> and <a href="http://jquery.com">jQuery</a>.<br/><br/>
 
         <div><a href="build/panic.min.js">Panic.min.js</a> (minified)</div>
         <div><a href="build/panic.js">Panic.js</a> (readable source)</div><br/>
 
         <h1>Compatibility</h1>
 
-       <b>Before use,</b> consider that the distribution contains full <a href="https://github.com/xpl/useless">Useless</a> toolkit, where the diagnostics-related utility [responsible for all the magic behind Panic.js] appear a small fraction of entire codebase, which is a holy shitload of code, and can cause all sort of compatibility-related issues. Supposing that you don't ever plan using Panic.js on production server (why would you) — the overhead doesn't matter that much.
+       <b>Before use,</b> consider that the distribution contains full <a href="https://github.com/xpl/useless">Useless</a> toolkit, where the diagnostics-related utility [responsible for all the magic behind <strong>Panic.js</strong>] appear a small fraction of entire codebase. In other words, it brings a holy shitload of code, which can possibly cause all sort of compatibility-related issues.
+
+       But in most cases, it should work out of the box. And supposing that you don't ever plan using Panic.js on production server (why would you), size of the script doesn't matter that much.
 
         <h1>Limitations</h1>
 
         Does not display source lines if executed from local HTML file (as sources are read by XHR requests).
-
     </body>
 </html>
