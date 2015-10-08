@@ -76,13 +76,13 @@
                         var args = _.asArray (arguments)
                         var fn   = args[callbackArgumentIndex]
 
-                        args[callbackArgumentIndex] = _.extendWith ({ __uncaughtJS_wraps: fn }, __supressErrorReporting = function () {
+                         fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
 
                             globalAsyncContext = asyncContext
 
                             try       { return fn.apply (this, arguments) }
                             catch (e) { globalUncaughtExceptionHandler (_.extend (e, {
-                                            asyncContext: asyncContext })) } })
+                                            asyncContext: asyncContext })) } }
 
                         return originalImpl.apply (this, args) } }
 
@@ -94,6 +94,6 @@
                 function (addEventListener) { return asyncHook (addEventListener, 1) },
                 function (removeEventListener) {
                     return function (name, fn, bubble, untrusted) {
-                       return removeEventListener.call (this, name, fn.__uncaughtJS_wraps || fn, bubble) } }) }
+                       return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } }) }
 
-}) ();
+}) ()
