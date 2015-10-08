@@ -30,7 +30,7 @@ Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss:
 Panic.init = function () {
 	if (!Panic._initialized) {
 		 Panic._initialized = true
-	   _.withUncaughtExceptionHandler (Panic.arity1) } }
+	   _.withUncaughtExceptionHandler (function (e) { Panic (e) }) } }
 
 Panic.widget = $singleton (Component, {
 

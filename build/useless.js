@@ -6382,8 +6382,7 @@ R = $singleton ({
                             globalAsyncContext = asyncContext
 
                             try       { return fn.apply (this, arguments) }
-                            catch (e) { globalUncaughtExceptionHandler (_.extend (e, {
-                                            asyncContext: asyncContext })) } }
+                            catch (e) { globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
 
                         return originalImpl.apply (this, args) } }
 
@@ -6596,8 +6595,8 @@ CallStack = $extends (Array, {
             _.map (_.partition2 (this, function (e) { return e.file + e.line }),
                     function (group) {
                         return _.reduce (_.rest (group), function (memo, entry) {
-                            memo.callee      += (' → ' + entry.callee)
-                            memo.calleeShort += (' → ' + entry.calleeShort)
+                            memo.callee      = (memo.callee      || '<anonymous>') + ' → ' + (entry.callee      || '<anonymous>')
+                            memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>')
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
@@ -6646,9 +6645,12 @@ CallStack = $extends (Array, {
         var cut = Platform.Browser ? 3 : 2
         return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
 
-    shortenPath: $static (function (file) {
-                    return file.replace ($uselessPath, '')
-                               .replace ($sourcePath,  '') }),
+    shortenPath: $static (function (path) {
+                    var relative = path.replace ($uselessPath, '')
+                                       .replace ($sourcePath,  '')
+                    return (relative !== path)
+                        ? relative
+                        : path.split ('/').last }), // extract last part of /-separated sequence
 
     isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
                     return (Platform.NodeJS && (file[0] !== '/')) || // from Node source

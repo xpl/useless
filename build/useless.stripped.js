@@ -4123,8 +4123,8 @@ CallStack = $extends(Array, {
             return e.file + e.line;
         }), function (group) {
             return _.reduce(_.rest(group), function (memo, entry) {
-                memo.callee += ' \u2192\xA0' + entry.callee;
-                memo.calleeShort += ' \u2192 ' + entry.calleeShort;
+                memo.callee = (memo.callee || '<anonymous>') + ' \u2192 ' + (entry.callee || '<anonymous>');
+                memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' \u2192 ' + (entry.calleeShort || '<anonymous>');
                 return memo;
             }, _.clone(group[0]));
         }));
@@ -4175,8 +4175,9 @@ CallStack = $extends(Array, {
         var cut = Platform.Browser ? 3 : 2;
         return _.rest((new Error().stack || '').split('\n'), cut).join('\n');
     })),
-    shortenPath: $static(function (file) {
-        return file.replace($uselessPath, '').replace($sourcePath, '');
+    shortenPath: $static(function (path) {
+        var relative = path.replace($uselessPath, '').replace($sourcePath, '');
+        return relative !== path ? relative : path.split('/').last;
     }),
     isThirdParty: $static(_.bindable(function (file) {
         var local = file.replace($sourcePath, '');

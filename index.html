@@ -8,7 +8,7 @@
         <script src="example/lib/jquery-2.0.3.min.js"></script>
 
         <!-- Panic.js -->
-        <script src="build/panic.min.js"></script>
+        <script src="build/panic.js"></script>
 
     </head>
     <style>
@@ -23,16 +23,12 @@
 
         function callErroneousFunctionTwoTimes () {
             _.delay (erroneousFunction)
-            _.delay (erroneousFunction) }
-
-        function panicDemo () {
-            callErroneousFunctionTwoTimes ()
-            _.delay (erroneousFunction, 1000) } // demonstrates multiple errors
+            /*_.delay (erroneousFunction)*/ }
 
         $(document).ready (function () {
 
             $('#panic-demo-1').click (callErroneousFunctionTwoTimes)
-            callErroneousFunctionTwoTimes ()  })
+            callErroneousFunctionTwoTimes () })
 
         </script>
 
