@@ -305,6 +305,7 @@ _.mixin({
     }
 });
 (function () {
+    var reThrownTag = ' [re-thrown by a hook]';
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
         var chain = arguments.callee.chain;
         arguments.callee.chain = _.reject(chain, _.property('catchesOnce'));
@@ -315,6 +316,7 @@ _.mixin({
                     break;
                 } catch (newE) {
                     if (i === n - 1) {
+                        newE.message += reThrownTag;
                         throw newE;
                     } else {
                         if (newE && typeof newE === 'object') {
@@ -325,7 +327,7 @@ _.mixin({
                 }
             }
         } else {
-            console.log('Uncaught exception: ', e);
+            e.message += reThrownTag;
             throw e;
         }
     };
@@ -359,13 +361,15 @@ _.mixin({
         break;
     case 'browser':
         window.addEventListener('error', function (e) {
-            if (e.error) {
-                globalUncaughtExceptionHandler(e.error);
-            } else {
-                globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
-                    stub: true,
-                    stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno
-                }));
+            if (e.message.indexOf(reThrownTag) < 0) {
+                if (e.error) {
+                    globalUncaughtExceptionHandler(e.error);
+                } else {
+                    globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
+                        stub: true,
+                        stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno
+                    }));
+                }
             }
         });
         var asyncHook = function (originalImpl, callbackArgumentIndex) {
@@ -1311,6 +1315,7 @@ _.perfTest = function (arg, then) {
             Panic._initialized = true;
             _.withUncaughtExceptionHandler(function (e) {
                 Panic(e);
+                throw e;
             });
         }
     };

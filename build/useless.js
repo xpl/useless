@@ -6304,6 +6304,8 @@ R = $singleton ({
 
 (function () {
 
+    var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
+
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
         
         var chain = arguments.callee.chain
@@ -6316,12 +6318,13 @@ R = $singleton ({
                     break }
                 catch (newE) {
                     if (i === n - 1) {
+                        newE.message += reThrownTag
                         throw newE }
                     else {
                         if (newE && (typeof newE === 'object')) { newE.originalError = e }
                         e = newE } } } }
         else {
-            console.log ('Uncaught exception: ', e)
+            e.message += reThrownTag
             throw e } }
 
     _.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity
@@ -6357,14 +6360,16 @@ R = $singleton ({
         case 'browser':
             window.addEventListener ('error', function (e) {
 
-                if (e.error) {
-                    globalUncaughtExceptionHandler (e.error) }
+                if (e.message.indexOf (reThrownTag) < 0) { // if not already processed by async hooks
 
-                else { // emulate missing .error (that's Safari)
+                    if (e.error) {
+                        globalUncaughtExceptionHandler (e.error) }
 
-                    globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
-                        stub: true,
-                        stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } })
+                    else { // emulate missing .error (that's Safari)
+
+                        globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
+                            stub: true,
+                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } })
 
             var asyncHook = function (originalImpl, callbackArgumentIndex) {
                 return __supressErrorReporting = function () {
