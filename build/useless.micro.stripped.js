@@ -426,6 +426,8 @@ _.atIndex = function (n) {
         return arr[n];
     };
 };
+_.takesFirst = _.higherOrder(_.first);
+_.takesLast = _.higherOrder(_.last);
 _.applies = function (fn, this_, args) {
     return function () {
         return fn.apply(this_, args);
@@ -3323,7 +3325,7 @@ if (jQuery) {
                         var relativeTo = cfg.relativeTo || this;
                         if (Platform.touch || initialEvent.which === 1) {
                             var offset = relativeTo.offset(), memo = undefined;
-                            if (!cfg.start || (memo = cfg.start.call(this, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) {
+                            if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) {
                                 var abort = undefined, unbind = undefined, end = undefined;
                                 memo = _.clone(memo);
                                 var move = this.$(function (e) {
@@ -3331,7 +3333,7 @@ if (jQuery) {
                                         e.preventDefault();
                                         var translatedEvent = translateTouchEvent(e, this[0]);
                                         var offset = relativeTo.offset();
-                                        memo = cfg.move.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top), translatedEvent) || memo;
+                                        memo = cfg.move.call(cfg.context || this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top), translatedEvent) || memo;
                                     } else {
                                         abort(e);
                                     }
@@ -3343,7 +3345,7 @@ if (jQuery) {
                                     unbind();
                                     if (cfg.end) {
                                         var translatedEvent = translateTouchEvent(e, this[0]);
-                                        cfg.end.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
+                                        cfg.end.call(cfg.context || this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
                                     }
                                 });
                                 abort = this.$(function (e) {
@@ -3355,12 +3357,12 @@ if (jQuery) {
                                     cursor: cfg.cursor || ''
                                 } : {}).on('mousemove touchmove', move).one('mouseup touchend', end);
                                 if (cfg.callMoveAtStart) {
-                                    cfg.move.call(this, memo, Vec2.zero, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent);
+                                    cfg.move.call(cfg.context || this, memo, Vec2.zero, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent);
                                 }
                             }
                         }
                     });
-                    return this.on(Platform.touch ? 'touchstart' : 'mousedown', _.$(this, function (e) {
+                    var touchstartListener = _.$(this, function (e) {
                         var where = _.extend({}, translateTouchEvent(e, this[0]));
                         if (Platform.touch && cfg.longPress) {
                             var cancel = undefined;
@@ -3378,9 +3380,27 @@ if (jQuery) {
                             e.preventDefault();
                             e.stopPropagation();
                         }
-                    }));
+                    });
+                    this.on(Platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+                    if (cfg.context) {
+                        (this[0].dragContexts = this[0].dragContexts || []).push([
+                            cfg.context,
+                            touchstartListener
+                        ]);
+                    }
+                    return this;
                 };
             }(),
+            undrag: function (context) {
+                var contexts = this[0].dragContexts;
+                if (contexts) {
+                    var ctx = _.find(contexts, _.takesFirst.then(_.equals(context)));
+                    if (ctx) {
+                        this.off(Platform.touch ? 'touchstart' : 'mousedown', ctx[1]);
+                        contexts.remove(ctx);
+                    }
+                }
+            },
             transform: function (cfg) {
                 return this.css('-webkit-transform', (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + cfg.scale.x + ',' + cfg.scale.y + ')' : ''));
             },
