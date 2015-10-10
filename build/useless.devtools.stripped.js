@@ -429,7 +429,14 @@ SourceFiles = $singleton(Component, {
                 if (Platform.NodeJS) {
                     then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '');
                 } else {
-                    jQuery.get(file, then, 'text');
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', file, true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4) {
+                            then(xhr.responseText);
+                        }
+                    };
+                    xhr.send(null);
                 }
             } catch (e) {
                 then('');
