@@ -2296,6 +2296,9 @@ Vec2 = $prototype({
     asTranslate: $property(function () {
         return 'translate(' + this.x + ' ' + this.y + ')';
     }),
+    separatedWith: function (sep) {
+        return this.x + sep + this.y;
+    },
     floor: $property(function () {
         return new Vec2(Math.floor(this.x), Math.floor(this.y));
     }),
