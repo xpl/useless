@@ -2334,6 +2334,14 @@ Vec2 = $prototype({
         if (t > 1)
             return w;
         return v.add(wv.scale(t));
+    },
+    projectOnRay: function (origin, dir) {
+        var v = origin;
+        var l2 = dir.lengthSquared;
+        if (l2 == 0)
+            return origin;
+        var t = this.sub(origin).dot(dir) / l2;
+        return origin.add(dir.scale(t));
     }
 });
 Bezier = {
