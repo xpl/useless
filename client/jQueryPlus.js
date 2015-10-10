@@ -333,6 +333,21 @@ _.extend ($, {
                     fn.apply (this, arguments) }
                 lastTime = now }) }
         else {
-            return this.dblclick (fn) } } })
+            return this.dblclick (fn) } },
+
+    /*  Taken from stackoverflow discussion on how to prevent zoom-on-double-tap behavior on iOS
+     */
+    nodoubletapzoom: function () {
+        return $(this).bind ('touchstart', function preventZoom (e) {
+            var t2 = e.timeStamp
+            var t1 = $(this).data ('lastTouch') || t2
+            var dt = t2 - t1
+            var fingers = e.originalEvent.touches.length
+            $(this).data ('lastTouch', t2)
+            if (!dt || dt > 500 || fingers > 1) {
+                return } // not double-tap
+            e.preventDefault ()                     // double tap - prevent the zoom
+            $(e.target).trigger ('click') }) }      // also synthesize click events we just swallowed up
+    })
 
 }) (jQuery) }
