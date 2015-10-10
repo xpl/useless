@@ -5160,25 +5160,13 @@ if (Platform.Browser) {
                             }
                         });
                         this.on(Platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
-                        if (cfg.context) {
-                            (this[0].dragContexts = this[0].dragContexts || []).push([
-                                cfg.context,
-                                touchstartListener
-                            ]);
-                        }
-                        return this;
+                        return _.extend(this, {
+                            cancel: this.$(function () {
+                                this.off(Platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+                            })
+                        });
                     };
                 }(),
-                undrag: function (context) {
-                    var contexts = this[0].dragContexts;
-                    if (contexts) {
-                        var ctx = _.find(contexts, _.takesFirst.then(_.equals(context)));
-                        if (ctx) {
-                            this.off(Platform.touch ? 'touchstart' : 'mousedown', ctx[1]);
-                            contexts.remove(ctx);
-                        }
-                    }
-                },
                 transform: function (cfg) {
                     return this.css('-webkit-transform', (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + cfg.scale.x + ',' + cfg.scale.y + ')' : ''));
                 },

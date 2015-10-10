@@ -5591,20 +5591,9 @@ _.extend ($, {
 
             this.on (Platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
 
-            if (cfg.context) {
-                (this[0].dragContexts = this[0].dragContexts || []).push ([cfg.context, touchstartListener]) }
-
-            return this } }) (),
-
-    /*  Removes listeners installed by a preceding .drag call (for a given context)
-     */
-    undrag: function (context) {
-        var contexts = this[0].dragContexts
-        if (contexts) {
-            var ctx = _.find (contexts, _.takesFirst.then (_.equals (context)))
-            if (ctx) {
-                this.off (Platform.touch ? 'touchstart' : 'mousedown', ctx[1])
-                contexts.remove (ctx) } } },
+            return _.extend (this, {
+                        cancel: this.$ (function () {
+                            this.off (Platform.touch ? 'touchstart' : 'mousedown', touchstartListener) }) }) } }) (),
 
     /*  $(el).transform ({
                 translate: new Vec2 (a, b),
