@@ -82,6 +82,8 @@ Vec2 = $prototype ({
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
 
+    distance: function (pt) { return this.sub (pt).length },
+
     aspect: $property (function () { return this.x / this.y }),
 
     add: function (a, b) {

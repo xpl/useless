@@ -2239,6 +2239,9 @@ Vec2 = $prototype({
     lengthSquared: $property(function () {
         return this.x * this.x + this.y * this.y;
     }),
+    distance: function (pt) {
+        return this.sub(pt).length;
+    },
     aspect: $property(function () {
         return this.x / this.y;
     }),
