@@ -7910,6 +7910,8 @@ _.extend ($, {
             var overlay = window.__globalDragOverlay
                 
             var begin = this.$ (function (initialEvent) { var relativeTo = (cfg.relativeTo || this)
+
+                this.addClass (cfg.cls || '')
                 
                 if (Platform.touch || initialEvent.which === 1) { var offset = relativeTo.offset (), memo = undefined
                     
@@ -7946,6 +7948,7 @@ _.extend ($, {
                                                 .off ('mousemove touchmove', move) }
 
                         end = this.$ (function (e) { unbind ()
+                            this.removeClass (cfg.cls || '')
                             if (cfg.end) { var translatedEvent = translateTouchEvent (e, this[0])
                                 cfg.end.call (cfg.context || this, memo, new Vec2 (
                                     // offset (relative to initial event)

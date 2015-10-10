@@ -3332,6 +3332,7 @@ if (jQuery) {
                     var overlay = window.__globalDragOverlay;
                     var begin = this.$(function (initialEvent) {
                         var relativeTo = cfg.relativeTo || this;
+                        this.addClass(cfg.cls || '');
                         if (Platform.touch || initialEvent.which === 1) {
                             var offset = relativeTo.offset(), memo = undefined;
                             if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) {
@@ -3352,6 +3353,7 @@ if (jQuery) {
                                 };
                                 end = this.$(function (e) {
                                     unbind();
+                                    this.removeClass(cfg.cls || '');
                                     if (cfg.end) {
                                         var translatedEvent = translateTouchEvent(e, this[0]);
                                         cfg.end.call(cfg.context || this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
