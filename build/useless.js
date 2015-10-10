@@ -8007,10 +8007,14 @@ _.extend ($, {
                 rotate:    180 })
      */
     transform: function (cfg) {
-        return this.css ('transform', (cfg && (
-            (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
-            (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
-            (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '') },
+        if (arguments.length === 0) {
+            var m = this.css ('transform').match (/^matrix\((.+\))$/)[1].split (',').map (parseFloat)
+            return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }
+        else {
+            return this.css ('transform', (_.isStrictlyObject (cfg) && (
+                (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
+                (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
+                (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '') } },
 
     /*  Other transform helpers
      */
