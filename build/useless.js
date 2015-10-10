@@ -8009,7 +8009,7 @@ _.extend ($, {
                 rotate:    180 })
      */
     transform: function (cfg) {
-        if (arguments.length === 0) { var components = this.css ('transform').match (/^matrix\((.+\))$/)
+        if (arguments.length === 0) { var components = (this.css ('transform') || '').match (/^matrix\((.+\))$/)
             if (components) {
                 var m = components[1].split (',').map (parseFloat)
                 return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }

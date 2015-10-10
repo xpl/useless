@@ -3420,7 +3420,7 @@ if (jQuery) {
             }(),
             transform: function (cfg) {
                 if (arguments.length === 0) {
-                    var components = this.css('transform').match(/^matrix\((.+\))$/);
+                    var components = (this.css('transform') || '').match(/^matrix\((.+\))$/);
                     if (components) {
                         var m = components[1].split(',').map(parseFloat);
                         return new Transform({
