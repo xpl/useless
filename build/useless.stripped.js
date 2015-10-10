@@ -5146,11 +5146,11 @@ if (Platform.Browser) {
                                     };
                                     end = this.$(function (e) {
                                         unbind();
-                                        this.removeClass(cfg.cls || '');
                                         if (cfg.end) {
                                             var translatedEvent = translateTouchEvent(e, this[0]);
                                             cfg.end.call(cfg.context || this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
                                         }
+                                        this.removeClass(cfg.cls || '');
                                     });
                                     abort = this.$(function (e) {
                                         unbind();

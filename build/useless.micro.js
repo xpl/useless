@@ -5568,12 +5568,14 @@ _.extend ($, {
                                                 .off ('mousemove touchmove', move) }
 
                         end = this.$ (function (e) { unbind ()
-                            this.removeClass (cfg.cls || '')
+                            
                             if (cfg.end) { var translatedEvent = translateTouchEvent (e, this[0])
                                 cfg.end.call (cfg.context || this, memo, new Vec2 (
                                     // offset (relative to initial event)
                                     translatedEvent.pageX - initialEvent.pageX,
-                                    translatedEvent.pageY - initialEvent.pageY), translatedEvent) } })
+                                    translatedEvent.pageY - initialEvent.pageY), translatedEvent) }
+
+                            this.removeClass (cfg.cls || '') })
 
                         abort = this.$ (function (e) { unbind (); end (e) })
 
