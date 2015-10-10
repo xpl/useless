@@ -1174,6 +1174,11 @@ _.subtracts = _.minus = _.higherOrder (_.subtract)
 _.muls                = _.higherOrder (_.mul)
 _.equals              = _.higherOrder (_.equal)
 
+_.less           = function (a, b) { return a <  b }
+_.lessOrEqual    = function (a, b) { return a <= b }
+_.greater        = function (a, b) { return a >  b }
+_.greaterOrEqual = function (a, b) { return a >= b }
+
 _.largest = function (a, b) {                   // FFFFUUUU: underscore already taken _.max for its dirty needs.
                 if (isNaN (a) && isNaN (b)) {
                     return NaN }
