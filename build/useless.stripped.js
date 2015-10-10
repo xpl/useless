@@ -1846,6 +1846,11 @@ $extensionMethods(Function, {
             });
         }
     }),
+    postponed: function (fn) {
+        return function () {
+            fn.postpone.apply(fn, arguments);
+        };
+    },
     delay: _.delay,
     delayed: function (fn, time) {
         return function () {

@@ -3010,6 +3010,10 @@ _.tests.Function = {
             callMeLater.postpone ()
             callMeLater.postpone () }) },       // should not trigger double call
 
+    'postponed': function (testDone) {
+        $assertCalls (1, function (mkay, done) {
+            (function (_42) { $assert (42, _42); mkay (); done (); testDone () }).postponed (42) }) },
+
     /*  Returns function that executed after _.delay
      */
     'delayed': function (testDone) {
@@ -3102,6 +3106,10 @@ $extensionMethods (Function, {
             _.delay (function () {
                 fn._postponed = false
                 fn.apply (null, args) }) } }),
+
+    postponed: function (fn) {
+        return function () {
+            fn.postpone.apply (fn, arguments) } },
 
     delay: _.delay,
     delayed: function (fn, time) {
