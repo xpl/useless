@@ -2578,6 +2578,9 @@ BBox = $prototype({
     }
 });
 Transform = $prototype({
+    identity: $static(function () {
+        return new Transform();
+    }),
     svgMatrix: $static(function (m) {
         return new Transform([
             [
@@ -3417,15 +3420,20 @@ if (jQuery) {
             }(),
             transform: function (cfg) {
                 if (arguments.length === 0) {
-                    var m = this.css('transform').match(/^matrix\((.+\))$/)[1].split(',').map(parseFloat);
-                    return new Transform({
-                        a: m[0],
-                        b: m[1],
-                        c: m[2],
-                        d: m[3],
-                        e: m[4],
-                        f: m[5]
-                    });
+                    var components = this.css('transform').match(/^matrix\((.+\))$/);
+                    if (components) {
+                        var m = components[1].split(',').map(parseFloat);
+                        return new Transform({
+                            a: m[0],
+                            b: m[1],
+                            c: m[2],
+                            d: m[3],
+                            e: m[4],
+                            f: m[5]
+                        });
+                    } else {
+                        return Transform.identity;
+                    }
                 } else {
                     return this.css('transform', _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '');
                 }

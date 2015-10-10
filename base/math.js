@@ -393,6 +393,8 @@ BBox = $prototype ({
 
 Transform = $prototype ({
 
+    identity: $static (function () { return new Transform () }),
+
     svgMatrix: $static (function (m) {
                             return new Transform ([
                                 [m.a, m.c, m.e],
