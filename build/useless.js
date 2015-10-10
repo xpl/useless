@@ -1179,6 +1179,8 @@ _.lessOrEqual    = function (a, b) { return a <= b }
 _.greater        = function (a, b) { return a >  b }
 _.greaterOrEqual = function (a, b) { return a >= b }
 
+_.isNegative = function (a) { return a < 0 }
+
 _.largest = function (a, b) {                   // FFFFUUUU: underscore already taken _.max for its dirty needs.
                 if (isNaN (a) && isNaN (b)) {
                     return NaN }

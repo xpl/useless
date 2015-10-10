@@ -829,6 +829,9 @@ _.greater = function (a, b) {
 _.greaterOrEqual = function (a, b) {
     return a >= b;
 };
+_.isNegative = function (a) {
+    return a < 0;
+};
 _.largest = function (a, b) {
     if (isNaN(a) && isNaN(b)) {
         return NaN;
