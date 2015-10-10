@@ -5179,12 +5179,12 @@ if (Platform.Browser) {
                     };
                 }(),
                 transform: function (cfg) {
-                    return this.css('-webkit-transform', (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + cfg.scale.x + ',' + cfg.scale.y + ')' : ''));
+                    return this.css('transform', cfg && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + cfg.scale.x + ',' + cfg.scale.y + ')' : '') || '');
                 },
-                translate: function (pt) {
+                svgTranslate: function (pt) {
                     return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
                 },
-                transformMatrix: function (t) {
+                svgTansformMatrix: function (t) {
                     var m = t.components;
                     return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
                 },
