@@ -104,10 +104,10 @@ _.extend ($, {
     selectClass: function (key, classes) {
         return this.removeClass (_.values (classes).join (' ')).addClass (classes[key]) },
 
-    /*  Returns a valid integer value of an attribute (or undefined)
+    /*  Returns a valid integer of an attribute (or undefined)
      */
-    integerAttr: function (name) {
-        return (this.attr (name) || '').integerValue },
+    attrInt: function (name) { return (this.attr (name) || '').integerValue },
+    cssInt:  function (name) { return (this.css  (name) || '').integerValue },
 
     /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
      */

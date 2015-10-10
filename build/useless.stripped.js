@@ -5035,8 +5035,11 @@ if (Platform.Browser) {
                 selectClass: function (key, classes) {
                     return this.removeClass(_.values(classes).join(' ')).addClass(classes[key]);
                 },
-                integerAttr: function (name) {
+                attrInt: function (name) {
                     return (this.attr(name) || '').integerValue;
+                },
+                cssInt: function (name) {
+                    return (this.css(name) || '').integerValue;
                 },
                 eachChild: function (selector, fn) {
                     _.each(this.find(selector), function (el) {
