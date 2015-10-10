@@ -450,7 +450,7 @@ _.tests.component = {
 /*  Syntax
  */
 _([ 'bindable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis'])
+    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener'])
     .each (_.defineTagKeyword)
 
 _.defineKeyword ('component', function (definition) {
@@ -574,6 +574,11 @@ Component = $prototype ({
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
                     stream (this.$ (defaultListener)) } }
+
+            /*  Expand $listener
+             */
+            if (def.$listener) {
+                this[name].queuedBy = [] }
 
             /*  Expand $bindable
              */

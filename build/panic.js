@@ -5010,7 +5010,7 @@ _.tests.component = {
 /*  Syntax
  */
 _([ 'bindable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis'])
+    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener'])
     .each (_.defineTagKeyword)
 
 _.defineKeyword ('component', function (definition) {
@@ -5134,6 +5134,11 @@ Component = $prototype ({
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
                     stream (this.$ (defaultListener)) } }
+
+            /*  Expand $listener
+             */
+            if (def.$listener) {
+                this[name].queuedBy = [] }
 
             /*  Expand $bindable
              */
@@ -5329,21 +5334,44 @@ Component = $prototype ({
 /*  Browser-related code
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-/*  some handy jQuery extensions
+/*  Some handy jQuery extensions
     ======================================================================== */
 
 if (jQuery) { (function ($) {
 
-var translateTouchEvent = function (e, desiredTarget) {
-    return (e.originalEvent.touches &&
-            _.find (e.originalEvent.touches, function (touch) {
-                                                return $(touch.target).hasParent (desiredTarget) })) || e }
+/*  We override some jQuery methods, so store previous impl. here
+ */
+var __previousMethods__ = _.clone ($.fn)
 
-$.svg = function (tag) {
-            return $(document.createElementNS ('http://www.w3.org/2000/svg', tag)) }
+/*  Global functions
+ */
+_.extend ($, {
 
-$.fn.extend ({
-    item: function (value) { /* links controller/data instance to its DOM counterpart */
+    /*  Instantiates svg elements
+     */
+    svg: function (tag) {
+            return $(document.createElementNS ('http://www.w3.org/2000/svg', tag)) } })
+
+/*  Element methods
+ */
+.fn.extend ({
+
+    /*  Provides auto-unbinding of $component $listeners from DOM events upon destroy
+     */
+    on: function (what, method) { var el = this, method = _.find (arguments, _.isFunction)
+
+            /*  See useless/base/dynamic/stream.js for that queue/queuedBy interface.
+             */
+            if (method.queuedBy) {
+                method.queuedBy.push ({ remove: function () { el.off (what, method) } }) }
+
+            /*  Call original impl.
+             */
+            return __previousMethods__.on.apply (this, arguments) },
+
+    /*  Links a data (or controller instance) to its DOM counterpart
+     */
+    item: function (value) {
         if (value) {                                                // setter
             if (this.length) {
                 this[0]._item = value }
@@ -5351,6 +5379,8 @@ $.fn.extend ({
         else {                                                      // getter
             return this.length ? this[0]._item : undefined } },
     
+    /*  Wait semantics
+     */
     hasWait: function () {
         return this.hasClass ('i-am-busy') },
 
@@ -5360,6 +5390,8 @@ $.fn.extend ({
             if (then) {
                 then.apply (null, arguments) } })); return this },
 
+    /*  Checks if has parent upwards the hierarchy
+     */
     hasParent: function (el) {
         var parent = this
         while (parent.length > 0) {
@@ -5368,14 +5400,20 @@ $.fn.extend ({
             parent = parent.parent () }
         return false },
 
+    /*  Returns a value or undefined (coercing empty values to undefined)
+     */
     nonemptyValue: function () {
         var value = $.trim (this.val ())
         return (value.length == 0) ? undefined : value },
 
+    /*  Returns a valid integer value or undefined (coercing NaN to undefined)
+     */
     intValue: function () {
         var value = parseInt (this.nonemptyValue (), 10)
         return isNaN (value) ? undefined : value },
 
+    /*  Checks if a mouse/touch event occured within element bounds
+     */
     hitTest: function (event) {
         var offset = this.offset ()
         var pt = {
@@ -5383,203 +5421,215 @@ $.fn.extend ({
             y: event.clientY - offset.top }
         return (pt.x >= 0) && (pt.y >= 0) && (pt.x < $(this).width ()) && (pt.y < $(this).height ()) },
 
+    /*  Returns multiple attributes as object of { attr1: value, attr2: value, .. } form
+     */
     attrs: function (/* name1, name2, ... */) {
         return _.object (_.map (arguments, function (name) { return [name, this.attr (name)] }, this)) },
 
+    /*  Checks if any element upwards the hierarchy (including this element) conforms to a selector
+     */
     belongsTo: function (selector) {
         return (this.is (selector) || this.parents (selector).length) },
 
+    /*  Selects which classes element should have, based on a key selector
+
+        Example: btn.selectClass (state, {  loading: 'btn-wait btn-disabled',
+                                            error: 'btn-invalid',
+                                            ok: '' })
+     */
     selectClass: function (key, classes) {
         return this.removeClass (_.values (classes).join (' ')).addClass (classes[key]) },
 
+    /*  Returns a valid integer value of an attribute (or undefined)
+     */
     integerAttr: function (name) {
         return (this.attr (name) || '').integerValue },
 
+    /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
+     */
     eachChild: function (selector, fn) {
         _.each (this.find (selector), function (el) { fn ($(el)) }); return this },
 
+    /*  Calls fn when current CSS transition ends
+     */
     transitionend: function (fn) {
         return this.one ('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn) },
-        
+    
+    /*  Calls fn when current CSS animation ends
+     */
     animationend: function (fn) {
         return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn) },
 
+    /*  1. Adds a class (that brings CSS animation)
+        2. Waits until CSS animation done
+        3. Removes that class
+        4. Calls 'done'
+     */
     animateWith: function (cls, done) { 
         this.addClass (cls)
         this.animationend (this.$ (function () { this.removeClass (cls)
                                                  if (done) { done.call (this) } }))
         return this },
 
-    drag: function (cfg) {
+    /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
 
-        if (!Platform.touch && !window.__globalDragOverlay) {
-             window.__globalDragOverlay =
-                 $('<div>').css ({
-                    display: 'none',
-                    position: 'fixed',
-                    top: 0, right: 0, bottom: 0, left: 0,
-                    zIndex: 999999 }).appendTo (document.body) }
+        Simplest example:
 
-        var overlay = window.__globalDragOverlay
-            
-        var begin = this.$ (function (initialEvent) { var relativeTo = (cfg.relativeTo || this)
-            
-            if (Platform.touch || initialEvent.which === 1) { var offset = relativeTo.offset (), memo = undefined
+            $(handle).drag ({
+                start: function ()             { return this.leftTop () },                          // returns 'memo'
+                move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } }) })
+     */
+    drag: (function () {
+
+        /*  Helper routine
+         */
+        var translateTouchEvent = function (e, desiredTarget) {
+            return (e.originalEvent.touches &&
+                    _.find (e.originalEvent.touches, function (touch) {
+                                                        return $(touch.target).hasParent (desiredTarget) })) || e }
+        /*  Impl
+         */
+        return function (cfg) {
+
+            if (!Platform.touch && !window.__globalDragOverlay) {
+                 window.__globalDragOverlay =
+                     $('<div>').css ({
+                        display: 'none',
+                        position: 'fixed',
+                        top: 0, right: 0, bottom: 0, left: 0,
+                        zIndex: 999999 }).appendTo (document.body) }
+
+            var overlay = window.__globalDragOverlay
                 
-                if (!cfg.start || ((memo = cfg.start.call (this, new Vec2 (
-                        // position (relative to delegate target)
-                        initialEvent.pageX - offset.left,
-                        initialEvent.pageY - offset.top), initialEvent)) !== false)) /* one can cancel drag by returning false from 'start' */ {
+            var begin = this.$ (function (initialEvent) { var relativeTo = (cfg.relativeTo || this)
+                
+                if (Platform.touch || initialEvent.which === 1) { var offset = relativeTo.offset (), memo = undefined
                     
-                    var abort = undefined, unbind = undefined, end = undefined
-
-                    memo = _.clone (memo)
-
-                    var move = this.$ (function (e) {
-                        if (Platform.touch || e.which === 1) {
-                            e.preventDefault ()
-                            var translatedEvent = translateTouchEvent (e, this[0])
-                            var offset = relativeTo.offset ()
-
-                            memo = cfg.move.call (this, memo, new Vec2 (
-                                // offset (relative to initial event)
-                                translatedEvent.pageX - initialEvent.pageX,
-                                translatedEvent.pageY - initialEvent.pageY), new Vec2 (
-                                // position (relative to delegate target)
-                                translatedEvent.pageX - offset.left,
-                                translatedEvent.pageY - offset.top),
-                                // the event
-                                translatedEvent) || memo }
-                        else {
-                            abort (e) } })
-
-                    unbind = function () { $(overlay || document.body)
-                                            .css (overlay ? { display: 'none' } : {})
-                                            .off ('mouseup touchend',    end)
-                                            .off ('mousemove touchmove', move) }
-
-                    end = this.$ (function (e) { unbind ()
-                        if (cfg.end) { var translatedEvent = translateTouchEvent (e, this[0])
-                            cfg.end.call (this, memo, new Vec2 (
-                                // offset (relative to initial event)
-                                translatedEvent.pageX - initialEvent.pageX,
-                                translatedEvent.pageY - initialEvent.pageY), translatedEvent) } })
-
-                    abort = this.$ (function (e) { unbind (); end (e) })
-
-                    $(overlay || document.body)
-                        .css (overlay ? { display: '', cursor: cfg.cursor || '' } : {})
-                        .on ('mousemove touchmove', move)
-                        .one ('mouseup touchend', end)
-
-                    if (cfg.callMoveAtStart) {
-                        cfg.move.call (this, memo, Vec2.zero, new Vec2 (
+                    if (!cfg.start || ((memo = cfg.start.call (this, new Vec2 (
                             // position (relative to delegate target)
                             initialEvent.pageX - offset.left,
-                            initialEvent.pageY - offset.top),
-                            // the event
-                            initialEvent) } } } })
+                            initialEvent.pageY - offset.top), initialEvent)) !== false)) /* one can cancel drag by returning false from 'start' */ {
+                        
+                        var abort = undefined, unbind = undefined, end = undefined
 
-        return this.on (Platform.touch ? 'touchstart' : 'mousedown', _.$ (this, function (e) {
-            var where = _.extend ({}, translateTouchEvent (e, this[0])) /* copy event, cuz on iPad it's re-used by browser */
-            if (Platform.touch && cfg.longPress) {
-                var cancel = undefined
-                var timeout = window.setTimeout (_.$ (this, function () {
-                    this.off ('touchmove touchend', cancel)
-                    begin (where) }), 300)
-                cancel = this.$ (function () {
-                    window.clearTimeout (timeout)
-                    this.off ('touchmove touchend', cancel) })
-                this.one ('touchmove touchend', cancel) }
-            else {
-                begin (where)
-                e.preventDefault ()
-                e.stopPropagation () } })) },
+                        memo = _.clone (memo)
 
-    selectorItem: function (cfg_) {             var cfg = _.extend ({ detoggleable: true }, cfg_)
-        return this.touchClick (function (e) {  var item = $(this)
-            
-            if ( (e.target === e.delegateTarget) || (
-                !(e.target.tagName === 'BUTTON') && !(e.target.tagName === 'A'))) {
-                if (cfg.detoggleable) {
-                    item.toggleClass ('active') }
+                        var move = this.$ (function (e) {
+                            if (Platform.touch || e.which === 1) {
+                                e.preventDefault ()
+                                var translatedEvent = translateTouchEvent (e, this[0])
+                                var offset = relativeTo.offset ()
+
+                                memo = cfg.move.call (this, memo, new Vec2 (
+                                    // offset (relative to initial event)
+                                    translatedEvent.pageX - initialEvent.pageX,
+                                    translatedEvent.pageY - initialEvent.pageY), new Vec2 (
+                                    // position (relative to delegate target)
+                                    translatedEvent.pageX - offset.left,
+                                    translatedEvent.pageY - offset.top),
+                                    // the event
+                                    translatedEvent) || memo }
+                            else {
+                                abort (e) } })
+
+                        unbind = function () { $(overlay || document.body)
+                                                .css (overlay ? { display: 'none' } : {})
+                                                .off ('mouseup touchend',    end)
+                                                .off ('mousemove touchmove', move) }
+
+                        end = this.$ (function (e) { unbind ()
+                            if (cfg.end) { var translatedEvent = translateTouchEvent (e, this[0])
+                                cfg.end.call (this, memo, new Vec2 (
+                                    // offset (relative to initial event)
+                                    translatedEvent.pageX - initialEvent.pageX,
+                                    translatedEvent.pageY - initialEvent.pageY), translatedEvent) } })
+
+                        abort = this.$ (function (e) { unbind (); end (e) })
+
+                        $(overlay || document.body)
+                            .css (overlay ? { display: '', cursor: cfg.cursor || '' } : {})
+                            .on ('mousemove touchmove', move)
+                            .one ('mouseup touchend', end)
+
+                        if (cfg.callMoveAtStart) {
+                            cfg.move.call (this, memo, Vec2.zero, new Vec2 (
+                                // position (relative to delegate target)
+                                initialEvent.pageX - offset.left,
+                                initialEvent.pageY - offset.top),
+                                // the event
+                                initialEvent) } } } })
+
+            return this.on (Platform.touch ? 'touchstart' : 'mousedown', _.$ (this, function (e) {
+                var where = _.extend ({}, translateTouchEvent (e, this[0])) /* copy event, cuz on iPad it's re-used by browser */
+                if (Platform.touch && cfg.longPress) {
+                    var cancel = undefined
+                    var timeout = window.setTimeout (_.$ (this, function () {
+                        this.off ('touchmove touchend', cancel)
+                        begin (where) }), 300)
+                    cancel = this.$ (function () {
+                        window.clearTimeout (timeout)
+                        this.off ('touchmove touchend', cancel) })
+                    this.one ('touchmove touchend', cancel) }
                 else {
-                    item.addClass ('active') }
+                    begin (where)
+                    e.preventDefault ()
+                    e.stopPropagation () } })) } }) (),
 
-                if (!cfg.multiByDefault && !(cfg.multi && (e.altKey || e.ctrlKey || e.shiftKey))) {
-                    item.siblings ().removeClass ('active')
-                    if (item.hasClass ('inner')) { // And cousins too...
-                        item.parent ().siblings ().children ().removeClass ('active') } }
-                
-                if (cfg.multi || cfg.multiByDefault) {
-                    cfg.selectionChanged (item.parent ().children ('.active')) }
-                else {
-                    cfg.selectionChanged (item.hasClass ('active') ? item : $()) }
-
-                e.preventDefault () }
-
-            return false }, { disableTouch: cfg.touchClick ? false : true }) },
-
+    /*  $(el).transform ({
+                translate: new Vec2 (a, b),
+                scale:     new Vec2 (x, y),
+                rotate:    180 })
+     */
     transform: function (cfg) {
         return this.css ('-webkit-transform',
             (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
             (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
             (cfg.scale ? ('scale(' + cfg.scale.x + ',' + cfg.scale.y + ')') : '')) },
 
-    outerExtent:  function () { return new Vec2 (this.outerWidth (), this.outerHeight ()) },
-    extent:       function () { return new Vec2 (this.width (),      this.height ()) },
-    innerExtent:  function () { return new Vec2 (this.innerWidth (), this.innerHeight ()) },
-    outerBBox:    function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ().asWidthHeight)) },
+    /*  Other transform helpers
+     */
+    translate: function (pt) {
+        return this.attr ('transform', 'translate(' + pt.x + ',' + pt.y + ')') },
+    
+    transformMatrix: function (t) {
+        var m = t.components
+        return this.attr ('transform', 'matrix(' +
+            m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')') },
 
-    leftTop:      function () { return new Vec2.fromLT (this.offset ()) },
+    /*  To determine display size of an element
+     */
+    outerExtent:    function () { return new Vec2 (this.outerWidth (), this.outerHeight ()) },
+    extent:         function () { return new Vec2 (this.width (),      this.height ()) },
+    innerExtent:    function () { return new Vec2 (this.innerWidth (), this.innerHeight ()) },
 
-    offsetInParent: function () {
-        return Vec2.fromLeftTop (this.offset ()).sub (
-               Vec2.fromLeftTop (this.parent ().offset ())) },
+    /*  BBox accessors
+     */
+    outerBBox:      function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ().asWidthHeight)) },
+    clientBBox:     function () { var rect = this[0].getBoundingClientRect ()
+                                  return new BBox (rect.left, rect.top, rect.width, rect.height) },
+    /*  Position accessors
+     */
+    leftTop:        function () { return new Vec2.fromLT (this.offset ()) },
+    offsetInParent: function () { return Vec2.fromLeftTop (this.offset ()).sub (
+                                         Vec2.fromLeftTop (this.parent ().offset ())) },
 
-    caret: function () { var node = this[0]
-              if (node.selectionStart) {
-                return node.selectionStart;
-              } else if (!document.selection) {
-                return 0;
-              }
-
-              var c = "\001",
-                  sel = document.selection.createRange(),
-                  dul = sel.duplicate(),
-                  len = 0;
-
-              dul.moveToElementText(node);
-              sel.text = c;
-              len = dul.text.indexOf(c);
-              sel.moveStart('character',-1);
-              sel.text = "";
-              return len;
-            },
-
+    /*  $(input).monitorInput ({
+                    empty: function (yes) { ... },    // called when empty state changes
+                    focus: function (yes) { ... } })  // called when focus state changes
+     */
     monitorInput: function (cfg) {
         var change = function () {
-            if ($.trim ($(this).val ()) === '') {
-                cfg.empty (true) }
-            else {
-                cfg.empty (false) } }
+            if ($.trim ($(this).val ()) === '') { cfg.empty (true) }
+            else                                { cfg.empty (false) } }
         return this
             .keyup (change)
             .change (change)
             .focus (_.bind (cfg.focus || _.noop, cfg, true))
             .blur (_.bind (cfg.focus || _.noop, cfg, false)) },
 
-    touchDoubleclick: function (fn) {
-        if (Platform.touch) {
-            var lastTime = Date.now ()
-            return this.on ('touchend', function () {
-                var now = Date.now ()
-                if ((now - lastTime) < 200) {
-                    fn.apply (this, arguments) }
-                lastTime = now }) }
-        else {
-            return this.dblclick (fn) } },
-
+    /*  Use instead of .click for more responsive clicking on touch devices.
+        Reverts to .click on desktop
+     */
     touchClick: function (fn, cfg) {
         var self = this
         cfg = cfg || {}
@@ -5607,17 +5657,19 @@ $.fn.extend ({
                         self.off ('click', fn) } }) }
             return this.click (fn) } },
 
-    translate: function (pt) {
-        return this.attr ('transform', 'translate(' + pt.x + ',' + pt.y + ')') },
-    
-    transform: function (t) {
-        var m = t.components
-        return this.attr ('transform', 'matrix(' +
-            m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')') },
-    
-    clientBBox: function () {
-        var rect = this[0].getBoundingClientRect ()
-        return new BBox (rect.left, rect.top, rect.width, rect.height) } })
+    /*  Use instead of .dblclick for responsive doubleclick on touch devices
+        Reverts to .dblclick on desktop
+     */
+    touchDoubleclick: function (fn) {
+        if (Platform.touch) {
+            var lastTime = Date.now ()
+            return this.on ('touchend', function () {
+                var now = Date.now ()
+                if ((now - lastTime) < 200) {
+                    fn.apply (this, arguments) }
+                lastTime = now }) }
+        else {
+            return this.dblclick (fn) } } })
 
 }) (jQuery) };
 
@@ -7481,16 +7533,16 @@ Panic.widget = $singleton (Component, {
 					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ])
 
-		$(document).ready (function () {
-			el.appendTo (document.body) })
+		//$(document).ready (function () {
+		el.appendTo (document.body)// })
 
-		this.initAutosize ()
+		try {
+			this.initAutosize ()
+			this.modal.enableScrollFaders ({ scroller: this.modalBody })
+			$(document).keydown (this.$ (function (e) { if (e.keyCode === 27) { this.close () } })) }
 
-		this.modal.enableScrollFaders ({ scroller: this.modalBody })
-
-		$(document).keydown (this.$ (function (e) {
-			if (e.keyCode === 27 /* ESC */) {
-				this.close () } }))
+		catch (e) {
+			_.delay (function () { Panic (e) }) }
 
 		return el })),
 

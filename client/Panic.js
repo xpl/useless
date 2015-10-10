@@ -50,16 +50,16 @@ Panic.widget = $singleton (Component, {
 					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ])
 
-		$(document).ready (function () {
-			el.appendTo (document.body) })
+		//$(document).ready (function () {
+		el.appendTo (document.body)// })
 
-		this.initAutosize ()
+		try {
+			this.initAutosize ()
+			this.modal.enableScrollFaders ({ scroller: this.modalBody })
+			$(document).keydown (this.$ (function (e) { if (e.keyCode === 27) { this.close () } })) }
 
-		this.modal.enableScrollFaders ({ scroller: this.modalBody })
-
-		$(document).keydown (this.$ (function (e) {
-			if (e.keyCode === 27 /* ESC */) {
-				this.close () } }))
+		catch (e) {
+			_.delay (function () { Panic (e) }) }
 
 		return el })),
 

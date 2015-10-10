@@ -4,9 +4,8 @@
         <title>Useless Examples</title>
 
         <script src="/example/lib/underscore-min.js"></script>
-        <script src="/example/lib/jquery-2.0.3.min.js"></script>
+        <script src="/example/lib/jquery-2.1.4.js"></script>
         <script src="/useless.js"></script>
-        <script src="/useless/jQueryPlus.js"></script>
         <script src="/useless/API.js"></script>
 
         <!-- Panic -->
@@ -65,6 +64,14 @@
         Panic.init ()
 
         function initErrorHandlingDemo () {
+
+            var Hui = $component ({
+                    init: function () { jQuery(document).click (this.clicked) },
+                    clicked: $listener (function () { alert ('foo') }) });
+
+                var hui = new Hui ()
+
+                hui.destroy ()
 
             /*  Define some function that throws error
              */

@@ -2941,7 +2941,8 @@ _([
     'memoizeCPS',
     'debounce',
     'throttle',
-    'overrideThis'
+    'overrideThis',
+    'listener'
 ]).each(_.defineTagKeyword);
 _.defineKeyword('component', function (definition) {
     return $extends(Component, definition);
@@ -3025,6 +3026,9 @@ Component = $prototype({
                     if (defaultListener) {
                         stream(this.$(defaultListener));
                     }
+                }
+                if (def.$listener) {
+                    this[name].queuedBy = [];
                 }
                 if (def.$bindable) {
                     if (_.hasAsserts) {
@@ -3180,15 +3184,23 @@ Component = $prototype({
 });
 if (jQuery) {
     (function ($) {
-        var translateTouchEvent = function (e, desiredTarget) {
-            return e.originalEvent.touches && _.find(e.originalEvent.touches, function (touch) {
-                return $(touch.target).hasParent(desiredTarget);
-            }) || e;
-        };
-        $.svg = function (tag) {
-            return $(document.createElementNS('http://www.w3.org/2000/svg', tag));
-        };
-        $.fn.extend({
+        var __previousMethods__ = _.clone($.fn);
+        _.extend($, {
+            svg: function (tag) {
+                return $(document.createElementNS('http://www.w3.org/2000/svg', tag));
+            }
+        }).fn.extend({
+            on: function (what, method) {
+                var el = this, method = _.find(arguments, _.isFunction);
+                if (method.queuedBy) {
+                    method.queuedBy.push({
+                        remove: function () {
+                            el.off(what, method);
+                        }
+                    });
+                }
+                return __previousMethods__.on.apply(this, arguments);
+            },
             item: function (value) {
                 if (value) {
                     if (this.length) {
@@ -3277,108 +3289,96 @@ if (jQuery) {
                 }));
                 return this;
             },
-            drag: function (cfg) {
-                if (!Platform.touch && !window.__globalDragOverlay) {
-                    window.__globalDragOverlay = $('<div>').css({
-                        display: 'none',
-                        position: 'fixed',
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        left: 0,
-                        zIndex: 999999
-                    }).appendTo(document.body);
-                }
-                var overlay = window.__globalDragOverlay;
-                var begin = this.$(function (initialEvent) {
-                    var relativeTo = cfg.relativeTo || this;
-                    if (Platform.touch || initialEvent.which === 1) {
-                        var offset = relativeTo.offset(), memo = undefined;
-                        if (!cfg.start || (memo = cfg.start.call(this, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) {
-                            var abort = undefined, unbind = undefined, end = undefined;
-                            memo = _.clone(memo);
-                            var move = this.$(function (e) {
-                                if (Platform.touch || e.which === 1) {
-                                    e.preventDefault();
-                                    var translatedEvent = translateTouchEvent(e, this[0]);
-                                    var offset = relativeTo.offset();
-                                    memo = cfg.move.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top), translatedEvent) || memo;
-                                } else {
-                                    abort(e);
+            drag: function () {
+                var translateTouchEvent = function (e, desiredTarget) {
+                    return e.originalEvent.touches && _.find(e.originalEvent.touches, function (touch) {
+                        return $(touch.target).hasParent(desiredTarget);
+                    }) || e;
+                };
+                return function (cfg) {
+                    if (!Platform.touch && !window.__globalDragOverlay) {
+                        window.__globalDragOverlay = $('<div>').css({
+                            display: 'none',
+                            position: 'fixed',
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
+                            left: 0,
+                            zIndex: 999999
+                        }).appendTo(document.body);
+                    }
+                    var overlay = window.__globalDragOverlay;
+                    var begin = this.$(function (initialEvent) {
+                        var relativeTo = cfg.relativeTo || this;
+                        if (Platform.touch || initialEvent.which === 1) {
+                            var offset = relativeTo.offset(), memo = undefined;
+                            if (!cfg.start || (memo = cfg.start.call(this, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) {
+                                var abort = undefined, unbind = undefined, end = undefined;
+                                memo = _.clone(memo);
+                                var move = this.$(function (e) {
+                                    if (Platform.touch || e.which === 1) {
+                                        e.preventDefault();
+                                        var translatedEvent = translateTouchEvent(e, this[0]);
+                                        var offset = relativeTo.offset();
+                                        memo = cfg.move.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top), translatedEvent) || memo;
+                                    } else {
+                                        abort(e);
+                                    }
+                                });
+                                unbind = function () {
+                                    $(overlay || document.body).css(overlay ? { display: 'none' } : {}).off('mouseup touchend', end).off('mousemove touchmove', move);
+                                };
+                                end = this.$(function (e) {
+                                    unbind();
+                                    if (cfg.end) {
+                                        var translatedEvent = translateTouchEvent(e, this[0]);
+                                        cfg.end.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
+                                    }
+                                });
+                                abort = this.$(function (e) {
+                                    unbind();
+                                    end(e);
+                                });
+                                $(overlay || document.body).css(overlay ? {
+                                    display: '',
+                                    cursor: cfg.cursor || ''
+                                } : {}).on('mousemove touchmove', move).one('mouseup touchend', end);
+                                if (cfg.callMoveAtStart) {
+                                    cfg.move.call(this, memo, Vec2.zero, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent);
                                 }
-                            });
-                            unbind = function () {
-                                $(overlay || document.body).css(overlay ? { display: 'none' } : {}).off('mouseup touchend', end).off('mousemove touchmove', move);
-                            };
-                            end = this.$(function (e) {
-                                unbind();
-                                if (cfg.end) {
-                                    var translatedEvent = translateTouchEvent(e, this[0]);
-                                    cfg.end.call(this, memo, new Vec2(translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
-                                }
-                            });
-                            abort = this.$(function (e) {
-                                unbind();
-                                end(e);
-                            });
-                            $(overlay || document.body).css(overlay ? {
-                                display: '',
-                                cursor: cfg.cursor || ''
-                            } : {}).on('mousemove touchmove', move).one('mouseup touchend', end);
-                            if (cfg.callMoveAtStart) {
-                                cfg.move.call(this, memo, Vec2.zero, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent);
                             }
                         }
-                    }
-                });
-                return this.on(Platform.touch ? 'touchstart' : 'mousedown', _.$(this, function (e) {
-                    var where = _.extend({}, translateTouchEvent(e, this[0]));
-                    if (Platform.touch && cfg.longPress) {
-                        var cancel = undefined;
-                        var timeout = window.setTimeout(_.$(this, function () {
-                            this.off('touchmove touchend', cancel);
+                    });
+                    return this.on(Platform.touch ? 'touchstart' : 'mousedown', _.$(this, function (e) {
+                        var where = _.extend({}, translateTouchEvent(e, this[0]));
+                        if (Platform.touch && cfg.longPress) {
+                            var cancel = undefined;
+                            var timeout = window.setTimeout(_.$(this, function () {
+                                this.off('touchmove touchend', cancel);
+                                begin(where);
+                            }), 300);
+                            cancel = this.$(function () {
+                                window.clearTimeout(timeout);
+                                this.off('touchmove touchend', cancel);
+                            });
+                            this.one('touchmove touchend', cancel);
+                        } else {
                             begin(where);
-                        }), 300);
-                        cancel = this.$(function () {
-                            window.clearTimeout(timeout);
-                            this.off('touchmove touchend', cancel);
-                        });
-                        this.one('touchmove touchend', cancel);
-                    } else {
-                        begin(where);
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                }));
-            },
-            selectorItem: function (cfg_) {
-                var cfg = _.extend({ detoggleable: true }, cfg_);
-                return this.touchClick(function (e) {
-                    var item = $(this);
-                    if (e.target === e.delegateTarget || !(e.target.tagName === 'BUTTON') && !(e.target.tagName === 'A')) {
-                        if (cfg.detoggleable) {
-                            item.toggleClass('active');
-                        } else {
-                            item.addClass('active');
+                            e.preventDefault();
+                            e.stopPropagation();
                         }
-                        if (!cfg.multiByDefault && !(cfg.multi && (e.altKey || e.ctrlKey || e.shiftKey))) {
-                            item.siblings().removeClass('active');
-                            if (item.hasClass('inner')) {
-                                item.parent().siblings().children().removeClass('active');
-                            }
-                        }
-                        if (cfg.multi || cfg.multiByDefault) {
-                            cfg.selectionChanged(item.parent().children('.active'));
-                        } else {
-                            cfg.selectionChanged(item.hasClass('active') ? item : $());
-                        }
-                        e.preventDefault();
-                    }
-                    return false;
-                }, { disableTouch: cfg.touchClick ? false : true });
-            },
+                    }));
+                };
+            }(),
             transform: function (cfg) {
                 return this.css('-webkit-transform', (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + cfg.scale.x + ',' + cfg.scale.y + ')' : ''));
+            },
+            translate: function (pt) {
+                return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+            },
+            transformMatrix: function (t) {
+                var m = t.components;
+                return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
             },
             outerExtent: function () {
                 return new Vec2(this.outerWidth(), this.outerHeight());
@@ -3392,26 +3392,15 @@ if (jQuery) {
             outerBBox: function () {
                 return BBox.fromLTWH(_.extend(this.offset(), this.outerExtent().asWidthHeight));
             },
+            clientBBox: function () {
+                var rect = this[0].getBoundingClientRect();
+                return new BBox(rect.left, rect.top, rect.width, rect.height);
+            },
             leftTop: function () {
                 return new Vec2.fromLT(this.offset());
             },
             offsetInParent: function () {
                 return Vec2.fromLeftTop(this.offset()).sub(Vec2.fromLeftTop(this.parent().offset()));
-            },
-            caret: function () {
-                var node = this[0];
-                if (node.selectionStart) {
-                    return node.selectionStart;
-                } else if (!document.selection) {
-                    return 0;
-                }
-                var c = '\x01', sel = document.selection.createRange(), dul = sel.duplicate(), len = 0;
-                dul.moveToElementText(node);
-                sel.text = c;
-                len = dul.text.indexOf(c);
-                sel.moveStart('character', -1);
-                sel.text = '';
-                return len;
             },
             monitorInput: function (cfg) {
                 var change = function () {
@@ -3422,20 +3411,6 @@ if (jQuery) {
                     }
                 };
                 return this.keyup(change).change(change).focus(_.bind(cfg.focus || _.noop, cfg, true)).blur(_.bind(cfg.focus || _.noop, cfg, false));
-            },
-            touchDoubleclick: function (fn) {
-                if (Platform.touch) {
-                    var lastTime = Date.now();
-                    return this.on('touchend', function () {
-                        var now = Date.now();
-                        if (now - lastTime < 200) {
-                            fn.apply(this, arguments);
-                        }
-                        lastTime = now;
-                    });
-                } else {
-                    return this.dblclick(fn);
-                }
             },
             touchClick: function (fn, cfg) {
                 var self = this;
@@ -3469,16 +3444,19 @@ if (jQuery) {
                     return this.click(fn);
                 }
             },
-            translate: function (pt) {
-                return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
-            },
-            transform: function (t) {
-                var m = t.components;
-                return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
-            },
-            clientBBox: function () {
-                var rect = this[0].getBoundingClientRect();
-                return new BBox(rect.left, rect.top, rect.width, rect.height);
+            touchDoubleclick: function (fn) {
+                if (Platform.touch) {
+                    var lastTime = Date.now();
+                    return this.on('touchend', function () {
+                        var now = Date.now();
+                        if (now - lastTime < 200) {
+                            fn.apply(this, arguments);
+                        }
+                        lastTime = now;
+                    });
+                } else {
+                    return this.dblclick(fn);
+                }
             }
         });
     }(jQuery));
@@ -4818,16 +4796,20 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            $(document).ready(function () {
-                el.appendTo(document.body);
-            });
-            this.initAutosize();
-            this.modal.enableScrollFaders({ scroller: this.modalBody });
-            $(document).keydown(this.$(function (e) {
-                if (e.keyCode === 27) {
-                    this.close();
-                }
-            }));
+            el.appendTo(document.body);
+            try {
+                this.initAutosize();
+                this.modal.enableScrollFaders({ scroller: this.modalBody });
+                $(document).keydown(this.$(function (e) {
+                    if (e.keyCode === 27) {
+                        this.close();
+                    }
+                }));
+            } catch (e) {
+                _.delay(function () {
+                    Panic(e);
+                });
+            }
             return el;
         })),
         initAutosize: function () {

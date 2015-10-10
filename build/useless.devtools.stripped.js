@@ -1333,16 +1333,20 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            $(document).ready(function () {
-                el.appendTo(document.body);
-            });
-            this.initAutosize();
-            this.modal.enableScrollFaders({ scroller: this.modalBody });
-            $(document).keydown(this.$(function (e) {
-                if (e.keyCode === 27) {
-                    this.close();
-                }
-            }));
+            el.appendTo(document.body);
+            try {
+                this.initAutosize();
+                this.modal.enableScrollFaders({ scroller: this.modalBody });
+                $(document).keydown(this.$(function (e) {
+                    if (e.keyCode === 27) {
+                        this.close();
+                    }
+                }));
+            } catch (e) {
+                _.delay(function () {
+                    Panic(e);
+                });
+            }
             return el;
         })),
         initAutosize: function () {
