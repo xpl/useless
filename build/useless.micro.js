@@ -5614,7 +5614,7 @@ _.extend ($, {
         return this.css ('transform', (cfg && (
             (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
             (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
-            (cfg.scale ? ('scale(' + cfg.scale.x + ',' + cfg.scale.y + ')') : ''))) || '') },
+            (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '') },
 
     /*  Other transform helpers
      */
