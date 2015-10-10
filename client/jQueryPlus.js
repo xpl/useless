@@ -117,12 +117,12 @@ _.extend ($, {
     /*  Calls fn when current CSS transition ends
      */
     transitionend: function (fn) {
-        return this.one ('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn) },
+        return this.one ('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot) },
     
     /*  Calls fn when current CSS animation ends
      */
     animationend: function (fn) {
-        return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn) },
+        return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot) },
 
     /*  1. Adds a class (that brings CSS animation)
         2. Waits until CSS animation done

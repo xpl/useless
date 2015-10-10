@@ -3073,6 +3073,10 @@ $extensionMethods (Function, {
 
     applies: _.applies,
 
+    oneShot: function (fn) { var called = false
+        return function () {   if (!called) {
+                                    called = true; return fn.apply (this, arguments) } } },
+
     memoized: _.memoize,
     throttled: _.throttle,
     
@@ -3110,16 +3114,13 @@ $extensionMethods (Function, {
 
         return debouncedFn },
 
-    postpone: $method (function (fn) { var args = _.rest (arguments)
-        if (!fn._postponed) {
-            fn._postponed = true
-            _.delay (function () {
-                fn._postponed = false
-                fn.apply (null, args) }) } }),
+    postpone: $method (function (fn) { fn.postponed.apply (null, arguments) }),
 
     postponed: function (fn) {
-        return function () {
-            fn.postpone.apply (fn, arguments) } },
+        return function () {               var args  = arguments, this_ = this
+            if (!fn._postponed) {      fn._postponed = true
+                _.delay (function () { fn._postponed = false
+                    fn.apply (this, args) }) } } },
 
     delay: _.delay,
     delayed: function (fn, time) {
@@ -3868,7 +3869,10 @@ _.extend (_, {
                         queue.off () }  // resets queue
 
                     _.each (schedule, function (fn) {
-                        fn.apply (this, args) }, context || this) }
+                        if (self.postpones) {
+                            fn.postponed.apply (this, args) }
+                        else {
+                            fn.apply (this, args) } }, context || this) }
 
                 var write = cfg.write (commitPendingReads)
                 var read  = cfg.read (scheduleRead)
@@ -5881,7 +5885,7 @@ _.tests.component = {
 /*  Syntax
  */
 _([ 'bindable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener'])
+    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
     .each (_.defineTagKeyword)
 
 _.defineKeyword ('component', function (definition) {
@@ -5972,8 +5976,9 @@ Component = $prototype ({
                                                 defaultValue    = (name in cfg ? cfg[name] : definitionValue)
                 /*  xxxChange stream
                  */
-                var observable         = this[name + 'Change'] = _.observable ()
-                    observable.context = this
+                var observable           = this[name + 'Change'] = _.observable ()
+                    observable.context   = this
+                    observable.postpones = def.$postpones
 
                 /*  auto-coercion of incoming values to prototype instance
                  */
@@ -6000,7 +6005,7 @@ Component = $prototype ({
                                 (def.$observable    ? _.observable :
                                 (def.$barrier       ? _.barrier : undefined)))) (this[name])
 
-                this[name] = _.extend (stream, { context: this })
+                this[name] = _.extend (stream, { context: this, postpones: def.$postpones })
 
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
@@ -7870,12 +7875,12 @@ _.extend ($, {
     /*  Calls fn when current CSS transition ends
      */
     transitionend: function (fn) {
-        return this.one ('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn) },
+        return this.one ('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot) },
     
     /*  Calls fn when current CSS animation ends
      */
     animationend: function (fn) {
-        return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn) },
+        return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot) },
 
     /*  1. Adds a class (that brings CSS animation)
         2. Waits until CSS animation done

@@ -327,7 +327,10 @@ _.extend (_, {
                         queue.off () }  // resets queue
 
                     _.each (schedule, function (fn) {
-                        fn.apply (this, args) }, context || this) }
+                        if (self.postpones) {
+                            fn.postponed.apply (this, args) }
+                        else {
+                            fn.apply (this, args) } }, context || this) }
 
                 var write = cfg.write (commitPendingReads)
                 var read  = cfg.read (scheduleRead)

@@ -1812,6 +1812,15 @@ $extensionMethods(Function, {
     and: _.and,
     not: _.not,
     applies: _.applies,
+    oneShot: function (fn) {
+        var called = false;
+        return function () {
+            if (!called) {
+                called = true;
+                return fn.apply(this, arguments);
+            }
+        };
+    },
     memoized: _.memoize,
     throttled: _.throttle,
     debounced: function (func, wait, immediate) {
@@ -1854,18 +1863,18 @@ $extensionMethods(Function, {
         return debouncedFn;
     },
     postpone: $method(function (fn) {
-        var args = _.rest(arguments);
-        if (!fn._postponed) {
-            fn._postponed = true;
-            _.delay(function () {
-                fn._postponed = false;
-                fn.apply(null, args);
-            });
-        }
+        fn.postponed.apply(null, arguments);
     }),
     postponed: function (fn) {
         return function () {
-            fn.postpone.apply(fn, arguments);
+            var args = arguments, this_ = this;
+            if (!fn._postponed) {
+                fn._postponed = true;
+                _.delay(function () {
+                    fn._postponed = false;
+                    fn.apply(this, args);
+                });
+            }
         };
     },
     delay: _.delay,
@@ -2325,7 +2334,11 @@ _.extend(_, {
                 queue.off();
             }
             _.each(schedule, function (fn) {
-                fn.apply(this, args);
+                if (self.postpones) {
+                    fn.postponed.apply(this, args);
+                } else {
+                    fn.apply(this, args);
+                }
             }, context || this);
         };
         var write = cfg.write(commitPendingReads);
@@ -3513,7 +3526,8 @@ _([
     'debounce',
     'throttle',
     'overrideThis',
-    'listener'
+    'listener',
+    'postpones'
 ]).each(_.defineTagKeyword);
 _.defineKeyword('component', function (definition) {
     return $extends(Component, definition);
@@ -3573,6 +3587,7 @@ Component = $prototype({
                     defaultValue = name in cfg ? cfg[name] : definitionValue;
                     var observable = this[name + 'Change'] = _.observable();
                     observable.context = this;
+                    observable.postpones = def.$postpones;
                     if (_.isPrototypeInstance(definitionValue)) {
                         var constructor = definitionValue.constructor;
                         observable.beforeWrite = function (value) {
@@ -3592,7 +3607,10 @@ Component = $prototype({
                     }
                 } else if (Component.isStreamDefinition(def)) {
                     var stream = (def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(this[name]);
-                    this[name] = _.extend(stream, { context: this });
+                    this[name] = _.extend(stream, {
+                        context: this,
+                        postpones: def.$postpones
+                    });
                     var defaultListener = cfg[name];
                     if (defaultListener) {
                         stream(this.$(defaultListener));
@@ -5092,10 +5110,10 @@ if (Platform.Browser) {
                     return this;
                 },
                 transitionend: function (fn) {
-                    return this.one('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn);
+                    return this.one('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot);
                 },
                 animationend: function (fn) {
-                    return this.one('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn);
+                    return this.one('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot);
                 },
                 animateWith: function (cls, done) {
                     this.addClass(cls);

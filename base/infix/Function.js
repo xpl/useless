@@ -84,6 +84,10 @@ $extensionMethods (Function, {
 
     applies: _.applies,
 
+    oneShot: function (fn) { var called = false
+        return function () {   if (!called) {
+                                    called = true; return fn.apply (this, arguments) } } },
+
     memoized: _.memoize,
     throttled: _.throttle,
     
@@ -121,16 +125,13 @@ $extensionMethods (Function, {
 
         return debouncedFn },
 
-    postpone: $method (function (fn) { var args = _.rest (arguments)
-        if (!fn._postponed) {
-            fn._postponed = true
-            _.delay (function () {
-                fn._postponed = false
-                fn.apply (null, args) }) } }),
+    postpone: $method (function (fn) { fn.postponed.apply (null, arguments) }),
 
     postponed: function (fn) {
-        return function () {
-            fn.postpone.apply (fn, arguments) } },
+        return function () {               var args  = arguments, this_ = this
+            if (!fn._postponed) {      fn._postponed = true
+                _.delay (function () { fn._postponed = false
+                    fn.apply (this, args) }) } } },
 
     delay: _.delay,
     delayed: function (fn, time) {

@@ -450,7 +450,7 @@ _.tests.component = {
 /*  Syntax
  */
 _([ 'bindable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener'])
+    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
     .each (_.defineTagKeyword)
 
 _.defineKeyword ('component', function (definition) {
@@ -541,8 +541,9 @@ Component = $prototype ({
                                                 defaultValue    = (name in cfg ? cfg[name] : definitionValue)
                 /*  xxxChange stream
                  */
-                var observable         = this[name + 'Change'] = _.observable ()
-                    observable.context = this
+                var observable           = this[name + 'Change'] = _.observable ()
+                    observable.context   = this
+                    observable.postpones = def.$postpones
 
                 /*  auto-coercion of incoming values to prototype instance
                  */
@@ -569,7 +570,7 @@ Component = $prototype ({
                                 (def.$observable    ? _.observable :
                                 (def.$barrier       ? _.barrier : undefined)))) (this[name])
 
-                this[name] = _.extend (stream, { context: this })
+                this[name] = _.extend (stream, { context: this, postpones: def.$postpones })
 
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
