@@ -1138,6 +1138,9 @@ _.concat = function (a, b) {
 _.atIndex = function (n) {
                 return function (arr) { return arr[n] } }
 
+_.takesFirst = _.higherOrder (_.first)
+_.takesLast  = _.higherOrder (_.last)
+
 _.applies = function (fn, this_, args) {
                 return function () { return fn.apply (this_, args) } }
 
@@ -7903,7 +7906,7 @@ _.extend ($, {
                 
                 if (Platform.touch || initialEvent.which === 1) { var offset = relativeTo.offset (), memo = undefined
                     
-                    if (!cfg.start || ((memo = cfg.start.call (this, new Vec2 (
+                    if (!cfg.start || ((memo = cfg.start.call (cfg.context || this, new Vec2 (
                             // position (relative to delegate target)
                             initialEvent.pageX - offset.left,
                             initialEvent.pageY - offset.top), initialEvent)) !== false)) /* one can cancel drag by returning false from 'start' */ {
@@ -7918,7 +7921,7 @@ _.extend ($, {
                                 var translatedEvent = translateTouchEvent (e, this[0])
                                 var offset = relativeTo.offset ()
 
-                                memo = cfg.move.call (this, memo, new Vec2 (
+                                memo = cfg.move.call (cfg.context || this, memo, new Vec2 (
                                     // offset (relative to initial event)
                                     translatedEvent.pageX - initialEvent.pageX,
                                     translatedEvent.pageY - initialEvent.pageY), new Vec2 (
@@ -7937,7 +7940,7 @@ _.extend ($, {
 
                         end = this.$ (function (e) { unbind ()
                             if (cfg.end) { var translatedEvent = translateTouchEvent (e, this[0])
-                                cfg.end.call (this, memo, new Vec2 (
+                                cfg.end.call (cfg.context || this, memo, new Vec2 (
                                     // offset (relative to initial event)
                                     translatedEvent.pageX - initialEvent.pageX,
                                     translatedEvent.pageY - initialEvent.pageY), translatedEvent) } })
@@ -7950,14 +7953,14 @@ _.extend ($, {
                             .one ('mouseup touchend', end)
 
                         if (cfg.callMoveAtStart) {
-                            cfg.move.call (this, memo, Vec2.zero, new Vec2 (
+                            cfg.move.call (cfg.context || this, memo, Vec2.zero, new Vec2 (
                                 // position (relative to delegate target)
                                 initialEvent.pageX - offset.left,
                                 initialEvent.pageY - offset.top),
                                 // the event
                                 initialEvent) } } } })
 
-            return this.on (Platform.touch ? 'touchstart' : 'mousedown', _.$ (this, function (e) {
+            var touchstartListener = _.$ (this, function (e) {
                 var where = _.extend ({}, translateTouchEvent (e, this[0])) /* copy event, cuz on iPad it's re-used by browser */
                 if (Platform.touch && cfg.longPress) {
                     var cancel = undefined
@@ -7971,7 +7974,24 @@ _.extend ($, {
                 else {
                     begin (where)
                     e.preventDefault ()
-                    e.stopPropagation () } })) } }) (),
+                    e.stopPropagation () } })
+
+            this.on (Platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
+
+            if (cfg.context) {
+                (this[0].dragContexts = this[0].dragContexts || []).push ([cfg.context, touchstartListener]) }
+
+            return this } }) (),
+
+    /*  Removes listeners installed by a preceding .drag call (for a given context)
+     */
+    undrag: function (context) {
+        var contexts = this[0].dragContexts
+        if (contexts) {
+            var ctx = _.find (contexts, _.takesFirst.then (_.equals (context)))
+            if (ctx) {
+                this.off (Platform.touch ? 'touchstart' : 'mousedown', ctx[1])
+                contexts.remove (ctx) } } },
 
     /*  $(el).transform ({
                 translate: new Vec2 (a, b),

@@ -33,6 +33,9 @@ _.concat = function (a, b) {
 _.atIndex = function (n) {
                 return function (arr) { return arr[n] } }
 
+_.takesFirst = _.higherOrder (_.first)
+_.takesLast  = _.higherOrder (_.last)
+
 _.applies = function (fn, this_, args) {
                 return function () { return fn.apply (this_, args) } }
 
