@@ -333,6 +333,60 @@ _.tests.component = {
         compo.position = { x: 20, y: 42 } },                  // supply POD value from property accessor
 
 
+    'binding to streams with traits': function () {
+
+        $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
+
+            var Trait = $trait ({
+                somethingHappened: $trigger () })
+
+            var Other = $trait ({
+                somethingHappened: function (_42) { $assert (this, this_); $assert (_42, 42); mkay1 () } })
+
+            var Compo = $component ({
+                $traits: [Trait, Other],
+                somethingHappened: function (_42) { $assert (this, this_); $assert (_42, 42); mkay2 () } })
+
+            this_ = new Compo ()
+            this_.somethingHappened (42) }) },
+
+    'binding to bindables with traits': function () {
+
+        $assertCallOrder (function (beforeCalled, bindableCalled, afterCalled) { var this_ = undefined
+
+            var Trait = $trait ({
+                doSomething: $bindable (function (x) { $assert (this, this_); bindableCalled () }) })
+
+            var Other = $trait ({
+                beforeDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); beforeCalled () } })
+
+            var Compo = $component ({
+                $traits: [Trait, Other],
+                afterDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); afterCalled () } })
+
+            this_ = new Compo ()
+            this_.doSomething (42) }) },
+
+    'binding to observable properties with traits': function () {
+
+        $assertEveryCalled (function (one, two) { var this_ = undefined
+
+            var Trait = $trait ({
+                someValue: $observableProperty (42) })
+
+            var Other = $trait ({
+                someValue: function (_42) { one () } })
+
+            var Compo = $component ({
+                $traits: [Trait, Other],
+                someValue: function (_42) { two () } })
+
+            this_ = new Compo ()
+
+            $assert (_.isFunction (this_.someValueChange))
+
+            this_.someValue = 33 }) },
+
     'hierarchy management': function () { $assertCalls (9, function (mkay) {
         
         var Compo = $extends (Component, {
@@ -449,12 +503,12 @@ _.tests.component = {
 
 /*  Syntax
  */
-_([ 'bindable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
-    .each (_.defineTagKeyword)
-
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
+
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
+    'bindable', 'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
+    .each (_.defineTagKeyword)
 
 
 /*  Make $defaults and $requires inherit base values
@@ -473,9 +527,48 @@ $prototype.inheritsBaseValues = function (keyword) {
 $prototype.inheritsBaseValues ('$defaults')
 $prototype.inheritsBaseValues ('$requires')
 
+
 /*  Impl
  */
 Component = $prototype ({
+
+    /*  Overrides default OOP.js implementation of traits (providing method chaining)
+     */
+    $impl: {
+        mergeTraitsMembers: function (def, traits) {
+
+            var pool = {}
+            var bindables = {}
+
+            _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
+                _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),
+                    function (member, name) {
+                        if (member.$bindable) {
+                            bindables[name] = member }
+                        (pool[name] || (pool[name] = [])).push (member) }) })
+
+            _.each (pool, function (members, name) {
+                var stream = _.find (members, Component.isStreamDefinition)
+                if (stream) {
+                    var clonedStream = def[name] = Tags.clone (stream)
+                        clonedStream.listeners = []
+                    _.each (members, function (member) {
+                                             if (member !== stream) {
+                                                 clonedStream.listeners.push (member) } }) }
+                else { if (!def[name]) {
+                            def[name] = pool[name][0] } } })
+
+            _.each (bindables, function (member, name) {
+                var bound = _.nonempty (_.map (_.bindable.hooks, function (hook, i) {
+                                                    var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
+                                                    return bound && [hook, bound] }))
+                if (bound.length) {
+                    var bindable = _.bindable ($untag (member))
+                    def[name] = $bindable (bindable)
+                    _.each (bound, function (kv) {
+                        _.each (kv[1], function (fn) { fn = $untag (fn)
+                            if (_.isFunction (fn)) {
+                                bindable[kv[0]] (fn) } }) }) } }) } },
 
     /*  Syntax helper
      */
@@ -557,6 +650,9 @@ Component = $prototype ({
                         get: function ()  { return observable.value },
                         set: function (x) { observable.call (this, x) } })
 
+                if (def.listeners) {
+                    _.each (def.listeners, observable) }
+
                 /*  write default value
                  */
                 if (defaultValue !== undefined) {
@@ -572,6 +668,9 @@ Component = $prototype ({
 
                 this[name] = _.extend (stream, { context: this, postpones: def.$postpones })
 
+                if (def.listeners) {
+                    _.each (def.listeners, stream) }
+
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
                     stream (this.$ (defaultListener)) } }
@@ -584,17 +683,17 @@ Component = $prototype ({
             /*  Expand $bindable
              */
             if (def.$bindable) { if (_.hasAsserts) { $assert (_.isFunction (this[name])) }
-                this[name] = _.bindable (this[name], this) }
+                this[name] = _.extendWith (def.defaultHooks || {}, _.bindable (this[name], this)) }
 
             /*  Expand $debounce
              */
-            if (def.$debounce) { var fn = this[name]
-                this[name] = _.debounce (fn, fn.wait || 500, fn.immediate) }
+            if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)
+                this[name] = _.debounce (fn, opts.wait || 500, opts) }
 
             /*  Expand $throttle
              */
-            if (def.$throttle) { var fn = this[name]
-                this[name] = _.throttle (fn, fn.wait || 500, _.pick (fn, 'leading', 'trailing')) }
+            if (def.$throttle) { var fn = this[name], opts = _.coerceToObject (def.$throttle)
+                this[name] = _.throttle (fn, opts.wait || 500, opts) }
 
             /*  Expand $memoize
              */

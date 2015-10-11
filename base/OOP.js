@@ -334,19 +334,23 @@ _.withTest ('OOP', {
             alwaysTriggeredMacros: [],
             memberNameTriggeredMacros: {},
 
-            compile: function (def, base) { return Tags.unwrap (_.sequence (
-                this.extendWithTags,
-                this.flatten,
-                this.generateArgumentContractsIfNeeded,
-                this.ensureFinalContracts (base),
-                this.generateConstructor (base),
-                this.evalAlwaysTriggeredMacros (base),
-                this.evalMemberNameTriggeredMacros (base),
-                this.contributeTraits,
-                this.generateBuiltInMembers (base),
-                this.expandAliases,
-                this.defineStaticMembers,
-                this.defineInstanceMembers).call (this, def || {}).constructor) },
+            compile: function (def, base) {
+                return ((base && base.$impl) || this)._compile (def, base) },
+
+           _compile: function (def, base) { return Tags.unwrap (_.sequence (
+                    this.extendWithTags,
+                    this.flatten,
+                    this.generateCustomCompilerImpl (base),
+                    this.generateArgumentContractsIfNeeded,
+                    this.ensureFinalContracts (base),
+                    this.generateConstructor (base),
+                    this.evalAlwaysTriggeredMacros (base),
+                    this.evalMemberNameTriggeredMacros (base),
+                    this.contributeTraits,
+                    this.generateBuiltInMembers (base),
+                    this.expandAliases,
+                    this.defineStaticMembers,
+                    this.defineInstanceMembers).call (this, def || {}).constructor) },
 
             evalAlwaysTriggeredMacros: function (base) {
                 return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
@@ -361,6 +365,15 @@ _.withTest ('OOP', {
                             def = macros[name] (def, value, name, base) } })
                     return def } },
 
+            generateCustomCompilerImpl: function (base) {
+                return function (def) {
+                    if (def.$impl) {
+                        def.$impl.__proto__ = (base && base.$impl) || this
+                        def.$impl = $static ($builtin ($property (def.$impl))) }
+                    else if (base && base.$impl) {
+                        def.$impl = $static ($builtin ($property (base.$impl))) }
+                    return def } },
+
             generateArgumentContractsIfNeeded: function (def) {
                 return def.$testArguments ? $prototype.wrapMethods (def, function (fn, name) {
                                                                      return function () { var args = _.asArray (arguments)
@@ -373,10 +386,8 @@ _.withTest ('OOP', {
                     delete def.$trait }
 
                 if (def.$traits) { var traits = def.$traits
-                    _.each (traits,
-                        function (constructor) {
-                            _.defaults (def, _.omit (constructor.$definition,
-                                _.or ($builtin.matches, _.key (_.equals ('constructor'))))) } ) 
+
+                    this.mergeTraitsMembers (def, traits)
 
                     def.$traits  = $static ($builtin ($property (traits)))
                     def.hasTrait = $static ($builtin (function (Constructor) {
@@ -384,8 +395,13 @@ _.withTest ('OOP', {
 
                 return def },
 
+            mergeTraitsMembers: function (def, traits) {
+                _.each (traits, function (trait) {
+                    _.defaults (def, _.omit (trait.$definition,
+                        _.or ($builtin.matches, _.key (_.equals ('constructor'))))) }) },
+
             extendWithTags: function (def) {                    
-                return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static)) },
+                return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:

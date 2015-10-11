@@ -54,7 +54,7 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
-_.withTest ('assert.js bootstrap', function () {
+_.deferTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -179,6 +179,16 @@ if (_.hasStdlib) {
         $assertCalls (0, function (mkay) { mkay () })
         $assertCalls (2, function (mkay) { mkay (); mkay (); mkay () }) })
 
+    $assertEveryCalled (function (a, b, c) {
+        a ()
+        b ()
+        c () })
+
+    $assertFails (function () {
+        $assertEveryCalled (function (a, b, c) {
+            a ()
+            b () }) })
+
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -250,6 +260,17 @@ function () {
                         _.assertionFailed ({ notMatching: args }) }
 
                     return true },
+
+        assertEveryCalled: function (fn) {
+            var callbacks = _.times (fn.length, function () { return function () { arguments.callee.called = true } })
+            fn.apply (null, callbacks)
+            return _.assert (_.pluck (callbacks, 'called'), _.times (callbacks.length, _.constant (true))) },
+
+        assertCallOrder: function (fn) {
+            var callIndex = 0
+            var callbacks = _.times (fn.length, function (i) { return function () { arguments.callee.callIndex = callIndex++ } })
+            fn.apply (null, callbacks)
+            return _.assert (_.pluck (callbacks, 'callIndex'), _.times (callbacks.length, _.identity.arity1)) },
 
         assertMatches: function (value, pattern) {
             try {       return _.assert (_.matches.apply (null, _.rest (arguments)) (value)) }

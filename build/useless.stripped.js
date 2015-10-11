@@ -297,6 +297,25 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         }
         return true;
     },
+    assertEveryCalled: function (fn) {
+        var callbacks = _.times(fn.length, function () {
+            return function () {
+                arguments.callee.called = true;
+            };
+        });
+        fn.apply(null, callbacks);
+        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(true)));
+    },
+    assertCallOrder: function (fn) {
+        var callIndex = 0;
+        var callbacks = _.times(fn.length, function (i) {
+            return function () {
+                arguments.callee.callIndex = callIndex++;
+            };
+        });
+        fn.apply(null, callbacks);
+        return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
+    },
     assertMatches: function (value, pattern) {
         try {
             return _.assert(_.matches.apply(null, _.rest(arguments))(value));
@@ -944,6 +963,9 @@ _.extend(_, {
     isNonemptyString: function (v) {
         return typeof v === 'string' && v.length > 0;
     },
+    coerceToObject: function (x) {
+        return _.isStrictlyObject(x) ? x : {};
+    },
     coerceToEmpty: function (x) {
         if (_.isArray(x)) {
             return [];
@@ -1352,8 +1374,8 @@ Tags = _.extend2(function (subject) {
 }, {
     $definition: {},
     prototype: {
-        add: function (name) {
-            return this[_.keyword(name)] = true, this;
+        add: function (name, additionalData) {
+            return this[_.keyword(name)] = additionalData || true, this;
         },
         clone: function () {
             return _.extend(new Tags(this.subject), _.pick(this, _.keyIsKeyword));
@@ -1367,6 +1389,9 @@ Tags = _.extend2(function (subject) {
             }
         }
     },
+    clone: function (what) {
+        return _.isTypeOf(Tags, what) ? what.clone() : what;
+    },
     get: function (def) {
         return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
     },
@@ -1374,10 +1399,9 @@ Tags = _.extend2(function (subject) {
         return _.isTypeOf(Tags, def) && 'subject' in def;
     },
     matches: function (name) {
-        return _.matches(_.object([[
-                _.keyword(name),
-                true
-            ]]));
+        return function (obj) {
+            return obj && obj[_.keyword(name)] !== undefined;
+        };
     },
     unwrapAll: function (definition) {
         return _.map2(definition, Tags.unwrap);
@@ -1400,8 +1424,8 @@ Tags = _.extend2(function (subject) {
             });
         });
     },
-    add: function (name, args) {
-        return Tags.wrap.apply(null, _.rest(arguments, 1)).add(name);
+    add: function (name, toWhat, additionalData) {
+        return Tags.wrap.apply(null, _.rest(arguments, 1)).add(name, additionalData);
     }
 });
 _.keyword = function (name) {
@@ -1428,9 +1452,17 @@ _.defineKeyword = function (name, value) {
 };
 _.defineKeyword('global', _.global);
 _.defineKeyword('platform', _.platform);
-_.defineTagKeyword = function (k) {
+_.defineKeyword('untag', Tags.unwrap);
+_.defineTagKeyword = function (k, fn) {
+    fn = _.isFunction(fn) ? fn : _.identity;
     if (!(_.keyword(k) in $global)) {
-        _.defineKeyword(k, Tags.add('constant', _.extend(_.partial(Tags.add, k), { matches: Tags.matches(k) })));
+        _.defineKeyword(k, Tags.add('constant', _.extendWith({ matches: Tags.matches(k) }, function (a, b) {
+            if (arguments.length < 2) {
+                return fn(Tags.add(k, a));
+            } else {
+                return fn(Tags.add(k, b, a));
+            }
+        })));
         _.tagKeywords[k] = true;
     }
     var kk = _.keyword(k);
@@ -1945,7 +1977,7 @@ _.zap = function (firstArg) {
 };
 $extensionMethods(String, {
     quote: _.quote,
-    cut: function (s, from, len) {
+    cut: function (s, from) {
         return s.substring(0, from - 1) + s.substring(from, s.length);
     },
     insert: function (s, position, what) {
@@ -1974,6 +2006,9 @@ $extensionMethods(String, {
     },
     first: function (s, n) {
         return _.first(s, n).join('');
+    },
+    last: function (s, n) {
+        return _.last(s, n).join('');
     },
     reversed: function (s) {
         return s.split('').reverse().join('');
@@ -2085,6 +2120,16 @@ $extensionMethods(String, {
         'onAfter',
         'intercept'
     ];
+    var hooksShort = [
+        'onceBefore',
+        'onceAfter',
+        'before',
+        'after',
+        ''
+    ];
+    var copyHooks = function (from, to) {
+        _.extend(to, _.map2(_.pick(from, hooks), _.clone));
+    };
     var makeBindable = function (obj, targetMethod) {
         var method = obj[targetMethod];
         return _.isBindable(method) ? method : obj[targetMethod] = _.bindable(method);
@@ -2128,7 +2173,10 @@ $extensionMethods(String, {
         isBindable: function (fn) {
             return fn && fn._bindable ? true : false;
         },
-        bindable: function (method, context) {
+        bindable: _.extendWith({
+            hooks: hooks,
+            hooksShort: hooksShort
+        }, function (method, context) {
             return _.withSameArgs(method, _.extendWith(mixin(method), function () {
                 var wrapper = arguments.callee;
                 var onceBefore = wrapper._onceBefore;
@@ -2162,7 +2210,7 @@ $extensionMethods(String, {
                 }
                 return result;
             }));
-        }
+        })
     });
 }());
 _.extend(_, {
@@ -2235,7 +2283,8 @@ _.extend(_, {
                 stream.hasValue = false;
                 stream(value || stream.value);
             },
-            when: function (matchFn, then) {
+            when: function (match, then) {
+                var matchFn = _.isFunction(match) ? match : _.equals(match);
                 stream(function (val) {
                     if (matchFn(val)) {
                         stream.off(arguments.callee);
@@ -2425,7 +2474,10 @@ _.extend($prototype, {
         alwaysTriggeredMacros: [],
         memberNameTriggeredMacros: {},
         compile: function (def, base) {
-            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberNameTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
+            return (base && base.$impl || this)._compile(def, base);
+        },
+        _compile: function (def, base) {
+            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberNameTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
         },
         evalAlwaysTriggeredMacros: function (base) {
             return function (def) {
@@ -2447,6 +2499,17 @@ _.extend($prototype, {
                 return def;
             };
         },
+        generateCustomCompilerImpl: function (base) {
+            return function (def) {
+                if (def.$impl) {
+                    def.$impl.__proto__ = base && base.$impl || this;
+                    def.$impl = $static($builtin($property(def.$impl)));
+                } else if (base && base.$impl) {
+                    def.$impl = $static($builtin($property(base.$impl)));
+                }
+                return def;
+            };
+        },
         generateArgumentContractsIfNeeded: function (def) {
             return def.$testArguments ? $prototype.wrapMethods(def, function (fn, name) {
                 return function () {
@@ -2463,9 +2526,7 @@ _.extend($prototype, {
             }
             if (def.$traits) {
                 var traits = def.$traits;
-                _.each(traits, function (constructor) {
-                    _.defaults(def, _.omit(constructor.$definition, _.or($builtin.matches, _.key(_.equals('constructor')))));
-                });
+                this.mergeTraitsMembers(def, traits);
                 def.$traits = $static($builtin($property(traits)));
                 def.hasTrait = $static($builtin(function (Constructor) {
                     return traits.indexOf(Constructor) >= 0;
@@ -2473,8 +2534,13 @@ _.extend($prototype, {
             }
             return def;
         },
+        mergeTraitsMembers: function (def, traits) {
+            _.each(traits, function (trait) {
+                _.defaults(def, _.omit(trait.$definition, _.or($builtin.matches, _.key(_.equals('constructor')))));
+            });
+        },
         extendWithTags: function (def) {
-            return _.extendWith(Tags.unwrap(def), _.mapObject(Tags.get(def), $static));
+            return _.extendWith(Tags.unwrap(def), _.mapObject(Tags.get(def), $static.arity1));
         },
         generateConstructor: function (base) {
             return function (def) {
@@ -3517,13 +3583,16 @@ _.extend(Math, function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
 }));
+_.defineKeyword('component', function (definition) {
+    return $extends(Component, definition);
+});
 _([
-    'bindable',
     'trigger',
     'triggerOnce',
     'barrier',
     'observable',
     'observableProperty',
+    'bindable',
     'memoize',
     'memoizeCPS',
     'debounce',
@@ -3532,9 +3601,6 @@ _([
     'listener',
     'postpones'
 ]).each(_.defineTagKeyword);
-_.defineKeyword('component', function (definition) {
-    return $extends(Component, definition);
-});
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro(keyword, function (def, value, name, Base) {
         _.defaults(value, Base && Base[keyword]);
@@ -3550,6 +3616,57 @@ $prototype.inheritsBaseValues = function (keyword) {
 $prototype.inheritsBaseValues('$defaults');
 $prototype.inheritsBaseValues('$requires');
 Component = $prototype({
+    $impl: {
+        mergeTraitsMembers: function (def, traits) {
+            var pool = {};
+            var bindables = {};
+            _.each([def].concat(_.pluck(traits, '$definition')), function (def) {
+                _.each(_.omit(def, _.or($builtin.matches, _.key(_.equals('constructor')))), function (member, name) {
+                    if (member.$bindable) {
+                        bindables[name] = member;
+                    }
+                    (pool[name] || (pool[name] = [])).push(member);
+                });
+            });
+            _.each(pool, function (members, name) {
+                var stream = _.find(members, Component.isStreamDefinition);
+                if (stream) {
+                    var clonedStream = def[name] = Tags.clone(stream);
+                    clonedStream.listeners = [];
+                    _.each(members, function (member) {
+                        if (member !== stream) {
+                            clonedStream.listeners.push(member);
+                        }
+                    });
+                } else {
+                    if (!def[name]) {
+                        def[name] = pool[name][0];
+                    }
+                }
+            });
+            _.each(bindables, function (member, name) {
+                var bound = _.nonempty(_.map(_.bindable.hooks, function (hook, i) {
+                    var bound = pool[_.bindable.hooksShort[i] + name.capitalized];
+                    return bound && [
+                        hook,
+                        bound
+                    ];
+                }));
+                if (bound.length) {
+                    var bindable = _.bindable($untag(member));
+                    def[name] = $bindable(bindable);
+                    _.each(bound, function (kv) {
+                        _.each(kv[1], function (fn) {
+                            fn = $untag(fn);
+                            if (_.isFunction(fn)) {
+                                bindable[kv[0]](fn);
+                            }
+                        });
+                    });
+                }
+            });
+        }
+    },
     isStreamDefinition: $static(function (def) {
         return _.isObject(def) && (def.$trigger || def.$triggerOnce || def.$barrier || def.$observable || def.$observableProperty);
     }),
@@ -3605,6 +3722,9 @@ Component = $prototype({
                             observable.call(this, x);
                         }
                     });
+                    if (def.listeners) {
+                        _.each(def.listeners, observable);
+                    }
                     if (defaultValue !== undefined) {
                         observable(_.isFunction(defaultValue) ? this.$(defaultValue) : defaultValue);
                     }
@@ -3614,6 +3734,9 @@ Component = $prototype({
                         context: this,
                         postpones: def.$postpones
                     });
+                    if (def.listeners) {
+                        _.each(def.listeners, stream);
+                    }
                     var defaultListener = cfg[name];
                     if (defaultListener) {
                         stream(this.$(defaultListener));
@@ -3626,15 +3749,15 @@ Component = $prototype({
                     if (_.hasAsserts) {
                         $assert(_.isFunction(this[name]));
                     }
-                    this[name] = _.bindable(this[name], this);
+                    this[name] = _.extendWith(def.defaultHooks || {}, _.bindable(this[name], this));
                 }
                 if (def.$debounce) {
-                    var fn = this[name];
-                    this[name] = _.debounce(fn, fn.wait || 500, fn.immediate);
+                    var fn = this[name], opts = _.coerceToObject(def.$debounce);
+                    this[name] = _.debounce(fn, opts.wait || 500, opts);
                 }
                 if (def.$throttle) {
-                    var fn = this[name];
-                    this[name] = _.throttle(fn, fn.wait || 500, _.pick(fn, 'leading', 'trailing'));
+                    var fn = this[name], opts = _.coerceToObject(def.$throttle);
+                    this[name] = _.throttle(fn, opts.wait || 500, opts);
                 }
                 if (def.$memoize) {
                     this[name] = _.memoize(this[name]);
@@ -4041,7 +4164,7 @@ R = $singleton({
             if (e.message.indexOf(reThrownTag) < 0) {
                 if (e.error) {
                     globalUncaughtExceptionHandler(e.error);
-                } else {
+                } else if (e.error !== null) {
                     globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
                         stub: true,
                         stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno

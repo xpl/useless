@@ -164,6 +164,25 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         }
         return true;
     },
+    assertEveryCalled: function (fn) {
+        var callbacks = _.times(fn.length, function () {
+            return function () {
+                arguments.callee.called = true;
+            };
+        });
+        fn.apply(null, callbacks);
+        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(true)));
+    },
+    assertCallOrder: function (fn) {
+        var callIndex = 0;
+        var callbacks = _.times(fn.length, function (i) {
+            return function () {
+                arguments.callee.callIndex = callIndex++;
+            };
+        });
+        fn.apply(null, callbacks);
+        return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
+    },
     assertMatches: function (value, pattern) {
         try {
             return _.assert(_.matches.apply(null, _.rest(arguments))(value));
@@ -352,7 +371,7 @@ _.mixin({
             if (e.message.indexOf(reThrownTag) < 0) {
                 if (e.error) {
                     globalUncaughtExceptionHandler(e.error);
-                } else {
+                } else if (e.error !== null) {
                     globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
                         stub: true,
                         stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno

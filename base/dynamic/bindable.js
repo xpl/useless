@@ -61,7 +61,11 @@ _.deferTest ('bindable', function () {
 
     /*  Internal impl
      */
-    var hooks = ['onceBefore', 'onceAfter', 'onBefore', 'onAfter', 'intercept']
+    var hooks      = ['onceBefore', 'onceAfter', 'onBefore', 'onAfter', 'intercept']
+    var hooksShort = ['onceBefore', 'onceAfter', 'before', 'after', '']
+
+    var copyHooks = function (from, to) {
+        _.extend (to, _.map2 (_.pick (from, hooks), _.clone)) }
 
     var makeBindable = function (obj, targetMethod) { var method = obj[targetMethod]
                             return _.isBindable (method) ? method : (obj[targetMethod] = _.bindable (method)) }
@@ -98,7 +102,7 @@ _.deferTest ('bindable', function () {
         isBindable: function (fn) {
             return (fn && fn._bindable) ? true : false },
 
-        bindable: function (method, context) {
+        bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
             return _.withSameArgs (method, _.extendWith (mixin (method), function () {      
 
                 var wrapper     = arguments.callee
@@ -140,4 +144,4 @@ _.deferTest ('bindable', function () {
                             onceAfter[i].apply (this_, args) }
                         onceAfter.removeAll () } }
 
-                return result } )) } }) })
+                return result } )) }) }) })

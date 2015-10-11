@@ -50,7 +50,7 @@ _.tests.stream = {
 
         $assertCalls (1, function (mkay) {
             var value = _.observable (234)
-                value.when (_.equals (234), function () { mkay () }) })
+                value.when (          234, function () { mkay () }) }) // passing constant should work
 
         $assertCalls (1, function (mkay) {
             var value = _.observable ()
@@ -245,7 +245,7 @@ _.extend (_, {
                 stream.hasValue = false
                 stream (value || stream.value) },
                 
-            when: function (matchFn, then) {
+            when: function (match, then) { var matchFn = _.isFunction (match) ? match : _.equals (match)
                 stream (function (val) {
                     if (matchFn (val)) {
                         stream.off (arguments.callee)

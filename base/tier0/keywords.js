@@ -85,6 +85,10 @@ _.withTest ('keywords', function () {
     $assert (     $qux ([8, 9, $foo ($bar (10))]),
         Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
 
+    /*  Tagging with non-boolean data
+     */
+    $assert ($foo ({ some: 'params' }, 42).$foo, { some: 'params' })
+
 }, function () {
 
     Tags = _.extend2 (
@@ -98,8 +102,8 @@ _.withTest ('keywords', function () {
 
         /* instance methods (internal impl)
          */
-        add: function (name) {
-                return this[_.keyword (name)] = true, this },
+        add: function (name, additionalData) {
+                return this[_.keyword (name)] = additionalData || true, this },
 
         clone: function () {
             return _.extend (new Tags (this.subject), _.pick (this, _.keyIsKeyword)) },
@@ -113,6 +117,9 @@ _.withTest ('keywords', function () {
 
         /* static methods (actual API)
          */
+        clone: function (what) {
+            return _.isTypeOf (Tags, what) ? what.clone () : what },
+
         get: function (def) {
             return _.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {} },
 
@@ -120,7 +127,7 @@ _.withTest ('keywords', function () {
                         return (_.isTypeOf (Tags, def) && ('subject' in def)) },
 
         matches: function (name) {
-                    return _.matches (_.object ([[_.keyword (name), true]])) },
+                    return function (obj) { return obj && (obj[_.keyword (name)] !== undefined) } },
 
         unwrapAll: function (definition) {
                         return _.map2 (definition, Tags.unwrap) },
@@ -141,8 +148,8 @@ _.withTest ('keywords', function () {
                                                         return Tags.modifySubject (t, function (v) {
                                                             return op (v, k, _.isTypeOf (Tags, t) ? t : undefined) }) }) }) },
 
-        add: function (name, args) {
-                return Tags.wrap.apply (null, _.rest (arguments, 1)).add (name) } })
+        add: function (name, toWhat, additionalData) {
+                return Tags.wrap.apply (null, _.rest (arguments, 1)).add (name, additionalData) } })
 
     _.keyword = function (name) {
                     return '$' + name }
@@ -168,11 +175,17 @@ _.withTest ('keywords', function () {
 
     _.defineKeyword ('global',   _.global)
     _.defineKeyword ('platform', _.platform)
+    _.defineKeyword ('untag',   Tags.unwrap)
 
-    _.defineTagKeyword = function (k) {
+    _.defineTagKeyword = function (k, fn) { // fn for additional processing of returned Tag instance
+
+                            fn = _.isFunction (fn) ? fn : _.identity
+
                             if (!(_.keyword (k) in $global)) { // tag keyword definitions may overlap
                                 _.defineKeyword (k, Tags.add ('constant',
-                                    _.extend (_.partial (Tags.add, k), { matches: Tags.matches (k) })))
+                                    _.extendWith ({ matches: Tags.matches (k) }, function (a, b) {      // generates $tag.matches predicate
+                                        if (arguments.length < 2) { return fn (Tags.add (k, a)) }            // $tag (value)
+                                                             else { return fn (Tags.add (k, b, a)) } })))    // $tag (params, value)
                                 _.tagKeywords[k] = true }
 
                                 var kk = _.keyword (k)

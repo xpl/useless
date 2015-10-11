@@ -139,6 +139,11 @@ _.withTest (['type', 'numbers'], function () {
 
 _.withTest (['type', 'empty-centric routines'], function () {
 
+    $assert (_.coerceToObject ({ foo: 42 }), { foo: 42 })
+    $assert (_.coerceToObject ([1,2,3]),     [1,2,3])
+    $assert (_.coerceToObject (42),          {})
+    $assert (_.coerceToObject (undefined),   {})
+
     $assert (_.coerceToEmpty (42), undefined)
     $assert (_.coerceToEmpty ([42]), [])
     $assert (_.coerceToEmpty ({ foo: 42 }), {})
@@ -215,6 +220,9 @@ _.withTest (['type', 'empty-centric routines'], function () {
 
     isNonemptyString: function (v) {
         return (typeof v === 'string') && (v.length > 0) },
+
+    coerceToObject: function (x) {
+        return _.isStrictlyObject (x) ? x : {} },
 
     coerceToEmpty: function (x) {
         if (_.isArray (x)) { return [] }

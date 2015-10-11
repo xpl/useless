@@ -70,7 +70,7 @@ _.deferTest ('String extensions', function () {
 
     quote: _.quote,
 
-    cut: function (s, from, len) {
+    cut: function (s, from) {
         return s.substring (0, from - 1) + s.substring (from, s.length) },
 
     insert: function (s, position, what) {
@@ -99,6 +99,9 @@ _.deferTest ('String extensions', function () {
 
     first: function (s, n) {
         return _.first (s, n).join ('') },
+
+    last: function (s, n) {
+        return _.last (s, n).join ('') },
 
     reversed: function (s) {
         return s.split ('').reverse ().join ('') },
