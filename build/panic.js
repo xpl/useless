@@ -6325,51 +6325,53 @@ _.mixin ({
 
 (function () {
 
-    var globalAsyncContext = undefined
+    if (Platform.Browser) {
 
-    var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
+        var globalAsyncContext = undefined
 
-        var override = function (obj) {
+        var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
 
-            obj.addEventListener    = genAddEventListener    (obj.addEventListener)
-            obj.removeEventListener = genRemoveEventListener (obj.removeEventListener) }
+            var override = function (obj) {
 
-        if (window.EventTarget) {
-            override (window.EventTarget.prototype) }
+                obj.addEventListener    = genAddEventListener    (obj.addEventListener)
+                obj.removeEventListener = genRemoveEventListener (obj.removeEventListener) }
 
-        else {
-            override (Node.prototype)
-            override (XMLHttpRequest.prototype) } }
+            if (window.EventTarget) {
+                override (window.EventTarget.prototype) }
 
-    var asyncHook = function (originalImpl, callbackArgumentIndex) {
-        return __supressErrorReporting = function () {
+            else {
+                override (Node.prototype)
+                override (XMLHttpRequest.prototype) } }
 
-                var asyncContext = {
-                    name: name,
-                    stack: (new Error ()).stack,
-                    asyncContext: globalAsyncContext }
+        var asyncHook = function (originalImpl, callbackArgumentIndex) {
+            return __supressErrorReporting = function () {
 
-                var args = _.asArray (arguments)
-                var fn   = args[callbackArgumentIndex]
+                    var asyncContext = {
+                        name: name,
+                        stack: (new Error ()).stack,
+                        asyncContext: globalAsyncContext }
 
-                 fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
+                    var args = _.asArray (arguments)
+                    var fn   = args[callbackArgumentIndex]
 
-                    globalAsyncContext = asyncContext
+                     fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
 
-                    try       { return fn.apply (this, arguments) }
-                    catch (e) { globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
+                        globalAsyncContext = asyncContext
 
-                return originalImpl.apply (this, args) } }
+                        try       { return fn.apply (this, arguments) }
+                        catch (e) { globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
 
-    window.setTimeout = asyncHook (window.setTimeout, 0)
+                    return originalImpl.apply (this, args) } }
 
-    /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
-     */ 
-    listenEventListeners (
-        function (addEventListener) { return asyncHook (addEventListener, 1) },
-        function (removeEventListener) {
-            return function (name, fn, bubble, untrusted) {
-               return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } })
+        window.setTimeout = asyncHook (window.setTimeout, 0)
+
+        /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
+         */ 
+        listenEventListeners (
+            function (addEventListener) { return asyncHook (addEventListener, 1) },
+            function (removeEventListener) {
+                return function (name, fn, bubble, untrusted) {
+                   return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } }) }
 
 }) ();
 /*  Self-awareness module
