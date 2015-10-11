@@ -5,6 +5,8 @@ _.withTest ('Array extensions', function () {
 
     var excess = [3,1,2,3,3,4,3]
 
+    $assert (excess.lastIndex, 6)
+
     $assert (excess.copy, excess)
     $assert (excess.copy !== excess)
 
@@ -37,10 +39,12 @@ _.withTest ('Array extensions', function () {
 
     $extensionMethods (Array, {
 
+        lastIndex: function (arr) { return arr.length - 1 },
+
         last: function (arr) { return _.last (arr) },
         
         random: function (arr) {
-            return arr[_.random (0, arr.length - 1)] },
+            return arr[_.random (0, arr.lastIndex)] },
 
         copy: function (arr) {
             return arr.slice (0) },

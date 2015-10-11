@@ -3135,6 +3135,8 @@ _.withTest ('Array extensions', function () {
 
     var excess = [3,1,2,3,3,4,3]
 
+    $assert (excess.lastIndex, 6)
+
     $assert (excess.copy, excess)
     $assert (excess.copy !== excess)
 
@@ -3167,10 +3169,12 @@ _.withTest ('Array extensions', function () {
 
     $extensionMethods (Array, {
 
+        lastIndex: function (arr) { return arr.length - 1 },
+
         last: function (arr) { return _.last (arr) },
         
         random: function (arr) {
-            return arr[_.random (0, arr.length - 1)] },
+            return arr[_.random (0, arr.lastIndex)] },
 
         copy: function (arr) {
             return arr.slice (0) },
@@ -6377,22 +6381,6 @@ R = $singleton ({
 
     globalUncaughtExceptionHandler.chain = []
 
-    var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
-
-        var override = function (obj) {
-
-            obj.addEventListener    = genAddEventListener    (obj.addEventListener)
-            obj.removeEventListener = genRemoveEventListener (obj.removeEventListener) }
-
-        if (window.EventTarget) {
-            override (window.EventTarget.prototype) }
-
-        else {
-            override (Node.prototype)
-            override (XMLHttpRequest.prototype) } }
-
-    var globalAsyncContext = undefined
-
     switch (Platform.engine) {
         case 'node':
             require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
@@ -6409,38 +6397,7 @@ R = $singleton ({
 
                         globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
                             stub: true,
-                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } })
-
-            var asyncHook = function (originalImpl, callbackArgumentIndex) {
-                return __supressErrorReporting = function () {
-
-                        var asyncContext = {
-                            name: name,
-                            stack: (new Error ()).stack,
-                            asyncContext: globalAsyncContext }
-
-                        var args = _.asArray (arguments)
-                        var fn   = args[callbackArgumentIndex]
-
-                         fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
-
-                            globalAsyncContext = asyncContext
-
-                            try       { return fn.apply (this, arguments) }
-                            catch (e) { globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
-
-                        return originalImpl.apply (this, args) } }
-
-            window.setTimeout = asyncHook (window.setTimeout, 0)
-
-            /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
-             */ 
-            listenEventListeners (
-                function (addEventListener) { return asyncHook (addEventListener, 1) },
-                function (removeEventListener) {
-                    return function (name, fn, bubble, untrusted) {
-                       return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } }) }
-
+                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } }) }
 }) ();
 /*  Self-awareness module
     ======================================================================== */

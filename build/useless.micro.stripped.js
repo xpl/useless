@@ -1443,11 +1443,14 @@ $extensionMethods(Function, {
     }
 });
 $extensionMethods(Array, {
+    lastIndex: function (arr) {
+        return arr.length - 1;
+    },
     last: function (arr) {
         return _.last(arr);
     },
     random: function (arr) {
-        return arr[_.random(0, arr.length - 1)];
+        return arr[_.random(0, arr.lastIndex)];
     },
     copy: function (arr) {
         return arr.slice(0);
