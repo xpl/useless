@@ -521,6 +521,8 @@ _.mixin ({
 
 (function () {
 
+    _.hasUncaught = true
+
     var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
 
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
@@ -578,6 +580,8 @@ _.mixin ({
 (function () {
 
     if (Platform.Browser) {
+
+        _.hasUncaughtAsync = true
 
         var globalAsyncContext = undefined
 

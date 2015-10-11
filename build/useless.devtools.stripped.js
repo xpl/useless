@@ -305,6 +305,7 @@ _.mixin({
     }
 });
 (function () {
+    _.hasUncaught = true;
     var reThrownTag = ' [re-thrown by a hook]';
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
         var chain = arguments.callee.chain;
@@ -363,6 +364,7 @@ _.mixin({
 }());
 (function () {
     if (Platform.Browser) {
+        _.hasUncaughtAsync = true;
         var globalAsyncContext = undefined;
         var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
             var override = function (obj) {

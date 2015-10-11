@@ -3994,6 +3994,7 @@ R = $singleton({
     }
 });
 (function () {
+    _.hasUncaught = true;
     var reThrownTag = ' [re-thrown by a hook]';
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
         var chain = arguments.callee.chain;

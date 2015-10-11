@@ -6348,6 +6348,8 @@ R = $singleton ({
 
 (function () {
 
+    _.hasUncaught = true
+
     var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
 
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
