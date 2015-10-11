@@ -392,7 +392,7 @@ _.mixin({
                     try {
                         return fn.apply(this, arguments);
                     } catch (e) {
-                        globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
+                        _.globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
                     }
                 };
                 return originalImpl.apply(this, args);
