@@ -371,7 +371,7 @@ _.mixin({
             if (e.message.indexOf(reThrownTag) < 0) {
                 if (e.error) {
                     globalUncaughtExceptionHandler(e.error);
-                } else if (e.error !== null) {
+                } else {
                     globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
                         stub: true,
                         stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno
@@ -833,6 +833,7 @@ _.extend(log, log.printAPI = {
     ok: log.impl.write({ location: true }).partial(log.color.green)
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
+logs = _.map2(log.printAPI, _.higherOrder);
 log.impl.writeBackend = log.impl.defaultWriteBackend;
 _.extend(log, {
     asTable: function (arrayOfObjects) {

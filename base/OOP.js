@@ -309,6 +309,9 @@ _.withTest ('OOP', {
             else {
                 $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
 
+        macroTag: function (name, fn) {
+            $prototype.impl.tagTriggeredMacros[_.keyword (name)] = fn },
+
         each: function (visitor) { var namespace = $global
             for (var k in namespace) {
                 if (!_.isKeyword (k)) { var value = namespace[k]
@@ -331,8 +334,9 @@ _.withTest ('OOP', {
 
         impl: {
 
-            alwaysTriggeredMacros: [],
+            alwaysTriggeredMacros:     [],
             memberNameTriggeredMacros: {},
+            tagTriggeredMacros:        {},
 
             compile: function (def, base) {
                 return ((base && base.$impl) || this)._compile (def, base) },
@@ -345,7 +349,7 @@ _.withTest ('OOP', {
                     this.ensureFinalContracts (base),
                     this.generateConstructor (base),
                     this.evalAlwaysTriggeredMacros (base),
-                    this.evalMemberNameTriggeredMacros (base),
+                    this.evalMemberTriggeredMacros (base),
                     this.contributeTraits,
                     this.generateBuiltInMembers (base),
                     this.expandAliases,
@@ -358,12 +362,15 @@ _.withTest ('OOP', {
                         def = macros[i] (def, base) }
                     return def } },
 
-            evalMemberNameTriggeredMacros: function (base) {
-                return function (def) { var macros = $prototype.impl.memberNameTriggeredMacros
+            evalMemberTriggeredMacros: function (base) {
+                return function (def) { var names = $prototype.impl.memberNameTriggeredMacros,
+                                            tags  = $prototype.impl.tagTriggeredMacros
                     _.each (def, function (value, name) {
-                        if (macros.hasOwnProperty (name)) {
-                            def = macros[name] (def, value, name, base) } })
-                    return def } },
+                        if (names.hasOwnProperty (name)) {
+                            def = names[name] (def, value, name, base) }
+                        _.each (_.keys (value), function (tag) { if (tags.hasOwnProperty (tag)) {
+                            def = tags [tag]  (def, value, name, base) } }) })
+                     return def } },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -381,10 +388,7 @@ _.withTest ('OOP', {
                                                                          return fn.apply (this, args) } }) : def },
 
             contributeTraits: function (def) {
-                if (def.$trait) {
-                    def.$traits = [def.$trait]
-                    delete def.$trait }
-
+                
                 if (def.$traits) { var traits = def.$traits
 
                     this.mergeTraitsMembers (def, traits)
@@ -481,7 +485,7 @@ _.withTest ('OOP', {
             (also known as "mixin" in some languages)
     ======================================================================== */
 
-    _.withTest (['OOP', '$trait / $traits'], function () {
+    _.withTest (['OOP', '$traits'], function () {
 
         var Closeable = $trait ({
             close: function () {} })
@@ -493,7 +497,7 @@ _.withTest ('OOP', {
             each: function (iter) {},
             length: $property (function () { return 0; }) })
 
-        var JustCloseable     = $prototype ({ $trait:  Closeable })
+        var JustCloseable     = $prototype ({ $traits: [Closeable] })
         var MovableEnumerable = $prototype ({ $traits: [Movable, Enumerable], move: function () {} })
 
         var movableEnumerable = new MovableEnumerable ()
@@ -519,8 +523,7 @@ _.withTest ('OOP', {
         $assert (MovableEnumerable.hasTrait (Enumerable))
 
         $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
-        $assertMatches (JustCloseable,      { $traits: [Closeable],
-                                              $trait:  undefined }) }, function () {
+        $assertMatches (JustCloseable,      { $traits: [Closeable] }) }, function () {
 
     _.isTraitOf = function (Trait, instance) {
         var constructor = instance && instance.constructor

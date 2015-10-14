@@ -58,9 +58,14 @@ Intersect = {
 Vec2 = $prototype ({
 
     $static: {
+        x:           function (x)   { return new Vec2 (x,x) },
+        xy:          function (x,y) { return new Vec2 (x,y) },
         zero:        $property (function () { return new Vec2 (0, 0) }),
         unit:        $property (function () { return new Vec2 (1, 1) }),
         one:         $alias ('unit'),
+        half:        $property (function () { return new Vec2 (0.5, 0.5) }),
+        lt:          $alias ('fromLT'),
+        wh:          $alias ('fromWH'),
         fromLT:      function (lt) { return new Vec2 (lt.left, lt.top) },
         fromWH:      function (wh) { return new Vec2 (wh.width, wh.height) },
         fromLeftTop:     $alias ('fromLT'),
@@ -330,6 +335,9 @@ BBox = $prototype ({
 
         return _.min (pts, function (test) { return pt.sub (test).length }) },
 
+    xywh: $property (function () {
+        return { x: this.x, y: this.y, width: this.width, height: this.height } }),
+
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
     
@@ -393,13 +401,21 @@ BBox = $prototype ({
 
 Transform = $prototype ({
 
-    identity: $static ($property (function () { return new Transform () })),
+    $static: {
 
-    svgMatrix: $static (function (m) {
-                            return new Transform ([
-                                [m.a, m.c, m.e],
-                                [m.b, m.d, m.f],
-                                [0.0, 0.0, 1.0] ]) }),
+        identity: $property (function () { return new Transform () }),
+
+        svgMatrix: function (m) {
+                        return new Transform ([
+                            [m.a, m.c, m.e],
+                            [m.b, m.d, m.f],
+                            [0.0, 0.0, 1.0] ]) },
+
+        translation: function (v) {
+                        return new Transform ([
+                                    [1.0, 0.0, v.x],
+                                    [0.0, 1.0, v.y],
+                                    [0.0, 0.0, 1.0] ]) } },
 
     constructor: function (components) {
                     this.components = components || [
@@ -418,10 +434,7 @@ Transform = $prototype ({
                     return new Transform (result) },
 
     translate: function (v) {
-                    return this.multiply (new Transform ([
-                        [1.0, 0.0, v.x],
-                        [0.0, 1.0, v.y],
-                        [0.0, 0.0, 1.0] ])) },
+                    return this.multiply (Transform.translation (v)) },
 
     scale: function (s) {
                 return this.multiply (new Transform ([

@@ -164,12 +164,13 @@ _.extend ($, {
                         zIndex: 999999 }).appendTo (document.body) }
 
             var overlay = window.__globalDragOverlay
+            var button  = cfg.button || 1
                 
             var begin = this.$ (function (initialEvent) { var relativeTo = (cfg.relativeTo || this)
 
                 this.addClass (cfg.cls || '')
                 
-                if (Platform.touch || initialEvent.which === 1) { var offset = relativeTo.offset (), memo = undefined
+                if (Platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
                     
                     if (!cfg.start || ((memo = cfg.start.call (cfg.context || this, new Vec2 (
                             // position (relative to delegate target)
@@ -181,7 +182,7 @@ _.extend ($, {
                         memo = _.clone (memo)
 
                         var move = this.$ (function (e) {
-                            if (Platform.touch || e.which === 1) {
+                            if (Platform.touch || e.which === button) {
                                 e.preventDefault ()
                                 var translatedEvent = translateTouchEvent (e, this[0])
                                 var offset = relativeTo.offset ()
@@ -273,10 +274,17 @@ _.extend ($, {
     svgTranslate: function (pt) {
         return this.attr ('transform', 'translate(' + pt.x + ',' + pt.y + ')') },
     
-    svgTansformMatrix: function (t) {
+    svgTransformMatrix: function (t) {
         var m = t.components
         return this.attr ('transform', 'matrix(' +
             m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')') },
+
+    svgTransformToElement: function (el) {
+        return Transform.svgMatrix (this[0].getTransformToElement (el[0])) },
+
+    svgBBox: function (bbox) {
+        if (arguments.length === 0) { return new BBox (this[0].getBBox ()) }
+                               else { return this.attr (bbox.xywh) } },
 
     /*  To determine display size of an element
      */

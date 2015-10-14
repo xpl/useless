@@ -106,6 +106,10 @@ _.tests.stream = {
         _.off (act)
         act () },
 
+    '_.barrier (defaultListener)': function () {
+        $assertEveryCalled (function (mkay) {
+             _.barrier (function () { mkay () }) () }) },
+
     /*  Need to rewrite it for clariy
      */
     'all shit': function () {
@@ -252,11 +256,15 @@ _.extend (_, {
                         then (val) } }) } }) },
 
 
-    barrier: function (value) {
+    barrier: function (defaultValue) { var defaultListener = undefined
+
+        if (_.isFunction (defaultValue)) {
+            defaultListener = defaultValue
+            defaultValue = undefined }
 
         var barrier = _.stream ({
-                    already: value !== undefined,
-                    value: value,
+                    already: defaultValue !== undefined,
+                    value: defaultValue,
                     write: function (returnResult) {
                                 return function (value) {
                                     if (!barrier.already) {
@@ -271,6 +279,9 @@ _.extend (_, {
                                         returnResult.call (this, barrier.value) }
                                     else {
                                         schedule.call (this, returnResult) } } } })
+
+        if (defaultListener) {
+            barrier (defaultListener) }
 
         return barrier },
 
@@ -359,7 +370,8 @@ _.extend (_, {
                     once:     once,
                     off:    _.off.asMethod,
                     read:     read,
-                    write:    write })) } })
+                    write:    write,
+                    postpone: function () { this.postponed.apply (self.context, arguments) } })) } })
 
 
 

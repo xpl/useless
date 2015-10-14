@@ -105,8 +105,8 @@ _.withTest ('keywords', function () {
         add: function (name, additionalData) {
                 return this[_.keyword (name)] = additionalData || true, this },
 
-        clone: function () {
-            return _.extend (new Tags (this.subject), _.pick (this, _.keyIsKeyword)) },
+        clone: function (newSubject) {
+            return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
 
         modifySubject: function (changesFn) {
                             this.subject = changesFn (this.subject)
@@ -117,8 +117,8 @@ _.withTest ('keywords', function () {
 
         /* static methods (actual API)
          */
-        clone: function (what) {
-            return _.isTypeOf (Tags, what) ? what.clone () : what },
+        clone: function (what, newSubject) {
+            return _.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what) },
 
         get: function (def) {
             return _.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {} },
@@ -177,15 +177,15 @@ _.withTest ('keywords', function () {
     _.defineKeyword ('platform', _.platform)
     _.defineKeyword ('untag',   Tags.unwrap)
 
-    _.defineTagKeyword = function (k, fn) { // fn for additional processing of returned Tag instance
+    _.defineTagKeyword = function (k, fn) { // fn for additional processing of constructed function
 
-                            fn = _.isFunction (fn) ? fn : _.identity
+                            fn = (_.isFunction (fn) && fn) || _.identity
 
                             if (!(_.keyword (k) in $global)) { // tag keyword definitions may overlap
                                 _.defineKeyword (k, Tags.add ('constant',
-                                    _.extendWith ({ matches: Tags.matches (k) }, function (a, b) {      // generates $tag.matches predicate
-                                        if (arguments.length < 2) { return fn (Tags.add (k, a)) }            // $tag (value)
-                                                             else { return fn (Tags.add (k, b, a)) } })))    // $tag (params, value)
+                                    _.extendWith ({ matches: Tags.matches (k) }, fn (function (a, b) {      // generates $tag.matches predicate
+                                        if (arguments.length < 2) { return Tags.add (k, a) }            // $tag (value)
+                                                             else { return Tags.add (k, b, a) } }))))    // $tag (params, value)
                                 _.tagKeywords[k] = true }
 
                                 var kk = _.keyword (k)

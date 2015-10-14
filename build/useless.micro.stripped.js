@@ -1005,8 +1005,8 @@ Tags = _.extend2(function (subject) {
         add: function (name, additionalData) {
             return this[_.keyword(name)] = additionalData || true, this;
         },
-        clone: function () {
-            return _.extend(new Tags(this.subject), _.pick(this, _.keyIsKeyword));
+        clone: function (newSubject) {
+            return _.extend(new Tags(newSubject || this.subject), _.pick(this, _.keyIsKeyword));
         },
         modifySubject: function (changesFn) {
             this.subject = changesFn(this.subject);
@@ -1017,8 +1017,8 @@ Tags = _.extend2(function (subject) {
             }
         }
     },
-    clone: function (what) {
-        return _.isTypeOf(Tags, what) ? what.clone() : what;
+    clone: function (what, newSubject) {
+        return _.isTypeOf(Tags, what) ? what.clone(newSubject) : newSubject || what;
     },
     get: function (def) {
         return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
@@ -1082,15 +1082,15 @@ _.defineKeyword('global', _.global);
 _.defineKeyword('platform', _.platform);
 _.defineKeyword('untag', Tags.unwrap);
 _.defineTagKeyword = function (k, fn) {
-    fn = _.isFunction(fn) ? fn : _.identity;
+    fn = _.isFunction(fn) && fn || _.identity;
     if (!(_.keyword(k) in $global)) {
-        _.defineKeyword(k, Tags.add('constant', _.extendWith({ matches: Tags.matches(k) }, function (a, b) {
+        _.defineKeyword(k, Tags.add('constant', _.extendWith({ matches: Tags.matches(k) }, fn(function (a, b) {
             if (arguments.length < 2) {
-                return fn(Tags.add(k, a));
+                return Tags.add(k, a);
             } else {
-                return fn(Tags.add(k, b, a));
+                return Tags.add(k, b, a);
             }
-        })));
+        }))));
         _.tagKeywords[k] = true;
     }
     var kk = _.keyword(k);
@@ -1830,10 +1830,15 @@ _.extend(_, {
             }
         });
     },
-    barrier: function (value) {
+    barrier: function (defaultValue) {
+        var defaultListener = undefined;
+        if (_.isFunction(defaultValue)) {
+            defaultListener = defaultValue;
+            defaultValue = undefined;
+        }
         var barrier = _.stream({
-            already: value !== undefined,
-            value: value,
+            already: defaultValue !== undefined,
+            value: defaultValue,
             write: function (returnResult) {
                 return function (value) {
                     if (!barrier.already) {
@@ -1853,6 +1858,9 @@ _.extend(_, {
                 };
             }
         });
+        if (defaultListener) {
+            barrier(defaultListener);
+        }
         return barrier;
     },
     triggerOnce: $restArg(function () {
@@ -1950,7 +1958,10 @@ _.extend(_, {
             once: once,
             off: _.off.asMethod,
             read: read,
-            write: write
+            write: write,
+            postpone: function () {
+                this.postponed.apply(self.context, arguments);
+            }
         });
     }
 });
@@ -1982,6 +1993,9 @@ _.extend($prototype, {
             $prototype.impl.memberNameTriggeredMacros[arg] = fn;
         }
     },
+    macroTag: function (name, fn) {
+        $prototype.impl.tagTriggeredMacros[_.keyword(name)] = fn;
+    },
     each: function (visitor) {
         var namespace = $global;
         for (var k in namespace) {
@@ -2009,11 +2023,12 @@ _.extend($prototype, {
     impl: {
         alwaysTriggeredMacros: [],
         memberNameTriggeredMacros: {},
+        tagTriggeredMacros: {},
         compile: function (def, base) {
             return (base && base.$impl || this)._compile(def, base);
         },
         _compile: function (def, base) {
-            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberNameTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
+            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
         },
         evalAlwaysTriggeredMacros: function (base) {
             return function (def) {
@@ -2024,13 +2039,18 @@ _.extend($prototype, {
                 return def;
             };
         },
-        evalMemberNameTriggeredMacros: function (base) {
+        evalMemberTriggeredMacros: function (base) {
             return function (def) {
-                var macros = $prototype.impl.memberNameTriggeredMacros;
+                var names = $prototype.impl.memberNameTriggeredMacros, tags = $prototype.impl.tagTriggeredMacros;
                 _.each(def, function (value, name) {
-                    if (macros.hasOwnProperty(name)) {
-                        def = macros[name](def, value, name, base);
+                    if (names.hasOwnProperty(name)) {
+                        def = names[name](def, value, name, base);
                     }
+                    _.each(_.keys(value), function (tag) {
+                        if (tags.hasOwnProperty(tag)) {
+                            def = tags[tag](def, value, name, base);
+                        }
+                    });
                 });
                 return def;
             };
@@ -2056,10 +2076,6 @@ _.extend($prototype, {
             }) : def;
         },
         contributeTraits: function (def) {
-            if (def.$trait) {
-                def.$traits = [def.$trait];
-                delete def.$trait;
-            }
             if (def.$traits) {
                 var traits = def.$traits;
                 this.mergeTraitsMembers(def, traits);
@@ -2276,6 +2292,12 @@ Intersect = {
 };
 Vec2 = $prototype({
     $static: {
+        x: function (x) {
+            return new Vec2(x, x);
+        },
+        xy: function (x, y) {
+            return new Vec2(x, y);
+        },
         zero: $property(function () {
             return new Vec2(0, 0);
         }),
@@ -2283,6 +2305,11 @@ Vec2 = $prototype({
             return new Vec2(1, 1);
         }),
         one: $alias('unit'),
+        half: $property(function () {
+            return new Vec2(0.5, 0.5);
+        }),
+        lt: $alias('fromLT'),
+        wh: $alias('fromWH'),
         fromLT: function (lt) {
             return new Vec2(lt.left, lt.top);
         },
@@ -2577,6 +2604,14 @@ BBox = $prototype({
             return pt.sub(test).length;
         });
     },
+    xywh: $property(function () {
+        return {
+            x: this.x,
+            y: this.y,
+            width: this.width,
+            height: this.height
+        };
+    }),
     clone: $property(function () {
         return new BBox(this.x, this.y, this.width, this.height);
     }),
@@ -2641,28 +2676,49 @@ BBox = $prototype({
     }
 });
 Transform = $prototype({
-    identity: $static($property(function () {
-        return new Transform();
-    })),
-    svgMatrix: $static(function (m) {
-        return new Transform([
-            [
-                m.a,
-                m.c,
-                m.e
-            ],
-            [
-                m.b,
-                m.d,
-                m.f
-            ],
-            [
-                0,
-                0,
-                1
-            ]
-        ]);
-    }),
+    $static: {
+        identity: $property(function () {
+            return new Transform();
+        }),
+        svgMatrix: function (m) {
+            return new Transform([
+                [
+                    m.a,
+                    m.c,
+                    m.e
+                ],
+                [
+                    m.b,
+                    m.d,
+                    m.f
+                ],
+                [
+                    0,
+                    0,
+                    1
+                ]
+            ]);
+        },
+        translation: function (v) {
+            return new Transform([
+                [
+                    1,
+                    0,
+                    v.x
+                ],
+                [
+                    0,
+                    1,
+                    v.y
+                ],
+                [
+                    0,
+                    0,
+                    1
+                ]
+            ]);
+        }
+    },
     constructor: function (components) {
         this.components = components || [
             [
@@ -2711,23 +2767,7 @@ Transform = $prototype({
         return new Transform(result);
     },
     translate: function (v) {
-        return this.multiply(new Transform([
-            [
-                1,
-                0,
-                v.x
-            ],
-            [
-                0,
-                1,
-                v.y
-            ],
-            [
-                0,
-                0,
-                1
-            ]
-        ]));
+        return this.multiply(Transform.translation(v));
     },
     scale: function (s) {
         return this.multiply(new Transform([
@@ -3038,7 +3078,6 @@ _([
     'triggerOnce',
     'barrier',
     'observable',
-    'observableProperty',
     'bindable',
     'memoize',
     'memoizeCPS',
@@ -3048,14 +3087,13 @@ _([
     'listener',
     'postpones'
 ]).each(_.defineTagKeyword);
+_.defineTagKeyword('observableProperty', _.flip);
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro(keyword, function (def, value, name, Base) {
-        _.defaults(value, Base && Base[keyword]);
-        if (def.$trait || def.$traits) {
-            _.each(def.$trait && [def.$trait] || def.$traits, function (Trait) {
-                _.defaults(value, Trait[keyword]);
-            });
-        }
+        _.extend2(value, Base && Base[keyword] || {}, value);
+        _.each(def.$traits, function (Trait) {
+            _.extend2(value, Trait[keyword]);
+        });
         def[keyword] = $static($builtin($property(_.constant(value))));
         return def;
     });
@@ -3100,8 +3138,7 @@ Component = $prototype({
                     ];
                 }));
                 if (bound.length) {
-                    var bindable = _.bindable($untag(member));
-                    def[name] = $bindable(bindable);
+                    var bindable = (def[name] = Tags.clone(member, _.bindable($untag(member)))).subject;
                     _.each(bound, function (kv) {
                         _.each(kv[1], function (fn) {
                             fn = $untag(fn);
@@ -3117,13 +3154,14 @@ Component = $prototype({
     isStreamDefinition: $static(function (def) {
         return _.isObject(def) && (def.$trigger || def.$triggerOnce || def.$barrier || def.$observable || def.$observableProperty);
     }),
-    enumMethods: function (iterator) {
+    enumMethods: function () {
+        var iterator = _.last(arguments), predicate = arguments.length === 1 ? _.constant(true) : arguments[0];
         var methods = [];
         for (var k in this) {
             var def = this.constructor.$definition[k];
             if (!(def && def.$property)) {
                 var fn = this[k];
-                if (_.isFunction(fn) && !_.isPrototypeConstructor(fn)) {
+                if (predicate(def) && _.isFunction(fn) && !_.isPrototypeConstructor(fn)) {
                     iterator.call(this, fn, k);
                 }
             }
@@ -3147,6 +3185,7 @@ Component = $prototype({
         }, _.omit(_.omit(cfg, 'init', 'attachTo', 'attach'), function (v, k) {
             return Component.isStreamDefinition(componentDefinition[k]);
         }, this));
+        var initialStreamListeners = [];
         _.each(componentDefinition, function (def, name) {
             if (def !== undefined) {
                 if (def.$observableProperty) {
@@ -3170,7 +3209,18 @@ Component = $prototype({
                         }
                     });
                     if (def.listeners) {
-                        _.each(def.listeners, observable);
+                        _.each(def.listeners, function (value) {
+                            initialStreamListeners.push([
+                                observable,
+                                value
+                            ]);
+                        });
+                    }
+                    if (_.isFunction(def.$observableProperty)) {
+                        initialStreamListeners.push([
+                            observable,
+                            def.$observableProperty
+                        ]);
                     }
                     if (defaultValue !== undefined) {
                         observable(_.isFunction(defaultValue) ? this.$(defaultValue) : defaultValue);
@@ -3182,11 +3232,19 @@ Component = $prototype({
                         postpones: def.$postpones
                     });
                     if (def.listeners) {
-                        _.each(def.listeners, stream);
+                        _.each(def.listeners, function (value) {
+                            initialStreamListeners.push([
+                                stream,
+                                value
+                            ]);
+                        });
                     }
                     var defaultListener = cfg[name];
                     if (defaultListener) {
-                        stream(this.$(defaultListener));
+                        initialStreamListeners.push([
+                            stream,
+                            defaultListener
+                        ]);
                     }
                 }
                 if (def.$listener) {
@@ -3231,6 +3289,9 @@ Component = $prototype({
                 $assertTypeMatches(this[name], contract);
             }, this);
         }
+        _.each(initialStreamListeners, function (v) {
+            v[0].call(this, v[1]);
+        }, this);
         if (!(cfg.init === false || this.constructor.$defaults && this.constructor.$defaults.init === false)) {
             this.init();
         }
@@ -3473,16 +3534,17 @@ if (jQuery) {
                         }).appendTo(document.body);
                     }
                     var overlay = window.__globalDragOverlay;
+                    var button = cfg.button || 1;
                     var begin = this.$(function (initialEvent) {
                         var relativeTo = cfg.relativeTo || this;
                         this.addClass(cfg.cls || '');
-                        if (Platform.touch || initialEvent.which === 1) {
+                        if (Platform.touch || initialEvent.which === button) {
                             var offset = relativeTo.offset(), memo = undefined;
                             if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) {
                                 var abort = undefined, unbind = undefined, end = undefined;
                                 memo = _.clone(memo);
                                 var move = this.$(function (e) {
-                                    if (Platform.touch || e.which === 1) {
+                                    if (Platform.touch || e.which === button) {
                                         e.preventDefault();
                                         var translatedEvent = translateTouchEvent(e, this[0]);
                                         var offset = relativeTo.offset();
@@ -3566,9 +3628,19 @@ if (jQuery) {
             svgTranslate: function (pt) {
                 return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
             },
-            svgTansformMatrix: function (t) {
+            svgTransformMatrix: function (t) {
                 var m = t.components;
                 return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
+            },
+            svgTransformToElement: function (el) {
+                return Transform.svgMatrix(this[0].getTransformToElement(el[0]));
+            },
+            svgBBox: function (bbox) {
+                if (arguments.length === 0) {
+                    return new BBox(this[0].getBBox());
+                } else {
+                    return this.attr(bbox.xywh);
+                }
             },
             outerExtent: function () {
                 return new Vec2(this.outerWidth(), this.outerHeight());

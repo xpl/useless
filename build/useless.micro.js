@@ -1728,8 +1728,8 @@ _.withTest ('keywords', function () {
         add: function (name, additionalData) {
                 return this[_.keyword (name)] = additionalData || true, this },
 
-        clone: function () {
-            return _.extend (new Tags (this.subject), _.pick (this, _.keyIsKeyword)) },
+        clone: function (newSubject) {
+            return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
 
         modifySubject: function (changesFn) {
                             this.subject = changesFn (this.subject)
@@ -1740,8 +1740,8 @@ _.withTest ('keywords', function () {
 
         /* static methods (actual API)
          */
-        clone: function (what) {
-            return _.isTypeOf (Tags, what) ? what.clone () : what },
+        clone: function (what, newSubject) {
+            return _.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what) },
 
         get: function (def) {
             return _.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {} },
@@ -1800,15 +1800,15 @@ _.withTest ('keywords', function () {
     _.defineKeyword ('platform', _.platform)
     _.defineKeyword ('untag',   Tags.unwrap)
 
-    _.defineTagKeyword = function (k, fn) { // fn for additional processing of returned Tag instance
+    _.defineTagKeyword = function (k, fn) { // fn for additional processing of constructed function
 
-                            fn = _.isFunction (fn) ? fn : _.identity
+                            fn = (_.isFunction (fn) && fn) || _.identity
 
                             if (!(_.keyword (k) in $global)) { // tag keyword definitions may overlap
                                 _.defineKeyword (k, Tags.add ('constant',
-                                    _.extendWith ({ matches: Tags.matches (k) }, function (a, b) {      // generates $tag.matches predicate
-                                        if (arguments.length < 2) { return fn (Tags.add (k, a)) }            // $tag (value)
-                                                             else { return fn (Tags.add (k, b, a)) } })))    // $tag (params, value)
+                                    _.extendWith ({ matches: Tags.matches (k) }, fn (function (a, b) {      // generates $tag.matches predicate
+                                        if (arguments.length < 2) { return Tags.add (k, a) }            // $tag (value)
+                                                             else { return Tags.add (k, b, a) } }))))    // $tag (params, value)
                                 _.tagKeywords[k] = true }
 
                                 var kk = _.keyword (k)
@@ -2937,6 +2937,10 @@ _.tests.stream = {
         _.off (act)
         act () },
 
+    '_.barrier (defaultListener)': function () {
+        $assertEveryCalled (function (mkay) {
+             _.barrier (function () { mkay () }) () }) },
+
     /*  Need to rewrite it for clariy
      */
     'all shit': function () {
@@ -3083,11 +3087,15 @@ _.extend (_, {
                         then (val) } }) } }) },
 
 
-    barrier: function (value) {
+    barrier: function (defaultValue) { var defaultListener = undefined
+
+        if (_.isFunction (defaultValue)) {
+            defaultListener = defaultValue
+            defaultValue = undefined }
 
         var barrier = _.stream ({
-                    already: value !== undefined,
-                    value: value,
+                    already: defaultValue !== undefined,
+                    value: defaultValue,
                     write: function (returnResult) {
                                 return function (value) {
                                     if (!barrier.already) {
@@ -3102,6 +3110,9 @@ _.extend (_, {
                                         returnResult.call (this, barrier.value) }
                                     else {
                                         schedule.call (this, returnResult) } } } })
+
+        if (defaultListener) {
+            barrier (defaultListener) }
 
         return barrier },
 
@@ -3190,7 +3201,8 @@ _.extend (_, {
                     once:     once,
                     off:    _.off.asMethod,
                     read:     read,
-                    write:    write })) } })
+                    write:    write,
+                    postpone: function () { this.postponed.apply (self.context, arguments) } })) } })
 
 
 
@@ -3507,6 +3519,9 @@ _.withTest ('OOP', {
             else {
                 $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
 
+        macroTag: function (name, fn) {
+            $prototype.impl.tagTriggeredMacros[_.keyword (name)] = fn },
+
         each: function (visitor) { var namespace = $global
             for (var k in namespace) {
                 if (!_.isKeyword (k)) { var value = namespace[k]
@@ -3529,8 +3544,9 @@ _.withTest ('OOP', {
 
         impl: {
 
-            alwaysTriggeredMacros: [],
+            alwaysTriggeredMacros:     [],
             memberNameTriggeredMacros: {},
+            tagTriggeredMacros:        {},
 
             compile: function (def, base) {
                 return ((base && base.$impl) || this)._compile (def, base) },
@@ -3543,7 +3559,7 @@ _.withTest ('OOP', {
                     this.ensureFinalContracts (base),
                     this.generateConstructor (base),
                     this.evalAlwaysTriggeredMacros (base),
-                    this.evalMemberNameTriggeredMacros (base),
+                    this.evalMemberTriggeredMacros (base),
                     this.contributeTraits,
                     this.generateBuiltInMembers (base),
                     this.expandAliases,
@@ -3556,12 +3572,15 @@ _.withTest ('OOP', {
                         def = macros[i] (def, base) }
                     return def } },
 
-            evalMemberNameTriggeredMacros: function (base) {
-                return function (def) { var macros = $prototype.impl.memberNameTriggeredMacros
+            evalMemberTriggeredMacros: function (base) {
+                return function (def) { var names = $prototype.impl.memberNameTriggeredMacros,
+                                            tags  = $prototype.impl.tagTriggeredMacros
                     _.each (def, function (value, name) {
-                        if (macros.hasOwnProperty (name)) {
-                            def = macros[name] (def, value, name, base) } })
-                    return def } },
+                        if (names.hasOwnProperty (name)) {
+                            def = names[name] (def, value, name, base) }
+                        _.each (_.keys (value), function (tag) { if (tags.hasOwnProperty (tag)) {
+                            def = tags [tag]  (def, value, name, base) } }) })
+                     return def } },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -3579,10 +3598,7 @@ _.withTest ('OOP', {
                                                                          return fn.apply (this, args) } }) : def },
 
             contributeTraits: function (def) {
-                if (def.$trait) {
-                    def.$traits = [def.$trait]
-                    delete def.$trait }
-
+                
                 if (def.$traits) { var traits = def.$traits
 
                     this.mergeTraitsMembers (def, traits)
@@ -3679,7 +3695,7 @@ _.withTest ('OOP', {
             (also known as "mixin" in some languages)
     ======================================================================== */
 
-    _.withTest (['OOP', '$trait / $traits'], function () {
+    _.withTest (['OOP', '$traits'], function () {
 
         var Closeable = $trait ({
             close: function () {} })
@@ -3691,7 +3707,7 @@ _.withTest ('OOP', {
             each: function (iter) {},
             length: $property (function () { return 0; }) })
 
-        var JustCloseable     = $prototype ({ $trait:  Closeable })
+        var JustCloseable     = $prototype ({ $traits: [Closeable] })
         var MovableEnumerable = $prototype ({ $traits: [Movable, Enumerable], move: function () {} })
 
         var movableEnumerable = new MovableEnumerable ()
@@ -3717,8 +3733,7 @@ _.withTest ('OOP', {
         $assert (MovableEnumerable.hasTrait (Enumerable))
 
         $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
-        $assertMatches (JustCloseable,      { $traits: [Closeable],
-                                              $trait:  undefined }) }, function () {
+        $assertMatches (JustCloseable,      { $traits: [Closeable] }) }, function () {
 
     _.isTraitOf = function (Trait, instance) {
         var constructor = instance && instance.constructor
@@ -3886,9 +3901,14 @@ Intersect = {
 Vec2 = $prototype ({
 
     $static: {
+        x:           function (x)   { return new Vec2 (x,x) },
+        xy:          function (x,y) { return new Vec2 (x,y) },
         zero:        $property (function () { return new Vec2 (0, 0) }),
         unit:        $property (function () { return new Vec2 (1, 1) }),
         one:         $alias ('unit'),
+        half:        $property (function () { return new Vec2 (0.5, 0.5) }),
+        lt:          $alias ('fromLT'),
+        wh:          $alias ('fromWH'),
         fromLT:      function (lt) { return new Vec2 (lt.left, lt.top) },
         fromWH:      function (wh) { return new Vec2 (wh.width, wh.height) },
         fromLeftTop:     $alias ('fromLT'),
@@ -4158,6 +4178,9 @@ BBox = $prototype ({
 
         return _.min (pts, function (test) { return pt.sub (test).length }) },
 
+    xywh: $property (function () {
+        return { x: this.x, y: this.y, width: this.width, height: this.height } }),
+
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
     
@@ -4221,13 +4244,21 @@ BBox = $prototype ({
 
 Transform = $prototype ({
 
-    identity: $static ($property (function () { return new Transform () })),
+    $static: {
 
-    svgMatrix: $static (function (m) {
-                            return new Transform ([
-                                [m.a, m.c, m.e],
-                                [m.b, m.d, m.f],
-                                [0.0, 0.0, 1.0] ]) }),
+        identity: $property (function () { return new Transform () }),
+
+        svgMatrix: function (m) {
+                        return new Transform ([
+                            [m.a, m.c, m.e],
+                            [m.b, m.d, m.f],
+                            [0.0, 0.0, 1.0] ]) },
+
+        translation: function (v) {
+                        return new Transform ([
+                                    [1.0, 0.0, v.x],
+                                    [0.0, 1.0, v.y],
+                                    [0.0, 0.0, 1.0] ]) } },
 
     constructor: function (components) {
                     this.components = components || [
@@ -4246,10 +4277,7 @@ Transform = $prototype ({
                     return new Transform (result) },
 
     translate: function (v) {
-                    return this.multiply (new Transform ([
-                        [1.0, 0.0, v.x],
-                        [0.0, 1.0, v.y],
-                        [0.0, 0.0, 1.0] ])) },
+                    return this.multiply (Transform.translation (v)) },
 
     scale: function (s) {
                 return this.multiply (new Transform ([
@@ -4762,13 +4790,13 @@ _.tests.component = {
             //  CPS init()
             $assertCalls (1, function (mkay) {
                 assertAfterInitCalls ($extends (Base, {
-                    $trait: trait,
+                    $traits: [trait],
                     init: function (then) { this.assertBeforeInitCalls (); mkay (); then () } })) })
 
             //  Sequential init()
             $assertCalls (1, function (mkay) {
                 assertAfterInitCalls ($extends (Base, {
-                    $trait: trait,
+                    $traits: [trait],
                     init: function () { this.assertBeforeInitCalls (); mkay () } })) }) }
 
         //  Sequential afterInit/beforeInit
@@ -4785,15 +4813,18 @@ _.tests.component = {
     /*  $defaults is convenient macro to extract _.defaults thing from init() to definition level
      */
     '$defaults': function () {
-        var Trait = $trait ({ $defaults: { pff: 'pff' }})
-        var Base = $component ({ $defaults: { foo: 12, qux: 'override me' } })
+        var Trait = $trait ({ $defaults: { pff: 'pff', inner: { fromTrait: 1 } }})
+        var Base = $component ({ $defaults: { foo: 12, qux: 'override me', inner: { fromBase: 1 } } })
         var Derived = $extends (Base, {
-            $trait: Trait,
-            $defaults: { bar: 34, qux: 'overriden', obj: {} } })
+            $traits: [Trait],
+            $defaults: { bar: 34, qux: 'overriden', inner: { fromDerived: 1 } } })
 
-        $assert (new Derived ().obj !== new Derived ().obj) // should clone $defaults at instance construction
+        /* TODO: fix bug not allowing derived to not have $defaults
+           var Derived2 = $extends (Derived, {}) */
+ 
+        $assert (new Derived ().inner !== new Derived ().inner) // should clone $defaults at instance construction
 
-        $assertMatches (new Derived (), { pff: 'pff', foo: 12, bar: 34, qux: 'overriden' }) },
+        $assertMatches (new Derived (), { pff: 'pff', foo: 12, bar: 34, qux: 'overriden', inner: { fromTrait: 1, fromBase: 1, fromDerived: 1 } }) },
 
 
     /*  Use $requires to specify required config params along with their type signatures
@@ -4974,7 +5005,6 @@ _.tests.component = {
         var compo = new Compo ({ position: { x: 10, y: 42 }}) // supply POD value from constructor
         compo.position = { x: 20, y: 42 } },                  // supply POD value from property accessor
 
-
     'binding to streams with traits': function () {
 
         $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
@@ -5077,6 +5107,16 @@ _.tests.component = {
 
         compo.propChange.force () }) },
 
+    'two-argument $observableProperty syntax': function () {
+
+        $assertEveryCalled (function (mkay) {
+            var compo = $singleton (Component, {
+                                        prop: $observableProperty (42, function (value) { mkay ()
+                                            if (compo) {
+                                                $assert (this  === compo)
+                                                $assert (value === compo.prop) } }) })
+                compo.prop = 43 }) },
+
 
     'destroyAll()': function () { $assertCalls (2, function (mkay) {
         
@@ -5143,32 +5183,34 @@ _.tests.component = {
 
             $assert (test.close, test.destroy) } }
 
-/*  Syntax
+/*  General syntax
  */
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'observableProperty',
-    'bindable', 'memoize', 'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize',
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
     .each (_.defineTagKeyword)
 
+_.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
 
-/*  Make $defaults and $requires inherit base values
+
+/*  Make $defaults and $requires inherit base values + $traits support
  */
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro (keyword, function (def, value, name, Base) {
-        _.defaults (value, Base && Base[keyword])
 
-        if (def.$trait || def.$traits) {
-            _.each ((def.$trait && [def.$trait]) || def.$traits, function (Trait) {
-                _.defaults (value, Trait[keyword]) }) }
+        _.extend2 (value, (Base && Base[keyword]) || {}, value)
+
+        _.each (def.$traits, function (Trait) {
+            _.extend2 (value, Trait[keyword]) })
 
         def[keyword] = $static ($builtin ($property (_.constant (value))))
+
         return def }) } 
 
 $prototype.inheritsBaseValues ('$defaults')
 $prototype.inheritsBaseValues ('$requires')
-
 
 /*  Impl
  */
@@ -5177,6 +5219,7 @@ Component = $prototype ({
     /*  Overrides default OOP.js implementation of traits (providing method chaining)
      */
     $impl: {
+
         mergeTraitsMembers: function (def, traits) {
 
             var pool = {}
@@ -5205,8 +5248,7 @@ Component = $prototype ({
                                                     var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
                                                     return bound && [hook, bound] }))
                 if (bound.length) {
-                    var bindable = _.bindable ($untag (member))
-                    def[name] = $bindable (bindable)
+                    var bindable = (def[name] = Tags.clone (member, _.bindable ($untag (member)))).subject
                     _.each (bound, function (kv) {
                         _.each (kv[1], function (fn) { fn = $untag (fn)
                             if (_.isFunction (fn)) {
@@ -5223,12 +5265,13 @@ Component = $prototype ({
     /*  Another helper (it was needed because _.methods actually evaluate $property values while enumerating keys,
         and it ruins most of application code, because it happens before Component is actually created).
      */
-    enumMethods: function (iterator) {
+    enumMethods: function (/* [predicate, ] iterator */) { var iterator  = _.last (arguments),
+                                                               predicate = (arguments.length === 1 ? _.constant (true) : arguments[0])
         var methods = []
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
-                if (_.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
+                if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
                     iterator.call (this, fn, k) } } } },
 
     /*  Thou shall not override this
@@ -5265,12 +5308,15 @@ Component = $prototype ({
             _.omit (_.omit (cfg, 'init', 'attachTo', 'attach'), function (v, k) {
                     return Component.isStreamDefinition (componentDefinition[k]) }, this))
 
+        var initialStreamListeners = []
+
         /*  Expand macros
             TODO: execute this substitution at $prototype code-gen level, not at instance level
          */
         _.each (componentDefinition, function (def, name) { if (def !== undefined) {
 
             /*  Expand $observableProperty
+                TODO: rewrite with $prototype.macro
              */
             if (def.$observableProperty) {  var definitionValue = this[name] // from $component definition
                                                 defaultValue    = (name in cfg ? cfg[name] : definitionValue)
@@ -5293,12 +5339,17 @@ Component = $prototype ({
                         set: function (x) { observable.call (this, x) } })
 
                 if (def.listeners) {
-                    _.each (def.listeners, observable) }
+                    _.each (def.listeners, function (value) {
+                        initialStreamListeners.push ([observable, value]) }) }
+
+                if (_.isFunction (def.$observableProperty)) { // default listener param
+                      initialStreamListeners.push ([observable, def.$observableProperty]) }
 
                 /*  write default value
                  */
                 if (defaultValue !== undefined) {
                     observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
+
 
             /*  Expand streams
              */
@@ -5311,11 +5362,11 @@ Component = $prototype ({
                 this[name] = _.extend (stream, { context: this, postpones: def.$postpones })
 
                 if (def.listeners) {
-                    _.each (def.listeners, stream) }
+                    _.each (def.listeners, function (value) {
+                        initialStreamListeners.push ([stream, value]) }) }
 
                 var defaultListener = cfg[name]                
-                if (defaultListener) {
-                    stream (this.$ (defaultListener)) } }
+                if (defaultListener) { initialStreamListeners.push ([stream, defaultListener]) } }
 
             /*  Expand $listener
              */
@@ -5371,6 +5422,11 @@ Component = $prototype ({
         if (_.hasAsserts) {
             _.each (this.constructor.$requires, function (contract, name) {
                 $assertTypeMatches (this[name], contract) }, this) }
+
+
+        /*  Subscribe default listeners
+         */
+        _.each (initialStreamListeners, function (v) { v[0].call (this, v[1]) }, this)
 
 
         /*  Call init (if not marked as deferred)
@@ -5682,12 +5738,13 @@ _.extend ($, {
                         zIndex: 999999 }).appendTo (document.body) }
 
             var overlay = window.__globalDragOverlay
+            var button  = cfg.button || 1
                 
             var begin = this.$ (function (initialEvent) { var relativeTo = (cfg.relativeTo || this)
 
                 this.addClass (cfg.cls || '')
                 
-                if (Platform.touch || initialEvent.which === 1) { var offset = relativeTo.offset (), memo = undefined
+                if (Platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
                     
                     if (!cfg.start || ((memo = cfg.start.call (cfg.context || this, new Vec2 (
                             // position (relative to delegate target)
@@ -5699,7 +5756,7 @@ _.extend ($, {
                         memo = _.clone (memo)
 
                         var move = this.$ (function (e) {
-                            if (Platform.touch || e.which === 1) {
+                            if (Platform.touch || e.which === button) {
                                 e.preventDefault ()
                                 var translatedEvent = translateTouchEvent (e, this[0])
                                 var offset = relativeTo.offset ()
@@ -5791,10 +5848,17 @@ _.extend ($, {
     svgTranslate: function (pt) {
         return this.attr ('transform', 'translate(' + pt.x + ',' + pt.y + ')') },
     
-    svgTansformMatrix: function (t) {
+    svgTransformMatrix: function (t) {
         var m = t.components
         return this.attr ('transform', 'matrix(' +
             m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')') },
+
+    svgTransformToElement: function (el) {
+        return Transform.svgMatrix (this[0].getTransformToElement (el[0])) },
+
+    svgBBox: function (bbox) {
+        if (arguments.length === 0) { return new BBox (this[0].getBBox ()) }
+                               else { return this.attr (bbox.xywh) } },
 
     /*  To determine display size of an element
      */

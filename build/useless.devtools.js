@@ -589,7 +589,7 @@ _.mixin ({
                     if (e.error) {
                         globalUncaughtExceptionHandler (e.error) }
 
-                    else if (e.error !== null) { // emulate missing .error (that's Safari)
+                    else { // emulate missing .error (that's Safari)
                         globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
                             stub: true,
                             stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } }) }
@@ -1259,6 +1259,8 @@ _.extend (log, log.printAPI = {
     ok:         log.impl.write ({ location: true }).partial (log.color.green) }) 
 
 log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
+
+logs = _.map2 (log.printAPI, _.higherOrder) // higher order API
 
 log.impl.writeBackend = log.impl.defaultWriteBackend
 

@@ -5,6 +5,8 @@ var fs              = require ('fs'),
 
 module.exports = $trait ({
 
+    buildScripts: ['useless.js', 'useless.devtools.js'],
+
     buildScript: function (name) { log.info ('Building monolithic ' + name)
 
         var includeFile = fs.readFileSync ($uselessPath + name, { encoding: 'utf8' })
@@ -13,12 +15,7 @@ module.exports = $trait ({
 
     /*  Self deployment protocol
      */
-    beforeInit: function (then) {
-
-        this.buildScript ('useless.js')
-        this.buildScript ('useless.devtools.js')
-
-        then () } })
+    beforeInit: function (then) { _.each (this.buildScripts, this.buildScript); then () } })
 
 
 

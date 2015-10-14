@@ -2,7 +2,7 @@
 
 Collection = $extends (Component, {
 
-	$trait: Changeable,
+	$traits: [Changeable],
 
 	/*	Coerces following input values to proper Collection instances:
 	 */
@@ -142,7 +142,7 @@ Collection = $extends (Component, {
 
 SortedFilteredCollection = $extends (Component, {
 
-	$trait: Changeable,
+	$traits: [Changeable],
 
 	notEmpty:			$barrier (),
 	updated:			$trigger (),

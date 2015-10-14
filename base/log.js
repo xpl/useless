@@ -269,6 +269,8 @@ _.extend (log, log.printAPI = {
 
 log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
 
+logs = _.map2 (log.printAPI, _.higherOrder) // higher order API
+
 log.impl.writeBackend = log.impl.defaultWriteBackend
 
 /*  Experimental formatting shit.

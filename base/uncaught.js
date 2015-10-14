@@ -50,7 +50,7 @@
                     if (e.error) {
                         globalUncaughtExceptionHandler (e.error) }
 
-                    else if (e.error !== null) { // emulate missing .error (that's Safari)
+                    else { // emulate missing .error (that's Safari)
                         globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
                             stub: true,
                             stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } }) }
