@@ -7854,7 +7854,7 @@ Panic.widget = $singleton (Component, {
 		el.appendTo (document.body)// })
 
 		try {
-			this.initAutosize ()
+			$(window).resize (this.layout).resize ()
 			this.modal.enableScrollFaders ({ scroller: this.modalBody })
 			$(document).keydown (this.$ (function (e) { if (e.keyCode === 27) { this.close () } })) }
 
@@ -7863,9 +7863,9 @@ Panic.widget = $singleton (Component, {
 
 		return el })),
 
-	initAutosize: function () {
-		$(window).resize (this.$ (function () { this.modal.css ('max-height', $(document).height () - 100)
-					  		  					this.modalBody.scroll () })).resize () },
+	layout: function () {
+		this.modal.css ('max-height', $(document).height () - 100)
+		this.modalBody.scroll () },
 
 	toggleVisibility: function (yes) {
 		if (yes !== !(this.el.css ('display') === 'none')) {
@@ -7914,7 +7914,7 @@ Panic.widget = $singleton (Component, {
 						this.el.find ('.panic-modal-title'))}
 
 		this.toggleVisibility (true)
-		this.modalBody.scroll ()  },
+		this.layout ()  },
 
 	hash: function (what) {
 		return ((_.isTypeOf (Error, what) ? (what && what.stack) : what) || '').hash },
@@ -7954,7 +7954,8 @@ Panic.widget = $singleton (Component, {
 									if (dom.is ('.full')) {
 										dom.removeClass ('full')
 										dom.transitionend (function () {
-											if (!dom.is ('.full')) { el.text (entry.source) } }) }
+											if (!dom.is ('.full')) {
+												entry.sourceReady (el.$ ($.fn.text)) } }) }
 									else {
 										dom.addClass ('full'); el.html (_.map (text.split ('\n'), function (line) {
 																			return $('<div class="line">').text (line) }))

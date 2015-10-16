@@ -1368,7 +1368,7 @@ _.perfTest = function (arg, then) {
             ]);
             el.appendTo(document.body);
             try {
-                this.initAutosize();
+                $(window).resize(this.layout).resize();
                 this.modal.enableScrollFaders({ scroller: this.modalBody });
                 $(document).keydown(this.$(function (e) {
                     if (e.keyCode === 27) {
@@ -1382,11 +1382,9 @@ _.perfTest = function (arg, then) {
             }
             return el;
         })),
-        initAutosize: function () {
-            $(window).resize(this.$(function () {
-                this.modal.css('max-height', $(document).height() - 100);
-                this.modalBody.scroll();
-            })).resize();
+        layout: function () {
+            this.modal.css('max-height', $(document).height() - 100);
+            this.modalBody.scroll();
         },
         toggleVisibility: function (yes) {
             if (yes !== !(this.el.css('display') === 'none')) {
@@ -1435,7 +1433,7 @@ _.perfTest = function (arg, then) {
                 $('<div class="panic-alert-error">').attr('id', id).append('<span class="panic-alert-counter">').append(_.isTypeOf(Error, what) ? this.printError(what) : log.impl.stringify(what)).insertAfter(this.el.find('.panic-modal-title'));
             }
             this.toggleVisibility(true);
-            this.modalBody.scroll();
+            this.layout();
         },
         hash: function (what) {
             return ((_.isTypeOf(Error, what) ? what && what.stack : what) || '').hash;
@@ -1469,7 +1467,7 @@ _.perfTest = function (arg, then) {
                                     dom.removeClass('full');
                                     dom.transitionend(function () {
                                         if (!dom.is('.full')) {
-                                            el.text(entry.source);
+                                            entry.sourceReady(el.$($.fn.text));
                                         }
                                     });
                                 } else {
