@@ -39,6 +39,13 @@ _.withTest ('Array extensions', function () {
 
     $extensionMethods (Array, {
 
+        each:        _.each,
+        map:         _.map,
+        reduce:      _.reduce,
+        reduceRight: _.reduceRight,
+        zip:         _.zipWith,
+        filter:      _.filter,
+
         lastIndex: function (arr) { return arr.length - 1 },
 
         last: function (arr) { return _.last (arr) },
@@ -75,9 +82,7 @@ _.withTest ('Array extensions', function () {
             var a = arr[indexA], b = arr[indexB]
             arr[indexA] = b
             arr[indexB] = a
-            return arr }),
-
-        zip: _.zipWith })
+            return arr }) })
 
     _.zap = function (firstArg) { /* (arg1..argN fn) syntax */
         var zippo = _.last (arguments)

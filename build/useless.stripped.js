@@ -1920,6 +1920,12 @@ $extensionMethods(Function, {
     }
 });
 $extensionMethods(Array, {
+    each: _.each,
+    map: _.map,
+    reduce: _.reduce,
+    reduceRight: _.reduceRight,
+    zip: _.zipWith,
+    filter: _.filter,
     lastIndex: function (arr) {
         return arr.length - 1;
     },
@@ -1964,8 +1970,7 @@ $extensionMethods(Array, {
         arr[indexA] = b;
         arr[indexB] = a;
         return arr;
-    }),
-    zip: _.zipWith
+    })
 });
 _.zap = function (firstArg) {
     var zippo = _.last(arguments);
