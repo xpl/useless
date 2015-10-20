@@ -2993,9 +2993,6 @@ Vec2 = $prototype({
             return new Vec2(1, 1);
         }),
         one: $alias('unit'),
-        half: $property(function () {
-            return new Vec2(0.5, 0.5);
-        }),
         lt: $alias('fromLT'),
         wh: $alias('fromWH'),
         fromLT: function (lt) {
