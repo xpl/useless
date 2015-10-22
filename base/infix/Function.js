@@ -117,10 +117,13 @@ $extensionMethods (Function, {
                 context = args = null }
             return result }
 
-        debouncedFn.callImmediately = function () { // cancels timeout (set by fn.debounced/fn.throttled) and calls immediately
+        debouncedFn.cancel = function () {
             if (timeout) {
                 clearTimeout (timeout)
-                timeout = null }
+                timeout = null } }
+
+        debouncedFn.callImmediately = function () { // cancels timeout (set by fn.debounced/fn.throttled) and calls immediately
+            debouncedFn.cancel ()
             func.apply (context, args) }
 
         return debouncedFn },

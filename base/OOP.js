@@ -8,7 +8,7 @@ Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
 
 _.hasOOP = true
 
-_.withTest ('OOP', {
+_.deferTest ('OOP', {
 
     '$prototype / $extends': function () {
 
@@ -152,12 +152,18 @@ _.withTest ('OOP', {
 
     '$alias': function () {
 
-        var foo = new $prototype ({
+        var foo = new ($prototype ({
             failure: $alias ('error'),
             crash:   $alias ('error'),
-            error:   function () { return 'foo.error' } })
+            error:   function () { return 'foo.error' } })) ()
 
-        $assert (foo.crash, foo.failure, foo.error) }, // all point to same function
+        $assert (foo.crash, foo.failure, foo.error) // all point to same function
+
+        var size = new ($prototype ({
+            w: $alias ($property ('x')),
+            h: $alias ($property ('y')) })) ()
+
+        $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) }, // property aliases
 
 
 /*  Run-time type information APIs
@@ -244,6 +250,17 @@ _.withTest ('OOP', {
 
         $assert ($prototype.inheritanceChain (C), [C,B,A]) },
 
+/*  $prototype.defines for searching for members on definition chain
+    ======================================================================== */
+
+    'defines': function () {
+
+        var A = $prototype ({ toString: function () {} })
+        var B = $extends (A)
+        var C = $prototype ()
+
+        $assert ([$prototype.defines (B, 'toString'),
+                  $prototype.defines (C, 'toString')], [true, false]) },
 
 /*  $prototype is really same as $extends, if passed two arguments
     ======================================================================== */
@@ -317,6 +334,10 @@ _.withTest ('OOP', {
                 if (!_.isKeyword (k)) { var value = namespace[k]
                     if ($prototype.isConstructor (value)) {
                         visitor (value, k) } } } },
+
+        defines: function (constructor, member) {
+            return (_.find ($prototype.inheritanceChain (constructor), function (supa) {
+                        return (supa.$definition && supa.$definition.hasOwnProperty (member)) || false })) ? true : false },
 
         inheritanceChain: function (def) { var chain = []
             while (def) {
@@ -465,7 +486,11 @@ _.withTest ('OOP', {
                 return def } },
 
             expandAliases: function (def) {
-                return _.mapObject (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
+                return _.mapObject (def, function (v) { var name = Tags.unwrap (v)
+                    return ($alias.is (v) ?
+                                ($property.is (v) ? $property ({
+                                    get: function ()  { return this[name] },
+                                    set: function (x) { this[name] = x } }) : def[name]) : v) }) },
 
             flatten: function (def) {
                 var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)

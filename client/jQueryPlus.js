@@ -42,7 +42,17 @@ _.extend ($, {
             return this }
         else {                                                      // getter
             return this.length ? this[0]._item : undefined } },
+
+    /*  Writes properties directly to DOM object
+     */
+    extend: function (what) {
+        _.extend.apply (null, [this[0]].concat (arguments))
+        return this },
     
+    extend2: function (what) {
+        _.extend2.apply (null, [this[0]].concat (arguments))
+        return this },
+
     /*  Wait semantics
      */
     hasWait: function () {
@@ -295,8 +305,8 @@ _.extend ($, {
     /*  BBox accessors
      */
     outerBBox:      function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ().asWidthHeight)) },
-    clientBBox:     function () { var rect = this[0].getBoundingClientRect ()
-                                  return new BBox (rect.left, rect.top, rect.width, rect.height) },
+    clientBBox:     function () { return BBox.fromLTWH (this[0].getBoundingClientRect ()) },
+
     /*  Position accessors
      */
     leftTop:        function () { return new Vec2.fromLT (this.offset ()) },

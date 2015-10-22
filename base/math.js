@@ -58,8 +58,10 @@ Intersect = {
 Vec2 = $prototype ({
 
     $static: {
-        x:           function (x)   { return new Vec2 (x,x) },
+        xx:          function (x)   { return new Vec2 (x,x) },
         xy:          function (x,y) { return new Vec2 (x,y) },
+        x:           function (x)   { return new Vec2 (x,0) },
+        y:           function (y)   { return new Vec2 (0,y) },
         zero:        $property (function () { return new Vec2 (0, 0) }),
         unit:        $property (function () { return new Vec2 (1, 1) }),
         one:         $alias ('unit'),
@@ -82,6 +84,9 @@ Vec2 = $prototype ({
         else {
             this.x = x
             this.y = y } },
+
+    w: $alias ($property ('x')),
+    h: $alias ($property ('y')),
 
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
@@ -336,6 +341,8 @@ BBox = $prototype ({
 
     xywh: $property (function () {
         return { x: this.x, y: this.y, width: this.width, height: this.height } }),
+
+    ltwh: $alias ('css'),
 
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),

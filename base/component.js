@@ -711,7 +711,7 @@ Component = $prototype ({
             /*  Expand $debounce
              */
             if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)
-                this[name] = _.debounce (fn, opts.wait || 500, opts) }
+                this[name] = fn.debounced (opts.wait || 500, opts.immediate) }
 
             /*  Expand $throttle
              */

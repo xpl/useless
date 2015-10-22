@@ -14,10 +14,10 @@ _.json = function (arg) {
 
 _.deferTest (['type', 'stringify'], function () {
 
-        var complex =  { foo: 1, nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+        var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
             complex.bar[0].bar = complex.bar
 
-        var renders = '{ foo: 1, nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+        var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
         var Proto = $prototype ({})
 
@@ -61,6 +61,13 @@ _.deferTest (['type', 'stringify'], function () {
 
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
+
+                            else if (_.isTypeOf (Tags, x)) {
+                                return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
+                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg, indent)) }
+
+                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x, 'toString')) {
+                                return x.toString () }
 
                             else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
 

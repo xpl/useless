@@ -867,10 +867,10 @@ _.json = function (arg) {
 
 _.deferTest (['type', 'stringify'], function () {
 
-        var complex =  { foo: 1, nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+        var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
             complex.bar[0].bar = complex.bar
 
-        var renders = '{ foo: 1, nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+        var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
         var Proto = $prototype ({})
 
@@ -914,6 +914,13 @@ _.deferTest (['type', 'stringify'], function () {
 
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
+
+                            else if (_.isTypeOf (Tags, x)) {
+                                return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
+                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg, indent)) }
+
+                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x, 'toString')) {
+                                return x.toString () }
 
                             else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
 
@@ -2391,10 +2398,13 @@ $extensionMethods (Function, {
                 context = args = null }
             return result }
 
-        debouncedFn.callImmediately = function () { // cancels timeout (set by fn.debounced/fn.throttled) and calls immediately
+        debouncedFn.cancel = function () {
             if (timeout) {
                 clearTimeout (timeout)
-                timeout = null }
+                timeout = null } }
+
+        debouncedFn.callImmediately = function () { // cancels timeout (set by fn.debounced/fn.throttled) and calls immediately
+            debouncedFn.cancel ()
             func.apply (context, args) }
 
         return debouncedFn },
@@ -3226,7 +3236,7 @@ Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
 
 _.hasOOP = true
 
-_.withTest ('OOP', {
+_.deferTest ('OOP', {
 
     '$prototype / $extends': function () {
 
@@ -3370,12 +3380,18 @@ _.withTest ('OOP', {
 
     '$alias': function () {
 
-        var foo = new $prototype ({
+        var foo = new ($prototype ({
             failure: $alias ('error'),
             crash:   $alias ('error'),
-            error:   function () { return 'foo.error' } })
+            error:   function () { return 'foo.error' } })) ()
 
-        $assert (foo.crash, foo.failure, foo.error) }, // all point to same function
+        $assert (foo.crash, foo.failure, foo.error) // all point to same function
+
+        var size = new ($prototype ({
+            w: $alias ($property ('x')),
+            h: $alias ($property ('y')) })) ()
+
+        $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) }, // property aliases
 
 
 /*  Run-time type information APIs
@@ -3462,6 +3478,17 @@ _.withTest ('OOP', {
 
         $assert ($prototype.inheritanceChain (C), [C,B,A]) },
 
+/*  $prototype.defines for searching for members on definition chain
+    ======================================================================== */
+
+    'defines': function () {
+
+        var A = $prototype ({ toString: function () {} })
+        var B = $extends (A)
+        var C = $prototype ()
+
+        $assert ([$prototype.defines (B, 'toString'),
+                  $prototype.defines (C, 'toString')], [true, false]) },
 
 /*  $prototype is really same as $extends, if passed two arguments
     ======================================================================== */
@@ -3535,6 +3562,10 @@ _.withTest ('OOP', {
                 if (!_.isKeyword (k)) { var value = namespace[k]
                     if ($prototype.isConstructor (value)) {
                         visitor (value, k) } } } },
+
+        defines: function (constructor, member) {
+            return (_.find ($prototype.inheritanceChain (constructor), function (supa) {
+                        return (supa.$definition && supa.$definition.hasOwnProperty (member)) || false })) ? true : false },
 
         inheritanceChain: function (def) { var chain = []
             while (def) {
@@ -3683,7 +3714,11 @@ _.withTest ('OOP', {
                 return def } },
 
             expandAliases: function (def) {
-                return _.mapObject (def, function (v) { return ($alias.matches (v) ? def[Tags.unwrap (v)] : v) }) },
+                return _.mapObject (def, function (v) { var name = Tags.unwrap (v)
+                    return ($alias.is (v) ?
+                                ($property.is (v) ? $property ({
+                                    get: function ()  { return this[name] },
+                                    set: function (x) { this[name] = x } }) : def[name]) : v) }) },
 
             flatten: function (def) {
                 var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
@@ -3909,8 +3944,10 @@ Intersect = {
 Vec2 = $prototype ({
 
     $static: {
-        x:           function (x)   { return new Vec2 (x,x) },
+        xx:          function (x)   { return new Vec2 (x,x) },
         xy:          function (x,y) { return new Vec2 (x,y) },
+        x:           function (x)   { return new Vec2 (x,0) },
+        y:           function (y)   { return new Vec2 (0,y) },
         zero:        $property (function () { return new Vec2 (0, 0) }),
         unit:        $property (function () { return new Vec2 (1, 1) }),
         one:         $alias ('unit'),
@@ -3933,6 +3970,9 @@ Vec2 = $prototype ({
         else {
             this.x = x
             this.y = y } },
+
+    w: $alias ($property ('x')),
+    h: $alias ($property ('y')),
 
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
@@ -4187,6 +4227,8 @@ BBox = $prototype ({
 
     xywh: $property (function () {
         return { x: this.x, y: this.y, width: this.width, height: this.height } }),
+
+    ltwh: $alias ('css'),
 
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
@@ -5388,7 +5430,7 @@ Component = $prototype ({
             /*  Expand $debounce
              */
             if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)
-                this[name] = _.debounce (fn, opts.wait || 500, opts) }
+                this[name] = fn.debounced (opts.wait || 500, opts.immediate) }
 
             /*  Expand $throttle
              */
@@ -5623,7 +5665,17 @@ _.extend ($, {
             return this }
         else {                                                      // getter
             return this.length ? this[0]._item : undefined } },
+
+    /*  Writes properties directly to DOM object
+     */
+    extend: function (what) {
+        _.extend.apply (null, [this[0]].concat (arguments))
+        return this },
     
+    extend2: function (what) {
+        _.extend2.apply (null, [this[0]].concat (arguments))
+        return this },
+
     /*  Wait semantics
      */
     hasWait: function () {
@@ -5876,8 +5928,8 @@ _.extend ($, {
     /*  BBox accessors
      */
     outerBBox:      function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ().asWidthHeight)) },
-    clientBBox:     function () { var rect = this[0].getBoundingClientRect ()
-                                  return new BBox (rect.left, rect.top, rect.width, rect.height) },
+    clientBBox:     function () { return BBox.fromLTWH (this[0].getBoundingClientRect ()) },
+
     /*  Position accessors
      */
     leftTop:        function () { return new Vec2.fromLT (this.offset ()) },
