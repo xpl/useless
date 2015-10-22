@@ -727,7 +727,7 @@ _.extend(log, {
                 var args = _.asArray(arguments);
                 var cleanArgs = log.cleanArgs(args);
                 var config = _.extend({ indent: 0 }, defaultCfg, log.readConfig(args));
-                var stackOffset = Platform.NodeJS ? 3 : 2;
+                var stackOffset = Platform.NodeJS ? 3 : 3;
                 var indent = (log.impl.writeBackend.indent || 0) + config.indent;
                 var text = log.impl.stringifyArguments(cleanArgs, config);
                 var indentation = _.times(indent, _.constant('\t')).join('');
