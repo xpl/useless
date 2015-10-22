@@ -8033,11 +8033,11 @@ _.extend ($, {
 
     /*  Writes properties directly to DOM object
      */
-    extend: function (what) {
+    props: function (what) {
         _.extend.apply (null, [this[0]].concat (arguments))
         return this },
     
-    extend2: function (what) {
+    props2: function (what) {
         _.extend2.apply (null, [this[0]].concat (arguments))
         return this },
 

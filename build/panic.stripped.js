@@ -3470,11 +3470,11 @@ if (jQuery) {
                     return this.length ? this[0]._item : undefined;
                 }
             },
-            extend: function (what) {
+            props: function (what) {
                 _.extend.apply(null, [this[0]].concat(arguments));
                 return this;
             },
-            extend2: function (what) {
+            props2: function (what) {
                 _.extend2.apply(null, [this[0]].concat(arguments));
                 return this;
             },
