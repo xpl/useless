@@ -1015,6 +1015,12 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg, prevIndent) {
         return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) ? '<prototype>' : '<function>';
     } else if (typeof x === 'string') {
         return _.quoteWith('"', x);
+    } else if (_.isTypeOf(Tags, x)) {
+        return _.reduce(_.keys(Tags.get(x)), function (memo, tag) {
+            return tag + ' ' + memo.quote('()');
+        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg, indent));
+    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x, 'toString')) {
+        return x.toString();
     } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
         var isArray = _.isArray(x);
         var pretty = cfg.pretty || false;
@@ -1888,11 +1894,14 @@ $extensionMethods(Function, {
             }
             return result;
         };
-        debouncedFn.callImmediately = function () {
+        debouncedFn.cancel = function () {
             if (timeout) {
                 clearTimeout(timeout);
                 timeout = null;
             }
+        };
+        debouncedFn.callImmediately = function () {
+            debouncedFn.cancel();
             func.apply(context, args);
         };
         return debouncedFn;
@@ -2479,6 +2488,11 @@ _.extend($prototype, {
             }
         }
     },
+    defines: function (constructor, member) {
+        return _.find($prototype.inheritanceChain(constructor), function (supa) {
+            return supa.$definition && supa.$definition.hasOwnProperty(member) || false;
+        }) ? true : false;
+    },
     inheritanceChain: function (def) {
         var chain = [];
         while (def) {
@@ -2645,7 +2659,15 @@ _.extend($prototype, {
         },
         expandAliases: function (def) {
             return _.mapObject(def, function (v) {
-                return $alias.matches(v) ? def[Tags.unwrap(v)] : v;
+                var name = Tags.unwrap(v);
+                return $alias.is(v) ? $property.is(v) ? $property({
+                    get: function () {
+                        return this[name];
+                    },
+                    set: function (x) {
+                        this[name] = x;
+                    }
+                }) : def[name] : v;
             });
         },
         flatten: function (def) {
@@ -2988,11 +3010,17 @@ Intersect = {
 };
 Vec2 = $prototype({
     $static: {
-        x: function (x) {
+        xx: function (x) {
             return new Vec2(x, x);
         },
         xy: function (x, y) {
             return new Vec2(x, y);
+        },
+        x: function (x) {
+            return new Vec2(x, 0);
+        },
+        y: function (y) {
+            return new Vec2(0, y);
         },
         zero: $property(function () {
             return new Vec2(0, 0);
@@ -3031,6 +3059,8 @@ Vec2 = $prototype({
             this.y = y;
         }
     },
+    w: $alias($property('x')),
+    h: $alias($property('y')),
     length: $property(function () {
         return Math.sqrt(this.lengthSquared);
     }),
@@ -3305,6 +3335,7 @@ BBox = $prototype({
             height: this.height
         };
     }),
+    ltwh: $alias('css'),
     clone: $property(function () {
         return new BBox(this.x, this.y, this.width, this.height);
     }),
@@ -3816,7 +3847,7 @@ Component = $prototype({
                 }
                 if (def.$debounce) {
                     var fn = this[name], opts = _.coerceToObject(def.$debounce);
-                    this[name] = _.debounce(fn, opts.wait || 500, opts);
+                    this[name] = fn.debounced(opts.wait || 500, opts.immediate);
                 }
                 if (def.$throttle) {
                     var fn = this[name], opts = _.coerceToObject(def.$throttle);
@@ -4550,7 +4581,8 @@ _.extend(log, {
                     color: log.readColor(args),
                     indentedText: match[2].reversed.split('\n').map(_.prepends(indentation)).join('\n'),
                     trailNewlines: match[1],
-                    codeLocation: location
+                    codeLocation: location,
+                    config: config
                 };
                 log.impl.writeBackend(backendParams);
                 return cleanArgs[0];
@@ -5197,6 +5229,14 @@ if (Platform.Browser) {
                         return this.length ? this[0]._item : undefined;
                     }
                 },
+                extend: function (what) {
+                    _.extend.apply(null, [this[0]].concat(arguments));
+                    return this;
+                },
+                extend2: function (what) {
+                    _.extend2.apply(null, [this[0]].concat(arguments));
+                    return this;
+                },
                 hasWait: function () {
                     return this.hasClass('i-am-busy');
                 },
@@ -5418,8 +5458,7 @@ if (Platform.Browser) {
                     return BBox.fromLTWH(_.extend(this.offset(), this.outerExtent().asWidthHeight));
                 },
                 clientBBox: function () {
-                    var rect = this[0].getBoundingClientRect();
-                    return new BBox(rect.left, rect.top, rect.width, rect.height);
+                    return BBox.fromLTWH(this[0].getBoundingClientRect());
                 },
                 leftTop: function () {
                     return new Vec2.fromLT(this.offset());

@@ -737,7 +737,8 @@ _.extend(log, {
                     color: log.readColor(args),
                     indentedText: match[2].reversed.split('\n').map(_.prepends(indentation)).join('\n'),
                     trailNewlines: match[1],
-                    codeLocation: location
+                    codeLocation: location,
+                    config: config
                 };
                 log.impl.writeBackend(backendParams);
                 return cleanArgs[0];
