@@ -86,7 +86,7 @@ _.defineGlobalProperty('alert2', function (args) {
 });
 _.extend(_, {
     asArray: function (arrayMimick) {
-        return [].splice.call(arrayMimick, 0);
+        return [].slice.call(arrayMimick, 0);
     }
 });
 _.extend(_, {

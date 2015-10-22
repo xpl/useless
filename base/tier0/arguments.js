@@ -12,7 +12,7 @@ _.withTest (['stdlib', 'asArray'], function () {
         $assert (args[1] === b) }) (42, 43) }, function () { _.extend (_, {
 
     asArray: function (arrayMimick) {
-                return [].splice.call (arrayMimick, 0) } }) })
+                return [].slice.call (arrayMimick, 0) } }) })
 
 /*  Argument count tracking module (provides hinting to several metaprogramming
     utilities, like property definitions)
