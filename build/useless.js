@@ -1507,7 +1507,6 @@ _.deferTest (['type', 'stringify'], function () {
                                 return customFormat }
 
                             if ((typeof jQuery !== 'undefined') && _.isTypeOf (jQuery, x)) {
-                                console.log ('foo')
                                 x = _.asArray (x) }
 
                             if (x === $global) {

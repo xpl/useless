@@ -622,12 +622,15 @@ _.stringify = function (x, cfg) {
     return _.stringifyImpl(x, [], [], 0, cfg || {}, -1);
 };
 _.stringifyImpl = function (x, parents, siblings, depth, cfg, prevIndent) {
-    if (x === $global) {
-        return '$global';
-    }
     var customFormat = cfg.formatter && cfg.formatter(x);
     if (customFormat) {
         return customFormat;
+    }
+    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
+        x = _.asArray(x);
+    }
+    if (x === $global) {
+        return '$global';
     } else if (parents.indexOf(x) >= 0) {
         return cfg.pure ? undefined : '<cyclic>';
     } else if (siblings.indexOf(x) >= 0) {
