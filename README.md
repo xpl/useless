@@ -412,11 +412,13 @@ $(handle).drag ({
 	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
 ```
 
-### Panic.js // **[LIVE DEMO](https://xpl.github.io/useless)**
+### Panic.js // error handling done right
 
 > Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
 
 Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.<br/><br/>
+
+> **[LIVE DEMO](https://xpl.github.io/useless)**
 
 [![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://xpl.github.io/useless)
 
