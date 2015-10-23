@@ -7,6 +7,7 @@ $include ('./base/log')
 $include ('./base/Testosterone')
 $include ('./base/profiling')
 $include ('./client/Panic')
+$include ('./client/LogOverlay')
 
 (function ($ /* JQUERY */) {
 	
@@ -18,5 +19,6 @@ $include ('./client/Panic')
 	           (file.indexOf ('useless') >= 0)    ||
 	           (file.indexOf ('mootools') >= 0) })
 
-    $('head').append (
-    	$('<style type="text/css">').text ($includeStr ('client/Panic.css'))) }) (jQuery);
+    $('head').append ([
+    	$('<style type="text/css">').text ($includeStr ('client/Panic.css')),
+    	$('<style type="text/css">').text ($includeStr ('client/LogOverlay.css')) ]) }) (jQuery);
