@@ -438,12 +438,12 @@ And because WebInspector is a separate tool, you might not even know that someth
 
 ### Configuring (stand-alone distribution)
 
-Simply link the script to a page, and it will configure itself automagically™. Requires <a href="http://underscorejs.org">underscore</a> and <a href="http://jquery.com">jQuery</a>.<br/><br/>
+Simply link the script to a page, and it will configure itself automagically™. Requires <a href="http://underscorejs.org">underscore</a> and <a href="http://jquery.com">jQuery</a>.
 
 * <a href="build/panic.min.js">Panic.min.js</a> (minified)
 * <a href="build/panic.js">Panic.js</a> (readable source)
 
-<b>Before use,</b> consider that the distribution contains full **Useless** toolkit, where the diagnostics-related utility [responsible for all the magic behind **Panic.js**] appear a small fraction of entire codebase. In other words, it brings a holy shitload of code, which can possibly cause all sort of compatibility-related issues.
+<b>Before use,</b> consider that the distribution contains full **Useless** toolkit, where the diagnostics-related utility _[responsible for all the magic behind Panic.js]_ appear a small fraction of entire codebase. In other words, it brings a holy shitload of code, which can possibly cause all sort of compatibility-related issues.
 
 __But in most cases, it should work out of the box.__ And supposing that you don't ever plan using **Panic.js** on production server (why would you), size of the script doesn't matter that much.
 
