@@ -402,7 +402,7 @@ Platform = $singleton ({ $property: {
 
 # `./client` features
 
-### jQueryPlus.js
+## jQueryPlus.js
 
 A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$.fn.drag`), which is utilized by countless number of widgets I made. It also compatible with mobile devices (iOS / Android).
 
@@ -412,7 +412,7 @@ $(handle).drag ({
 	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
 ```
 
-### Panic.js // error handling done right
+## Panic.js // error handling done right
 
 > Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
 
@@ -430,13 +430,13 @@ Live demo __(clickable)__:
 * Grouping of same source line repeated consequently.
 * Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals (exception handling / callstack access) — _TBD_
 
-#### Err... isn't this what debug tools are for?
+### Err... isn't this what debug tools are for?
 
 Yes, and this is "debug tools" too, but more specific. It is not a replacement to **WebInspector**, but a power-up. WebInspector is just not good enough for the quick identification of typical errors that occur often during development process. In most cases, they require no detailed inspection of the full source code — you can identify problem cause just by briefly looking at the source line. Displaying full info, as WebInspector does, would slow down things: you need to scroll through tons of text, expand cryptic traces by clicking, and then clicking and waiting again to load sources in separate window.
 
 And because WebInspector is a separate tool, you might not even know that something's broken, until its opened. You can imagine **Panic.js** as a small and fast subset of WebInspector, inlined into your page until it goes to the production, like a scaffolding.
 
-#### Configuring (stand-alone distribution)
+### Configuring (stand-alone distribution)
 
 Simply link the script to a page, and it will configure itself automagically™. Requires <a href="http://underscorejs.org">underscore</a> and <a href="http://jquery.com">jQuery</a>.<br/><br/>
 
@@ -449,7 +449,7 @@ __But in most cases, it should work out of the box.__ And supposing that you don
 
 **P.S.:** it does not display source lines if executed from local HTML file (as sources are read by XHR requests).
 
-### LogOverlay.js
+## LogOverlay.js
 
 > Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
 
@@ -466,11 +466,11 @@ log.e ('...and hasta la vista, baby')
 
 [![Reference](http://img.leprosorium.com/2460404)](https://github.com/xpl/useless/blob/master/client/LogOverlay.js)
 
-### API.js
+## API.js
 
 XHR requests to communicate with `./server` part.
 
-### RemoteCollection
+## RemoteCollection
 
 - `DataManager.js`
 - `Collection/Collection.js`
