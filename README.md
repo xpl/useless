@@ -416,9 +416,9 @@ $(handle).drag ({
 
 > Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
 
-Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.<br/><br/>
+Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.
 
-Live demo (clickable):
+Live demo __(clickable)__:
 
 [![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://xpl.github.io/useless)
 
@@ -432,13 +432,11 @@ Live demo (clickable):
 
 #### Err... isn't this what debug tools are for?
 
-Yes, and this is "debug tools" too, but more specific. It is not a replacement to **WebInspector**, but a power-up. WebInspector is just not good enough for the quick identification of typical errors that occur often during development process. In most cases, they require no detailed inspection of the full source code — you can identify problem cause just by briefly looking at the source line. Displaying full info, as **WebInspector** does, would slow down things: you need to scroll through tons of text, expand cryptic traces by clicking, and then clicking and waiting again to load sources in separate window.
+Yes, and this is "debug tools" too, but more specific. It is not a replacement to **WebInspector**, but a power-up. WebInspector is just not good enough for the quick identification of typical errors that occur often during development process. In most cases, they require no detailed inspection of the full source code — you can identify problem cause just by briefly looking at the source line. Displaying full info, as WebInspector does, would slow down things: you need to scroll through tons of text, expand cryptic traces by clicking, and then clicking and waiting again to load sources in separate window.
 
-And because **WebInspector** is a separate tool, you might not even know that something's broken, until its opened. You can imagine **Panic.js** as a small and fast subset of WebInspector, inlined into your page until it goes to the production, like a scaffolding.
+And because WebInspector is a separate tool, you might not even know that something's broken, until its opened. You can imagine **Panic.js** as a small and fast subset of WebInspector, inlined into your page until it goes to the production, like a scaffolding.
 
 #### Configuring (stand-alone distribution)
-
-> Does not display source lines if executed from local HTML file (as sources are read by XHR requests).
 
 Simply link the script to a page, and it will configure itself automagically™. Requires <a href="http://underscorejs.org">underscore</a> and <a href="http://jquery.com">jQuery</a>.<br/><br/>
 
@@ -448,6 +446,8 @@ Simply link the script to a page, and it will configure itself automagically™.
 <b>Before use,</b> consider that the distribution contains full **Useless** toolkit, where the diagnostics-related utility [responsible for all the magic behind **Panic.js**] appear a small fraction of entire codebase. In other words, it brings a holy shitload of code, which can possibly cause all sort of compatibility-related issues.
 
 __But in most cases, it should work out of the box.__ And supposing that you don't ever plan using **Panic.js** on production server (why would you), size of the script doesn't matter that much.
+
+**P.S.:** it does not display source lines if executed from local HTML file (as sources are read by XHR requests).
 
 ### LogOverlay.js
 
