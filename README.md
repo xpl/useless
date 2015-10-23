@@ -418,7 +418,7 @@ $(handle).drag ({
 
 Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.<br/><br/>
 
-> **[LIVE DEMO](https://xpl.github.io/useless)**
+Live demo (clickable):
 
 [![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://xpl.github.io/useless)
 
