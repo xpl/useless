@@ -428,6 +428,13 @@ A nice `console.log` alternative for those who like log-driven debugging. Based 
 
 Renders incoming `log` calls into semi-transparent overlay at the bottom of the viewport. It is transparent for mouse input (so it doesnt mess with page interaction) and can be toggled by `~` key (hello Quake). Much nicier than default `console.log` in many cases.
 
+```javascript
+LogOverlay.init ()
+
+log.i ('Hello world...')
+log.e ('...and hasta la vista, baby')
+```
+
 [![Reference](http://img.leprosorium.com/2460404)](https://github.com/xpl/useless/blob/master/client/LogOverlay.js)
 
 ### API.js
