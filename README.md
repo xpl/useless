@@ -422,7 +422,7 @@ A pop-up alert that shows errors / stack traces. See example app for demo & how-
 
 ### LogOverlay.js
 
-A nice `console.log` alternative for those who like log-driven debugging. Based on `[log.js](https://github.com/xpl/useless/blob/master/base/log.js)` (acts as a write backend for it) — which is ultimately based on `[stringify.js](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js)` and `[reflection.js](https://github.com/xpl/useless/blob/master/base/reflection.js)` superpowers (check it out).
+A nice `console.log` alternative for those who like log-driven debugging. Based on [log.js](https://github.com/xpl/useless/blob/master/base/log.js) (acts as a write backend for it) — which is ultimately based on [stringify.js](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js) and [reflection.js](https://github.com/xpl/useless/blob/master/base/reflection.js) superpowers (check it out).
 
 Renders incoming `log.js` calls into semi-transparent overlay at the bottom of the viewport. It is transparent for mouse input (so it doesnt mess with page interaction) and can be toggled by `~` key (hello Quake). Much nicier than default `console.log` in many cases.
 
