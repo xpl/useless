@@ -9,7 +9,13 @@ _.withTest (['stdlib', 'asArray'], function () {
         $assert (_.isArray (args))
         $assert (args.length === 2)
         $assert (args[0] === a)
-        $assert (args[1] === b) }) (42, 43) }, function () { _.extend (_, {
+        $assert (args[1] === b) }) (42, 43)
+
+        /*  Should not mutate its argument (regression)
+         */
+        var foo =     { 0: 'foo', length: 1 }
+        $assert (_.asArray (foo), ['foo'])
+        $assert (foo, { 0: 'foo', length: 1 }) }, function () { _.extend (_, {
 
     asArray: function (arrayMimick) {
                 return [].slice.call (arrayMimick, 0) } }) })

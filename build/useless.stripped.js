@@ -5309,13 +5309,15 @@ if (Platform.Browser) {
                     return this.one('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot);
                 },
                 animateWith: function (cls, done) {
-                    this.addClass(cls);
-                    this.animationend(this.$(function () {
-                        this.removeClass(cls);
-                        if (done) {
-                            done.call(this);
-                        }
-                    }));
+                    if (cls) {
+                        this.addClass(cls);
+                        this.animationend(this.$(function () {
+                            this.removeClass(cls);
+                            if (done) {
+                                done.call(this);
+                            }
+                        }));
+                    }
                     return this;
                 },
                 drag: function () {

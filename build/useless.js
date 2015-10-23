@@ -722,7 +722,13 @@ _.withTest (['stdlib', 'asArray'], function () {
         $assert (_.isArray (args))
         $assert (args.length === 2)
         $assert (args[0] === a)
-        $assert (args[1] === b) }) (42, 43) }, function () { _.extend (_, {
+        $assert (args[1] === b) }) (42, 43)
+
+        /*  Should not mutate its argument (regression)
+         */
+        var foo =     { 0: 'foo', length: 1 }
+        $assert (_.asArray (foo), ['foo'])
+        $assert (foo, { 0: 'foo', length: 1 }) }, function () { _.extend (_, {
 
     asArray: function (arrayMimick) {
                 return [].slice.call (arrayMimick, 0) } }) })
@@ -8127,10 +8133,11 @@ _.extend ($, {
         3. Removes that class
         4. Calls 'done'
      */
-    animateWith: function (cls, done) { 
-        this.addClass (cls)
-        this.animationend (this.$ (function () { this.removeClass (cls)
-                                                 if (done) { done.call (this) } }))
+    animateWith: function (cls, done) {
+        if (cls) {
+            this.addClass (cls)
+            this.animationend (this.$ (function () { this.removeClass (cls)
+                                                     if (done) { done.call (this) } })) }
         return this },
 
     /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.

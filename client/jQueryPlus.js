@@ -139,10 +139,11 @@ _.extend ($, {
         3. Removes that class
         4. Calls 'done'
      */
-    animateWith: function (cls, done) { 
-        this.addClass (cls)
-        this.animationend (this.$ (function () { this.removeClass (cls)
-                                                 if (done) { done.call (this) } }))
+    animateWith: function (cls, done) {
+        if (cls) {
+            this.addClass (cls)
+            this.animationend (this.$ (function () { this.removeClass (cls)
+                                                     if (done) { done.call (this) } })) }
         return this },
 
     /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
