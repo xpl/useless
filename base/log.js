@@ -247,6 +247,7 @@ _.extend (log, {
 
 
 /*  Printing API
+    TODO: refactor dat copypasta!
  */
 _.extend (log, log.printAPI = {
 
