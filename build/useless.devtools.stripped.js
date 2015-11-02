@@ -173,6 +173,15 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         fn.apply(null, callbacks);
         return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(true)));
     },
+    assertEveryCalledOnce: function (fn) {
+        var callbacks = _.times(fn.length, function () {
+            return function () {
+                arguments.callee.called = (arguments.callee.called || 0) + 1;
+            };
+        });
+        fn.apply(null, callbacks);
+        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(1)));
+    },
     assertCallOrder: function (fn) {
         var callIndex = 0;
         var callbacks = _.times(fn.length, function (i) {

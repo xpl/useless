@@ -2708,6 +2708,9 @@ _.deferTest ('String extensions', function () {
 /*  Interceptable/observable methods
     ======================================================================== */
 
+
+/*  TODO: rewrite test
+ */
 _.deferTest ('bindable', function () {
 
     /*  Test subject
@@ -2755,14 +2758,17 @@ _.deferTest ('bindable', function () {
      */
     var obj2 = { plusOne: function (x) { return x + 1 } }
 
-    $assertCalls (1, function (beforeCalled) {
-    $assertCalls (1, function (afterCalled) {
+    $assertEveryCalledOnce (function (beforeCalled, afterCalled) {
 
-        _.onceBefore (obj, 'plusOne', function (x)         { beforeCalled (); $assert (x === 7) })
-        _.onceAfter  (obj, 'plusOne', function (x, result) { afterCalled ();  $assert ([x, result], [7, 8]) })
+        var before = function (x) { beforeCalled (); $assert (x === 7) }
+        var after  = function (x, result) { afterCalled ();  $assert ([x, result], [7, 8]) }
+
+        _.times (2, function () {
+            _.onceBefore (obj, 'plusOne', before)
+            _.onceAfter  (obj, 'plusOne', after) })
 
         $assert (obj.plusOne (7), 8)
-        $assert (obj.plusOne (7), 8) }) })
+        $assert (obj.plusOne (7), 8) })
 
 }, function () {
 
@@ -2777,19 +2783,28 @@ _.deferTest ('bindable', function () {
     var makeBindable = function (obj, targetMethod) { var method = obj[targetMethod]
                             return _.isBindable (method) ? method : (obj[targetMethod] = _.bindable (method)) }
 
-    var hookProc = function (name) { return function (obj, targetMethod, delegate) {
-                                        return makeBindable (obj, targetMethod)['_' + name].push (delegate) } }
+    var hookProc = function (name) {
+                        return function (obj, targetMethod, delegate) {
+                               var bindable = makeBindable (obj, targetMethod)
+                            return bindable[name].call (bindable, delegate) } }
 
     var mixin = function (method) {
                     return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */
-                                _.object (_.map (hooks, function (name) {
+                                _.object (_.map (hooks, function (name) { var queueName = ('_' + name)
+                                                                          var once      = (name.indexOf ('once') >= 0)
+
                                                             return [name, function (fn) {
                                                                             if (!_.isBindable (this)) {
                                                                                 throw new Error ('wrong this') }
-                                                                            return this['_' + name].push (fn), this }] })),
+
+                                                                            var queue = this[queueName]
+                                                                            if (!once || queue.indexOf (fn) < 0) {
+                                                                                this[queueName].push (fn) }
+
+                                                                            return this }] })),
 
                                 /*  ._onBefore, ._onAfter, ._intercept (queues)
                                  */

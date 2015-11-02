@@ -306,6 +306,15 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         fn.apply(null, callbacks);
         return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(true)));
     },
+    assertEveryCalledOnce: function (fn) {
+        var callbacks = _.times(fn.length, function () {
+            return function () {
+                arguments.callee.called = (arguments.callee.called || 0) + 1;
+            };
+        });
+        fn.apply(null, callbacks);
+        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(1)));
+    },
     assertCallOrder: function (fn) {
         var callIndex = 0;
         var callbacks = _.times(fn.length, function (i) {
@@ -2153,7 +2162,8 @@ $extensionMethods(String, {
     };
     var hookProc = function (name) {
         return function (obj, targetMethod, delegate) {
-            return makeBindable(obj, targetMethod)['_' + name].push(delegate);
+            var bindable = makeBindable(obj, targetMethod);
+            return bindable[name].call(bindable, delegate);
         };
     };
     var mixin = function (method) {
@@ -2162,13 +2172,19 @@ $extensionMethods(String, {
             impl: method,
             _wrapped: method
         }, _.object(_.map(hooks, function (name) {
+            var queueName = '_' + name;
+            var once = name.indexOf('once') >= 0;
             return [
                 name,
                 function (fn) {
                     if (!_.isBindable(this)) {
                         throw new Error('wrong this');
                     }
-                    return this['_' + name].push(fn), this;
+                    var queue = this[queueName];
+                    if (!once || queue.indexOf(fn) < 0) {
+                        this[queueName].push(fn);
+                    }
+                    return this;
                 }
             ];
         })), _.object(_.map(hooks, function (name) {

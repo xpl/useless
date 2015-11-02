@@ -317,15 +317,12 @@ if (_.hasStdlib) {
         $assertCalls (0, function (mkay) { mkay () })
         $assertCalls (2, function (mkay) { mkay (); mkay (); mkay () }) })
 
-    $assertEveryCalled (function (a, b, c) {
-        a ()
-        b ()
-        c () })
+    $assertEveryCalled     (function (a, b, c) { a (); a (); b (); c () })
+    $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
 
     $assertFails (function () {
-        $assertEveryCalled (function (a, b, c) {
-            a ()
-            b () }) })
+        $assertEveryCalled     (function (a, b, c) { a (); b () })
+        $assertEveryCalledOnce (function (a, b, c) { a (); b (); c (); c () }) })
 
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -403,6 +400,13 @@ function () {
             var callbacks = _.times (fn.length, function () { return function () { arguments.callee.called = true } })
             fn.apply (null, callbacks)
             return _.assert (_.pluck (callbacks, 'called'), _.times (callbacks.length, _.constant (true))) },
+
+        assertEveryCalledOnce: function (fn) {
+            var callbacks = _.times (fn.length, function () {
+                                                    return function () {
+                                                        arguments.callee.called = (arguments.callee.called || 0) + 1 } })
+            fn.apply (null, callbacks)
+            return _.assert (_.pluck (callbacks, 'called'), _.times (callbacks.length, _.constant (1))) },
 
         assertCallOrder: function (fn) {
             var callIndex = 0
