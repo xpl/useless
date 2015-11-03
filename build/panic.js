@@ -417,14 +417,23 @@ _.asMethod = function (fn) { return function () {
 /*  Wrapper generator
     ======================================================================== */
 
-_.wrapper = function (fn, wrapper) {
-                return _.withSameArgs (fn, function () {
+_.appendsArguments = function (fn, wrapper) {
+                        return _.withSameArgs (fn, function () {
+                                                        var this_ = this
+                                                        var args = _.asArray (arguments)
+                                                        return wrapper (function () {
+                                                                            fn.apply (
+                                                                                this_,
+                                                                                args.concat (_.asArray (arguments))) }) }) }
+
+_.prependsArguments = function (fn, wrapper) {
+                        return _.withSameArgs (fn, function () {
                                                 var this_ = this
-                                                var arguments_ = arguments
-                                                return wrapper (function (additionalArguments) {
+                                                var args = _.asArray (arguments)
+                                                return wrapper (function () {
                                                                     fn.apply (
                                                                         this_,
-                                                                        _.asArray (arguments_).concat (additionalArguments)) }) }) }
+                                                                        _.asArray (arguments).concat (args)) }) }) }
 
 
 /*  _.once
@@ -552,6 +561,8 @@ _.atIndex = function (n) {
 
 _.takesFirst = _.higherOrder (_.first)
 _.takesLast  = _.higherOrder (_.last)
+
+_.call    = function (fn) { return fn () }
 
 _.applies = function (fn, this_, args) {
                 return function () { return fn.apply (this_, args) } }
@@ -2480,6 +2491,9 @@ _.withTest ('Array extensions', function () {
         zip:         _.zipWith,
         filter:      _.filter,
 
+        isEmpty: function (arr) { return arr.length === 0 },
+        notEmpty: function (arr) { return arr.length > 0 },
+
         lastIndex: function (arr) { return arr.length - 1 },
 
         last: function (arr) { return _.last (arr) },
@@ -2879,10 +2893,11 @@ _.tests.stream = {
 
     'triggerOnce': function () { $assertCalls (1, function (mkay) {
                                     var t = _.triggerOnce ()
-                                    t (function (_321) {
-                                        $assert (_321 === 321); mkay () })
-                                    t (321)
-                                    t (123) }) },
+                                    var f = function (_321) { $assert (_321 === 321); mkay () }
+                                     t (f)
+                                     t (f)
+                                     t (321)
+                                     t (123) }) },
 
     'observable': function () {
 
@@ -2946,6 +2961,7 @@ _.tests.stream = {
     'once': function () { $assertCalls (1, function (mkay) {
 
         var whenSomething = _.trigger ()
+            whenSomething.once (mkay)
             whenSomething.once (mkay)
             whenSomething ()
             whenSomething () }) },
@@ -3161,16 +3177,19 @@ _.extend (_, {
 
 
     triggerOnce: $restArg (function () {
-                return _.stream ({
-                    read: _.identity,
-                    write: function (writes) {
-                        return writes.partial (true) } }).apply (this, arguments) }),
+                var stream = _.stream ({
+                                read: function (schedule) {
+                                            return function (listener) {
+                                                if (stream.queue.indexOf (listener) < 0) {
+                                                    schedule.call (this, listener) } } },
+                                write: function (writes) {
+                                    return writes.partial (true) } }).apply (this, arguments); return stream }),
 
     trigger: $restArg (function () {
                 return _.stream ({
-                    read: _.identity,
-                    write: function (writes) {
-                        return writes.partial (false) } }).apply (this, arguments) }),
+                            read: _.identity,
+                            write: function (writes) {
+                                return writes.partial (false) } }).apply (this, arguments) }),
 
     off: function (fn, what) {
         if (fn.queue) {
@@ -3234,8 +3253,8 @@ _.extend (_, {
                 /*  Once semantics
                  */
                 var once = function (then) {
-                                read (function (val) {
-                                    _.off (self, arguments.callee); then (val) }) }
+                                if (!_.find (queue, function (f) { return f.onceWrapped_ === then })) {
+                                    read (_.extend (function (v) { _.off (self, arguments.callee); then (v) }, { onceWrapped_: then })) } }
 
                 /*  Constructor
                  */
@@ -4640,12 +4659,27 @@ _.tests.concurrency = {
                 $assert (_.filter (tasksDone, _.identity).length === 3)
                 testDone () }) },
 
+    'scope': function (testDone) { var releases = [],
+                                            acquires = [],
+                                            count    = 10
+
+        var method = $scope (function (release, id, then) {           acquires.push (id)
+                        _.delay (function () { release (function () { releases.push (id)
+                                                            if (then)
+                                                                then () }) }, 10) })
+
+        method (42, function /* released */ () {
+            $assert (count + 1, acquires.length, releases.length)
+            $assert (acquires, releases.reversed)
+            testDone () })
+
+        _.times (count, function () { method (_.random (1000)) }) },
 
     'interlocked': function (testDone) { var isNowRunning = false
         _.mapReduce (_.times (30, Format.randomHexString), {
                 complete: testDone,
                 maxConcurrency: 10,
-                next: $interlocked (function (item, itemIndex, then, skip, memo, releaseLock) { $assert (!isNowRunning)
+                next: $interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
                                         isNowRunning = true
                                         _.delay (function () {
                                             then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
@@ -4700,13 +4734,13 @@ _.asyncJoin = function (functions, complete, context) {
             fn.call (context, next, skip) } }) }
 
 
-/*  Mutex/lock (now supports stand-alone operation, and it's re-usable)
+/*  Mutex/lock (now supports stand-alone operation, and it's re-usable).
  */
 Lock = $prototype ({
     acquire: function (then) {
         this.wait (this.$ (function () {
             if (!this.waitQueue) {
-                this.waitQueue = [] }
+                 this.waitQueue = [] }
             then () })) },
 
     acquired: function () {
@@ -4735,10 +4769,30 @@ Lock = $prototype ({
     'Release' trigger passed as last argument to your target function.
  */
 _.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
-    return _.wrapper (Tags.unwrap (fn), function (fn) {
+    return _.prependsArguments (Tags.unwrap (fn), function (context) {
         lock.acquire (function () {
-            fn (lock.$ (lock.release)) }) }) })
+            context (lock.$ (lock.release)) }) }) })
 
+
+/*  EXPERIMENTAL (TBD)
+ */
+_.defineKeyword ('scope', function (fn) { var releaseStack = undefined
+                                                    
+    return _.prependsArguments (Tags.unwrap (fn),
+
+            function /* acquire */ (context) {
+
+                            var released     = { when: undefined };
+                               (releaseStack = (releaseStack || [])).push (released)
+
+                    context (function /* release */ (then) { if (released.when) throw new Error ('$scope: release called twice')
+                                                                 released.when = then
+                        while (releaseStack &&
+                               releaseStack.last &&
+                               releaseStack.last.when) { var trigger =  releaseStack.last.when
+                                                                   if ((releaseStack = _.initial (releaseStack)).isEmpty) {
+                                                                        releaseStack = undefined }
+                                                             trigger () } }) }) })
 
 if (Platform.NodeJS) {
     module.exports = _ };
@@ -6721,7 +6775,7 @@ _.tests.reflection = {
         catch (e) {
             $assertTypeMatches (CallStack.fromError (e), CallStack) } },
 
-    '$callStack': function () { if (!Platform.NodeJS) { return } // TODO: fixme
+    '$callStack': function () {
 
         /*  That's how you access call stack at current location
          */
@@ -7038,53 +7092,70 @@ $prototype.macro (function (def, base) {
 ;
 _.hasLog = true
 
-_.tests.log = function () {
+_.tests.log = {
 
-    log         ('log (x)')         //  Basic API
+    basic: function () {
 
-    log.green   ('log.green')       //  Use for plain colored output.
-    log.blue    ('log.blue')
-    log.orange  ('log.orange')
-    log.red     ('log.red')
+        log         ('log (x)')         //  Basic API
 
-    log.success ('log.success')     //  Use for quality production logging (logging that lasts).
-    log.ok      ('log.ok')
-    log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
-    log.i       ('log.i')
-    log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
-    log.warn    ('log.warn')
-    log.w       ('log.w')
-    log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
-                                    //  to where {success:fn,failure:fn} config expected.
-    log.error   ('log.error')
-    log.e       ('log.e')
+        log.green   ('log.green')       //  Use for plain colored output.
+        log.blue    ('log.blue')
+        log.orange  ('log.orange')
+        log.red     ('log.red')
 
-    $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
-                                                        // (as it returns it first argument, like in _.identity)
+        log.success ('log.success')     //  Use for quality production logging (logging that lasts).
+        log.ok      ('log.ok')
+        log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
+        log.i       ('log.i')
+        log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
+        log.warn    ('log.warn')
+        log.w       ('log.w')
+        log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
+                                        //  to where {success:fn,failure:fn} config expected.
+        log.error   ('log.error')
+        log.e       ('log.e')
 
-    log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
+        $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
+                                                            // (as it returns it first argument, like in _.identity)
 
-    log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
+        log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
 
-    log.write   (log.boldLine)  //  ASCII art <hr>
-    log.write   (log.thinLine)
-    log.write   (log.line)
+        log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
 
-    log.write   (log.color.green,
-                    ['You can set indentation',
-                     'that is nicely handled',
-                     'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
+        log.write   (log.boldLine)  //  ASCII art <hr>
+        log.write   (log.thinLine)
+        log.write   (log.line)
 
-    log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
-    log.orange  (log.config ({ indent: 2, table: true }), [
-        { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
-        { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
+        log.write   (log.color.green,
+                        ['You can set indentation',
+                         'that is nicely handled',
+                         'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
 
-    log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
-    log.write ('Array:', [1, 2, 3])                             //  Arrays too
-    log.write ('Function:', _.identity)                         //  Prints code of a function
+        log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
+        log.orange  (log.config ({ indent: 2, table: true }), [
+            { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
+            { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
 
-    log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') }
+        log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
+        log.write ('Array:', [1, 2, 3])                             //  Arrays too
+        log.write ('Function:', _.identity)                         //  Prints code of a function
+
+        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') },
+
+/*
+    'write backend control': function (testDone) { var calls = []
+
+        var backend1 = function (cfg) { calls.push ('1: ' + cfg.indentedText) }
+        var backend2 = function (cfg) { calls.push ('2: ' + cfg.indentedText)}
+
+        log.withWriteBackend (backend1, function (done) {     log ('backend1 ready')
+            log.withWriteBackend (backend2, function (done) { log ('backend2 ready')
+                done () }, function () {                      log ('backend2 released') })
+                                                              log ('backend1 on hold')
+            done () }, function () {                          log ('backend1 released')
+                $assert (calls, ['1: backend1 ready', 
+                                 '1: backend1 on hold',
+                                 '2: backend2 ready']); testDone () }) }*/ }
 
 _.extend (
 
@@ -7153,24 +7224,25 @@ _.extend (log, {
     line:       '--------------------------------------',
     thinLine:   '......................................',
 
-
     /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
      */
-    withCustomWriteBackend: function (backend, contextFn, then) {
-        var previousBackend = log.impl.writeBackend
-        log.impl.writeBackend = backend
-        contextFn (function () {
-            log.impl.writeBackend = previousBackend
-            if (then) {
-                then () } }) },
+    withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
+                                                                                        log.writeBackend.value = backend
+        contextFn (function /* release */ (then) {
+                     release (function () {                                             log.writeBackend.value = prev
+                        if (then) then ()
+                        if (done) done () }) }) }),  
 
     /*  For writing with forced default backend
      */
     writeUsingDefaultBackend: function () { var args = arguments
-        log.withCustomWriteBackend (
+        log.withWriteBackend (
             log.impl.defaultWriteBackend,
             function (done) {
                 log.write.apply (null, args); done () }) },
+
+    writeBackend: function () {
+        return arguments.callee.value || log.impl.defaultWriteBackend },
     
     /*  Internals
      */
@@ -7178,7 +7250,7 @@ _.extend (log, {
 
         /*  Nuts & guts
          */
-        write: function (defaultCfg) { return $restArg (function () {
+        write: function (defaultCfg) { return $restArg (function () { var writeBackend = log.writeBackend ()
 
             var args            = _.asArray (arguments)
             var cleanArgs       = log.cleanArgs (args)
@@ -7186,7 +7258,7 @@ _.extend (log, {
             var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
             var stackOffset     = Platform.NodeJS ? 3 : 3
 
-            var indent          = (log.impl.writeBackend.indent || 0) + config.indent
+            var indent          = (writeBackend.indent || 0) + config.indent
 
             var text            = log.impl.stringifyArguments (cleanArgs, config)
             var indentation     = _.times (indent, _.constant ('\t')).join ('')
@@ -7203,7 +7275,7 @@ _.extend (log, {
                 codeLocation: location,
                 config:       config }
 
-            log.impl.writeBackend (backendParams)
+            writeBackend (backendParams)
 
             return cleanArgs[0] }) },
         
@@ -7310,8 +7382,6 @@ _.extend (log, log.printAPI = {
 log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
 
 logs = _.map2 (log.printAPI, _.higherOrder) // higher order API
-
-log.impl.writeBackend = log.impl.defaultWriteBackend
 
 /*  Experimental formatting shit.
  */
@@ -7485,9 +7555,7 @@ Testosterone = $singleton ({
 
     /*  Entry point
      */
-    run: $interlocked (function (cfg_, optionalThen) {
-        var releaseLock = _.last (arguments)
-        var then = arguments.length === 3 ? optionalThen : _.identity
+    run: $interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
 
         /*  Configuration
          */
@@ -7700,9 +7768,7 @@ Test = $prototype ({
             callStack       = CallStack.fromError (error)
         
         callStack.sourcesReady (function () {
-
             then (_.map (assertionStack, function (assertion) {
-
                 var found = _.find (callStack, function (loc, index) {
                     if ((assertion.location && CallStack.locationEquals (loc, assertion.location)) ||
                         (loc.source.indexOf ('$' + assertion.name) >= 0)) {
@@ -7759,7 +7825,7 @@ Test = $prototype ({
             then () }) },
 
     onUnhandledException: function (e) {
-        this.onException (e, function () {
+        this.onException (e, function () { 
             if (this.afterUnhandledException) {
                 var fn =    this.afterUnhandledException
                             this.afterUnhandledException = undefined
@@ -7807,13 +7873,12 @@ Test = $prototype ({
 
         var withTimeout     = _.withTimeout.partial ({ maxTime: self.timeout, expired: timeoutExpired })
         
-        var withLogging     = log.withCustomWriteBackend.partial (
+        var withLogging     = log.withWriteBackend.partial (
                                     _.extendWith ({ indent: self.depth + (self.indent || 0) }, function (args) {
                                         self.logCalls.push (args) }))
 
         var withExceptions  = _.withUncaughtExceptionHandler.partial (self.$ (self.onUnhandledException))
 
-        
         withLogging (           function (doneWithLogging) {
             withExceptions (    function (doneWithExceptions) {
                 withTimeout (   function (doneWithTimeout) {
@@ -7825,9 +7890,7 @@ Test = $prototype ({
                                 function () {
                                     beforeComplete ()
                                     doneWithExceptions ()
-                                    doneWithLogging ()
-
-                                    then () }) }) }) },
+                                    doneWithLogging () }) }) }, then) },
 
     printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
 
@@ -7841,7 +7904,7 @@ Test = $prototype ({
         this.evalLogCalls () },
 
     evalLogCalls: function () {
-        _.each (this.logCalls, function (args) { log.impl.writeBackend (args) }) } })
+        _.each (this.logCalls, log.writeBackend ().arity1) } })
 
 
 if (Platform.NodeJS) {
@@ -8027,7 +8090,7 @@ Panic.widget = $singleton (Component, {
 
 	printFailedTest: function (test) { var logEl = $('<div class="test-log" style="margin-top: 13px;">')
 
-		log.withCustomWriteBackend (
+		log.withWriteBackend (
 			function (params) {
 				logEl.append ($('<pre>').css ({ color: params.color.css }).html (
 					_.escape (params.indentedText) +

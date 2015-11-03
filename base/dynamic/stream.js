@@ -5,10 +5,11 @@ _.tests.stream = {
 
     'triggerOnce': function () { $assertCalls (1, function (mkay) {
                                     var t = _.triggerOnce ()
-                                    t (function (_321) {
-                                        $assert (_321 === 321); mkay () })
-                                    t (321)
-                                    t (123) }) },
+                                    var f = function (_321) { $assert (_321 === 321); mkay () }
+                                     t (f)
+                                     t (f)
+                                     t (321)
+                                     t (123) }) },
 
     'observable': function () {
 
@@ -72,6 +73,7 @@ _.tests.stream = {
     'once': function () { $assertCalls (1, function (mkay) {
 
         var whenSomething = _.trigger ()
+            whenSomething.once (mkay)
             whenSomething.once (mkay)
             whenSomething ()
             whenSomething () }) },
@@ -287,16 +289,19 @@ _.extend (_, {
 
 
     triggerOnce: $restArg (function () {
-                return _.stream ({
-                    read: _.identity,
-                    write: function (writes) {
-                        return writes.partial (true) } }).apply (this, arguments) }),
+                var stream = _.stream ({
+                                read: function (schedule) {
+                                            return function (listener) {
+                                                if (stream.queue.indexOf (listener) < 0) {
+                                                    schedule.call (this, listener) } } },
+                                write: function (writes) {
+                                    return writes.partial (true) } }).apply (this, arguments); return stream }),
 
     trigger: $restArg (function () {
                 return _.stream ({
-                    read: _.identity,
-                    write: function (writes) {
-                        return writes.partial (false) } }).apply (this, arguments) }),
+                            read: _.identity,
+                            write: function (writes) {
+                                return writes.partial (false) } }).apply (this, arguments) }),
 
     off: function (fn, what) {
         if (fn.queue) {
@@ -360,8 +365,8 @@ _.extend (_, {
                 /*  Once semantics
                  */
                 var once = function (then) {
-                                read (function (val) {
-                                    _.off (self, arguments.callee); then (val) }) }
+                                if (!_.find (queue, function (f) { return f.onceWrapped_ === then })) {
+                                    read (_.extend (function (v) { _.off (self, arguments.callee); then (v) }, { onceWrapped_: then })) } }
 
                 /*  Constructor
                  */

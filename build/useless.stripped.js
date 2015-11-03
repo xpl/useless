@@ -719,12 +719,21 @@ _.asMethod = function (fn) {
         return fn.apply(undefined, [this].concat(_.asArray(arguments)));
     };
 };
-_.wrapper = function (fn, wrapper) {
+_.appendsArguments = function (fn, wrapper) {
     return _.withSameArgs(fn, function () {
         var this_ = this;
-        var arguments_ = arguments;
-        return wrapper(function (additionalArguments) {
-            fn.apply(this_, _.asArray(arguments_).concat(additionalArguments));
+        var args = _.asArray(arguments);
+        return wrapper(function () {
+            fn.apply(this_, args.concat(_.asArray(arguments)));
+        });
+    });
+};
+_.prependsArguments = function (fn, wrapper) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this;
+        var args = _.asArray(arguments);
+        return wrapper(function () {
+            fn.apply(this_, _.asArray(arguments).concat(args));
         });
     });
 };
@@ -810,6 +819,9 @@ _.atIndex = function (n) {
 };
 _.takesFirst = _.higherOrder(_.first);
 _.takesLast = _.higherOrder(_.last);
+_.call = function (fn) {
+    return fn();
+};
 _.applies = function (fn, this_, args) {
     return function () {
         return fn.apply(this_, args);
@@ -1949,6 +1961,12 @@ $extensionMethods(Array, {
     reduceRight: _.reduceRight,
     zip: _.zipWith,
     filter: _.filter,
+    isEmpty: function (arr) {
+        return arr.length === 0;
+    },
+    notEmpty: function (arr) {
+        return arr.length > 0;
+    },
     lastIndex: function (arr) {
         return arr.length - 1;
     },
@@ -2363,12 +2381,19 @@ _.extend(_, {
         return barrier;
     },
     triggerOnce: $restArg(function () {
-        return _.stream({
-            read: _.identity,
+        var stream = _.stream({
+            read: function (schedule) {
+                return function (listener) {
+                    if (stream.queue.indexOf(listener) < 0) {
+                        schedule.call(this, listener);
+                    }
+                };
+            },
             write: function (writes) {
                 return writes.partial(true);
             }
         }).apply(this, arguments);
+        return stream;
     }),
     trigger: $restArg(function () {
         return _.stream({
@@ -2447,10 +2472,14 @@ _.extend(_, {
             return arguments.callee;
         };
         var once = function (then) {
-            read(function (val) {
-                _.off(self, arguments.callee);
-                then(val);
-            });
+            if (!_.find(queue, function (f) {
+                    return f.onceWrapped_ === then;
+                })) {
+                read(_.extend(function (v) {
+                    _.off(self, arguments.callee);
+                    then(v);
+                }, { onceWrapped_: then }));
+            }
         };
         return self = _.extend($restArg(frontEnd), cfg, {
             queue: queue,
@@ -2968,9 +2997,28 @@ Lock = $prototype({
 });
 _.defineKeyword('interlocked', function (fn) {
     var lock = new Lock();
-    return _.wrapper(Tags.unwrap(fn), function (fn) {
+    return _.prependsArguments(Tags.unwrap(fn), function (context) {
         lock.acquire(function () {
-            fn(lock.$(lock.release));
+            context(lock.$(lock.release));
+        });
+    });
+});
+_.defineKeyword('scope', function (fn) {
+    var releaseStack = undefined;
+    return _.prependsArguments(Tags.unwrap(fn), function (context) {
+        var released = { when: undefined };
+        (releaseStack = releaseStack || []).push(released);
+        context(function (then) {
+            if (released.when)
+                throw new Error('$scope: release called twice');
+            released.when = then;
+            while (releaseStack && releaseStack.last && releaseStack.last.when) {
+                var trigger = releaseStack.last.when;
+                if ((releaseStack = _.initial(releaseStack)).isEmpty) {
+                    releaseStack = undefined;
+                }
+                trigger();
+            }
         });
     });
 });
@@ -4566,31 +4614,38 @@ _.extend(log, {
     boldLine: '======================================',
     line: '--------------------------------------',
     thinLine: '......................................',
-    withCustomWriteBackend: function (backend, contextFn, then) {
-        var previousBackend = log.impl.writeBackend;
-        log.impl.writeBackend = backend;
-        contextFn(function () {
-            log.impl.writeBackend = previousBackend;
-            if (then) {
-                then();
-            }
+    withWriteBackend: $scope(function (release, backend, contextFn, done) {
+        var prev = log.writeBackend.value;
+        log.writeBackend.value = backend;
+        contextFn(function (then) {
+            release(function () {
+                log.writeBackend.value = prev;
+                if (then)
+                    then();
+                if (done)
+                    done();
+            });
         });
-    },
+    }),
     writeUsingDefaultBackend: function () {
         var args = arguments;
-        log.withCustomWriteBackend(log.impl.defaultWriteBackend, function (done) {
+        log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
             log.write.apply(null, args);
             done();
         });
     },
+    writeBackend: function () {
+        return arguments.callee.value || log.impl.defaultWriteBackend;
+    },
     impl: {
         write: function (defaultCfg) {
             return $restArg(function () {
+                var writeBackend = log.writeBackend();
                 var args = _.asArray(arguments);
                 var cleanArgs = log.cleanArgs(args);
                 var config = _.extend({ indent: 0 }, defaultCfg, log.readConfig(args));
                 var stackOffset = Platform.NodeJS ? 3 : 3;
-                var indent = (log.impl.writeBackend.indent || 0) + config.indent;
+                var indent = (writeBackend.indent || 0) + config.indent;
                 var text = log.impl.stringifyArguments(cleanArgs, config);
                 var indentation = _.times(indent, _.constant('\t')).join('');
                 var match = text.reversed.match(/(\n*)([^]*)/);
@@ -4602,7 +4657,7 @@ _.extend(log, {
                     codeLocation: location,
                     config: config
                 };
-                log.impl.writeBackend(backendParams);
+                writeBackend(backendParams);
                 return cleanArgs[0];
             });
         },
@@ -4697,7 +4752,6 @@ _.extend(log, log.printAPI = {
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
 logs = _.map2(log.printAPI, _.higherOrder);
-log.impl.writeBackend = log.impl.defaultWriteBackend;
 _.extend(log, {
     asTable: function (arrayOfObjects) {
         var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
@@ -4779,8 +4833,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: $interlocked(function (cfg_, optionalThen) {
-        var releaseLock = _.last(arguments);
+    run: $interlocked(function (releaseLock, cfg_, optionalThen) {
         var then = arguments.length === 3 ? optionalThen : _.identity;
         var defaults = {
             silent: true,
@@ -5124,7 +5177,7 @@ Test = $prototype({
             maxTime: self.timeout,
             expired: timeoutExpired
         });
-        var withLogging = log.withCustomWriteBackend.partial(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (args) {
+        var withLogging = log.withWriteBackend.partial(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (args) {
             self.logCalls.push(args);
         }));
         var withExceptions = _.withUncaughtExceptionHandler.partial(self.$(self.onUnhandledException));
@@ -5136,10 +5189,9 @@ Test = $prototype({
                     beforeComplete();
                     doneWithExceptions();
                     doneWithLogging();
-                    then();
                 });
             });
-        });
+        }, then);
     },
     printLog: function () {
         var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
@@ -5150,9 +5202,7 @@ Test = $prototype({
         this.evalLogCalls();
     },
     evalLogCalls: function () {
-        _.each(this.logCalls, function (args) {
-            log.impl.writeBackend(args);
-        });
+        _.each(this.logCalls, log.writeBackend().arity1);
     }
 });
 if (Platform.NodeJS) {

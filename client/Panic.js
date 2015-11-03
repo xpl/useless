@@ -131,7 +131,7 @@ Panic.widget = $singleton (Component, {
 
 	printFailedTest: function (test) { var logEl = $('<div class="test-log" style="margin-top: 13px;">')
 
-		log.withCustomWriteBackend (
+		log.withWriteBackend (
 			function (params) {
 				logEl.append ($('<pre>').css ({ color: params.color.css }).html (
 					_.escape (params.indentedText) +

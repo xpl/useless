@@ -111,9 +111,7 @@ Testosterone = $singleton ({
 
     /*  Entry point
      */
-    run: $interlocked (function (cfg_, optionalThen) {
-        var releaseLock = _.last (arguments)
-        var then = arguments.length === 3 ? optionalThen : _.identity
+    run: $interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
 
         /*  Configuration
          */
@@ -326,9 +324,7 @@ Test = $prototype ({
             callStack       = CallStack.fromError (error)
         
         callStack.sourcesReady (function () {
-
             then (_.map (assertionStack, function (assertion) {
-
                 var found = _.find (callStack, function (loc, index) {
                     if ((assertion.location && CallStack.locationEquals (loc, assertion.location)) ||
                         (loc.source.indexOf ('$' + assertion.name) >= 0)) {
@@ -385,7 +381,7 @@ Test = $prototype ({
             then () }) },
 
     onUnhandledException: function (e) {
-        this.onException (e, function () {
+        this.onException (e, function () { 
             if (this.afterUnhandledException) {
                 var fn =    this.afterUnhandledException
                             this.afterUnhandledException = undefined
@@ -433,13 +429,12 @@ Test = $prototype ({
 
         var withTimeout     = _.withTimeout.partial ({ maxTime: self.timeout, expired: timeoutExpired })
         
-        var withLogging     = log.withCustomWriteBackend.partial (
+        var withLogging     = log.withWriteBackend.partial (
                                     _.extendWith ({ indent: self.depth + (self.indent || 0) }, function (args) {
                                         self.logCalls.push (args) }))
 
         var withExceptions  = _.withUncaughtExceptionHandler.partial (self.$ (self.onUnhandledException))
 
-        
         withLogging (           function (doneWithLogging) {
             withExceptions (    function (doneWithExceptions) {
                 withTimeout (   function (doneWithTimeout) {
@@ -451,9 +446,7 @@ Test = $prototype ({
                                 function () {
                                     beforeComplete ()
                                     doneWithExceptions ()
-                                    doneWithLogging ()
-
-                                    then () }) }) }) },
+                                    doneWithLogging () }) }) }, then) },
 
     printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
 
@@ -467,7 +460,7 @@ Test = $prototype ({
         this.evalLogCalls () },
 
     evalLogCalls: function () {
-        _.each (this.logCalls, function (args) { log.impl.writeBackend (args) }) } })
+        _.each (this.logCalls, log.writeBackend ().arity1) } })
 
 
 if (Platform.NodeJS) {
