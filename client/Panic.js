@@ -11,7 +11,7 @@ Error reporting UI
 if (typeof UI === 'undefined') {
 	UI = {} }
 
-Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity })
+Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
 
 	if (what === null) {
 		return }
@@ -19,7 +19,7 @@ Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss:
 	if (_.isTypeOf (Error, what)) {
 		_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
 
-	Panic.widget.append (what)
+	Panic.widget.append (what, cfg.raw)
 
 	if (_.isFunction (cfg.retry)) {
 		Panic.widget.onRetry (cfg.retry) }
@@ -101,23 +101,50 @@ Panic.widget = $singleton (Component, {
 		this.btnRetry.hide ()
 		this.btnClose.hide () },
 
-	append: function (what) { var id = 'panic' + this.hash (what)
+	append: function (what, raw) { var id = 'panic' + this.hash (what)
 
 		var counter = $('#' + id + ' .panic-alert-counter')
 		if (counter.length) {
 			counter.text ((counter.text () || '1').parsedInt + 1) }
 		else {
 			$('<div class="panic-alert-error">').attr ('id', id)
-				.append ('<span class="panic-alert-counter">')
-				.append (
-					_.isTypeOf (Error, what) ? this.printError (what) : log.impl.stringify (what)).insertAfter (
-						this.el.find ('.panic-modal-title'))}
+												.append ('<span class="panic-alert-counter">')
+												.append (this.print (what, raw))
+												.insertAfter (this.el.find ('.panic-modal-title')) }
 
 		this.toggleVisibility (true)
 		this.layout ()  },
 
 	hash: function (what) {
-		return ((_.isTypeOf (Error, what) ? (what && what.stack) : what) || '').hash },
+		return ((_.isTypeOf (Error, what) ? (what && what.stack) :
+				(_.isTypeOf (Test, what)  ? (what.suite + what.name) : what)) || '').hash },
+
+	print: function (what, raw) {
+		return (_.isTypeOf (Error, what) ?
+						this.printError (what) :
+			   (_.isTypeOf (Test, what) ?
+						this.printFailedTest (what) :
+						this.printUnknownStuff (what, raw))) },
+
+	printUnknownStuff: function (what, raw) {
+		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
+
+	printFailedTest: function (test) { var logEl = $('<div class="test-log" style="margin-top: 13px;">')
+
+		log.withCustomWriteBackend (
+			function (params) {
+				logEl.append ($('<pre>').css ({ color: params.color.css }).html (
+					_.escape (params.indentedText) +
+					((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
+					(params.trailNewlines || '').replace (/\n/g, '<br>'))) },
+
+			function (done) {
+				test.evalLogCalls ()
+				done () })
+
+		return [$('<div class="panic-alert-error-message" style="font-weight: bold;">')
+				    .text (test.name)
+				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
 	printError: function (e) { var stackEntries = CallStack.fromError (e),
 								   asyncContext = e.asyncContext

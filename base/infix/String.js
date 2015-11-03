@@ -62,6 +62,7 @@ _.deferTest ('String extensions', function () {
     $assert  ('qux'.quote ('[]'),   '[qux]')
     $assert  ('qux'.quote ('/'),    '/qux/')
     $assert  ('qux'.quote ('{  }'), '{ qux }')
+    $assert  ('qux'.quote ('</>'),  '</qux>')
 
     $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
     $assert  (_.asArray ('foo'.bytes), [102, 111, 111])

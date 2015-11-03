@@ -1294,8 +1294,9 @@ _.extend(_, {
 });
 _.quote = function (s, pattern_) {
     var pattern = pattern_ || '"';
-    var before = pattern.slice(0, Math.floor(pattern.length / 2 + pattern.length % 2));
-    var after = pattern.slice(pattern.length / 2) || before;
+    var splitAt = Math.floor(pattern.length / 2 + pattern.length % 2);
+    var before = pattern.slice(0, splitAt);
+    var after = pattern.slice(splitAt) || before;
     return before + s + after;
 };
 _.quoteWith = _.flip2(_.quote);
@@ -4799,7 +4800,10 @@ Testosterone = $singleton({
             var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
             var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
             this.runningTests = _.map(selectTests, function (test, i) {
-                return _.extend(test, { index: i });
+                return _.extend(test, {
+                    indent: cfg.indent,
+                    index: i
+                });
             });
             _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
                 _.assert(cfg.done !== true);
@@ -4871,15 +4875,17 @@ Testosterone = $singleton({
         }));
     },
     printLog: function (cfg) {
-        var loggedTests = _.filter(this.runningTests, function (test) {
-            return test.failed || !cfg.silent && test.hasLog;
-        });
-        var failedTests = _.filter(this.runningTests, _.property('failed'));
-        _.invoke(cfg.verbose ? this.runningTests : loggedTests, 'printLog');
-        if (failedTests.length) {
-            log.orange('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck(failedTests, 'name').join(', '), '\n\n');
-        } else if (cfg.silent !== true) {
-            log.green('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n');
+        if (!cfg.supressLog) {
+            var loggedTests = _.filter(this.runningTests, function (test) {
+                return test.failed || !cfg.silent && test.hasLog;
+            });
+            var failedTests = _.filter(this.runningTests, _.property('failed'));
+            _.invoke(cfg.verbose ? this.runningTests : loggedTests, 'printLog');
+            if (failedTests.length) {
+                log.orange('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck(failedTests, 'name').join(', '), '\n\n');
+            } else if (cfg.silent !== true) {
+                log.green('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n');
+            }
         }
     }
 });
@@ -4892,6 +4898,7 @@ Test = $prototype({
             routine: undefined,
             verbose: false,
             depth: 1,
+            indent: 0,
             context: this
         });
     },
@@ -5116,7 +5123,7 @@ Test = $prototype({
             maxTime: self.timeout,
             expired: timeoutExpired
         });
-        var withLogging = log.withCustomWriteBackend.partial(_.extendWith({ indent: self.depth }, function (args) {
+        var withLogging = log.withCustomWriteBackend.partial(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (args) {
             self.logCalls.push(args);
         }));
         var withExceptions = _.withUncaughtExceptionHandler.partial(self.$(self.onUnhandledException));

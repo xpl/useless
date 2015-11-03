@@ -1489,14 +1489,17 @@ _.withTest (['stdlib', 'quote'], function () {
         $assert (_.quote      ('qux', '[]'),     '[qux]')
         $assert (_.quote      ('qux', '/'),      '/qux/')
         $assert (_.quote      ('qux', '{  }'),   '{ qux }')
+        $assert (_.quote      ('qux', '</>'),    '</qux>')
         $assert (_.quoteWith  ('[]', 'qux'), '[qux]') }, function () {
 
     _.quote = function (s, pattern_) {
                     var pattern = pattern_ || '"'
-                    var before  = pattern.slice (0, Math.floor (pattern.length / 2 + (pattern.length % 2)))
-                    var after   = pattern.slice (pattern.length / 2) || before
+                    var splitAt = Math.floor (pattern.length / 2 + (pattern.length % 2))
+                    var before  = pattern.slice (0, splitAt)
+                    var after   = pattern.slice (splitAt) || before
 
                     return before + s + after }
+
 
     _.quoteWith  = _.flip2 (_.quote)
     _.quotesWith = _.higherOrder (_.quoteWith) })
@@ -2586,6 +2589,7 @@ _.deferTest ('String extensions', function () {
     $assert  ('qux'.quote ('[]'),   '[qux]')
     $assert  ('qux'.quote ('/'),    '/qux/')
     $assert  ('qux'.quote ('{  }'), '{ qux }')
+    $assert  ('qux'.quote ('</>'),  '</qux>')
 
     $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
     $assert  (_.asArray ('foo'.bytes), [102, 111, 111])

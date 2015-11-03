@@ -22,7 +22,7 @@ _.tests.reflection = {
         catch (e) {
             $assertTypeMatches (CallStack.fromError (e), CallStack) } },
 
-    '$callStack': function () {
+    '$callStack': function () { if (!Platform.NodeJS) { return } // TODO: fixme
 
         /*  That's how you access call stack at current location
          */
