@@ -504,8 +504,9 @@ _.withTest (['stdlib', 'quote'], function () {
 
     _.quote = function (s, pattern_) {
                     var pattern = pattern_ || '"'
-                    var before  = pattern.slice (0, Math.floor (pattern.length / 2 + (pattern.length % 2)))
-                    var after   = pattern.slice (pattern.length / 2) || before
+                    var splitAt = Math.floor (pattern.length / 2 + (pattern.length % 2))
+                    var before  = pattern.slice (0, splitAt)
+                    var after   = pattern.slice (splitAt) || before
 
                     return before + s + after }
 

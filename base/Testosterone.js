@@ -145,7 +145,7 @@ Testosterone = $singleton ({
 
             /*  Reset context (assigning indices)
              */
-            this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { index: i }) })
+            this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
             /*  Go
              */
@@ -209,7 +209,8 @@ Testosterone = $singleton ({
                                         else {
                                             return self.currentTest.runAssertion (name, def, fn, arguments) } }) })) },
 
-    printLog: function (cfg) {
+    printLog: function (cfg) { if (!cfg.supressLog) {
+
         var loggedTests = _.filter (this.runningTests, function (test) { return test.failed || (!cfg.silent && test.hasLog) })
         var failedTests = _.filter (this.runningTests, _.property ('failed'))
 
@@ -219,7 +220,7 @@ Testosterone = $singleton ({
             log.orange ('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck (failedTests, 'name').join (', '), '\n\n') }
 
         else if (cfg.silent !== true) {
-            log.green ('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n') } } })
+            log.green ('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n') } } } })
 
 
 /*  Encapsulates internals of test's I/O.
@@ -236,6 +237,7 @@ Test = $prototype ({
             routine:    undefined,
             verbose:    false,
             depth:      1,
+            indent:     0,
             context:    this }) },
 
     currentAssertion: $property (function () {
@@ -432,7 +434,7 @@ Test = $prototype ({
         var withTimeout     = _.withTimeout.partial ({ maxTime: self.timeout, expired: timeoutExpired })
         
         var withLogging     = log.withCustomWriteBackend.partial (
-                                    _.extendWith ({ indent: self.depth }, function (args) {
+                                    _.extendWith ({ indent: self.depth + (self.indent || 0) }, function (args) {
                                         self.logCalls.push (args) }))
 
         var withExceptions  = _.withUncaughtExceptionHandler.partial (self.$ (self.onUnhandledException))

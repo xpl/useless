@@ -89,7 +89,7 @@
 
 .panic-alert-error .callstack-entry,
 .panic-alert-error .callstack-entry * { line-height: initial; }
-.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; overflow: hidden; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }
+.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }
 .panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }
 .panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }
 .panic-alert-error .callstack-entry.full { max-height: 220px; }
@@ -102,3 +102,5 @@
 .panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: '<< SOURCE LOADING >>'; color: rgba(0,0,0,0.5); }
 
 .panic-alert-error .callstack-entry .line:after { content: ' '; }
+
+.panic-alert-error pre { font-family: Menlo, monospace; overflow: scroll; border-radius: 2px; white-space: pre; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; font-size: 11px; }
