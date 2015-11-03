@@ -1,0 +1,9 @@
+.useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;
+					   white-space: pre;
+					   font-family: Menlo, monospace;
+					   font-size: 11px;
+					   pointer-events: none;
+					   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }
+
+.ulo-line { white-space: nowrap; }
+.ulo-line-where { color: black; opacity: 0.25; }
