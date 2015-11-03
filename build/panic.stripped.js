@@ -1,5 +1,6 @@
 /*    AUTO GENERATED from panic.js (stripped unit tests and comments) */
 
+$uselessFile = 'useless.micro.js';
 if (typeof require !== 'undefined') {
     _ = require('underscore');
     $include = require;
@@ -3792,6 +3793,7 @@ if (jQuery) {
 }
 ;
 ;
+$uselessFile = 'panic.js';
 _.defineTagKeyword('required');
 _.defineTagKeyword('atom');
 _.defineKeyword('any', _.identity);

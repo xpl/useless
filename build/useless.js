@@ -1,10 +1,10 @@
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-------------------------------------------------------------------------
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+   ------------------------------------------------------------------- */
 
-Entry point.
+$uselessFile = 'useless.js'
 
-------------------------------------------------------------------------
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* -------------------------------------------------------------------
+   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
 /*  As we do not run macro processor on server scripts, $include reduces to
@@ -6710,10 +6710,10 @@ _.tests.reflection = {
         $assert ($uselessPath.length > 0) },
 
     'readSource': function () {
-        _.readSource ($uselessPath + 'useless.js', function (text) {
+        _.readSource ($uselessPath + $uselessFile, function (text) {
             $assert (text.length > 0) })
 
-        _.readSourceLine ($uselessPath + 'useless.js', 0, function (line) {
+        _.readSourceLine ($uselessPath + $uselessFile, 0, function (line) {
             $assert (line.length > 0) }) },
 
     'CallStack from error': function () {

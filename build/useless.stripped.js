@@ -1,5 +1,6 @@
 /*    AUTO GENERATED from useless.js (stripped unit tests and comments) */
 
+$uselessFile = 'useless.js';
 if (typeof require !== 'undefined') {
     _ = require('underscore');
     $include = require;
