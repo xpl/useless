@@ -1489,6 +1489,7 @@ _.withTest (['stdlib', 'quote'], function () {
         $assert (_.quote      ('qux', '[]'),     '[qux]')
         $assert (_.quote      ('qux', '/'),      '/qux/')
         $assert (_.quote      ('qux', '{  }'),   '{ qux }')
+        $assert (_.quote      ('qux', '</>'),    '</qux>')
         $assert (_.quoteWith  ('[]', 'qux'), '[qux]') }, function () {
 
     _.quote = function (s, pattern_) {
@@ -1498,6 +1499,7 @@ _.withTest (['stdlib', 'quote'], function () {
                     var after   = pattern.slice (splitAt) || before
 
                     return before + s + after }
+
 
     _.quoteWith  = _.flip2 (_.quote)
     _.quotesWith = _.higherOrder (_.quoteWith) })
