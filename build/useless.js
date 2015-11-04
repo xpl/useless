@@ -676,26 +676,6 @@ function () {
 
 })
 
-/*  console.log with 'pure' semantics, for debugging of complex expressions
-    ======================================================================== */
-
-_.mixin ({
-
-    log: function (x, label) {
-        console.log.apply (console.log,
-            _.times (arguments.callee.depth || 0, _.constant ('→ '))
-                .concat ([label || '_.log:', x]))
-        return x },
-
-    logs: function (fn, numArgs) {
-        return function () {
-            _.log.depth = (_.log.depth || 0) + 1
-                _.log (_.first (arguments, numArgs), 'inp:')
-                var result = _.log (fn.apply (this, arguments), 'out:')
-                console.log ('\n')
-            _.log.depth--
-            return result }} })
-
 
 
 
