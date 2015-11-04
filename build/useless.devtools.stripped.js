@@ -985,6 +985,7 @@ Testosterone = $singleton({
         test.run(function () {
             runConfig.testComplete(test);
             test.time = Date.now() - test.startTime;
+            self.currentAssertion = undefined;
             then();
         });
     },
@@ -1138,14 +1139,6 @@ Test = $prototype({
         this.failed = true;
         this.finalize();
     },
-    assertionStack: $property(function () {
-        var result = [], a = this;
-        do {
-            result.push(a);
-            a = a.mother;
-        } while (a);
-        return result;
-    }),
     onException: function (e) {
         var self = this;
         if (this.canFail || this.verbose) {
