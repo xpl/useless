@@ -151,7 +151,7 @@ Testosterone.run ({
     silent:   true },
 
     function (okay) { if (okay) {
-
+        
         var arguments     = _.rest (process.argv, 2)
         var optionNames   = ['no-compress', 'no-stripped']
         var filePath      = _.without.apply (null, [arguments].concat (optionNames))

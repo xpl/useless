@@ -3,7 +3,7 @@
 
 _.tests.stream = {
 
-    'triggerOnce': function () { $assertCalls (1, function (mkay) {
+    'triggerOnce': function () { $assertEveryCalledOnce (function (mkay) {
                                     var t = _.triggerOnce ()
                                     var f = function (_321) { $assert (_321 === 321); mkay () }
                                      t (f)
@@ -20,21 +20,21 @@ _.tests.stream = {
 
         /*  Should call with current value when upon binding
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
+        $assertEveryCalledOnce (function (mkay) { var valueChanged = _.observable ()
             valueChanged (999)
             valueChanged (function (_999) { $assert (_999, 999); mkay () }) })
 
         /*  Should call previously bound callback if changed
          */
-        $assertCalls (3, function (mkay) { var valueChanged = _.observable ()
-            valueChanged (mkay)
+        $assertEveryCalled (function (mkay__3) { var valueChanged = _.observable ()
+            valueChanged (mkay__3)
             valueChanged (123)
             valueChanged (345)
             valueChanged (567) })
 
         /*  Should pass last distinct value as argument to callbacks, not calling if its not changed
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
+        $assertEveryCalledOnce (function (mkay) { var valueChanged = _.observable ()
             valueChanged (function (_111) {
                             $assert (111, _111)
                             mkay () })
@@ -43,34 +43,34 @@ _.tests.stream = {
 
         /*  Should pass previous value as second argument
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable (444)
+        $assertEveryCalledOnce (function (mkay) { var valueChanged = _.observable (444)
             valueChanged (function (_666, _444) { if (_444) { $assert ([_666, _444], [666, 444]); mkay () } })
             valueChanged (666) }) },
 
     'observable.when': function () {
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             var value = _.observable (234)
                 value.when (          234, function () { mkay () }) }) // passing constant should work
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
                 value (432) })
 
-        $assertCalls (0, function (mkay) {
+        $assertNotCalled (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
                 value (7) })
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals ('bar'), function () { mkay () })
                 value ('bar')
                 value ('foo')
                 value ('bar') }) },
 
-    'once': function () { $assertCalls (1, function (mkay) {
+    'once': function () { $assertEveryCalledOnce (function (mkay) {
 
         var whenSomething = _.trigger ()
             whenSomething.once (mkay)
@@ -123,19 +123,18 @@ _.tests.stream = {
 
         /*  Test conventional semantics (1:1 multicast)
          */
-        $assertCalls (2, function (mkay1) {
-        $assertCalls (2, function (mkay2) {
+        $assertEveryCalled (function (mkay1__2, mkay2__2) {
 
-            obj.whenSomething (mkay1)                   // that's how you bind
-            obj.whenSomething (mkay2)
+            obj.whenSomething (mkay1__2)                // that's how you bind
+            obj.whenSomething (mkay2__2)
 
             obj.whenSomething ()                        // that's how you trigger it
-            obj.whenSomething ()     }) })                      
+            obj.whenSomething ()     })                      
 
 
         /*  Test unbinding
          */
-        $assertCalls (1, function (shouldCall) {
+        $assertEveryCalledOnce (function (shouldCall) {
 
             var whenSomething = _.trigger ()
 
@@ -150,16 +149,16 @@ _.tests.stream = {
 
         /*  Test 'barrier' semantics + test argument passing
          */
-        $assertCalls (2, function (mkay) {
+        $assertEveryCalledOnce (function (mkay1, mkay2) {
 
             obj.somethingReady (function (x) {
                 $assert (x === 'foo')               // you may pass arguments to callbacks
                 obj.somethingReady (x)              // should not call anything
-                mkay () })
+                mkay1 () })
 
             obj.somethingReady (function (x) {
                 $assert (x === 'foo')
-                mkay () })
+                mkay2 () })
 
             obj.somethingReady ('foo') })   // that's how you trigger it (may pass arguments)
         obj.somethingReady ('bar')          // should not call anything
@@ -172,11 +171,11 @@ _.tests.stream = {
 
         _.allTriggered ([t1, t2], function () { $fail }); t1 ()     // pair1: should not cause _.allTriggered to trigger
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
-    '_.barrier (value)': function () { $assertCalls (1, function (mkay) {
+    '_.barrier (value)': function () { $assertEveryCalledOnce (function (mkay) {
              var willBe42 = _.barrier (42)
         $assert (willBe42.already)
                  willBe42 (function (_42) { $assert (_42, 42); mkay () }) }) },

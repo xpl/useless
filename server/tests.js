@@ -85,7 +85,7 @@ module.exports = $trait ({
                             this.dbName + '_test',
                             this.entitySchema,
                             this.$ (function (testDb) { var productionDb = this.db;
-                                                                            this.db = testDb
+                                                                           this.db = testDb
                 this.dropDb (this.newContext ({
                     success: this.$ (function () { 
                        what (this.$ (function () { this.db = productionDb })) }) })) })) } },

@@ -54,6 +54,12 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
+
+_.tests.foobar = {
+    foo: function () {
+        $assertFails (function () {
+            $assertEveryCalled (function (a, b, c) { a (); b () }) }) } }
+
 _.deferTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
@@ -167,24 +173,12 @@ if (_.hasStdlib) {
     $assertThrows (function () { throw new Error ('42') }, _.matches ({ message: '42' }))
 
 
-/*  Ensuring execution (given number of times)
+/*  Ensuring execution
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertCalls (1, function (mkay) { mkay () })
-    $assertFails (function () {
-        $assertCalls (1, function (mkay) { })   })
-
-    $assertCalls (3, function (mkay) { mkay (); mkay (); mkay () })
-    $assertFails (function () {
-        $assertCalls (0, function (mkay) { mkay () })
-        $assertCalls (2, function (mkay) { mkay (); mkay (); mkay () }) })
 
     $assertEveryCalled     (function (a, b, c) { a (); a (); b (); c () })
     $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
-
-    $assertFails (function () {
-        $assertEveryCalled     (function (a, b, c) { a (); b () })
-        $assertEveryCalledOnce (function (a, b, c) { a (); b (); c (); c () }) })
+    $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
 
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -216,36 +210,7 @@ if (_.hasStdlib) {
 
 function () {
 
-    /*  assertions that exhibit CPS interface
-     */
-    _.extend (_, _.asyncAssertions = {
-
-        assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
-            fn (function () {
-                $assert ([].splice.call (arguments, 0), requiredResult)
-                if (then) {
-                    then () } }) },
-
-        assertCalls: function (times, test, then) {
-            var timesCalled = 0
-            var mkay        = function () {
-                                timesCalled++ }
-
-            var countMkays  = function () {
-                                $assert (times, timesCalled)
-                                if (then) {
-                                    then () } }
-
-            if (test.length >= 2) {
-                test.call (this, mkay, function () {
-                    countMkays () }) }      // async
-            else {
-                test.call (this, mkay);
-                    countMkays () } } })    // sync
-    
-    /*  non-CPS assertions
-     */
-    _.extend (_, _.assertions = _.extend ({}, _.asyncAssertions, {
+    _.extend (_, _.assertions = {
 
         assert: function (__) { var args = [].splice.call (arguments, 0)
 
@@ -258,17 +223,38 @@ function () {
 
                     return true },
 
-        assertEveryCalled: function (fn) {
-            var callbacks = _.times (fn.length, function () { return function () { arguments.callee.called = true } })
-            fn.apply (null, callbacks)
-            return _.assert (_.pluck (callbacks, 'called'), _.times (callbacks.length, _.constant (true))) },
+        assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
+            fn (function () {
+                $assert ([].splice.call (arguments, 0), requiredResult)
+                if (then) { then (); return true; } }) },
 
-        assertEveryCalledOnce: function (fn) {
-            var callbacks = _.times (fn.length, function () {
+        assertNotCalled: function (context) {
+            context (function () { $fail }) },
+
+        assertEveryCalledOnce: function (fn, then) {
+            return _.assertEveryCalled (_.hasTags ? $once (fn) : _.extend (fn, { once: true }), then) },
+
+        assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
+                                                      async = _.hasTags ? $async.is (fn_) : fn_.async
+                                                      once  = _.hasTags ? $once.is (fn_)  : fn_.once
+
+            var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
+            var contracts = once ? _.times (fn.length, _.constant (1)) :
+                                   _.map (match[1].split (','), function (arg) {
+                                                                    var parts = (arg.trim ().match (/^(.+)__(.+)$/))
+                                                                    return (parts && parseInt (parts[2], 10)) || true })
+            var status    = []
+            var callbacks = _.times (fn.length, function (i) {
                                                     return function () {
-                                                        arguments.callee.called = (arguments.callee.called || 0) + 1 } })
+                                                        status[i] =
+                                                            _.isNumber (contracts[i]) ?
+                                                                ((status[i] || 0) + 1) : true
+                                                        if (async && _.isEqual (status, contracts))
+                                                            then () } })
             fn.apply (null, callbacks)
-            return _.assert (_.pluck (callbacks, 'called'), _.times (callbacks.length, _.constant (1))) },
+
+            if (!async)   { _.assert (status, contracts)
+                if (then) { then () } } },
 
         assertCallOrder: function (fn) {
             var callIndex = 0
@@ -299,7 +285,7 @@ function () {
                                             { mismatches:   mismatches }] }) },
 
         assertFails: function (what) {
-            _.assertThrows.call (this, what, _.isAssertionError) },
+            return _.assertThrows.call (this, what, _.isAssertionError) },
 
         assertThrows: function (what, errorPattern /* optional */) {
                             var e = undefined, thrown = false
@@ -308,11 +294,11 @@ function () {
 
                             _.assert.call (this, thrown)
 
-                            if (arguments.length === 1) {
+                            if (arguments.length > 1) {
                                 _.assertMatches.apply (this, [e].concat (_.rest (arguments))) } },
 
         assertNotThrows: function (what) {
-            _.assertCalls.call (this, 0, function () { what () }) },
+            return _.assertEveryCalled (function (ok) { what (); ok () }) },
 
         assertArguments: function (args, callee, name) {
             var fn    = (callee || args.callee).toString ()
@@ -338,7 +324,7 @@ function () {
                 _.assertionFailed () }),
 
         stub: function () {
-                _.assertionFailed () } }))
+                _.assertionFailed () } })
 
 
     /*  DEFAULT FAILURE IMPL.

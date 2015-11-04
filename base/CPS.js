@@ -70,12 +70,12 @@ _.withTest (['cps', 'each'], function () {
 
     /*  Iterating over dictionary is legal
      */
-    $assertCalls (4, function (mkay) {
+    $assertEveryCalled (function (items__3, final__1) {
         var data2 = { 'foo': 1, 'bar': 2, 'baz': 3 }
         _.cps.each (
             data2,
-            function (item, name, then) { $assert (item === data2[name]); mkay (); then () },
-            function () { mkay () }) }) },
+            function (item, name, then) { $assert (item === data2[name]); items__3 (); then () },
+            function () { final__1 () }) }) },
 
 function () { _.extend (_.cps, {
 
@@ -169,7 +169,7 @@ function () { _.extend (_.cps, {
 
 _.withTest (['cps', 'memoize'], function () {
 
-    $assertCalls (1, function (noMoreThanOne) {
+    $assertEveryCalledOnce (function (noMoreThanOne) {
         var plusOne = _.cps.memoize (function (x, then) { noMoreThanOne (); then (x + 1) })
 
         plusOne (2, function (x) { $assert (x === 3) })
@@ -213,11 +213,11 @@ function () { _.extend (_.cps, {
 /*  reduce
     ======================================================================== */
 
-_.withTest (['cps', 'reduce'], function () { $assertCalls (2, function (mkay) {
+_.withTest (['cps', 'reduce'], function () { $assertEveryCalled (function (mkay__2) {
 
     var input   = [1,2,3]
     var sums    = function (a, b, then) { then (a + b) }
-    var check   = function (result) { $assert (result === 6); mkay () }
+    var check   = function (result) { $assert (result === 6); mkay__2 () }
 
     _.cps.reduce (input, sums, check)
     _.cps.reduce ([], sums, check, 6)
@@ -240,20 +240,20 @@ _.withTest (['cps', 'reduce'], function () { $assertCalls (2, function (mkay) {
 /*  noop / identity / constant
     ======================================================================== */
 
-_.withTest (['cps', 'noop, identity, constant'], function () { $assertCalls (4, function (mkay) {
+_.withTest (['cps', 'noop, identity, constant'], function () { $assertEveryCalled (function (noop, identity, const1, const2) {
 
     /*  Port of underscore's _.noop to CPS terms
      */
-    _.cps.noop (1,2,3, function () { $assert (arguments.length === 0); mkay () })
+    _.cps.noop (1,2,3, function () { $assert (arguments.length === 0); noop () })
 
     /*  Port of underscore's _.identity to CPS terms
      */
-    _.cps.identity (1,2,3, function () { $assert ([1,2,3], _.asArray (arguments)); mkay () })
+    _.cps.identity (1,2,3, function () { $assert ([1,2,3], _.asArray (arguments)); identity () })
 
     /*  Port of underscore's _.constant to CPS terms
      */
-    _.cps.constant (3)    (function (_3)     { $assert (_3 === 3); mkay () })
-    _.cps.constant (1, 2) (function (_1, _2) { $assert (_1 === 1); $assert (_2 === 2); mkay () })
+    _.cps.constant (3)    (function (_3)     { $assert (_3 === 3); const1 () })
+    _.cps.constant (1, 2) (function (_1, _2) { $assert (_1 === 1); $assert (_2 === 2); const2 () })
 
 })}, function () { _.extend (_.cps, {
 
@@ -320,13 +320,13 @@ _.deferTest (['cps', 'arity / resultArity'], function () {
 /*  sequence / compose
     ======================================================================== */
 
-_.withTest (['cps', 'sequence / compose'], function () { $assertCalls (4, function (mkay) {
+_.withTest (['cps', 'sequence / compose'], function () { $assertEveryCalled (function (mkay__4) {
 
     /*  Basic example of asynchronous functions sequencing
      */
     var makeCookies = function (whatCookies, then)  { then ('cookies ' + whatCookies) }
     var eatCookies  = function (cookies, then)      { then ('nice ' + cookies) }
-    var check       = function (result)             { $assert (result, 'nice cookies from shit'); mkay () }
+    var check       = function (result)             { $assert (result, 'nice cookies from shit'); mkay__4 () }
 
     _.cps.sequence (makeCookies, eatCookies, check)   ('from shit')     // supports both ways (either argument list...
     _.cps.sequence ([makeCookies, eatCookies, check]) ('from shit')     // ..or array
@@ -359,7 +359,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  No error
      */
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             _.cps.constant ('foo'),
             _.appends ('bar').asContinuation],
@@ -367,7 +367,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Throwing error
      */
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function () { throw testErr },
             function () { $fail }],
@@ -375,7 +375,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Returning error to continuation
      */
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function (then) { then (testErr) },
             function () { $fail }],
@@ -383,7 +383,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Reading error in separate callback
      */
-    $assertCalls (1, function (mkay) {
+$assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function (then) { then (testErr) },
             function () { $fail }],

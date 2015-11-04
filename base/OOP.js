@@ -603,7 +603,7 @@ _.deferTest ('OOP', {
 /*  $singleton (a humanized macro to new ($prototype (definition)))
     ======================================================================== */
 
-     _.withTest (['OOP', '$singleton'], function () { $assertCalls (2, function (mkay) {
+     _.withTest (['OOP', '$singleton'], function () { $assertEveryCalledOnce (function (baseConstructor, derivedConstructor) {
 
             var Base    = $prototype ({
                             method:    _.constant (42) })
@@ -612,14 +612,14 @@ _.deferTest ('OOP', {
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
             var Simple  = $singleton ({
-                            constructor: function () { mkay () },
+                            constructor: function () { baseConstructor () },
                             method:      function () { return 42 } })
 
         /*  can inherit from a prototype
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
             var Derived = $singleton (Base, {
-                            constructor: function () { mkay (); Base.prototype.constructor.apply (this, arguments) } })
+                            constructor: function () { derivedConstructor (); Base.prototype.constructor.apply (this, arguments) } })
 
             $assert (Simple.method (), Derived.method (), 42) })
 

@@ -22,7 +22,7 @@ _.tests.reflection = {
         catch (e) {
             $assertTypeMatches (CallStack.fromError (e), CallStack) } },
 
-    '$callStack': function () {
+    '$callStack': function (testDone) {
 
         /*  That's how you access call stack at current location
          */
@@ -65,23 +65,23 @@ _.tests.reflection = {
         $assert (_.isTypeOf (CallStack, stack.filter (_.identity)))
         $assert (_.isTypeOf (CallStack, stack.reject (_.identity)))
 
-        /*  4. source code access, either per entry..
-         */
-        if (Platform.NodeJS) { // on client it's async so to test it properly, need to extract this test part to separate async routine
-            $assertCalls (1, function (mkay) {
-                stack[0].sourceReady (function (src) { mkay ()  // sourceReady is barrier, i.e. if ready, called immediately
-                    $assert (typeof src, 'string') }) })
+        $assertEveryCalled ($async (function (sourceReady, sourcesReady, safeLocationReady) {
 
-        /*  5. ..or for all stack
-         */
-            $assertCalls (1, function (mkay) {
-                stack.sourcesReady (function () { mkay ()       // sourcesReady is barrier, i.e. if ready, called immediately
-                    _.each (stack, function (entry) {
-                        $assert (typeof entry.source, 'string') }) }) })
+            /*  4. source code access, either per entry..
+             */
+            stack[0].sourceReady (function (src) {               // sourceReady is barrier, i.e. if ready, called immediately
+                $assert (typeof src, 'string'); sourceReady () })
 
-        /*  Safe location querying
-         */
-        $assertCPS (stack.safeLocation (7777).sourceReady, '??? WRONG LOCATION ???') } },
+            /*  5. ..or for all stack
+             */
+            stack.sourcesReady (function () {                     // sourcesReady is barrier, i.e. if ready, called immediately
+                _.each (stack, function (entry) {
+                    $assert (typeof entry.source, 'string') }); sourcesReady () })
+
+            /*  Safe location querying
+             */
+            stack.safeLocation (7777).sourceReady (function (line) {
+                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) },
 
     'Prototype.$meta': function (done) {
         var Dummy = $prototype ()

@@ -15,19 +15,19 @@ _.deferTest ('bindable', function () {
         innocentMethod: function (x) {
             return x } }
 
-    $assertCalls (7, function (mkay) {
+    $assertEveryCalled (function (before__1, after__1, intercept__2, secondIntercept__1, bindable__1, infixBefore__1) {
 
         /*  That's how you observe method calls
          */
-        _.onBefore (obj, 'plusOne', function (x)            { mkay (); $assert (x === 7) })
-        _.onAfter  (obj, 'plusOne', function (x, result)    { mkay (); $assert ([x, result], [7, 8]) })
+        _.onBefore (obj, 'plusOne', function (x)            { before__1 (); $assert (x === 7) })
+        _.onAfter  (obj, 'plusOne', function (x, result)    { after__1 (); $assert ([x, result], [7, 8]) })
 
         $assert (obj.plusOne (7), 8)
 
         /*  That's how you intercept method calls
          */
         _.intercept (obj, 'innocentMethod', function (x, method) {
-            mkay ()
+            intercept__2 ()
             return method (x + 1) * 2 })
 
         $assert (obj.innocentMethod (42), (42 + 1) * 2) 
@@ -35,7 +35,7 @@ _.deferTest ('bindable', function () {
         /*  Consequent interceptors wrap-up previous ones
          */
         _.intercept (obj, 'innocentMethod', function (x, method) {
-            mkay ()
+            secondIntercept__1 ()
             $assert (method (x), (42 + 1) * 2) 
             return 'hard boiled shit' })
 
@@ -43,8 +43,8 @@ _.deferTest ('bindable', function () {
 
         /*  Test infix calls
          */
-        var method = _.bindable (function (x) { mkay (); $assert (x === 42) })
-            method.onBefore (function (x) { mkay (); $assert (x === 42) })
+        var method = _.bindable (function (x) { bindable__1 (); $assert (x === 42) })
+            method.onBefore (function (x) { infixBefore__1 (); $assert (x === 42) })
             method (42) })
 
     /*  Test 'once' semantics

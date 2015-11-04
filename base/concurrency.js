@@ -174,9 +174,10 @@ Lock = $prototype ({
     'Release' trigger passed as last argument to your target function.
  */
 _.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
-    return _.prependsArguments (Tags.unwrap (fn), function (context) {
-        lock.acquire (function () {
-            context (lock.$ (lock.release)) }) }) })
+    return _.extendWith ({ wait: lock.$ (lock.wait) },
+        _.prependsArguments (Tags.unwrap (fn), function (context) {
+                                                    lock.acquire (function () {
+                                                        context (lock.$ (lock.release)) }) })) })
 
 
 /*  EXPERIMENTAL (TBD)

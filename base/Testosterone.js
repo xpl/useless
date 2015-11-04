@@ -84,16 +84,15 @@ Testosterone = $singleton ({
     prototypeTests: [],
 
     isRunning: $property (function () {
-        return this.currentTest !== undefined }),
+        return this.currentAssertion !== undefined }),
 
     /*  Hook up to assertion syntax defined in common.js
      */
     constructor: function () {
 
-        this.defineAssertion ('assertFails', $shouldFail (function (what) { what.call (this) }))
-
-        _.each (_.omit (_.assertions, 'assertFails'), function (fn, name) {
-            this.defineAssertion (name, name in _.asyncAssertions ? $async (fn) : fn) }, this);
+        _.each (_.assertions, function (fn, name) {
+                                    this.defineAssertion (name, (name === 'assertFails') ?
+                                        $shouldFail (function (what) { what.call (this) }) : fn) }, this);
 
         /*  For defining tests inside prototype definitions
          */
@@ -145,19 +144,32 @@ Testosterone = $singleton ({
              */
             this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-            /*  Go
+            /*  Bind to exception handling
              */
-            _.cps.each (selectTests,
-                    this.$ (this.runTest),
-                    this.$ (function () {
-                                _.assert (cfg.done !== true)
-                                          cfg.done   = true
+            _.withUncaughtExceptionHandler (this.$ (this.onException), this.$ (function (doneWithExceptions) {
 
-                                this.printLog (cfg)
-                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                                this.failed = (this.failedTests.length > 0)
-                                then (!this.failed)
-                                releaseLock () }) ) })) }),
+                /*  Go
+                 */
+                _.cps.each (selectTests,
+                        this.$ (this.runTest),
+                        this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
+
+                                    _.assert (cfg.done !== true)
+                                              cfg.done   = true
+
+                                    this.printLog (cfg)
+                                    this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+                                    this.failed = (this.failedTests.length > 0)
+                                    then (!this.failed)
+                                    
+                                    doneWithExceptions ()
+                                    releaseLock () }) ) })) })) }),
+
+    onException: function (e) {
+        if (this.currentAssertion) 
+            this.currentAssertion.onException (e)
+        else
+            throw e },
 
     /*  You may define custom assertions through this API
      */
@@ -168,16 +180,16 @@ Testosterone = $singleton ({
     /*  Internal impl
      */
     runTest: function (test, i, then) { var self = this, runConfig = this.runConfig
-        this.currentTest = test
         
         runConfig.testStarted (test)
         
         test.verbose = runConfig.verbose
         test.timeout = runConfig.timeout
 
+        test.startTime = Date.now ()
+
         test.run (function () {
-            runConfig.testComplete (test)
-            delete self.currentTest
+            runConfig.testComplete (test); test.time = Date.now () - test.startTime
             then () }) },
 
     collectTests: function () {
@@ -193,19 +205,23 @@ Testosterone = $singleton ({
         name: name || '',
         tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
-                        return new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context }) }) } },
+                        var test = new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context })
+                            test.complete (function () {
+                                if (!(test.hasLog = (test.logCalls.length > 0))) {
+                                         if (test.failed)  { log.red   ('FAIL') }
+                                    else if (test.verbose) { log.green ('PASS') } } })
+
+                            return test }) } },
 
     defineAssertion: function (name, def) { var self = this
-
         _.deleteKeyword (name)
         _.defineKeyword (name, Tags.modifySubject (def,
-
-                                    function (fn) { return _.withSameArgs (fn, function () {
-
-                                        if (!self.currentTest) {
-                                            return fn.apply (self, arguments) }
-                                        else {
-                                            return self.currentTest.runAssertion (name, def, fn, arguments) } }) })) },
+                                    function (fn) {
+                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (1)
+                                            if (!self.currentAssertion) {
+                                                return fn.apply (self, arguments) }
+                                            else {
+                                                return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } }) })) },
 
     printLog: function (cfg) { if (!cfg.supressLog) {
 
@@ -226,228 +242,123 @@ Testosterone = $singleton ({
 Test = $prototype ({
 
     constructor: function (cfg) {
-        _.extend (this, cfg, {
-            assertionStack: _.observableRef ([]) })
-
-        _.defaults (this, {
+        _.defaults (this, cfg, {
             name:       'youre so dumb you cannot even think of a name?',
             failed:     false,
             routine:    undefined,
             verbose:    false,
             depth:      1,
             indent:     0,
-            context:    this }) },
+            failedAssertions: [],
+            context:    this,
+            complete: _.barrier () })
 
-    currentAssertion: $property (function () {
-        return this.assertionStack.value[0] }),
+        this.babyAssertion = $interlocked (this.babyAssertion) },
 
-    waitUntilPreviousAssertionComplete: function (then) {
-        if (this.currentAssertion && this.currentAssertion.async) {
-            this.assertionStack.when (_.isEmpty, function () {
-                then () }) }
-        else {
-            then () } },
+    finalize: function () {
+        this.babyAssertion.wait (this.$ (function () {
+            if (this.canFail && this.failedAssertions.length) {
+                this.failed = true }
+            this.complete (true) })) },
 
-    runAssertion: function (name, def, fn, args) { var self = this
+    babyAssertion: function (releaseLock, name, def, fn, args, loc) { var self = this
 
-        var assertion = {
+        var assertion = new Test ({
+            mother: this,
             name: name,
-            async: def.$async,
-            shouldFail: def.$shouldFail,
-            depth: self.depth + self.assertionStack.value.length + 1,
-            location: def.$async ? $callStack.safeLocation (2) : undefined }
-
-        this.waitUntilPreviousAssertionComplete (function () {
-
-            if (assertion.async) {
-                assertion = new Test (_.extend (assertion, {
-                    context: self.context,
-                    timeout: self.timeout / 2,
-                    routine: Tags.modifySubject (def, function (fn) {
+            shouldFail: def.$shouldFail || this.shouldFail,
+            depth: this.depth + 1,
+            location: loc,
+            context: this.context,
+            timeout: this.timeout / 2,
+            verbose: this.verbose,
+            silent:  this.silent,
+            routine: Tags.modifySubject (def, function (fn) {
                         return function (done) {
-                            _.cps.apply (fn, self.context, args, function (args, then) {
-                                if (!assertion.failed && then) {
-                                    then.apply (self.context, args) }
-                                done () }) } }) }))
+                                if ($async.is (args[0])) {
+                                    _.cps.apply (fn, self.context, args, function (args, then) {
+                                                                            if (then) then ()
+                                                                                      done ()  }) }
+                                  else {
+                                    try       { fn.apply (self.context, args); done () }
+                                    catch (e) { assertion.onException (e) } } } }) })
 
-                self.beginAssertion (assertion)
+        var doneWithAssertion = function () {
+            if (assertion.failed && self.canFail) {
+                self.failedAssertions.push (assertion) }
+            Testosterone.currentAssertion = self
+            releaseLock () }
 
-                assertion.run (function () {
-                    if (assertion.failed && self.fail ()) {
-                        assertion.location.sourceReady (function (src) {
-                            log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
-                            assertion.evalLogCalls ()
-                            self.endAssertion (assertion) }) }
-                    else {
-                        self.endAssertion (assertion) } }) }
-
+        assertion.run (function () {
+            if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
+                    assertion.location.sourceReady (function (src) {
+                        log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
+                        assertion.evalLogCalls ()
+                        doneWithAssertion () }) }
             else {
-                self.beginAssertion (assertion)
+                doneWithAssertion () } }) },
 
-                try {
-                    var result = fn.apply (self.context, args)
-                    self.endAssertion (assertion)
-                    return result }
-
-                catch (e) {
-                    self.onException (e)
-                    self.endAssertion (assertion) } } }) },
-
-    beginAssertion: function (a) {
-        if (a.async) {
-            Testosterone.currentTest = a }
-        this.assertionStack ([a].concat (this.assertionStack.value)) },
-
-    endAssertion: function (a) {
-        if (Testosterone.currentTest === a) {
-            Testosterone.currentTest = this }
-
-        if (a.shouldFail && !a.failed) {
-            this.onException (_.assertionError ({ notMatching: 'not failed (as should)' })) }
-
-        this.assertionStack (_.without (this.assertionStack.value, a)) },
+    canFail: $property (function () {
+        return !this.failed && !this.shouldFail }),
 
     fail: function () {
-        var shouldFail = _.find (_.rest (this.assertionStack.value), _.matches ({ shouldFail: true }))
+        this.failed = true
+        this.finalize () },
 
-        if (shouldFail) {
-            shouldFail.failed = true
-            return false }
+    assertionStack: $property (function () { var result = [],
+                                                      a = this; do { result.push (a); a = a.mother } while (a)
+                                          return result }),
 
-        else {
-            this.failed = true
-            return true } },
+    onException: function (e) { var self = this
 
-    mapStackLocations: function (error, then) {
+            if (this.canFail || this.verbose) {
 
-        var assertionStack  = this.assertionStack.value.copy,
-            callStack       = CallStack.fromError (error)
-        
-        callStack.sourcesReady (function () {
-            then (_.map (assertionStack, function (assertion) {
-                var found = _.find (callStack, function (loc, index) {
-                    if ((assertion.location && CallStack.locationEquals (loc, assertion.location)) ||
-                        (loc.source.indexOf ('$' + assertion.name) >= 0)) {
-                            callStack = callStack.offset (index + 1)
-                            return true } })
-
-                return found || assertion.location || callStack.safeLocation (5) })) }) },
-
-    onException: function (e, then) { var self = this
-
-        if (this.done) {
-            throw e } // not our exception, re-throw
-
-        if (!this.fail ()) {
-            if (then) {
-                then.call (this) } }
-
-        else {
-            this.mapStackLocations (e, function (locations) {
-
-                if (self.logCalls.length > 0) {
-                    log.newline () }
-
-                //  $assertMatches (blabla...
-                _.each (locations.reversed, function (loc, i) {
-                    if (loc) {
-                        log.red (log.config ({ indent: i, location: true, where: loc }), loc.source) } })
-                
                 if (_.isAssertionError (e)) {
                     //  • a
                     //  • b
                     if ('notMatching' in e) { var notMatching = _.coerceToArray (e.notMatching)
                         if (e.asColumns) {
-                            log.orange (log.indent (locations.length),
+                            log.orange (
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
                             _.each (notMatching, function (what, i) {
-                                log.orange (log.indent (locations.length), '•', what) }) } } }
+                                log.orange ('•', what) }) } } }
                         
                     // print exception
                 else {
                     if (self.depth > 1) { log.newline () }
-                    log.write (log.indent (locations.length), e) }
+                    log.write (e) }
 
-                log.newline ()
+                log.newline () }
 
-                if (then) {
-                    then.call (self) } }) } },
+            if (this.canFail) { this.fail () }
+                        else  { this.finalize () } },
 
-    tryCatch: function (routine, then) { var self = this
-                                                    self.afterUnhandledException = then
-        routine.call (self.context, function () {   self.afterUnhandledException = undefined
-            then () }) },
+    run: function (then) { var self    = Testosterone.currentAssertion = this,
+                               routine = Tags.unwrap (this.routine)
 
-    onUnhandledException: function (e) {
-        this.onException (e, function () { 
-            if (this.afterUnhandledException) {
-                var fn =    this.afterUnhandledException
-                            this.afterUnhandledException = undefined
-                    fn () } }) },
-
-    run: function (then) { var self = this
+        this.shouldFail = $shouldFail.is (this.routine)
         this.failed = false
         this.hasLog = false
         this.logCalls = []
-        this.assertionStack ([])
         this.failureLocations = {}
 
-        var routine     = Tags.unwrap (this.routine)
-        var doRoutine   = function (then) {
-                                var done = function () {
-                                                self.done = true
-                                                then () }
-                                try { 
-                                    if (_.noArgs (routine)) {
-                                        routine.call (self.context)
-                                        done () }
-                                    else {
-                                        self.tryCatch (routine, done) } }
+        _.withTimeout ({
+            maxTime: self.timeout,
+            expired: function ()     { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
+            function (cancelTimeout) {
+                self.complete (cancelTimeout.arity0) } )
 
-                                catch (e) {
-                                    self.onException (e, then) } }
+        log.withWriteBackend (_.extendWith ({ indent: self.depth + (self.indent || 0) },
+                                    function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),
 
-        var beforeComplete = function () {
-            if (self.routine.$shouldFail) {
-                self.failed = !self.failed }
-            
-            if (!(self.hasLog = (self.logCalls.length > 0))) {
-                if (self.failed) {
-                    log.red ('FAIL') }
-                else if (self.verbose) {
-                    log.green ('PASS') } } }
+                              function (doneWithLogging)  { self.complete (doneWithLogging.arity0)
+                                                if (then) { self.complete (then) }
 
-        var timeoutExpired = function (then) {
-                                self.failed = true
-                                log.error ('TIMEOUT EXPIRED')
-                                then () }
-
-        var waitUntilAssertionsComplete = function (then) {
-                                                self.assertionStack.when (_.isEmpty, then) }
-
-        var withTimeout     = _.withTimeout.partial ({ maxTime: self.timeout, expired: timeoutExpired })
+                                    if (routine.length > 0) routine.call (self.context,  self.$ (self.finalize))
+                                    else                   (routine.call (self.context),         self.finalize ()) }) },
         
-        var withLogging     = log.withWriteBackend.partial (
-                                    _.extendWith ({ indent: self.depth + (self.indent || 0) }, function (args) {
-                                        self.logCalls.push (args) }))
-
-        var withExceptions  = _.withUncaughtExceptionHandler.partial (self.$ (self.onUnhandledException))
-
-        withLogging (           function (doneWithLogging) {
-            withExceptions (    function (doneWithExceptions) {
-                withTimeout (   function (doneWithTimeout) {
-                                    _.cps.sequence (
-                                        doRoutine,
-                                        waitUntilAssertionsComplete,
-                                        doneWithTimeout) () },
-
-                                function () {
-                                    beforeComplete ()
-                                    doneWithExceptions ()
-                                    doneWithLogging () }) }) }, then) },
-
     printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
 
         log.write (log.color.blue,

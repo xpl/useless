@@ -26,7 +26,7 @@ _.withTest ('properties', function () { var obj = {}
     _.defineHiddenProperty (obj, 'hiddenAndDangerous', 42)      // shortut for enumerable:false
     $assert (_.keys (obj).indexOf ('hiddenAndDangerous') < 0)
 
-    $assertCalls (1, function (mkay) {                          // memoized property
+    $assertEveryCalledOnce (function (mkay) {                   // memoized property
         _.defineMemoizedProperty (obj, '_42', function () {
                                                     mkay (); return 42 }) 
         $assert (                           
@@ -82,5 +82,4 @@ _.withTest ('properties', function () { var obj = {}
 
     ownProperties: function (obj) {
         return (obj && _.pickKeys (obj, obj.hasOwnProperty.bind (obj))) || {} }  }) })
-
 

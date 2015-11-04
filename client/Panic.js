@@ -129,11 +129,11 @@ Panic.widget = $singleton (Component, {
 	printUnknownStuff: function (what, raw) {
 		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 
-	printFailedTest: function (test) { var logEl = $('<div class="test-log" style="margin-top: 13px;">')
+	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
 		log.withWriteBackend (
 			function (params) {
-				logEl.append ($('<pre>').css ({ color: params.color.css }).html (
+				logEl.append ($('<div>').css ({ color: params.color.css }).html (
 					_.escape (params.indentedText) +
 					((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
 					(params.trailNewlines || '').replace (/\n/g, '<br>'))) },

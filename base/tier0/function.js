@@ -224,10 +224,10 @@ _.prependsArguments = function (fn, wrapper) {
 
 _.withTest (['function', 'once'], function () {
 
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         var f = _.once (function () { mkay () })
         f ()
-        f () }) }, function () {
+        f () }) },                                          function () {
 
     _.once = function (fn) {
                 var called = false
