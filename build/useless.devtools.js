@@ -192,12 +192,6 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
-
-_.tests.foobar = {
-    foo: function () {
-        $assertFails (function () {
-            $assertEveryCalled (function (a, b, c) { a (); b () }) }) } }
-
 _.deferTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
@@ -317,6 +311,11 @@ if (_.hasStdlib) {
     $assertEveryCalled     (function (a, b, c) { a (); a (); b (); c () })
     $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
     $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
+
+    $assertFails (function () {
+        $assertEveryCalled     (function (a, b, c) { a (); b () })
+        $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
+        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })
 
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
