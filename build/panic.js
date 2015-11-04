@@ -7606,7 +7606,6 @@ Testosterone = $singleton ({
 
         test.run (function () {
             runConfig.testComplete (test); test.time = Date.now () - test.startTime
-            self.currentAssertion = undefined
             then () }) },
 
     collectTests: function () {
@@ -7722,6 +7721,10 @@ Test = $prototype ({
         this.failed = true
         this.finalize () },
 
+    assertionStack: $property (function () { var result = [],
+                                                      a = this; do { result.push (a); a = a.mother } while (a)
+                                          return result }),
+
     onException: function (e) { var self = this
 
             if (this.canFail || this.verbose) {
@@ -7760,10 +7763,11 @@ Test = $prototype ({
         _.withTimeout ({
             maxTime: self.timeout,
             expired: function ()     { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
-            function (cancelTimeout) { self.complete (cancelTimeout.arity0) } )
+            function (cancelTimeout) {
+                self.complete (cancelTimeout.arity0) } )
 
         log.withWriteBackend (_.extendWith ({ indent: self.depth + (self.indent || 0) },
-                                    function (x) { self.logCalls.push (x) }),
+                                    function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),
 
                               function (doneWithLogging)  { self.complete (doneWithLogging.arity0)
                                                 if (then) { self.complete (then) }
