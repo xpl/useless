@@ -180,7 +180,7 @@ Testosterone = $singleton ({
     /*  Internal impl
      */
     runTest: function (test, i, then) { var self = this, runConfig = this.runConfig
-        
+    
         runConfig.testStarted (test)
         
         test.verbose = runConfig.verbose

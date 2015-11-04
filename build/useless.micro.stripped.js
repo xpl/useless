@@ -1018,6 +1018,7 @@ _.extend(_, {
         return obj && _.pickKeys(obj, obj.hasOwnProperty.bind(obj)) || {};
     }
 });
+_.hasTags = true;
 Tags = _.extend2(function (subject) {
     if (subject !== undefined) {
         this.subject = subject;
@@ -1131,7 +1132,9 @@ _.defineTagKeyword = function (k, fn) {
 };
 _([
     'constant',
-    'get'
+    'get',
+    'once',
+    'async'
 ]).each(_.defineTagKeyword);
 _.defineModifierKeyword = function (name, fn) {
     _.defineKeyword(name, function (val) {
@@ -3134,11 +3137,11 @@ Lock = $prototype({
 });
 _.defineKeyword('interlocked', function (fn) {
     var lock = new Lock();
-    return _.prependsArguments(Tags.unwrap(fn), function (context) {
+    return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
         lock.acquire(function () {
             context(lock.$(lock.release));
         });
-    });
+    }));
 });
 _.defineKeyword('scope', function (fn) {
     var releaseStack = undefined;
@@ -3173,14 +3176,19 @@ _([
     'observable',
     'bindable',
     'memoize',
+    'lock',
     'memoizeCPS',
     'debounce',
     'throttle',
     'overrideThis',
     'listener',
-    'postpones'
+    'postpones',
+    'reference'
 ]).each(_.defineTagKeyword);
 _.defineTagKeyword('observableProperty', _.flip);
+_.defineKeyword('observableRef', function (x) {
+    return $observableProperty($reference(x));
+});
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro(keyword, function (def, value, name, Base) {
         _.extend2(value, Base && Base[keyword] || {}, value);
@@ -3293,6 +3301,9 @@ Component = $prototype({
                             return constructor.isTypeOf(value) ? value : new constructor(value);
                         };
                     }
+                    if (def.$reference) {
+                        observable.trackReference = true;
+                    }
                     _.defineProperty(this, name, {
                         get: function () {
                             return observable.value;
@@ -3342,6 +3353,9 @@ Component = $prototype({
                 }
                 if (def.$listener) {
                     this[name].queuedBy = [];
+                }
+                if (def.$lock) {
+                    this[name] = $interlocked(this[name]);
                 }
                 if (def.$bindable) {
                     if (_.hasAsserts) {

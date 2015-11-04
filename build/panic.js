@@ -441,10 +441,10 @@ _.prependsArguments = function (fn, wrapper) {
 
 _.withTest (['function', 'once'], function () {
 
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         var f = _.once (function () { mkay () })
         f ()
-        f () }) }, function () {
+        f () }) },                                          function () {
 
     _.once = function (fn) {
                 var called = false
@@ -1592,7 +1592,7 @@ _.withTest ('properties', function () { var obj = {}
     _.defineHiddenProperty (obj, 'hiddenAndDangerous', 42)      // shortut for enumerable:false
     $assert (_.keys (obj).indexOf ('hiddenAndDangerous') < 0)
 
-    $assertCalls (1, function (mkay) {                          // memoized property
+    $assertEveryCalledOnce (function (mkay) {                   // memoized property
         _.defineMemoizedProperty (obj, '_42', function () {
                                                     mkay (); return 42 }) 
         $assert (                           
@@ -1649,8 +1649,9 @@ _.withTest ('properties', function () { var obj = {}
     ownProperties: function (obj) {
         return (obj && _.pickKeys (obj, obj.hasOwnProperty.bind (obj))) || {} }  }) })
 
-
 ;
+_.hasTags = true
+
 /*  Keywords
     ======================================================================== */
 
@@ -1849,7 +1850,7 @@ _.withTest ('keywords', function () {
                                     unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) }
 
 
-    _(['constant', 'get'])
+    _(['constant', 'get', 'once', 'async'])
         .each (_.defineTagKeyword)
 
     _.defineModifierKeyword = function (name, fn) {
@@ -1934,12 +1935,12 @@ _.withTest (['cps', 'each'], function () {
 
     /*  Iterating over dictionary is legal
      */
-    $assertCalls (4, function (mkay) {
+    $assertEveryCalled (function (items__3, final__1) {
         var data2 = { 'foo': 1, 'bar': 2, 'baz': 3 }
         _.cps.each (
             data2,
-            function (item, name, then) { $assert (item === data2[name]); mkay (); then () },
-            function () { mkay () }) }) },
+            function (item, name, then) { $assert (item === data2[name]); items__3 (); then () },
+            function () { final__1 () }) }) },
 
 function () { _.extend (_.cps, {
 
@@ -2033,7 +2034,7 @@ function () { _.extend (_.cps, {
 
 _.withTest (['cps', 'memoize'], function () {
 
-    $assertCalls (1, function (noMoreThanOne) {
+    $assertEveryCalledOnce (function (noMoreThanOne) {
         var plusOne = _.cps.memoize (function (x, then) { noMoreThanOne (); then (x + 1) })
 
         plusOne (2, function (x) { $assert (x === 3) })
@@ -2077,11 +2078,11 @@ function () { _.extend (_.cps, {
 /*  reduce
     ======================================================================== */
 
-_.withTest (['cps', 'reduce'], function () { $assertCalls (2, function (mkay) {
+_.withTest (['cps', 'reduce'], function () { $assertEveryCalled (function (mkay__2) {
 
     var input   = [1,2,3]
     var sums    = function (a, b, then) { then (a + b) }
-    var check   = function (result) { $assert (result === 6); mkay () }
+    var check   = function (result) { $assert (result === 6); mkay__2 () }
 
     _.cps.reduce (input, sums, check)
     _.cps.reduce ([], sums, check, 6)
@@ -2104,20 +2105,20 @@ _.withTest (['cps', 'reduce'], function () { $assertCalls (2, function (mkay) {
 /*  noop / identity / constant
     ======================================================================== */
 
-_.withTest (['cps', 'noop, identity, constant'], function () { $assertCalls (4, function (mkay) {
+_.withTest (['cps', 'noop, identity, constant'], function () { $assertEveryCalled (function (noop, identity, const1, const2) {
 
     /*  Port of underscore's _.noop to CPS terms
      */
-    _.cps.noop (1,2,3, function () { $assert (arguments.length === 0); mkay () })
+    _.cps.noop (1,2,3, function () { $assert (arguments.length === 0); noop () })
 
     /*  Port of underscore's _.identity to CPS terms
      */
-    _.cps.identity (1,2,3, function () { $assert ([1,2,3], _.asArray (arguments)); mkay () })
+    _.cps.identity (1,2,3, function () { $assert ([1,2,3], _.asArray (arguments)); identity () })
 
     /*  Port of underscore's _.constant to CPS terms
      */
-    _.cps.constant (3)    (function (_3)     { $assert (_3 === 3); mkay () })
-    _.cps.constant (1, 2) (function (_1, _2) { $assert (_1 === 1); $assert (_2 === 2); mkay () })
+    _.cps.constant (3)    (function (_3)     { $assert (_3 === 3); const1 () })
+    _.cps.constant (1, 2) (function (_1, _2) { $assert (_1 === 1); $assert (_2 === 2); const2 () })
 
 })}, function () { _.extend (_.cps, {
 
@@ -2184,13 +2185,13 @@ _.deferTest (['cps', 'arity / resultArity'], function () {
 /*  sequence / compose
     ======================================================================== */
 
-_.withTest (['cps', 'sequence / compose'], function () { $assertCalls (4, function (mkay) {
+_.withTest (['cps', 'sequence / compose'], function () { $assertEveryCalled (function (mkay__4) {
 
     /*  Basic example of asynchronous functions sequencing
      */
     var makeCookies = function (whatCookies, then)  { then ('cookies ' + whatCookies) }
     var eatCookies  = function (cookies, then)      { then ('nice ' + cookies) }
-    var check       = function (result)             { $assert (result, 'nice cookies from shit'); mkay () }
+    var check       = function (result)             { $assert (result, 'nice cookies from shit'); mkay__4 () }
 
     _.cps.sequence (makeCookies, eatCookies, check)   ('from shit')     // supports both ways (either argument list...
     _.cps.sequence ([makeCookies, eatCookies, check]) ('from shit')     // ..or array
@@ -2223,7 +2224,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  No error
      */
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             _.cps.constant ('foo'),
             _.appends ('bar').asContinuation],
@@ -2231,7 +2232,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Throwing error
      */
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function () { throw testErr },
             function () { $fail }],
@@ -2239,7 +2240,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Returning error to continuation
      */
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function (then) { then (testErr) },
             function () { $fail }],
@@ -2247,7 +2248,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Reading error in separate callback
      */
-    $assertCalls (1, function (mkay) {
+$assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function (then) { then (testErr) },
             function () { $fail }],
@@ -2306,12 +2307,12 @@ _.tests.Function = {
 
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
-    'asContinuation': function () { $assertCalls (2, function (mkay) {
+    'asContinuation': function () { $assertEveryCalled (function (mkay__2) {
 
         var twoPlusTwo   = function () { return 2 + 2 }
         var shouldBeFour = function (result) {
             $assert (result == 4)
-            mkay () }
+            mkay__2 () }
 
         twoPlusTwo.asContinuation (shouldBeFour)
         _.asContinuation (twoPlusTwo) (shouldBeFour) }) },
@@ -2319,22 +2320,21 @@ _.tests.Function = {
     /*  Postpones execution
      */
     'postpone': function (testDone) {
-        $assertCalls (2, function (mkay, done) { var testSecondCall = false
+        $assertEveryCalledOnce ($async (function (mkay1, mkay2) { var testSecondCall = false
             var callMeLater = function () {
                 if (testSecondCall) {
-                    mkay ()
-                    done ()
+                    mkay2 ()
                     testDone () }
                 else {
-                    mkay ()
+                    mkay1 ()
                     testSecondCall = true
                     callMeLater.postpone () } } // should be postponed again
             callMeLater.postpone ()
-            callMeLater.postpone () }) },       // should not trigger double call
+            callMeLater.postpone () })) },       // should not trigger double call
 
     'postponed': function (testDone) {
-        $assertCalls (1, function (mkay, done) {
-            (function (_42) { $assert (42, _42); mkay (); done (); testDone () }).postponed (42) }) },
+        $assertEveryCalledOnce ($async (function (mkay) {
+            (function (_42) { $assert (42, _42); mkay (); }).postponed (42) }), testDone) },
 
     /*  Returns function that executed after _.delay
      */
@@ -2342,8 +2342,8 @@ _.tests.Function = {
         var eat42           = function (_42, then) { $assert (_42, 42); then () }
         var eat42_after5ms  = eat42.delayed (5)
 
-        $assertCalls (1, function (mkay, done) {
-            eat42_after5ms (42, function () { mkay (); done (); testDone () }) }) } }
+        $assertEveryCalledOnce ($async (function (mkay) {
+            eat42_after5ms (42, function () { mkay () }) }), testDone) } }
 
 /*  Impl.
  */
@@ -2740,19 +2740,19 @@ _.deferTest ('bindable', function () {
         innocentMethod: function (x) {
             return x } }
 
-    $assertCalls (7, function (mkay) {
+    $assertEveryCalled (function (before__1, after__1, intercept__2, secondIntercept__1, bindable__1, infixBefore__1) {
 
         /*  That's how you observe method calls
          */
-        _.onBefore (obj, 'plusOne', function (x)            { mkay (); $assert (x === 7) })
-        _.onAfter  (obj, 'plusOne', function (x, result)    { mkay (); $assert ([x, result], [7, 8]) })
+        _.onBefore (obj, 'plusOne', function (x)            { before__1 (); $assert (x === 7) })
+        _.onAfter  (obj, 'plusOne', function (x, result)    { after__1 (); $assert ([x, result], [7, 8]) })
 
         $assert (obj.plusOne (7), 8)
 
         /*  That's how you intercept method calls
          */
         _.intercept (obj, 'innocentMethod', function (x, method) {
-            mkay ()
+            intercept__2 ()
             return method (x + 1) * 2 })
 
         $assert (obj.innocentMethod (42), (42 + 1) * 2) 
@@ -2760,7 +2760,7 @@ _.deferTest ('bindable', function () {
         /*  Consequent interceptors wrap-up previous ones
          */
         _.intercept (obj, 'innocentMethod', function (x, method) {
-            mkay ()
+            secondIntercept__1 ()
             $assert (method (x), (42 + 1) * 2) 
             return 'hard boiled shit' })
 
@@ -2768,8 +2768,8 @@ _.deferTest ('bindable', function () {
 
         /*  Test infix calls
          */
-        var method = _.bindable (function (x) { mkay (); $assert (x === 42) })
-            method.onBefore (function (x) { mkay (); $assert (x === 42) })
+        var method = _.bindable (function (x) { bindable__1 (); $assert (x === 42) })
+            method.onBefore (function (x) { infixBefore__1 (); $assert (x === 42) })
             method (42) })
 
     /*  Test 'once' semantics
@@ -2891,7 +2891,7 @@ _.deferTest ('bindable', function () {
 
 _.tests.stream = {
 
-    'triggerOnce': function () { $assertCalls (1, function (mkay) {
+    'triggerOnce': function () { $assertEveryCalledOnce (function (mkay) {
                                     var t = _.triggerOnce ()
                                     var f = function (_321) { $assert (_321 === 321); mkay () }
                                      t (f)
@@ -2908,21 +2908,21 @@ _.tests.stream = {
 
         /*  Should call with current value when upon binding
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
+        $assertEveryCalledOnce (function (mkay) { var valueChanged = _.observable ()
             valueChanged (999)
             valueChanged (function (_999) { $assert (_999, 999); mkay () }) })
 
         /*  Should call previously bound callback if changed
          */
-        $assertCalls (3, function (mkay) { var valueChanged = _.observable ()
-            valueChanged (mkay)
+        $assertEveryCalled (function (mkay__3) { var valueChanged = _.observable ()
+            valueChanged (mkay__3)
             valueChanged (123)
             valueChanged (345)
             valueChanged (567) })
 
         /*  Should pass last distinct value as argument to callbacks, not calling if its not changed
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable ()
+        $assertEveryCalledOnce (function (mkay) { var valueChanged = _.observable ()
             valueChanged (function (_111) {
                             $assert (111, _111)
                             mkay () })
@@ -2931,34 +2931,34 @@ _.tests.stream = {
 
         /*  Should pass previous value as second argument
          */
-        $assertCalls (1, function (mkay) { var valueChanged = _.observable (444)
+        $assertEveryCalledOnce (function (mkay) { var valueChanged = _.observable (444)
             valueChanged (function (_666, _444) { if (_444) { $assert ([_666, _444], [666, 444]); mkay () } })
             valueChanged (666) }) },
 
     'observable.when': function () {
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             var value = _.observable (234)
                 value.when (          234, function () { mkay () }) }) // passing constant should work
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
                 value (432) })
 
-        $assertCalls (0, function (mkay) {
+        $assertNotCalled (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
                 value (7) })
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals ('bar'), function () { mkay () })
                 value ('bar')
                 value ('foo')
                 value ('bar') }) },
 
-    'once': function () { $assertCalls (1, function (mkay) {
+    'once': function () { $assertEveryCalledOnce (function (mkay) {
 
         var whenSomething = _.trigger ()
             whenSomething.once (mkay)
@@ -3011,19 +3011,18 @@ _.tests.stream = {
 
         /*  Test conventional semantics (1:1 multicast)
          */
-        $assertCalls (2, function (mkay1) {
-        $assertCalls (2, function (mkay2) {
+        $assertEveryCalled (function (mkay1__2, mkay2__2) {
 
-            obj.whenSomething (mkay1)                   // that's how you bind
-            obj.whenSomething (mkay2)
+            obj.whenSomething (mkay1__2)                // that's how you bind
+            obj.whenSomething (mkay2__2)
 
             obj.whenSomething ()                        // that's how you trigger it
-            obj.whenSomething ()     }) })                      
+            obj.whenSomething ()     })                      
 
 
         /*  Test unbinding
          */
-        $assertCalls (1, function (shouldCall) {
+        $assertEveryCalledOnce (function (shouldCall) {
 
             var whenSomething = _.trigger ()
 
@@ -3038,16 +3037,16 @@ _.tests.stream = {
 
         /*  Test 'barrier' semantics + test argument passing
          */
-        $assertCalls (2, function (mkay) {
+        $assertEveryCalledOnce (function (mkay1, mkay2) {
 
             obj.somethingReady (function (x) {
                 $assert (x === 'foo')               // you may pass arguments to callbacks
                 obj.somethingReady (x)              // should not call anything
-                mkay () })
+                mkay1 () })
 
             obj.somethingReady (function (x) {
                 $assert (x === 'foo')
-                mkay () })
+                mkay2 () })
 
             obj.somethingReady ('foo') })   // that's how you trigger it (may pass arguments)
         obj.somethingReady ('bar')          // should not call anything
@@ -3060,11 +3059,11 @@ _.tests.stream = {
 
         _.allTriggered ([t1, t2], function () { $fail }); t1 ()     // pair1: should not cause _.allTriggered to trigger
 
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
-    '_.barrier (value)': function () { $assertCalls (1, function (mkay) {
+    '_.barrier (value)': function () { $assertEveryCalledOnce (function (mkay) {
              var willBe42 = _.barrier (42)
         $assert (willBe42.already)
                  willBe42 (function (_42) { $assert (_42, 42); mkay () }) }) },
@@ -3875,7 +3874,7 @@ _.deferTest ('OOP', {
 /*  $singleton (a humanized macro to new ($prototype (definition)))
     ======================================================================== */
 
-     _.withTest (['OOP', '$singleton'], function () { $assertCalls (2, function (mkay) {
+     _.withTest (['OOP', '$singleton'], function () { $assertEveryCalledOnce (function (baseConstructor, derivedConstructor) {
 
             var Base    = $prototype ({
                             method:    _.constant (42) })
@@ -3884,14 +3883,14 @@ _.deferTest ('OOP', {
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
             var Simple  = $singleton ({
-                            constructor: function () { mkay () },
+                            constructor: function () { baseConstructor () },
                             method:      function () { return 42 } })
 
         /*  can inherit from a prototype
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
             var Derived = $singleton (Base, {
-                            constructor: function () { mkay (); Base.prototype.constructor.apply (this, arguments) } })
+                            constructor: function () { derivedConstructor (); Base.prototype.constructor.apply (this, arguments) } })
 
             $assert (Simple.method (), Derived.method (), 42) })
 
@@ -4769,9 +4768,10 @@ Lock = $prototype ({
     'Release' trigger passed as last argument to your target function.
  */
 _.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
-    return _.prependsArguments (Tags.unwrap (fn), function (context) {
-        lock.acquire (function () {
-            context (lock.$ (lock.release)) }) }) })
+    return _.extendWith ({ wait: lock.$ (lock.wait) },
+        _.prependsArguments (Tags.unwrap (fn), function (context) {
+                                                    lock.acquire (function () {
+                                                        context (lock.$ (lock.release)) }) })) })
 
 
 /*  EXPERIMENTAL (TBD)
@@ -4832,7 +4832,7 @@ _.tests.component = {
     /*  - Passing config to constructor will extend constructed instance with that object
         - Component constructors exhibit CPS interface (last function argument interprets as continuation)
      */
-    'constructor([cfg, ][then])': function () { $assertCalls (0, function (mkay) {
+    'constructor([cfg, ][then])': function () { $assertNotCalled (function (mkay) {
 
         var Compo = $component ({})
 
@@ -4851,7 +4851,7 @@ _.tests.component = {
 
     /*  init() should be entry point to a component, calling at constructor by default
      */
-    'init': function () { $assertCalls (1, function (mkay) {
+    'init': function () { $assertEveryCalledOnce (function (mkay) {
                             $singleton (Component, {
                                 init: function () {
                                     mkay () } }) }) },
@@ -4859,18 +4859,18 @@ _.tests.component = {
 
     /*  init(then) means your initialization is defined in CPS style
      */
-    /*'CPS init': function () { $assertCalls (2, function (mkay) {
+    /*'CPS init': function () { $assertEveryCalled (function (compo1, compo2) {
 
                             var Compo = $prototype ({
                                 init: function (then) { // you're required to call then, to complete init
                                     then () } })
 
                             var compo = new Compo (function () {
-                                mkay () })
+                                compo1 () })
 
                             var compo2 = new Compo ({ _42: 42 }, function () {
                                 $assert (this._42, 42)
-                                mkay () }) }) },*/
+                                compo2 () }) }) },*/
 
     /*  constructor overriding is prohibited (by $final), use init() API for configuration means
      */
@@ -4882,7 +4882,7 @@ _.tests.component = {
     /*  If you don't want init() to be called at constructor (to call it manually later),
         pass init:false to constructor's config
      */
-    'manual init()': function () { $assertCalls (0, function (fail) {
+    'manual init()': function () { $assertNotCalled (function (fail) {
                                         var Compo = $component ({ init: function () { fail () } })
                                         var compo = new Compo ({ init: false })
                                         $assert (typeof compo.init, 'function') }) }, // shouldn't be replaced by false
@@ -4895,7 +4895,7 @@ _.tests.component = {
         var compo = new Compo ({ init: false })
 
         $assert (!compo.initialized.already)
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             compo.initialized (function () { mkay () })
             compo.init () }) },
 
@@ -4909,20 +4909,20 @@ _.tests.component = {
                 $assertMatches (this, { foo: 'beforeInit called' }) } })
 
         var assertAfterInitCalls = function (Compo) {
-            $assertCalls (1, function (mkay) {
+            $assertEveryCalledOnce (function (mkay) {
                 new Compo ().initialized (function () {
                     $assertMatches (this, { foo: 'afterInit called' }); mkay () }) }) }
 
         var assertTraitsInitCalls = function (trait) {
 
             //  CPS init()
-            $assertCalls (1, function (mkay) {
+            $assertEveryCalledOnce (function (mkay) {
                 assertAfterInitCalls ($extends (Base, {
                     $traits: [trait],
                     init: function (then) { this.assertBeforeInitCalls (); mkay (); then () } })) })
 
             //  Sequential init()
-            $assertCalls (1, function (mkay) {
+            $assertEveryCalledOnce (function (mkay) {
                 assertAfterInitCalls ($extends (Base, {
                     $traits: [trait],
                     init: function () { this.assertBeforeInitCalls (); mkay () } })) }) }
@@ -5000,17 +5000,17 @@ _.tests.component = {
 
         Use to implement common beforeXXX and afterXXX semantics.
      */
-    '$bindable': function () { $assertCalls (3, function (mkay) {
+    '$bindable': function () { $assertEveryCalledOnce (function (method, before, after) {
 
         var compo = $singleton (Component, {
-                        method: $bindable (function (x) { mkay ()
+                        method: $bindable (function (x) { method ()
                             return 42 }) })
 
-        compo.method.onBefore (function (_5) { mkay ()
+        compo.method.onBefore (function (_5) { before ()
             $assert (this === compo)
             $assert (_5, 5) })
 
-        compo.method.onAfter (function (_5, _result) { mkay ()
+        compo.method.onAfter (function (_5, _result) { after ()
             $assert (this === compo)
             $assert (_5, 5)
             $assert (_result, 42) })
@@ -5036,23 +5036,23 @@ _.tests.component = {
         auto-disconnecting bound methods, so that no method of Component bound
         to such streams will ever be called after destroy().
      */
-    '$trigger': function () { $assertCalls (2, function (mkay) {
+    '$trigger': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
                         mouseMoved: $trigger () })
 
-        compo.mouseMoved (function (x, y) { $assert ([x, y], [7, 12]); mkay () })
+        compo.mouseMoved (function (x, y) { $assert ([x, y], [7, 12]); mkay__2 () })
         compo.mouseMoved (7, 12)
         compo.mouseMoved (7, 12) }) },
 
-    'init streams from config': function () { $assertCalls (2, function (mkay) {
+    'init streams from config': function () { $assertEveryCalled (function (atDefinition, atInit) {
 
         var Compo = $component ({
-                        mouseMoved: $trigger (mkay), // should call this one
+                        mouseMoved: $trigger (atDefinition),
                         init: function () {
-                            this.mouseMoved () } })  // here we go
+                            this.mouseMoved () } })
 
-        new Compo ({ mouseMoved: mkay }) }) },       // should call this one
+        new Compo ({ mouseMoved: atInit }) }) },
 
     /*  A variation of trigger. On 'write' operation, it flushes wait queue, so
         no callback bound previously gets called in future (until explicitly
@@ -5062,13 +5062,10 @@ _.tests.component = {
         var compo = $singleton (Component, {
                         somthingHappened: $triggerOnce () })
 
-        $assertCalls (2, function (mkay) {
-            compo.somthingHappened (function (what) { $assert (what, 'somthin'); mkay () })
-            compo.somthingHappened (function (what) { $assert (what, 'somthin'); mkay () })
-            compo.somthingHappened ('somthin')  })
-
-        $assertCalls (0, function (mkay) {
-            compo.somthingHappened ('no one will receive that') }) },
+        $assertEveryCalled (function (first, second) {
+            compo.somthingHappened (function (what) { $assert (what, 'somthin'); first () })
+            compo.somthingHappened (function (what) { $assert (what, 'somthin'); second () })
+            compo.somthingHappened ('somthin') }) },
 
 
     /*  Another variation of stream, having 'memory fence / memory barrier' semantics,
@@ -5083,22 +5080,20 @@ _.tests.component = {
             3.  After barrier had opened, any futher callback gets called immediately
                 with that value argument passed before, i.e. short-circuits.
      */
-    '$barrier': function () { $assertCalls (2, function (mkay) {
+    '$barrier': function () { $assertEveryCalled (function (early, lately) {
         
         var compo = $singleton (Component, {
                         hasMessage: $barrier () })
 
-        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); mkay () })
+        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); early () })
         compo.hasMessage ('mkay')
-        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); mkay () }) }) },
+        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); lately () }) }) },
 
 
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () {    $assertCalls (1, function (fromConstructor) {
-                                            $assertCalls (1, function (fromConfig) {
-                                            $assertCalls (1, function (fromLateBoundListener) {
+    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener) {
 
         var Compo = $component ({
                         color: $observableProperty (),
@@ -5117,7 +5112,7 @@ _.tests.component = {
             $assert (undefined,   was) })
 
         compo.color = 'green'
-        compo.smell = 'bad' }) }) }) },
+        compo.smell = 'bad' }) },
 
 
     /*  $observableProperty automatically calls prototype constructor if supplied with non-prototype instance data
@@ -5187,11 +5182,11 @@ _.tests.component = {
 
             this_.someValue = 33 }) },
 
-    'hierarchy management': function () { $assertCalls (9, function (mkay) {
+    'hierarchy management': function () { $assertEveryCalled (function (mkay__9) {
         
         var Compo = $extends (Component, {
-            init:    function () { mkay () },
-            destroy: function () { mkay () } })
+            init:    function () { mkay__9 () },
+            destroy: function () { mkay__9 () } })
 
         var parent = new Compo ().attach (
                         new Compo ().attach (
@@ -5222,7 +5217,7 @@ _.tests.component = {
         compo.trig.call ({}) },
 
 
-    'observableProperty.force (regression)': function () { $assertCalls (2, function (mkay) {
+    'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
             prop: $observableProperty () })
@@ -5231,7 +5226,7 @@ _.tests.component = {
         compo.propChange (function (value) {
             $assert (value, 42)
             $assert (this === compo)
-            mkay () })
+            mkay__2 () })
 
         compo.propChange.force () }) },
 
@@ -5246,10 +5241,10 @@ _.tests.component = {
                 compo.prop = 43 }) },
 
 
-    'destroyAll()': function () { $assertCalls (2, function (mkay) {
+    'destroyAll()': function () { $assertEveryCalled (function (destroyed__2) {
         
         var Compo = $extends (Component, {
-            destroy: function () { mkay () } })
+            destroy: function () { destroyed__2 () } })
 
         var parent = new Compo ()
                         .attach (new Compo ())
@@ -5274,7 +5269,7 @@ _.tests.component = {
         somethingHappened () }, // should not invoke compo.fail
 
     '(regression) $observableProperty (false)': function () {
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             $singleton (Component, {
                 foo: $observableProperty (false),
                 init: function () { this.fooChange (mkay) } }) }) },
@@ -5289,11 +5284,11 @@ _.tests.component = {
 
         $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
-    '(regression) postpone': function (testDone) { $assertCalls (1, function (mkay, done) {
+    '(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
         $singleton (Component, {
-            foo: function () { mkay (); done (); testDone () },
+            foo: function () { foo (); },
             init: function () {
-                this.foo.postpone () } }) }) },
+                this.foo.postpone () } }) }), testDone) },
 
     '(regression) undefined at definition': function () { $singleton (Component, { fail: undefined }) },
 
@@ -5316,12 +5311,13 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize',
-    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'lock',
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
 _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
 
+_.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
 /*  Make $defaults and $requires inherit base values + $traits support
  */
@@ -5460,6 +5456,11 @@ Component = $prototype ({
                     observable.beforeWrite = function (value) {
                         return constructor.isTypeOf (value) ? value : (new constructor (value)) } }
 
+                /*  tracking by reference
+                 */
+                if (def.$reference) {
+                    observable.trackReference = true }
+
                 /*  property
                  */
                 _.defineProperty (this, name, {
@@ -5500,6 +5501,11 @@ Component = $prototype ({
              */
             if (def.$listener) {
                 this[name].queuedBy = [] }
+
+            /*  Expand $lock
+             */
+            if (def.$lock) {
+                this[name] = $interlocked (this[name]) }
 
             /*  Expand $bindable
              */
@@ -6289,6 +6295,12 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
+
+_.tests.foobar = {
+    foo: function () {
+        $assertFails (function () {
+            $assertEveryCalled (function (a, b, c) { a (); b () }) }) } }
+
 _.deferTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
@@ -6402,24 +6414,12 @@ if (_.hasStdlib) {
     $assertThrows (function () { throw new Error ('42') }, _.matches ({ message: '42' }))
 
 
-/*  Ensuring execution (given number of times)
+/*  Ensuring execution
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertCalls (1, function (mkay) { mkay () })
-    $assertFails (function () {
-        $assertCalls (1, function (mkay) { })   })
-
-    $assertCalls (3, function (mkay) { mkay (); mkay (); mkay () })
-    $assertFails (function () {
-        $assertCalls (0, function (mkay) { mkay () })
-        $assertCalls (2, function (mkay) { mkay (); mkay (); mkay () }) })
 
     $assertEveryCalled     (function (a, b, c) { a (); a (); b (); c () })
     $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
-
-    $assertFails (function () {
-        $assertEveryCalled     (function (a, b, c) { a (); b () })
-        $assertEveryCalledOnce (function (a, b, c) { a (); b (); c (); c () }) })
+    $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
 
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -6451,36 +6451,7 @@ if (_.hasStdlib) {
 
 function () {
 
-    /*  assertions that exhibit CPS interface
-     */
-    _.extend (_, _.asyncAssertions = {
-
-        assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
-            fn (function () {
-                $assert ([].splice.call (arguments, 0), requiredResult)
-                if (then) {
-                    then () } }) },
-
-        assertCalls: function (times, test, then) {
-            var timesCalled = 0
-            var mkay        = function () {
-                                timesCalled++ }
-
-            var countMkays  = function () {
-                                $assert (times, timesCalled)
-                                if (then) {
-                                    then () } }
-
-            if (test.length >= 2) {
-                test.call (this, mkay, function () {
-                    countMkays () }) }      // async
-            else {
-                test.call (this, mkay);
-                    countMkays () } } })    // sync
-    
-    /*  non-CPS assertions
-     */
-    _.extend (_, _.assertions = _.extend ({}, _.asyncAssertions, {
+    _.extend (_, _.assertions = {
 
         assert: function (__) { var args = [].splice.call (arguments, 0)
 
@@ -6493,17 +6464,38 @@ function () {
 
                     return true },
 
-        assertEveryCalled: function (fn) {
-            var callbacks = _.times (fn.length, function () { return function () { arguments.callee.called = true } })
-            fn.apply (null, callbacks)
-            return _.assert (_.pluck (callbacks, 'called'), _.times (callbacks.length, _.constant (true))) },
+        assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
+            fn (function () {
+                $assert ([].splice.call (arguments, 0), requiredResult)
+                if (then) { then (); return true; } }) },
 
-        assertEveryCalledOnce: function (fn) {
-            var callbacks = _.times (fn.length, function () {
+        assertNotCalled: function (context) {
+            context (function () { $fail }) },
+
+        assertEveryCalledOnce: function (fn, then) {
+            return _.assertEveryCalled (_.hasTags ? $once (fn) : _.extend (fn, { once: true }), then) },
+
+        assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
+                                                      async = _.hasTags ? $async.is (fn_) : fn_.async
+                                                      once  = _.hasTags ? $once.is (fn_)  : fn_.once
+
+            var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
+            var contracts = once ? _.times (fn.length, _.constant (1)) :
+                                   _.map (match[1].split (','), function (arg) {
+                                                                    var parts = (arg.trim ().match (/^(.+)__(.+)$/))
+                                                                    return (parts && parseInt (parts[2], 10)) || true })
+            var status    = []
+            var callbacks = _.times (fn.length, function (i) {
                                                     return function () {
-                                                        arguments.callee.called = (arguments.callee.called || 0) + 1 } })
+                                                        status[i] =
+                                                            _.isNumber (contracts[i]) ?
+                                                                ((status[i] || 0) + 1) : true
+                                                        if (async && _.isEqual (status, contracts))
+                                                            then () } })
             fn.apply (null, callbacks)
-            return _.assert (_.pluck (callbacks, 'called'), _.times (callbacks.length, _.constant (1))) },
+
+            if (!async)   { _.assert (status, contracts)
+                if (then) { then () } } },
 
         assertCallOrder: function (fn) {
             var callIndex = 0
@@ -6534,7 +6526,7 @@ function () {
                                             { mismatches:   mismatches }] }) },
 
         assertFails: function (what) {
-            _.assertThrows.call (this, what, _.isAssertionError) },
+            return _.assertThrows.call (this, what, _.isAssertionError) },
 
         assertThrows: function (what, errorPattern /* optional */) {
                             var e = undefined, thrown = false
@@ -6543,11 +6535,11 @@ function () {
 
                             _.assert.call (this, thrown)
 
-                            if (arguments.length === 1) {
+                            if (arguments.length > 1) {
                                 _.assertMatches.apply (this, [e].concat (_.rest (arguments))) } },
 
         assertNotThrows: function (what) {
-            _.assertCalls.call (this, 0, function () { what () }) },
+            return _.assertEveryCalled (function (ok) { what (); ok () }) },
 
         assertArguments: function (args, callee, name) {
             var fn    = (callee || args.callee).toString ()
@@ -6573,7 +6565,7 @@ function () {
                 _.assertionFailed () }),
 
         stub: function () {
-                _.assertionFailed () } }))
+                _.assertionFailed () } })
 
 
     /*  DEFAULT FAILURE IMPL.
@@ -6651,6 +6643,7 @@ _.mixin ({
         
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
+
 
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
@@ -6775,7 +6768,7 @@ _.tests.reflection = {
         catch (e) {
             $assertTypeMatches (CallStack.fromError (e), CallStack) } },
 
-    '$callStack': function () {
+    '$callStack': function (testDone) {
 
         /*  That's how you access call stack at current location
          */
@@ -6818,23 +6811,23 @@ _.tests.reflection = {
         $assert (_.isTypeOf (CallStack, stack.filter (_.identity)))
         $assert (_.isTypeOf (CallStack, stack.reject (_.identity)))
 
-        /*  4. source code access, either per entry..
-         */
-        if (Platform.NodeJS) { // on client it's async so to test it properly, need to extract this test part to separate async routine
-            $assertCalls (1, function (mkay) {
-                stack[0].sourceReady (function (src) { mkay ()  // sourceReady is barrier, i.e. if ready, called immediately
-                    $assert (typeof src, 'string') }) })
+        $assertEveryCalled ($async (function (sourceReady, sourcesReady, safeLocationReady) {
 
-        /*  5. ..or for all stack
-         */
-            $assertCalls (1, function (mkay) {
-                stack.sourcesReady (function () { mkay ()       // sourcesReady is barrier, i.e. if ready, called immediately
-                    _.each (stack, function (entry) {
-                        $assert (typeof entry.source, 'string') }) }) })
+            /*  4. source code access, either per entry..
+             */
+            stack[0].sourceReady (function (src) {               // sourceReady is barrier, i.e. if ready, called immediately
+                $assert (typeof src, 'string'); sourceReady () })
 
-        /*  Safe location querying
-         */
-        $assertCPS (stack.safeLocation (7777).sourceReady, '??? WRONG LOCATION ???') } },
+            /*  5. ..or for all stack
+             */
+            stack.sourcesReady (function () {                     // sourcesReady is barrier, i.e. if ready, called immediately
+                _.each (stack, function (entry) {
+                    $assert (typeof entry.source, 'string') }); sourcesReady () })
+
+            /*  Safe location querying
+             */
+            stack.safeLocation (7777).sourceReady (function (line) {
+                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) },
 
     'Prototype.$meta': function (done) {
         var Dummy = $prototype ()
@@ -7528,16 +7521,15 @@ Testosterone = $singleton ({
     prototypeTests: [],
 
     isRunning: $property (function () {
-        return this.currentTest !== undefined }),
+        return this.currentAssertion !== undefined }),
 
     /*  Hook up to assertion syntax defined in common.js
      */
     constructor: function () {
 
-        this.defineAssertion ('assertFails', $shouldFail (function (what) { what.call (this) }))
-
-        _.each (_.omit (_.assertions, 'assertFails'), function (fn, name) {
-            this.defineAssertion (name, name in _.asyncAssertions ? $async (fn) : fn) }, this);
+        _.each (_.assertions, function (fn, name) {
+                                    this.defineAssertion (name, (name === 'assertFails') ?
+                                        $shouldFail (function (what) { what.call (this) }) : fn) }, this);
 
         /*  For defining tests inside prototype definitions
          */
@@ -7589,19 +7581,32 @@ Testosterone = $singleton ({
              */
             this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-            /*  Go
+            /*  Bind to exception handling
              */
-            _.cps.each (selectTests,
-                    this.$ (this.runTest),
-                    this.$ (function () {
-                                _.assert (cfg.done !== true)
-                                          cfg.done   = true
+            _.withUncaughtExceptionHandler (this.$ (this.onException), this.$ (function (doneWithExceptions) {
 
-                                this.printLog (cfg)
-                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                                this.failed = (this.failedTests.length > 0)
-                                then (!this.failed)
-                                releaseLock () }) ) })) }),
+                /*  Go
+                 */
+                _.cps.each (selectTests,
+                        this.$ (this.runTest),
+                        this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
+
+                                    _.assert (cfg.done !== true)
+                                              cfg.done   = true
+
+                                    this.printLog (cfg)
+                                    this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+                                    this.failed = (this.failedTests.length > 0)
+                                    then (!this.failed)
+                                    
+                                    doneWithExceptions ()
+                                    releaseLock () }) ) })) })) }),
+
+    onException: function (e) {
+        if (this.currentAssertion) 
+            this.currentAssertion.onException (e)
+        else
+            throw e },
 
     /*  You may define custom assertions through this API
      */
@@ -7612,16 +7617,16 @@ Testosterone = $singleton ({
     /*  Internal impl
      */
     runTest: function (test, i, then) { var self = this, runConfig = this.runConfig
-        this.currentTest = test
-        
+    
         runConfig.testStarted (test)
         
         test.verbose = runConfig.verbose
         test.timeout = runConfig.timeout
 
+        test.startTime = Date.now ()
+
         test.run (function () {
-            runConfig.testComplete (test)
-            delete self.currentTest
+            runConfig.testComplete (test); test.time = Date.now () - test.startTime
             then () }) },
 
     collectTests: function () {
@@ -7637,19 +7642,23 @@ Testosterone = $singleton ({
         name: name || '',
         tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
-                        return new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context }) }) } },
+                        var test = new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context })
+                            test.complete (function () {
+                                if (!(test.hasLog = (test.logCalls.length > 0))) {
+                                         if (test.failed)  { log.red   ('FAIL') }
+                                    else if (test.verbose) { log.green ('PASS') } } })
+
+                            return test }) } },
 
     defineAssertion: function (name, def) { var self = this
-
         _.deleteKeyword (name)
         _.defineKeyword (name, Tags.modifySubject (def,
-
-                                    function (fn) { return _.withSameArgs (fn, function () {
-
-                                        if (!self.currentTest) {
-                                            return fn.apply (self, arguments) }
-                                        else {
-                                            return self.currentTest.runAssertion (name, def, fn, arguments) } }) })) },
+                                    function (fn) {
+                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (1)
+                                            if (!self.currentAssertion) {
+                                                return fn.apply (self, arguments) }
+                                            else {
+                                                return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } }) })) },
 
     printLog: function (cfg) { if (!cfg.supressLog) {
 
@@ -7670,228 +7679,123 @@ Testosterone = $singleton ({
 Test = $prototype ({
 
     constructor: function (cfg) {
-        _.extend (this, cfg, {
-            assertionStack: _.observableRef ([]) })
-
-        _.defaults (this, {
+        _.defaults (this, cfg, {
             name:       'youre so dumb you cannot even think of a name?',
             failed:     false,
             routine:    undefined,
             verbose:    false,
             depth:      1,
             indent:     0,
-            context:    this }) },
+            failedAssertions: [],
+            context:    this,
+            complete: _.barrier () })
 
-    currentAssertion: $property (function () {
-        return this.assertionStack.value[0] }),
+        this.babyAssertion = $interlocked (this.babyAssertion) },
 
-    waitUntilPreviousAssertionComplete: function (then) {
-        if (this.currentAssertion && this.currentAssertion.async) {
-            this.assertionStack.when (_.isEmpty, function () {
-                then () }) }
-        else {
-            then () } },
+    finalize: function () {
+        this.babyAssertion.wait (this.$ (function () {
+            if (this.canFail && this.failedAssertions.length) {
+                this.failed = true }
+            this.complete (true) })) },
 
-    runAssertion: function (name, def, fn, args) { var self = this
+    babyAssertion: function (releaseLock, name, def, fn, args, loc) { var self = this
 
-        var assertion = {
+        var assertion = new Test ({
+            mother: this,
             name: name,
-            async: def.$async,
-            shouldFail: def.$shouldFail,
-            depth: self.depth + self.assertionStack.value.length + 1,
-            location: def.$async ? $callStack.safeLocation (2) : undefined }
-
-        this.waitUntilPreviousAssertionComplete (function () {
-
-            if (assertion.async) {
-                assertion = new Test (_.extend (assertion, {
-                    context: self.context,
-                    timeout: self.timeout / 2,
-                    routine: Tags.modifySubject (def, function (fn) {
+            shouldFail: def.$shouldFail || this.shouldFail,
+            depth: this.depth + 1,
+            location: loc,
+            context: this.context,
+            timeout: this.timeout / 2,
+            verbose: this.verbose,
+            silent:  this.silent,
+            routine: Tags.modifySubject (def, function (fn) {
                         return function (done) {
-                            _.cps.apply (fn, self.context, args, function (args, then) {
-                                if (!assertion.failed && then) {
-                                    then.apply (self.context, args) }
-                                done () }) } }) }))
+                                if ($async.is (args[0])) {
+                                    _.cps.apply (fn, self.context, args, function (args, then) {
+                                                                            if (then) then ()
+                                                                                      done ()  }) }
+                                  else {
+                                    try       { fn.apply (self.context, args); done () }
+                                    catch (e) { assertion.onException (e) } } } }) })
 
-                self.beginAssertion (assertion)
+        var doneWithAssertion = function () {
+            if (assertion.failed && self.canFail) {
+                self.failedAssertions.push (assertion) }
+            Testosterone.currentAssertion = self
+            releaseLock () }
 
-                assertion.run (function () {
-                    if (assertion.failed && self.fail ()) {
-                        assertion.location.sourceReady (function (src) {
-                            log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
-                            assertion.evalLogCalls ()
-                            self.endAssertion (assertion) }) }
-                    else {
-                        self.endAssertion (assertion) } }) }
-
+        assertion.run (function () {
+            if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
+                    assertion.location.sourceReady (function (src) {
+                        log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
+                        assertion.evalLogCalls ()
+                        doneWithAssertion () }) }
             else {
-                self.beginAssertion (assertion)
+                doneWithAssertion () } }) },
 
-                try {
-                    var result = fn.apply (self.context, args)
-                    self.endAssertion (assertion)
-                    return result }
-
-                catch (e) {
-                    self.onException (e)
-                    self.endAssertion (assertion) } } }) },
-
-    beginAssertion: function (a) {
-        if (a.async) {
-            Testosterone.currentTest = a }
-        this.assertionStack ([a].concat (this.assertionStack.value)) },
-
-    endAssertion: function (a) {
-        if (Testosterone.currentTest === a) {
-            Testosterone.currentTest = this }
-
-        if (a.shouldFail && !a.failed) {
-            this.onException (_.assertionError ({ notMatching: 'not failed (as should)' })) }
-
-        this.assertionStack (_.without (this.assertionStack.value, a)) },
+    canFail: $property (function () {
+        return !this.failed && !this.shouldFail }),
 
     fail: function () {
-        var shouldFail = _.find (_.rest (this.assertionStack.value), _.matches ({ shouldFail: true }))
+        this.failed = true
+        this.finalize () },
 
-        if (shouldFail) {
-            shouldFail.failed = true
-            return false }
+    assertionStack: $property (function () { var result = [],
+                                                      a = this; do { result.push (a); a = a.mother } while (a)
+                                          return result }),
 
-        else {
-            this.failed = true
-            return true } },
+    onException: function (e) { var self = this
 
-    mapStackLocations: function (error, then) {
+            if (this.canFail || this.verbose) {
 
-        var assertionStack  = this.assertionStack.value.copy,
-            callStack       = CallStack.fromError (error)
-        
-        callStack.sourcesReady (function () {
-            then (_.map (assertionStack, function (assertion) {
-                var found = _.find (callStack, function (loc, index) {
-                    if ((assertion.location && CallStack.locationEquals (loc, assertion.location)) ||
-                        (loc.source.indexOf ('$' + assertion.name) >= 0)) {
-                            callStack = callStack.offset (index + 1)
-                            return true } })
-
-                return found || assertion.location || callStack.safeLocation (5) })) }) },
-
-    onException: function (e, then) { var self = this
-
-        if (this.done) {
-            throw e } // not our exception, re-throw
-
-        if (!this.fail ()) {
-            if (then) {
-                then.call (this) } }
-
-        else {
-            this.mapStackLocations (e, function (locations) {
-
-                if (self.logCalls.length > 0) {
-                    log.newline () }
-
-                //  $assertMatches (blabla...
-                _.each (locations.reversed, function (loc, i) {
-                    if (loc) {
-                        log.red (log.config ({ indent: i, location: true, where: loc }), loc.source) } })
-                
                 if (_.isAssertionError (e)) {
                     //  • a
                     //  • b
                     if ('notMatching' in e) { var notMatching = _.coerceToArray (e.notMatching)
                         if (e.asColumns) {
-                            log.orange (log.indent (locations.length),
+                            log.orange (
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
                             _.each (notMatching, function (what, i) {
-                                log.orange (log.indent (locations.length), '•', what) }) } } }
+                                log.orange ('•', what) }) } } }
                         
                     // print exception
                 else {
                     if (self.depth > 1) { log.newline () }
-                    log.write (log.indent (locations.length), e) }
+                    log.write (e) }
 
-                log.newline ()
+                log.newline () }
 
-                if (then) {
-                    then.call (self) } }) } },
+            if (this.canFail) { this.fail () }
+                        else  { this.finalize () } },
 
-    tryCatch: function (routine, then) { var self = this
-                                                    self.afterUnhandledException = then
-        routine.call (self.context, function () {   self.afterUnhandledException = undefined
-            then () }) },
+    run: function (then) { var self    = Testosterone.currentAssertion = this,
+                               routine = Tags.unwrap (this.routine)
 
-    onUnhandledException: function (e) {
-        this.onException (e, function () { 
-            if (this.afterUnhandledException) {
-                var fn =    this.afterUnhandledException
-                            this.afterUnhandledException = undefined
-                    fn () } }) },
-
-    run: function (then) { var self = this
+        this.shouldFail = $shouldFail.is (this.routine)
         this.failed = false
         this.hasLog = false
         this.logCalls = []
-        this.assertionStack ([])
         this.failureLocations = {}
 
-        var routine     = Tags.unwrap (this.routine)
-        var doRoutine   = function (then) {
-                                var done = function () {
-                                                self.done = true
-                                                then () }
-                                try { 
-                                    if (_.noArgs (routine)) {
-                                        routine.call (self.context)
-                                        done () }
-                                    else {
-                                        self.tryCatch (routine, done) } }
+        _.withTimeout ({
+            maxTime: self.timeout,
+            expired: function ()     { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
+            function (cancelTimeout) {
+                self.complete (cancelTimeout.arity0) } )
 
-                                catch (e) {
-                                    self.onException (e, then) } }
+        log.withWriteBackend (_.extendWith ({ indent: self.depth + (self.indent || 0) },
+                                    function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),
 
-        var beforeComplete = function () {
-            if (self.routine.$shouldFail) {
-                self.failed = !self.failed }
-            
-            if (!(self.hasLog = (self.logCalls.length > 0))) {
-                if (self.failed) {
-                    log.red ('FAIL') }
-                else if (self.verbose) {
-                    log.green ('PASS') } } }
+                              function (doneWithLogging)  { self.complete (doneWithLogging.arity0)
+                                                if (then) { self.complete (then) }
 
-        var timeoutExpired = function (then) {
-                                self.failed = true
-                                log.error ('TIMEOUT EXPIRED')
-                                then () }
-
-        var waitUntilAssertionsComplete = function (then) {
-                                                self.assertionStack.when (_.isEmpty, then) }
-
-        var withTimeout     = _.withTimeout.partial ({ maxTime: self.timeout, expired: timeoutExpired })
+                                    if (routine.length > 0) routine.call (self.context,  self.$ (self.finalize))
+                                    else                   (routine.call (self.context),         self.finalize ()) }) },
         
-        var withLogging     = log.withWriteBackend.partial (
-                                    _.extendWith ({ indent: self.depth + (self.indent || 0) }, function (args) {
-                                        self.logCalls.push (args) }))
-
-        var withExceptions  = _.withUncaughtExceptionHandler.partial (self.$ (self.onUnhandledException))
-
-        withLogging (           function (doneWithLogging) {
-            withExceptions (    function (doneWithExceptions) {
-                withTimeout (   function (doneWithTimeout) {
-                                    _.cps.sequence (
-                                        doRoutine,
-                                        waitUntilAssertionsComplete,
-                                        doneWithTimeout) () },
-
-                                function () {
-                                    beforeComplete ()
-                                    doneWithExceptions ()
-                                    doneWithLogging () }) }) }, then) },
-
     printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
 
         log.write (log.color.blue,
@@ -8088,11 +7992,11 @@ Panic.widget = $singleton (Component, {
 	printUnknownStuff: function (what, raw) {
 		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 
-	printFailedTest: function (test) { var logEl = $('<div class="test-log" style="margin-top: 13px;">')
+	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
 		log.withWriteBackend (
 			function (params) {
-				logEl.append ($('<pre>').css ({ color: params.color.css }).html (
+				logEl.append ($('<div>').css ({ color: params.color.css }).html (
 					_.escape (params.indentedText) +
 					((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
 					(params.trailNewlines || '').replace (/\n/g, '<br>'))) },
@@ -8201,7 +8105,7 @@ Modal overlay that outputs log.js for debugging purposes
 
 		init: function () {
 
-			log.impl.writeBackend = this.write
+			log.withWriteBackend (this.write, function () {})
 
 			$(document).keydown (this.$ (function (e) {
 				if (e.keyCode === 192) { // ~
@@ -8224,7 +8128,7 @@ Modal overlay that outputs log.js for debugging purposes
 				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
 
             if (!this.opaque) {
-				log.impl.defaultWriteBackend.apply (log.impl, arguments) } }
+				log.impl.defaultWriteBackend (arguments) } }
 
 	})
 

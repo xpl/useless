@@ -16,6 +16,7 @@
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
                 try {
+                    chain[i] (e)
                     break }
                 catch (newE) {
                     if (i === n - 1) {
