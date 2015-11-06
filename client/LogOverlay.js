@@ -39,7 +39,7 @@ Modal overlay that outputs log.js for debugging purposes
 				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
 
             if (!this.opaque) {
-				log.impl.defaultWriteBackend (arguments) } }
+				log.impl.defaultWriteBackend (params) } }
 
 	})
 

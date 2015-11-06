@@ -5,7 +5,7 @@ var fs              = require ('fs'),
 
 module.exports = $trait ({
 
-    buildScripts: ['useless.js', 'useless.devtools.js'],
+    buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
 
     buildScript: function (name) { log.info ('Building monolithic ' + name)
 

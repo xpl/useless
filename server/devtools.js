@@ -28,7 +28,7 @@ module.exports = $trait ({
 
     afterInit: function () { // remote logging
         if (this.messageToPeers) {
-            _.onAfter (log.impl, 'writeBackend', this.$ (function (params) {
+            _.onAfter (log.impl, 'defaultWriteBackend', this.$ (function (params) {
                 this.messageToPeers ({ what: 'log', params: params }, this.isDeveloper) })) } },
 
     /*  Prints raw incoming HTTP data (for debugging of client write methods)
