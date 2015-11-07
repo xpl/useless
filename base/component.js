@@ -89,7 +89,6 @@ _.tests.component = {
                                         var compo = new Compo ({ init: false })
                                         $assert (typeof compo.init, 'function') }) }, // shouldn't be replaced by false
 
-
     /*  initialized is a _.barrier that opens after initialization
      */
     'initialized (barrier)': function () {
@@ -101,6 +100,18 @@ _.tests.component = {
             compo.initialized (function () { mkay () })
             compo.init () }) },
 
+    /*  'thiscall' semantics for methods (which can be defined by a variety of ways)
+     */
+    'thiscall for methods': function () {
+        $assertEveryCalledOnce (function (prototypeMethod, instanceMethod) {
+            var instance = null
+            var Compo = new $component ({
+                prototypeMethod: function () { $assert (this === instance); prototypeMethod () } })
+            instance = new Compo ({
+                instanceMethod:  function () { $assert (this === instance); instanceMethod () } })
+
+            instance.prototypeMethod.call (null)
+            instance.instanceMethod.call (null) }) },
 
     /*  Pluggable init/destroy with $traits (tests all combinations of CPS / sequential style method calling)
      */
@@ -407,7 +418,6 @@ _.tests.component = {
 
         parent.destroy () })},
 
-
     'thiscall for streams': function () {
         
         var compo = $singleton (Component, {
@@ -417,7 +427,6 @@ _.tests.component = {
             $assert (this === compo) })
 
         compo.trig.call ({}) },
-
 
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
@@ -614,12 +623,6 @@ Component = $prototype ({
             _.defaults (this, _.cloneDeep (this.constructor.$defaults)) }
 
 
-        /*  Add thiscall semantics to methods
-            TODO: execute this substitution at $prototype code-gen level, not at instance level
-         */
-        this.enumMethods (function (fn, name) { if (name !== '$' && name !== 'init') { this[name] = this.$ (fn) } })
-
-
         /*  Listen self destroy method
          */
         _.onBefore  (this, 'destroy', this.beforeDestroy)
@@ -633,6 +636,12 @@ Component = $prototype ({
             children_: [] },
             _.omit (_.omit (cfg, 'init', 'attachTo', 'attach'), function (v, k) {
                     return Component.isStreamDefinition (componentDefinition[k]) }, this))
+
+
+        /*  Add thiscall semantics to methods
+         */
+        this.enumMethods (function (fn, name) { if (name !== '$' && name !== 'init') { this[name] = this.$ (fn) } })
+
 
         var initialStreamListeners = []
 
@@ -680,7 +689,6 @@ Component = $prototype ({
                  */
                 if (defaultValue !== undefined) {
                     observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
-
 
             /*  Expand streams
              */
