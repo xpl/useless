@@ -4283,10 +4283,10 @@ BBox = $prototype ({
         return new BBox (this.x, this.y, this.width, this.height) }),
     
     floor: $property (function () {
-        return new BBox (Math.floor (this.x),
-                         Math.floor (this.y),
-                         Math.floor (this.width),
-                         Math.floor (this.height)) }),
+        return new BBox.fromLTRB (Math.floor (this.left),
+                                  Math.floor (this.top),
+                                  Math.floor (this.right),
+                                  Math.floor (this.bottom)) }),
 
     css: $property (function () {
         return { left: this.left, top: this.top, width: this.width, height: this.height } }),
