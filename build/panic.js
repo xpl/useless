@@ -936,7 +936,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
                                             _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg, indent)) }
 
-                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x, 'toString')) {
+                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }
 
                             else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
