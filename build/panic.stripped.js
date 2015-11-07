@@ -2699,7 +2699,7 @@ BBox = $prototype({
         return new BBox(this.x, this.y, this.width, this.height);
     }),
     floor: $property(function () {
-        return new Vec2(Math.floor(this.x), Math.floor(this.y));
+        return new BBox(Math.floor(this.x), Math.floor(this.y), Math.floor(this.width), Math.floor(this.height));
     }),
     css: $property(function () {
         return {
