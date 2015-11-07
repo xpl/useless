@@ -2689,9 +2689,9 @@ BBox = $prototype({
         };
     }),
     ltwh: $alias('css'),
-    union: $property(function (other) {
+    union: function (other) {
         return BBox.fromLTRB(Math.min(this.left, other.left), Math.min(this.top, other.top), Math.max(this.right, other.right), Math.max(this.bottom, other.bottom));
-    }),
+    },
     clone: $property(function () {
         return new BBox(this.x, this.y, this.width, this.height);
     }),
