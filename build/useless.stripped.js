@@ -3260,11 +3260,19 @@ BBox = $prototype({
                 height: size.y
             });
         },
-        fromLTWH: function (r) {
-            return new BBox(r.left + r.width / 2, r.top + r.height / 2, r.width, r.height);
+        fromLTWH: function (l, t, w, h) {
+            if (arguments.length === 1) {
+                return BBox.fromLTWH(l.left, l.top, l.width, l.height);
+            } else {
+                return new BBox(l + w / 2, t + h / 2, w, h);
+            }
         },
-        fromLTRB: function (r) {
-            return new BBox(_.lerp(0.5, r.left, r.right), _.lerp(0.5, r.top, r.bottom), r.right - r.left, r.bottom - r.top);
+        fromLTRB: function (l, t, r, b) {
+            if (arguments.length === 1) {
+                return BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
+            } else {
+                return new BBox(_.lerp(0.5, l, r), _.lerp(0.5, t, b), r - l, b - t);
+            }
         },
         fromSizeAndCenter: function (size, center) {
             return new BBox(center.x - size.x / 2, center.y - size.y / 2, size.x, size.y);
@@ -3284,12 +3292,7 @@ BBox = $prototype({
                 r = Math.max(pt.x, r);
                 b = Math.max(pt.y, b);
             });
-            return BBox.fromLTRB({
-                left: l,
-                top: t,
-                right: r,
-                bottom: b
-            });
+            return BBox.fromLTRB(l, t, r, b);
         }
     },
     constructor: function (x, y, w, h) {
