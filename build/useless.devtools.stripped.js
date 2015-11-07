@@ -1303,7 +1303,7 @@ _.perfTest = function (arg, then) {
             return el;
         })),
         layout: function () {
-            this.modal.css('max-height', $(document).height() - 100);
+            this.modal.css('max-height', $(window).height() - 100);
             this.modalBody.scroll();
         },
         toggleVisibility: function (yes) {

@@ -2689,6 +2689,9 @@ BBox = $prototype({
         };
     }),
     ltwh: $alias('css'),
+    union: $property(function (other) {
+        return BBox.fromLTRB(Math.min(this.left, other.left), Math.min(this.top, other.top), Math.max(this.right, other.right), Math.max(this.bottom, other.bottom));
+    }),
     clone: $property(function () {
         return new BBox(this.x, this.y, this.width, this.height);
     }),
@@ -2749,7 +2752,7 @@ BBox = $prototype({
         return Math.abs(this.width * this.height);
     }),
     toString: function () {
-        return '{' + this.x + ',' + this.y + ':' + this.width + '\xD7' + this.height + '}';
+        return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
     }
 });
 Transform = $prototype({
@@ -3273,11 +3276,6 @@ Component = $prototype({
         if (this.constructor.$defaults) {
             _.defaults(this, _.cloneDeep(this.constructor.$defaults));
         }
-        this.enumMethods(function (fn, name) {
-            if (name !== '$' && name !== 'init') {
-                this[name] = this.$(fn);
-            }
-        });
         _.onBefore(this, 'destroy', this.beforeDestroy);
         _.onAfter(this, 'destroy', this.afterDestroy);
         _.extend(this, {
@@ -3286,6 +3284,11 @@ Component = $prototype({
         }, _.omit(_.omit(cfg, 'init', 'attachTo', 'attach'), function (v, k) {
             return Component.isStreamDefinition(componentDefinition[k]);
         }, this));
+        this.enumMethods(function (fn, name) {
+            if (name !== '$' && name !== 'init') {
+                this[name] = this.$(fn);
+            }
+        });
         var initialStreamListeners = [];
         _.each(componentDefinition, function (def, name) {
             if (def !== undefined) {
@@ -5159,7 +5162,7 @@ _.perfTest = function (arg, then) {
             return el;
         })),
         layout: function () {
-            this.modal.css('max-height', $(document).height() - 100);
+            this.modal.css('max-height', $(window).height() - 100);
             this.modalBody.scroll();
         },
         toggleVisibility: function (yes) {
