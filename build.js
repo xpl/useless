@@ -160,7 +160,7 @@ Testosterone.run ({
         var cfg = _.extend ({ files: _.coerceToUndefined (_.initial (filePath)) || ['./useless.js'],
                               path:                       _.last    (filePath)  ||  './build' }, options)
 
-        console.log ('Checking dependencies')
+        log ('Checking dependencies...')
 
         util.require (['esprima', 'escodegen'], compile.partial (cfg)) } })
 

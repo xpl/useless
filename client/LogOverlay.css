@@ -4,6 +4,5 @@
 					   font-size: 11px;
 					   pointer-events: none;
 					   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }
-
-.ulo-line { white-space: nowrap; }
+.ulo-line 		{ white-space: pre; word-wrap: normal; }
 .ulo-line-where { color: black; opacity: 0.25; }

@@ -121,38 +121,7 @@ _.extend(_, {
         }
     }
 });
-_.extend(_, _.asyncAssertions = {
-    assertCPS: function (fn, args, then) {
-        var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
-        fn(function () {
-            $assert([].splice.call(arguments, 0), requiredResult);
-            if (then) {
-                then();
-            }
-        });
-    },
-    assertCalls: function (times, test, then) {
-        var timesCalled = 0;
-        var mkay = function () {
-            timesCalled++;
-        };
-        var countMkays = function () {
-            $assert(times, timesCalled);
-            if (then) {
-                then();
-            }
-        };
-        if (test.length >= 2) {
-            test.call(this, mkay, function () {
-                countMkays();
-            });
-        } else {
-            test.call(this, mkay);
-            countMkays();
-        }
-    }
-});
-_.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
+_.extend(_, _.assertions = {
     assert: function (__) {
         var args = [].splice.call(arguments, 0);
         if (args.length === 1) {
@@ -164,23 +133,47 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         }
         return true;
     },
-    assertEveryCalled: function (fn) {
-        var callbacks = _.times(fn.length, function () {
-            return function () {
-                arguments.callee.called = true;
-            };
+    assertCPS: function (fn, args, then) {
+        var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
+        fn(function () {
+            $assert([].splice.call(arguments, 0), requiredResult);
+            if (then) {
+                then();
+                return true;
+            }
         });
-        fn.apply(null, callbacks);
-        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(true)));
     },
-    assertEveryCalledOnce: function (fn) {
-        var callbacks = _.times(fn.length, function () {
+    assertNotCalled: function (context) {
+        context(function () {
+            $fail;
+        });
+    },
+    assertEveryCalledOnce: function (fn, then) {
+        return _.assertEveryCalled(_.hasTags ? $once(fn) : _.extend(fn, { once: true }), then);
+    },
+    assertEveryCalled: function (fn_, then) {
+        var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
+        once = _.hasTags ? $once.is(fn_) : fn_.once;
+        var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
+        var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
+            var parts = arg.trim().match(/^(.+)__(.+)$/);
+            return parts && parseInt(parts[2], 10) || true;
+        });
+        var status = [];
+        var callbacks = _.times(fn.length, function (i) {
             return function () {
-                arguments.callee.called = (arguments.callee.called || 0) + 1;
+                status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
+                if (async && _.isEqual(status, contracts))
+                    then();
             };
         });
         fn.apply(null, callbacks);
-        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(1)));
+        if (!async) {
+            _.assert(status, contracts);
+            if (then) {
+                then();
+            }
+        }
     },
     assertCallOrder: function (fn) {
         var callIndex = 0;
@@ -232,7 +225,7 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         });
     },
     assertFails: function (what) {
-        _.assertThrows.call(this, what, _.isAssertionError);
+        return _.assertThrows.call(this, what, _.isAssertionError);
     },
     assertThrows: function (what, errorPattern) {
         var e = undefined, thrown = false;
@@ -243,13 +236,14 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
             thrown = true;
         }
         _.assert.call(this, thrown);
-        if (arguments.length === 1) {
+        if (arguments.length > 1) {
             _.assertMatches.apply(this, [e].concat(_.rest(arguments)));
         }
     },
     assertNotThrows: function (what) {
-        _.assertCalls.call(this, 0, function () {
+        return _.assertEveryCalled(function (ok) {
             what();
+            ok();
         });
     },
     assertArguments: function (args, callee, name) {
@@ -291,7 +285,7 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
     stub: function () {
         _.assertionFailed();
     }
-}));
+});
 _.extend(_, {
     assertionError: function (additionalInfo) {
         return _.extend(new Error('assertion failed'), additionalInfo, { assertion: true });
@@ -312,25 +306,6 @@ _.extend(_, {
 });
 _.each(_.keys(_.assertions), function (name) {
     _.defineGlobalProperty('$' + name, _[name], { configurable: true });
-});
-_.mixin({
-    log: function (x, label) {
-        console.log.apply(console.log, _.times(arguments.callee.depth || 0, _.constant('\u2192 ')).concat([
-            label || '_.log:',
-            x
-        ]));
-        return x;
-    },
-    logs: function (fn, numArgs) {
-        return function () {
-            _.log.depth = (_.log.depth || 0) + 1;
-            _.log(_.first(arguments, numArgs), 'inp:');
-            var result = _.log(fn.apply(this, arguments), 'out:');
-            console.log('\n');
-            _.log.depth--;
-            return result;
-        };
-    }
 });
 (function () {
     _.hasUncaught = true;
@@ -713,31 +688,38 @@ _.extend(log, {
     boldLine: '======================================',
     line: '--------------------------------------',
     thinLine: '......................................',
-    withCustomWriteBackend: function (backend, contextFn, then) {
-        var previousBackend = log.impl.writeBackend;
-        log.impl.writeBackend = backend;
-        contextFn(function () {
-            log.impl.writeBackend = previousBackend;
-            if (then) {
-                then();
-            }
+    withWriteBackend: $scope(function (release, backend, contextFn, done) {
+        var prev = log.writeBackend.value;
+        log.writeBackend.value = backend;
+        contextFn(function (then) {
+            release(function () {
+                log.writeBackend.value = prev;
+                if (then)
+                    then();
+                if (done)
+                    done();
+            });
         });
-    },
+    }),
     writeUsingDefaultBackend: function () {
         var args = arguments;
-        log.withCustomWriteBackend(log.impl.defaultWriteBackend, function (done) {
+        log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
             log.write.apply(null, args);
             done();
         });
     },
+    writeBackend: function () {
+        return arguments.callee.value || log.impl.defaultWriteBackend;
+    },
     impl: {
         write: function (defaultCfg) {
             return $restArg(function () {
+                var writeBackend = log.writeBackend();
                 var args = _.asArray(arguments);
                 var cleanArgs = log.cleanArgs(args);
                 var config = _.extend({ indent: 0 }, defaultCfg, log.readConfig(args));
                 var stackOffset = Platform.NodeJS ? 3 : 3;
-                var indent = (log.impl.writeBackend.indent || 0) + config.indent;
+                var indent = (writeBackend.indent || 0) + config.indent;
                 var text = log.impl.stringifyArguments(cleanArgs, config);
                 var indentation = _.times(indent, _.constant('\t')).join('');
                 var match = text.reversed.match(/(\n*)([^]*)/);
@@ -749,7 +731,7 @@ _.extend(log, {
                     codeLocation: location,
                     config: config
                 };
-                log.impl.writeBackend(backendParams);
+                writeBackend(backendParams);
                 return cleanArgs[0];
             });
         },
@@ -844,7 +826,6 @@ _.extend(log, log.printAPI = {
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
 logs = _.map2(log.printAPI, _.higherOrder);
-log.impl.writeBackend = log.impl.defaultWriteBackend;
 _.extend(log, {
     asTable: function (arrayOfObjects) {
         var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
@@ -904,14 +885,13 @@ _.defineTagKeyword('assertion');
 Testosterone = $singleton({
     prototypeTests: [],
     isRunning: $property(function () {
-        return this.currentTest !== undefined;
+        return this.currentAssertion !== undefined;
     }),
     constructor: function () {
-        this.defineAssertion('assertFails', $shouldFail(function (what) {
-            what.call(this);
-        }));
-        _.each(_.omit(_.assertions, 'assertFails'), function (fn, name) {
-            this.defineAssertion(name, name in _.asyncAssertions ? $async(fn) : fn);
+        _.each(_.assertions, function (fn, name) {
+            this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
+                what.call(this);
+            }) : fn);
         }, this);
         (function (register) {
             $prototype.macro('$test', register);
@@ -926,8 +906,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: $interlocked(function (cfg_, optionalThen) {
-        var releaseLock = _.last(arguments);
+    run: $interlocked(function (releaseLock, cfg_, optionalThen) {
         var then = arguments.length === 3 ? optionalThen : _.identity;
         var defaults = {
             silent: true,
@@ -953,17 +932,26 @@ Testosterone = $singleton({
                     index: i
                 });
             });
-            _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
-                _.assert(cfg.done !== true);
-                cfg.done = true;
-                this.printLog(cfg);
-                this.failedTests = _.filter(this.runningTests, _.property('failed'));
-                this.failed = this.failedTests.length > 0;
-                then(!this.failed);
-                releaseLock();
+            _.withUncaughtExceptionHandler(this.$(this.onException), this.$(function (doneWithExceptions) {
+                _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
+                    _.assert(cfg.done !== true);
+                    cfg.done = true;
+                    this.printLog(cfg);
+                    this.failedTests = _.filter(this.runningTests, _.property('failed'));
+                    this.failed = this.failedTests.length > 0;
+                    then(!this.failed);
+                    doneWithExceptions();
+                    releaseLock();
+                }));
             }));
         }));
     }),
+    onException: function (e) {
+        if (this.currentAssertion)
+            this.currentAssertion.onException(e);
+        else
+            throw e;
+    },
     defineAssertions: function (assertions) {
         _.each(assertions, function (fn, name) {
             this.defineAssertion(name, fn);
@@ -971,13 +959,13 @@ Testosterone = $singleton({
     },
     runTest: function (test, i, then) {
         var self = this, runConfig = this.runConfig;
-        this.currentTest = test;
         runConfig.testStarted(test);
         test.verbose = runConfig.verbose;
         test.timeout = runConfig.timeout;
+        test.startTime = Date.now();
         test.run(function () {
             runConfig.testComplete(test);
-            delete self.currentTest;
+            test.time = Date.now() - test.startTime;
             then();
         });
     },
@@ -1000,12 +988,22 @@ Testosterone = $singleton({
                     name,
                     tests
                 ]]) || tests)).map(function (keyValue) {
-                return new Test({
+                var test = new Test({
                     name: keyValue[0],
                     routine: keyValue[1],
                     suite: name,
                     context: context
                 });
+                test.complete(function () {
+                    if (!(test.hasLog = test.logCalls.length > 0)) {
+                        if (test.failed) {
+                            log.red('FAIL');
+                        } else if (test.verbose) {
+                            log.green('PASS');
+                        }
+                    }
+                });
+                return test;
             })
         };
     },
@@ -1014,10 +1012,11 @@ Testosterone = $singleton({
         _.deleteKeyword(name);
         _.defineKeyword(name, Tags.modifySubject(def, function (fn) {
             return _.withSameArgs(fn, function () {
-                if (!self.currentTest) {
+                var loc = $callStack.safeLocation(1);
+                if (!self.currentAssertion) {
                     return fn.apply(self, arguments);
                 } else {
-                    return self.currentTest.runAssertion(name, def, fn, arguments);
+                    return self.currentAssertion.babyAssertion(name, def, fn, arguments, loc);
                 }
             });
         }));
@@ -1039,253 +1038,157 @@ Testosterone = $singleton({
 });
 Test = $prototype({
     constructor: function (cfg) {
-        _.extend(this, cfg, { assertionStack: _.observableRef([]) });
-        _.defaults(this, {
+        _.defaults(this, cfg, {
             name: 'youre so dumb you cannot even think of a name?',
             failed: false,
             routine: undefined,
             verbose: false,
             depth: 1,
             indent: 0,
-            context: this
+            failedAssertions: [],
+            context: this,
+            complete: _.barrier()
         });
+        this.babyAssertion = $interlocked(this.babyAssertion);
     },
-    currentAssertion: $property(function () {
-        return this.assertionStack.value[0];
-    }),
-    waitUntilPreviousAssertionComplete: function (then) {
-        if (this.currentAssertion && this.currentAssertion.async) {
-            this.assertionStack.when(_.isEmpty, function () {
-                then();
-            });
-        } else {
-            then();
-        }
+    finalize: function () {
+        this.babyAssertion.wait(this.$(function () {
+            if (this.canFail && this.failedAssertions.length) {
+                this.failed = true;
+            }
+            this.complete(true);
+        }));
     },
-    runAssertion: function (name, def, fn, args) {
+    babyAssertion: function (releaseLock, name, def, fn, args, loc) {
         var self = this;
-        var assertion = {
+        var assertion = new Test({
+            mother: this,
             name: name,
-            async: def.$async,
-            shouldFail: def.$shouldFail,
-            depth: self.depth + self.assertionStack.value.length + 1,
-            location: def.$async ? $callStack.safeLocation(2) : undefined
-        };
-        this.waitUntilPreviousAssertionComplete(function () {
-            if (assertion.async) {
-                assertion = new Test(_.extend(assertion, {
-                    context: self.context,
-                    timeout: self.timeout / 2,
-                    routine: Tags.modifySubject(def, function (fn) {
-                        return function (done) {
-                            _.cps.apply(fn, self.context, args, function (args, then) {
-                                if (!assertion.failed && then) {
-                                    then.apply(self.context, args);
-                                }
-                                done();
-                            });
-                        };
-                    })
-                }));
-                self.beginAssertion(assertion);
-                assertion.run(function () {
-                    if (assertion.failed && self.fail()) {
-                        assertion.location.sourceReady(function (src) {
-                            log.red(src, log.config({
-                                location: assertion.location,
-                                where: assertion.location
-                            }));
-                            assertion.evalLogCalls();
-                            self.endAssertion(assertion);
+            shouldFail: def.$shouldFail || this.shouldFail,
+            depth: this.depth + 1,
+            location: loc,
+            context: this.context,
+            timeout: this.timeout / 2,
+            verbose: this.verbose,
+            silent: this.silent,
+            routine: Tags.modifySubject(def, function (fn) {
+                return function (done) {
+                    if ($async.is(args[0])) {
+                        _.cps.apply(fn, self.context, args, function (args, then) {
+                            if (then)
+                                then();
+                            done();
                         });
                     } else {
-                        self.endAssertion(assertion);
-                    }
-                });
-            } else {
-                self.beginAssertion(assertion);
-                try {
-                    var result = fn.apply(self.context, args);
-                    self.endAssertion(assertion);
-                    return result;
-                } catch (e) {
-                    self.onException(e);
-                    self.endAssertion(assertion);
-                }
-            }
-        });
-    },
-    beginAssertion: function (a) {
-        if (a.async) {
-            Testosterone.currentTest = a;
-        }
-        this.assertionStack([a].concat(this.assertionStack.value));
-    },
-    endAssertion: function (a) {
-        if (Testosterone.currentTest === a) {
-            Testosterone.currentTest = this;
-        }
-        if (a.shouldFail && !a.failed) {
-            this.onException(_.assertionError({ notMatching: 'not failed (as should)' }));
-        }
-        this.assertionStack(_.without(this.assertionStack.value, a));
-    },
-    fail: function () {
-        var shouldFail = _.find(_.rest(this.assertionStack.value), _.matches({ shouldFail: true }));
-        if (shouldFail) {
-            shouldFail.failed = true;
-            return false;
-        } else {
-            this.failed = true;
-            return true;
-        }
-    },
-    mapStackLocations: function (error, then) {
-        var assertionStack = this.assertionStack.value.copy, callStack = CallStack.fromError(error);
-        callStack.sourcesReady(function () {
-            then(_.map(assertionStack, function (assertion) {
-                var found = _.find(callStack, function (loc, index) {
-                    if (assertion.location && CallStack.locationEquals(loc, assertion.location) || loc.source.indexOf('$' + assertion.name) >= 0) {
-                        callStack = callStack.offset(index + 1);
-                        return true;
-                    }
-                });
-                return found || assertion.location || callStack.safeLocation(5);
-            }));
-        });
-    },
-    onException: function (e, then) {
-        var self = this;
-        if (this.done) {
-            throw e;
-        }
-        if (!this.fail()) {
-            if (then) {
-                then.call(this);
-            }
-        } else {
-            this.mapStackLocations(e, function (locations) {
-                if (self.logCalls.length > 0) {
-                    log.newline();
-                }
-                _.each(locations.reversed, function (loc, i) {
-                    if (loc) {
-                        log.red(log.config({
-                            indent: i,
-                            location: true,
-                            where: loc
-                        }), loc.source);
-                    }
-                });
-                if (_.isAssertionError(e)) {
-                    if ('notMatching' in e) {
-                        var notMatching = _.coerceToArray(e.notMatching);
-                        if (e.asColumns) {
-                            log.orange(log.indent(locations.length), log.columns(_.map(notMatching, function (obj) {
-                                return [
-                                    '\u2022 ' + _.keys(obj)[0],
-                                    _.stringify(_.values(obj)[0])
-                                ];
-                            })).join('\n'));
-                        } else {
-                            _.each(notMatching, function (what, i) {
-                                log.orange(log.indent(locations.length), '\u2022', what);
-                            });
+                        try {
+                            fn.apply(self.context, args);
+                            done();
+                        } catch (e) {
+                            assertion.onException(e);
                         }
                     }
-                } else {
-                    if (self.depth > 1) {
-                        log.newline();
-                    }
-                    log.write(log.indent(locations.length), e);
-                }
-                log.newline();
-                if (then) {
-                    then.call(self);
-                }
-            });
-        }
-    },
-    tryCatch: function (routine, then) {
-        var self = this;
-        self.afterUnhandledException = then;
-        routine.call(self.context, function () {
-            self.afterUnhandledException = undefined;
-            then();
+                };
+            })
         });
-    },
-    onUnhandledException: function (e) {
-        this.onException(e, function () {
-            if (this.afterUnhandledException) {
-                var fn = this.afterUnhandledException;
-                this.afterUnhandledException = undefined;
-                fn();
+        var doneWithAssertion = function () {
+            if (assertion.failed && self.canFail) {
+                self.failedAssertions.push(assertion);
+            }
+            Testosterone.currentAssertion = self;
+            releaseLock();
+        };
+        assertion.run(function () {
+            if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
+                assertion.location.sourceReady(function (src) {
+                    log.red(src, log.config({
+                        location: assertion.location,
+                        where: assertion.location
+                    }));
+                    assertion.evalLogCalls();
+                    doneWithAssertion();
+                });
+            } else {
+                doneWithAssertion();
             }
         });
     },
-    run: function (then) {
+    canFail: $property(function () {
+        return !this.failed && !this.shouldFail;
+    }),
+    fail: function () {
+        this.failed = true;
+        this.finalize();
+    },
+    assertionStack: $property(function () {
+        var result = [], a = this;
+        do {
+            result.push(a);
+            a = a.mother;
+        } while (a);
+        return result;
+    }),
+    onException: function (e) {
         var self = this;
+        if (this.canFail || this.verbose) {
+            if (_.isAssertionError(e)) {
+                if ('notMatching' in e) {
+                    var notMatching = _.coerceToArray(e.notMatching);
+                    if (e.asColumns) {
+                        log.orange(log.columns(_.map(notMatching, function (obj) {
+                            return [
+                                '\u2022 ' + _.keys(obj)[0],
+                                _.stringify(_.values(obj)[0])
+                            ];
+                        })).join('\n'));
+                    } else {
+                        _.each(notMatching, function (what, i) {
+                            log.orange('\u2022', what);
+                        });
+                    }
+                }
+            } else {
+                if (self.depth > 1) {
+                    log.newline();
+                }
+                log.write(e);
+            }
+            log.newline();
+        }
+        if (this.canFail) {
+            this.fail();
+        } else {
+            this.finalize();
+        }
+    },
+    run: function (then) {
+        var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
+        this.shouldFail = $shouldFail.is(this.routine);
         this.failed = false;
         this.hasLog = false;
         this.logCalls = [];
-        this.assertionStack([]);
         this.failureLocations = {};
-        var routine = Tags.unwrap(this.routine);
-        var doRoutine = function (then) {
-            var done = function () {
-                self.done = true;
-                then();
-            };
-            try {
-                if (_.noArgs(routine)) {
-                    routine.call(self.context);
-                    done();
-                } else {
-                    self.tryCatch(routine, done);
-                }
-            } catch (e) {
-                self.onException(e, then);
-            }
-        };
-        var beforeComplete = function () {
-            if (self.routine.$shouldFail) {
-                self.failed = !self.failed;
-            }
-            if (!(self.hasLog = self.logCalls.length > 0)) {
-                if (self.failed) {
-                    log.red('FAIL');
-                } else if (self.verbose) {
-                    log.green('PASS');
-                }
-            }
-        };
-        var timeoutExpired = function (then) {
-            self.failed = true;
-            log.error('TIMEOUT EXPIRED');
-            then();
-        };
-        var waitUntilAssertionsComplete = function (then) {
-            self.assertionStack.when(_.isEmpty, then);
-        };
-        var withTimeout = _.withTimeout.partial({
+        _.withTimeout({
             maxTime: self.timeout,
-            expired: timeoutExpired
+            expired: function () {
+                if (self.canFail) {
+                    log.error('TIMEOUT EXPIRED');
+                    self.fail();
+                }
+            }
+        }, function (cancelTimeout) {
+            self.complete(cancelTimeout.arity0);
         });
-        var withLogging = log.withCustomWriteBackend.partial(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (args) {
-            self.logCalls.push(args);
-        }));
-        var withExceptions = _.withUncaughtExceptionHandler.partial(self.$(self.onUnhandledException));
-        withLogging(function (doneWithLogging) {
-            withExceptions(function (doneWithExceptions) {
-                withTimeout(function (doneWithTimeout) {
-                    _.cps.sequence(doRoutine, waitUntilAssertionsComplete, doneWithTimeout)();
-                }, function () {
-                    beforeComplete();
-                    doneWithExceptions();
-                    doneWithLogging();
-                    then();
-                });
-            });
+        log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
+            self.logCalls.push(x);
+        }), function (doneWithLogging) {
+            self.complete(doneWithLogging.arity0);
+            if (then) {
+                self.complete(then);
+            }
+            if (routine.length > 0)
+                routine.call(self.context, self.$(self.finalize));
+            else
+                routine.call(self.context), self.finalize();
         });
     },
     printLog: function () {
@@ -1297,9 +1200,7 @@ Test = $prototype({
         this.evalLogCalls();
     },
     evalLogCalls: function () {
-        _.each(this.logCalls, function (args) {
-            log.impl.writeBackend(args);
-        });
+        _.each(this.logCalls, log.writeBackend().arity1);
     }
 });
 if (Platform.NodeJS) {
@@ -1464,9 +1365,9 @@ _.perfTest = function (arg, then) {
             return raw ? what : $('<span>').text(log.impl.stringify(what));
         },
         printFailedTest: function (test) {
-            var logEl = $('<div class="test-log" style="margin-top: 13px;">');
-            log.withCustomWriteBackend(function (params) {
-                logEl.append($('<pre>').css({ color: params.color.css }).html(_.escape(params.indentedText) + (params.codeLocation && ' <span class="location">' + params.codeLocation + '</span>' || '') + (params.trailNewlines || '').replace(/\n/g, '<br>')));
+            var logEl = $('<pre class="test-log" style="margin-top: 13px;">');
+            log.withWriteBackend(function (params) {
+                logEl.append($('<div>').css({ color: params.color.css }).html(_.escape(params.indentedText) + (params.codeLocation && ' <span class="location">' + params.codeLocation + '</span>' || '') + (params.trailNewlines || '').replace(/\n/g, '<br>')));
             }, function (done) {
                 test.evalLogCalls();
                 done();
@@ -1559,7 +1460,8 @@ _.perfTest = function (arg, then) {
             init: false
         },
         init: function () {
-            log.impl.writeBackend = this.write;
+            log.withWriteBackend(this.write, function () {
+            });
             $(document).keydown(this.$(function (e) {
                 if (e.keyCode === 192) {
                     this.toggle();
@@ -1579,7 +1481,7 @@ _.perfTest = function (arg, then) {
             }
             this.el.append($('<div class="ulo-line">').css('color', params.color.css).append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
             if (!this.opaque) {
-                log.impl.defaultWriteBackend.apply(log.impl, arguments);
+                log.impl.defaultWriteBackend(params);
             }
         }
     });
@@ -1592,6 +1494,6 @@ _.perfTest = function (arg, then) {
     });
     $('head').append([
         $('<style type="text/css">').text('@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 1.2em; left: 0; top: 1em; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \u2192 \'; }\n\n.panic-alert-error:not(.all) .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all) .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { font-family: Menlo, monospace; overflow: scroll; border-radius: 2px; white-space: pre; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; font-size: 11px; }\n'),
-        $('<style type="text/css">').text('.useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;\n\t\t\t\t\t   white-space: pre;\n\t\t\t\t\t   font-family: Menlo, monospace;\n\t\t\t\t\t   font-size: 11px;\n\t\t\t\t\t   pointer-events: none;\n\t\t\t\t\t   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }\n\n.ulo-line { white-space: nowrap; }\n.ulo-line-where { color: black; opacity: 0.25; }')
+        $('<style type="text/css">').text('.useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;\n\t\t\t\t\t   white-space: pre;\n\t\t\t\t\t   font-family: Menlo, monospace;\n\t\t\t\t\t   font-size: 11px;\n\t\t\t\t\t   pointer-events: none;\n\t\t\t\t\t   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }')
     ]);
 }(jQuery));

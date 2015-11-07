@@ -1,5 +1,6 @@
 /*    AUTO GENERATED from useless.micro.js (stripped unit tests and comments) */
 
+$uselessFile = 'useless.micro.js';
 if (typeof require !== 'undefined') {
     _ = require('underscore');
     $include = require;
@@ -337,12 +338,21 @@ _.asMethod = function (fn) {
         return fn.apply(undefined, [this].concat(_.asArray(arguments)));
     };
 };
-_.wrapper = function (fn, wrapper) {
+_.appendsArguments = function (fn, wrapper) {
     return _.withSameArgs(fn, function () {
         var this_ = this;
-        var arguments_ = arguments;
-        return wrapper(function (additionalArguments) {
-            fn.apply(this_, _.asArray(arguments_).concat(additionalArguments));
+        var args = _.asArray(arguments);
+        return wrapper(function () {
+            fn.apply(this_, args.concat(_.asArray(arguments)));
+        });
+    });
+};
+_.prependsArguments = function (fn, wrapper) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this;
+        var args = _.asArray(arguments);
+        return wrapper(function () {
+            fn.apply(this_, _.asArray(arguments).concat(args));
         });
     });
 };
@@ -428,6 +438,9 @@ _.atIndex = function (n) {
 };
 _.takesFirst = _.higherOrder(_.first);
 _.takesLast = _.higherOrder(_.last);
+_.call = function (fn) {
+    return fn();
+};
 _.applies = function (fn, this_, args) {
     return function () {
         return fn.apply(this_, args);
@@ -1005,6 +1018,7 @@ _.extend(_, {
         return obj && _.pickKeys(obj, obj.hasOwnProperty.bind(obj)) || {};
     }
 });
+_.hasTags = true;
 Tags = _.extend2(function (subject) {
     if (subject !== undefined) {
         this.subject = subject;
@@ -1118,7 +1132,9 @@ _.defineTagKeyword = function (k, fn) {
 };
 _([
     'constant',
-    'get'
+    'get',
+    'once',
+    'async'
 ]).each(_.defineTagKeyword);
 _.defineModifierKeyword = function (name, fn) {
     _.defineKeyword(name, function (val) {
@@ -1475,6 +1491,12 @@ $extensionMethods(Array, {
     reduceRight: _.reduceRight,
     zip: _.zipWith,
     filter: _.filter,
+    isEmpty: function (arr) {
+        return arr.length === 0;
+    },
+    notEmpty: function (arr) {
+        return arr.length > 0;
+    },
     lastIndex: function (arr) {
         return arr.length - 1;
     },
@@ -1889,12 +1911,19 @@ _.extend(_, {
         return barrier;
     },
     triggerOnce: $restArg(function () {
-        return _.stream({
-            read: _.identity,
+        var stream = _.stream({
+            read: function (schedule) {
+                return function (listener) {
+                    if (stream.queue.indexOf(listener) < 0) {
+                        schedule.call(this, listener);
+                    }
+                };
+            },
             write: function (writes) {
                 return writes.partial(true);
             }
         }).apply(this, arguments);
+        return stream;
     }),
     trigger: $restArg(function () {
         return _.stream({
@@ -1973,10 +2002,14 @@ _.extend(_, {
             return arguments.callee;
         };
         var once = function (then) {
-            read(function (val) {
-                _.off(self, arguments.callee);
-                then(val);
-            });
+            if (!_.find(queue, function (f) {
+                    return f.onceWrapped_ === then;
+                })) {
+                read(_.extend(function (v) {
+                    _.off(self, arguments.callee);
+                    then(v);
+                }, { onceWrapped_: then }));
+            }
         };
         return self = _.extend($restArg(frontEnd), cfg, {
             queue: queue,
@@ -3104,9 +3137,28 @@ Lock = $prototype({
 });
 _.defineKeyword('interlocked', function (fn) {
     var lock = new Lock();
-    return _.wrapper(Tags.unwrap(fn), function (fn) {
+    return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
         lock.acquire(function () {
-            fn(lock.$(lock.release));
+            context(lock.$(lock.release));
+        });
+    }));
+});
+_.defineKeyword('scope', function (fn) {
+    var releaseStack = undefined;
+    return _.prependsArguments(Tags.unwrap(fn), function (context) {
+        var released = { when: undefined };
+        (releaseStack = releaseStack || []).push(released);
+        context(function (then) {
+            if (released.when)
+                throw new Error('$scope: release called twice');
+            released.when = then;
+            while (releaseStack && releaseStack.last && releaseStack.last.when) {
+                var trigger = releaseStack.last.when;
+                if ((releaseStack = _.initial(releaseStack)).isEmpty) {
+                    releaseStack = undefined;
+                }
+                trigger();
+            }
         });
     });
 });
@@ -3124,14 +3176,19 @@ _([
     'observable',
     'bindable',
     'memoize',
+    'lock',
     'memoizeCPS',
     'debounce',
     'throttle',
     'overrideThis',
     'listener',
-    'postpones'
+    'postpones',
+    'reference'
 ]).each(_.defineTagKeyword);
 _.defineTagKeyword('observableProperty', _.flip);
+_.defineKeyword('observableRef', function (x) {
+    return $observableProperty($reference(x));
+});
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro(keyword, function (def, value, name, Base) {
         _.extend2(value, Base && Base[keyword] || {}, value);
@@ -3244,6 +3301,9 @@ Component = $prototype({
                             return constructor.isTypeOf(value) ? value : new constructor(value);
                         };
                     }
+                    if (def.$reference) {
+                        observable.trackReference = true;
+                    }
                     _.defineProperty(this, name, {
                         get: function () {
                             return observable.value;
@@ -3293,6 +3353,9 @@ Component = $prototype({
                 }
                 if (def.$listener) {
                     this[name].queuedBy = [];
+                }
+                if (def.$lock) {
+                    this[name] = $interlocked(this[name]);
                 }
                 if (def.$bindable) {
                     if (_.hasAsserts) {

@@ -64,12 +64,27 @@ _.tests.concurrency = {
                 $assert (_.filter (tasksDone, _.identity).length === 3)
                 testDone () }) },
 
+    'scope': function (testDone) { var releases = [],
+                                            acquires = [],
+                                            count    = 10
+
+        var method = $scope (function (release, id, then) {           acquires.push (id)
+                        _.delay (function () { release (function () { releases.push (id)
+                                                            if (then)
+                                                                then () }) }, 10) })
+
+        method (42, function /* released */ () {
+            $assert (count + 1, acquires.length, releases.length)
+            $assert (acquires, releases.reversed)
+            testDone () })
+
+        _.times (count, function () { method (_.random (1000)) }) },
 
     'interlocked': function (testDone) { var isNowRunning = false
         _.mapReduce (_.times (30, Format.randomHexString), {
                 complete: testDone,
                 maxConcurrency: 10,
-                next: $interlocked (function (item, itemIndex, then, skip, memo, releaseLock) { $assert (!isNowRunning)
+                next: $interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
                                         isNowRunning = true
                                         _.delay (function () {
                                             then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
@@ -124,13 +139,13 @@ _.asyncJoin = function (functions, complete, context) {
             fn.call (context, next, skip) } }) }
 
 
-/*  Mutex/lock (now supports stand-alone operation, and it's re-usable)
+/*  Mutex/lock (now supports stand-alone operation, and it's re-usable).
  */
 Lock = $prototype ({
     acquire: function (then) {
         this.wait (this.$ (function () {
             if (!this.waitQueue) {
-                this.waitQueue = [] }
+                 this.waitQueue = [] }
             then () })) },
 
     acquired: function () {
@@ -159,10 +174,31 @@ Lock = $prototype ({
     'Release' trigger passed as last argument to your target function.
  */
 _.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
-    return _.wrapper (Tags.unwrap (fn), function (fn) {
-        lock.acquire (function () {
-            fn (lock.$ (lock.release)) }) }) })
+    return _.extendWith ({ wait: lock.$ (lock.wait) },
+        _.prependsArguments (Tags.unwrap (fn), function (context) {
+                                                    lock.acquire (function () {
+                                                        context (lock.$ (lock.release)) }) })) })
 
+
+/*  EXPERIMENTAL (TBD)
+ */
+_.defineKeyword ('scope', function (fn) { var releaseStack = undefined
+                                                    
+    return _.prependsArguments (Tags.unwrap (fn),
+
+            function /* acquire */ (context) {
+
+                            var released     = { when: undefined };
+                               (releaseStack = (releaseStack || [])).push (released)
+
+                    context (function /* release */ (then) { if (released.when) throw new Error ('$scope: release called twice')
+                                                                 released.when = then
+                        while (releaseStack &&
+                               releaseStack.last &&
+                               releaseStack.last.when) { var trigger =  releaseStack.last.when
+                                                                   if ((releaseStack = _.initial (releaseStack)).isEmpty) {
+                                                                        releaseStack = undefined }
+                                                             trigger () } }) }) })
 
 if (Platform.NodeJS) {
     module.exports = _ }

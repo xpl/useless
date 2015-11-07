@@ -1,5 +1,6 @@
 /*    AUTO GENERATED from useless.js (stripped unit tests and comments) */
 
+$uselessFile = 'useless.js';
 if (typeof require !== 'undefined') {
     _ = require('underscore');
     $include = require;
@@ -254,38 +255,7 @@ _.extend(_, {
         }
     }
 });
-_.extend(_, _.asyncAssertions = {
-    assertCPS: function (fn, args, then) {
-        var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
-        fn(function () {
-            $assert([].splice.call(arguments, 0), requiredResult);
-            if (then) {
-                then();
-            }
-        });
-    },
-    assertCalls: function (times, test, then) {
-        var timesCalled = 0;
-        var mkay = function () {
-            timesCalled++;
-        };
-        var countMkays = function () {
-            $assert(times, timesCalled);
-            if (then) {
-                then();
-            }
-        };
-        if (test.length >= 2) {
-            test.call(this, mkay, function () {
-                countMkays();
-            });
-        } else {
-            test.call(this, mkay);
-            countMkays();
-        }
-    }
-});
-_.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
+_.extend(_, _.assertions = {
     assert: function (__) {
         var args = [].splice.call(arguments, 0);
         if (args.length === 1) {
@@ -297,23 +267,47 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         }
         return true;
     },
-    assertEveryCalled: function (fn) {
-        var callbacks = _.times(fn.length, function () {
-            return function () {
-                arguments.callee.called = true;
-            };
+    assertCPS: function (fn, args, then) {
+        var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
+        fn(function () {
+            $assert([].splice.call(arguments, 0), requiredResult);
+            if (then) {
+                then();
+                return true;
+            }
         });
-        fn.apply(null, callbacks);
-        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(true)));
     },
-    assertEveryCalledOnce: function (fn) {
-        var callbacks = _.times(fn.length, function () {
+    assertNotCalled: function (context) {
+        context(function () {
+            $fail;
+        });
+    },
+    assertEveryCalledOnce: function (fn, then) {
+        return _.assertEveryCalled(_.hasTags ? $once(fn) : _.extend(fn, { once: true }), then);
+    },
+    assertEveryCalled: function (fn_, then) {
+        var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
+        once = _.hasTags ? $once.is(fn_) : fn_.once;
+        var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
+        var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
+            var parts = arg.trim().match(/^(.+)__(.+)$/);
+            return parts && parseInt(parts[2], 10) || true;
+        });
+        var status = [];
+        var callbacks = _.times(fn.length, function (i) {
             return function () {
-                arguments.callee.called = (arguments.callee.called || 0) + 1;
+                status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
+                if (async && _.isEqual(status, contracts))
+                    then();
             };
         });
         fn.apply(null, callbacks);
-        return _.assert(_.pluck(callbacks, 'called'), _.times(callbacks.length, _.constant(1)));
+        if (!async) {
+            _.assert(status, contracts);
+            if (then) {
+                then();
+            }
+        }
     },
     assertCallOrder: function (fn) {
         var callIndex = 0;
@@ -365,7 +359,7 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
         });
     },
     assertFails: function (what) {
-        _.assertThrows.call(this, what, _.isAssertionError);
+        return _.assertThrows.call(this, what, _.isAssertionError);
     },
     assertThrows: function (what, errorPattern) {
         var e = undefined, thrown = false;
@@ -376,13 +370,14 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
             thrown = true;
         }
         _.assert.call(this, thrown);
-        if (arguments.length === 1) {
+        if (arguments.length > 1) {
             _.assertMatches.apply(this, [e].concat(_.rest(arguments)));
         }
     },
     assertNotThrows: function (what) {
-        _.assertCalls.call(this, 0, function () {
+        return _.assertEveryCalled(function (ok) {
             what();
+            ok();
         });
     },
     assertArguments: function (args, callee, name) {
@@ -424,7 +419,7 @@ _.extend(_, _.assertions = _.extend({}, _.asyncAssertions, {
     stub: function () {
         _.assertionFailed();
     }
-}));
+});
 _.extend(_, {
     assertionError: function (additionalInfo) {
         return _.extend(new Error('assertion failed'), additionalInfo, { assertion: true });
@@ -445,25 +440,6 @@ _.extend(_, {
 });
 _.each(_.keys(_.assertions), function (name) {
     _.defineGlobalProperty('$' + name, _[name], { configurable: true });
-});
-_.mixin({
-    log: function (x, label) {
-        console.log.apply(console.log, _.times(arguments.callee.depth || 0, _.constant('\u2192 ')).concat([
-            label || '_.log:',
-            x
-        ]));
-        return x;
-    },
-    logs: function (fn, numArgs) {
-        return function () {
-            _.log.depth = (_.log.depth || 0) + 1;
-            _.log(_.first(arguments, numArgs), 'inp:');
-            var result = _.log(fn.apply(this, arguments), 'out:');
-            console.log('\n');
-            _.log.depth--;
-            return result;
-        };
-    }
 });
 _.extend(_, {
     asArray: function (arrayMimick) {
@@ -718,12 +694,21 @@ _.asMethod = function (fn) {
         return fn.apply(undefined, [this].concat(_.asArray(arguments)));
     };
 };
-_.wrapper = function (fn, wrapper) {
+_.appendsArguments = function (fn, wrapper) {
     return _.withSameArgs(fn, function () {
         var this_ = this;
-        var arguments_ = arguments;
-        return wrapper(function (additionalArguments) {
-            fn.apply(this_, _.asArray(arguments_).concat(additionalArguments));
+        var args = _.asArray(arguments);
+        return wrapper(function () {
+            fn.apply(this_, args.concat(_.asArray(arguments)));
+        });
+    });
+};
+_.prependsArguments = function (fn, wrapper) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this;
+        var args = _.asArray(arguments);
+        return wrapper(function () {
+            fn.apply(this_, _.asArray(arguments).concat(args));
         });
     });
 };
@@ -809,6 +794,9 @@ _.atIndex = function (n) {
 };
 _.takesFirst = _.higherOrder(_.first);
 _.takesLast = _.higherOrder(_.last);
+_.call = function (fn) {
+    return fn();
+};
 _.applies = function (fn, this_, args) {
     return function () {
         return fn.apply(this_, args);
@@ -1386,6 +1374,7 @@ _.extend(_, {
         return obj && _.pickKeys(obj, obj.hasOwnProperty.bind(obj)) || {};
     }
 });
+_.hasTags = true;
 Tags = _.extend2(function (subject) {
     if (subject !== undefined) {
         this.subject = subject;
@@ -1499,7 +1488,9 @@ _.defineTagKeyword = function (k, fn) {
 };
 _([
     'constant',
-    'get'
+    'get',
+    'once',
+    'async'
 ]).each(_.defineTagKeyword);
 _.defineModifierKeyword = function (name, fn) {
     _.defineKeyword(name, function (val) {
@@ -1948,6 +1939,12 @@ $extensionMethods(Array, {
     reduceRight: _.reduceRight,
     zip: _.zipWith,
     filter: _.filter,
+    isEmpty: function (arr) {
+        return arr.length === 0;
+    },
+    notEmpty: function (arr) {
+        return arr.length > 0;
+    },
     lastIndex: function (arr) {
         return arr.length - 1;
     },
@@ -2362,12 +2359,19 @@ _.extend(_, {
         return barrier;
     },
     triggerOnce: $restArg(function () {
-        return _.stream({
-            read: _.identity,
+        var stream = _.stream({
+            read: function (schedule) {
+                return function (listener) {
+                    if (stream.queue.indexOf(listener) < 0) {
+                        schedule.call(this, listener);
+                    }
+                };
+            },
             write: function (writes) {
                 return writes.partial(true);
             }
         }).apply(this, arguments);
+        return stream;
     }),
     trigger: $restArg(function () {
         return _.stream({
@@ -2446,10 +2450,14 @@ _.extend(_, {
             return arguments.callee;
         };
         var once = function (then) {
-            read(function (val) {
-                _.off(self, arguments.callee);
-                then(val);
-            });
+            if (!_.find(queue, function (f) {
+                    return f.onceWrapped_ === then;
+                })) {
+                read(_.extend(function (v) {
+                    _.off(self, arguments.callee);
+                    then(v);
+                }, { onceWrapped_: then }));
+            }
         };
         return self = _.extend($restArg(frontEnd), cfg, {
             queue: queue,
@@ -2967,9 +2975,28 @@ Lock = $prototype({
 });
 _.defineKeyword('interlocked', function (fn) {
     var lock = new Lock();
-    return _.wrapper(Tags.unwrap(fn), function (fn) {
+    return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
         lock.acquire(function () {
-            fn(lock.$(lock.release));
+            context(lock.$(lock.release));
+        });
+    }));
+});
+_.defineKeyword('scope', function (fn) {
+    var releaseStack = undefined;
+    return _.prependsArguments(Tags.unwrap(fn), function (context) {
+        var released = { when: undefined };
+        (releaseStack = releaseStack || []).push(released);
+        context(function (then) {
+            if (released.when)
+                throw new Error('$scope: release called twice');
+            released.when = then;
+            while (releaseStack && releaseStack.last && releaseStack.last.when) {
+                var trigger = releaseStack.last.when;
+                if ((releaseStack = _.initial(releaseStack)).isEmpty) {
+                    releaseStack = undefined;
+                }
+                trigger();
+            }
         });
     });
 });
@@ -3686,14 +3713,19 @@ _([
     'observable',
     'bindable',
     'memoize',
+    'lock',
     'memoizeCPS',
     'debounce',
     'throttle',
     'overrideThis',
     'listener',
-    'postpones'
+    'postpones',
+    'reference'
 ]).each(_.defineTagKeyword);
 _.defineTagKeyword('observableProperty', _.flip);
+_.defineKeyword('observableRef', function (x) {
+    return $observableProperty($reference(x));
+});
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro(keyword, function (def, value, name, Base) {
         _.extend2(value, Base && Base[keyword] || {}, value);
@@ -3806,6 +3838,9 @@ Component = $prototype({
                             return constructor.isTypeOf(value) ? value : new constructor(value);
                         };
                     }
+                    if (def.$reference) {
+                        observable.trackReference = true;
+                    }
                     _.defineProperty(this, name, {
                         get: function () {
                             return observable.value;
@@ -3855,6 +3890,9 @@ Component = $prototype({
                 }
                 if (def.$listener) {
                     this[name].queuedBy = [];
+                }
+                if (def.$lock) {
+                    this[name] = $interlocked(this[name]);
                 }
                 if (def.$bindable) {
                     if (_.hasAsserts) {
@@ -4565,31 +4603,38 @@ _.extend(log, {
     boldLine: '======================================',
     line: '--------------------------------------',
     thinLine: '......................................',
-    withCustomWriteBackend: function (backend, contextFn, then) {
-        var previousBackend = log.impl.writeBackend;
-        log.impl.writeBackend = backend;
-        contextFn(function () {
-            log.impl.writeBackend = previousBackend;
-            if (then) {
-                then();
-            }
+    withWriteBackend: $scope(function (release, backend, contextFn, done) {
+        var prev = log.writeBackend.value;
+        log.writeBackend.value = backend;
+        contextFn(function (then) {
+            release(function () {
+                log.writeBackend.value = prev;
+                if (then)
+                    then();
+                if (done)
+                    done();
+            });
         });
-    },
+    }),
     writeUsingDefaultBackend: function () {
         var args = arguments;
-        log.withCustomWriteBackend(log.impl.defaultWriteBackend, function (done) {
+        log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
             log.write.apply(null, args);
             done();
         });
     },
+    writeBackend: function () {
+        return arguments.callee.value || log.impl.defaultWriteBackend;
+    },
     impl: {
         write: function (defaultCfg) {
             return $restArg(function () {
+                var writeBackend = log.writeBackend();
                 var args = _.asArray(arguments);
                 var cleanArgs = log.cleanArgs(args);
                 var config = _.extend({ indent: 0 }, defaultCfg, log.readConfig(args));
                 var stackOffset = Platform.NodeJS ? 3 : 3;
-                var indent = (log.impl.writeBackend.indent || 0) + config.indent;
+                var indent = (writeBackend.indent || 0) + config.indent;
                 var text = log.impl.stringifyArguments(cleanArgs, config);
                 var indentation = _.times(indent, _.constant('\t')).join('');
                 var match = text.reversed.match(/(\n*)([^]*)/);
@@ -4601,7 +4646,7 @@ _.extend(log, {
                     codeLocation: location,
                     config: config
                 };
-                log.impl.writeBackend(backendParams);
+                writeBackend(backendParams);
                 return cleanArgs[0];
             });
         },
@@ -4696,7 +4741,6 @@ _.extend(log, log.printAPI = {
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
 logs = _.map2(log.printAPI, _.higherOrder);
-log.impl.writeBackend = log.impl.defaultWriteBackend;
 _.extend(log, {
     asTable: function (arrayOfObjects) {
         var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
@@ -4756,14 +4800,13 @@ _.defineTagKeyword('assertion');
 Testosterone = $singleton({
     prototypeTests: [],
     isRunning: $property(function () {
-        return this.currentTest !== undefined;
+        return this.currentAssertion !== undefined;
     }),
     constructor: function () {
-        this.defineAssertion('assertFails', $shouldFail(function (what) {
-            what.call(this);
-        }));
-        _.each(_.omit(_.assertions, 'assertFails'), function (fn, name) {
-            this.defineAssertion(name, name in _.asyncAssertions ? $async(fn) : fn);
+        _.each(_.assertions, function (fn, name) {
+            this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
+                what.call(this);
+            }) : fn);
         }, this);
         (function (register) {
             $prototype.macro('$test', register);
@@ -4778,8 +4821,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: $interlocked(function (cfg_, optionalThen) {
-        var releaseLock = _.last(arguments);
+    run: $interlocked(function (releaseLock, cfg_, optionalThen) {
         var then = arguments.length === 3 ? optionalThen : _.identity;
         var defaults = {
             silent: true,
@@ -4805,17 +4847,26 @@ Testosterone = $singleton({
                     index: i
                 });
             });
-            _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
-                _.assert(cfg.done !== true);
-                cfg.done = true;
-                this.printLog(cfg);
-                this.failedTests = _.filter(this.runningTests, _.property('failed'));
-                this.failed = this.failedTests.length > 0;
-                then(!this.failed);
-                releaseLock();
+            _.withUncaughtExceptionHandler(this.$(this.onException), this.$(function (doneWithExceptions) {
+                _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
+                    _.assert(cfg.done !== true);
+                    cfg.done = true;
+                    this.printLog(cfg);
+                    this.failedTests = _.filter(this.runningTests, _.property('failed'));
+                    this.failed = this.failedTests.length > 0;
+                    then(!this.failed);
+                    doneWithExceptions();
+                    releaseLock();
+                }));
             }));
         }));
     }),
+    onException: function (e) {
+        if (this.currentAssertion)
+            this.currentAssertion.onException(e);
+        else
+            throw e;
+    },
     defineAssertions: function (assertions) {
         _.each(assertions, function (fn, name) {
             this.defineAssertion(name, fn);
@@ -4823,13 +4874,13 @@ Testosterone = $singleton({
     },
     runTest: function (test, i, then) {
         var self = this, runConfig = this.runConfig;
-        this.currentTest = test;
         runConfig.testStarted(test);
         test.verbose = runConfig.verbose;
         test.timeout = runConfig.timeout;
+        test.startTime = Date.now();
         test.run(function () {
             runConfig.testComplete(test);
-            delete self.currentTest;
+            test.time = Date.now() - test.startTime;
             then();
         });
     },
@@ -4852,12 +4903,22 @@ Testosterone = $singleton({
                     name,
                     tests
                 ]]) || tests)).map(function (keyValue) {
-                return new Test({
+                var test = new Test({
                     name: keyValue[0],
                     routine: keyValue[1],
                     suite: name,
                     context: context
                 });
+                test.complete(function () {
+                    if (!(test.hasLog = test.logCalls.length > 0)) {
+                        if (test.failed) {
+                            log.red('FAIL');
+                        } else if (test.verbose) {
+                            log.green('PASS');
+                        }
+                    }
+                });
+                return test;
             })
         };
     },
@@ -4866,10 +4927,11 @@ Testosterone = $singleton({
         _.deleteKeyword(name);
         _.defineKeyword(name, Tags.modifySubject(def, function (fn) {
             return _.withSameArgs(fn, function () {
-                if (!self.currentTest) {
+                var loc = $callStack.safeLocation(1);
+                if (!self.currentAssertion) {
                     return fn.apply(self, arguments);
                 } else {
-                    return self.currentTest.runAssertion(name, def, fn, arguments);
+                    return self.currentAssertion.babyAssertion(name, def, fn, arguments, loc);
                 }
             });
         }));
@@ -4891,253 +4953,157 @@ Testosterone = $singleton({
 });
 Test = $prototype({
     constructor: function (cfg) {
-        _.extend(this, cfg, { assertionStack: _.observableRef([]) });
-        _.defaults(this, {
+        _.defaults(this, cfg, {
             name: 'youre so dumb you cannot even think of a name?',
             failed: false,
             routine: undefined,
             verbose: false,
             depth: 1,
             indent: 0,
-            context: this
+            failedAssertions: [],
+            context: this,
+            complete: _.barrier()
         });
+        this.babyAssertion = $interlocked(this.babyAssertion);
     },
-    currentAssertion: $property(function () {
-        return this.assertionStack.value[0];
-    }),
-    waitUntilPreviousAssertionComplete: function (then) {
-        if (this.currentAssertion && this.currentAssertion.async) {
-            this.assertionStack.when(_.isEmpty, function () {
-                then();
-            });
-        } else {
-            then();
-        }
+    finalize: function () {
+        this.babyAssertion.wait(this.$(function () {
+            if (this.canFail && this.failedAssertions.length) {
+                this.failed = true;
+            }
+            this.complete(true);
+        }));
     },
-    runAssertion: function (name, def, fn, args) {
+    babyAssertion: function (releaseLock, name, def, fn, args, loc) {
         var self = this;
-        var assertion = {
+        var assertion = new Test({
+            mother: this,
             name: name,
-            async: def.$async,
-            shouldFail: def.$shouldFail,
-            depth: self.depth + self.assertionStack.value.length + 1,
-            location: def.$async ? $callStack.safeLocation(2) : undefined
-        };
-        this.waitUntilPreviousAssertionComplete(function () {
-            if (assertion.async) {
-                assertion = new Test(_.extend(assertion, {
-                    context: self.context,
-                    timeout: self.timeout / 2,
-                    routine: Tags.modifySubject(def, function (fn) {
-                        return function (done) {
-                            _.cps.apply(fn, self.context, args, function (args, then) {
-                                if (!assertion.failed && then) {
-                                    then.apply(self.context, args);
-                                }
-                                done();
-                            });
-                        };
-                    })
-                }));
-                self.beginAssertion(assertion);
-                assertion.run(function () {
-                    if (assertion.failed && self.fail()) {
-                        assertion.location.sourceReady(function (src) {
-                            log.red(src, log.config({
-                                location: assertion.location,
-                                where: assertion.location
-                            }));
-                            assertion.evalLogCalls();
-                            self.endAssertion(assertion);
+            shouldFail: def.$shouldFail || this.shouldFail,
+            depth: this.depth + 1,
+            location: loc,
+            context: this.context,
+            timeout: this.timeout / 2,
+            verbose: this.verbose,
+            silent: this.silent,
+            routine: Tags.modifySubject(def, function (fn) {
+                return function (done) {
+                    if ($async.is(args[0])) {
+                        _.cps.apply(fn, self.context, args, function (args, then) {
+                            if (then)
+                                then();
+                            done();
                         });
                     } else {
-                        self.endAssertion(assertion);
-                    }
-                });
-            } else {
-                self.beginAssertion(assertion);
-                try {
-                    var result = fn.apply(self.context, args);
-                    self.endAssertion(assertion);
-                    return result;
-                } catch (e) {
-                    self.onException(e);
-                    self.endAssertion(assertion);
-                }
-            }
-        });
-    },
-    beginAssertion: function (a) {
-        if (a.async) {
-            Testosterone.currentTest = a;
-        }
-        this.assertionStack([a].concat(this.assertionStack.value));
-    },
-    endAssertion: function (a) {
-        if (Testosterone.currentTest === a) {
-            Testosterone.currentTest = this;
-        }
-        if (a.shouldFail && !a.failed) {
-            this.onException(_.assertionError({ notMatching: 'not failed (as should)' }));
-        }
-        this.assertionStack(_.without(this.assertionStack.value, a));
-    },
-    fail: function () {
-        var shouldFail = _.find(_.rest(this.assertionStack.value), _.matches({ shouldFail: true }));
-        if (shouldFail) {
-            shouldFail.failed = true;
-            return false;
-        } else {
-            this.failed = true;
-            return true;
-        }
-    },
-    mapStackLocations: function (error, then) {
-        var assertionStack = this.assertionStack.value.copy, callStack = CallStack.fromError(error);
-        callStack.sourcesReady(function () {
-            then(_.map(assertionStack, function (assertion) {
-                var found = _.find(callStack, function (loc, index) {
-                    if (assertion.location && CallStack.locationEquals(loc, assertion.location) || loc.source.indexOf('$' + assertion.name) >= 0) {
-                        callStack = callStack.offset(index + 1);
-                        return true;
-                    }
-                });
-                return found || assertion.location || callStack.safeLocation(5);
-            }));
-        });
-    },
-    onException: function (e, then) {
-        var self = this;
-        if (this.done) {
-            throw e;
-        }
-        if (!this.fail()) {
-            if (then) {
-                then.call(this);
-            }
-        } else {
-            this.mapStackLocations(e, function (locations) {
-                if (self.logCalls.length > 0) {
-                    log.newline();
-                }
-                _.each(locations.reversed, function (loc, i) {
-                    if (loc) {
-                        log.red(log.config({
-                            indent: i,
-                            location: true,
-                            where: loc
-                        }), loc.source);
-                    }
-                });
-                if (_.isAssertionError(e)) {
-                    if ('notMatching' in e) {
-                        var notMatching = _.coerceToArray(e.notMatching);
-                        if (e.asColumns) {
-                            log.orange(log.indent(locations.length), log.columns(_.map(notMatching, function (obj) {
-                                return [
-                                    '\u2022 ' + _.keys(obj)[0],
-                                    _.stringify(_.values(obj)[0])
-                                ];
-                            })).join('\n'));
-                        } else {
-                            _.each(notMatching, function (what, i) {
-                                log.orange(log.indent(locations.length), '\u2022', what);
-                            });
+                        try {
+                            fn.apply(self.context, args);
+                            done();
+                        } catch (e) {
+                            assertion.onException(e);
                         }
                     }
-                } else {
-                    if (self.depth > 1) {
-                        log.newline();
-                    }
-                    log.write(log.indent(locations.length), e);
-                }
-                log.newline();
-                if (then) {
-                    then.call(self);
-                }
-            });
-        }
-    },
-    tryCatch: function (routine, then) {
-        var self = this;
-        self.afterUnhandledException = then;
-        routine.call(self.context, function () {
-            self.afterUnhandledException = undefined;
-            then();
+                };
+            })
         });
-    },
-    onUnhandledException: function (e) {
-        this.onException(e, function () {
-            if (this.afterUnhandledException) {
-                var fn = this.afterUnhandledException;
-                this.afterUnhandledException = undefined;
-                fn();
+        var doneWithAssertion = function () {
+            if (assertion.failed && self.canFail) {
+                self.failedAssertions.push(assertion);
+            }
+            Testosterone.currentAssertion = self;
+            releaseLock();
+        };
+        assertion.run(function () {
+            if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
+                assertion.location.sourceReady(function (src) {
+                    log.red(src, log.config({
+                        location: assertion.location,
+                        where: assertion.location
+                    }));
+                    assertion.evalLogCalls();
+                    doneWithAssertion();
+                });
+            } else {
+                doneWithAssertion();
             }
         });
     },
-    run: function (then) {
+    canFail: $property(function () {
+        return !this.failed && !this.shouldFail;
+    }),
+    fail: function () {
+        this.failed = true;
+        this.finalize();
+    },
+    assertionStack: $property(function () {
+        var result = [], a = this;
+        do {
+            result.push(a);
+            a = a.mother;
+        } while (a);
+        return result;
+    }),
+    onException: function (e) {
         var self = this;
+        if (this.canFail || this.verbose) {
+            if (_.isAssertionError(e)) {
+                if ('notMatching' in e) {
+                    var notMatching = _.coerceToArray(e.notMatching);
+                    if (e.asColumns) {
+                        log.orange(log.columns(_.map(notMatching, function (obj) {
+                            return [
+                                '\u2022 ' + _.keys(obj)[0],
+                                _.stringify(_.values(obj)[0])
+                            ];
+                        })).join('\n'));
+                    } else {
+                        _.each(notMatching, function (what, i) {
+                            log.orange('\u2022', what);
+                        });
+                    }
+                }
+            } else {
+                if (self.depth > 1) {
+                    log.newline();
+                }
+                log.write(e);
+            }
+            log.newline();
+        }
+        if (this.canFail) {
+            this.fail();
+        } else {
+            this.finalize();
+        }
+    },
+    run: function (then) {
+        var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
+        this.shouldFail = $shouldFail.is(this.routine);
         this.failed = false;
         this.hasLog = false;
         this.logCalls = [];
-        this.assertionStack([]);
         this.failureLocations = {};
-        var routine = Tags.unwrap(this.routine);
-        var doRoutine = function (then) {
-            var done = function () {
-                self.done = true;
-                then();
-            };
-            try {
-                if (_.noArgs(routine)) {
-                    routine.call(self.context);
-                    done();
-                } else {
-                    self.tryCatch(routine, done);
-                }
-            } catch (e) {
-                self.onException(e, then);
-            }
-        };
-        var beforeComplete = function () {
-            if (self.routine.$shouldFail) {
-                self.failed = !self.failed;
-            }
-            if (!(self.hasLog = self.logCalls.length > 0)) {
-                if (self.failed) {
-                    log.red('FAIL');
-                } else if (self.verbose) {
-                    log.green('PASS');
-                }
-            }
-        };
-        var timeoutExpired = function (then) {
-            self.failed = true;
-            log.error('TIMEOUT EXPIRED');
-            then();
-        };
-        var waitUntilAssertionsComplete = function (then) {
-            self.assertionStack.when(_.isEmpty, then);
-        };
-        var withTimeout = _.withTimeout.partial({
+        _.withTimeout({
             maxTime: self.timeout,
-            expired: timeoutExpired
+            expired: function () {
+                if (self.canFail) {
+                    log.error('TIMEOUT EXPIRED');
+                    self.fail();
+                }
+            }
+        }, function (cancelTimeout) {
+            self.complete(cancelTimeout.arity0);
         });
-        var withLogging = log.withCustomWriteBackend.partial(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (args) {
-            self.logCalls.push(args);
-        }));
-        var withExceptions = _.withUncaughtExceptionHandler.partial(self.$(self.onUnhandledException));
-        withLogging(function (doneWithLogging) {
-            withExceptions(function (doneWithExceptions) {
-                withTimeout(function (doneWithTimeout) {
-                    _.cps.sequence(doRoutine, waitUntilAssertionsComplete, doneWithTimeout)();
-                }, function () {
-                    beforeComplete();
-                    doneWithExceptions();
-                    doneWithLogging();
-                    then();
-                });
-            });
+        log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
+            self.logCalls.push(x);
+        }), function (doneWithLogging) {
+            self.complete(doneWithLogging.arity0);
+            if (then) {
+                self.complete(then);
+            }
+            if (routine.length > 0)
+                routine.call(self.context, self.$(self.finalize));
+            else
+                routine.call(self.context), self.finalize();
         });
     },
     printLog: function () {
@@ -5149,9 +5115,7 @@ Test = $prototype({
         this.evalLogCalls();
     },
     evalLogCalls: function () {
-        _.each(this.logCalls, function (args) {
-            log.impl.writeBackend(args);
-        });
+        _.each(this.logCalls, log.writeBackend().arity1);
     }
 });
 if (Platform.NodeJS) {

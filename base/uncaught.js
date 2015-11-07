@@ -12,6 +12,7 @@
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
 
+
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
                 try {

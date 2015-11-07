@@ -1,52 +1,69 @@
 _.hasLog = true
 
-_.tests.log = function () {
+_.tests.log = {
 
-    log         ('log (x)')         //  Basic API
+    basic: function () {
 
-    log.green   ('log.green')       //  Use for plain colored output.
-    log.blue    ('log.blue')
-    log.orange  ('log.orange')
-    log.red     ('log.red')
+        log         ('log (x)')         //  Basic API
 
-    log.success ('log.success')     //  Use for quality production logging (logging that lasts).
-    log.ok      ('log.ok')
-    log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
-    log.i       ('log.i')
-    log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
-    log.warn    ('log.warn')
-    log.w       ('log.w')
-    log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
-                                    //  to where {success:fn,failure:fn} config expected.
-    log.error   ('log.error')
-    log.e       ('log.e')
+        log.green   ('log.green')       //  Use for plain colored output.
+        log.blue    ('log.blue')
+        log.orange  ('log.orange')
+        log.red     ('log.red')
 
-    $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
-                                                        // (as it returns it first argument, like in _.identity)
+        log.success ('log.success')     //  Use for quality production logging (logging that lasts).
+        log.ok      ('log.ok')
+        log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
+        log.i       ('log.i')
+        log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
+        log.warn    ('log.warn')
+        log.w       ('log.w')
+        log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
+                                        //  to where {success:fn,failure:fn} config expected.
+        log.error   ('log.error')
+        log.e       ('log.e')
 
-    log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
+        $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
+                                                            // (as it returns it first argument, like in _.identity)
 
-    log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
+        log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
 
-    log.write   (log.boldLine)  //  ASCII art <hr>
-    log.write   (log.thinLine)
-    log.write   (log.line)
+        log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
 
-    log.write   (log.color.green,
-                    ['You can set indentation',
-                     'that is nicely handled',
-                     'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
+        log.write   (log.boldLine)  //  ASCII art <hr>
+        log.write   (log.thinLine)
+        log.write   (log.line)
 
-    log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
-    log.orange  (log.config ({ indent: 2, table: true }), [
-        { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
-        { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
+        log.write   (log.color.green,
+                        ['You can set indentation',
+                         'that is nicely handled',
+                         'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
 
-    log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
-    log.write ('Array:', [1, 2, 3])                             //  Arrays too
-    log.write ('Function:', _.identity)                         //  Prints code of a function
+        log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
+        log.orange  (log.config ({ indent: 2, table: true }), [
+            { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
+            { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
 
-    log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') }
+        log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
+        log.write ('Array:', [1, 2, 3])                             //  Arrays too
+        log.write ('Function:', _.identity)                         //  Prints code of a function
+
+        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') },
+
+/*
+    'write backend control': function (testDone) { var calls = []
+
+        var backend1 = function (cfg) { calls.push ('1: ' + cfg.indentedText) }
+        var backend2 = function (cfg) { calls.push ('2: ' + cfg.indentedText)}
+
+        log.withWriteBackend (backend1, function (done) {     log ('backend1 ready')
+            log.withWriteBackend (backend2, function (done) { log ('backend2 ready')
+                done () }, function () {                      log ('backend2 released') })
+                                                              log ('backend1 on hold')
+            done () }, function () {                          log ('backend1 released')
+                $assert (calls, ['1: backend1 ready', 
+                                 '1: backend1 on hold',
+                                 '2: backend2 ready']); testDone () }) }*/ }
 
 _.extend (
 
@@ -115,24 +132,25 @@ _.extend (log, {
     line:       '--------------------------------------',
     thinLine:   '......................................',
 
-
     /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
      */
-    withCustomWriteBackend: function (backend, contextFn, then) {
-        var previousBackend = log.impl.writeBackend
-        log.impl.writeBackend = backend
-        contextFn (function () {
-            log.impl.writeBackend = previousBackend
-            if (then) {
-                then () } }) },
+    withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
+                                                                                        log.writeBackend.value = backend
+        contextFn (function /* release */ (then) {
+                     release (function () {                                             log.writeBackend.value = prev
+                        if (then) then ()
+                        if (done) done () }) }) }),  
 
     /*  For writing with forced default backend
      */
     writeUsingDefaultBackend: function () { var args = arguments
-        log.withCustomWriteBackend (
+        log.withWriteBackend (
             log.impl.defaultWriteBackend,
             function (done) {
                 log.write.apply (null, args); done () }) },
+
+    writeBackend: function () {
+        return arguments.callee.value || log.impl.defaultWriteBackend },
     
     /*  Internals
      */
@@ -140,7 +158,7 @@ _.extend (log, {
 
         /*  Nuts & guts
          */
-        write: function (defaultCfg) { return $restArg (function () {
+        write: function (defaultCfg) { return $restArg (function () { var writeBackend = log.writeBackend ()
 
             var args            = _.asArray (arguments)
             var cleanArgs       = log.cleanArgs (args)
@@ -148,7 +166,7 @@ _.extend (log, {
             var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
             var stackOffset     = Platform.NodeJS ? 3 : 3
 
-            var indent          = (log.impl.writeBackend.indent || 0) + config.indent
+            var indent          = (writeBackend.indent || 0) + config.indent
 
             var text            = log.impl.stringifyArguments (cleanArgs, config)
             var indentation     = _.times (indent, _.constant ('\t')).join ('')
@@ -165,7 +183,7 @@ _.extend (log, {
                 codeLocation: location,
                 config:       config }
 
-            log.impl.writeBackend (backendParams)
+            writeBackend (backendParams)
 
             return cleanArgs[0] }) },
         
@@ -272,8 +290,6 @@ _.extend (log, log.printAPI = {
 log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
 
 logs = _.map2 (log.printAPI, _.higherOrder) // higher order API
-
-log.impl.writeBackend = log.impl.defaultWriteBackend
 
 /*  Experimental formatting shit.
  */

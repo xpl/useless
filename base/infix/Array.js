@@ -46,6 +46,9 @@ _.withTest ('Array extensions', function () {
         zip:         _.zipWith,
         filter:      _.filter,
 
+        isEmpty: function (arr) { return arr.length === 0 },
+        notEmpty: function (arr) { return arr.length > 0 },
+
         lastIndex: function (arr) { return arr.length - 1 },
 
         last: function (arr) { return _.last (arr) },

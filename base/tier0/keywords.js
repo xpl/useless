@@ -1,3 +1,5 @@
+_.hasTags = true
+
 /*  Keywords
     ======================================================================== */
 
@@ -196,7 +198,7 @@ _.withTest ('keywords', function () {
                                     unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) }
 
 
-    _(['constant', 'get'])
+    _(['constant', 'get', 'once', 'async'])
         .each (_.defineTagKeyword)
 
     _.defineModifierKeyword = function (name, fn) {

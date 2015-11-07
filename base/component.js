@@ -34,7 +34,7 @@ _.tests.component = {
     /*  - Passing config to constructor will extend constructed instance with that object
         - Component constructors exhibit CPS interface (last function argument interprets as continuation)
      */
-    'constructor([cfg, ][then])': function () { $assertCalls (0, function (mkay) {
+    'constructor([cfg, ][then])': function () { $assertNotCalled (function (mkay) {
 
         var Compo = $component ({})
 
@@ -53,7 +53,7 @@ _.tests.component = {
 
     /*  init() should be entry point to a component, calling at constructor by default
      */
-    'init': function () { $assertCalls (1, function (mkay) {
+    'init': function () { $assertEveryCalledOnce (function (mkay) {
                             $singleton (Component, {
                                 init: function () {
                                     mkay () } }) }) },
@@ -61,18 +61,18 @@ _.tests.component = {
 
     /*  init(then) means your initialization is defined in CPS style
      */
-    /*'CPS init': function () { $assertCalls (2, function (mkay) {
+    /*'CPS init': function () { $assertEveryCalled (function (compo1, compo2) {
 
                             var Compo = $prototype ({
                                 init: function (then) { // you're required to call then, to complete init
                                     then () } })
 
                             var compo = new Compo (function () {
-                                mkay () })
+                                compo1 () })
 
                             var compo2 = new Compo ({ _42: 42 }, function () {
                                 $assert (this._42, 42)
-                                mkay () }) }) },*/
+                                compo2 () }) }) },*/
 
     /*  constructor overriding is prohibited (by $final), use init() API for configuration means
      */
@@ -84,11 +84,10 @@ _.tests.component = {
     /*  If you don't want init() to be called at constructor (to call it manually later),
         pass init:false to constructor's config
      */
-    'manual init()': function () { $assertCalls (0, function (fail) {
+    'manual init()': function () { $assertNotCalled (function (fail) {
                                         var Compo = $component ({ init: function () { fail () } })
                                         var compo = new Compo ({ init: false })
                                         $assert (typeof compo.init, 'function') }) }, // shouldn't be replaced by false
-
 
     /*  initialized is a _.barrier that opens after initialization
      */
@@ -97,10 +96,22 @@ _.tests.component = {
         var compo = new Compo ({ init: false })
 
         $assert (!compo.initialized.already)
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             compo.initialized (function () { mkay () })
             compo.init () }) },
 
+    /*  'thiscall' semantics for methods (which can be defined by a variety of ways)
+     */
+    'thiscall for methods': function () {
+        $assertEveryCalledOnce (function (prototypeMethod, instanceMethod) {
+            var instance = null
+            var Compo = new $component ({
+                prototypeMethod: function () { $assert (this === instance); prototypeMethod () } })
+            instance = new Compo ({
+                instanceMethod:  function () { $assert (this === instance); instanceMethod () } })
+
+            instance.prototypeMethod.call (null)
+            instance.instanceMethod.call (null) }) },
 
     /*  Pluggable init/destroy with $traits (tests all combinations of CPS / sequential style method calling)
      */
@@ -111,20 +122,20 @@ _.tests.component = {
                 $assertMatches (this, { foo: 'beforeInit called' }) } })
 
         var assertAfterInitCalls = function (Compo) {
-            $assertCalls (1, function (mkay) {
+            $assertEveryCalledOnce (function (mkay) {
                 new Compo ().initialized (function () {
                     $assertMatches (this, { foo: 'afterInit called' }); mkay () }) }) }
 
         var assertTraitsInitCalls = function (trait) {
 
             //  CPS init()
-            $assertCalls (1, function (mkay) {
+            $assertEveryCalledOnce (function (mkay) {
                 assertAfterInitCalls ($extends (Base, {
                     $traits: [trait],
                     init: function (then) { this.assertBeforeInitCalls (); mkay (); then () } })) })
 
             //  Sequential init()
-            $assertCalls (1, function (mkay) {
+            $assertEveryCalledOnce (function (mkay) {
                 assertAfterInitCalls ($extends (Base, {
                     $traits: [trait],
                     init: function () { this.assertBeforeInitCalls (); mkay () } })) }) }
@@ -202,17 +213,17 @@ _.tests.component = {
 
         Use to implement common beforeXXX and afterXXX semantics.
      */
-    '$bindable': function () { $assertCalls (3, function (mkay) {
+    '$bindable': function () { $assertEveryCalledOnce (function (method, before, after) {
 
         var compo = $singleton (Component, {
-                        method: $bindable (function (x) { mkay ()
+                        method: $bindable (function (x) { method ()
                             return 42 }) })
 
-        compo.method.onBefore (function (_5) { mkay ()
+        compo.method.onBefore (function (_5) { before ()
             $assert (this === compo)
             $assert (_5, 5) })
 
-        compo.method.onAfter (function (_5, _result) { mkay ()
+        compo.method.onAfter (function (_5, _result) { after ()
             $assert (this === compo)
             $assert (_5, 5)
             $assert (_result, 42) })
@@ -238,23 +249,23 @@ _.tests.component = {
         auto-disconnecting bound methods, so that no method of Component bound
         to such streams will ever be called after destroy().
      */
-    '$trigger': function () { $assertCalls (2, function (mkay) {
+    '$trigger': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
                         mouseMoved: $trigger () })
 
-        compo.mouseMoved (function (x, y) { $assert ([x, y], [7, 12]); mkay () })
+        compo.mouseMoved (function (x, y) { $assert ([x, y], [7, 12]); mkay__2 () })
         compo.mouseMoved (7, 12)
         compo.mouseMoved (7, 12) }) },
 
-    'init streams from config': function () { $assertCalls (2, function (mkay) {
+    'init streams from config': function () { $assertEveryCalled (function (atDefinition, atInit) {
 
         var Compo = $component ({
-                        mouseMoved: $trigger (mkay), // should call this one
+                        mouseMoved: $trigger (atDefinition),
                         init: function () {
-                            this.mouseMoved () } })  // here we go
+                            this.mouseMoved () } })
 
-        new Compo ({ mouseMoved: mkay }) }) },       // should call this one
+        new Compo ({ mouseMoved: atInit }) }) },
 
     /*  A variation of trigger. On 'write' operation, it flushes wait queue, so
         no callback bound previously gets called in future (until explicitly
@@ -264,13 +275,10 @@ _.tests.component = {
         var compo = $singleton (Component, {
                         somthingHappened: $triggerOnce () })
 
-        $assertCalls (2, function (mkay) {
-            compo.somthingHappened (function (what) { $assert (what, 'somthin'); mkay () })
-            compo.somthingHappened (function (what) { $assert (what, 'somthin'); mkay () })
-            compo.somthingHappened ('somthin')  })
-
-        $assertCalls (0, function (mkay) {
-            compo.somthingHappened ('no one will receive that') }) },
+        $assertEveryCalled (function (first, second) {
+            compo.somthingHappened (function (what) { $assert (what, 'somthin'); first () })
+            compo.somthingHappened (function (what) { $assert (what, 'somthin'); second () })
+            compo.somthingHappened ('somthin') }) },
 
 
     /*  Another variation of stream, having 'memory fence / memory barrier' semantics,
@@ -285,22 +293,20 @@ _.tests.component = {
             3.  After barrier had opened, any futher callback gets called immediately
                 with that value argument passed before, i.e. short-circuits.
      */
-    '$barrier': function () { $assertCalls (2, function (mkay) {
+    '$barrier': function () { $assertEveryCalled (function (early, lately) {
         
         var compo = $singleton (Component, {
                         hasMessage: $barrier () })
 
-        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); mkay () })
+        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); early () })
         compo.hasMessage ('mkay')
-        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); mkay () }) }) },
+        compo.hasMessage (function (_msg) { $assert (_msg, 'mkay'); lately () }) }) },
 
 
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () {    $assertCalls (1, function (fromConstructor) {
-                                            $assertCalls (1, function (fromConfig) {
-                                            $assertCalls (1, function (fromLateBoundListener) {
+    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener) {
 
         var Compo = $component ({
                         color: $observableProperty (),
@@ -319,7 +325,7 @@ _.tests.component = {
             $assert (undefined,   was) })
 
         compo.color = 'green'
-        compo.smell = 'bad' }) }) }) },
+        compo.smell = 'bad' }) },
 
 
     /*  $observableProperty automatically calls prototype constructor if supplied with non-prototype instance data
@@ -389,11 +395,11 @@ _.tests.component = {
 
             this_.someValue = 33 }) },
 
-    'hierarchy management': function () { $assertCalls (9, function (mkay) {
+    'hierarchy management': function () { $assertEveryCalled (function (mkay__9) {
         
         var Compo = $extends (Component, {
-            init:    function () { mkay () },
-            destroy: function () { mkay () } })
+            init:    function () { mkay__9 () },
+            destroy: function () { mkay__9 () } })
 
         var parent = new Compo ().attach (
                         new Compo ().attach (
@@ -412,7 +418,6 @@ _.tests.component = {
 
         parent.destroy () })},
 
-
     'thiscall for streams': function () {
         
         var compo = $singleton (Component, {
@@ -423,8 +428,7 @@ _.tests.component = {
 
         compo.trig.call ({}) },
 
-
-    'observableProperty.force (regression)': function () { $assertCalls (2, function (mkay) {
+    'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
             prop: $observableProperty () })
@@ -433,7 +437,7 @@ _.tests.component = {
         compo.propChange (function (value) {
             $assert (value, 42)
             $assert (this === compo)
-            mkay () })
+            mkay__2 () })
 
         compo.propChange.force () }) },
 
@@ -448,10 +452,10 @@ _.tests.component = {
                 compo.prop = 43 }) },
 
 
-    'destroyAll()': function () { $assertCalls (2, function (mkay) {
+    'destroyAll()': function () { $assertEveryCalled (function (destroyed__2) {
         
         var Compo = $extends (Component, {
-            destroy: function () { mkay () } })
+            destroy: function () { destroyed__2 () } })
 
         var parent = new Compo ()
                         .attach (new Compo ())
@@ -476,7 +480,7 @@ _.tests.component = {
         somethingHappened () }, // should not invoke compo.fail
 
     '(regression) $observableProperty (false)': function () {
-        $assertCalls (1, function (mkay) {
+        $assertEveryCalledOnce (function (mkay) {
             $singleton (Component, {
                 foo: $observableProperty (false),
                 init: function () { this.fooChange (mkay) } }) }) },
@@ -491,11 +495,11 @@ _.tests.component = {
 
         $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
-    '(regression) postpone': function (testDone) { $assertCalls (1, function (mkay, done) {
+    '(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
         $singleton (Component, {
-            foo: function () { mkay (); done (); testDone () },
+            foo: function () { foo (); },
             init: function () {
-                this.foo.postpone () } }) }) },
+                this.foo.postpone () } }) }), testDone) },
 
     '(regression) undefined at definition': function () { $singleton (Component, { fail: undefined }) },
 
@@ -518,12 +522,13 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize',
-    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones'])
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'lock',
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
 _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
 
+_.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
 /*  Make $defaults and $requires inherit base values + $traits support
  */
@@ -618,12 +623,6 @@ Component = $prototype ({
             _.defaults (this, _.cloneDeep (this.constructor.$defaults)) }
 
 
-        /*  Add thiscall semantics to methods
-            TODO: execute this substitution at $prototype code-gen level, not at instance level
-         */
-        this.enumMethods (function (fn, name) { if (name !== '$' && name !== 'init') { this[name] = this.$ (fn) } })
-
-
         /*  Listen self destroy method
          */
         _.onBefore  (this, 'destroy', this.beforeDestroy)
@@ -637,6 +636,12 @@ Component = $prototype ({
             children_: [] },
             _.omit (_.omit (cfg, 'init', 'attachTo', 'attach'), function (v, k) {
                     return Component.isStreamDefinition (componentDefinition[k]) }, this))
+
+
+        /*  Add thiscall semantics to methods
+         */
+        this.enumMethods (function (fn, name) { if (name !== '$' && name !== 'init') { this[name] = this.$ (fn) } })
+
 
         var initialStreamListeners = []
 
@@ -662,6 +667,11 @@ Component = $prototype ({
                     observable.beforeWrite = function (value) {
                         return constructor.isTypeOf (value) ? value : (new constructor (value)) } }
 
+                /*  tracking by reference
+                 */
+                if (def.$reference) {
+                    observable.trackReference = true }
+
                 /*  property
                  */
                 _.defineProperty (this, name, {
@@ -679,7 +689,6 @@ Component = $prototype ({
                  */
                 if (defaultValue !== undefined) {
                     observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
-
 
             /*  Expand streams
              */
@@ -702,6 +711,11 @@ Component = $prototype ({
              */
             if (def.$listener) {
                 this[name].queuedBy = [] }
+
+            /*  Expand $lock
+             */
+            if (def.$lock) {
+                this[name] = $interlocked (this[name]) }
 
             /*  Expand $bindable
              */

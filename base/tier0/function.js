@@ -200,14 +200,23 @@ _.asMethod = function (fn) { return function () {
 /*  Wrapper generator
     ======================================================================== */
 
-_.wrapper = function (fn, wrapper) {
-                return _.withSameArgs (fn, function () {
+_.appendsArguments = function (fn, wrapper) {
+                        return _.withSameArgs (fn, function () {
+                                                        var this_ = this
+                                                        var args = _.asArray (arguments)
+                                                        return wrapper (function () {
+                                                                            fn.apply (
+                                                                                this_,
+                                                                                args.concat (_.asArray (arguments))) }) }) }
+
+_.prependsArguments = function (fn, wrapper) {
+                        return _.withSameArgs (fn, function () {
                                                 var this_ = this
-                                                var arguments_ = arguments
-                                                return wrapper (function (additionalArguments) {
+                                                var args = _.asArray (arguments)
+                                                return wrapper (function () {
                                                                     fn.apply (
                                                                         this_,
-                                                                        _.asArray (arguments_).concat (additionalArguments)) }) }) }
+                                                                        _.asArray (arguments).concat (args)) }) }) }
 
 
 /*  _.once
@@ -215,10 +224,10 @@ _.wrapper = function (fn, wrapper) {
 
 _.withTest (['function', 'once'], function () {
 
-    $assertCalls (1, function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         var f = _.once (function () { mkay () })
         f ()
-        f () }) }, function () {
+        f () }) },                                          function () {
 
     _.once = function (fn) {
                 var called = false

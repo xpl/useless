@@ -344,6 +344,12 @@ BBox = $prototype ({
 
     ltwh: $alias ('css'),
 
+    union: $property (function (other) { return BBox.fromLTRB (
+                                                    Math.min (this.left,   other.left),
+                                                    Math.min (this.top,    other.top),
+                                                    Math.max (this.right,  other.right),
+                                                    Math.max (this.bottom, other.bottom)) }),
+
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
     
@@ -399,7 +405,7 @@ BBox = $prototype ({
         return Math.abs (this.width * this.height) }),
 
     toString: function () {
-        return '{' + this.x + ',' + this.y + ':' + this.width + '×' + this.height + '}' } })
+        return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }' } })
 
 
 /*  3x3 affine transform matrix, encoding scale/offset/rotate/skew in 2D

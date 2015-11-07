@@ -5,12 +5,12 @@ _.tests.Function = {
 
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
-    'asContinuation': function () { $assertCalls (2, function (mkay) {
+    'asContinuation': function () { $assertEveryCalled (function (mkay__2) {
 
         var twoPlusTwo   = function () { return 2 + 2 }
         var shouldBeFour = function (result) {
             $assert (result == 4)
-            mkay () }
+            mkay__2 () }
 
         twoPlusTwo.asContinuation (shouldBeFour)
         _.asContinuation (twoPlusTwo) (shouldBeFour) }) },
@@ -18,22 +18,21 @@ _.tests.Function = {
     /*  Postpones execution
      */
     'postpone': function (testDone) {
-        $assertCalls (2, function (mkay, done) { var testSecondCall = false
+        $assertEveryCalledOnce ($async (function (mkay1, mkay2) { var testSecondCall = false
             var callMeLater = function () {
                 if (testSecondCall) {
-                    mkay ()
-                    done ()
+                    mkay2 ()
                     testDone () }
                 else {
-                    mkay ()
+                    mkay1 ()
                     testSecondCall = true
                     callMeLater.postpone () } } // should be postponed again
             callMeLater.postpone ()
-            callMeLater.postpone () }) },       // should not trigger double call
+            callMeLater.postpone () })) },       // should not trigger double call
 
     'postponed': function (testDone) {
-        $assertCalls (1, function (mkay, done) {
-            (function (_42) { $assert (42, _42); mkay (); done (); testDone () }).postponed (42) }) },
+        $assertEveryCalledOnce ($async (function (mkay) {
+            (function (_42) { $assert (42, _42); mkay (); }).postponed (42) }), testDone) },
 
     /*  Returns function that executed after _.delay
      */
@@ -41,8 +40,8 @@ _.tests.Function = {
         var eat42           = function (_42, then) { $assert (_42, 42); then () }
         var eat42_after5ms  = eat42.delayed (5)
 
-        $assertCalls (1, function (mkay, done) {
-            eat42_after5ms (42, function () { mkay (); done (); testDone () }) }) } }
+        $assertEveryCalledOnce ($async (function (mkay) {
+            eat42_after5ms (42, function () { mkay () }) }), testDone) } }
 
 /*  Impl.
  */

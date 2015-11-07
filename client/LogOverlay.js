@@ -15,8 +15,7 @@ Modal overlay that outputs log.js for debugging purposes
 			init:   false }, // deferred init
 
 		init: function () {
-
-			log.impl.writeBackend = this.write
+			log.withWriteBackend (this.write, function () {})
 
 			$(document).keydown (this.$ (function (e) {
 				if (e.keyCode === 192) { // ~
@@ -39,8 +38,7 @@ Modal overlay that outputs log.js for debugging purposes
 				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
 
             if (!this.opaque) {
-				log.impl.defaultWriteBackend.apply (log.impl, arguments) } }
-
+				log.impl.defaultWriteBackend (params) } }
 	})
 
 // -- end of namespace
