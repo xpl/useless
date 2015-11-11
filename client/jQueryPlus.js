@@ -14,7 +14,10 @@ _.extend ($, {
     /*  Instantiates svg elements
      */
     svg: function (tag) {
-            return $(document.createElementNS ('http://www.w3.org/2000/svg', tag)) } })
+            var node = document.createElementNS ('http://www.w3.org/2000/svg', tag)
+            if ((tag === 'svg') && !Platform.IE) {
+                node.setAttribute ('xmlns', 'http://www.w3.org/2000/svg') }
+            return $(node) } })
 
 /*  Element methods
  */

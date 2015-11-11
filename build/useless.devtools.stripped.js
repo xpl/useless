@@ -918,8 +918,9 @@ Testosterone = $singleton({
             }
         };
         var cfg = this.runConfig = _.extend(defaults, cfg_);
-        var suites = _.map(cfg.suites || [], this.$(function (suite) {
-            return this.testSuite(suite.name, suite.tests, cfg.context);
+        var suitesIsArray = _.isArray(cfg.suites);
+        var suites = _.map(cfg.suites || [], this.$(function (suite, name) {
+            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context);
         }));
         var collectPrototypeTests = cfg.codebase === false ? _.cps.constant([]) : this.$(this.collectPrototypeTests);
         collectPrototypeTests(this.$(function (prototypeTests) {
@@ -933,7 +934,7 @@ Testosterone = $singleton({
                 });
             });
             _.withUncaughtExceptionHandler(this.$(this.onException), this.$(function (doneWithExceptions) {
-                _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
+                _.cps.each(this.runningTests, this.$(this.runTest), this.$(function () {
                     _.assert(cfg.done !== true);
                     cfg.done = true;
                     this.printLog(cfg);
@@ -1039,7 +1040,7 @@ Testosterone = $singleton({
 Test = $prototype({
     constructor: function (cfg) {
         _.defaults(this, cfg, {
-            name: 'youre so dumb you cannot even think of a name?',
+            name: '<< UNNAMED FOR UNKNOWN REASON >>',
             failed: false,
             routine: undefined,
             verbose: false,
@@ -1094,10 +1095,10 @@ Test = $prototype({
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push(assertion);
             }
-            Testosterone.currentAssertion = self;
             releaseLock();
         };
         assertion.run(function () {
+            Testosterone.currentAssertion = self;
             if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
                 assertion.location.sourceReady(function (src) {
                     log.red(src, log.config({
@@ -1128,7 +1129,6 @@ Test = $prototype({
         return result;
     }),
     onException: function (e) {
-        var self = this;
         if (this.canFail || this.verbose) {
             if (_.isAssertionError(e)) {
                 if ('notMatching' in e) {
@@ -1147,7 +1147,7 @@ Test = $prototype({
                     }
                 }
             } else {
-                if (self.depth > 1) {
+                if (this.depth > 1) {
                     log.newline();
                 }
                 log.write(e);

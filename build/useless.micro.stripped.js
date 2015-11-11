@@ -38,9 +38,12 @@ _.deferTest = _.withTest = function (name, test, subj) {
     subj();
 };
 _.platform = function () {
-    if (typeof window !== 'undefined' && window._.platform === arguments.callee) {
-        if (navigator.platform && navigator.platform.indexOf) {
-            return _.extend({ engine: 'browser' }, navigator.platform.indexOf('Linux arm') >= 0 || navigator.platform.indexOf('Android') >= 0 || navigator.userAgent.indexOf('Android') >= 0 ? {
+    return arguments.callee.__value || (arguments.callee.__value = function () {
+        if (typeof window !== 'undefined' && window._ && window._.platform === _.platform && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
+            return _.extend({
+                engine: 'browser',
+                browser: navigator.userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : navigator.userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
+            }, navigator.platform.indexOf('Linux arm') >= 0 || navigator.platform.indexOf('Android') >= 0 || navigator.userAgent.indexOf('Android') >= 0 ? {
                 touch: true,
                 system: 'Android'
             } : navigator.platform.indexOf('iPad') >= 0 ? {
@@ -52,12 +55,12 @@ _.platform = function () {
                 system: 'iOS',
                 device: 'iPhone'
             } : {});
+        } else if (typeof global !== 'undefined' && global._ && global._.platform === _.platform) {
+            return { engine: 'node' };
+        } else {
+            return {};
         }
-    }
-    if (typeof global !== 'undefined' && global._.platform === arguments.callee) {
-        return { engine: 'node' };
-    }
-    return {};
+    }());
 };
 _.global = function () {
     return _.platform().engine === 'browser' ? window : _.platform().engine === 'node' ? global : undefined;
@@ -2306,6 +2309,8 @@ Platform = $singleton({
         system: _.platform().system,
         device: _.platform().device,
         touch: _.platform().touch || false,
+        IE: _.platform().browser === 'IE',
+        Firefox: _.platform().browser === 'Firefox',
         Browser: _.platform().engine === 'browser',
         NodeJS: _.platform().engine === 'node',
         iPad: _.platform().device === 'iPad',
@@ -3523,7 +3528,11 @@ if (jQuery) {
         var __previousMethods__ = _.clone($.fn);
         _.extend($, {
             svg: function (tag) {
-                return $(document.createElementNS('http://www.w3.org/2000/svg', tag));
+                var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+                if (tag === 'svg' && !Platform.IE) {
+                    node.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                }
+                return $(node);
             }
         }).fn.extend({
             on: function (what, method) {

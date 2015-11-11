@@ -312,10 +312,10 @@ if (_.hasStdlib) {
     $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
     $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
 
-    $assertFails (function () {
+    /*$assertFails (function () {
         $assertEveryCalled     (function (a, b, c) { a (); b () })
         $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
-        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })
+        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
 
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -1438,8 +1438,9 @@ Testosterone = $singleton ({
 
         /*  Read cfg.suites
          */
-        var suites = _.map (cfg.suites || [], this.$ (function (suite) {
-            return this.testSuite (suite.name, suite.tests, cfg.context) }))
+        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suites = _.map (cfg.suites || [], this.$ (function (suite, name) {
+            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
 
         var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
 
@@ -1463,7 +1464,7 @@ Testosterone = $singleton ({
 
                 /*  Go
                  */
-                _.cps.each (selectTests,
+                _.cps.each (this.runningTests,
                         this.$ (this.runTest),
                         this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
 
@@ -1556,7 +1557,7 @@ Test = $prototype ({
 
     constructor: function (cfg) {
         _.defaults (this, cfg, {
-            name:       'youre so dumb you cannot even think of a name?',
+            name:       '<< UNNAMED FOR UNKNOWN REASON >>',
             failed:     false,
             routine:    undefined,
             verbose:    false,
@@ -1599,10 +1600,10 @@ Test = $prototype ({
         var doneWithAssertion = function () {
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push (assertion) }
-            Testosterone.currentAssertion = self
             releaseLock () }
 
         assertion.run (function () {
+            Testosterone.currentAssertion = self
             if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
                     assertion.location.sourceReady (function (src) {
                         log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
@@ -1622,7 +1623,7 @@ Test = $prototype ({
                                                       a = this; do { result.push (a); a = a.mother } while (a)
                                           return result }),
 
-    onException: function (e) { var self = this
+    onException: function (e) {
 
             if (this.canFail || this.verbose) {
 
@@ -1640,10 +1641,9 @@ Test = $prototype ({
                         
                     // print exception
                 else {
-                    if (self.depth > 1) { log.newline () }
-                    log.write (e) }
-
-                log.newline () }
+                    if (this.depth > 1) { log.newline () }
+                                          log.write (e) }
+                                          log.newline () }
 
             if (this.canFail) { this.fail () }
                         else  { this.finalize () } },
@@ -1980,7 +1980,7 @@ Modal overlay that outputs log.js for debugging purposes
 			init:   false }, // deferred init
 
 		init: function () {
-
+			
 			log.withWriteBackend (this.write, function () {})
 
 			$(document).keydown (this.$ (function (e) {

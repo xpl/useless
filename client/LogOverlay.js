@@ -15,7 +15,7 @@ Modal overlay that outputs log.js for debugging purposes
 			init:   false }, // deferred init
 
 		init: function () {
-
+			
 			log.withWriteBackend (this.write, function () {})
 
 			$(document).keydown (this.$ (function (e) {
