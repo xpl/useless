@@ -2196,7 +2196,7 @@ $extensionMethods(String, {
         })));
     };
     _.extend(_, _.mapObject(_.invert(hooks), hookProc.flip2), {
-        off: function (obj, targetMethod, delegate) {
+        unbind: function (obj, targetMethod, delegate) {
             var method = obj[targetMethod];
             if (_.isBindable(method)) {
                 _.each(hooks, function (hook) {
@@ -2337,6 +2337,10 @@ _.extend(_, {
         var barrier = _.stream({
             already: defaultValue !== undefined,
             value: defaultValue,
+            reset: function () {
+                barrier.already = false;
+                delete barrier.value;
+            },
             write: function (returnResult) {
                 return function (value) {
                     if (!barrier.already) {
@@ -2978,14 +2982,14 @@ Lock = $prototype({
             delete this.waitQueue;
     }
 });
-_.defineKeyword('interlocked', function (fn) {
+_.interlocked = function (fn) {
     var lock = new Lock();
     return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
         lock.acquire(function () {
             context(lock.$(lock.release));
         });
     }));
-});
+};
 _.defineKeyword('scope', function (fn) {
     var releaseStack = undefined;
     return _.prependsArguments(Tags.unwrap(fn), function (context) {
@@ -3724,7 +3728,7 @@ _([
     'observable',
     'bindable',
     'memoize',
-    'lock',
+    'interlocked',
     'memoizeCPS',
     'debounce',
     'throttle',
@@ -3902,8 +3906,8 @@ Component = $prototype({
                 if (def.$listener) {
                     this[name].queuedBy = [];
                 }
-                if (def.$lock) {
-                    this[name] = $interlocked(this[name]);
+                if (def.$interlocked) {
+                    this[name] = _.interlocked(this[name]);
                 }
                 if (def.$bindable) {
                     if (_.hasAsserts) {
@@ -4748,7 +4752,8 @@ _.extend(log, log.printAPI = {
     warn: log.impl.write({ location: true }).partial(log.color.orange),
     warning: log.impl.write({ location: true }).partial(log.color.orange),
     success: log.impl.write({ location: true }).partial(log.color.green),
-    ok: log.impl.write({ location: true }).partial(log.color.green)
+    ok: log.impl.write({ location: true }).partial(log.color.green),
+    g: log.impl.write({ location: true }).partial(log.color.green)
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
 logs = _.map2(log.printAPI, _.higherOrder);
@@ -4832,7 +4837,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: $interlocked(function (releaseLock, cfg_, optionalThen) {
+    run: _.interlocked(function (releaseLock, cfg_, optionalThen) {
         var then = arguments.length === 3 ? optionalThen : _.identity;
         var defaults = {
             silent: true,
@@ -4976,7 +4981,7 @@ Test = $prototype({
             context: this,
             complete: _.barrier()
         });
-        this.babyAssertion = $interlocked(this.babyAssertion);
+        this.babyAssertion = _.interlocked(this.babyAssertion);
     },
     finalize: function () {
         this.babyAssertion.wait(this.$(function () {
@@ -5314,6 +5319,18 @@ if (Platform.Browser) {
                     if (cls) {
                         this.addClass(cls);
                         this.animationend(this.$(function () {
+                            this.removeClass(cls);
+                            if (done) {
+                                done.call(this);
+                            }
+                        }));
+                    }
+                    return this;
+                },
+                transitionWith: function (cls, done) {
+                    if (cls) {
+                        this.addClass(cls);
+                        this.transitionend(this.$(function () {
                             this.removeClass(cls);
                             if (done) {
                                 done.call(this);

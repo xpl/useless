@@ -186,10 +186,10 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
                   complete: function (memo) { ... })
 ```
 
-**$interlocked** (puts a function under concurrency lock)
+**_.interlocked** (puts a function under concurrency lock)
 
 ```javascript
-  readFilesSequentially = $interlocked (function (releaseLock, file, done) {
+  readFilesSequentially = _.interlocked (function (releaseLock, file, done) {
                                          $.get (file, done.then (releaseLock), 'text') })
 
   readFilesSequentially ('file1.txt', log)

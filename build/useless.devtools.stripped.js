@@ -822,7 +822,8 @@ _.extend(log, log.printAPI = {
     warn: log.impl.write({ location: true }).partial(log.color.orange),
     warning: log.impl.write({ location: true }).partial(log.color.orange),
     success: log.impl.write({ location: true }).partial(log.color.green),
-    ok: log.impl.write({ location: true }).partial(log.color.green)
+    ok: log.impl.write({ location: true }).partial(log.color.green),
+    g: log.impl.write({ location: true }).partial(log.color.green)
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
 logs = _.map2(log.printAPI, _.higherOrder);
@@ -906,7 +907,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: $interlocked(function (releaseLock, cfg_, optionalThen) {
+    run: _.interlocked(function (releaseLock, cfg_, optionalThen) {
         var then = arguments.length === 3 ? optionalThen : _.identity;
         var defaults = {
             silent: true,
@@ -1050,7 +1051,7 @@ Test = $prototype({
             context: this,
             complete: _.barrier()
         });
-        this.babyAssertion = $interlocked(this.babyAssertion);
+        this.babyAssertion = _.interlocked(this.babyAssertion);
     },
     finalize: function () {
         this.babyAssertion.wait(this.$(function () {

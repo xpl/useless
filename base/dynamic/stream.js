@@ -175,6 +175,16 @@ _.tests.stream = {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
+    '_.barrier reset': function () {
+        var b = _.barrier ()
+
+        b ('not_42')
+        b.reset ()
+
+        $assertEveryCalledOnce (function (mkay) {
+            b (function (value) { mkay (); $assert (value, 42) })
+            b (42) }) },
+
     '_.barrier (value)': function () { $assertEveryCalledOnce (function (mkay) {
              var willBe42 = _.barrier (42)
         $assert (willBe42.already)
@@ -266,6 +276,11 @@ _.extend (_, {
         var barrier = _.stream ({
                     already: defaultValue !== undefined,
                     value: defaultValue,
+
+                    reset: function () {
+                        barrier.already = false
+                        delete barrier.value },
+
                     write: function (returnResult) {
                                 return function (value) {
                                     if (!barrier.already) {

@@ -2843,7 +2843,7 @@ _.deferTest ('bindable', function () {
      */
     _.extend (_, _.mapObject (_.invert (hooks), hookProc.flip2), {
 
-        off: function (obj, targetMethod, delegate) {
+        unbind: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]
                 if (_.isBindable (method)) {
                     _.each (hooks, function (hook) {
@@ -3073,6 +3073,16 @@ _.tests.stream = {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
+    '_.barrier reset': function () {
+        var b = _.barrier ()
+
+        b ('not_42')
+        b.reset ()
+
+        $assertEveryCalledOnce (function (mkay) {
+            b (function (value) { mkay (); $assert (value, 42) })
+            b (42) }) },
+
     '_.barrier (value)': function () { $assertEveryCalledOnce (function (mkay) {
              var willBe42 = _.barrier (42)
         $assert (willBe42.already)
@@ -3164,6 +3174,11 @@ _.extend (_, {
         var barrier = _.stream ({
                     already: defaultValue !== undefined,
                     value: defaultValue,
+
+                    reset: function () {
+                        barrier.already = false
+                        delete barrier.value },
+
                     write: function (returnResult) {
                                 return function (value) {
                                     if (!barrier.already) {
@@ -4700,7 +4715,7 @@ _.tests.concurrency = {
         _.mapReduce (_.times (30, Format.randomHexString), {
                 complete: testDone,
                 maxConcurrency: 10,
-                next: $interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
+                next: _.interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
                                         isNowRunning = true
                                         _.delay (function () {
                                             then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
@@ -4782,18 +4797,18 @@ Lock = $prototype ({
             delete this.waitQueue } })
 
    
-/*  Adds $interlocked(fn) utility that wraps passed function into lock. Unfortunately,
-    it cannot be released automagically © at the moment, because $interlocked does
+/*  Adds _.interlocked(fn) utility that wraps passed function into lock. Unfortunately,
+    it cannot be released automagically © at the moment, because _.interlocked does
     not know how to bind to your chains of continuations, and no general mechanism
     exist. Should look into Promise concept (as its now core JS feature)...
 
     'Release' trigger passed as last argument to your target function.
  */
-_.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
+_.interlocked = function (fn) { var lock = new Lock ()
     return _.extendWith ({ wait: lock.$ (lock.wait) },
         _.prependsArguments (Tags.unwrap (fn), function (context) {
                                                     lock.acquire (function () {
-                                                        context (lock.$ (lock.release)) }) })) })
+                                                        context (lock.$ (lock.release)) }) })) }
 
 
 /*  EXPERIMENTAL (TBD)
@@ -5342,7 +5357,7 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'lock',
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
@@ -5532,10 +5547,10 @@ Component = $prototype ({
             if (def.$listener) {
                 this[name].queuedBy = [] }
 
-            /*  Expand $lock
+            /*  Expand $interlocked
              */
-            if (def.$lock) {
-                this[name] = $interlocked (this[name]) }
+            if (def.$interlocked) {
+                this[name] = _.interlocked (this[name]) }
 
             /*  Expand $bindable
              */
@@ -5885,6 +5900,13 @@ _.extend ($, {
             this.addClass (cls)
             this.animationend (this.$ (function () { this.removeClass (cls)
                                                      if (done) { done.call (this) } })) }
+        return this },
+
+    transitionWith: function (cls, done) {
+        if (cls) {
+            this.addClass (cls)
+            this.transitionend (this.$ (function () { this.removeClass (cls)
+                                                      if (done) { done.call (this) } })) }
         return this },
 
     /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.

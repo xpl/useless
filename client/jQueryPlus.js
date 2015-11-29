@@ -149,6 +149,13 @@ _.extend ($, {
                                                      if (done) { done.call (this) } })) }
         return this },
 
+    transitionWith: function (cls, done) {
+        if (cls) {
+            this.addClass (cls)
+            this.transitionend (this.$ (function () { this.removeClass (cls)
+                                                      if (done) { done.call (this) } })) }
+        return this },
+
     /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
 
         Simplest example:

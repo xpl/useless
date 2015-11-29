@@ -110,7 +110,7 @@ Testosterone = $singleton ({
 
     /*  Entry point
      */
-    run: $interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
+    run: _.interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
 
         /*  Configuration
          */
@@ -254,7 +254,7 @@ Test = $prototype ({
             context:    this,
             complete: _.barrier () })
 
-        this.babyAssertion = $interlocked (this.babyAssertion) },
+        this.babyAssertion = _.interlocked (this.babyAssertion) },
 
     finalize: function () {
         this.babyAssertion.wait (this.$ (function () {

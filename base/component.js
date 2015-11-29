@@ -522,7 +522,7 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'lock',
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
@@ -712,10 +712,10 @@ Component = $prototype ({
             if (def.$listener) {
                 this[name].queuedBy = [] }
 
-            /*  Expand $lock
+            /*  Expand $interlocked
              */
-            if (def.$lock) {
-                this[name] = $interlocked (this[name]) }
+            if (def.$interlocked) {
+                this[name] = _.interlocked (this[name]) }
 
             /*  Expand $bindable
              */

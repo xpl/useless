@@ -108,7 +108,7 @@ _.deferTest ('bindable', function () {
      */
     _.extend (_, _.mapObject (_.invert (hooks), hookProc.flip2), {
 
-        off: function (obj, targetMethod, delegate) {
+        unbind: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]
                 if (_.isBindable (method)) {
                     _.each (hooks, function (hook) {
