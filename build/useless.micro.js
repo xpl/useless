@@ -1372,7 +1372,7 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
 
             $assert (_.map (input, _.arity1 (plus)), gives) }) (),
 
-        /*  Deep version of _.extend, allowing to extend two levels deep (NOW DEPRECATED, USE _.extendedDeep)
+        /*  NOW DEPRECATED, USE _.extendedDeep
          */
         (function () {
             var input   = { foo:1,  bar: { qux:1 } }
@@ -5758,9 +5758,7 @@ Component = $prototype ({
     destroyAll: function () {
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
-                            return this }
-
-})
+                            return this } })
 
 ;
 

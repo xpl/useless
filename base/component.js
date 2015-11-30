@@ -908,7 +908,5 @@ Component = $prototype ({
     destroyAll: function () {
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
-                            return this }
-
-})
+                            return this } })
 
