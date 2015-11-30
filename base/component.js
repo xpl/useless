@@ -428,6 +428,15 @@ _.tests.component = {
 
         compo.trig.call ({}) },
 
+    '$defaults can set $observableProperty': function () {
+
+        var compo = $singleton (Component, {
+            twentyFour: $observableProperty (42),
+            $defaults: { twentyFour: 24 } })
+
+        $assertEveryCalledOnce (function (mkay) {
+            compo.twentyFourChange (function (val) { $assert (val, 24); mkay (); }) }) },
+
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
@@ -535,10 +544,10 @@ _.defineKeyword ('observableRef', function (x) { return $observableProperty ($re
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro (keyword, function (def, value, name, Base) {
 
-        _.extend2 (value, (Base && Base[keyword]) || {}, value)
+        value = _.extendedDeep ((Base && Base[keyword]) || {}, value)
 
         _.each (def.$traits, function (Trait) {
-            _.extend2 (value, Trait[keyword]) })
+            value = _.extendedDeep (Trait[keyword], value) })
 
         def[keyword] = $static ($builtin ($property (_.constant (value))))
 
@@ -620,7 +629,7 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.defaults (this, _.cloneDeep (this.constructor.$defaults)) }
+            _.extend (this, _.cloneDeep (this.constructor.$defaults)) }
 
 
         /*  Listen self destroy method

@@ -1287,7 +1287,9 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            el.appendTo(document.body);
+            $(document).ready(function () {
+                el.appendTo(document.body);
+            });
             try {
                 $(window).resize(this.layout).resize();
                 this.modal.enableScrollFaders({ scroller: this.modalBody });
@@ -1321,11 +1323,11 @@ _.perfTest = function (arg, then) {
         },
         onRetry: function (retry) {
             this.retryTriggered(retry);
-            this.btnRetry.show();
+            this.btnRetry.css('display', '');
         },
         onClose: function (close) {
             this.closeTriggered(close);
-            this.btnClose.show();
+            this.btnClose.css('display', '');
         },
         retry: function () {
             this._clean();
@@ -1342,8 +1344,8 @@ _.perfTest = function (arg, then) {
         _clean: function () {
             this.modalBody.find('.panic-alert-error').remove();
             this.modalBody.scroll();
-            this.btnRetry.hide();
-            this.btnClose.hide();
+            this.btnRetry.css('display', 'none');
+            this.btnClose.css('display', 'none');
         },
         append: function (what, raw) {
             var id = 'panic' + this.hash(what);

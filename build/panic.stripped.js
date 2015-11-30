@@ -891,6 +891,9 @@ _.findFind = function (obj, pred_) {
 _.extend = $restArg(_.extend);
 _.extendWith = _.flip(_.extend);
 _.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
+_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
+    return b || a;
+});
 _.extend2 = $restArg(function (what) {
     return _.extend(what, _.reduceRight(arguments, function (right, left) {
         return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
@@ -905,7 +908,11 @@ _.extend2 = $restArg(function (what) {
 _.nonempty = function (obj) {
     return _.filter2(obj, _.isNonempty);
 };
-_.extend(_, { cloneDeep: _.tails2(_.mapMap, _.clone) });
+_.extend(_, {
+    cloneDeep: _.tails2(_.mapMap, function (value) {
+        return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
+    })
+});
 _.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
     return _.coerceToUndefined(_.nonempty(_.zip2(a, b, pred)));
 });
@@ -3206,9 +3213,9 @@ _.defineKeyword('observableRef', function (x) {
 });
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro(keyword, function (def, value, name, Base) {
-        _.extend2(value, Base && Base[keyword] || {}, value);
+        value = _.extendedDeep(Base && Base[keyword] || {}, value);
         _.each(def.$traits, function (Trait) {
-            _.extend2(value, Trait[keyword]);
+            value = _.extendedDeep(Trait[keyword], value);
         });
         def[keyword] = $static($builtin($property(_.constant(value))));
         return def;
@@ -3286,7 +3293,7 @@ Component = $prototype({
     constructor: $final(function (arg1, arg2) {
         var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
         if (this.constructor.$defaults) {
-            _.defaults(this, _.cloneDeep(this.constructor.$defaults));
+            _.extend(this, _.cloneDeep(this.constructor.$defaults));
         }
         _.onBefore(this, 'destroy', this.beforeDestroy);
         _.onAfter(this, 'destroy', this.afterDestroy);
@@ -5174,7 +5181,9 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            el.appendTo(document.body);
+            $(document).ready(function () {
+                el.appendTo(document.body);
+            });
             try {
                 $(window).resize(this.layout).resize();
                 this.modal.enableScrollFaders({ scroller: this.modalBody });
@@ -5208,11 +5217,11 @@ _.perfTest = function (arg, then) {
         },
         onRetry: function (retry) {
             this.retryTriggered(retry);
-            this.btnRetry.show();
+            this.btnRetry.css('display', '');
         },
         onClose: function (close) {
             this.closeTriggered(close);
-            this.btnClose.show();
+            this.btnClose.css('display', '');
         },
         retry: function () {
             this._clean();
@@ -5229,8 +5238,8 @@ _.perfTest = function (arg, then) {
         _clean: function () {
             this.modalBody.find('.panic-alert-error').remove();
             this.modalBody.scroll();
-            this.btnRetry.hide();
-            this.btnClose.hide();
+            this.btnRetry.css('display', 'none');
+            this.btnClose.css('display', 'none');
         },
         append: function (what, raw) {
             var id = 'panic' + this.hash(what);

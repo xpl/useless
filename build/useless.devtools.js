@@ -1791,8 +1791,8 @@ Panic.widget = $singleton (Component, {
 					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ])
 
-		//$(document).ready (function () {
-		el.appendTo (document.body)// })
+		$(document).ready (function () {
+			el.appendTo (document.body) })
 
 		try {
 			$(window).resize (this.layout).resize ()
@@ -1818,11 +1818,11 @@ Panic.widget = $singleton (Component, {
 
 	onRetry: function (retry) {
 		this.retryTriggered (retry)
-		this.btnRetry.show () },
+		this.btnRetry.css ('display', '') },
 
 	onClose: function (close) {
 		this.closeTriggered (close)
-		this.btnClose.show () },
+		this.btnClose.css ('display', '') },
 
 	retry: function () {
 		this._clean ()
@@ -1839,8 +1839,8 @@ Panic.widget = $singleton (Component, {
    _clean: function () {
 		this.modalBody.find ('.panic-alert-error').remove ()
 		this.modalBody.scroll ()
-		this.btnRetry.hide ()
-		this.btnClose.hide () },
+		this.btnRetry.css ('display', 'none')
+		this.btnClose.css ('display', 'none') },
 
 	append: function (what, raw) { var id = 'panic' + this.hash (what)
 
