@@ -437,6 +437,14 @@ _.tests.component = {
         $assertEveryCalledOnce (function (mkay) {
             compo.twentyFourChange (function (val) { $assert (val, 24); mkay (); }) }) },
 
+    'defer init with $defaults': function () {
+        var compo = $singleton (Component, {
+            $defaults: { init: false },
+            init: function () { } })
+
+        compo.init ()
+    },
+
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
@@ -629,7 +637,7 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.extend (this, _.cloneDeep (this.constructor.$defaults)) }
+            _.extend (cfg, _.cloneDeep (this.constructor.$defaults)) }
 
 
         /*  Listen self destroy method

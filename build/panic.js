@@ -2831,7 +2831,8 @@ _.deferTest ('bindable', function () {
                                var bindable = makeBindable (obj, targetMethod)
                             return bindable[name].call (bindable, delegate) } }
 
-    var mixin = function (method) {
+    var mixin = function (method) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
+
                     return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
@@ -2868,7 +2869,7 @@ _.deferTest ('bindable', function () {
             return (fn && fn._bindable) ? true : false },
 
         bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
-            return _.withSameArgs (method, _.extendWith (mixin (method), function () {      
+            return _.withSameArgs (method, _.extendWith (mixin (method), function () {   
 
                 var wrapper     = arguments.callee
                 var onceBefore  = wrapper._onceBefore
@@ -5287,6 +5288,14 @@ _.tests.component = {
         $assertEveryCalledOnce (function (mkay) {
             compo.twentyFourChange (function (val) { $assert (val, 24); mkay (); }) }) },
 
+    'defer init with $defaults': function () {
+        var compo = $singleton (Component, {
+            $defaults: { init: false },
+            init: function () { } })
+
+        compo.init ()
+    },
+
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
@@ -5479,7 +5488,7 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.extend (this, _.cloneDeep (this.constructor.$defaults)) }
+            _.extend (cfg, _.cloneDeep (this.constructor.$defaults)) }
 
 
         /*  Listen self destroy method
@@ -6700,13 +6709,13 @@ function () {
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
 
-
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
                 try {
                     chain[i] (e)
                     break }
                 catch (newE) {
+                    console.log (newE)
                     if (i === n - 1) {
                         newE.message += reThrownTag
                         throw newE }
@@ -7640,10 +7649,6 @@ Testosterone = $singleton ({
              */
             this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-            /*  Bind to exception handling
-             */
-            _.withUncaughtExceptionHandler (this.$ (this.onException), this.$ (function (doneWithExceptions) {
-
                 /*  Go
                  */
                 _.cps.each (this.runningTests,
@@ -7658,8 +7663,7 @@ Testosterone = $singleton ({
                                     this.failed = (this.failedTests.length > 0)
                                     then (!this.failed)
                                     
-                                    doneWithExceptions ()
-                                    releaseLock () }) ) })) })) }),
+                                    releaseLock () }) ) })) }),
 
     onException: function (e) {
         if (this.currentAssertion) 
@@ -7747,7 +7751,7 @@ Test = $prototype ({
             indent:     0,
             failedAssertions: [],
             context:    this,
-            complete: _.barrier () })
+            complete: _.extend (_.barrier (), { context: this }) })
 
         this.babyAssertion = _.interlocked (this.babyAssertion) },
 
@@ -7841,9 +7845,10 @@ Test = $prototype ({
 
         _.withTimeout ({
             maxTime: self.timeout,
-            expired: function ()     { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
-            function (cancelTimeout) {
-                self.complete (cancelTimeout.arity0) } )
+            expired: function () { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
+            self.complete)
+
+        _.withUncaughtExceptionHandler (self.$ (self.onException), self.complete)
 
         log.withWriteBackend (_.extendWith ({ indent: self.depth + (self.indent || 0) },
                                     function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),

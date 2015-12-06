@@ -2831,7 +2831,8 @@ _.deferTest ('bindable', function () {
                                var bindable = makeBindable (obj, targetMethod)
                             return bindable[name].call (bindable, delegate) } }
 
-    var mixin = function (method) {
+    var mixin = function (method) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
+
                     return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
@@ -2868,7 +2869,7 @@ _.deferTest ('bindable', function () {
             return (fn && fn._bindable) ? true : false },
 
         bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
-            return _.withSameArgs (method, _.extendWith (mixin (method), function () {      
+            return _.withSameArgs (method, _.extendWith (mixin (method), function () {   
 
                 var wrapper     = arguments.callee
                 var onceBefore  = wrapper._onceBefore
@@ -5287,6 +5288,14 @@ _.tests.component = {
         $assertEveryCalledOnce (function (mkay) {
             compo.twentyFourChange (function (val) { $assert (val, 24); mkay (); }) }) },
 
+    'defer init with $defaults': function () {
+        var compo = $singleton (Component, {
+            $defaults: { init: false },
+            init: function () { } })
+
+        compo.init ()
+    },
+
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
@@ -5479,7 +5488,7 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.extend (this, _.cloneDeep (this.constructor.$defaults)) }
+            _.extend (cfg, _.cloneDeep (this.constructor.$defaults)) }
 
 
         /*  Listen self destroy method

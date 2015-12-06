@@ -2175,6 +2175,9 @@ $extensionMethods(String, {
         };
     };
     var mixin = function (method) {
+        if (typeof method !== 'function') {
+            throw new Error('method should be a function');
+        }
         return _.extend({}, method, {
             _bindable: true,
             impl: method,
@@ -3830,7 +3833,7 @@ Component = $prototype({
     constructor: $final(function (arg1, arg2) {
         var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
         if (this.constructor.$defaults) {
-            _.extend(this, _.cloneDeep(this.constructor.$defaults));
+            _.extend(cfg, _.cloneDeep(this.constructor.$defaults));
         }
         _.onBefore(this, 'destroy', this.beforeDestroy);
         _.onAfter(this, 'destroy', this.afterDestroy);
@@ -4302,6 +4305,7 @@ R = $singleton({
                     chain[i](e);
                     break;
                 } catch (newE) {
+                    console.log(newE);
                     if (i === n - 1) {
                         newE.message += reThrownTag;
                         throw newE;
@@ -4871,17 +4875,14 @@ Testosterone = $singleton({
                     index: i
                 });
             });
-            _.withUncaughtExceptionHandler(this.$(this.onException), this.$(function (doneWithExceptions) {
-                _.cps.each(this.runningTests, this.$(this.runTest), this.$(function () {
-                    _.assert(cfg.done !== true);
-                    cfg.done = true;
-                    this.printLog(cfg);
-                    this.failedTests = _.filter(this.runningTests, _.property('failed'));
-                    this.failed = this.failedTests.length > 0;
-                    then(!this.failed);
-                    doneWithExceptions();
-                    releaseLock();
-                }));
+            _.cps.each(this.runningTests, this.$(this.runTest), this.$(function () {
+                _.assert(cfg.done !== true);
+                cfg.done = true;
+                this.printLog(cfg);
+                this.failedTests = _.filter(this.runningTests, _.property('failed'));
+                this.failed = this.failedTests.length > 0;
+                then(!this.failed);
+                releaseLock();
             }));
         }));
     }),
@@ -4986,7 +4987,7 @@ Test = $prototype({
             indent: 0,
             failedAssertions: [],
             context: this,
-            complete: _.barrier()
+            complete: _.extend(_.barrier(), { context: this })
         });
         this.babyAssertion = _.interlocked(this.babyAssertion);
     },
@@ -5113,9 +5114,8 @@ Test = $prototype({
                     self.fail();
                 }
             }
-        }, function (cancelTimeout) {
-            self.complete(cancelTimeout.arity0);
-        });
+        }, self.complete);
+        _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
         log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
             self.logCalls.push(x);
         }), function (doneWithLogging) {

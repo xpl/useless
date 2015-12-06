@@ -1727,6 +1727,9 @@ $extensionMethods(String, {
         };
     };
     var mixin = function (method) {
+        if (typeof method !== 'function') {
+            throw new Error('method should be a function');
+        }
         return _.extend({}, method, {
             _bindable: true,
             impl: method,
@@ -3293,7 +3296,7 @@ Component = $prototype({
     constructor: $final(function (arg1, arg2) {
         var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
         if (this.constructor.$defaults) {
-            _.extend(this, _.cloneDeep(this.constructor.$defaults));
+            _.extend(cfg, _.cloneDeep(this.constructor.$defaults));
         }
         _.onBefore(this, 'destroy', this.beforeDestroy);
         _.onAfter(this, 'destroy', this.afterDestroy);

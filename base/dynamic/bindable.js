@@ -81,7 +81,8 @@ _.deferTest ('bindable', function () {
                                var bindable = makeBindable (obj, targetMethod)
                             return bindable[name].call (bindable, delegate) } }
 
-    var mixin = function (method) {
+    var mixin = function (method) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
+
                     return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
@@ -118,7 +119,7 @@ _.deferTest ('bindable', function () {
             return (fn && fn._bindable) ? true : false },
 
         bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
-            return _.withSameArgs (method, _.extendWith (mixin (method), function () {      
+            return _.withSameArgs (method, _.extendWith (mixin (method), function () {   
 
                 var wrapper     = arguments.callee
                 var onceBefore  = wrapper._onceBefore
