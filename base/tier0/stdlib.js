@@ -362,19 +362,30 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
 
             $assert (_.map (input, _.arity1 (plus)), gives) }) (),
 
-        /*  Deep version of _.extend, allowing to extend two levels deep (super useful one)
+        /*  NOW DEPRECATED, USE _.extendedDeep
          */
         (function () {
             var input   = { foo:1,  bar: { qux:1 } }
             var plus    = { foo:42, bar: { baz:1 } }
             var gives   = { foo:42, bar: { baz:1, qux:1 }}
 
-            $assert (_.extend2 (input, plus), gives) }) ()]  }, function () {
+            $assert (_.extend2 (input, plus), gives) }) (),
+
+        /*  Deep version of _.extend, allowing to extend arbitrary levels deep (referentially transparent, so _.extendedDeep instead of _.extendDeep)
+         */
+        (function () {
+            var input   = { foo:1,  bar: { qux:1 } }
+            var plus    = { foo:42, bar: { baz:1 } }
+            var gives   = { foo:42, bar: { baz:1, qux:1 }}
+
+            $assert (_.extendedDeep (input, plus), gives) }) ()]  }, function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
 
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
+
+    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b || a })
 
     _.extend2 = $restArg (function (what) { 
                                 return _.extend (what, _.reduceRight (arguments, function (right, left) {
@@ -411,18 +422,22 @@ _.withTest (['stdlib', 'nonempty'], function () {
     ======================================================================== */
 
 _.deferTest (['stdlib', 'cloneDeep'], function () {
-    var obj     = { a: [{ b: { c: 'd' } }], b: {} }
+
+    var Proto = $prototype ({})
+
+    var obj     = { a: [{ b: { c: 'd' } }], b: {}, c: new Proto ()  }
     var copy    = _.cloneDeep (obj)
 
     $assert (obj   !== copy)    // should be distinct references
-    $assert (obj.a !== copy.a)  // should be distinct references
-    $assert (obj.b !== copy.b)  // should be distinct references
+    $assert (obj.a !== copy.a)  //
+    $assert (obj.b !== copy.b)  //
+    $assert (obj.c === copy.c)  // should be same instance (should consider prototype instances as atomic value)
 
     $assert (obj, copy)     // structure should not change
 
 }, function () { _.extend (_, {
 
-    cloneDeep: _.tails2 (_.mapMap, _.clone) }) })
+    cloneDeep: _.tails2 (_.mapMap, function (value) { return (_.isStrictlyObject (value) && !_.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,

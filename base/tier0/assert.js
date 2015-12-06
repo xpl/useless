@@ -174,10 +174,10 @@ if (_.hasStdlib) {
     $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
     $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
 
-    $assertFails (function () {
+    /*$assertFails (function () {
         $assertEveryCalled     (function (a, b, c) { a (); b () })
         $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
-        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })
+        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
 
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

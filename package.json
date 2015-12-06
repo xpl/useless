@@ -1,6 +1,6 @@
 {
   "name": "useless",
-  "version": "0.0.54",
+  "version": "0.0.63",
   "description": "Use Less. Do More. JavaScript on steroids.",
   "main": "useless.js",
   "directories": {

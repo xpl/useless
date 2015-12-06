@@ -12,13 +12,13 @@
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
 
-
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
                 try {
                     chain[i] (e)
                     break }
                 catch (newE) {
+                    console.log (newE)
                     if (i === n - 1) {
                         newE.message += reThrownTag
                         throw newE }

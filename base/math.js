@@ -219,20 +219,20 @@ BBox = $prototype ({
         fromLeftTopAndSize: function (pt, size) {
             return BBox.fromLTWH ({ left: pt.x, top: pt.y, width: size.x, height: size.y }) },
 
-        fromLTWH: function (r) {
-            return new BBox (r.left + r.width / 2.0, r.top + r.height / 2.0, r.width, r.height) },
+        fromLTWH: function (l,t,w,h) {
+            if (arguments.length === 1) { return BBox.fromLTWH (l.left, l.top, l.width, l.height) }
+                                   else { return new BBox (l + w / 2.0, t + h / 2.0, w, h) } },
 
-        fromLTRB: function (r) {
-            return new BBox (_.lerp (0.5, r.left, r.right), _.lerp (0.5, r.top, r.bottom), r.right - r.left, r.bottom - r.top) },
+        fromLTRB: function (l,t,r,b) {
+            if (arguments.length === 1) { return BBox.fromLTRB (l.left, l.top, l.right, l.bottom) }
+                                   else { return new BBox (_.lerp (0.5, l, r), _.lerp (0.5, t, b), r - l, b - t) } },
 
         fromSizeAndCenter: function (size, center) {
             return new BBox (center.x - size.x / 2.0, center.y - size.y / 2.0, size.x, size.y) },
 
         fromSize: function (a, b) {
-            if (b) {
-                return new BBox (-a / 2.0, -b / 2.0, a, b) }
-            else {
-                return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
+            if (b) { return new BBox (-a / 2.0, -b / 2.0, a, b) }
+              else { return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
         
         fromPoints: function (pts) { var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE
             _.each (pts, function (pt) {
@@ -240,7 +240,7 @@ BBox = $prototype ({
                 t = Math.min (pt.y, t)
                 r = Math.max (pt.x, r)
                 b = Math.max (pt.y, b) })
-            return BBox.fromLTRB ({ left: l, top: t, right: r, bottom: b }) } },
+            return BBox.fromLTRB (l, t, r, b) } },
 
     constructor: function (x, y, w, h) {
         if (arguments.length == 4) {
@@ -344,17 +344,20 @@ BBox = $prototype ({
 
     ltwh: $alias ('css'),
 
-    union: $property (function (other) { return BBox.fromLTRB (
-                                                    Math.min (this.left,   other.left),
-                                                    Math.min (this.top,    other.top),
-                                                    Math.max (this.right,  other.right),
-                                                    Math.max (this.bottom, other.bottom)) }),
+    union: function (other) { return BBox.fromLTRB (
+                                        Math.min (this.left,   other.left),
+                                        Math.min (this.top,    other.top),
+                                        Math.max (this.right,  other.right),
+                                        Math.max (this.bottom, other.bottom)) },
 
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
     
     floor: $property (function () {
-        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
+        return new BBox.fromLTRB (Math.floor (this.left),
+                                  Math.floor (this.top),
+                                  Math.floor (this.right),
+                                  Math.floor (this.bottom)) }),
 
     css: $property (function () {
         return { left: this.left, top: this.top, width: this.width, height: this.height } }),

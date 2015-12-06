@@ -38,9 +38,12 @@ _.deferTest = _.withTest = function (name, test, subj) {
     subj();
 };
 _.platform = function () {
-    if (typeof window !== 'undefined' && window._.platform === arguments.callee) {
-        if (navigator.platform && navigator.platform.indexOf) {
-            return _.extend({ engine: 'browser' }, navigator.platform.indexOf('Linux arm') >= 0 || navigator.platform.indexOf('Android') >= 0 || navigator.userAgent.indexOf('Android') >= 0 ? {
+    return arguments.callee.__value || (arguments.callee.__value = function () {
+        if (typeof window !== 'undefined' && window._ && window._.platform === _.platform && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
+            return _.extend({
+                engine: 'browser',
+                browser: navigator.userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : navigator.userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
+            }, navigator.platform.indexOf('Linux arm') >= 0 || navigator.platform.indexOf('Android') >= 0 || navigator.userAgent.indexOf('Android') >= 0 ? {
                 touch: true,
                 system: 'Android'
             } : navigator.platform.indexOf('iPad') >= 0 ? {
@@ -52,12 +55,12 @@ _.platform = function () {
                 system: 'iOS',
                 device: 'iPhone'
             } : {});
+        } else if (typeof global !== 'undefined' && global._ && global._.platform === _.platform) {
+            return { engine: 'node' };
+        } else {
+            return {};
         }
-    }
-    if (typeof global !== 'undefined' && global._.platform === arguments.callee) {
-        return { engine: 'node' };
-    }
-    return {};
+    }());
 };
 _.global = function () {
     return _.platform().engine === 'browser' ? window : _.platform().engine === 'node' ? global : undefined;
@@ -660,7 +663,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg, prevIndent) {
         return _.reduce(_.keys(Tags.get(x)), function (memo, tag) {
             return tag + ' ' + memo.quote('()');
         }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg, indent));
-    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x, 'toString')) {
+    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
         return x.toString();
     } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
         var isArray = _.isArray(x);
@@ -888,6 +891,9 @@ _.findFind = function (obj, pred_) {
 _.extend = $restArg(_.extend);
 _.extendWith = _.flip(_.extend);
 _.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
+_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
+    return b || a;
+});
 _.extend2 = $restArg(function (what) {
     return _.extend(what, _.reduceRight(arguments, function (right, left) {
         return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
@@ -902,7 +908,11 @@ _.extend2 = $restArg(function (what) {
 _.nonempty = function (obj) {
     return _.filter2(obj, _.isNonempty);
 };
-_.extend(_, { cloneDeep: _.tails2(_.mapMap, _.clone) });
+_.extend(_, {
+    cloneDeep: _.tails2(_.mapMap, function (value) {
+        return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
+    })
+});
 _.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
     return _.coerceToUndefined(_.nonempty(_.zip2(a, b, pred)));
 });
@@ -1717,6 +1727,9 @@ $extensionMethods(String, {
         };
     };
     var mixin = function (method) {
+        if (typeof method !== 'function') {
+            throw new Error('method should be a function');
+        }
         return _.extend({}, method, {
             _bindable: true,
             impl: method,
@@ -1745,7 +1758,7 @@ $extensionMethods(String, {
         })));
     };
     _.extend(_, _.mapObject(_.invert(hooks), hookProc.flip2), {
-        off: function (obj, targetMethod, delegate) {
+        unbind: function (obj, targetMethod, delegate) {
             var method = obj[targetMethod];
             if (_.isBindable(method)) {
                 _.each(hooks, function (hook) {
@@ -1886,6 +1899,10 @@ _.extend(_, {
         var barrier = _.stream({
             already: defaultValue !== undefined,
             value: defaultValue,
+            reset: function () {
+                barrier.already = false;
+                delete barrier.value;
+            },
             write: function (returnResult) {
                 return function (value) {
                     if (!barrier.already) {
@@ -2306,6 +2323,8 @@ Platform = $singleton({
         system: _.platform().system,
         device: _.platform().device,
         touch: _.platform().touch || false,
+        IE: _.platform().browser === 'IE',
+        Firefox: _.platform().browser === 'Firefox',
         Browser: _.platform().engine === 'browser',
         NodeJS: _.platform().engine === 'node',
         iPad: _.platform().device === 'iPad',
@@ -2569,11 +2588,19 @@ BBox = $prototype({
                 height: size.y
             });
         },
-        fromLTWH: function (r) {
-            return new BBox(r.left + r.width / 2, r.top + r.height / 2, r.width, r.height);
+        fromLTWH: function (l, t, w, h) {
+            if (arguments.length === 1) {
+                return BBox.fromLTWH(l.left, l.top, l.width, l.height);
+            } else {
+                return new BBox(l + w / 2, t + h / 2, w, h);
+            }
         },
-        fromLTRB: function (r) {
-            return new BBox(_.lerp(0.5, r.left, r.right), _.lerp(0.5, r.top, r.bottom), r.right - r.left, r.bottom - r.top);
+        fromLTRB: function (l, t, r, b) {
+            if (arguments.length === 1) {
+                return BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
+            } else {
+                return new BBox(_.lerp(0.5, l, r), _.lerp(0.5, t, b), r - l, b - t);
+            }
         },
         fromSizeAndCenter: function (size, center) {
             return new BBox(center.x - size.x / 2, center.y - size.y / 2, size.x, size.y);
@@ -2593,12 +2620,7 @@ BBox = $prototype({
                 r = Math.max(pt.x, r);
                 b = Math.max(pt.y, b);
             });
-            return BBox.fromLTRB({
-                left: l,
-                top: t,
-                right: r,
-                bottom: b
-            });
+            return BBox.fromLTRB(l, t, r, b);
         }
     },
     constructor: function (x, y, w, h) {
@@ -2689,14 +2711,14 @@ BBox = $prototype({
         };
     }),
     ltwh: $alias('css'),
-    union: $property(function (other) {
+    union: function (other) {
         return BBox.fromLTRB(Math.min(this.left, other.left), Math.min(this.top, other.top), Math.max(this.right, other.right), Math.max(this.bottom, other.bottom));
-    }),
+    },
     clone: $property(function () {
         return new BBox(this.x, this.y, this.width, this.height);
     }),
     floor: $property(function () {
-        return new Vec2(Math.floor(this.x), Math.floor(this.y));
+        return new BBox.fromLTRB(Math.floor(this.left), Math.floor(this.top), Math.floor(this.right), Math.floor(this.bottom));
     }),
     css: $property(function () {
         return {
@@ -3138,14 +3160,14 @@ Lock = $prototype({
             delete this.waitQueue;
     }
 });
-_.defineKeyword('interlocked', function (fn) {
+_.interlocked = function (fn) {
     var lock = new Lock();
     return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
         lock.acquire(function () {
             context(lock.$(lock.release));
         });
     }));
-});
+};
 _.defineKeyword('scope', function (fn) {
     var releaseStack = undefined;
     return _.prependsArguments(Tags.unwrap(fn), function (context) {
@@ -3179,7 +3201,7 @@ _([
     'observable',
     'bindable',
     'memoize',
-    'lock',
+    'interlocked',
     'memoizeCPS',
     'debounce',
     'throttle',
@@ -3194,9 +3216,9 @@ _.defineKeyword('observableRef', function (x) {
 });
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro(keyword, function (def, value, name, Base) {
-        _.extend2(value, Base && Base[keyword] || {}, value);
+        value = _.extendedDeep(Base && Base[keyword] || {}, value);
         _.each(def.$traits, function (Trait) {
-            _.extend2(value, Trait[keyword]);
+            value = _.extendedDeep(Trait[keyword], value);
         });
         def[keyword] = $static($builtin($property(_.constant(value))));
         return def;
@@ -3274,7 +3296,7 @@ Component = $prototype({
     constructor: $final(function (arg1, arg2) {
         var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
         if (this.constructor.$defaults) {
-            _.defaults(this, _.cloneDeep(this.constructor.$defaults));
+            _.extend(cfg, _.cloneDeep(this.constructor.$defaults));
         }
         _.onBefore(this, 'destroy', this.beforeDestroy);
         _.onAfter(this, 'destroy', this.afterDestroy);
@@ -3357,8 +3379,8 @@ Component = $prototype({
                 if (def.$listener) {
                     this[name].queuedBy = [];
                 }
-                if (def.$lock) {
-                    this[name] = $interlocked(this[name]);
+                if (def.$interlocked) {
+                    this[name] = _.interlocked(this[name]);
                 }
                 if (def.$bindable) {
                     if (_.hasAsserts) {
@@ -3520,7 +3542,11 @@ if (jQuery) {
         var __previousMethods__ = _.clone($.fn);
         _.extend($, {
             svg: function (tag) {
-                return $(document.createElementNS('http://www.w3.org/2000/svg', tag));
+                var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+                if (tag === 'svg' && !Platform.IE) {
+                    node.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                }
+                return $(node);
             }
         }).fn.extend({
             on: function (what, method) {
@@ -3627,6 +3653,18 @@ if (jQuery) {
                 if (cls) {
                     this.addClass(cls);
                     this.animationend(this.$(function () {
+                        this.removeClass(cls);
+                        if (done) {
+                            done.call(this);
+                        }
+                    }));
+                }
+                return this;
+            },
+            transitionWith: function (cls, done) {
+                if (cls) {
+                    this.addClass(cls);
+                    this.transitionend(this.$(function () {
                         this.removeClass(cls);
                         if (done) {
                             done.call(this);
@@ -4178,6 +4216,7 @@ _.each(_.keys(_.assertions), function (name) {
                     chain[i](e);
                     break;
                 } catch (newE) {
+                    console.log(newE);
                     if (i === n - 1) {
                         newE.message += reThrownTag;
                         throw newE;
@@ -4681,7 +4720,8 @@ _.extend(log, log.printAPI = {
     warn: log.impl.write({ location: true }).partial(log.color.orange),
     warning: log.impl.write({ location: true }).partial(log.color.orange),
     success: log.impl.write({ location: true }).partial(log.color.green),
-    ok: log.impl.write({ location: true }).partial(log.color.green)
+    ok: log.impl.write({ location: true }).partial(log.color.green),
+    g: log.impl.write({ location: true }).partial(log.color.green)
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
 logs = _.map2(log.printAPI, _.higherOrder);
@@ -4765,7 +4805,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: $interlocked(function (releaseLock, cfg_, optionalThen) {
+    run: _.interlocked(function (releaseLock, cfg_, optionalThen) {
         var then = arguments.length === 3 ? optionalThen : _.identity;
         var defaults = {
             silent: true,
@@ -4777,8 +4817,9 @@ Testosterone = $singleton({
             }
         };
         var cfg = this.runConfig = _.extend(defaults, cfg_);
-        var suites = _.map(cfg.suites || [], this.$(function (suite) {
-            return this.testSuite(suite.name, suite.tests, cfg.context);
+        var suitesIsArray = _.isArray(cfg.suites);
+        var suites = _.map(cfg.suites || [], this.$(function (suite, name) {
+            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context);
         }));
         var collectPrototypeTests = cfg.codebase === false ? _.cps.constant([]) : this.$(this.collectPrototypeTests);
         collectPrototypeTests(this.$(function (prototypeTests) {
@@ -4791,17 +4832,14 @@ Testosterone = $singleton({
                     index: i
                 });
             });
-            _.withUncaughtExceptionHandler(this.$(this.onException), this.$(function (doneWithExceptions) {
-                _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
-                    _.assert(cfg.done !== true);
-                    cfg.done = true;
-                    this.printLog(cfg);
-                    this.failedTests = _.filter(this.runningTests, _.property('failed'));
-                    this.failed = this.failedTests.length > 0;
-                    then(!this.failed);
-                    doneWithExceptions();
-                    releaseLock();
-                }));
+            _.cps.each(this.runningTests, this.$(this.runTest), this.$(function () {
+                _.assert(cfg.done !== true);
+                cfg.done = true;
+                this.printLog(cfg);
+                this.failedTests = _.filter(this.runningTests, _.property('failed'));
+                this.failed = this.failedTests.length > 0;
+                then(!this.failed);
+                releaseLock();
             }));
         }));
     }),
@@ -4898,7 +4936,7 @@ Testosterone = $singleton({
 Test = $prototype({
     constructor: function (cfg) {
         _.defaults(this, cfg, {
-            name: 'youre so dumb you cannot even think of a name?',
+            name: '<< UNNAMED FOR UNKNOWN REASON >>',
             failed: false,
             routine: undefined,
             verbose: false,
@@ -4906,9 +4944,9 @@ Test = $prototype({
             indent: 0,
             failedAssertions: [],
             context: this,
-            complete: _.barrier()
+            complete: _.extend(_.barrier(), { context: this })
         });
-        this.babyAssertion = $interlocked(this.babyAssertion);
+        this.babyAssertion = _.interlocked(this.babyAssertion);
     },
     finalize: function () {
         this.babyAssertion.wait(this.$(function () {
@@ -4953,10 +4991,10 @@ Test = $prototype({
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push(assertion);
             }
-            Testosterone.currentAssertion = self;
             releaseLock();
         };
         assertion.run(function () {
+            Testosterone.currentAssertion = self;
             if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
                 assertion.location.sourceReady(function (src) {
                     log.red(src, log.config({
@@ -4987,7 +5025,6 @@ Test = $prototype({
         return result;
     }),
     onException: function (e) {
-        var self = this;
         if (this.canFail || this.verbose) {
             if (_.isAssertionError(e)) {
                 if ('notMatching' in e) {
@@ -5006,7 +5043,7 @@ Test = $prototype({
                     }
                 }
             } else {
-                if (self.depth > 1) {
+                if (this.depth > 1) {
                     log.newline();
                 }
                 log.write(e);
@@ -5034,9 +5071,8 @@ Test = $prototype({
                     self.fail();
                 }
             }
-        }, function (cancelTimeout) {
-            self.complete(cancelTimeout.arity0);
-        });
+        }, self.complete);
+        _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
         log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
             self.logCalls.push(x);
         }), function (doneWithLogging) {
@@ -5145,7 +5181,9 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            el.appendTo(document.body);
+            $(document).ready(function () {
+                el.appendTo(document.body);
+            });
             try {
                 $(window).resize(this.layout).resize();
                 this.modal.enableScrollFaders({ scroller: this.modalBody });
@@ -5179,11 +5217,11 @@ _.perfTest = function (arg, then) {
         },
         onRetry: function (retry) {
             this.retryTriggered(retry);
-            this.btnRetry.show();
+            this.btnRetry.css('display', '');
         },
         onClose: function (close) {
             this.closeTriggered(close);
-            this.btnClose.show();
+            this.btnClose.css('display', '');
         },
         retry: function () {
             this._clean();
@@ -5200,8 +5238,8 @@ _.perfTest = function (arg, then) {
         _clean: function () {
             this.modalBody.find('.panic-alert-error').remove();
             this.modalBody.scroll();
-            this.btnRetry.hide();
-            this.btnClose.hide();
+            this.btnRetry.css('display', 'none');
+            this.btnClose.css('display', 'none');
         },
         append: function (what, raw) {
             var id = 'panic' + this.hash(what);

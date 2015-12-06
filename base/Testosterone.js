@@ -110,7 +110,7 @@ Testosterone = $singleton ({
 
     /*  Entry point
      */
-    run: $interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
+    run: _.interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
 
         /*  Configuration
          */
@@ -125,8 +125,9 @@ Testosterone = $singleton ({
 
         /*  Read cfg.suites
          */
-        var suites = _.map (cfg.suites || [], this.$ (function (suite) {
-            return this.testSuite (suite.name, suite.tests, cfg.context) }))
+        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suites = _.map (cfg.suites || [], this.$ (function (suite, name) {
+            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
 
         var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
 
@@ -144,13 +145,9 @@ Testosterone = $singleton ({
              */
             this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-            /*  Bind to exception handling
-             */
-            _.withUncaughtExceptionHandler (this.$ (this.onException), this.$ (function (doneWithExceptions) {
-
                 /*  Go
                  */
-                _.cps.each (selectTests,
+                _.cps.each (this.runningTests,
                         this.$ (this.runTest),
                         this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
 
@@ -162,8 +159,7 @@ Testosterone = $singleton ({
                                     this.failed = (this.failedTests.length > 0)
                                     then (!this.failed)
                                     
-                                    doneWithExceptions ()
-                                    releaseLock () }) ) })) })) }),
+                                    releaseLock () }) ) })) }),
 
     onException: function (e) {
         if (this.currentAssertion) 
@@ -243,7 +239,7 @@ Test = $prototype ({
 
     constructor: function (cfg) {
         _.defaults (this, cfg, {
-            name:       'youre so dumb you cannot even think of a name?',
+            name:       '<< UNNAMED FOR UNKNOWN REASON >>',
             failed:     false,
             routine:    undefined,
             verbose:    false,
@@ -251,9 +247,9 @@ Test = $prototype ({
             indent:     0,
             failedAssertions: [],
             context:    this,
-            complete: _.barrier () })
+            complete: _.extend (_.barrier (), { context: this }) })
 
-        this.babyAssertion = $interlocked (this.babyAssertion) },
+        this.babyAssertion = _.interlocked (this.babyAssertion) },
 
     finalize: function () {
         this.babyAssertion.wait (this.$ (function () {
@@ -286,10 +282,10 @@ Test = $prototype ({
         var doneWithAssertion = function () {
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push (assertion) }
-            Testosterone.currentAssertion = self
             releaseLock () }
 
         assertion.run (function () {
+            Testosterone.currentAssertion = self
             if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
                     assertion.location.sourceReady (function (src) {
                         log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
@@ -309,7 +305,7 @@ Test = $prototype ({
                                                       a = this; do { result.push (a); a = a.mother } while (a)
                                           return result }),
 
-    onException: function (e) { var self = this
+    onException: function (e) {
 
             if (this.canFail || this.verbose) {
 
@@ -327,10 +323,9 @@ Test = $prototype ({
                         
                     // print exception
                 else {
-                    if (self.depth > 1) { log.newline () }
-                    log.write (e) }
-
-                log.newline () }
+                    if (this.depth > 1) { log.newline () }
+                                          log.write (e) }
+                                          log.newline () }
 
             if (this.canFail) { this.fail () }
                         else  { this.finalize () } },
@@ -346,9 +341,10 @@ Test = $prototype ({
 
         _.withTimeout ({
             maxTime: self.timeout,
-            expired: function ()     { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
-            function (cancelTimeout) {
-                self.complete (cancelTimeout.arity0) } )
+            expired: function () { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
+            self.complete)
+
+        _.withUncaughtExceptionHandler (self.$ (self.onException), self.complete)
 
         log.withWriteBackend (_.extendWith ({ indent: self.depth + (self.indent || 0) },
                                     function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),

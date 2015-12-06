@@ -22,11 +22,11 @@ module.exports = $trait ({
             then.apply (this, arguments) }) },
 
 
-    /*  Makes whole chain $interlocked (see concurrency.js for details), as
+    /*  Makes whole chain _.interlocked (see concurrency.js for details), as
         being a wrapper over it, lifting it to request handling chain level.
      */
     interlocked: function (then) {
-        return $interlocked (this.$ (function (context, releaseLock) {
+        return _.interlocked (this.$ (function (context, releaseLock) {
             _.onAfter (context, 'end', releaseLock)
             then.call (this, context) })) },
 

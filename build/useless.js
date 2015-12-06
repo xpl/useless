@@ -262,20 +262,30 @@ Base64 = {
  */
 
 _.platform = function () {
-                if ((typeof window !== 'undefined') && (window._.platform === arguments.callee)) {
-                    if (navigator.platform && navigator.platform.indexOf) {
-                        return _.extend ({ engine: 'browser'},
-                                ((navigator.platform .indexOf ("Linux arm") >= 0)
-                            ||   (navigator.platform .indexOf ("Android")   >= 0)
-                            ||   (navigator.userAgent.indexOf ("Android")   >= 0) ? { touch: true, system: 'Android' } :
-                                ((navigator.platform .indexOf ("iPad")      >= 0) ? { touch: true, system: 'iOS', device: 'iPad' }  :
-                                ((navigator.platform .indexOf ("iPhone")    >= 0)
-                            ||   (navigator.platform .indexOf ("iPod")      >= 0) ? { touch: true, system: 'iOS', device: 'iPhone' } : {} )))) } }
 
-                if ((typeof global !== 'undefined') && (global._.platform === arguments.callee)) {
-                    return { engine: 'node' } }
+                return arguments.callee.__value || (arguments.callee.__value = (function () {
 
-                return {} }
+                    if ((typeof window !== 'undefined') && window._ && (window._.platform === _.platform) &&
+                        (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
+                            return _.extend ({
+                                    engine: 'browser',
+                                    browser: 
+                                        ((navigator.userAgent.indexOf ('Firefox') >= 0) ? 'Firefox' :
+                                         (navigator.userAgent.indexOf ('Trident') >= 0) ? 'IE' : undefined) },
+
+                                    ((navigator.platform .indexOf ("Linux arm") >= 0)
+                                ||   (navigator.platform .indexOf ("Android")   >= 0)
+                                ||   (navigator.userAgent.indexOf ("Android")   >= 0) ? { touch: true, system: 'Android' } :
+
+                                        ((navigator.platform .indexOf ("iPad")      >= 0) ? { touch: true, system: 'iOS', device: 'iPad' }  :
+                                        ((navigator.platform .indexOf ("iPhone")    >= 0)
+                                    ||   (navigator.platform .indexOf ("iPod")      >= 0) ? { touch: true, system: 'iOS', device: 'iPhone' } : {} )))) }
+
+                    else if ((typeof global !== 'undefined') && global._ && (global._.platform === _.platform)) {
+                        return { engine: 'node' } }
+
+                    else {
+                        return {} } }) ()) }
 
 _.global = function () {
                 return ((_.platform ().engine === 'browser') ? window :
@@ -486,10 +496,10 @@ if (_.hasStdlib) {
     $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
     $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
 
-    $assertFails (function () {
+    /*$assertFails (function () {
         $assertEveryCalled     (function (a, b, c) { a (); b () })
         $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
-        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })
+        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
 
 /*  Ensuring CPS routine result
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -1520,7 +1530,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
                                             _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg, indent)) }
 
-                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x, 'toString')) {
+                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }
 
                             else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
@@ -1946,19 +1956,30 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
 
             $assert (_.map (input, _.arity1 (plus)), gives) }) (),
 
-        /*  Deep version of _.extend, allowing to extend two levels deep (super useful one)
+        /*  NOW DEPRECATED, USE _.extendedDeep
          */
         (function () {
             var input   = { foo:1,  bar: { qux:1 } }
             var plus    = { foo:42, bar: { baz:1 } }
             var gives   = { foo:42, bar: { baz:1, qux:1 }}
 
-            $assert (_.extend2 (input, plus), gives) }) ()]  }, function () {
+            $assert (_.extend2 (input, plus), gives) }) (),
+
+        /*  Deep version of _.extend, allowing to extend arbitrary levels deep (referentially transparent, so _.extendedDeep instead of _.extendDeep)
+         */
+        (function () {
+            var input   = { foo:1,  bar: { qux:1 } }
+            var plus    = { foo:42, bar: { baz:1 } }
+            var gives   = { foo:42, bar: { baz:1, qux:1 }}
+
+            $assert (_.extendedDeep (input, plus), gives) }) ()]  }, function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
 
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
+
+    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b || a })
 
     _.extend2 = $restArg (function (what) { 
                                 return _.extend (what, _.reduceRight (arguments, function (right, left) {
@@ -1995,18 +2016,22 @@ _.withTest (['stdlib', 'nonempty'], function () {
     ======================================================================== */
 
 _.deferTest (['stdlib', 'cloneDeep'], function () {
-    var obj     = { a: [{ b: { c: 'd' } }], b: {} }
+
+    var Proto = $prototype ({})
+
+    var obj     = { a: [{ b: { c: 'd' } }], b: {}, c: new Proto ()  }
     var copy    = _.cloneDeep (obj)
 
     $assert (obj   !== copy)    // should be distinct references
-    $assert (obj.a !== copy.a)  // should be distinct references
-    $assert (obj.b !== copy.b)  // should be distinct references
+    $assert (obj.a !== copy.a)  //
+    $assert (obj.b !== copy.b)  //
+    $assert (obj.c === copy.c)  // should be same instance (should consider prototype instances as atomic value)
 
     $assert (obj, copy)     // structure should not change
 
 }, function () { _.extend (_, {
 
-    cloneDeep: _.tails2 (_.mapMap, _.clone) }) })
+    cloneDeep: _.tails2 (_.mapMap, function (value) { return (_.isStrictlyObject (value) && !_.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,
@@ -3539,7 +3564,8 @@ _.deferTest ('bindable', function () {
                                var bindable = makeBindable (obj, targetMethod)
                             return bindable[name].call (bindable, delegate) } }
 
-    var mixin = function (method) {
+    var mixin = function (method) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
+
                     return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
@@ -3566,7 +3592,7 @@ _.deferTest ('bindable', function () {
      */
     _.extend (_, _.mapObject (_.invert (hooks), hookProc.flip2), {
 
-        off: function (obj, targetMethod, delegate) {
+        unbind: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]
                 if (_.isBindable (method)) {
                     _.each (hooks, function (hook) {
@@ -3576,7 +3602,7 @@ _.deferTest ('bindable', function () {
             return (fn && fn._bindable) ? true : false },
 
         bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
-            return _.withSameArgs (method, _.extendWith (mixin (method), function () {      
+            return _.withSameArgs (method, _.extendWith (mixin (method), function () {   
 
                 var wrapper     = arguments.callee
                 var onceBefore  = wrapper._onceBefore
@@ -3796,6 +3822,16 @@ _.tests.stream = {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
+    '_.barrier reset': function () {
+        var b = _.barrier ()
+
+        b ('not_42')
+        b.reset ()
+
+        $assertEveryCalledOnce (function (mkay) {
+            b (function (value) { mkay (); $assert (value, 42) })
+            b (42) }) },
+
     '_.barrier (value)': function () { $assertEveryCalledOnce (function (mkay) {
              var willBe42 = _.barrier (42)
         $assert (willBe42.already)
@@ -3887,6 +3923,11 @@ _.extend (_, {
         var barrier = _.stream ({
                     already: defaultValue !== undefined,
                     value: defaultValue,
+
+                    reset: function () {
+                        barrier.already = false
+                        delete barrier.value },
+
                     write: function (returnResult) {
                                 return function (value) {
                                     if (!barrier.already) {
@@ -4656,6 +4697,9 @@ _.deferTest ('OOP', {
         device: _.platform ().device,
         touch:  _.platform ().touch || false,
 
+        IE:      _.platform ().browser === 'IE',
+        Firefox: _.platform ().browser === 'Firefox',
+
         Browser: _.platform ().engine === 'browser',
         NodeJS:  _.platform ().engine === 'node',
         iPad:    _.platform ().device === 'iPad',
@@ -4902,7 +4946,7 @@ _.tests.concurrency = {
         _.mapReduce (_.times (30, Format.randomHexString), {
                 complete: testDone,
                 maxConcurrency: 10,
-                next: $interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
+                next: _.interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
                                         isNowRunning = true
                                         _.delay (function () {
                                             then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
@@ -4984,18 +5028,18 @@ Lock = $prototype ({
             delete this.waitQueue } })
 
    
-/*  Adds $interlocked(fn) utility that wraps passed function into lock. Unfortunately,
-    it cannot be released automagically © at the moment, because $interlocked does
+/*  Adds _.interlocked(fn) utility that wraps passed function into lock. Unfortunately,
+    it cannot be released automagically © at the moment, because _.interlocked does
     not know how to bind to your chains of continuations, and no general mechanism
     exist. Should look into Promise concept (as its now core JS feature)...
 
     'Release' trigger passed as last argument to your target function.
  */
-_.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
+_.interlocked = function (fn) { var lock = new Lock ()
     return _.extendWith ({ wait: lock.$ (lock.wait) },
         _.prependsArguments (Tags.unwrap (fn), function (context) {
                                                     lock.acquire (function () {
-                                                        context (lock.$ (lock.release)) }) })) })
+                                                        context (lock.$ (lock.release)) }) })) }
 
 
 /*  EXPERIMENTAL (TBD)
@@ -5241,20 +5285,20 @@ BBox = $prototype ({
         fromLeftTopAndSize: function (pt, size) {
             return BBox.fromLTWH ({ left: pt.x, top: pt.y, width: size.x, height: size.y }) },
 
-        fromLTWH: function (r) {
-            return new BBox (r.left + r.width / 2.0, r.top + r.height / 2.0, r.width, r.height) },
+        fromLTWH: function (l,t,w,h) {
+            if (arguments.length === 1) { return BBox.fromLTWH (l.left, l.top, l.width, l.height) }
+                                   else { return new BBox (l + w / 2.0, t + h / 2.0, w, h) } },
 
-        fromLTRB: function (r) {
-            return new BBox (_.lerp (0.5, r.left, r.right), _.lerp (0.5, r.top, r.bottom), r.right - r.left, r.bottom - r.top) },
+        fromLTRB: function (l,t,r,b) {
+            if (arguments.length === 1) { return BBox.fromLTRB (l.left, l.top, l.right, l.bottom) }
+                                   else { return new BBox (_.lerp (0.5, l, r), _.lerp (0.5, t, b), r - l, b - t) } },
 
         fromSizeAndCenter: function (size, center) {
             return new BBox (center.x - size.x / 2.0, center.y - size.y / 2.0, size.x, size.y) },
 
         fromSize: function (a, b) {
-            if (b) {
-                return new BBox (-a / 2.0, -b / 2.0, a, b) }
-            else {
-                return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
+            if (b) { return new BBox (-a / 2.0, -b / 2.0, a, b) }
+              else { return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
         
         fromPoints: function (pts) { var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE
             _.each (pts, function (pt) {
@@ -5262,7 +5306,7 @@ BBox = $prototype ({
                 t = Math.min (pt.y, t)
                 r = Math.max (pt.x, r)
                 b = Math.max (pt.y, b) })
-            return BBox.fromLTRB ({ left: l, top: t, right: r, bottom: b }) } },
+            return BBox.fromLTRB (l, t, r, b) } },
 
     constructor: function (x, y, w, h) {
         if (arguments.length == 4) {
@@ -5366,17 +5410,20 @@ BBox = $prototype ({
 
     ltwh: $alias ('css'),
 
-    union: $property (function (other) { return BBox.fromLTRB (
-                                                    Math.min (this.left,   other.left),
-                                                    Math.min (this.top,    other.top),
-                                                    Math.max (this.right,  other.right),
-                                                    Math.max (this.bottom, other.bottom)) }),
+    union: function (other) { return BBox.fromLTRB (
+                                        Math.min (this.left,   other.left),
+                                        Math.min (this.top,    other.top),
+                                        Math.max (this.right,  other.right),
+                                        Math.max (this.bottom, other.bottom)) },
 
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
     
     floor: $property (function () {
-        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
+        return new BBox.fromLTRB (Math.floor (this.left),
+                                  Math.floor (this.top),
+                                  Math.floor (this.right),
+                                  Math.floor (this.bottom)) }),
 
     css: $property (function () {
         return { left: this.left, top: this.top, width: this.width, height: this.height } }),
@@ -6063,6 +6110,23 @@ _.tests.component = {
 
         compo.trig.call ({}) },
 
+    '$defaults can set $observableProperty': function () {
+
+        var compo = $singleton (Component, {
+            twentyFour: $observableProperty (42),
+            $defaults: { twentyFour: 24 } })
+
+        $assertEveryCalledOnce (function (mkay) {
+            compo.twentyFourChange (function (val) { $assert (val, 24); mkay (); }) }) },
+
+    'defer init with $defaults': function () {
+        var compo = $singleton (Component, {
+            $defaults: { init: false },
+            init: function () { } })
+
+        compo.init ()
+    },
+
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
@@ -6157,7 +6221,7 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'lock',
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
@@ -6170,10 +6234,10 @@ _.defineKeyword ('observableRef', function (x) { return $observableProperty ($re
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro (keyword, function (def, value, name, Base) {
 
-        _.extend2 (value, (Base && Base[keyword]) || {}, value)
+        value = _.extendedDeep ((Base && Base[keyword]) || {}, value)
 
         _.each (def.$traits, function (Trait) {
-            _.extend2 (value, Trait[keyword]) })
+            value = _.extendedDeep (Trait[keyword], value) })
 
         def[keyword] = $static ($builtin ($property (_.constant (value))))
 
@@ -6255,7 +6319,7 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.defaults (this, _.cloneDeep (this.constructor.$defaults)) }
+            _.extend (cfg, _.cloneDeep (this.constructor.$defaults)) }
 
 
         /*  Listen self destroy method
@@ -6347,10 +6411,10 @@ Component = $prototype ({
             if (def.$listener) {
                 this[name].queuedBy = [] }
 
-            /*  Expand $lock
+            /*  Expand $interlocked
              */
-            if (def.$lock) {
-                this[name] = $interlocked (this[name]) }
+            if (def.$interlocked) {
+                this[name] = _.interlocked (this[name]) }
 
             /*  Expand $bindable
              */
@@ -6534,9 +6598,7 @@ Component = $prototype ({
     destroyAll: function () {
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
-                            return this }
-
-})
+                            return this } })
 
 ;
 /*  Implementation
@@ -6694,13 +6756,13 @@ R = $singleton ({
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
 
-
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
                 try {
                     chain[i] (e)
                     break }
                 catch (newE) {
+                    console.log (newE)
                     if (i === n - 1) {
                         newE.message += reThrownTag
                         throw newE }
@@ -7092,6 +7154,7 @@ _.tests.log = {
 
         log.success ('log.success')     //  Use for quality production logging (logging that lasts).
         log.ok      ('log.ok')
+        log.g       ('log.g')
         log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
         log.i       ('log.i')
         log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
@@ -7364,7 +7427,8 @@ _.extend (log, log.printAPI = {
     warn:       log.impl.write ({ location: true }).partial (log.color.orange),
     warning:    log.impl.write ({ location: true }).partial (log.color.orange),
     success:    log.impl.write ({ location: true }).partial (log.color.green),
-    ok:         log.impl.write ({ location: true }).partial (log.color.green) }) 
+    ok:         log.impl.write ({ location: true }).partial (log.color.green),
+    g:          log.impl.write ({ location: true }).partial (log.color.green) }) 
 
 log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
 
@@ -7541,7 +7605,7 @@ Testosterone = $singleton ({
 
     /*  Entry point
      */
-    run: $interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
+    run: _.interlocked (function (releaseLock, cfg_, optionalThen) { var then = arguments.length === 3 ? optionalThen : _.identity
 
         /*  Configuration
          */
@@ -7556,8 +7620,9 @@ Testosterone = $singleton ({
 
         /*  Read cfg.suites
          */
-        var suites = _.map (cfg.suites || [], this.$ (function (suite) {
-            return this.testSuite (suite.name, suite.tests, cfg.context) }))
+        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suites = _.map (cfg.suites || [], this.$ (function (suite, name) {
+            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
 
         var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
 
@@ -7575,13 +7640,9 @@ Testosterone = $singleton ({
              */
             this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-            /*  Bind to exception handling
-             */
-            _.withUncaughtExceptionHandler (this.$ (this.onException), this.$ (function (doneWithExceptions) {
-
                 /*  Go
                  */
-                _.cps.each (selectTests,
+                _.cps.each (this.runningTests,
                         this.$ (this.runTest),
                         this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
 
@@ -7593,8 +7654,7 @@ Testosterone = $singleton ({
                                     this.failed = (this.failedTests.length > 0)
                                     then (!this.failed)
                                     
-                                    doneWithExceptions ()
-                                    releaseLock () }) ) })) })) }),
+                                    releaseLock () }) ) })) }),
 
     onException: function (e) {
         if (this.currentAssertion) 
@@ -7674,7 +7734,7 @@ Test = $prototype ({
 
     constructor: function (cfg) {
         _.defaults (this, cfg, {
-            name:       'youre so dumb you cannot even think of a name?',
+            name:       '<< UNNAMED FOR UNKNOWN REASON >>',
             failed:     false,
             routine:    undefined,
             verbose:    false,
@@ -7682,9 +7742,9 @@ Test = $prototype ({
             indent:     0,
             failedAssertions: [],
             context:    this,
-            complete: _.barrier () })
+            complete: _.extend (_.barrier (), { context: this }) })
 
-        this.babyAssertion = $interlocked (this.babyAssertion) },
+        this.babyAssertion = _.interlocked (this.babyAssertion) },
 
     finalize: function () {
         this.babyAssertion.wait (this.$ (function () {
@@ -7717,10 +7777,10 @@ Test = $prototype ({
         var doneWithAssertion = function () {
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push (assertion) }
-            Testosterone.currentAssertion = self
             releaseLock () }
 
         assertion.run (function () {
+            Testosterone.currentAssertion = self
             if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
                     assertion.location.sourceReady (function (src) {
                         log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
@@ -7740,7 +7800,7 @@ Test = $prototype ({
                                                       a = this; do { result.push (a); a = a.mother } while (a)
                                           return result }),
 
-    onException: function (e) { var self = this
+    onException: function (e) {
 
             if (this.canFail || this.verbose) {
 
@@ -7758,10 +7818,9 @@ Test = $prototype ({
                         
                     // print exception
                 else {
-                    if (self.depth > 1) { log.newline () }
-                    log.write (e) }
-
-                log.newline () }
+                    if (this.depth > 1) { log.newline () }
+                                          log.write (e) }
+                                          log.newline () }
 
             if (this.canFail) { this.fail () }
                         else  { this.finalize () } },
@@ -7777,9 +7836,10 @@ Test = $prototype ({
 
         _.withTimeout ({
             maxTime: self.timeout,
-            expired: function ()     { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
-            function (cancelTimeout) {
-                self.complete (cancelTimeout.arity0) } )
+            expired: function () { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
+            self.complete)
+
+        _.withUncaughtExceptionHandler (self.$ (self.onException), self.complete)
 
         log.withWriteBackend (_.extendWith ({ indent: self.depth + (self.indent || 0) },
                                     function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),
@@ -7994,7 +8054,10 @@ _.extend ($, {
     /*  Instantiates svg elements
      */
     svg: function (tag) {
-            return $(document.createElementNS ('http://www.w3.org/2000/svg', tag)) } })
+            var node = document.createElementNS ('http://www.w3.org/2000/svg', tag)
+            if ((tag === 'svg') && !Platform.IE) {
+                node.setAttribute ('xmlns', 'http://www.w3.org/2000/svg') }
+            return $(node) } })
 
 /*  Element methods
  */
@@ -8124,6 +8187,13 @@ _.extend ($, {
             this.addClass (cls)
             this.animationend (this.$ (function () { this.removeClass (cls)
                                                      if (done) { done.call (this) } })) }
+        return this },
+
+    transitionWith: function (cls, done) {
+        if (cls) {
+            this.addClass (cls)
+            this.transitionend (this.$ (function () { this.removeClass (cls)
+                                                      if (done) { done.call (this) } })) }
         return this },
 
     /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.

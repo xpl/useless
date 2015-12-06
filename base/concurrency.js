@@ -84,7 +84,7 @@ _.tests.concurrency = {
         _.mapReduce (_.times (30, Format.randomHexString), {
                 complete: testDone,
                 maxConcurrency: 10,
-                next: $interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
+                next: _.interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
                                         isNowRunning = true
                                         _.delay (function () {
                                             then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
@@ -166,18 +166,18 @@ Lock = $prototype ({
             delete this.waitQueue } })
 
    
-/*  Adds $interlocked(fn) utility that wraps passed function into lock. Unfortunately,
-    it cannot be released automagically © at the moment, because $interlocked does
+/*  Adds _.interlocked(fn) utility that wraps passed function into lock. Unfortunately,
+    it cannot be released automagically © at the moment, because _.interlocked does
     not know how to bind to your chains of continuations, and no general mechanism
     exist. Should look into Promise concept (as its now core JS feature)...
 
     'Release' trigger passed as last argument to your target function.
  */
-_.defineKeyword ('interlocked', function (fn) { var lock = new Lock ()
+_.interlocked = function (fn) { var lock = new Lock ()
     return _.extendWith ({ wait: lock.$ (lock.wait) },
         _.prependsArguments (Tags.unwrap (fn), function (context) {
                                                     lock.acquire (function () {
-                                                        context (lock.$ (lock.release)) }) })) })
+                                                        context (lock.$ (lock.release)) }) })) }
 
 
 /*  EXPERIMENTAL (TBD)

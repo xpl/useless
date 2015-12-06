@@ -14,7 +14,10 @@ _.extend ($, {
     /*  Instantiates svg elements
      */
     svg: function (tag) {
-            return $(document.createElementNS ('http://www.w3.org/2000/svg', tag)) } })
+            var node = document.createElementNS ('http://www.w3.org/2000/svg', tag)
+            if ((tag === 'svg') && !Platform.IE) {
+                node.setAttribute ('xmlns', 'http://www.w3.org/2000/svg') }
+            return $(node) } })
 
 /*  Element methods
  */
@@ -144,6 +147,13 @@ _.extend ($, {
             this.addClass (cls)
             this.animationend (this.$ (function () { this.removeClass (cls)
                                                      if (done) { done.call (this) } })) }
+        return this },
+
+    transitionWith: function (cls, done) {
+        if (cls) {
+            this.addClass (cls)
+            this.transitionend (this.$ (function () { this.removeClass (cls)
+                                                      if (done) { done.call (this) } })) }
         return this },
 
     /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.

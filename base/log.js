@@ -13,6 +13,7 @@ _.tests.log = {
 
         log.success ('log.success')     //  Use for quality production logging (logging that lasts).
         log.ok      ('log.ok')
+        log.g       ('log.g')
         log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
         log.i       ('log.i')
         log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
@@ -285,7 +286,8 @@ _.extend (log, log.printAPI = {
     warn:       log.impl.write ({ location: true }).partial (log.color.orange),
     warning:    log.impl.write ({ location: true }).partial (log.color.orange),
     success:    log.impl.write ({ location: true }).partial (log.color.green),
-    ok:         log.impl.write ({ location: true }).partial (log.color.green) }) 
+    ok:         log.impl.write ({ location: true }).partial (log.color.green),
+    g:          log.impl.write ({ location: true }).partial (log.color.green) }) 
 
 log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
 

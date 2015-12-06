@@ -10,7 +10,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Browser builds
 
-* Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js) (111 Kb)
+* Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
 * Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
 
 ### Dependencies and limitations
@@ -186,10 +186,10 @@ Task pooling (parallel map/reduce with limit on maximum concurrently running tas
                   complete: function (memo) { ... })
 ```
 
-**$interlocked** (puts a function under concurrency lock)
+**_.interlocked** (puts a function under concurrency lock)
 
 ```javascript
-  readFilesSequentially = $interlocked (function (releaseLock, file, done) {
+  readFilesSequentially = _.interlocked (function (releaseLock, file, done) {
                                          $.get (file, done.then (releaseLock), 'text') })
 
   readFilesSequentially ('file1.txt', log)

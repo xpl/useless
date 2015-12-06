@@ -648,6 +648,9 @@ _.deferTest ('OOP', {
         device: _.platform ().device,
         touch:  _.platform ().touch || false,
 
+        IE:      _.platform ().browser === 'IE',
+        Firefox: _.platform ().browser === 'Firefox',
+
         Browser: _.platform ().engine === 'browser',
         NodeJS:  _.platform ().engine === 'node',
         iPad:    _.platform ().device === 'iPad',

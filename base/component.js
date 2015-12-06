@@ -428,6 +428,23 @@ _.tests.component = {
 
         compo.trig.call ({}) },
 
+    '$defaults can set $observableProperty': function () {
+
+        var compo = $singleton (Component, {
+            twentyFour: $observableProperty (42),
+            $defaults: { twentyFour: 24 } })
+
+        $assertEveryCalledOnce (function (mkay) {
+            compo.twentyFourChange (function (val) { $assert (val, 24); mkay (); }) }) },
+
+    'defer init with $defaults': function () {
+        var compo = $singleton (Component, {
+            $defaults: { init: false },
+            init: function () { } })
+
+        compo.init ()
+    },
+
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
         var compo = $singleton (Component, {
@@ -522,7 +539,7 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
     return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'lock',
+_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
@@ -535,10 +552,10 @@ _.defineKeyword ('observableRef', function (x) { return $observableProperty ($re
 $prototype.inheritsBaseValues = function (keyword) {
     $prototype.macro (keyword, function (def, value, name, Base) {
 
-        _.extend2 (value, (Base && Base[keyword]) || {}, value)
+        value = _.extendedDeep ((Base && Base[keyword]) || {}, value)
 
         _.each (def.$traits, function (Trait) {
-            _.extend2 (value, Trait[keyword]) })
+            value = _.extendedDeep (Trait[keyword], value) })
 
         def[keyword] = $static ($builtin ($property (_.constant (value))))
 
@@ -620,7 +637,7 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.defaults (this, _.cloneDeep (this.constructor.$defaults)) }
+            _.extend (cfg, _.cloneDeep (this.constructor.$defaults)) }
 
 
         /*  Listen self destroy method
@@ -712,10 +729,10 @@ Component = $prototype ({
             if (def.$listener) {
                 this[name].queuedBy = [] }
 
-            /*  Expand $lock
+            /*  Expand $interlocked
              */
-            if (def.$lock) {
-                this[name] = $interlocked (this[name]) }
+            if (def.$interlocked) {
+                this[name] = _.interlocked (this[name]) }
 
             /*  Expand $bindable
              */
@@ -899,7 +916,5 @@ Component = $prototype ({
     destroyAll: function () {
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
-                            return this }
-
-})
+                            return this } })
 

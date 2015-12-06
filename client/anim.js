@@ -46,7 +46,7 @@ InertialValue = $component ({
 /*  Easing functions (1D an 2D)
  */
 
-var Easing = {
+Easing = {
 
     scalar: {
 

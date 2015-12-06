@@ -319,6 +319,7 @@ _.each(_.keys(_.assertions), function (name) {
                     chain[i](e);
                     break;
                 } catch (newE) {
+                    console.log(newE);
                     if (i === n - 1) {
                         newE.message += reThrownTag;
                         throw newE;
@@ -822,7 +823,8 @@ _.extend(log, log.printAPI = {
     warn: log.impl.write({ location: true }).partial(log.color.orange),
     warning: log.impl.write({ location: true }).partial(log.color.orange),
     success: log.impl.write({ location: true }).partial(log.color.green),
-    ok: log.impl.write({ location: true }).partial(log.color.green)
+    ok: log.impl.write({ location: true }).partial(log.color.green),
+    g: log.impl.write({ location: true }).partial(log.color.green)
 });
 log.writes = log.printAPI.writes = _.higherOrder(log.write);
 logs = _.map2(log.printAPI, _.higherOrder);
@@ -906,7 +908,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: $interlocked(function (releaseLock, cfg_, optionalThen) {
+    run: _.interlocked(function (releaseLock, cfg_, optionalThen) {
         var then = arguments.length === 3 ? optionalThen : _.identity;
         var defaults = {
             silent: true,
@@ -918,8 +920,9 @@ Testosterone = $singleton({
             }
         };
         var cfg = this.runConfig = _.extend(defaults, cfg_);
-        var suites = _.map(cfg.suites || [], this.$(function (suite) {
-            return this.testSuite(suite.name, suite.tests, cfg.context);
+        var suitesIsArray = _.isArray(cfg.suites);
+        var suites = _.map(cfg.suites || [], this.$(function (suite, name) {
+            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context);
         }));
         var collectPrototypeTests = cfg.codebase === false ? _.cps.constant([]) : this.$(this.collectPrototypeTests);
         collectPrototypeTests(this.$(function (prototypeTests) {
@@ -932,17 +935,14 @@ Testosterone = $singleton({
                     index: i
                 });
             });
-            _.withUncaughtExceptionHandler(this.$(this.onException), this.$(function (doneWithExceptions) {
-                _.cps.each(selectTests, this.$(this.runTest), this.$(function () {
-                    _.assert(cfg.done !== true);
-                    cfg.done = true;
-                    this.printLog(cfg);
-                    this.failedTests = _.filter(this.runningTests, _.property('failed'));
-                    this.failed = this.failedTests.length > 0;
-                    then(!this.failed);
-                    doneWithExceptions();
-                    releaseLock();
-                }));
+            _.cps.each(this.runningTests, this.$(this.runTest), this.$(function () {
+                _.assert(cfg.done !== true);
+                cfg.done = true;
+                this.printLog(cfg);
+                this.failedTests = _.filter(this.runningTests, _.property('failed'));
+                this.failed = this.failedTests.length > 0;
+                then(!this.failed);
+                releaseLock();
             }));
         }));
     }),
@@ -1039,7 +1039,7 @@ Testosterone = $singleton({
 Test = $prototype({
     constructor: function (cfg) {
         _.defaults(this, cfg, {
-            name: 'youre so dumb you cannot even think of a name?',
+            name: '<< UNNAMED FOR UNKNOWN REASON >>',
             failed: false,
             routine: undefined,
             verbose: false,
@@ -1047,9 +1047,9 @@ Test = $prototype({
             indent: 0,
             failedAssertions: [],
             context: this,
-            complete: _.barrier()
+            complete: _.extend(_.barrier(), { context: this })
         });
-        this.babyAssertion = $interlocked(this.babyAssertion);
+        this.babyAssertion = _.interlocked(this.babyAssertion);
     },
     finalize: function () {
         this.babyAssertion.wait(this.$(function () {
@@ -1094,10 +1094,10 @@ Test = $prototype({
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push(assertion);
             }
-            Testosterone.currentAssertion = self;
             releaseLock();
         };
         assertion.run(function () {
+            Testosterone.currentAssertion = self;
             if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
                 assertion.location.sourceReady(function (src) {
                     log.red(src, log.config({
@@ -1128,7 +1128,6 @@ Test = $prototype({
         return result;
     }),
     onException: function (e) {
-        var self = this;
         if (this.canFail || this.verbose) {
             if (_.isAssertionError(e)) {
                 if ('notMatching' in e) {
@@ -1147,7 +1146,7 @@ Test = $prototype({
                     }
                 }
             } else {
-                if (self.depth > 1) {
+                if (this.depth > 1) {
                     log.newline();
                 }
                 log.write(e);
@@ -1175,9 +1174,8 @@ Test = $prototype({
                     self.fail();
                 }
             }
-        }, function (cancelTimeout) {
-            self.complete(cancelTimeout.arity0);
-        });
+        }, self.complete);
+        _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
         log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
             self.logCalls.push(x);
         }), function (doneWithLogging) {
@@ -1286,7 +1284,9 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            el.appendTo(document.body);
+            $(document).ready(function () {
+                el.appendTo(document.body);
+            });
             try {
                 $(window).resize(this.layout).resize();
                 this.modal.enableScrollFaders({ scroller: this.modalBody });
@@ -1320,11 +1320,11 @@ _.perfTest = function (arg, then) {
         },
         onRetry: function (retry) {
             this.retryTriggered(retry);
-            this.btnRetry.show();
+            this.btnRetry.css('display', '');
         },
         onClose: function (close) {
             this.closeTriggered(close);
-            this.btnClose.show();
+            this.btnClose.css('display', '');
         },
         retry: function () {
             this._clean();
@@ -1341,8 +1341,8 @@ _.perfTest = function (arg, then) {
         _clean: function () {
             this.modalBody.find('.panic-alert-error').remove();
             this.modalBody.scroll();
-            this.btnRetry.hide();
-            this.btnClose.hide();
+            this.btnRetry.css('display', 'none');
+            this.btnClose.css('display', 'none');
         },
         append: function (what, raw) {
             var id = 'panic' + this.hash(what);
