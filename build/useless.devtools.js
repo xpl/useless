@@ -1787,8 +1787,8 @@ Panic.widget = $singleton (Component, {
 					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ])
 
-		$(document).ready (function () {
-			el.appendTo (document.body) })
+		//$(document).ready (function () {
+			el.appendTo (document.body)// })
 
 		try {
 			$(window).resize (this.layout).resize ()

@@ -1284,9 +1284,7 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            $(document).ready(function () {
-                el.appendTo(document.body);
-            });
+            el.appendTo(document.body);
             try {
                 $(window).resize(this.layout).resize();
                 this.modal.enableScrollFaders({ scroller: this.modalBody });

@@ -5847,7 +5847,7 @@ _.tests.component = {
  
         $assert (new Derived ().inner !== new Derived ().inner) // should clone $defaults at instance construction
 
-        $assertMatches (new Derived (), { pff: 'pff', foo: 12, bar: 34, qux: 'overriden', inner: { fromTrait: 1, fromBase: 1, fromDerived: 1 } }) },
+        $assertMatches (new Derived ({ pff: 'overriden from cfg' }), { pff: 'overriden from cfg', foo: 12, bar: 34, qux: 'overriden', inner: { fromTrait: 1, fromBase: 1, fromDerived: 1 } }) },
 
 
     /*  Use $requires to specify required config params along with their type signatures
@@ -6319,7 +6319,7 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.extend (cfg, _.cloneDeep (this.constructor.$defaults)) }
+            cfg = this.cfg = _.extend (_.cloneDeep (this.constructor.$defaults), cfg) }
 
 
         /*  Listen self destroy method

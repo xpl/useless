@@ -3296,7 +3296,7 @@ Component = $prototype({
     constructor: $final(function (arg1, arg2) {
         var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
         if (this.constructor.$defaults) {
-            _.extend(cfg, _.cloneDeep(this.constructor.$defaults));
+            cfg = this.cfg = _.extend(_.cloneDeep(this.constructor.$defaults), cfg);
         }
         _.onBefore(this, 'destroy', this.beforeDestroy);
         _.onAfter(this, 'destroy', this.afterDestroy);
@@ -5181,9 +5181,7 @@ _.perfTest = function (arg, then) {
                     ])
                 ])
             ]);
-            $(document).ready(function () {
-                el.appendTo(document.body);
-            });
+            el.appendTo(document.body);
             try {
                 $(window).resize(this.layout).resize();
                 this.modal.enableScrollFaders({ scroller: this.modalBody });
