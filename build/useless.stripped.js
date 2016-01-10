@@ -286,7 +286,7 @@ _.extend(_, _.assertions = {
         });
     },
     assertEveryCalledOnce: function (fn, then) {
-        return _.assertEveryCalled(_.hasTags ? $once(fn) : _.extend(fn, { once: true }), then);
+        return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
     },
     assertEveryCalled: function (fn_, then) {
         var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
@@ -296,7 +296,7 @@ _.extend(_, _.assertions = {
             var parts = arg.trim().match(/^(.+)__(.+)$/);
             return parts && parseInt(parts[2], 10) || true;
         });
-        var status = [];
+        var status = _.times(fn.length, _.constant(false));
         var callbacks = _.times(fn.length, function (i) {
             return function () {
                 status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
@@ -445,8 +445,8 @@ _.each(_.keys(_.assertions), function (name) {
     _.defineGlobalProperty('$' + name, _[name], { configurable: true });
 });
 _.extend(_, {
-    asArray: function (arrayMimick) {
-        return [].slice.call(arrayMimick, 0);
+    asArray: function (x) {
+        return x.length !== undefined ? [].slice.call(x, 0) : [x];
     }
 });
 _.extend(_, {
@@ -777,6 +777,11 @@ _.asString = function (what) {
 _.typeOf = function (what) {
     return typeof what;
 };
+_.instanceOf = function (what) {
+    return function (x) {
+        return x instanceof what;
+    };
+};
 _.count = function (what) {
     return what.length;
 };
@@ -870,6 +875,9 @@ _.propertyOf = function (obj) {
         return obj[prop];
     };
 };
+_.oneOf = $restArg(function () {
+    return _.propertyOf(_.index(_.asArray(arguments)));
+});
 _.isInstanceofSyntaxAvailable = function () {
     var e = new Error();
     try {
@@ -1213,6 +1221,16 @@ _.mixin({
     }
 });
 _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
+_.find2 = function (value, pred) {
+    for (var i = 0, n = value.length; i < n; i++) {
+        var x = pred(value[i], i, value);
+        if (typeof x !== 'boolean') {
+            return x;
+        } else if (x === true) {
+            return value[i];
+        }
+    }
+};
 _.findFind = function (obj, pred_) {
     return _.hyperOperator(_.unary, function (value, pred) {
         if (_.isArray(value)) {
@@ -1248,7 +1266,7 @@ _.extend = $restArg(_.extend);
 _.extendWith = _.flip(_.extend);
 _.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
 _.extendedDeep = _.tails3(_.zipZip, function (a, b) {
-    return b || a;
+    return b === undefined ? a : b;
 });
 _.extend2 = $restArg(function (what) {
     return _.extend(what, _.reduceRight(arguments, function (right, left) {
@@ -1826,6 +1844,7 @@ $extensionMethods = function (Type, methods) {
     });
 };
 $extensionMethods(Function, {
+    $: $method(_.partial),
     bind: _.bind,
     partial: _.partial,
     tails: _.tails,
@@ -1838,6 +1857,9 @@ $extensionMethods(Function, {
     flip3: _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod: _.asMethod,
+    asPromise: function (f) {
+        return new Promise(f);
+    },
     asContinuation: function (f) {
         return $restArg(function () {
             _.last(arguments)(f.apply(this, _.initial(arguments)));
@@ -1949,6 +1971,12 @@ $extensionMethods(Array, {
     reduceRight: _.reduceRight,
     zip: _.zipWith,
     filter: _.filter,
+    first: function (arr) {
+        return arr[0];
+    },
+    last: function (arr) {
+        return arr[arr.length - 1];
+    },
     isEmpty: function (arr) {
         return arr.length === 0;
     },
@@ -1957,9 +1985,6 @@ $extensionMethods(Array, {
     },
     lastIndex: function (arr) {
         return arr.length - 1;
-    },
-    last: function (arr) {
-        return _.last(arr);
     },
     random: function (arr) {
         return arr[_.random(0, arr.lastIndex)];
@@ -2174,14 +2199,15 @@ $extensionMethods(String, {
             return bindable[name].call(bindable, delegate);
         };
     };
-    var mixin = function (method) {
+    var mixin = function (method, context) {
         if (typeof method !== 'function') {
             throw new Error('method should be a function');
         }
         return _.extend({}, method, {
             _bindable: true,
             impl: method,
-            _wrapped: method
+            _wrapped: method,
+            context: context
         }, _.object(_.map(hooks, function (name) {
             var queueName = '_' + name;
             var once = name.indexOf('once') >= 0;
@@ -2221,7 +2247,7 @@ $extensionMethods(String, {
             hooks: hooks,
             hooksShort: hooksShort
         }, function (method, context) {
-            return _.withSameArgs(method, _.extendWith(mixin(method), function () {
+            return _.withSameArgs(method, _.extendWith(mixin(method, context), function () {
                 var wrapper = arguments.callee;
                 var onceBefore = wrapper._onceBefore;
                 var onceAfter = wrapper._onceAfter;
@@ -2505,6 +2531,9 @@ $prototype = function (arg1, arg2) {
 $extends = function (base, def) {
     return $prototype(base, def || {});
 };
+$mixin = function (constructor, def) {
+    return $prototype.impl.compileMixin(_.extend(def, { constructor: constructor }));
+};
 _.extend($prototype, {
     isConstructor: function (what) {
         return _.isPrototypeConstructor(what);
@@ -2556,13 +2585,16 @@ _.extend($prototype, {
             return (base && base.$impl || this)._compile(def, base);
         },
         _compile: function (def, base) {
-            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
+            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers, this.callStaticConstructor).call(this, def || {}).constructor);
+        },
+        compileMixin: function (def) {
+            return _.sequence(this.flatten, this.contributeTraits, this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
         },
         evalAlwaysTriggeredMacros: function (base) {
             return function (def) {
                 var macros = $prototype.impl.alwaysTriggeredMacros;
                 for (var i = 0, n = macros.length; i < n; i++) {
-                    def = macros[i](def, base);
+                    def = macros[i](def, base) || def;
                 }
                 return def;
             };
@@ -2572,11 +2604,11 @@ _.extend($prototype, {
                 var names = $prototype.impl.memberNameTriggeredMacros, tags = $prototype.impl.tagTriggeredMacros;
                 _.each(def, function (value, name) {
                     if (names.hasOwnProperty(name)) {
-                        def = names[name](def, value, name, base);
+                        def = names[name](def, value, name, base) || def;
                     }
                     _.each(_.keys(value), function (tag) {
                         if (tags.hasOwnProperty(tag)) {
-                            def = tags[tag](def, value, name, base);
+                            def = tags[tag](def, value, name, base) || def;
                         }
                     });
                 });
@@ -2621,6 +2653,12 @@ _.extend($prototype, {
         },
         extendWithTags: function (def) {
             return _.extendWith(Tags.unwrap(def), _.mapObject(Tags.get(def), $static.arity1));
+        },
+        callStaticConstructor: function (def) {
+            if (def.$constructor) {
+                def.$constructor();
+            }
+            return def;
         },
         generateConstructor: function (base) {
             return function (def) {
@@ -2747,20 +2785,29 @@ $trait = function (arg1, arg2) {
     return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
 };
 _.$ = function (this_, fn) {
-    return _.bind.apply(undefined, [
+    var arguments_ = _.rest(arguments, 2);
+    var result = arguments_.length ? _.bind.apply(undefined, [
         fn,
         this_
-    ].concat(_.rest(arguments, 2)));
+    ].concat(_.rest(arguments, 2))) : _.withSameArgs(fn, function () {
+        return fn.apply(this_, arguments);
+    });
+    return result;
 };
 if (typeof jQuery !== 'undefined') {
     jQuery.fn.extend({
-        $: function (f) {
-            return _.$(this, f);
+        $: function () {
+            return _.$.apply(null, [this].concat(_.asArray(arguments)));
         }
     });
 }
 _.defineKeyword('const', function (x) {
     return $static($property(x));
+});
+_.defineTagKeyword('callableAsFreeFunction');
+$prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
+    def.constructor[name] = Tags.unwrap(value).asFreeFunction;
+    return def;
 });
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))();
@@ -3825,36 +3872,34 @@ Component = $prototype({
             if (!(def && def.$property)) {
                 var fn = this[k];
                 if (predicate(def) && _.isFunction(fn) && !_.isPrototypeConstructor(fn)) {
-                    iterator.call(this, fn, k);
+                    iterator.call(this, fn, k, def);
                 }
             }
         }
     },
     constructor: $final(function (arg1, arg2) {
+        this.parent_ = undefined;
+        this.children_ = [];
         var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
         if (this.constructor.$defaults) {
             cfg = this.cfg = _.extend(_.cloneDeep(this.constructor.$defaults), cfg);
         }
-        _.onBefore(this, 'destroy', this.beforeDestroy);
-        _.onAfter(this, 'destroy', this.afterDestroy);
-        _.extend(this, {
-            parent_: undefined,
-            children_: []
-        }, _.omit(_.omit(cfg, 'init', 'attachTo', 'attach'), function (v, k) {
-            return Component.isStreamDefinition(componentDefinition[k]);
-        }, this));
         this.enumMethods(function (fn, name) {
             if (name !== '$' && name !== 'init') {
                 this[name] = this.$(fn);
             }
         });
+        _.onBefore(this, 'destroy', this.beforeDestroy);
+        _.onAfter(this, 'destroy', this.afterDestroy);
         var initialStreamListeners = [];
+        var excludeFromCfg = { init: true };
         _.each(componentDefinition, function (def, name) {
             if (def !== undefined) {
                 if (def.$observableProperty) {
-                    var definitionValue = this[name];
-                    defaultValue = name in cfg ? cfg[name] : definitionValue;
-                    var observable = this[name + 'Change'] = _.observable();
+                    var definitionValue = def.subject;
+                    var defaultValue = name in cfg ? cfg[name] : definitionValue;
+                    var streamName = name + 'Change';
+                    var observable = excludeFromCfg[streamName] = this[streamName] = _.observable();
                     observable.context = this;
                     observable.postpones = def.$postpones;
                     if (_.isPrototypeInstance(definitionValue)) {
@@ -3889,11 +3934,10 @@ Component = $prototype({
                         ]);
                     }
                     if (defaultValue !== undefined) {
-                        observable(_.isFunction(defaultValue) ? this.$(defaultValue) : defaultValue);
+                        observable(defaultValue);
                     }
                 } else if (Component.isStreamDefinition(def)) {
-                    var stream = (def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(this[name]);
-                    this[name] = _.extend(stream, {
+                    var stream = excludeFromCfg[name] = this[name] = _.extend((def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(def.subject), {
                         context: this,
                         postpones: def.$postpones
                     });
@@ -3948,6 +3992,11 @@ Component = $prototype({
                 this._afterInit
             ]).call(this);
         });
+        _.each(cfg, function (value, name) {
+            if (!(name in excludeFromCfg)) {
+                this[name] = _.isFunction(value) ? this.$(value) : value;
+            }
+        }, this);
         _.each(componentDefinition, function (def, name) {
             if (def && def.$alias) {
                 this[name] = this[Tags.unwrap(def)];
@@ -3988,19 +4037,13 @@ Component = $prototype({
     },
     _afterInit: function (then) {
         var cfg = this.cfg;
-        if (cfg.attach && !_.isFunction(cfg.attach)) {
-            this.attach(cfg.attach);
-        }
-        if (cfg.attachTo && !_.isFunction(cfg.attachTo)) {
-            this.attachTo(cfg.attachTo);
-        }
         this.callTraitsMethod('afterInit', then);
         this.initialized(true);
         _.each(this.constructor.$definition, function (def, name) {
-            name += 'Change';
             if (def && def.$observableProperty) {
+                name += 'Change';
                 var defaultListener = cfg[name];
-                if (_.isFunction(defaultListener)) {
+                if (defaultListener) {
                     this[name](defaultListener);
                 }
             }
@@ -4437,6 +4480,14 @@ CallStack = $extends(Array, {
             return CallStack.fromParsedArray([]);
         }
     }),
+    fromErrorWithAsync: $static(function (e) {
+        var stackEntries = CallStack.fromError(e), asyncContext = e.asyncContext;
+        while (asyncContext) {
+            stackEntries = stackEntries.concat(CallStack.fromRawString(asyncContext.stack));
+            asyncContext = asyncContext.asyncContext;
+        }
+        return stackEntries.mergeDuplicateLines;
+    }),
     locationEquals: $static(function (a, b) {
         return a.file === b.file && a.line === b.line && a.column === b.column;
     }),
@@ -4725,7 +4776,7 @@ _.extend(log, {
         },
         stringifyError: function (e) {
             try {
-                var stack = CallStack.fromError(e).clean.offset(e.stackOffset || 0);
+                var stack = CallStack.fromErrorWithAsync(e).clean.offset(e.stackOffset || 0);
                 var why = (e.message || '').replace(/\r|\n/g, '').trimmed.first(120);
                 return '[EXCEPTION] ' + why + '\n\n' + log.impl.stringifyCallStack(stack) + '\n';
             } catch (sub) {

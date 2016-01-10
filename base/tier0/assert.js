@@ -231,7 +231,7 @@ function () {
             context (function () { $fail }) },
 
         assertEveryCalledOnce: function (fn, then) {
-            return _.assertEveryCalled (_.hasTags ? $once (fn) : _.extend (fn, { once: true }), then) },
+            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
 
         assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
                                                       async = _.hasTags ? $async.is (fn_) : fn_.async
@@ -242,7 +242,7 @@ function () {
                                    _.map (match[1].split (','), function (arg) {
                                                                     var parts = (arg.trim ().match (/^(.+)__(.+)$/))
                                                                     return (parts && parseInt (parts[2], 10)) || true })
-            var status    = []
+            var status    = _.times (fn.length, _.constant (false))
             var callbacks = _.times (fn.length, function (i) {
                                                     return function () {
                                                         status[i] =

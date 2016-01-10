@@ -369,7 +369,7 @@ function () {
             context (function () { $fail }) },
 
         assertEveryCalledOnce: function (fn, then) {
-            return _.assertEveryCalled (_.hasTags ? $once (fn) : _.extend (fn, { once: true }), then) },
+            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
 
         assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
                                                       async = _.hasTags ? $async.is (fn_) : fn_.async
@@ -380,7 +380,7 @@ function () {
                                    _.map (match[1].split (','), function (arg) {
                                                                     var parts = (arg.trim ().match (/^(.+)__(.+)$/))
                                                                     return (parts && parseInt (parts[2], 10)) || true })
-            var status    = []
+            var status    = _.times (fn.length, _.constant (false))
             var callbacks = _.times (fn.length, function (i) {
                                                     return function () {
                                                         status[i] =
@@ -808,6 +808,16 @@ CallStack = $extends (Array, {
         else {
             return CallStack.fromParsedArray ([]) } }),
 
+    fromErrorWithAsync: $static (function (e) {
+        var stackEntries = CallStack.fromError (e),
+            asyncContext = e.asyncContext
+
+        while (asyncContext) {
+            stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
+            asyncContext = asyncContext.asyncContext }
+
+        return stackEntries.mergeDuplicateLines }),
+
     locationEquals: $static (function (a, b) {
         return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
 
@@ -1209,7 +1219,7 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromError (e).clean.offset (e.stackOffset || 0)
+                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }
@@ -1883,14 +1893,7 @@ Panic.widget = $singleton (Component, {
 				    .text (test.name)
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
-	printError: function (e) { var stackEntries = CallStack.fromError (e),
-								   asyncContext = e.asyncContext
-
-		while (asyncContext) {
-			stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
-			asyncContext = asyncContext.asyncContext }
-
-		stackEntries = stackEntries.mergeDuplicateLines
+	printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
 
 		return [
 

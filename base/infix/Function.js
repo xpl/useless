@@ -3,6 +3,10 @@
 
 _.tests.Function = {
 
+    '$ for partial application': function () {
+             var sum = function (a, b) { return a + b }
+        $assert (sum.$ (5) (42), 47) },
+
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
     'asContinuation': function () { $assertEveryCalled (function (mkay__2) {
@@ -47,6 +51,7 @@ _.tests.Function = {
  */
 $extensionMethods (Function, {
 
+    $:     $method (_.partial),
     bind:           _.bind,
     partial:        _.partial,
     tails:          _.tails,
@@ -59,6 +64,9 @@ $extensionMethods (Function, {
     flip3:          _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod:       _.asMethod,
+
+    asPromise: function (f) {
+        return new Promise (f) },
 
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },

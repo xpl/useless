@@ -18,6 +18,9 @@ _.asString = function (what) { return what + '' }
 _.typeOf = function (what) {
                 return typeof what }
 
+_.instanceOf = function (what) {
+                    return function (x) { return (x instanceof what) } }
+
 _.count = function (what) { // cannot override _.length
                 return what.length }
 
@@ -93,3 +96,5 @@ _.notZero = function (x) { return x !== 0 }
 _.propertyOf = function (obj) { return function (prop) {            // inverted version of _.property
                                             return obj[prop] }}
 
+_.oneOf = $restArg (function () {
+    return _.propertyOf (_.index (_.asArray (arguments))) })

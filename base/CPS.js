@@ -383,7 +383,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Reading error in separate callback
      */
-$assertEveryCalledOnce (function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function (then) { then (testErr) },
             function () { $fail }],

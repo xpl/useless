@@ -166,6 +166,16 @@ _.deferTest ('OOP', {
         $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) }, // property aliases
 
 
+/*  Static (compile-time) constructor gets called at prototype generation
+    ======================================================================== */
+
+    '$constructor': function () {
+        $assertEveryCalledOnce (function (mkay) {
+            var foo = new ($prototype ({
+                $constructor: function () {
+                    mkay ()  } })) }) },
+
+
 /*  Run-time type information APIs
     ======================================================================== */
 
@@ -297,7 +307,20 @@ _.deferTest ('OOP', {
 
     'tags on definition': function () {
 
-        $assertMatches ($prototype ($static ($final ({}))), { $static: true, $final: true }) } }, function () {
+        $assertMatches ($prototype ($static ($final ({}))), { $static: true, $final: true }) },
+
+
+/*  $mixin to extend existing types with $prototype-style definitions
+    ======================================================================== */
+
+    '$mixin': function () { var Type = $prototype ()
+
+        $mixin (Type, {
+            twentyFour: $static ($property (24)),
+            fourtyTwo:           $property (42) })
+
+        $assert ([Type    .twentyFour,
+             (new Type ()).fourtyTwo], [24, 42]) }                                  }, function () {
 
 
 /*  PUBLIC API
@@ -314,6 +337,9 @@ _.deferTest ('OOP', {
 
     $extends = function (base, def) {
                     return $prototype (base, def || {}) }
+
+    $mixin = function (constructor, def) {
+        return $prototype.impl.compileMixin (_.extend (def, { constructor: constructor })) }
 
     _.extend ($prototype, {
 
@@ -375,12 +401,22 @@ _.deferTest ('OOP', {
                     this.generateBuiltInMembers (base),
                     this.expandAliases,
                     this.defineStaticMembers,
-                    this.defineInstanceMembers).call (this, def || {}).constructor) },
+                    this.defineInstanceMembers,
+                    this.callStaticConstructor).call (this, def || {}).constructor) },
+
+            compileMixin: function (def) {
+                return _.sequence (
+                    this.flatten,
+                    this.contributeTraits,
+                    this.expandAliases,
+                    this.evalMemberTriggeredMacros (),
+                    this.defineStaticMembers,
+                    this.defineInstanceMembers).call (this, def || {}).constructor },
 
             evalAlwaysTriggeredMacros: function (base) {
                 return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
                     for (var i = 0, n = macros.length; i < n; i++) {
-                        def = macros[i] (def, base) }
+                        def = (macros[i] (def, base)) || def }
                     return def } },
 
             evalMemberTriggeredMacros: function (base) {
@@ -388,9 +424,9 @@ _.deferTest ('OOP', {
                                             tags  = $prototype.impl.tagTriggeredMacros
                     _.each (def, function (value, name) {
                         if (names.hasOwnProperty (name)) {
-                            def = names[name] (def, value, name, base) }
+                            def = (names[name] (def, value, name, base)) || def }
                         _.each (_.keys (value), function (tag) { if (tags.hasOwnProperty (tag)) {
-                            def = tags [tag]  (def, value, name, base) } }) })
+                            def = (tags [tag] (def, value, name, base)) || def } }) })
                      return def } },
 
             generateCustomCompilerImpl: function (base) {
@@ -407,7 +443,6 @@ _.deferTest ('OOP', {
                                                                      return function () { var args = _.asArray (arguments)
                                                                         $assertArguments (args.copy, fn.original, name)
                                                                          return fn.apply (this, args) } }) : def },
-
             contributeTraits: function (def) {
                 
                 if (def.$traits) { var traits = def.$traits
@@ -427,6 +462,10 @@ _.deferTest ('OOP', {
 
             extendWithTags: function (def) {                    
                 return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
+
+            callStaticConstructor: function (def) {
+                if (def.$constructor) {
+                    def.$constructor () } return def },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
@@ -548,7 +587,11 @@ _.deferTest ('OOP', {
         $assert (MovableEnumerable.hasTrait (Enumerable))
 
         $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
-        $assertMatches (JustCloseable,      { $traits: [Closeable] }) }, function () {
+        $assertMatches (JustCloseable,      { $traits: [Closeable] })
+
+        /*$assertEveryCalledOnce (function (mkay) {
+            var WithStaticConstructor = $trait ({ $constructor: function () { mkay () } })
+            var Proto = $prototype ({ $traits: [WithStaticConstructor] }) })*/                        }, function () {
 
     _.isTraitOf = function (Trait, instance) {
         var constructor = instance && instance.constructor
@@ -571,15 +614,22 @@ _.deferTest ('OOP', {
 /*  Context-free implementation of this.$
     ======================================================================== */
 
-    _.$ = function (this_, fn) {
-                return _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) }
+    _.$ = function (this_, fn) { var arguments_ = _.rest (arguments, 2)
+
+        var result = (arguments_.length) ?
+                        _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) :
+                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) })
+        
+        //result.context = this_
+
+        return result }
 
 
 /*  Adds this.$ to jQuery objects (to enforce code style consistency)
     ======================================================================== */
 
     if (typeof jQuery !== 'undefined') {
-        jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
+        jQuery.fn.extend ({ $: function () { return _.$.apply (null, [this].concat (_.asArray (arguments))) } })}
 
 
 /*  $const (xxx) as convenient alias for $static ($property (xxx))
@@ -599,6 +649,26 @@ _.deferTest ('OOP', {
 
     _.defineKeyword ('const', function (x) { return $static ($property (x)) })  })
 
+
+
+/*  Dual call interface
+    ======================================================================== */
+
+    _.withTest (['OOP', '$callableAsFreeFunction'], function () {
+
+            var x = undefined
+            var X = $prototype ({
+                foo: $callableAsFreeFunction ($property (function () { $assert (this === x); return 42 })) })
+
+                x = new X ()
+
+            $assert (x.foo, X.foo (x), 42) },                   function () {
+
+        _.defineTagKeyword  ('callableAsFreeFunction')
+        $prototype.macroTag ('callableAsFreeFunction',
+            function (def, value, name) {
+                      def.constructor[name] = Tags.unwrap (value).asFreeFunction
+               return def }) })
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
     ======================================================================== */

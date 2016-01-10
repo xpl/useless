@@ -5,13 +5,13 @@ _(['method', 'property', 'flipped']) // keywords recognized by $extensionMethods
     .each (_.defineTagKeyword)
 
 $extensionMethods = function (Type, methods) {
-    _.each (methods, function (tags, name) {
-        var fn = Tags.unwrap (tags)
+
+    _.each (methods, function (tags, name) { var fn = Tags.unwrap (tags)
 
         /*  define as _.method (this, ...)
          */
         if (!(name in _)) {
-            _[name] = _[name] || fn }
+                      _[name] = _[name] || fn }
 
         /*  define as property of Type
          */

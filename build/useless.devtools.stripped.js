@@ -149,7 +149,7 @@ _.extend(_, _.assertions = {
         });
     },
     assertEveryCalledOnce: function (fn, then) {
-        return _.assertEveryCalled(_.hasTags ? $once(fn) : _.extend(fn, { once: true }), then);
+        return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
     },
     assertEveryCalled: function (fn_, then) {
         var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
@@ -159,7 +159,7 @@ _.extend(_, _.assertions = {
             var parts = arg.trim().match(/^(.+)__(.+)$/);
             return parts && parseInt(parts[2], 10) || true;
         });
-        var status = [];
+        var status = _.times(fn.length, _.constant(false));
         var callbacks = _.times(fn.length, function (i) {
             return function () {
                 status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
@@ -497,6 +497,14 @@ CallStack = $extends(Array, {
             return CallStack.fromParsedArray([]);
         }
     }),
+    fromErrorWithAsync: $static(function (e) {
+        var stackEntries = CallStack.fromError(e), asyncContext = e.asyncContext;
+        while (asyncContext) {
+            stackEntries = stackEntries.concat(CallStack.fromRawString(asyncContext.stack));
+            asyncContext = asyncContext.asyncContext;
+        }
+        return stackEntries.mergeDuplicateLines;
+    }),
     locationEquals: $static(function (a, b) {
         return a.file === b.file && a.line === b.line && a.column === b.column;
     }),
@@ -785,7 +793,7 @@ _.extend(log, {
         },
         stringifyError: function (e) {
             try {
-                var stack = CallStack.fromError(e).clean.offset(e.stackOffset || 0);
+                var stack = CallStack.fromErrorWithAsync(e).clean.offset(e.stackOffset || 0);
                 var why = (e.message || '').replace(/\r|\n/g, '').trimmed.first(120);
                 return '[EXCEPTION] ' + why + '\n\n' + log.impl.stringifyCallStack(stack) + '\n';
             } catch (sub) {
@@ -1376,12 +1384,7 @@ _.perfTest = function (arg, then) {
             ];
         },
         printError: function (e) {
-            var stackEntries = CallStack.fromError(e), asyncContext = e.asyncContext;
-            while (asyncContext) {
-                stackEntries = stackEntries.concat(CallStack.fromRawString(asyncContext.stack));
-                asyncContext = asyncContext.asyncContext;
-            }
-            stackEntries = stackEntries.mergeDuplicateLines;
+            var stackEntries = CallStack.fromErrorWithAsync(e);
             return [
                 $('<div class="panic-alert-error-message" style="font-weight: bold;">').text(e.message).append(_.any(stackEntries, function (e, i) {
                     return (e.thirdParty || e['native']) && i !== 0;

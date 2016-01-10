@@ -3,26 +3,28 @@
 
 _.withTest ('Array extensions', function () {
 
-    var excess = [3,1,2,3,3,4,3]
+    var arr = [1,3,2,3,3,4,3]
 
-    $assert (excess.lastIndex, 6)
+    $assert ([arr.first, arr.last], [1, 3])
 
-    $assert (excess.copy, excess)
-    $assert (excess.copy !== excess)
+    $assert (arr.lastIndex, 6)
 
-    $assert (excess.remove (3), [1,2,4]) // it is fast
-    $assert (excess,            [1,2,4]) // and mutates original (thats why fast)
-                                         // for immutable version, use underscore's _.without
+    $assert (arr.copy, arr)
+    $assert (arr.copy !== arr)
 
-    $assert (excess.removeAll (),   [])
-    $assert (excess,                [])
+    $assert (arr.remove (3), [1,2,4]) // it is fast
+    $assert (arr,            [1,2,4]) // and mutates original (thats why fast)
+                                      // for immutable version, use underscore's _.without
+
+    $assert (arr.removeAll (),   [])
+    $assert (arr,                [])
 
     $assert (['a','b','c'].removeAt (1),    ['a','c'])      // NOTE: mutates original
     $assert (['a','c'].insertAt ('b', 1),   ['a','b','c'])  // NOTE: mutates original
 
     $assert ([0,1,2].itemAtWrappedIndex (4) === 1)
 
-         var arr =         [1,2,3]
+             arr =         [1,2,3]
     $assert (arr.reversed, [3,2,1])
     $assert (arr,          [1,2,3]) // does not mutate original (in contrary to .reverse)
                                         
@@ -46,13 +48,14 @@ _.withTest ('Array extensions', function () {
         zip:         _.zipWith,
         filter:      _.filter,
 
+        first: function (arr) { return arr[0] },
+        last:  function (arr) { return arr[arr.length - 1] },
+        
         isEmpty: function (arr) { return arr.length === 0 },
         notEmpty: function (arr) { return arr.length > 0 },
 
         lastIndex: function (arr) { return arr.length - 1 },
 
-        last: function (arr) { return _.last (arr) },
-        
         random: function (arr) {
             return arr[_.random (0, arr.lastIndex)] },
 

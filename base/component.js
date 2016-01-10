@@ -306,18 +306,19 @@ _.tests.component = {
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener) {
+    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener, fromDefinition) {
 
         var Compo = $component ({
                         color: $observableProperty (),
                         smell: $observableProperty (),
+                        shape: $observableProperty ('round', function (now) { $assert (now, 'round'); fromDefinition () }),
                         init: function () {
                             this.colorChange (function (now, was) { if (was) { fromConstructor ()
                                 $assert ([now, was], ['green', 'blue']) } }) } })
 
         var compo = new Compo ({
             color: 'blue',
-            colorChange: function (now, was) { if (was) { fromConfig ()
+            colorChange: function (now, was) { log.ok ($callStack); log.ok (now, was); if (was) { fromConfig ()
                 $assert ([now, was], ['green', 'blue']) } } })
 
         compo.smellChange (function (now, was) { fromLateBoundListener ()
@@ -442,8 +443,13 @@ _.tests.component = {
             $defaults: { init: false },
             init: function () { } })
 
-        compo.init ()
-    },
+        compo.init () },
+
+    'stream members should be available at property setters when inited from config': function () {
+        var compo = new ($component ({
+            ready: $barrier (),
+            value: $property ({
+                set: function (_42) { $assertTypeMatches (this.ready, 'function') } }) })) ({ value: 42 }) },
 
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
@@ -496,6 +502,16 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
+
+    '(regression) $defaults with $traits fail': function () {
+        var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})], $defaults: { a: {}, b: [], c: 0 } })
+        $assert (Compo.$defaults, { x: 1, a: {}, b: [], c: 0 }) },
+
+    '(regression) method overriding broken': function () {
+        var Compo = $component ({ method: function () { $fail } })
+        var compo = new Compo ({ value: 42, method: function () { return this.value } })
+        $assert (compo.method (), 42) },
+
     '(regression) $observableProperty (false)': function () {
         $assertEveryCalledOnce (function (mkay) {
             $singleton (Component, {
@@ -534,10 +550,11 @@ _.tests.component = {
 
             $assert (test.close, test.destroy) } }
 
+
 /*  General syntax
  */
 _.defineKeyword ('component', function (definition) {
-    return $extends (Component, definition) })
+                                return $extends (Component, definition) })
 
 _([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
@@ -546,6 +563,7 @@ _([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'i
 _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
+
 
 /*  Make $defaults and $requires inherit base values + $traits support
  */
@@ -561,8 +579,10 @@ $prototype.inheritsBaseValues = function (keyword) {
 
         return def }) } 
 
+
 $prototype.inheritsBaseValues ('$defaults')
 $prototype.inheritsBaseValues ('$requires')
+
 
 /*  Impl
  */
@@ -624,11 +644,15 @@ Component = $prototype ({
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
                 if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
-                    iterator.call (this, fn, k) } } } },
+                    iterator.call (this, fn, k, def) } } } },
+
 
     /*  Thou shall not override this
      */
     constructor: $final (function (arg1, arg2) {
+
+        this.parent_ = undefined
+        this.children_ = []
 
         var cfg                 = this.cfg = ((typeof arg1 === 'object') ? arg1 : {}),
             componentDefinition = this.constructor.$definition
@@ -640,27 +664,20 @@ Component = $prototype ({
             cfg = this.cfg = _.extend (_.cloneDeep (this.constructor.$defaults), cfg) }
 
 
+        /*  Add thiscall semantics to methods
+         */
+        this.enumMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { this[name] = this.$ (fn) } })
+
+
         /*  Listen self destroy method
          */
         _.onBefore  (this, 'destroy', this.beforeDestroy)
         _.onAfter   (this, 'destroy', this.afterDestroy)
 
 
-        /*  Apply cfg thing (stream definitions, init and attach will be handled later)
-         */
-        _.extend (this, {
-            parent_: undefined,
-            children_: [] },
-            _.omit (_.omit (cfg, 'init', 'attachTo', 'attach'), function (v, k) {
-                    return Component.isStreamDefinition (componentDefinition[k]) }, this))
-
-
-        /*  Add thiscall semantics to methods
-         */
-        this.enumMethods (function (fn, name) { if (name !== '$' && name !== 'init') { this[name] = this.$ (fn) } })
-
-
         var initialStreamListeners = []
+        var excludeFromCfg = { init: true }
+
 
         /*  Expand macros
             TODO: execute this substitution at $prototype code-gen level, not at instance level
@@ -670,11 +687,13 @@ Component = $prototype ({
             /*  Expand $observableProperty
                 TODO: rewrite with $prototype.macro
              */
-            if (def.$observableProperty) {  var definitionValue = this[name] // from $component definition
-                                                defaultValue    = (name in cfg ? cfg[name] : definitionValue)
+            if (def.$observableProperty) {  var definitionValue = def.subject
+                                            var defaultValue = (name in cfg) ? cfg[name] : definitionValue
+                                            var streamName   = name + 'Change'
+
                 /*  xxxChange stream
                  */
-                var observable           = this[name + 'Change'] = _.observable ()
+                var observable           = excludeFromCfg[streamName] = this[streamName] = _.observable ()
                     observable.context   = this
                     observable.postpones = def.$postpones
 
@@ -695,27 +714,30 @@ Component = $prototype ({
                         get: function ()  { return observable.value },
                         set: function (x) { observable.call (this, x) } })
 
+                /*  Default listeners (come from traits)
+                 */
                 if (def.listeners) {
                     _.each (def.listeners, function (value) {
                         initialStreamListeners.push ([observable, value]) }) }
 
-                if (_.isFunction (def.$observableProperty)) { // default listener param
+                /*  Default listener which comes from $observableProperty (defValue, defListener) syntax
+                 */
+                if (_.isFunction (def.$observableProperty)) {
                       initialStreamListeners.push ([observable, def.$observableProperty]) }
 
                 /*  write default value
                  */
                 if (defaultValue !== undefined) {
-                    observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
+                    observable (defaultValue) } }
 
             /*  Expand streams
              */
             else if (Component.isStreamDefinition (def)) {
-                var stream =    (def.$trigger       ? _.trigger :
+                var stream = excludeFromCfg[name] = this[name] = _.extend (
+                                (def.$trigger       ? _.trigger :
                                 (def.$triggerOnce   ? _.triggerOnce :
                                 (def.$observable    ? _.observable :
-                                (def.$barrier       ? _.barrier : undefined)))) (this[name])
-
-                this[name] = _.extend (stream, { context: this, postpones: def.$postpones })
+                                (def.$barrier       ? _.barrier : undefined)))) (def.subject), { context: this, postpones: def.$postpones })
 
                 if (def.listeners) {
                     _.each (def.listeners, function (value) {
@@ -760,9 +782,16 @@ Component = $prototype ({
         /*  Bind stuff to init (either in CPS, or in sequential flow control style)
          */
         _.intercept (this, 'init', function (init) {
-
             var evalChain = _.hasArgs (this.constructor.prototype.init) ? _.cps.sequence : _.sequence
                 evalChain ([this._beforeInit, init.bind (this), this._afterInit]).call (this) })
+
+
+        /*  Apply cfg thing
+         */
+        _.each (cfg, function (value, name) {
+            if (!(name in excludeFromCfg)) {
+                this[name] = _.isFunction (value) ? this.$ (value) : value } }, this)
+
 
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
@@ -828,12 +857,6 @@ Component = $prototype ({
 
     _afterInit: function (then) { var cfg = this.cfg
 
-        if (cfg.attach && !_.isFunction (cfg.attach)) {
-            this.attach (cfg.attach) }
-
-        if (cfg.attachTo && !_.isFunction (cfg.attachTo)) {
-            this.attachTo (cfg.attachTo) }
-
         this.callTraitsMethod ('afterInit', then)
 
         this.initialized (true)
@@ -845,10 +868,9 @@ Component = $prototype ({
             We do not do this for other streams, as their execution is up to component logic,
             and they're might get called at init, so their default values get bound before init.
          */
-        _.each (this.constructor.$definition, function (def, name) { name += 'Change'
-            if (def && def.$observableProperty) { var defaultListener = cfg[name]
-                if (_.isFunction (defaultListener)) {
-                    this[name] (defaultListener) } } }, this) },
+        _.each (this.constructor.$definition, function (def, name) {
+            if (def && def.$observableProperty) { name += 'Change'; var defaultListener = cfg[name]
+                if (defaultListener) { this[name] (defaultListener) } } }, this) },
     
     initialized: $barrier (),
 

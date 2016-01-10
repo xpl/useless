@@ -318,6 +318,11 @@ _.deferTest (['stdlib', 'findFind'], function () {
 
 function () {
 
+    _.find2 = function (value, pred) {
+        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
+                          if (typeof x !== 'boolean') { return x }
+                                 else if (x === true) { return value[i] } } }
+
     _.findFind = function (obj, pred_) {
                     return _.hyperOperator (_.unary,
                              function (value, pred) {
@@ -385,7 +390,7 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
 
-    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b || a })
+    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b === undefined ? a : b })
 
     _.extend2 = $restArg (function (what) { 
                                 return _.extend (what, _.reduceRight (arguments, function (right, left) {

@@ -119,14 +119,16 @@ _.withTest (['stdlib', 'asArray'], function () {
         $assert (args[0] === a)
         $assert (args[1] === b) }) (42, 43)
 
+        $assert (_.asArray (42), [42])
+
         /*  Should not mutate its argument (regression)
          */
         var foo =     { 0: 'foo', length: 1 }
         $assert (_.asArray (foo), ['foo'])
         $assert (foo, { 0: 'foo', length: 1 }) }, function () { _.extend (_, {
 
-    asArray: function (arrayMimick) {
-                return [].slice.call (arrayMimick, 0) } }) })
+    asArray: function (x) {
+                return (x.length !== undefined) ? [].slice.call (x, 0) : [x] } }) })
 
 /*  Argument count tracking module (provides hinting to several metaprogramming
     utilities, like property definitions)
@@ -554,6 +556,9 @@ _.asString = function (what) { return what + '' }
 _.typeOf = function (what) {
                 return typeof what }
 
+_.instanceOf = function (what) {
+                    return function (x) { return (x instanceof what) } }
+
 _.count = function (what) { // cannot override _.length
                 return what.length }
 
@@ -629,6 +634,8 @@ _.notZero = function (x) { return x !== 0 }
 _.propertyOf = function (obj) { return function (prop) {            // inverted version of _.property
                                             return obj[prop] }}
 
+_.oneOf = $restArg (function () {
+    return _.propertyOf (_.index (_.asArray (arguments))) })
 ;
 /*  isTypeOf (bootstrap for OOP.js)
     ======================================================================== */
@@ -1328,6 +1335,11 @@ _.deferTest (['stdlib', 'findFind'], function () {
 
 function () {
 
+    _.find2 = function (value, pred) {
+        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
+                          if (typeof x !== 'boolean') { return x }
+                                 else if (x === true) { return value[i] } } }
+
     _.findFind = function (obj, pred_) {
                     return _.hyperOperator (_.unary,
                              function (value, pred) {
@@ -1395,7 +1407,7 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
 
-    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b || a })
+    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b === undefined ? a : b })
 
     _.extend2 = $restArg (function (what) { 
                                 return _.extend (what, _.reduceRight (arguments, function (right, left) {
@@ -2273,7 +2285,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 
     /*  Reading error in separate callback
      */
-$assertEveryCalledOnce (function (mkay) {
+    $assertEveryCalledOnce (function (mkay) {
         _.cps.trySequence ([
             function (then) { then (testErr) },
             function () { $fail }],
@@ -2302,13 +2314,13 @@ _(['method', 'property', 'flipped']) // keywords recognized by $extensionMethods
     .each (_.defineTagKeyword)
 
 $extensionMethods = function (Type, methods) {
-    _.each (methods, function (tags, name) {
-        var fn = Tags.unwrap (tags)
+
+    _.each (methods, function (tags, name) { var fn = Tags.unwrap (tags)
 
         /*  define as _.method (this, ...)
          */
         if (!(name in _)) {
-            _[name] = _[name] || fn }
+                      _[name] = _[name] || fn }
 
         /*  define as property of Type
          */
@@ -2329,6 +2341,10 @@ $extensionMethods = function (Type, methods) {
     ======================================================================== */
 
 _.tests.Function = {
+
+    '$ for partial application': function () {
+             var sum = function (a, b) { return a + b }
+        $assert (sum.$ (5) (42), 47) },
 
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
@@ -2374,6 +2390,7 @@ _.tests.Function = {
  */
 $extensionMethods (Function, {
 
+    $:     $method (_.partial),
     bind:           _.bind,
     partial:        _.partial,
     tails:          _.tails,
@@ -2386,6 +2403,9 @@ $extensionMethods (Function, {
     flip3:          _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod:       _.asMethod,
+
+    asPromise: function (f) {
+        return new Promise (f) },
 
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
@@ -2473,26 +2493,28 @@ $extensionMethods (Function, {
 
 _.withTest ('Array extensions', function () {
 
-    var excess = [3,1,2,3,3,4,3]
+    var arr = [1,3,2,3,3,4,3]
 
-    $assert (excess.lastIndex, 6)
+    $assert ([arr.first, arr.last], [1, 3])
 
-    $assert (excess.copy, excess)
-    $assert (excess.copy !== excess)
+    $assert (arr.lastIndex, 6)
 
-    $assert (excess.remove (3), [1,2,4]) // it is fast
-    $assert (excess,            [1,2,4]) // and mutates original (thats why fast)
-                                         // for immutable version, use underscore's _.without
+    $assert (arr.copy, arr)
+    $assert (arr.copy !== arr)
 
-    $assert (excess.removeAll (),   [])
-    $assert (excess,                [])
+    $assert (arr.remove (3), [1,2,4]) // it is fast
+    $assert (arr,            [1,2,4]) // and mutates original (thats why fast)
+                                      // for immutable version, use underscore's _.without
+
+    $assert (arr.removeAll (),   [])
+    $assert (arr,                [])
 
     $assert (['a','b','c'].removeAt (1),    ['a','c'])      // NOTE: mutates original
     $assert (['a','c'].insertAt ('b', 1),   ['a','b','c'])  // NOTE: mutates original
 
     $assert ([0,1,2].itemAtWrappedIndex (4) === 1)
 
-         var arr =         [1,2,3]
+             arr =         [1,2,3]
     $assert (arr.reversed, [3,2,1])
     $assert (arr,          [1,2,3]) // does not mutate original (in contrary to .reverse)
                                         
@@ -2516,13 +2538,14 @@ _.withTest ('Array extensions', function () {
         zip:         _.zipWith,
         filter:      _.filter,
 
+        first: function (arr) { return arr[0] },
+        last:  function (arr) { return arr[arr.length - 1] },
+        
         isEmpty: function (arr) { return arr.length === 0 },
         notEmpty: function (arr) { return arr.length > 0 },
 
         lastIndex: function (arr) { return arr.length - 1 },
 
-        last: function (arr) { return _.last (arr) },
-        
         random: function (arr) {
             return arr[_.random (0, arr.lastIndex)] },
 
@@ -2831,9 +2854,9 @@ _.deferTest ('bindable', function () {
                                var bindable = makeBindable (obj, targetMethod)
                             return bindable[name].call (bindable, delegate) } }
 
-    var mixin = function (method) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
+    var mixin = function (method, context) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
 
-                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
+                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method, context: context },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */
@@ -2869,7 +2892,7 @@ _.deferTest ('bindable', function () {
             return (fn && fn._bindable) ? true : false },
 
         bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
-            return _.withSameArgs (method, _.extendWith (mixin (method), function () {   
+            return _.withSameArgs (method, _.extendWith (mixin (method, context), function () {   
 
                 var wrapper     = arguments.callee
                 var onceBefore  = wrapper._onceBefore
@@ -3478,6 +3501,16 @@ _.deferTest ('OOP', {
         $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) }, // property aliases
 
 
+/*  Static (compile-time) constructor gets called at prototype generation
+    ======================================================================== */
+
+    '$constructor': function () {
+        $assertEveryCalledOnce (function (mkay) {
+            var foo = new ($prototype ({
+                $constructor: function () {
+                    mkay ()  } })) }) },
+
+
 /*  Run-time type information APIs
     ======================================================================== */
 
@@ -3609,7 +3642,20 @@ _.deferTest ('OOP', {
 
     'tags on definition': function () {
 
-        $assertMatches ($prototype ($static ($final ({}))), { $static: true, $final: true }) } }, function () {
+        $assertMatches ($prototype ($static ($final ({}))), { $static: true, $final: true }) },
+
+
+/*  $mixin to extend existing types with $prototype-style definitions
+    ======================================================================== */
+
+    '$mixin': function () { var Type = $prototype ()
+
+        $mixin (Type, {
+            twentyFour: $static ($property (24)),
+            fourtyTwo:           $property (42) })
+
+        $assert ([Type    .twentyFour,
+             (new Type ()).fourtyTwo], [24, 42]) }                                  }, function () {
 
 
 /*  PUBLIC API
@@ -3626,6 +3672,9 @@ _.deferTest ('OOP', {
 
     $extends = function (base, def) {
                     return $prototype (base, def || {}) }
+
+    $mixin = function (constructor, def) {
+        return $prototype.impl.compileMixin (_.extend (def, { constructor: constructor })) }
 
     _.extend ($prototype, {
 
@@ -3687,12 +3736,22 @@ _.deferTest ('OOP', {
                     this.generateBuiltInMembers (base),
                     this.expandAliases,
                     this.defineStaticMembers,
-                    this.defineInstanceMembers).call (this, def || {}).constructor) },
+                    this.defineInstanceMembers,
+                    this.callStaticConstructor).call (this, def || {}).constructor) },
+
+            compileMixin: function (def) {
+                return _.sequence (
+                    this.flatten,
+                    this.contributeTraits,
+                    this.expandAliases,
+                    this.evalMemberTriggeredMacros (),
+                    this.defineStaticMembers,
+                    this.defineInstanceMembers).call (this, def || {}).constructor },
 
             evalAlwaysTriggeredMacros: function (base) {
                 return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
                     for (var i = 0, n = macros.length; i < n; i++) {
-                        def = macros[i] (def, base) }
+                        def = (macros[i] (def, base)) || def }
                     return def } },
 
             evalMemberTriggeredMacros: function (base) {
@@ -3700,9 +3759,9 @@ _.deferTest ('OOP', {
                                             tags  = $prototype.impl.tagTriggeredMacros
                     _.each (def, function (value, name) {
                         if (names.hasOwnProperty (name)) {
-                            def = names[name] (def, value, name, base) }
+                            def = (names[name] (def, value, name, base)) || def }
                         _.each (_.keys (value), function (tag) { if (tags.hasOwnProperty (tag)) {
-                            def = tags [tag]  (def, value, name, base) } }) })
+                            def = (tags [tag] (def, value, name, base)) || def } }) })
                      return def } },
 
             generateCustomCompilerImpl: function (base) {
@@ -3719,7 +3778,6 @@ _.deferTest ('OOP', {
                                                                      return function () { var args = _.asArray (arguments)
                                                                         $assertArguments (args.copy, fn.original, name)
                                                                          return fn.apply (this, args) } }) : def },
-
             contributeTraits: function (def) {
                 
                 if (def.$traits) { var traits = def.$traits
@@ -3739,6 +3797,10 @@ _.deferTest ('OOP', {
 
             extendWithTags: function (def) {                    
                 return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
+
+            callStaticConstructor: function (def) {
+                if (def.$constructor) {
+                    def.$constructor () } return def },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
@@ -3860,7 +3922,11 @@ _.deferTest ('OOP', {
         $assert (MovableEnumerable.hasTrait (Enumerable))
 
         $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
-        $assertMatches (JustCloseable,      { $traits: [Closeable] }) }, function () {
+        $assertMatches (JustCloseable,      { $traits: [Closeable] })
+
+        /*$assertEveryCalledOnce (function (mkay) {
+            var WithStaticConstructor = $trait ({ $constructor: function () { mkay () } })
+            var Proto = $prototype ({ $traits: [WithStaticConstructor] }) })*/                        }, function () {
 
     _.isTraitOf = function (Trait, instance) {
         var constructor = instance && instance.constructor
@@ -3883,15 +3949,22 @@ _.deferTest ('OOP', {
 /*  Context-free implementation of this.$
     ======================================================================== */
 
-    _.$ = function (this_, fn) {
-                return _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) }
+    _.$ = function (this_, fn) { var arguments_ = _.rest (arguments, 2)
+
+        var result = (arguments_.length) ?
+                        _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) :
+                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) })
+        
+        //result.context = this_
+
+        return result }
 
 
 /*  Adds this.$ to jQuery objects (to enforce code style consistency)
     ======================================================================== */
 
     if (typeof jQuery !== 'undefined') {
-        jQuery.fn.extend ({ $: function (f) { return _.$ (this, f) } })}
+        jQuery.fn.extend ({ $: function () { return _.$.apply (null, [this].concat (_.asArray (arguments))) } })}
 
 
 /*  $const (xxx) as convenient alias for $static ($property (xxx))
@@ -3911,6 +3984,26 @@ _.deferTest ('OOP', {
 
     _.defineKeyword ('const', function (x) { return $static ($property (x)) })  })
 
+
+
+/*  Dual call interface
+    ======================================================================== */
+
+    _.withTest (['OOP', '$callableAsFreeFunction'], function () {
+
+            var x = undefined
+            var X = $prototype ({
+                foo: $callableAsFreeFunction ($property (function () { $assert (this === x); return 42 })) })
+
+                x = new X ()
+
+            $assert (x.foo, X.foo (x), 42) },                   function () {
+
+        _.defineTagKeyword  ('callableAsFreeFunction')
+        $prototype.macroTag ('callableAsFreeFunction',
+            function (def, value, name) {
+                      def.constructor[name] = Tags.unwrap (value).asFreeFunction
+               return def }) })
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
     ======================================================================== */
@@ -5157,18 +5250,19 @@ _.tests.component = {
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener) {
+    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener, fromDefinition) {
 
         var Compo = $component ({
                         color: $observableProperty (),
                         smell: $observableProperty (),
+                        shape: $observableProperty ('round', function (now) { $assert (now, 'round'); fromDefinition () }),
                         init: function () {
                             this.colorChange (function (now, was) { if (was) { fromConstructor ()
                                 $assert ([now, was], ['green', 'blue']) } }) } })
 
         var compo = new Compo ({
             color: 'blue',
-            colorChange: function (now, was) { if (was) { fromConfig ()
+            colorChange: function (now, was) { log.ok ($callStack); log.ok (now, was); if (was) { fromConfig ()
                 $assert ([now, was], ['green', 'blue']) } } })
 
         compo.smellChange (function (now, was) { fromLateBoundListener ()
@@ -5293,8 +5387,13 @@ _.tests.component = {
             $defaults: { init: false },
             init: function () { } })
 
-        compo.init ()
-    },
+        compo.init () },
+
+    'stream members should be available at property setters when inited from config': function () {
+        var compo = new ($component ({
+            ready: $barrier (),
+            value: $property ({
+                set: function (_42) { $assertTypeMatches (this.ready, 'function') } }) })) ({ value: 42 }) },
 
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
@@ -5347,6 +5446,16 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
+
+    '(regression) $defaults with $traits fail': function () {
+        var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})], $defaults: { a: {}, b: [], c: 0 } })
+        $assert (Compo.$defaults, { x: 1, a: {}, b: [], c: 0 }) },
+
+    '(regression) method overriding broken': function () {
+        var Compo = $component ({ method: function () { $fail } })
+        var compo = new Compo ({ value: 42, method: function () { return this.value } })
+        $assert (compo.method (), 42) },
+
     '(regression) $observableProperty (false)': function () {
         $assertEveryCalledOnce (function (mkay) {
             $singleton (Component, {
@@ -5385,10 +5494,11 @@ _.tests.component = {
 
             $assert (test.close, test.destroy) } }
 
+
 /*  General syntax
  */
 _.defineKeyword ('component', function (definition) {
-    return $extends (Component, definition) })
+                                return $extends (Component, definition) })
 
 _([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
@@ -5397,6 +5507,7 @@ _([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'i
 _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
+
 
 /*  Make $defaults and $requires inherit base values + $traits support
  */
@@ -5412,8 +5523,10 @@ $prototype.inheritsBaseValues = function (keyword) {
 
         return def }) } 
 
+
 $prototype.inheritsBaseValues ('$defaults')
 $prototype.inheritsBaseValues ('$requires')
+
 
 /*  Impl
  */
@@ -5475,11 +5588,15 @@ Component = $prototype ({
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
                 if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
-                    iterator.call (this, fn, k) } } } },
+                    iterator.call (this, fn, k, def) } } } },
+
 
     /*  Thou shall not override this
      */
     constructor: $final (function (arg1, arg2) {
+
+        this.parent_ = undefined
+        this.children_ = []
 
         var cfg                 = this.cfg = ((typeof arg1 === 'object') ? arg1 : {}),
             componentDefinition = this.constructor.$definition
@@ -5491,27 +5608,20 @@ Component = $prototype ({
             cfg = this.cfg = _.extend (_.cloneDeep (this.constructor.$defaults), cfg) }
 
 
+        /*  Add thiscall semantics to methods
+         */
+        this.enumMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { this[name] = this.$ (fn) } })
+
+
         /*  Listen self destroy method
          */
         _.onBefore  (this, 'destroy', this.beforeDestroy)
         _.onAfter   (this, 'destroy', this.afterDestroy)
 
 
-        /*  Apply cfg thing (stream definitions, init and attach will be handled later)
-         */
-        _.extend (this, {
-            parent_: undefined,
-            children_: [] },
-            _.omit (_.omit (cfg, 'init', 'attachTo', 'attach'), function (v, k) {
-                    return Component.isStreamDefinition (componentDefinition[k]) }, this))
-
-
-        /*  Add thiscall semantics to methods
-         */
-        this.enumMethods (function (fn, name) { if (name !== '$' && name !== 'init') { this[name] = this.$ (fn) } })
-
-
         var initialStreamListeners = []
+        var excludeFromCfg = { init: true }
+
 
         /*  Expand macros
             TODO: execute this substitution at $prototype code-gen level, not at instance level
@@ -5521,11 +5631,13 @@ Component = $prototype ({
             /*  Expand $observableProperty
                 TODO: rewrite with $prototype.macro
              */
-            if (def.$observableProperty) {  var definitionValue = this[name] // from $component definition
-                                                defaultValue    = (name in cfg ? cfg[name] : definitionValue)
+            if (def.$observableProperty) {  var definitionValue = def.subject
+                                            var defaultValue = (name in cfg) ? cfg[name] : definitionValue
+                                            var streamName   = name + 'Change'
+
                 /*  xxxChange stream
                  */
-                var observable           = this[name + 'Change'] = _.observable ()
+                var observable           = excludeFromCfg[streamName] = this[streamName] = _.observable ()
                     observable.context   = this
                     observable.postpones = def.$postpones
 
@@ -5546,27 +5658,30 @@ Component = $prototype ({
                         get: function ()  { return observable.value },
                         set: function (x) { observable.call (this, x) } })
 
+                /*  Default listeners (come from traits)
+                 */
                 if (def.listeners) {
                     _.each (def.listeners, function (value) {
                         initialStreamListeners.push ([observable, value]) }) }
 
-                if (_.isFunction (def.$observableProperty)) { // default listener param
+                /*  Default listener which comes from $observableProperty (defValue, defListener) syntax
+                 */
+                if (_.isFunction (def.$observableProperty)) {
                       initialStreamListeners.push ([observable, def.$observableProperty]) }
 
                 /*  write default value
                  */
                 if (defaultValue !== undefined) {
-                    observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
+                    observable (defaultValue) } }
 
             /*  Expand streams
              */
             else if (Component.isStreamDefinition (def)) {
-                var stream =    (def.$trigger       ? _.trigger :
+                var stream = excludeFromCfg[name] = this[name] = _.extend (
+                                (def.$trigger       ? _.trigger :
                                 (def.$triggerOnce   ? _.triggerOnce :
                                 (def.$observable    ? _.observable :
-                                (def.$barrier       ? _.barrier : undefined)))) (this[name])
-
-                this[name] = _.extend (stream, { context: this, postpones: def.$postpones })
+                                (def.$barrier       ? _.barrier : undefined)))) (def.subject), { context: this, postpones: def.$postpones })
 
                 if (def.listeners) {
                     _.each (def.listeners, function (value) {
@@ -5611,9 +5726,16 @@ Component = $prototype ({
         /*  Bind stuff to init (either in CPS, or in sequential flow control style)
          */
         _.intercept (this, 'init', function (init) {
-
             var evalChain = _.hasArgs (this.constructor.prototype.init) ? _.cps.sequence : _.sequence
                 evalChain ([this._beforeInit, init.bind (this), this._afterInit]).call (this) })
+
+
+        /*  Apply cfg thing
+         */
+        _.each (cfg, function (value, name) {
+            if (!(name in excludeFromCfg)) {
+                this[name] = _.isFunction (value) ? this.$ (value) : value } }, this)
+
 
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
@@ -5679,12 +5801,6 @@ Component = $prototype ({
 
     _afterInit: function (then) { var cfg = this.cfg
 
-        if (cfg.attach && !_.isFunction (cfg.attach)) {
-            this.attach (cfg.attach) }
-
-        if (cfg.attachTo && !_.isFunction (cfg.attachTo)) {
-            this.attachTo (cfg.attachTo) }
-
         this.callTraitsMethod ('afterInit', then)
 
         this.initialized (true)
@@ -5696,10 +5812,9 @@ Component = $prototype ({
             We do not do this for other streams, as their execution is up to component logic,
             and they're might get called at init, so their default values get bound before init.
          */
-        _.each (this.constructor.$definition, function (def, name) { name += 'Change'
-            if (def && def.$observableProperty) { var defaultListener = cfg[name]
-                if (_.isFunction (defaultListener)) {
-                    this[name] (defaultListener) } } }, this) },
+        _.each (this.constructor.$definition, function (def, name) {
+            if (def && def.$observableProperty) { name += 'Change'; var defaultListener = cfg[name]
+                if (defaultListener) { this[name] (defaultListener) } } }, this) },
     
     initialized: $barrier (),
 
@@ -6558,7 +6673,7 @@ function () {
             context (function () { $fail }) },
 
         assertEveryCalledOnce: function (fn, then) {
-            return _.assertEveryCalled (_.hasTags ? $once (fn) : _.extend (fn, { once: true }), then) },
+            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
 
         assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
                                                       async = _.hasTags ? $async.is (fn_) : fn_.async
@@ -6569,7 +6684,7 @@ function () {
                                    _.map (match[1].split (','), function (arg) {
                                                                     var parts = (arg.trim ().match (/^(.+)__(.+)$/))
                                                                     return (parts && parseInt (parts[2], 10)) || true })
-            var status    = []
+            var status    = _.times (fn.length, _.constant (false))
             var callbacks = _.times (fn.length, function (i) {
                                                     return function () {
                                                         status[i] =
@@ -6997,6 +7112,16 @@ CallStack = $extends (Array, {
         else {
             return CallStack.fromParsedArray ([]) } }),
 
+    fromErrorWithAsync: $static (function (e) {
+        var stackEntries = CallStack.fromError (e),
+            asyncContext = e.asyncContext
+
+        while (asyncContext) {
+            stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
+            asyncContext = asyncContext.asyncContext }
+
+        return stackEntries.mergeDuplicateLines }),
+
     locationEquals: $static (function (a, b) {
         return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
 
@@ -7398,7 +7523,7 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromError (e).clean.offset (e.stackOffset || 0)
+                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }
@@ -8072,14 +8197,7 @@ Panic.widget = $singleton (Component, {
 				    .text (test.name)
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
-	printError: function (e) { var stackEntries = CallStack.fromError (e),
-								   asyncContext = e.asyncContext
-
-		while (asyncContext) {
-			stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
-			asyncContext = asyncContext.asyncContext }
-
-		stackEntries = stackEntries.mergeDuplicateLines
+	printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
 
 		return [
 

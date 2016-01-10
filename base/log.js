@@ -248,7 +248,7 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromError (e).clean.offset (e.stackOffset || 0)
+                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }

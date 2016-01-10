@@ -186,6 +186,16 @@ CallStack = $extends (Array, {
         else {
             return CallStack.fromParsedArray ([]) } }),
 
+    fromErrorWithAsync: $static (function (e) {
+        var stackEntries = CallStack.fromError (e),
+            asyncContext = e.asyncContext
+
+        while (asyncContext) {
+            stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
+            asyncContext = asyncContext.asyncContext }
+
+        return stackEntries.mergeDuplicateLines }),
+
     locationEquals: $static (function (a, b) {
         return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
 

@@ -146,14 +146,7 @@ Panic.widget = $singleton (Component, {
 				    .text (test.name)
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
-	printError: function (e) { var stackEntries = CallStack.fromError (e),
-								   asyncContext = e.asyncContext
-
-		while (asyncContext) {
-			stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
-			asyncContext = asyncContext.asyncContext }
-
-		stackEntries = stackEntries.mergeDuplicateLines
+	printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
 
 		return [
 
