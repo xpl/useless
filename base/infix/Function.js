@@ -170,6 +170,9 @@ _.tests.Function.catches = function () {
          _.identity          .catches ($fails) ('yo'),
          _.throwsError ('xx').catches          ('yo')   ())
 
+    $assertThrows (function () {
+        _.constant ('yo').catches (function () { $assert ('catch handler shoudnt work on passed continuations') }, _.throwsError ('xx')) () })
+
     $assert ((function (x) { throw x }).catches (
                                             _.appends ('+error_case'),
                                             _.appends ('+no_error_case'),
@@ -193,8 +196,9 @@ $extensionMethods (Function, { catch_:  function (fn, catch_, then, finally_) { 
                                                         catch_ = (args > 1 ? _.coerceToFunction (catch_)   : _.identity)
                                                          then  = (args > 2 ? _.coerceToFunction (then)     : _.identity)
                                                     finally_   = (args > 3 ? _.coerceToFunction (finally_) : _.identity)
-                                          return function () {    var result = undefined;
-                                                      try         {   result = then   (fn.apply (this, arguments)) }
-                                                      catch (e)   {   result = catch_ (e) }
-                                                  return finally_ (   result) } } })
+                                          return function () {     var result = undefined, catched = false
+                                                      try          {   result = fn.apply (this, arguments) }
+                                                      catch (e)    {   result = catch_ (e); catched = true }
+                                                     if (!catched) {   result = then (result) }
+                                                  return finally_  (   result) } } })
 

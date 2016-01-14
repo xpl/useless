@@ -59,6 +59,7 @@ module.exports = {
                 function (name, i, return_) {
                     require.$ (name).catch_ (
                                function (e) {
+                                    log.w ('Fetching', name, 'dependency from repository...')
                                     exec ('npm install ' + name, function (e, stdout, stderr) {
                                                                         if (e) {
                                                                             util.fatalError (stderr) }
@@ -99,7 +100,7 @@ module.exports = {
                                 return line.match (/^\s*\/\/.*/) ? '' : (read (moduleName + '.js') + ';') }
                             else {
                                 return line } }).join ('\n')
-                        
+
                         if (cfg.outputFile) {
                             util.writeFile (cfg.outputFile, result) }
 

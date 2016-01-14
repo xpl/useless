@@ -5,7 +5,6 @@ var fs          = require ('fs'),
     http        = require ('http'),
     process     = require ('process'),
     path        = require ('path')
-//    nodemon     = require ('nodemon')
 
 function compileMacros (file) {
     return util.compileScript ({ sourceFile: file }) }
@@ -130,7 +129,7 @@ function stripCommentsAndTests (src, name, path) {
 
     return output }
 
-function compile (cfg) { _.each (cfg.inputFiles, function (file) { log.w ('Compiling', file)
+function compileFile (cfg, file) { log.w ('Compiling', file)
 
     var name = _.initial (path.basename (file).split ('.')).join ('.')
     var compiledSrc = compileMacros (file)
@@ -141,31 +140,42 @@ function compile (cfg) { _.each (cfg.inputFiles, function (file) { log.w ('Compi
             strippedSrc,
             writeCompiled.partial (name + '.min.js', cfg.outputPath)) }
 
-    writeCompiled (name + '.js', cfg.outputPath, compiledSrc) }) }
+    writeCompiled (name + '.js', cfg.outputPath, compiledSrc) }
 
-console.log ('Running code base tests...')
+ console.log ('\n1. Validating own integrity ' + log.thinLine + '\n')
 
-Testosterone.run ({                             
-    codebase: true,
-    verbose:  false,
-    silent:   true },
+;(function main () {
 
-    function (okay) { if (okay) {
+    ;(function setUpExceptionHandling () {
+        _.withUncaughtExceptionHandler (function (e) {
+            log.writeUsingDefaultBackend ('\n', e)
+            if (e.fatal) { log.e (log.boldLine + ' cannot continue ' + log.boldLine + '\n'); process.exit () } }) }) ();
 
-        var args = util.parseCommandLineOptions ('no-compress', 'no-stripped')
+    Testosterone.run ({                             
+        codebase: true,
+        verbose:  false,
+        silent:   true },
 
-        var directories = args.rest.groupBy (
-                                fs.lstatSync.catches (null,
-                                    _.method ('isDirectory')))
-                                                           
-        var cfg = _.extend ({ inputFiles: _.coerceToUndefined (directories['false'])  || ['./useless.js'],
-                              outputPath:             _.first (directories['true'])   ||  './build' }, args.options)
+        function (okay) { if (okay) {
 
-        log.pretty.i (cfg)
+            var args = util.parseCommandLineOptions ('no-compress', 'no-stripped')
 
-        log ('Checking dependencies...')
+            var directories = args.rest.groupBy (
+                                    fs.lstatSync.catches (null,
+                                        _.method ('isDirectory')))
+                                                               
+            var cfg = _.extend ({ inputFiles: _.coerceToUndefined (directories['false'])  || ['./useless.js'],
+                                  outputPath:             _.first (directories['true'])   ||  './build' }, args.options)
 
-        util.require (['esprima', 'escodegen'], compile.partial (cfg)) } })
+            log.pretty.i (cfg)
+
+            log ('\n2. Checking dependencies...' + log.thinLine + '\n')
+
+            util.require (['esprima', 'escodegen'],
+
+                function () {
+
+                    _.each (cfg.inputFiles, compileFile.$ (cfg)) }) } }) }) ();
 
 
 
