@@ -5,7 +5,7 @@ var fs          = require ('fs'),
     http        = require ('http'),
     process     = require ('process'),
     path        = require ('path')
-    nodemon     = require ('nodemon')
+//    nodemon     = require ('nodemon')
 
 function compileMacros (file) {
     return util.compileScript ({ sourceFile: file }) }
