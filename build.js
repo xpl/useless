@@ -32,7 +32,7 @@ BuildApp = $singleton (Component, {
         this.inputFiles =                    _.coerceToUndefined (directories['false']) || this.inputFiles
         this.buildPath  =  path.resolve (process.cwd (), _.first (directories['true'])  || this.buildPath)
 
-        if (args.options.supervised) {
+        if (!this.isSupervisor) {
             log.pretty.g (_.extend ({ options: args.options },
                     _.pick (this, 'inputFiles',
                                   'buildPath'))) } },
