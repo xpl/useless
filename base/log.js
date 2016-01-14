@@ -280,7 +280,7 @@ _.extend (log, {
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
                                                   function (name,                     i,                        names      )  {
-                                                   return  [name,  write ({ location: i === 0, color: log.color[names.first]  }) ] })))))))
+                                                   return  [name,  write ({ location: i !== 0, color: log.color[names.first]  }) ] })))))))
 
 }) ()
 

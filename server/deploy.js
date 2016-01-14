@@ -6,12 +6,13 @@ var fs              = require ('fs'),
 module.exports = $trait ({
 
     buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
+    buildPath: undefined,
 
     buildScript: function (name) { log.info ('Building monolithic ' + name)
 
         var includeFile = fs.readFileSync ($uselessPath + name, { encoding: 'utf8' })
         var compiledSrc = util.compileScript ({ source: includeFile, includePath: $uselessPath })
-        fs.writeFileSync ($uselessPath + 'build/' + name, compiledSrc, { encoding: 'utf8' }) },
+        fs.writeFileSync (path.join (this.buildPath || ($uselessPath + 'build/'), name), compiledSrc, { encoding: 'utf8' }) },
 
     /*  Self deployment protocol
      */

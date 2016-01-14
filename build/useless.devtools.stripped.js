@@ -835,7 +835,7 @@ _.extend(log, {
         return [
             name,
             write({
-                location: i === 0,
+                location: i !== 0,
                 color: log.color[names.first]
             })
         ];

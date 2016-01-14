@@ -164,7 +164,6 @@ Testosterone.run ({
         var cfg = _.extend ({ inputFiles: _.coerceToUndefined (directories['false' ])  || ['./useless.js'],
                               outputPath:             _.first (directories['true'])    ||  './build' }, options)
 
-
         log.pretty.i (cfg)
 
         log ('Checking dependencies...')

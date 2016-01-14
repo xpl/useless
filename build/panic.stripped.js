@@ -3375,7 +3375,7 @@ Component = $prototype({
             var bindables = {};
             _.each([def].concat(_.pluck(traits, '$definition')), function (def) {
                 _.each(_.omit(def, _.or($builtin.matches, _.key(_.equals('constructor')))), function (member, name) {
-                    if (member.$bindable) {
+                    if ($bindable.is(member)) {
                         bindables[name] = member;
                     }
                     (pool[name] || (pool[name] = [])).push(member);
@@ -4877,7 +4877,7 @@ _.extend(log, {
         return [
             name,
             write({
-                location: i === 0,
+                location: i !== 0,
                 color: log.color[names.first]
             })
         ];

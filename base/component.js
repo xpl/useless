@@ -512,6 +512,9 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
+    '(regression) undefined members fail': function () {
+        var Compo = $component ({ yoba: undefined })
+        $assert ('yoba' in Compo.prototype) },
 
     '(regression) $defaults with $traits fail': function () {
         var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})], $defaults: { a: {}, b: [], c: 0 } })
@@ -604,11 +607,12 @@ Component = $prototype ({
             var pool = {}
             var bindables = {}
 
+
             _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
                 _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),
                     function (member, name) {
-                        if (member.$bindable) {
-                            bindables[name] = member }
+                        if ($bindable.is (member)) {
+                             bindables[name] = member }
                         (pool[name] || (pool[name] = [])).push (member) }) })
 
             _.each (pool, function (members, name) {
