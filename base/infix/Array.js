@@ -5,7 +5,11 @@ _.withTest ('Array extensions', function () {
 
     var arr = [1,3,2,3,3,4,3]
 
-    $assert ([arr.first, arr.last], [1, 3])
+    $assert ([arr.first, arr.top, arr.last], [1, 3, 3])
+
+    $assert (arr.take (4), [1,3,2,3])
+
+    $assert ([arr.contains (4), arr.contains (9)], [true, false])
 
     $assert (arr.lastIndex, 6)
 
@@ -46,11 +50,22 @@ _.withTest ('Array extensions', function () {
         reduce:      _.reduce,
         reduceRight: _.reduceRight,
         zip:         _.zipWith,
+        groupBy:     _.groupBy,
         filter:      _.filter,
+        flat:        _.flatten.tails2 (true),
+        object:      _.object,
 
+        contains: function (arr, item) { return arr.indexOf (item) >= 0 },
+
+        top:   function (arr) { return arr[arr.length - 1] },        
         first: function (arr) { return arr[0] },
         last:  function (arr) { return arr[arr.length - 1] },
         
+        take: function (arr, n) { return arr.slice (0, n) },
+
+        before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
+        after: function (arr, x)  { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (i + 1) },
+
         isEmpty: function (arr) { return arr.length === 0 },
         notEmpty: function (arr) { return arr.length > 0 },
 
@@ -80,9 +95,6 @@ _.withTest ('Array extensions', function () {
 
         reversed: function (arr) {
             return arr.slice ().reverse () },
-
-        flat: function (arr) {
-            return _.flatten (arr, true) },
 
         swap: $method (function (arr, indexA, indexB) {
             var a = arr[indexA], b = arr[indexB]

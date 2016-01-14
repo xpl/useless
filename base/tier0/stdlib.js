@@ -7,44 +7,14 @@ _.withTest (['stdlib', 'throwsError'], function () {
 
         $assertThrows (
             _.throwsError ('неуловимый Джо'),
-            _.matches ({ message: 'неуловимый Джо' })) }, function () { _.extend (_, {
+            _.matches ({ message: 'неуловимый Джо' })) }, function () {
 
-    throwsError: function (msg) {
-                    return function () {
-                        throw new Error (msg) }} }) })
+    _.throwsError = _.higherOrder (
+        _.throwError = function (msg) {
+                         throw new Error (msg) }) })
 
 _.overrideThis   = _.throwsError ('override this')
 _.notImplemented = _.throwsError ('not implemented')
-
-
-/*  A functional try/catch
-    ======================================================================== */
-
-_.deferTest (['stdlib', 'tryEval'], function () {
-
-    /*  'return' interface
-     */
-    $assert ('ok',     _.tryEval (_.constant ('ok'),
-                                  $fails))
-
-    $assert ('failed', _.tryEval (_.throwsError ('yo'),
-                                  $assertMatches.partial ({ message: 'yo'}).then (_.constant ('failed'))))
-
-   /*   CPS interface
-    */
-    $assertCPS (_.tryEval.partial (_.constant ('ok'),
-                                   _.constant ('failed')), 'ok')
- 
-    $assertCPS (_.tryEval.partial (_.throwsError ('yo'),
-                                   _.constant ('failed')), 'failed')
-
-}, function () { _.mixin ({
-                    tryEval: function (try_, catch_, then_) { var result = undefined
-                        try       { result = try_ ()    }
-                        catch (e) { result = catch_ && catch_ (e) }
-                        return then_ ?
-                                    then_ (result) :
-                                    result } }) })
 
 
 /*  Abstract _.values
@@ -71,20 +41,18 @@ _.deferTest (['stdlib', 'values2'], function () {
 /*  Semantically-correct abstract map (maps any type of value)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
+_.deferTest (['stdlib', 'map2'], function () {
+                                 var plusBar = _.appends ('bar')
+    $assert (_.map2 (       'foo',   plusBar),         'foobar'  )
+    $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
+    $assert (_.map2 ({ foo: 'foo' }, plusBar),  { foo: 'foobar' })
 
-    $assert (_.map2 ('foo', plusBar), 'foobar')
-    $assert (_.map2 (['foo'], plusBar), ['foobar'])
-    $assert (_.map2 ({ foo: 'foo' }, plusBar), { foo: 'foobar' })
-
-}, function () { _.mixin ({
-                    map2: function (value, fn, context) {
-                        if (_.isArray (value)) {
-                            return _.map (value, fn, context) }
-                        else if (_.isStrictlyObject (value)) {
-                            return _.mapObject (value, fn, context) }
-                        else {
-                            return fn.call (context, value) } } })})
+}, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
+                                     _.isArray (value) ? _.map       (value, fn,      context) : (
+                            _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
+                                                                             fn.call (context, value))) } })
+                _.mapsWith = _.higherOrder (
+                    _.mapWith  = _.flip2 (_.map)) })
 
 /*  Hyper map (deep) #1 — maps leafs
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -167,12 +135,32 @@ _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
         filterFilter: _.hyperOperator (_.unary, _.filter2) }) })
 
 
+_.withTest (['stdlib', 'each 2.0'], function () {
+
+    var test = function (input) {                                        var output = []
+                _.each2 (input, function ( x,     i,          n) {           output.push (
+                                         [ x,     i,          n]) }); return output }
+                            
+        $assert (test ( 'foo'),         [['foo',  undefined,  1]])        
+        $assert (test (['foo', 'bar']), [['foo',  0,          2],
+                                         ['bar',  1,          2]])
+        $assert (test ({ 'f': 'oo',
+                         'b': 'ar' }),  [[ 'oo', 'f',         2],
+                                         [ 'ar', 'b',         2]])
+}, function () { 
+
+    _.each2 =            function (x,                                                                           f) {
+           if (         _.isArray (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+      else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
+         else                          {                                                                        f (x,        undefined, 1) } } })
+
 /*  Reduce on steroids
     ======================================================================== */
 
-_.deferTest (['stdlib', 'reduce 2.0'], function () {
+_.withTest (['stdlib', 'reduce 2.0'], function () {
 
-    /*$assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
+    $assert (_.reduce2 (     3,   [7,    9 ], _.sum), 19)
+    $assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
     $assert (_.reduce2 ({ a: 3, b: 7, c: 9 }, _.sum), 19)
     $assert (_.reduce2 (     3   + 7   + 9  , _.sum), 19)
 
@@ -180,7 +168,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
     $assert (_.reduce2 ([],  _.sum), undefined)
 
     $assert (              1 + 20 + 3 + 4 + 5,
-        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))*/
+        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))
 
 }, function () {
 
@@ -193,29 +181,20 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
             1. _.reduce (value, op, memo)
             2.       op (memo, value)
     */
-    _.reduce2 = function (value, memo, op_) {
 
-                    var op     = _.last (arguments)
+    _.reduce2 = function (        _1,                 _2,      _3) { var no_left = arguments.length < 3
+                       var left = _1,        rights = _2, op = _3
+         if (no_left) {    left = undefined; rights = _1; op = _2 }
 
-                    var safeOp = function (value, memo) { var hasMemo = (memo !== undefined)
-                                                          var result  = (hasMemo ? op (value, memo) : value)
-                        return (result === undefined) ?
-                                    (hasMemo ? memo : value) :
-                                    (result) }
+         _.each2 (rights, function (right) {
+                  left =  no_left ? right :
+                          op (left, right); no_left = false }); return left }
 
-                    if (_.isArray (value)) {                                
-                        for (var i = 0, n = value.length; i < n; i++) {
-                            memo = safeOp (value[i],   memo) } }
-
-                    else if (_.isStrictlyObject (value)) {                  
-                        _.each (Object.keys (value), function (key) {
-                            memo = safeOp (value[key], memo) }) }
-
-                    else {
-                            memo = safeOp (value,      memo) } return memo }
-
-    _.reduceReduce = function (initial, value, op) {
-                        return _.hyperOperator (_.binary, _.reduce2, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
+    _.reduceReduce = function (_1, _2, _3) {                             var initial = _1, value = _2, op = _3
+                        if (arguments.length < 3) {                          initial = {}; value = _1; op = _2 }
+                        return _.hyperOperator (_.binary,
+                                                _.reduce2,
+                                                _.goDeeperAlwaysIfPossible) (initial,      value,      op) }
  })
 
 /*  Zip 2.0
@@ -277,7 +256,7 @@ _.deferTest (['stdlib', 'zip2'], function () {
             else if (_.isStrictlyObject (rows[0])) {
                 return _.zipObjectsWith (rows, fn) }
             else {
-                return _.reduce (rows, fn) } } } }) })
+                return _.reduce2 (rows, fn) } } } }) })
 
 /*  Hyperzip (deep one).
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

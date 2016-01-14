@@ -84,7 +84,7 @@ _.tests.AOP = {
                             $prototype.impl.extendWithTags,
                             $prototype.impl.flatten,
                             $prototype.impl.generateArgumentContractsIfNeeded,
-                            $prototype.impl.contributeTraits,
+                            $prototype.impl.contributeTraits ({}),
                             $prototype.impl.expandAliases).call ($prototype.impl, cfg))
         
         var motherDef = ofWhat.constructor && ofWhat.constructor.$definition

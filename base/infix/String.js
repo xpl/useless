@@ -19,6 +19,9 @@ _.deferTest ('String extensions', function () {
     $assert ('па'.prepend   ('жо'),
              'жо'.append    ('па'), 'жопа')
 
+    $assert (['жопа'.contains ('опа'),
+              'жопа'.contains ('апож')], [true, false])
+
     /*  Higher order version of former utility
      */
     $assert ([  _.map ([1, 2, 3], _.prepends ('foo')), // higher order version
@@ -70,6 +73,8 @@ _.deferTest ('String extensions', function () {
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
+
+    contains: function (s, other) { return s.indexOf (other) >= 0 },
 
     cut: function (s, from) {
         return s.substring (0, from - 1) + s.substring (from, s.length) },

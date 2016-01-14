@@ -27,7 +27,16 @@ _.isPrototypeConstructor = function (x) {
     ======================================================================== */
 
 _.coerceToArray = function (x) {
-                        return (x === undefined) ? [] : (_.isArray (x) ? x : [x]) }
+                    return (x === undefined) ? []
+                                             : (_.isArray (x) ? x :
+                                                               [x]) }
+
+/*  Useful for defining flow control parameterization
+    ======================================================================== */
+
+_.coerceToFunction = function (x) {
+          return _.isFunction (x) ?             x
+                                  : _.constant (x) }
 
 /*  Fixes _.isArray to account objects that derive from Array prototype
     ======================================================================== */

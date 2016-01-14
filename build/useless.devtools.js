@@ -1149,7 +1149,7 @@ _.extend (log, {
                 log.impl.location (config.where || $callStack[stackOffset + (config.stackOffset || 0)])) || ''
 
             var backendParams = {
-                color: log.readColor (args),
+                color: config.color || log.readColor (args),
                 indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
                 trailNewlines: match[1],
                 codeLocation: location,
@@ -1237,32 +1237,32 @@ _.extend (log, {
 
 
 /*  Printing API
-    TODO: refactor dat copypasta!
  */
-_.extend (log, log.printAPI = {
+;(function () {                                                var write = log.impl.write
+   _.extend (log,
+             log.printAPI =
+                    _.object (
+                    _.concat (            [[            'newline', write ().$ ('') ],
+                                           [              'write', write ()        ]],
+                            _.flat (_.map (['red failure error e',
+                                                    'blue info i',
+                                          'orange warning warn w',
+                                             'green success ok g' ],
+                                                    _.splitsWith  (' ').then (
+                                                      _.mapsWith  (
+                                                  function (name,                     i,                        names      )  {
+                                                   return  [name,  write ({ location: i === 0, color: log.color[names.first]  }) ] })))))))
 
-    newline:    log.impl.write ().partial (''),
-    write:      log.impl.write (),
-    red:        log.impl.write ().partial (log.color.red),
-    blue:       log.impl.write ().partial (log.color.blue),
-    orange:     log.impl.write ().partial (log.color.orange),
-    green:      log.impl.write ().partial (log.color.green),
+}) ()
 
-    failure:    log.impl.write ({ location: true }).partial (log.color.red),
-    error:      log.impl.write ({ location: true }).partial (log.color.red),
-    e:          log.impl.write ({ location: true }).partial (log.color.red),
-    info:       log.impl.write ({ location: true }).partial (log.color.blue),
-    i:          log.impl.write ({ location: true }).partial (log.color.blue),
-    w:          log.impl.write ({ location: true }).partial (log.color.orange),
-    warn:       log.impl.write ({ location: true }).partial (log.color.orange),
-    warning:    log.impl.write ({ location: true }).partial (log.color.orange),
-    success:    log.impl.write ({ location: true }).partial (log.color.green),
-    ok:         log.impl.write ({ location: true }).partial (log.color.green),
-    g:          log.impl.write ({ location: true }).partial (log.color.green) }) 
+/*  Higher order API
+ */
+log.writes =            _.higherOrder (log.write)       // generates write functions
+logs       = _.mapWith (_.higherOrder, log.printAPI)    // higher order API
 
-log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
-
-logs = _.map2 (log.printAPI, _.higherOrder) // higher order API
+/*  Pretty printing API
+ */
+log.pretty = _.map2 (log.printAPI, _.partial.tails2 (log.config ({ pretty: true })))
 
 /*  Experimental formatting shit.
  */
@@ -1287,7 +1287,7 @@ _.extend (log, {
             
             /*  convert column data to string, taking first line
              */
-            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return (col + '').split ('\n')[0] }))
+            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return _.asString (col).split ('\n')[0] }))
 
             /*  compute column widths (per row) and max widths (per column)
              */
@@ -1643,8 +1643,7 @@ Test = $prototype ({
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            _.each (notMatching, function (what, i) {
-                                log.orange ('•', what) }) } } }
+                            _.each (notMatching, function (what, i) { log.orange (_.bullet ('• ', log.impl.stringify (what))) }) } } }
                         
                     // print exception
                 else {
@@ -1797,8 +1796,10 @@ Panic.widget = $singleton (Component, {
 					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ])
 
-		//$(document).ready (function () {
-			el.appendTo (document.body)// })
+		el.appendTo (document.body)
+		
+		$(document).ready (function () {
+			el.appendTo (document.body) })
 
 		try {
 			$(window).resize (this.layout).resize ()

@@ -54,7 +54,7 @@ module.exports = {
     require: function (names, then) {
         _.cps.map (names,
                 function (name, i, return_) {
-                    _.tryEval (function () { return require (name) },
+                    require.$ (name).catch_ (
                                function (e) {
                                     exec ('npm install ' + name, function (e, stdout, stderr) {
                                                                         if (e) {

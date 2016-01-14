@@ -130,18 +130,18 @@ function stripCommentsAndTests (src, name, path) {
 
     return output }
 
-function compile (cfg) { _.each (cfg.files, function (file) {
+function compile (cfg) { _.each (cfg.inputFiles, function (file) { log.w ('Compiling ', file)
 
     var name = _.initial (path.basename (file).split ('.')).join ('.')
     var compiledSrc = compileMacros (file)
-    var strippedSrc = stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, !cfg['no-stripped'] && cfg.path)
+    var strippedSrc = stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name, !cfg['no-stripped'] && cfg.outputPath)
 
     if (!cfg['no-compress']) {
         compileWithGoogle (
             strippedSrc,
-            writeCompiled.partial (name + '.min.js', cfg.path)) }
+            writeCompiled.partial (name + '.min.js', cfg.outputPath)) }
 
-    writeCompiled (name + '.js', cfg.path, compiledSrc) }) }
+    writeCompiled (name + '.js', cfg.outputPath, compiledSrc) }) }
 
 console.log ('Running code base tests...')
 
@@ -154,11 +154,18 @@ Testosterone.run ({
 
         var arguments     = _.rest (process.argv, 2)
         var optionNames   = ['no-compress', 'no-stripped']
-        var filePath      = _.without.apply (null, [arguments].concat (optionNames))
+        var filePaths     = _.without.apply (null, [arguments].concat (optionNames))
         var options       = _.index (_.intersection (arguments, optionNames))
 
-        var cfg = _.extend ({ files: _.coerceToUndefined (_.initial (filePath)) || ['./useless.js'],
-                              path:                       _.last    (filePath)  ||  './build' }, options)
+                                                           var directories = filePaths.groupBy (
+                                                                                    fs.lstatSync.catches (null,
+                                                                                        _.method ('isDirectory')))
+                                                           
+        var cfg = _.extend ({ inputFiles: _.coerceToUndefined (directories['false' ])  || ['./useless.js'],
+                              outputPath:             _.first (directories['true'])    ||  './build' }, options)
+
+
+        log.pretty.i (cfg)
 
         log ('Checking dependencies...')
 

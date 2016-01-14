@@ -397,7 +397,7 @@ _.deferTest ('OOP', {
                     this.generateConstructor (base),
                     this.evalAlwaysTriggeredMacros (base),
                     this.evalMemberTriggeredMacros (base),
-                    this.contributeTraits,
+                    this.contributeTraits (base),
                     this.generateBuiltInMembers (base),
                     this.expandAliases,
                     this.defineStaticMembers,
@@ -407,7 +407,7 @@ _.deferTest ('OOP', {
             compileMixin: function (def) {
                 return _.sequence (
                     this.flatten,
-                    this.contributeTraits,
+                    this.contributeTraits (),
                     this.expandAliases,
                     this.evalMemberTriggeredMacros (),
                     this.defineStaticMembers,
@@ -443,19 +443,20 @@ _.deferTest ('OOP', {
                                                                      return function () { var args = _.asArray (arguments)
                                                                         $assertArguments (args.copy, fn.original, name)
                                                                          return fn.apply (this, args) } }) : def },
-            contributeTraits: function (def) {
+            contributeTraits: function (base) {
+                        return function (def) {
                 
                 if (def.$traits) { var traits = def.$traits
 
-                    this.mergeTraitsMembers (def, traits)
+                    this.mergeTraitsMembers (def, traits, base)
 
                     def.$traits  = $static ($builtin ($property (traits)))
                     def.hasTrait = $static ($builtin (function (Constructor) {
                         return traits.indexOf (Constructor) >= 0 })) }
 
-                return def },
+                return def } },
 
-            mergeTraitsMembers: function (def, traits) {
+            mergeTraitsMembers: function (def, traits, base) {
                 _.each (traits, function (trait) {
                     _.defaults (def, _.omit (trait.$definition,
                         _.or ($builtin.matches, _.key (_.equals ('constructor'))))) }) },
@@ -464,8 +465,8 @@ _.deferTest ('OOP', {
                 return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
 
             callStaticConstructor: function (def) {
-                if (def.$constructor) {
-                    def.$constructor () } return def },
+                         if (def.$constructor) {
+                Tags.unwrap (def.$constructor).call (def) } return def },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:

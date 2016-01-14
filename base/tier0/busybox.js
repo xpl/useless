@@ -27,11 +27,12 @@ _.count = function (what) { // cannot override _.length
 _.array = _.tuple = function () {
                         return _.asArray (arguments) }
 
-_.concat = function (a, b) {
-    if (_.isArray (a)) {
-        return a.concat ([b]) }
-    else {
-        return a + b } }
+_.cons = function (head, tail) { return [head].concat (tail || []) }
+
+_.concat = function (first, rest) {                rest = _.rest (arguments)
+      return _.isArray (first)
+                      ? first.concat.apply (first, rest)
+                      :          _.reduce2 (first, rest, function (a, b) { return a + b }) }
 
 _.atIndex = function (n) {
                 return function (arr) { return arr[n] } }
@@ -55,6 +56,10 @@ _.appends = function (what) {
 _.join = function (arr, s) { return arr.join (s) }
 _.joinWith = _.flip2 (_.join)
 _.joinsWith = _.higherOrder (_.joinWith)
+
+_.split      = function (s, del) { return s.split (del) }
+_.splitWith  =                   _.flip2 (_.split)
+_.splitsWith =             _.higherOrder (_.splitWith)
 
 _.sum = function (a, b) {
             return (a || 0) + (b || 0) }

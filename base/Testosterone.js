@@ -318,8 +318,7 @@ Test = $prototype ({
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            _.each (notMatching, function (what, i) {
-                                log.orange ('•', what) }) } } }
+                            _.each (notMatching, function (what, i) { log.orange (_.bullet ('• ', log.impl.stringify (what))) }) } } }
                         
                     // print exception
                 else {

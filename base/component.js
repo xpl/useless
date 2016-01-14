@@ -153,6 +153,16 @@ _.tests.component = {
 
     /*  $defaults is convenient macro to extract _.defaults thing from init() to definition level
      */
+    '$defaults basic': function () {
+        var Compo = $component ({ $defaults:           { foo: 42 }})
+        $assert ($untag (Compo.$definition.$defaults), { foo: 42 })
+        $assert (        Compo.            $defaults,  { foo: 42 })
+
+        var Compo2 = $component ({ $traits: [$trait ({ $defaults: { foo: 11 } })], $defaults: { } })
+        $assert ($untag (Compo2.$definition.$defaults), { foo: 11 })
+        $assert (        Compo2.            $defaults,  { foo: 11 })
+    },
+
     '$defaults': function () {
         var Trait = $trait ({ $defaults: { pff: 'pff', inner: { fromTrait: 1 } }})
         var Base = $component ({ $defaults: { foo: 12, qux: 'override me', inner: { fromBase: 1 } } })
@@ -507,6 +517,10 @@ _.tests.component = {
         var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})], $defaults: { a: {}, b: [], c: 0 } })
         $assert (Compo.$defaults, { x: 1, a: {}, b: [], c: 0 }) },
 
+    '(regression) $defaults with $traits fail #2': function () {
+        var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})] })
+        $assert (Compo.$defaults, { x: 1 }) },
+
     '(regression) method overriding broken': function () {
         var Compo = $component ({ method: function () { $fail } })
         var compo = new Compo ({ value: 42, method: function () { return this.value } })
@@ -556,7 +570,7 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
                                 return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
+_([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
@@ -565,32 +579,25 @@ _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observ
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
 
-/*  Make $defaults and $requires inherit base values + $traits support
- */
-$prototype.inheritsBaseValues = function (keyword) {
-    $prototype.macro (keyword, function (def, value, name, Base) {
-
-        value = _.extendedDeep ((Base && Base[keyword]) || {}, value)
-
-        _.each (def.$traits, function (Trait) {
-            value = _.extendedDeep (Trait[keyword], value) })
-
-        def[keyword] = $static ($builtin ($property (_.constant (value))))
-
-        return def }) } 
-
-
-$prototype.inheritsBaseValues ('$defaults')
-$prototype.inheritsBaseValues ('$requires')
-
-
 /*  Impl
  */
 Component = $prototype ({
 
+    $defaults: $extendable ($static ($builtin ($property ({})))),
+    $requires: $extendable ($static ($builtin ($property ({})))),
+
     /*  Overrides default OOP.js implementation of traits (providing method chaining)
      */
     $impl: {
+
+        contributeTraits: function (base) {  var prevImpl = $prototype.impl.contributeTraits (base)
+            return function (def) {        def = prevImpl.call (this, def)
+                _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
+                    def[name] = Tags.modifySubject (value, function (value) { value = _.extendedDeep (value, $untag (def[name] || {}))
+                            _.each ($untag (def.$traits),  function (trait) { var traitVal = trait.$definition [name]
+                                                                              if (traitVal) { value = _.extendedDeep ($untag (traitVal), value) } })
+                                                             return value }) })
+            return def } },
 
         mergeTraitsMembers: function (def, traits) {
 
@@ -637,14 +644,18 @@ Component = $prototype ({
     /*  Another helper (it was needed because _.methods actually evaluate $property values while enumerating keys,
         and it ruins most of application code, because it happens before Component is actually created).
      */
-    enumMethods: function (/* [predicate, ] iterator */) { var iterator  = _.last (arguments),
+    mapMethods: function (/* [predicate, ] iterator */) { var iterator  = _.last (arguments),
                                                                predicate = (arguments.length === 1 ? _.constant (true) : arguments[0])
         var methods = []
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
                 if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
-                    iterator.call (this, fn, k, def) } } } },
+                    this[k] = iterator.call (this, fn, k, def) || fn } } } },
+
+    enumMethods: function (_1, _2) {
+        if (arguments.length === 2) { this.mapMethods (_1, _2.returns (undefined)) }
+                               else { this.mapMethods (    _1.returns (undefined)) } },
 
 
     /*  Thou shall not override this
@@ -666,7 +677,7 @@ Component = $prototype ({
 
         /*  Add thiscall semantics to methods
          */
-        this.enumMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { this[name] = this.$ (fn) } })
+        this.mapMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { return this.$ (fn) } })
 
 
         /*  Listen self destroy method

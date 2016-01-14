@@ -26,12 +26,37 @@ _.deferTest (['type', 'stringify'], function () {
         $assert (_.stringify (123),     '123')
         $assert (_.stringify (complex), renders)
 
+        $assert (_.pretty ({    array: ['foo',
+                                        'bar',
+                                        'baz'],
+                                 more:  'qux',
+                             evenMore:   42    }), ['{    array: [ "foo",'     ,
+                                                    '              "bar",'     ,
+                                                    '              "baz" ],'    ,
+                                                    '      more:   "qux",'     ,
+                                                    '  evenMore:    42     }'].join ('\n'))
+
         var obj = {}
         $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
 
-    _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}, -1) }
+    _.alignStringsRight = function (strings) {
+                                                var              lengths = strings.map (_.count)
+                                                var max = _.max (lengths)
+                            return                              [lengths,  strings].zip (function (ln,   str) {
+                                return ' '.repeats (max -                                          ln) + str }) }
 
-    _.stringifyImpl     = function (x, parents, siblings, depth, cfg, prevIndent) {
+    _.bullet = function (bullet,        str) { var indent = ' '.repeats (bullet.length)
+              return _.joinWith  ('\n',
+                     _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
+                                                                                 ? (bullet + line)
+                                                                                 : (indent + line) })) }
+
+    _.pretty = function (   x,                             cfg) {
+        return _.stringify (x, _.extend ({ pretty: true }, cfg)) }
+
+    _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}) }
+
+    _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
                             var customFormat = cfg.formatter && cfg.formatter (x)
 
@@ -64,7 +89,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
-                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg, indent)) }
+                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
 
                             else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }
@@ -93,21 +118,35 @@ _.deferTest (['type', 'stringify'], function () {
 
                                 var oneLine = !pretty || (values.length < 2)
 
-                                var indent  = prevIndent + 1
-                                var tabs    = !oneLine ? '\t'.repeats (indent) : ''
+                                var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
 
-                                if (pretty && !isArray) {
-                                    var max = _.reduce (_.map (_.keys (x), _.count), _.largest, 0)
-                                    values = _.map (values, function (v) {
-                                        return [v[0], v[1], ' '.repeats (max - v[0].length)] }) }
+                                if (pretty) {
+                                        values        = _.values (x)
+                                    var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
+                                    var printedValues =                            values.map (impl)
 
-                                var square  = !oneLine ? '[\n  ]' : '[]'
-                                var fig     = !oneLine ? '{\n  }' : '{  }'
-                                
-                                return _.quoteWith (isArray ? square : fig, _.joinWith (oneLine ?  ', ' : ',\n',
+                                    var leftPaddings = printedValues.map (function (x, i) {
+                                                                            return (x.split ('\n').length > 1) ? 3 :
+                                                                                        _.isString (values[i]) ? 1 : 0 })
+                                    var maxLeftPadding = _.max (leftPaddings)
+
+                                    var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
+                                                                 return ' '.repeats (maxLeftPadding - padding) + x })
+
+                                    var internals = isArray ? indentedValues :
+                                                [printedKeys, indentedValues].zip (_.bullet)
+
+                                    var printed = _.bullet (isArray ? '[ ' :
+                                                                      '{ ', internals.join (',\n'))
+                                    var lines = printed.split ('\n')
+
+                                    return printed +  (' '.repeats (_.max (lines.map (_.count)) -
+                                                                    _.count (lines.last)) + (isArray ? ']' :
+                                                                                                       '}')) }
+
+                                return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
                                             _.map (values, function (kv) {
-                                                        return tabs + (isArray ? '' : (kv[0] + ': ' + (kv[2] || ''))) +
-                                                            _.stringifyImpl (kv[1], parentsPlusX, siblings, depth + 1, cfg, indent) }))) }
+                                                        return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) }
 
                             else if (_.isDecimal (x) && (cfg.precision > 0)) {
                                 return _.toFixed (x,     cfg.precision) }

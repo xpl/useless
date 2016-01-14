@@ -565,11 +565,12 @@ _.count = function (what) { // cannot override _.length
 _.array = _.tuple = function () {
                         return _.asArray (arguments) }
 
-_.concat = function (a, b) {
-    if (_.isArray (a)) {
-        return a.concat ([b]) }
-    else {
-        return a + b } }
+_.cons = function (head, tail) { return [head].concat (tail || []) }
+
+_.concat = function (first, rest) {                rest = _.rest (arguments)
+      return _.isArray (first)
+                      ? first.concat.apply (first, rest)
+                      :          _.reduce2 (first, rest, function (a, b) { return a + b }) }
 
 _.atIndex = function (n) {
                 return function (arr) { return arr[n] } }
@@ -593,6 +594,10 @@ _.appends = function (what) {
 _.join = function (arr, s) { return arr.join (s) }
 _.joinWith = _.flip2 (_.join)
 _.joinsWith = _.higherOrder (_.joinWith)
+
+_.split      = function (s, del) { return s.split (del) }
+_.splitWith  =                   _.flip2 (_.split)
+_.splitsWith =             _.higherOrder (_.splitWith)
 
 _.sum = function (a, b) {
             return (a || 0) + (b || 0) }
@@ -666,7 +671,16 @@ _.isPrototypeConstructor = function (x) {
     ======================================================================== */
 
 _.coerceToArray = function (x) {
-                        return (x === undefined) ? [] : (_.isArray (x) ? x : [x]) }
+                    return (x === undefined) ? []
+                                             : (_.isArray (x) ? x :
+                                                               [x]) }
+
+/*  Useful for defining flow control parameterization
+    ======================================================================== */
+
+_.coerceToFunction = function (x) {
+          return _.isFunction (x) ?             x
+                                  : _.constant (x) }
 
 /*  Fixes _.isArray to account objects that derive from Array prototype
     ======================================================================== */
@@ -913,12 +927,37 @@ _.deferTest (['type', 'stringify'], function () {
         $assert (_.stringify (123),     '123')
         $assert (_.stringify (complex), renders)
 
+        $assert (_.pretty ({    array: ['foo',
+                                        'bar',
+                                        'baz'],
+                                 more:  'qux',
+                             evenMore:   42    }), ['{    array: [ "foo",'     ,
+                                                    '              "bar",'     ,
+                                                    '              "baz" ],'    ,
+                                                    '      more:   "qux",'     ,
+                                                    '  evenMore:    42     }'].join ('\n'))
+
         var obj = {}
         $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
 
-    _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}, -1) }
+    _.alignStringsRight = function (strings) {
+                                                var              lengths = strings.map (_.count)
+                                                var max = _.max (lengths)
+                            return                              [lengths,  strings].zip (function (ln,   str) {
+                                return ' '.repeats (max -                                          ln) + str }) }
 
-    _.stringifyImpl     = function (x, parents, siblings, depth, cfg, prevIndent) {
+    _.bullet = function (bullet,        str) { var indent = ' '.repeats (bullet.length)
+              return _.joinWith  ('\n',
+                     _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
+                                                                                 ? (bullet + line)
+                                                                                 : (indent + line) })) }
+
+    _.pretty = function (   x,                             cfg) {
+        return _.stringify (x, _.extend ({ pretty: true }, cfg)) }
+
+    _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}) }
+
+    _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
                             var customFormat = cfg.formatter && cfg.formatter (x)
 
@@ -951,7 +990,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
-                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg, indent)) }
+                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
 
                             else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }
@@ -980,21 +1019,35 @@ _.deferTest (['type', 'stringify'], function () {
 
                                 var oneLine = !pretty || (values.length < 2)
 
-                                var indent  = prevIndent + 1
-                                var tabs    = !oneLine ? '\t'.repeats (indent) : ''
+                                var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
 
-                                if (pretty && !isArray) {
-                                    var max = _.reduce (_.map (_.keys (x), _.count), _.largest, 0)
-                                    values = _.map (values, function (v) {
-                                        return [v[0], v[1], ' '.repeats (max - v[0].length)] }) }
+                                if (pretty) {
+                                        values        = _.values (x)
+                                    var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
+                                    var printedValues =                            values.map (impl)
 
-                                var square  = !oneLine ? '[\n  ]' : '[]'
-                                var fig     = !oneLine ? '{\n  }' : '{  }'
-                                
-                                return _.quoteWith (isArray ? square : fig, _.joinWith (oneLine ?  ', ' : ',\n',
+                                    var leftPaddings = printedValues.map (function (x, i) {
+                                                                            return (x.split ('\n').length > 1) ? 3 :
+                                                                                        _.isString (values[i]) ? 1 : 0 })
+                                    var maxLeftPadding = _.max (leftPaddings)
+
+                                    var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
+                                                                 return ' '.repeats (maxLeftPadding - padding) + x })
+
+                                    var internals = isArray ? indentedValues :
+                                                [printedKeys, indentedValues].zip (_.bullet)
+
+                                    var printed = _.bullet (isArray ? '[ ' :
+                                                                      '{ ', internals.join (',\n'))
+                                    var lines = printed.split ('\n')
+
+                                    return printed +  (' '.repeats (_.max (lines.map (_.count)) -
+                                                                    _.count (lines.last)) + (isArray ? ']' :
+                                                                                                       '}')) }
+
+                                return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
                                             _.map (values, function (kv) {
-                                                        return tabs + (isArray ? '' : (kv[0] + ': ' + (kv[2] || ''))) +
-                                                            _.stringifyImpl (kv[1], parentsPlusX, siblings, depth + 1, cfg, indent) }))) }
+                                                        return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) }
 
                             else if (_.isDecimal (x) && (cfg.precision > 0)) {
                                 return _.toFixed (x,     cfg.precision) }
@@ -1024,44 +1077,14 @@ _.withTest (['stdlib', 'throwsError'], function () {
 
         $assertThrows (
             _.throwsError ('неуловимый Джо'),
-            _.matches ({ message: 'неуловимый Джо' })) }, function () { _.extend (_, {
+            _.matches ({ message: 'неуловимый Джо' })) }, function () {
 
-    throwsError: function (msg) {
-                    return function () {
-                        throw new Error (msg) }} }) })
+    _.throwsError = _.higherOrder (
+        _.throwError = function (msg) {
+                         throw new Error (msg) }) })
 
 _.overrideThis   = _.throwsError ('override this')
 _.notImplemented = _.throwsError ('not implemented')
-
-
-/*  A functional try/catch
-    ======================================================================== */
-
-_.deferTest (['stdlib', 'tryEval'], function () {
-
-    /*  'return' interface
-     */
-    $assert ('ok',     _.tryEval (_.constant ('ok'),
-                                  $fails))
-
-    $assert ('failed', _.tryEval (_.throwsError ('yo'),
-                                  $assertMatches.partial ({ message: 'yo'}).then (_.constant ('failed'))))
-
-   /*   CPS interface
-    */
-    $assertCPS (_.tryEval.partial (_.constant ('ok'),
-                                   _.constant ('failed')), 'ok')
- 
-    $assertCPS (_.tryEval.partial (_.throwsError ('yo'),
-                                   _.constant ('failed')), 'failed')
-
-}, function () { _.mixin ({
-                    tryEval: function (try_, catch_, then_) { var result = undefined
-                        try       { result = try_ ()    }
-                        catch (e) { result = catch_ && catch_ (e) }
-                        return then_ ?
-                                    then_ (result) :
-                                    result } }) })
 
 
 /*  Abstract _.values
@@ -1088,20 +1111,18 @@ _.deferTest (['stdlib', 'values2'], function () {
 /*  Semantically-correct abstract map (maps any type of value)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
+_.deferTest (['stdlib', 'map2'], function () {
+                                 var plusBar = _.appends ('bar')
+    $assert (_.map2 (       'foo',   plusBar),         'foobar'  )
+    $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
+    $assert (_.map2 ({ foo: 'foo' }, plusBar),  { foo: 'foobar' })
 
-    $assert (_.map2 ('foo', plusBar), 'foobar')
-    $assert (_.map2 (['foo'], plusBar), ['foobar'])
-    $assert (_.map2 ({ foo: 'foo' }, plusBar), { foo: 'foobar' })
-
-}, function () { _.mixin ({
-                    map2: function (value, fn, context) {
-                        if (_.isArray (value)) {
-                            return _.map (value, fn, context) }
-                        else if (_.isStrictlyObject (value)) {
-                            return _.mapObject (value, fn, context) }
-                        else {
-                            return fn.call (context, value) } } })})
+}, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
+                                     _.isArray (value) ? _.map       (value, fn,      context) : (
+                            _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
+                                                                             fn.call (context, value))) } })
+                _.mapsWith = _.higherOrder (
+                    _.mapWith  = _.flip2 (_.map)) })
 
 /*  Hyper map (deep) #1 — maps leafs
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -1184,12 +1205,32 @@ _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
         filterFilter: _.hyperOperator (_.unary, _.filter2) }) })
 
 
+_.withTest (['stdlib', 'each 2.0'], function () {
+
+    var test = function (input) {                                        var output = []
+                _.each2 (input, function ( x,     i,          n) {           output.push (
+                                         [ x,     i,          n]) }); return output }
+                            
+        $assert (test ( 'foo'),         [['foo',  undefined,  1]])        
+        $assert (test (['foo', 'bar']), [['foo',  0,          2],
+                                         ['bar',  1,          2]])
+        $assert (test ({ 'f': 'oo',
+                         'b': 'ar' }),  [[ 'oo', 'f',         2],
+                                         [ 'ar', 'b',         2]])
+}, function () { 
+
+    _.each2 =            function (x,                                                                           f) {
+           if (         _.isArray (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+      else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
+         else                          {                                                                        f (x,        undefined, 1) } } })
+
 /*  Reduce on steroids
     ======================================================================== */
 
-_.deferTest (['stdlib', 'reduce 2.0'], function () {
+_.withTest (['stdlib', 'reduce 2.0'], function () {
 
-    /*$assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
+    $assert (_.reduce2 (     3,   [7,    9 ], _.sum), 19)
+    $assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
     $assert (_.reduce2 ({ a: 3, b: 7, c: 9 }, _.sum), 19)
     $assert (_.reduce2 (     3   + 7   + 9  , _.sum), 19)
 
@@ -1197,7 +1238,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
     $assert (_.reduce2 ([],  _.sum), undefined)
 
     $assert (              1 + 20 + 3 + 4 + 5,
-        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))*/
+        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))
 
 }, function () {
 
@@ -1210,29 +1251,20 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
             1. _.reduce (value, op, memo)
             2.       op (memo, value)
     */
-    _.reduce2 = function (value, memo, op_) {
 
-                    var op     = _.last (arguments)
+    _.reduce2 = function (        _1,                 _2,      _3) { var no_left = arguments.length < 3
+                       var left = _1,        rights = _2, op = _3
+         if (no_left) {    left = undefined; rights = _1; op = _2 }
 
-                    var safeOp = function (value, memo) { var hasMemo = (memo !== undefined)
-                                                          var result  = (hasMemo ? op (value, memo) : value)
-                        return (result === undefined) ?
-                                    (hasMemo ? memo : value) :
-                                    (result) }
+         _.each2 (rights, function (right) {
+                  left =  no_left ? right :
+                          op (left, right); no_left = false }); return left }
 
-                    if (_.isArray (value)) {                                
-                        for (var i = 0, n = value.length; i < n; i++) {
-                            memo = safeOp (value[i],   memo) } }
-
-                    else if (_.isStrictlyObject (value)) {                  
-                        _.each (Object.keys (value), function (key) {
-                            memo = safeOp (value[key], memo) }) }
-
-                    else {
-                            memo = safeOp (value,      memo) } return memo }
-
-    _.reduceReduce = function (initial, value, op) {
-                        return _.hyperOperator (_.binary, _.reduce2, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
+    _.reduceReduce = function (_1, _2, _3) {                             var initial = _1, value = _2, op = _3
+                        if (arguments.length < 3) {                          initial = {}; value = _1; op = _2 }
+                        return _.hyperOperator (_.binary,
+                                                _.reduce2,
+                                                _.goDeeperAlwaysIfPossible) (initial,      value,      op) }
  })
 
 /*  Zip 2.0
@@ -1294,7 +1326,7 @@ _.deferTest (['stdlib', 'zip2'], function () {
             else if (_.isStrictlyObject (rows[0])) {
                 return _.zipObjectsWith (rows, fn) }
             else {
-                return _.reduce (rows, fn) } } } }) })
+                return _.reduce2 (rows, fn) } } } }) })
 
 /*  Hyperzip (deep one).
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -2346,6 +2378,11 @@ _.tests.Function = {
              var sum = function (a, b) { return a + b }
         $assert (sum.$ (5) (42), 47) },
 
+    'Fn.calls': function () {
+        $assert (42, (function (a,b,c) {
+                      $assert ([a,b,c],
+                               [1,2,3]); return 42; }).calls (1,2,3) ()) },
+
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
     'asContinuation': function () { $assertEveryCalled (function (mkay__2) {
@@ -2404,20 +2441,25 @@ $extensionMethods (Function, {
     asFreeFunction: _.asFreeFunction,
     asMethod:       _.asMethod,
 
-    asPromise: function (f) {
-        return new Promise (f) },
+    calls: function (             fn) {
+            return _.higherOrder (fn) },
+
+    returns: function (              fn,                                returns) {
+                return function () { fn.apply (this, arguments); return returns } },
+                                                
+    asPromise: function (       f) {
+            return new Promise (f) },
 
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
 
-    wraps: function (f, w) { 
-        f._wrapped = _.withSameArgs (f, w); return f },
+    wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w);
+                      return f },
 
-    wrapped: function (f) {
-        return f._wrapped || f },
+    wrapped: function (f) { return f._wrapped || f },
 
-    original: function (f) {
-        while (f && f._wrapped) { f = f._wrapped } return f },
+    original: function (f) {  while (f && f._wrapped) {
+                                     f  = f._wrapped } return f },
 
     arity0:         _.arity0,
     arity1:         _.arity1,
@@ -2487,6 +2529,38 @@ $extensionMethods (Function, {
         return function () {
             var args = arguments, context = this
             _.delay (function () { fn.apply (context, args) }, time) } } })
+
+
+/*  A functional try/catch
+    ======================================================================== */
+
+_.tests.Function.catches = function () {
+
+    $assert (           'yo',
+         _.constant    ('yo').catches ($fails) (),
+         _.identity          .catches ($fails) ('yo'),
+         _.throwsError ('xx').catches          ('yo')   ())
+
+    $assertMatches (
+         _.throwError.catches () ('yo'), {
+                         message: 'yo' })
+
+    $assert (_.catches (_.throwsError (  42 ), $assertMatches
+                          .$ ({ message: 42 })
+                              .returns ('yo')) (),
+                                        'yo')
+
+    $assertCPS (_.constant ('yo').catches ($fails),
+                            'yo') }
+
+$extensionMethods (Function, { catch_:  function (fn, catch_, then) { return fn.catches (catch_, then) () },
+                               catches: function (fn, catch_, then) { catch_ = (arguments.length > 1 ? _.coerceToFunction (catch_) : _.identity)
+                                                                      then   = (arguments.length > 2 ? _.coerceToFunction (then)   : _.identity)
+                                          return function () {    var result = undefined;
+                                                      try         {   result = fn.apply (this, arguments) }
+                                                      catch (e)   {   result = catch_ (e) }
+                                                      return then (   result) } } })
+
 ;
 /*  Array extensions
     ======================================================================== */
@@ -2495,7 +2569,11 @@ _.withTest ('Array extensions', function () {
 
     var arr = [1,3,2,3,3,4,3]
 
-    $assert ([arr.first, arr.last], [1, 3])
+    $assert ([arr.first, arr.top, arr.last], [1, 3, 3])
+
+    $assert (arr.take (4), [1,3,2,3])
+
+    $assert ([arr.contains (4), arr.contains (9)], [true, false])
 
     $assert (arr.lastIndex, 6)
 
@@ -2536,11 +2614,22 @@ _.withTest ('Array extensions', function () {
         reduce:      _.reduce,
         reduceRight: _.reduceRight,
         zip:         _.zipWith,
+        groupBy:     _.groupBy,
         filter:      _.filter,
+        flat:        _.flatten.tails2 (true),
+        object:      _.object,
 
+        contains: function (arr, item) { return arr.indexOf (item) >= 0 },
+
+        top:   function (arr) { return arr[arr.length - 1] },        
         first: function (arr) { return arr[0] },
         last:  function (arr) { return arr[arr.length - 1] },
         
+        take: function (arr, n) { return arr.slice (0, n) },
+
+        before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
+        after: function (arr, x)  { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (i + 1) },
+
         isEmpty: function (arr) { return arr.length === 0 },
         notEmpty: function (arr) { return arr.length > 0 },
 
@@ -2570,9 +2659,6 @@ _.withTest ('Array extensions', function () {
 
         reversed: function (arr) {
             return arr.slice ().reverse () },
-
-        flat: function (arr) {
-            return _.flatten (arr, true) },
 
         swap: $method (function (arr, indexA, indexB) {
             var a = arr[indexA], b = arr[indexB]
@@ -2607,6 +2693,9 @@ _.deferTest ('String extensions', function () {
     $assert ('<жопа>'.escaped   === '&lt;жопа&gt;')
     $assert ('па'.prepend   ('жо'),
              'жо'.append    ('па'), 'жопа')
+
+    $assert (['жопа'.contains ('опа'),
+              'жопа'.contains ('апож')], [true, false])
 
     /*  Higher order version of former utility
      */
@@ -2659,6 +2748,8 @@ _.deferTest ('String extensions', function () {
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
+
+    contains: function (s, other) { return s.indexOf (other) >= 0 },
 
     cut: function (s, from) {
         return s.substring (0, from - 1) + s.substring (from, s.length) },
@@ -3732,7 +3823,7 @@ _.deferTest ('OOP', {
                     this.generateConstructor (base),
                     this.evalAlwaysTriggeredMacros (base),
                     this.evalMemberTriggeredMacros (base),
-                    this.contributeTraits,
+                    this.contributeTraits (base),
                     this.generateBuiltInMembers (base),
                     this.expandAliases,
                     this.defineStaticMembers,
@@ -3742,7 +3833,7 @@ _.deferTest ('OOP', {
             compileMixin: function (def) {
                 return _.sequence (
                     this.flatten,
-                    this.contributeTraits,
+                    this.contributeTraits (),
                     this.expandAliases,
                     this.evalMemberTriggeredMacros (),
                     this.defineStaticMembers,
@@ -3778,19 +3869,20 @@ _.deferTest ('OOP', {
                                                                      return function () { var args = _.asArray (arguments)
                                                                         $assertArguments (args.copy, fn.original, name)
                                                                          return fn.apply (this, args) } }) : def },
-            contributeTraits: function (def) {
+            contributeTraits: function (base) {
+                        return function (def) {
                 
                 if (def.$traits) { var traits = def.$traits
 
-                    this.mergeTraitsMembers (def, traits)
+                    this.mergeTraitsMembers (def, traits, base)
 
                     def.$traits  = $static ($builtin ($property (traits)))
                     def.hasTrait = $static ($builtin (function (Constructor) {
                         return traits.indexOf (Constructor) >= 0 })) }
 
-                return def },
+                return def } },
 
-            mergeTraitsMembers: function (def, traits) {
+            mergeTraitsMembers: function (def, traits, base) {
                 _.each (traits, function (trait) {
                     _.defaults (def, _.omit (trait.$definition,
                         _.or ($builtin.matches, _.key (_.equals ('constructor'))))) }) },
@@ -3799,8 +3891,8 @@ _.deferTest ('OOP', {
                 return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
 
             callStaticConstructor: function (def) {
-                if (def.$constructor) {
-                    def.$constructor () } return def },
+                         if (def.$constructor) {
+                Tags.unwrap (def.$constructor).call (def) } return def },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
@@ -5097,6 +5189,16 @@ _.tests.component = {
 
     /*  $defaults is convenient macro to extract _.defaults thing from init() to definition level
      */
+    '$defaults basic': function () {
+        var Compo = $component ({ $defaults:           { foo: 42 }})
+        $assert ($untag (Compo.$definition.$defaults), { foo: 42 })
+        $assert (        Compo.            $defaults,  { foo: 42 })
+
+        var Compo2 = $component ({ $traits: [$trait ({ $defaults: { foo: 11 } })], $defaults: { } })
+        $assert ($untag (Compo2.$definition.$defaults), { foo: 11 })
+        $assert (        Compo2.            $defaults,  { foo: 11 })
+    },
+
     '$defaults': function () {
         var Trait = $trait ({ $defaults: { pff: 'pff', inner: { fromTrait: 1 } }})
         var Base = $component ({ $defaults: { foo: 12, qux: 'override me', inner: { fromBase: 1 } } })
@@ -5451,6 +5553,10 @@ _.tests.component = {
         var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})], $defaults: { a: {}, b: [], c: 0 } })
         $assert (Compo.$defaults, { x: 1, a: {}, b: [], c: 0 }) },
 
+    '(regression) $defaults with $traits fail #2': function () {
+        var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})] })
+        $assert (Compo.$defaults, { x: 1 }) },
+
     '(regression) method overriding broken': function () {
         var Compo = $component ({ method: function () { $fail } })
         var compo = new Compo ({ value: 42, method: function () { return this.value } })
@@ -5500,7 +5606,7 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
                                 return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
+_([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
     .each (_.defineTagKeyword)
 
@@ -5509,32 +5615,25 @@ _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observ
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
 
-/*  Make $defaults and $requires inherit base values + $traits support
- */
-$prototype.inheritsBaseValues = function (keyword) {
-    $prototype.macro (keyword, function (def, value, name, Base) {
-
-        value = _.extendedDeep ((Base && Base[keyword]) || {}, value)
-
-        _.each (def.$traits, function (Trait) {
-            value = _.extendedDeep (Trait[keyword], value) })
-
-        def[keyword] = $static ($builtin ($property (_.constant (value))))
-
-        return def }) } 
-
-
-$prototype.inheritsBaseValues ('$defaults')
-$prototype.inheritsBaseValues ('$requires')
-
-
 /*  Impl
  */
 Component = $prototype ({
 
+    $defaults: $extendable ($static ($builtin ($property ({})))),
+    $requires: $extendable ($static ($builtin ($property ({})))),
+
     /*  Overrides default OOP.js implementation of traits (providing method chaining)
      */
     $impl: {
+
+        contributeTraits: function (base) {  var prevImpl = $prototype.impl.contributeTraits (base)
+            return function (def) {        def = prevImpl.call (this, def)
+                _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
+                    def[name] = Tags.modifySubject (value, function (value) { value = _.extendedDeep (value, $untag (def[name] || {}))
+                            _.each ($untag (def.$traits),  function (trait) { var traitVal = trait.$definition [name]
+                                                                              if (traitVal) { value = _.extendedDeep ($untag (traitVal), value) } })
+                                                             return value }) })
+            return def } },
 
         mergeTraitsMembers: function (def, traits) {
 
@@ -5581,14 +5680,18 @@ Component = $prototype ({
     /*  Another helper (it was needed because _.methods actually evaluate $property values while enumerating keys,
         and it ruins most of application code, because it happens before Component is actually created).
      */
-    enumMethods: function (/* [predicate, ] iterator */) { var iterator  = _.last (arguments),
+    mapMethods: function (/* [predicate, ] iterator */) { var iterator  = _.last (arguments),
                                                                predicate = (arguments.length === 1 ? _.constant (true) : arguments[0])
         var methods = []
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
                 if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
-                    iterator.call (this, fn, k, def) } } } },
+                    this[k] = iterator.call (this, fn, k, def) || fn } } } },
+
+    enumMethods: function (_1, _2) {
+        if (arguments.length === 2) { this.mapMethods (_1, _2.returns (undefined)) }
+                               else { this.mapMethods (    _1.returns (undefined)) } },
 
 
     /*  Thou shall not override this
@@ -5610,7 +5713,7 @@ Component = $prototype ({
 
         /*  Add thiscall semantics to methods
          */
-        this.enumMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { this[name] = this.$ (fn) } })
+        this.mapMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { return this.$ (fn) } })
 
 
         /*  Listen self destroy method

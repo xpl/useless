@@ -7,6 +7,11 @@ _.tests.Function = {
              var sum = function (a, b) { return a + b }
         $assert (sum.$ (5) (42), 47) },
 
+    'Fn.calls': function () {
+        $assert (42, (function (a,b,c) {
+                      $assert ([a,b,c],
+                               [1,2,3]); return 42; }).calls (1,2,3) ()) },
+
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
     'asContinuation': function () { $assertEveryCalled (function (mkay__2) {
@@ -65,20 +70,25 @@ $extensionMethods (Function, {
     asFreeFunction: _.asFreeFunction,
     asMethod:       _.asMethod,
 
-    asPromise: function (f) {
-        return new Promise (f) },
+    calls: function (             fn) {
+            return _.higherOrder (fn) },
+
+    returns: function (              fn,                                returns) {
+                return function () { fn.apply (this, arguments); return returns } },
+                                                
+    asPromise: function (       f) {
+            return new Promise (f) },
 
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
 
-    wraps: function (f, w) { 
-        f._wrapped = _.withSameArgs (f, w); return f },
+    wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w);
+                      return f },
 
-    wrapped: function (f) {
-        return f._wrapped || f },
+    wrapped: function (f) { return f._wrapped || f },
 
-    original: function (f) {
-        while (f && f._wrapped) { f = f._wrapped } return f },
+    original: function (f) {  while (f && f._wrapped) {
+                                     f  = f._wrapped } return f },
 
     arity0:         _.arity0,
     arity1:         _.arity1,
@@ -148,3 +158,35 @@ $extensionMethods (Function, {
         return function () {
             var args = arguments, context = this
             _.delay (function () { fn.apply (context, args) }, time) } } })
+
+
+/*  A functional try/catch
+    ======================================================================== */
+
+_.tests.Function.catches = function () {
+
+    $assert (           'yo',
+         _.constant    ('yo').catches ($fails) (),
+         _.identity          .catches ($fails) ('yo'),
+         _.throwsError ('xx').catches          ('yo')   ())
+
+    $assertMatches (
+         _.throwError.catches () ('yo'), {
+                         message: 'yo' })
+
+    $assert (_.catches (_.throwsError (  42 ), $assertMatches
+                          .$ ({ message: 42 })
+                              .returns ('yo')) (),
+                                        'yo')
+
+    $assertCPS (_.constant ('yo').catches ($fails),
+                            'yo') }
+
+$extensionMethods (Function, { catch_:  function (fn, catch_, then) { return fn.catches (catch_, then) () },
+                               catches: function (fn, catch_, then) { catch_ = (arguments.length > 1 ? _.coerceToFunction (catch_) : _.identity)
+                                                                      then   = (arguments.length > 2 ? _.coerceToFunction (then)   : _.identity)
+                                          return function () {    var result = undefined;
+                                                      try         {   result = fn.apply (this, arguments) }
+                                                      catch (e)   {   result = catch_ (e) }
+                                                      return then (   result) } } })
+
