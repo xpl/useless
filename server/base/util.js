@@ -17,11 +17,10 @@ path.joinsWith = _.higherOrder (path.joinWith)
 _.tests.util = {
 
     'crypt': function () {
-        var util    =  module.exports
         var options = { key: 'f00bAя' }
         var message = 'Hello world'
-        var encrypted = util.encrypt (options, message)
-        var decrypted = util.decrypt (options, encrypted)
+        var encrypted = module.exports.encrypt (options, message)
+        var decrypted = module.exports.decrypt (options, encrypted)
 
         $assert (encrypted.length > 0)
         $assert (encrypted !== message)
@@ -54,15 +53,15 @@ module.exports = {
         Or pushed to global namespace, if callback has no arguments:
             2. require (['esprima', 'escodegen'], function () { $assert (esprima !== undefined) })
      */
-    require: function (names, then) {
+    require: function (names, then) { names = _.coerceToArray (names)
         _.cps.map (names,
                 function (name, i, return_) {
                     require.$ (name).catch_ (
                                function (e) {
-                                    log.w ('Fetching', name, 'dependency from repository...')
+                                    log.w ('Fetching ./node_modules/' + name + ' from remote repository...')
                                     exec ('npm install ' + name, function (e, stdout, stderr) {
                                                                         if (e) {
-                                                                            util.fatalError (stderr) }
+                                                                            module.exports.fatalError (stderr) }
                                                                         else {
                                                                             _.delay (function () {
                                                                                 var module = require (name)
@@ -102,7 +101,7 @@ module.exports = {
                                 return line } }).join ('\n')
 
                         if (cfg.outputFile) {
-                            util.writeFile (cfg.outputFile, result) }
+                            module.exports.writeFile (cfg.outputFile, result) }
 
                         return result },
 
@@ -123,14 +122,14 @@ module.exports = {
 
     locateFile: function (name, searchPaths) {
         return _.find (_.cons (name, (searchPaths || [process.cwd ()]).map (path.joinsWith (name).arity1)),
-                        fs.lstatSync.catches (false, true)) || util.fatalError ('Unable to locate ' + name) },
+                        fs.lstatSync.catches (false, true)) || module.exports.fatalError ('Unable to locate ' + name) },
 
     readFile: function (name, searchPaths) {
         return fs.readFileSync.catches (module.exports.fatalError.$ ('Cannot read', name)) (
                                         module.exports.locateFile (name, searchPaths), { encoding: 'utf-8' }) },
 
-    writeFile: function (file) {
-        return fs.writeFileSync.catches (module.exports.fatalError.$ ('Cannot write', file)) (file, { encoding: 'utf-8' }) },
+    writeFile: function (file, what) {
+        fs.writeFileSync.$ (file, what, { encoding: 'utf-8'}).catches (module.exports.fatalError.$ ('Cannot write', file)) ()  },
 
     mkdir: function (dirPath, root_) {
         var dirs = dirPath.split ('/')
@@ -153,7 +152,7 @@ module.exports = {
         return resultName
     },
     httpGet_and_downloadFile_example: function () {
-        util.httpGet ({
+        module.exports.httpGet ({
             path: '/',                  // URL part after the hostname
             host: 'www.cian.ru',        // if you encounter "getaddrinfo ENOTFOUND" error, probably your 'host' is not correct (DNS failure)
             port: 80,                   // 443 for HTTPS, any other (usually 80) for HTTP
@@ -171,7 +170,7 @@ module.exports = {
             success: function (data) { log.success ('httpGot', data) },
             failure: log.error
         })
-        util.downloadFile ({
+        module.exports.downloadFile ({
             overwrite: false, // if false, skips download if file already exists at 'dst' (default is true)
             dst: path.join (process.cwd (), 'static/photos/index.html'), // target path in file system
             src: {
@@ -211,7 +210,7 @@ module.exports = {
     },
     httpGet: function (cfg) {
         log.info ('httpGet:', cfg.host + cfg.path)
-        var req = (cfg.port === 443 ? https : http).get (cfg, util.readHttpResponse (cfg.encoding, cfg.success))
+        var req = (cfg.port === 443 ? https : http).get (cfg, module.exports.readHttpResponse (cfg.encoding, cfg.success))
         req.on ('error', cfg.failure)
     },
     downloadFile: function (cfg) {
@@ -221,7 +220,7 @@ module.exports = {
         } else {
             log.warn ('downloadFile: downloading', cfg.src.path)
             var req = (cfg.src.port === 443 ? https : http).get (cfg.src, function (response) {
-                util.writeRequestDataToFile (_.extend (_.pick (cfg, 'success', 'failure'), {
+                module.exports.writeRequestDataToFile (_.extend (_.pick (cfg, 'success', 'failure'), {
                     request: response,
                     filePath: cfg.dst
                 }))

@@ -172,11 +172,8 @@ function compileFile (cfg, file) { log.w ('Compiling', file)
             log ('\n2. Checking dependencies...' + log.thinLine + '\n')
 
             util.require (['esprima', 'escodegen'],
-
                 function () {
-
                     _.each (cfg.inputFiles, compileFile.$ (cfg)) }) } }) }) ();
-
 
 
 
