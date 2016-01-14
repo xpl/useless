@@ -165,7 +165,7 @@ _.extend (log, {
             var cleanArgs       = log.cleanArgs (args)
 
             var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
-            var stackOffset     = Platform.NodeJS ? 3 : 3
+            var stackOffset     = Platform.NodeJS ? 1 : 3
 
             var indent          = (writeBackend.indent || 0) + config.indent
 

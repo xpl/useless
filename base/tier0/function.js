@@ -37,16 +37,17 @@ _.tails3 = $restArg (function (fn) { var tailArgs = _.rest (arguments)
 /*  Flips function signature (argument order)
     ======================================================================== */
 
+_.flipN = function (fn) { return $restArg (function () {
+             return fn.apply (this, _.asArray (arguments).reverse ()) })}
+
 _.flip = function (fn) {
-            if (_.restArg (fn)) { return $restArg (function () {
-                return fn.apply (this, _.asArray (arguments).reverse ()) }) }
-            else {
-                switch (_.numArgs (fn)) {
-                    case 0:
-                    case 1: return fn
-                    case 2: return _.flip2 (fn)
-                    case 3: return _.flip3 (fn)
-                    default: throw new Error ('flip: unsupported arity') } } }
+            if (_.restArg (fn)) { return _.flipN (fn) }
+            else { switch (_.numArgs (fn)) {
+                                    case 0:
+                                    case 1: return fn
+                                    case 2: return _.flip2 (fn)
+                                    case 3: return _.flip3 (fn)
+                                    default: throw new Error ('flip: unsupported arity') } } }
 
 _.flip2 = function (fn) { return function (a, b) {
                                     return fn.call (this, b, a) }}

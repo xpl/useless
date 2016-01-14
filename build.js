@@ -5,14 +5,14 @@ var fs          = require ('fs'),
     http        = require ('http'),
     process     = require ('process'),
     path        = require ('path')
+    nodemon     = require ('nodemon')
 
 function compileMacros (file) {
-    return util.compileScript ({ source:
-        fs.readFileSync ('./' + file, { encoding: 'utf8' }), includePath: './' }) }
+    return util.compileScript ({ sourceFile: file }) }
 
 function writeCompiled (file, dir, src) {
     log.success ('Writing', file)
-    fs.writeFileSync (path.join (dir, file), src, { encoding: 'utf8' }) }
+    util.writeFile (path.join (dir, file), src) }
 
 function compileWithGoogle (src, then) { log.info ('Calling Google Closure compiler...')
 
@@ -130,7 +130,7 @@ function stripCommentsAndTests (src, name, path) {
 
     return output }
 
-function compile (cfg) { _.each (cfg.inputFiles, function (file) { log.w ('Compiling ', file)
+function compile (cfg) { _.each (cfg.inputFiles, function (file) { log.w ('Compiling', file)
 
     var name = _.initial (path.basename (file).split ('.')).join ('.')
     var compiledSrc = compileMacros (file)
@@ -158,8 +158,8 @@ Testosterone.run ({
                                 fs.lstatSync.catches (null,
                                     _.method ('isDirectory')))
                                                            
-        var cfg = _.extend ({ inputFiles: _.coerceToUndefined (directories['false' ])  || ['./useless.js'],
-                              outputPath:             _.first (directories['true'])    ||  './build' }, args.options)
+        var cfg = _.extend ({ inputFiles: _.coerceToUndefined (directories['false'])  || ['./useless.js'],
+                              outputPath:             _.first (directories['true'])   ||  './build' }, args.options)
 
         log.pretty.i (cfg)
 

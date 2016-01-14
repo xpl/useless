@@ -30,11 +30,11 @@ _.deferTest (['type', 'stringify'], function () {
                                         'bar',
                                         'baz'],
                                  more:  'qux',
-                             evenMore:   42    }), ['{    array: [ "foo",'     ,
-                                                    '              "bar",'     ,
-                                                    '              "baz" ],'    ,
-                                                    '      more:   "qux",'     ,
-                                                    '  evenMore:    42     }'].join ('\n'))
+                             evenMore:   42    }), ['{    array: [ "foo",'    ,
+                                                    '              "bar",'    ,
+                                                    '              "baz"  ],' ,
+                                                    '      more:   "qux",'    ,
+                                                    '  evenMore:    42       }'].join ('\n'))
 
         var obj = {}
         $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
@@ -126,8 +126,9 @@ _.deferTest (['type', 'stringify'], function () {
                                     var printedValues =                            values.map (impl)
 
                                     var leftPaddings = printedValues.map (function (x, i) {
-                                                                            return (x.split ('\n').length > 1) ? 3 :
-                                                                                        _.isString (values[i]) ? 1 : 0 })
+                                                                            return (((x[0] === '[') ||
+                                                                                     (x[0] === '{')) ? 3 :
+                                                                                        _.isString (values[i]) ? 1 : 0) })
                                     var maxLeftPadding = _.max (leftPaddings)
 
                                     var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
@@ -141,8 +142,8 @@ _.deferTest (['type', 'stringify'], function () {
                                     var lines = printed.split ('\n')
 
                                     return printed +  (' '.repeats (_.max (lines.map (_.count)) -
-                                                                    _.count (lines.last)) + (isArray ? ']' :
-                                                                                                       '}')) }
+                                                                    _.count (lines.last)) + (isArray ? ' ]' :
+                                                                                                       ' }')) }
 
                                 return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
                                             _.map (values, function (kv) {

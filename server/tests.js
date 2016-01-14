@@ -1,7 +1,8 @@
 module.exports = $trait ({
 
-    supressAllTests:      false,
-    supressCodeBaseTests: false,
+    supressAllTests:          false,
+    supressCodeBaseTests:     false,
+    supressAppComponentTests: false,
 
     /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
      */
@@ -20,15 +21,13 @@ module.exports = $trait ({
     /*  Tests codebase
      */
     beforeInit: function (then) { if (this.supressAllTests || this.supressCodeBaseTests) { then () }
-                                else { log.info ('Running code base tests')
+                                else                                                     { log.info ('Running code base tests')
         Testosterone.run ({
             verbose: false,
             silent:  true }, this.$ (function (okay) {
                                         if (okay) {
-                                            if (this.deferAppComponentTests) {
-                                                then () }
-                                            else {
-                                                this.runAppComponentTests (then) } } }))} },
+                                            if (this.deferAppComponentTests) {                            then () }
+                                            else                             { this.runAppComponentTests (then) } } }))} },
 
     afterInit: function (then) {
         if (!this.supressAllTests && this.deferAppComponentTests) {
@@ -38,7 +37,8 @@ module.exports = $trait ({
 
     /*  Tests $traits (app components)
      */
-    runAppComponentTests: function (then) { log.info ('Running app components tests')
+    runAppComponentTests: function (then) { if (this.supressAppComponentTests) { then () }
+                                          else                                 { log.info ('Running app components tests')
 
         /*  Adds custom assertions to help test App framework
          */
@@ -72,7 +72,7 @@ module.exports = $trait ({
                         codebase: false,
                         verbose: false,
                         silent: false,
-                        suites: _.nonempty (suites) }, function (okay) { putBackProductionDb (); then () }) })) })) },
+                        suites: _.nonempty (suites) }, function (okay) { putBackProductionDb (); then () }) })) })) } },
 
 
     withTestDb: function (what) {

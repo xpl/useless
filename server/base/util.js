@@ -11,7 +11,7 @@ var path        = require ('path'),
     jsStrEscape = require ('js-string-escape')
 
 path.joins     = _.higherOrder (path.join)
-path.joinWith  = _.flip        (path.join)
+path.joinWith  = _.flipN       (path.join)
 path.joinsWith = _.higherOrder (path.joinWith)
 
 _.tests.util = {
@@ -78,17 +78,16 @@ module.exports = {
                         _.each (modules, function (module, i) { $global[names[i]] = module }) }
                     then.apply (null, _.coerceToArray (modules)) }) },
 
-    compileScript: function (cfg) {
+    compileScript: function (cfg) { if (!cfg.source) {
+                                    if (!cfg.sourceFile) { module.exports.fatalError ('no sourceFile specified') }
+                                         cfg.source      = module.exports.readFile (cfg.sourceFile, cfg.includePaths) }
 
-                        var read = function (what) { var file = path.join (cfg.includePath, what)
+                        var read = function (what) { var file = module.exports.locateFile (what, cfg.includePaths)
+                                                     return module.exports.compileScript ({
+                                                                includePaths: _.cons (path.dirname (file), cfg.includePaths), 
+                                                                source:       module.exports.readFile (file) }) }
 
-                            try       { return module.exports.compileScript ({
-                                                    includePath: path.dirname (file), 
-                                                    source:      fs.readFileSync (file, { encoding: 'utf-8' }) }) }
-
-                            catch (e) { module.exports.fatalError ('\nCannot read:', file) } }
-
-                        return _.map (cfg.source.split ('\n'), function (line) {
+                        var result = _.map (cfg.source.split ('\n'), function (line) {
 
                             var includeStrMatch = line.match (/^(.*)\$includeStr \(\'(.+)\'\)(.*)$/)
                             if (includeStrMatch) {
@@ -99,10 +98,15 @@ module.exports = {
                             if (moduleName) {
                                 return line.match (/^\s*\/\/.*/) ? '' : (read (moduleName + '.js') + ';') }
                             else {
-                                return line } }).join ('\n') },
+                                return line } }).join ('\n')
+                        
+                        if (cfg.outputFile) {
+                            util.writeFile (cfg.outputFile, result) }
+
+                        return result },
 
     fatalError: function (explain) {
-                    log.error.apply (null, _.asArray (arguments).concat ('\n'))
+                    log.error.apply (null, _.cons (log.config ({ stackOffset: 1 }), _.asArray (arguments).concat ('\n')))
                     throw _.extend (new Error (_.asArray (arguments).join (' ')), { fatal: true, stackOffset: 1 }) },
                     
     lstatSync: function (dst) { // NOTE: replace with lstatSync.catches
@@ -115,6 +119,17 @@ module.exports = {
         return {
             options: options,
             rest: _.without.apply (null, [arguments].concat (names)) } },
+
+    locateFile: function (name, searchPaths) {
+        return _.find (_.cons (name, (searchPaths || [process.cwd ()]).map (path.joinsWith (name).arity1)),
+                        fs.lstatSync.catches (false, true)) || util.fatalError ('Unable to locate ' + name) },
+
+    readFile: function (name, searchPaths) {
+        return fs.readFileSync.catches (module.exports.fatalError.$ ('Cannot read', name)) (
+                                        module.exports.locateFile (name, searchPaths), { encoding: 'utf-8' }) },
+
+    writeFile: function (file) {
+        return fs.writeFileSync.catches (module.exports.fatalError.$ ('Cannot write', file)) (file, { encoding: 'utf-8' }) },
 
     mkdir: function (dirPath, root_) {
         var dirs = dirPath.split ('/')
