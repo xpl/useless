@@ -51,6 +51,7 @@ _.withTest ('Array extensions', function () {
         reduceRight: _.reduceRight,
         zip:         _.zipWith,
         groupBy:     _.groupBy,
+        indexBy:     _.indexBy,
         filter:      _.filter,
         flat:        _.flatten.tails2 (true),
         object:      _.object,

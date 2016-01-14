@@ -1,5 +1,8 @@
 module.exports = $trait ({
 
+    supressAllTests:      false,
+    supressCodeBaseTests: false,
+
     /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
      */
     deferAppComponentTests: true,
@@ -16,8 +19,8 @@ module.exports = $trait ({
 
     /*  Tests codebase
      */
-    beforeInit: function (then) { log.info ('Running code base tests')
-
+    beforeInit: function (then) { if (this.supressAllTests || this.supressCodeBaseTests) { then () }
+                                else { log.info ('Running code base tests')
         Testosterone.run ({
             verbose: false,
             silent:  true }, this.$ (function (okay) {
@@ -25,10 +28,10 @@ module.exports = $trait ({
                                             if (this.deferAppComponentTests) {
                                                 then () }
                                             else {
-                                                this.runAppComponentTests (then) } } })) },
+                                                this.runAppComponentTests (then) } } }))} },
 
     afterInit: function (then) {
-        if (this.deferAppComponentTests) {
+        if (!this.supressAllTests && this.deferAppComponentTests) {
             this.runAppComponentTests (then) }
         else {
             then () } },

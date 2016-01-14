@@ -170,6 +170,11 @@ _.tests.Function.catches = function () {
          _.identity          .catches ($fails) ('yo'),
          _.throwsError ('xx').catches          ('yo')   ())
 
+    $assert ((function (x) { throw x }).catches (
+                                            _.appends ('+error_case'),
+                                            _.appends ('+no_error_case'),
+                                            _.appends ('+finally')) ('foo'), 'foo+error_case+finally')
+
     $assertMatches (
          _.throwError.catches () ('yo'), {
                          message: 'yo' })
@@ -182,11 +187,14 @@ _.tests.Function.catches = function () {
     $assertCPS (_.constant ('yo').catches ($fails),
                             'yo') }
 
-$extensionMethods (Function, { catch_:  function (fn, catch_, then) { return fn.catches (catch_, then) () },
-                               catches: function (fn, catch_, then) { catch_ = (arguments.length > 1 ? _.coerceToFunction (catch_) : _.identity)
-                                                                      then   = (arguments.length > 2 ? _.coerceToFunction (then)   : _.identity)
+$extensionMethods (Function, { catch_:  function (fn, catch_, then, finally_) { return fn.catches (catch_, then) () },
+                               catches: function (fn, catch_, then, finally_) {
+                                                              var args = arguments.length
+                                                        catch_ = (args > 1 ? _.coerceToFunction (catch_)   : _.identity)
+                                                         then  = (args > 2 ? _.coerceToFunction (then)     : _.identity)
+                                                    finally_   = (args > 3 ? _.coerceToFunction (finally_) : _.identity)
                                           return function () {    var result = undefined;
-                                                      try         {   result = fn.apply (this, arguments) }
+                                                      try         {   result = then   (fn.apply (this, arguments)) }
                                                       catch (e)   {   result = catch_ (e) }
-                                                      return then (   result) } } })
+                                                  return finally_ (   result) } } })
 

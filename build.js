@@ -152,17 +152,14 @@ Testosterone.run ({
 
     function (okay) { if (okay) {
 
-        var arguments     = _.rest (process.argv, 2)
-        var optionNames   = ['no-compress', 'no-stripped']
-        var filePaths     = _.without.apply (null, [arguments].concat (optionNames))
-        var options       = _.index (_.intersection (arguments, optionNames))
+        var args = util.parseCommandLineOptions ('no-compress', 'no-stripped')
 
-                                                           var directories = filePaths.groupBy (
-                                                                                    fs.lstatSync.catches (null,
-                                                                                        _.method ('isDirectory')))
+        var directories = args.rest.groupBy (
+                                fs.lstatSync.catches (null,
+                                    _.method ('isDirectory')))
                                                            
         var cfg = _.extend ({ inputFiles: _.coerceToUndefined (directories['false' ])  || ['./useless.js'],
-                              outputPath:             _.first (directories['true'])    ||  './build' }, options)
+                              outputPath:             _.first (directories['true'])    ||  './build' }, args.options)
 
         log.pretty.i (cfg)
 

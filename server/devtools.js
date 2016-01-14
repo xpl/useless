@@ -9,13 +9,14 @@ var fs      = require ('fs'),
 module.exports = $trait ({
 
     sourceRoot: process.cwd (),
+    devHint: log.warn,
 
     api: function () {
 
         if (!this.developerAccess || !this.isDeveloper) {
-            this.developerAccess = _.identity
-            this.isDeveloper     = _.constant (true)
-            log.warn ("Add 'auth' trait to restrict access to devtools API") }
+             this.developerAccess = _.identity
+             this.isDeveloper     = _.constant (true)
+             this.devHint ("Add 'auth' trait to restrict access to devtools API") }
 
         return {
             'echo':             { post: this.echo },

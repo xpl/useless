@@ -10,6 +10,9 @@ var path        = require ('path'),
     _           = require ('underscore'),
     jsStrEscape = require ('js-string-escape')
 
+path.joins     = _.higherOrder (path.join)
+path.joinWith  = _.flip        (path.join)
+path.joinsWith = _.higherOrder (path.joinWith)
 
 _.tests.util = {
 
@@ -102,9 +105,16 @@ module.exports = {
                     log.error.apply (null, _.asArray (arguments).concat ('\n'))
                     throw _.extend (new Error (_.asArray (arguments).join (' ')), { fatal: true, stackOffset: 1 }) },
                     
-    lstatSync: function (dst) {
+    lstatSync: function (dst) { // NOTE: replace with lstatSync.catches
                     try       { return fs.lstatSync (dst) }
                     catch (e) { return undefined } },
+
+    parseCommandLineOptions: function (names) {
+        var arguments     = _.rest (process.argv, 2)
+        var options       = _.index (_.intersection (arguments, names))
+        return {
+            options: options,
+            rest: _.without.apply (null, [arguments].concat (names)) } },
 
     mkdir: function (dirPath, root_) {
         var dirs = dirPath.split ('/')
