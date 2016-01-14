@@ -18,6 +18,7 @@ Examples = $singleton (Component, {
     $traits: [
         
         require ('./server/exceptions'),
+        require ('./server/supervisor'),
         require ('./server/tests'),
         require ('./server/deploy'),
         require ('./server/api'),

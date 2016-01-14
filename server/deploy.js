@@ -7,10 +7,9 @@ module.exports = $trait ({
 
     buildScriptPaths: [process.cwd (), $uselessPath],
     buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
-    buildPath: undefined,
+    buildPath: $uselessPath + 'build/',
 
-    buildTargetPath: function (file) { return path.join (this.buildPath ||
-                                                 ($uselessPath + 'build/'), file) },
+    buildTargetPath: function (file) { return path.join (this.buildPath, file) },
 
     buildScript: function (name) { log.w ('Building monolithic ' + name)
 

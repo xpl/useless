@@ -71,7 +71,7 @@ module.exports = {
                                                                                     log.error ('Install failed:', name) }
                                                                                 return_ (module) }) } }) },
                                 function (module) { if (module) {
-                                                        log.info ('Loaded', name)
+                                                        //log.info ('Loaded', name)
                                                         return_ (module) } }) },
                 function (modules) {
                     if (_.noArgs (then)) {
@@ -118,6 +118,7 @@ module.exports = {
         var options       = _.index (_.intersection (arguments, names))
         return {
             options: options,
+            all: arguments,
             rest: _.without.apply (null, [arguments].concat (names)) } },
 
     locateFile: function (name, searchPaths) {

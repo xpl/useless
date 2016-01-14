@@ -9,7 +9,7 @@ module.exports = $trait ({
 
             if (e.fatal) {
                 log.e (log.boldLine + ' cannot continue ' + log.boldLine + '\n')
-                process.exit () } })) // Let nodemon/supervisor do their job
+                process.exit () } }))
         
         then () },
 
