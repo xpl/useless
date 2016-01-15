@@ -3,7 +3,9 @@ var fs              = require ('fs'),
     util            = require ('./base/util'),
     exec            = require ('child_process').exec
 
-module.exports = $trait ({
+ module.exports = ServerDeploy = $trait ({
+
+    $depends: [require ('./io')],
 
     buildScriptPaths: [process.cwd (), $uselessPath],
     buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],

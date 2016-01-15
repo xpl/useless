@@ -1,4 +1,6 @@
-module.exports = $trait ({
+module.exports = TestsItself = $trait ({
+
+    $depends: [require ('./exceptions')],
 
     supressAllTests:          false,
     supressCodeBaseTests:     false,
@@ -71,7 +73,7 @@ module.exports = $trait ({
                         context: this,
                         codebase: false,
                         verbose: false,
-                        silent: false,
+                        silent: this.spawnedBySupervisor || false,
                         suites: _.nonempty (suites) }, function (okay) { putBackProductionDb (); then () }) })) })) } },
 
 

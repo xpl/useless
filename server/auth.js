@@ -1,10 +1,11 @@
-module.exports = $trait ({
+ServerAuth = module.exports = $trait ({
+
+    $depends: [require ('./entity')],
 
     api: function () {
         return {
             'api/login':    { post: this.jsonInput (this.doLogin) },
             'api/logout':   { post: this.doLogout, get: this.doLogout } } },
-
 
     /*  Login/logout
      */

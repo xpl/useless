@@ -169,6 +169,9 @@ _.tests.component = {
         var Derived = $extends (Base, {
             $traits: [Trait],
             $defaults: { bar: 34, qux: 'overriden', inner: { fromDerived: 1 } } })
+        
+        //$assert (Derived.$ownDefaults,
+        //               { bar: 34, qux: 'overriden', inner: { fromDerived: 1 } } )
 
         /* TODO: fix bug not allowing derived to not have $defaults
            var Derived2 = $extends (Derived, {}) */
@@ -581,32 +584,67 @@ _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observ
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
+$prototype.macro ('$depends', function  (def, value, name) {
+                                       (def.$depends = $builtin ($const (_.coerceToArray (value))))
+                                 return def })
 
-/*  Impl
- */
+$prototype.macroTag ('extendable',
+            function (def, value, name) {
+                      def[name] = $builtin ($const (value))
+               return def })
+
 Component = $prototype ({
 
-    $defaults: $extendable ($static ($builtin ($property ({})))),
-    $requires: $extendable ($static ($builtin ($property ({})))),
+    $defaults: $extendable ({}),
+    $requires: $extendable ({}),
 
     /*  Overrides default OOP.js implementation of traits (providing method chaining)
      */
     $impl: {
 
-        contributeTraits: function (base) {  var prevImpl = $prototype.impl.contributeTraits (base)
-            return function (def) {        def = prevImpl.call (this, def)
+        contributeTraits: function (base) { return _.sequence ([this.expandTraitsDependencies,
+                                                    $prototype.impl.contributeTraits (base),
+                                                              this.mergeExtendables (base)]).bind (this) },
+        
+        expandTraitsDependencies: function (def) {
+            if (def.$depends) {
+                            var edges = []
+                            var lastId = 0
+                            var drill =  function ( depends,           T        ) { if (!T.__tempId) { T.__tempId = lastId++ }
+                                            //_.reduce2 (depends, // TODO: add horizontal dependency edges
+                                            _.each (depends, function (   TSuper) {
+                                                          edges.push ([T, TSuper])
+                                                                    drill (TSuper.$depends || [], TSuper) }) }
+                                                                    drill ($untag (def.$depends), {})
+
+                    _.each (def.$traits =               _.reversed (
+                                                            _.rest (
+                                                     _.linearMerge (edges, { key: _.property ('__tempId') }))),
+                            function (obj) {
+                                delete obj.__tempId }) }
+        return def },
+
+        
+        mergeExtendables: function (base) { return function (def) {
+
                 _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
-                    def[name] = Tags.modifySubject (value, function (value) { value = _.extendedDeep (value, $untag (def[name] || {}))
-                            _.each ($untag (def.$traits),  function (trait) { var traitVal = trait.$definition [name]
-                                                                              if (traitVal) { value = _.extendedDeep ($untag (traitVal), value) } })
-                                                             return value }) })
-            return def } },
+
+                    //var ownPropName = '$own' +        _.capitalized (_.keywordName (name))
+                    //def[ownPropName] =       $builtin ($const (_.cloneDeep (value)))
+
+                    def[name]        = Tags.modifySubject (                 value,
+                                            function (                      value) {
+                                                                            value =    _.extendedDeep (value, $untag (def[name] || {}))
+                                        _.each ($untag (def.$traits),
+                                                    function (trait) {
+                                                          var traitVal = trait.$definition [name]
+                                                          if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
+                                                                   return   value }) }); 
+                                                                                    return def } },
 
         mergeTraitsMembers: function (def, traits) {
-
             var pool = {}
             var bindables = {}
-
 
             _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
                 _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),

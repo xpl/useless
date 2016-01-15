@@ -101,9 +101,13 @@ if (_.platform ().engine !== 'browser') {
             _.partial (log.warn, log.config ({ stackOffset: 2 }))) ||
             console.log)
         print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) }) }
-
+ 
 _.defineGlobalProperty ('alert2', function (args) {
     alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })
+
+_.global ().log = function () { console.log.call (console.log, arguments) } // placeholder for log.js
+
+
 ;
 
 /*  converts 'arguments' (and any other array mimick) to real Array
@@ -916,17 +920,20 @@ _.json = function (arg) {
 
 _.deferTest (['type', 'stringify'], function () {
 
-        var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
-            complex.bar[0].bar = complex.bar
+        if (_.hasTags) {
 
-        var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+            var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+                complex.bar[0].bar = complex.bar
 
-        var Proto = $prototype ({})
+            var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
-        $assert (_.stringify (Proto),   '<prototype>')
+            var Proto = $prototype ({})
 
-        $assert (_.stringify (123),     '123')
-        $assert (_.stringify (complex), renders)
+            $assert (_.stringify (Proto),   Platform.NodeJS ? 'Proto ()' : '<prototype>')
+
+            $assert (_.stringify (undefined),'undefined')
+            $assert (_.stringify (123),     '123')
+            $assert (_.stringify (complex, { pretty: false }), renders) }
 
         $assert (_.pretty ({    array: ['foo',
                                         'bar',
@@ -952,11 +959,21 @@ _.deferTest (['type', 'stringify'], function () {
                      _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
                                                                                  ? (bullet + line)
                                                                                  : (indent + line) })) }
+                        
+                                            _.pretty = function (x, cfg) {
+                                            return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
 
-    _.pretty = function (   x,                             cfg) {
-        return _.stringify (x, _.extend ({ pretty: true }, cfg)) }
+                                        _.stringify = function  (x, cfg) {       cfg = cfg || {}
+                                        var s = _.stringifyImpl (x, [], [], 0,   cfg)
+                                    return (s.length < 80 ||    'pretty' in      cfg) ?
+                                            s : _.stringifyImpl (x, [], [], 0, _.extend (cfg, {
+                                                                 pretty: true })) }
 
-    _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}) }
+    _.stringifyPrototype = function (x) {
+            if (Platform.NodeJS) { var name = ''
+                x.$meta (function (values) { name = values.name })
+                return name && (name + ' ()') }
+            else return '<prototype>' }
 
     _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
@@ -984,7 +1001,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return 'null' }
 
                             else if (_.isFunction (x)) {
-                                return cfg.pure ? x.toString () : (_.isPrototypeConstructor (x) ? '<prototype>' : '<function>') }
+                                return cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>') }
 
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
@@ -1125,6 +1142,24 @@ _.deferTest (['stdlib', 'map2'], function () {
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
                     _.mapWith  = _.flip2 (_.map)) })
+
+
+/*  Semantically-correct abstract map (maps any type of value)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.deferTest (['stdlib', 'mapKeys'], function () {
+
+    $assert (_.mapKeys ({ 'foo':    [1, 2,{ 'gay':    3 }]}, _.appends ('bar')),
+                        { 'foobar': [1, 2,{ 'gaybar': 3 }]})
+
+}, function () { _.mapKeys = function (x, fn) {
+                        if (_.isArray (x)) {
+                            return _.map (x, _.mapKeys.tails2 (fn)) }
+                        else if (_.isStrictlyObject (x)) {
+                            return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
+                        else {
+                            return x } } })              
+
 
 /*  Hyper map (deep) #1 — maps leafs
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -1612,6 +1647,62 @@ _.withTest (['stdlib', 'partition2'], function () {
                 result.push (group) }
 
             return result } })
+
+/*  Merges arrays, keeping given element order.
+    TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
+    ======================================================================== */
+
+_.withTest (['stdlib', 'linearMerge'], function () {
+
+    $assert (_.linearMerge ([]), [])
+    $assert (_.linearMerge ([   ['all','your',                'to','us'],
+                                [      'your',       'belong',     'us'],
+                                [             'base','belong','to'     ],
+                                [      'your','base'                   ]]),
+                                ['all','your','base','belong','to','us'])
+
+/*  cfg accepts { key: fn, sort: fn } optional parameters for key extraction and sorting
+    ======================================================================== */
+
+}, function () {
+
+    _.linearMerge = function (arrays, cfg) {
+
+            cfg = cfg || { key: _.identity }
+
+        var head = { key: null, next: {} }
+        var nodes = {}
+
+        _.each (arrays, function (arr) {
+            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+                var item = arr[i]
+                var key  = cfg.key (item)
+                node = nodes[key] || (nodes[key] = { key: key, item: item, next: {} })
+                if (prev) {
+                    prev.next[key] = node } } })
+
+        var decyclize = function (visited, node) { visited[node.key] = true
+
+            node.next = _.chain (_.values (node.next))
+                            .filter (function (node) { return !(node.key in visited) })
+                            .map (_.partial (decyclize, visited)).value ()
+            
+            delete visited[node.key]; return node }
+
+        var ordered = function (a, b) {
+            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
+
+        var flatten = function (node) { if (!node) return []
+
+            var next = cfg.sort ? _.sortBy (node.next || [], cfg.sort) : (node.next || [])
+
+            return [node].concat (flatten (_.reduce (next, function (a, b) {
+
+                if (a === b)             { return a }
+                else if (ordered (b, a)) { b.next.push (a); return b }
+                else                     { a.next.push (b); return a } }))) }
+
+        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
 
 
 /*  experimental shit (subject to removal)
@@ -4047,7 +4138,7 @@ _.deferTest ('OOP', {
         var constructor = undefined
         var def = _.extend (arguments.length > 1 ? arg2 : arg1, {
                         constructor: _.throwsError ('Traits are not instantiable (what for?)'),
-                        isTraitOf: $static ($builtin (function (instance) {
+                          isTraitOf: $static ($builtin (function (instance) {
                             return _.isTraitOf (constructor, instance) })) })
 
         return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) } })
@@ -4788,6 +4879,21 @@ _.extend (Math, (function (decimalAdjust) {
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }));
 
+
+_.deferTest (['identifier naming style interpolation'], function () {
+
+    $assert (_.camelCaseToLoDashes        ('flyingBurritoOption'), 'flying_burrito_option')
+    $assert (_.camelCaseToDashes          ('flyingBurritoOption'), 'flying-burrito-option')
+    $assert (_.dashesToCamelCase          ('flying-burrito-option'), 'flyingBurritoOption')
+    $assert (_.loDashesToCamelCase        ('flying_burrito_option'), 'flyingBurritoOption')
+
+}, function () {
+
+    _.camelCaseToDashes   =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '-' + x[1].lowercase }) }
+    _.camelCaseToLoDashes =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '_' + x[1].lowercase }) }
+    _.dashesToCamelCase   =   function (x) { return x.replace (/(-.)/g,       function (x) { return x[1].uppercase }) } })
+    _.loDashesToCamelCase =   function (x) { return x.replace (/(_.)/g,       function (x) { return x[1].uppercase }) }
+
 Format = {
 
     /*  Use this to print objects as JavaScript (supports functions and $-tags output)
@@ -4811,7 +4917,6 @@ Format = {
 
     progressPercents: function (value, max) {
         return Math.floor ((value / max) * 100) + '%' },
-
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {
@@ -5220,6 +5325,9 @@ _.tests.component = {
         var Derived = $extends (Base, {
             $traits: [Trait],
             $defaults: { bar: 34, qux: 'overriden', inner: { fromDerived: 1 } } })
+        
+        //$assert (Derived.$ownDefaults,
+        //               { bar: 34, qux: 'overriden', inner: { fromDerived: 1 } } )
 
         /* TODO: fix bug not allowing derived to not have $defaults
            var Derived2 = $extends (Derived, {}) */
@@ -5632,32 +5740,67 @@ _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observ
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
+$prototype.macro ('$depends', function  (def, value, name) {
+                                       (def.$depends = $builtin ($const (_.coerceToArray (value))))
+                                 return def })
 
-/*  Impl
- */
+$prototype.macroTag ('extendable',
+            function (def, value, name) {
+                      def[name] = $builtin ($const (value))
+               return def })
+
 Component = $prototype ({
 
-    $defaults: $extendable ($static ($builtin ($property ({})))),
-    $requires: $extendable ($static ($builtin ($property ({})))),
+    $defaults: $extendable ({}),
+    $requires: $extendable ({}),
 
     /*  Overrides default OOP.js implementation of traits (providing method chaining)
      */
     $impl: {
 
-        contributeTraits: function (base) {  var prevImpl = $prototype.impl.contributeTraits (base)
-            return function (def) {        def = prevImpl.call (this, def)
+        contributeTraits: function (base) { return _.sequence ([this.expandTraitsDependencies,
+                                                    $prototype.impl.contributeTraits (base),
+                                                              this.mergeExtendables (base)]).bind (this) },
+        
+        expandTraitsDependencies: function (def) {
+            if (def.$depends) {
+                            var edges = []
+                            var lastId = 0
+                            var drill =  function ( depends,           T        ) { if (!T.__tempId) { T.__tempId = lastId++ }
+                                            //_.reduce2 (depends, // TODO: add horizontal dependency edges
+                                            _.each (depends, function (   TSuper) {
+                                                          edges.push ([T, TSuper])
+                                                                    drill (TSuper.$depends || [], TSuper) }) }
+                                                                    drill ($untag (def.$depends), {})
+
+                    _.each (def.$traits =               _.reversed (
+                                                            _.rest (
+                                                     _.linearMerge (edges, { key: _.property ('__tempId') }))),
+                            function (obj) {
+                                delete obj.__tempId }) }
+        return def },
+
+        
+        mergeExtendables: function (base) { return function (def) {
+
                 _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
-                    def[name] = Tags.modifySubject (value, function (value) { value = _.extendedDeep (value, $untag (def[name] || {}))
-                            _.each ($untag (def.$traits),  function (trait) { var traitVal = trait.$definition [name]
-                                                                              if (traitVal) { value = _.extendedDeep ($untag (traitVal), value) } })
-                                                             return value }) })
-            return def } },
+
+                    //var ownPropName = '$own' +        _.capitalized (_.keywordName (name))
+                    //def[ownPropName] =       $builtin ($const (_.cloneDeep (value)))
+
+                    def[name]        = Tags.modifySubject (                 value,
+                                            function (                      value) {
+                                                                            value =    _.extendedDeep (value, $untag (def[name] || {}))
+                                        _.each ($untag (def.$traits),
+                                                    function (trait) {
+                                                          var traitVal = trait.$definition [name]
+                                                          if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
+                                                                   return   value }) }); 
+                                                                                    return def } },
 
         mergeTraitsMembers: function (def, traits) {
-
             var pool = {}
             var bindables = {}
-
 
             _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
                 _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),

@@ -606,7 +606,7 @@ _.deferTest ('OOP', {
         var constructor = undefined
         var def = _.extend (arguments.length > 1 ? arg2 : arg1, {
                         constructor: _.throwsError ('Traits are not instantiable (what for?)'),
-                        isTraitOf: $static ($builtin (function (instance) {
+                          isTraitOf: $static ($builtin (function (instance) {
                             return _.isTraitOf (constructor, instance) })) })
 
         return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) } })

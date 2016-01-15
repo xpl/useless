@@ -1,6 +1,6 @@
 var exec = require ('child_process').exec
 
-module.exports = $trait ({
+ServerUptime = module.exports = $trait ({
 
     afterInit: function () {
         this.birthdate = Date.now () },

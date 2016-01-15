@@ -1,4 +1,7 @@
-module.exports = $trait ({
+ServerHistory = module.exports = $trait ({
+
+    $depends: [require ('./entity'),
+               require ('./websocket')],
 
     api: function () {
         return { 'api': this.collectionAPI ('history', {

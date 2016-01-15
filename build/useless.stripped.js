@@ -229,6 +229,9 @@ _.defineGlobalProperty('alert2', function (args) {
     alert(_.map(arguments, _.stringify).join(', '));
     return arguments[0];
 });
+_.global().log = function () {
+    console.log.call(console.log, arguments);
+};
 _.hasAsserts = true;
 _.extend(_, {
     tests: {},
@@ -1028,10 +1031,22 @@ _.bullet = function (bullet, str) {
     }));
 };
 _.pretty = function (x, cfg) {
-    return _.stringify(x, _.extend({ pretty: true }, cfg));
+    return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
 };
 _.stringify = function (x, cfg) {
-    return _.stringifyImpl(x, [], [], 0, cfg || {});
+    cfg = cfg || {};
+    var s = _.stringifyImpl(x, [], [], 0, cfg);
+    return s.length < 80 || 'pretty' in cfg ? s : _.stringifyImpl(x, [], [], 0, _.extend(cfg, { pretty: true }));
+};
+_.stringifyPrototype = function (x) {
+    if (Platform.NodeJS) {
+        var name = '';
+        x.$meta(function (values) {
+            name = values.name;
+        });
+        return name && name + ' ()';
+    } else
+        return '<prototype>';
 };
 _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     var customFormat = cfg.formatter && cfg.formatter(x);
@@ -1052,7 +1067,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     } else if (x === null) {
         return 'null';
     } else if (_.isFunction(x)) {
-        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) ? '<prototype>' : '<function>';
+        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
     } else if (typeof x === 'string') {
         return _.quoteWith('"', x);
     } else if (_.isTypeOf(Tags, x)) {
@@ -1147,6 +1162,20 @@ _.mixin({
     }
 });
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map));
+_.mapKeys = function (x, fn) {
+    if (_.isArray(x)) {
+        return _.map(x, _.mapKeys.tails2(fn));
+    } else if (_.isStrictlyObject(x)) {
+        return _.object(_.map(_.pairs(x), function (kv) {
+            return [
+                fn(kv[0]),
+                _.mapKeys(kv[1], fn)
+            ];
+        }));
+    } else {
+        return x;
+    }
+};
 _.mixin({ mapMap: _.hyperOperator(_.unary, _.map2) });
 _.mixin({
     reject2: function (value, op) {
@@ -1367,6 +1396,58 @@ _.partition2 = function (arr, pred) {
         result.push(group);
     }
     return result;
+};
+_.linearMerge = function (arrays, cfg) {
+    cfg = cfg || { key: _.identity };
+    var head = {
+        key: null,
+        next: {}
+    };
+    var nodes = {};
+    _.each(arrays, function (arr) {
+        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+            var item = arr[i];
+            var key = cfg.key(item);
+            node = nodes[key] || (nodes[key] = {
+                key: key,
+                item: item,
+                next: {}
+            });
+            if (prev) {
+                prev.next[key] = node;
+            }
+        }
+    });
+    var decyclize = function (visited, node) {
+        visited[node.key] = true;
+        node.next = _.chain(_.values(node.next)).filter(function (node) {
+            return !(node.key in visited);
+        }).map(_.partial(decyclize, visited)).value();
+        delete visited[node.key];
+        return node;
+    };
+    var ordered = function (a, b) {
+        return a === b || _.some(a.next, function (aa) {
+            return ordered(aa, b);
+        });
+    };
+    var flatten = function (node) {
+        if (!node)
+            return [];
+        var next = cfg.sort ? _.sortBy(node.next || [], cfg.sort) : node.next || [];
+        return [node].concat(flatten(_.reduce(next, function (a, b) {
+            if (a === b) {
+                return a;
+            } else if (ordered(b, a)) {
+                b.next.push(a);
+                return b;
+            } else {
+                a.next.push(b);
+                return a;
+            }
+        })));
+    };
+    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
 };
 _.key = function (fn) {
     return function (value, key) {
@@ -2972,6 +3053,26 @@ Parse = {
         return new Date((date[2].length > 2 ? 0 : 2000) + parseInt(date[2], 10), parseInt(date[1], 10) - 1, parseInt(date[0], 10), parseInt(time[0], 10), parseInt(time[1], 10)).getTime();
     }
 };
+_.camelCaseToDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '-' + x[1].lowercase;
+    });
+};
+_.camelCaseToLoDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '_' + x[1].lowercase;
+    });
+};
+_.dashesToCamelCase = function (x) {
+    return x.replace(/(-.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
+_.loDashesToCamelCase = function (x) {
+    return x.replace(/(_.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
 Format = {
     javascript: function (obj) {
         return _.stringify(obj, {
@@ -3902,14 +4003,50 @@ _.defineTagKeyword('observableProperty', _.flip);
 _.defineKeyword('observableRef', function (x) {
     return $observableProperty($reference(x));
 });
+$prototype.macro('$depends', function (def, value, name) {
+    def.$depends = $builtin($const(_.coerceToArray(value)));
+    return def;
+});
+$prototype.macroTag('extendable', function (def, value, name) {
+    def[name] = $builtin($const(value));
+    return def;
+});
 Component = $prototype({
-    $defaults: $extendable($static($builtin($property({})))),
-    $requires: $extendable($static($builtin($property({})))),
+    $defaults: $extendable({}),
+    $requires: $extendable({}),
     $impl: {
         contributeTraits: function (base) {
-            var prevImpl = $prototype.impl.contributeTraits(base);
+            return _.sequence([
+                this.expandTraitsDependencies,
+                $prototype.impl.contributeTraits(base),
+                this.mergeExtendables(base)
+            ]).bind(this);
+        },
+        expandTraitsDependencies: function (def) {
+            if (def.$depends) {
+                var edges = [];
+                var lastId = 0;
+                var drill = function (depends, T) {
+                    if (!T.__tempId) {
+                        T.__tempId = lastId++;
+                    }
+                    _.each(depends, function (TSuper) {
+                        edges.push([
+                            T,
+                            TSuper
+                        ]);
+                        drill(TSuper.$depends || [], TSuper);
+                    });
+                };
+                drill($untag(def.$depends), {});
+                _.each(def.$traits = _.reversed(_.rest(_.linearMerge(edges, { key: _.property('__tempId') }))), function (obj) {
+                    delete obj.__tempId;
+                });
+            }
+            return def;
+        },
+        mergeExtendables: function (base) {
             return function (def) {
-                def = prevImpl.call(this, def);
                 _.each(_.pick(base.$definition, $extendable.is), function (value, name) {
                     def[name] = Tags.modifySubject(value, function (value) {
                         value = _.extendedDeep(value, $untag(def[name] || {}));

@@ -1,4 +1,7 @@
-module.exports = $trait ({
+ServerEntity = module.exports = $trait ({
+
+    $depends: [require ('./request')],
+    $depends: [require ('./api')],
 
     entitySchema: undefined, // define this
 

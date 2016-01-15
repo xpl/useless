@@ -54,6 +54,24 @@ _.deferTest (['stdlib', 'map2'], function () {
                 _.mapsWith = _.higherOrder (
                     _.mapWith  = _.flip2 (_.map)) })
 
+
+/*  Semantically-correct abstract map (maps any type of value)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.deferTest (['stdlib', 'mapKeys'], function () {
+
+    $assert (_.mapKeys ({ 'foo':    [1, 2,{ 'gay':    3 }]}, _.appends ('bar')),
+                        { 'foobar': [1, 2,{ 'gaybar': 3 }]})
+
+}, function () { _.mapKeys = function (x, fn) {
+                        if (_.isArray (x)) {
+                            return _.map (x, _.mapKeys.tails2 (fn)) }
+                        else if (_.isStrictlyObject (x)) {
+                            return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
+                        else {
+                            return x } } })              
+
+
 /*  Hyper map (deep) #1 — maps leafs
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -540,6 +558,62 @@ _.withTest (['stdlib', 'partition2'], function () {
                 result.push (group) }
 
             return result } })
+
+/*  Merges arrays, keeping given element order.
+    TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
+    ======================================================================== */
+
+_.withTest (['stdlib', 'linearMerge'], function () {
+
+    $assert (_.linearMerge ([]), [])
+    $assert (_.linearMerge ([   ['all','your',                'to','us'],
+                                [      'your',       'belong',     'us'],
+                                [             'base','belong','to'     ],
+                                [      'your','base'                   ]]),
+                                ['all','your','base','belong','to','us'])
+
+/*  cfg accepts { key: fn, sort: fn } optional parameters for key extraction and sorting
+    ======================================================================== */
+
+}, function () {
+
+    _.linearMerge = function (arrays, cfg) {
+
+            cfg = cfg || { key: _.identity }
+
+        var head = { key: null, next: {} }
+        var nodes = {}
+
+        _.each (arrays, function (arr) {
+            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+                var item = arr[i]
+                var key  = cfg.key (item)
+                node = nodes[key] || (nodes[key] = { key: key, item: item, next: {} })
+                if (prev) {
+                    prev.next[key] = node } } })
+
+        var decyclize = function (visited, node) { visited[node.key] = true
+
+            node.next = _.chain (_.values (node.next))
+                            .filter (function (node) { return !(node.key in visited) })
+                            .map (_.partial (decyclize, visited)).value ()
+            
+            delete visited[node.key]; return node }
+
+        var ordered = function (a, b) {
+            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
+
+        var flatten = function (node) { if (!node) return []
+
+            var next = cfg.sort ? _.sortBy (node.next || [], cfg.sort) : (node.next || [])
+
+            return [node].concat (flatten (_.reduce (next, function (a, b) {
+
+                if (a === b)             { return a }
+                else if (ordered (b, a)) { b.next.push (a); return b }
+                else                     { a.next.push (b); return a } }))) }
+
+        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
 
 
 /*  experimental shit (subject to removal)

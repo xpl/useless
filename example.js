@@ -15,14 +15,11 @@ Examples = $singleton (Component, {
 
         'api/erroneous-method': { post: this.erroneousMethod } } },
 
-    $traits: [
+    $depends: [
         
-        require ('./server/exceptions'),
         require ('./server/supervisor'),
         require ('./server/tests'),
         require ('./server/deploy'),
-        require ('./server/api'),
-        require ('./server/io'),
         require ('./server/http'),
         require ('./server/templating'),
         require ('./server/websocket'),

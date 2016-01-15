@@ -1,4 +1,4 @@
-module.exports = $trait ({
+ServerWebsocket = module.exports = $trait ({
 
     /*  Override this to specify who can connect via WebSocket
      */

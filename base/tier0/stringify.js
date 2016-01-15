@@ -14,17 +14,20 @@ _.json = function (arg) {
 
 _.deferTest (['type', 'stringify'], function () {
 
-        var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
-            complex.bar[0].bar = complex.bar
+        if (_.hasTags) {
 
-        var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+            var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+                complex.bar[0].bar = complex.bar
 
-        var Proto = $prototype ({})
+            var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
-        $assert (_.stringify (Proto),   '<prototype>')
+            var Proto = $prototype ({})
 
-        $assert (_.stringify (123),     '123')
-        $assert (_.stringify (complex), renders)
+            $assert (_.stringify (Proto),   Platform.NodeJS ? 'Proto ()' : '<prototype>')
+
+            $assert (_.stringify (undefined),'undefined')
+            $assert (_.stringify (123),     '123')
+            $assert (_.stringify (complex, { pretty: false }), renders) }
 
         $assert (_.pretty ({    array: ['foo',
                                         'bar',
@@ -50,11 +53,21 @@ _.deferTest (['type', 'stringify'], function () {
                      _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
                                                                                  ? (bullet + line)
                                                                                  : (indent + line) })) }
+                        
+                                            _.pretty = function (x, cfg) {
+                                            return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
 
-    _.pretty = function (   x,                             cfg) {
-        return _.stringify (x, _.extend ({ pretty: true }, cfg)) }
+                                        _.stringify = function  (x, cfg) {       cfg = cfg || {}
+                                        var s = _.stringifyImpl (x, [], [], 0,   cfg)
+                                    return (s.length < 80 ||    'pretty' in      cfg) ?
+                                            s : _.stringifyImpl (x, [], [], 0, _.extend (cfg, {
+                                                                 pretty: true })) }
 
-    _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}) }
+    _.stringifyPrototype = function (x) {
+            if (Platform.NodeJS) { var name = ''
+                x.$meta (function (values) { name = values.name })
+                return name && (name + ' ()') }
+            else return '<prototype>' }
 
     _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
@@ -82,7 +95,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return 'null' }
 
                             else if (_.isFunction (x)) {
-                                return cfg.pure ? x.toString () : (_.isPrototypeConstructor (x) ? '<prototype>' : '<function>') }
+                                return cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>') }
 
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }

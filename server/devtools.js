@@ -6,7 +6,11 @@ var fs      = require ('fs'),
     path    = require ('path'),
     process = require ('process')
 
-module.exports = $trait ({
+ServerDevtools = module.exports = $trait ({
+
+    $depends: [require ('./io'),
+               require ('./request'),
+               require ('./api')],
 
     sourceRoot: process.cwd (),
     devHint: log.warn,

@@ -1,7 +1,8 @@
 var imagemagick = require ('./base/imagemagick'),
     path        = require ('path')
     
-module.exports = $trait ({
+ServerUploads = module.exports = $trait ({
+
 
     uploadPhoto: function (getTargetPath) { return this.$ (function (context) {
 

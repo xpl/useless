@@ -56,6 +56,10 @@ if (_.platform ().engine !== 'browser') {
             _.partial (log.warn, log.config ({ stackOffset: 2 }))) ||
             console.log)
         print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) }) }
-
+ 
 _.defineGlobalProperty ('alert2', function (args) {
     alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })
+
+_.global ().log = function () { console.log.call (console.log, arguments) } // placeholder for log.js
+
+

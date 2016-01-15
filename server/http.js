@@ -2,7 +2,10 @@ var http    = require ('http'),
     util    = require ('./base/util')
     Context = require ('./base/context.js')
 
-module.exports = $trait ({
+ServerHttp = module.exports = $trait ({
+
+    $depends: [require ('./exceptions'),
+               require ('./api')],
 
     beforeInit: function (then) { var portNumber = this.port || 1333
 

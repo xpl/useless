@@ -6,6 +6,8 @@ var _           = require ('./useless'),
     process     = require ('process'),
     path        = require ('path')
 
+/*  ======================================================================== */
+
 //console.log ('\n1. Setting up error handling / self testing...' + log.thinLine + '\n')
 
 BuildApp = $singleton (Component, {
@@ -13,35 +15,39 @@ BuildApp = $singleton (Component, {
     deferAppComponentTests: false,
 
     $defaults: {
-        optionNames: { 'no-compress': 1, 'no-stripped': 1 },
+        argKeys: { noCompress: 1, noStripped: 1 },
         inputFiles: ['./useless.js'],
         buildPath:   './build' },
 
-    $traits: [
-        require ('./server/exceptions'),
+    $depends: [
         require ('./server/args'),
         require ('./server/supervisor'),
-        require ('./server/tests') ],
+        require ('./server/tests')],
 
     argsReady: function (args) {
 
-        var directories =   args.rest.groupBy (
+        var directories =   args.values.groupBy (
                                 fs.lstatSync.catches (null,
                                     _.method ('isDirectory')))
                                                            
         this.inputFiles =                    _.coerceToUndefined (directories['false']) || this.inputFiles
         this.buildPath  =  path.resolve (process.cwd (), _.first (directories['true'])  || this.buildPath)
 
-        if (!this.isSupervisor) {
-            log.pretty.g (_.extend ({ options: args.options },
+        if (!this.args.spawnedBySupervisor) {
+            log.pretty.g (_.extend ({ keys: args.keysDashed },
                     _.pick (this, 'inputFiles',
                                   'buildPath'))) } },
+
+/*  ======================================================================== */
+
     init: function (then) {
 
         //log ('\n2. Checking dependencies...' + log.thinLine + '\n')
 
-        util.require (['esprima', 'escodegen'],
+        this.require (['esprima', 'escodegen'],
             this.$ (function () { _.each (this.inputFiles, this.compileFile.$ ()); then () })) },
+
+/*  ======================================================================== */
 
     writeCompiled: function (file, dir, src) { var fullPath = path.resolve (process.cwd (), path.join (dir, file))
         log.ok ('Writing', fullPath)
@@ -169,10 +175,10 @@ BuildApp = $singleton (Component, {
         var name = _.initial (path.basename (file).split ('.')).join ('.')
         var compiledSrc = util.compileScript ({ sourceFile: file })
         var strippedSrc = this.stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name,
-                                !this.args.options['no-stripped'] &&
+                                !this.args.noStripped &&
                                  this.buildPath)
 
-        if (!this.args.options['no-compress']) {
+        if (!this.args.noCompress) {
             this.compileWithGoogle (
                 strippedSrc,
                 this.writeCompiled.$ (name + '.min.js', this.buildPath)) }

@@ -47,37 +47,6 @@ module.exports = {
             log.error (e)
             return undefined } },
 
-    /*  Loaded modules are returned either as arguments:
-            1. require (['esprima', 'escodegen'], function (esprima, escodegen) { })
-
-        Or pushed to global namespace, if callback has no arguments:
-            2. require (['esprima', 'escodegen'], function () { $assert (esprima !== undefined) })
-     */
-    require: function (names, then) { names = _.coerceToArray (names)
-        _.cps.map (names,
-                function (name, i, return_) {
-                    require.$ (name).catch_ (
-                               function (e) {
-                                    log.w ('Fetching ./node_modules/' + name + ' from remote repository...')
-                                    exec ('npm install ' + name, function (e, stdout, stderr) {
-                                                                        if (e) {
-                                                                            module.exports.fatalError (stderr) }
-                                                                        else {
-                                                                            _.delay (function () {
-                                                                                var module = require (name)
-                                                                                if (module) {
-                                                                                    log.ok ('Installed', name) }
-                                                                                else {
-                                                                                    log.error ('Install failed:', name) }
-                                                                                return_ (module) }) } }) },
-                                function (module) { if (module) {
-                                                        //log.info ('Loaded', name)
-                                                        return_ (module) } }) },
-                function (modules) {
-                    if (_.noArgs (then)) {
-                        _.each (modules, function (module, i) { $global[names[i]] = module }) }
-                    then.apply (null, _.coerceToArray (modules)) }) },
-
     compileScript: function (cfg) { if (!cfg.source) {
                                     if (!cfg.sourceFile) { module.exports.fatalError ('no sourceFile specified') }
                                          cfg.source      = module.exports.readFile (cfg.sourceFile, cfg.includePaths) }
@@ -112,14 +81,6 @@ module.exports = {
     lstatSync: function (dst) { // NOTE: replace with lstatSync.catches
                     try       { return fs.lstatSync (dst) }
                     catch (e) { return undefined } },
-
-    parseCommandLineOptions: function (names) {
-        var arguments     = _.rest (process.argv, 2)
-        var options       = _.index (_.intersection (arguments, names))
-        return {
-            options: options,
-            all: arguments,
-            rest: _.without.apply (null, [arguments].concat (names)) } },
 
     locateFile: function (name, searchPaths) {
         return _.find (_.cons (name, (searchPaths || [process.cwd ()]).map (path.joinsWith (name).arity1)),
