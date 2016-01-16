@@ -1,5 +1,6 @@
-var _           = require ('./useless'),
-    fs          = require ('fs'),
+_ = require ('./useless')
+
+var fs          = require ('fs'),
     util        = require ('./server/base/util'),
     querystring = require ('querystring'),
     http        = require ('http'),
@@ -7,8 +8,6 @@ var _           = require ('./useless'),
     path        = require ('path')
 
 /*  ======================================================================== */
-
-//console.log ('\n1. Setting up error handling / self testing...' + log.thinLine + '\n')
 
 BuildApp = $singleton (Component, {
 
@@ -41,9 +40,6 @@ BuildApp = $singleton (Component, {
 /*  ======================================================================== */
 
     init: function (then) {
-
-        //log ('\n2. Checking dependencies...' + log.thinLine + '\n')
-
         this.require (['esprima', 'escodegen'],
             this.$ (function () { _.each (this.inputFiles, this.compileFile.$ ()); then () })) },
 
