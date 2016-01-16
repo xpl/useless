@@ -76,7 +76,7 @@
 
 .panic-alert-error:last-child { margin-bottom: 0; }
 
-.panic-alert-error-message { line-height: 1.2em; }
+.panic-alert-error-message { line-height: 1.2em; position: relative; }
 
 .panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }
 
@@ -104,3 +104,7 @@
 .panic-alert-error .callstack-entry .line:after { content: ' '; }
 
 .panic-alert-error pre { font-family: Menlo, monospace; overflow: scroll; border-radius: 2px; white-space: pre; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; font-size: 11px; }
+
+.panic-aler-error .inline-exception { position: relative; }
+
+

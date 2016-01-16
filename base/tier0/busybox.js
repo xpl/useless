@@ -29,11 +29,6 @@ _.array = _.tuple = function () {
 
 _.cons = function (head, tail) { return [head].concat (tail || []) }
 
-_.concat = function (first, rest) {                rest = _.rest (arguments)
-      return _.isArray (first)
-                      ? first.concat.apply (first, rest)
-                      :          _.reduce2 (first, rest, function (a, b) { return a + b }) }
-
 _.atIndex = function (n) {
                 return function (arr) { return arr[n] } }
 

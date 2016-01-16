@@ -20,7 +20,7 @@ _.notImplemented = _.throwsError ('not implemented')
 /*  Abstract _.values
     ======================================================================== */
 
-_.deferTest (['stdlib', 'values2'], function () {
+_.withTest (['stdlib', 'values2'], function () {
 
     $assert (_.values2 (undefined), [])
     $assert (_.values2 (_.identity), [_.identity])
@@ -35,13 +35,14 @@ _.deferTest (['stdlib', 'values2'], function () {
                         else if (_.isEmpty (x))             { return [] }
                         else                                { return [x] } } }) })
 
+
 /*  Map 2.0
     ======================================================================== */
 
 /*  Semantically-correct abstract map (maps any type of value)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'map2'], function () {
+_.withTest (['stdlib', 'map2'], function () {
                                  var plusBar = _.appends ('bar')
     $assert (_.map2 (       'foo',   plusBar),         'foobar'  )
     $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
@@ -58,14 +59,14 @@ _.deferTest (['stdlib', 'map2'], function () {
 /*  Semantically-correct abstract map (maps any type of value)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'mapKeys'], function () {
+_.withTest (['stdlib', 'mapKeys'], function () {
 
     $assert (_.mapKeys ({ 'foo':    [1, 2,{ 'gay':    3 }]}, _.appends ('bar')),
                         { 'foobar': [1, 2,{ 'gaybar': 3 }]})
 
 }, function () { _.mapKeys = function (x, fn) {
                         if (_.isArray (x)) {
-                            return _.map (x, _.mapKeys.tails2 (fn)) }
+                            return _.map (x, _.tails2 (_.mapKeys, fn)) }
                         else if (_.isStrictlyObject (x)) {
                             return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
                         else {
@@ -75,7 +76,7 @@ _.deferTest (['stdlib', 'mapKeys'], function () {
 /*  Hyper map (deep) #1 — maps leafs
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'mapMap'], function () {
+_.withTest (['stdlib', 'mapMap'], function () {
 
     $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
     $assert (_.mapMap ([7], _.typeOf), ['number'])
@@ -96,7 +97,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
 /*  Filter 2.0
     ======================================================================== */
 
-_.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
+_.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
 
     // generic filter behavior for any container type
 
@@ -215,13 +216,35 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
                                                 _.goDeeperAlwaysIfPossible) (initial,      value,      op) }
  })
 
+
+/*  Abstract concat
+    ======================================================================== */
+
+_.withTest (['stdlib', 'concat2'], function () {
+
+    $assert (_.concat ([1,2], [3], [4,5]), [1,2,3,4,5])
+    $assert (_.concat ({ foo: 1 }, { bar: 2 }), { foo: 1, bar: 2 })
+    $assert (_.concat (1,2,3), 6)
+
+}, function () { 
+
+    _.concat = function (   first,                     rest) {
+                                                       rest = _.rest (arguments)
+          return _.isArray (first)
+                          ? first.concat.apply (first, rest)
+                          :          _.reduce2 (first, rest, function (              a,  b) {
+                                                                if (_.isObject (     a) &&
+                                                                    _.isObject (         b)) {
+                                                                return _.extend ({}, a,  b)  }
+                                                        else {  return               a + b   } }) } })
+
 /*  Zip 2.0
     ======================================================================== */
 
 /*  Abstract zip that reduces any types of matrices.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'zip2'], function () {
+_.withTest (['stdlib', 'zip2'], function () {
 
     $assert (_.zip2 ([  'f',
                         'o',
@@ -276,10 +299,11 @@ _.deferTest (['stdlib', 'zip2'], function () {
             else {
                 return _.reduce2 (rows, fn) } } } }) })
 
+
 /*  Hyperzip (deep one).
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'zipZip'], function () {
+_.withTest (['stdlib', 'zipZip'], function () {
 
     $assert (_.zipZip (
             { phones: [{ number: 'number' }] },
@@ -300,43 +324,6 @@ _.deferTest (['stdlib', 'zipZip'], function () {
 function () {
 
     _.mixin ({ zipZip: _.hyperOperator (_.binary, _.zip2) }) })
-
-
-/*  Find 2.0 + Hyperfind
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_.deferTest (['stdlib', 'findFind'], function () {
-
-    var obj = { x: 1, y: { z: 2 }}
-
-    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.constant (false)), false)
-    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),       2)
-    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)),     obj) },
-
-function () {
-
-    _.find2 = function (value, pred) {
-        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
-                          if (typeof x !== 'boolean') { return x }
-                                 else if (x === true) { return value[i] } } }
-
-    _.findFind = function (obj, pred_) {
-                    return _.hyperOperator (_.unary,
-                             function (value, pred) {
-                                    if (_.isArray (value)) {                                
-                                        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
-                                                          if (typeof x !== 'boolean') { return x }
-                                                                 else if (x === true) { return value[i] } } }
-
-                                    else if (_.isStrictlyObject (value)) {        
-                                        for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
-                                                                                 if (typeof x !== 'boolean') { return x }
-                                                                                        else if (x === true) { return value[k] } } }
-
-                                                                                          var x = pred_ (value)
-                                                            if (typeof x !== 'boolean') { return x }
-                                                                   else if (x === true) { return value }
-                                                                                          return false }) (obj, pred_) } })
 
 
 /*  Most useful _.extend derivatives
@@ -384,6 +371,8 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
 
+    _.extended = _.partial (_.extend, {}) // referentially-transparent version
+
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
 
@@ -399,6 +388,42 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
                                                                                     _.extend (lvalue, right[key]) :
                                                                                     right[key]) :
                                                                                 lvalue] }))}, {})) }) })
+
+/*  Find 2.0 + Hyperfind
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'findFind'], function () {
+
+    var obj = { x: 1, y: { z: 2 }}
+
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.constant (false)), false)
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),       2)
+    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)),     obj) },
+
+function () {
+
+    _.find2 = function (value, pred) {
+        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
+                          if (typeof x !== 'boolean') { return x }
+                                 else if (x === true) { return value[i] } } }
+
+    _.findFind = function (obj, pred_) {
+                    return _.hyperOperator (_.unary,
+                             function (value, pred) {
+                                    if (_.isArray (value)) {                                
+                                        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
+                                                          if (typeof x !== 'boolean') { return x }
+                                                                 else if (x === true) { return value[i] } } }
+
+                                    else if (_.isStrictlyObject (value)) {        
+                                        for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
+                                                                                 if (typeof x !== 'boolean') { return x }
+                                                                                        else if (x === true) { return value[k] } } }
+
+                                                                                          var x = pred_ (value)
+                                                            if (typeof x !== 'boolean') { return x }
+                                                                   else if (x === true) { return value }
+                                                                                          return false }) (obj, pred_) } })
 
 
 /*  removes empty contents from any kinds of objects
@@ -439,7 +464,9 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
 }, function () { _.extend (_, {
 
-    cloneDeep: _.tails2 (_.mapMap, function (value) { return (_.isStrictlyObject (value) && !_.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
+    cloneDeep: _.tails2 (_.mapMap, function (value) {
+        return (_.isStrictlyObject (value) && !
+                _.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,

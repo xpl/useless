@@ -54,7 +54,7 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
-_.deferTest ('assert.js bootstrap', function () {
+_.withTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -163,9 +163,12 @@ if (_.hasStdlib) {
 /*  Ensuring throw (strict version)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assertThrows (function () { throw 42 }, 42) // accepts either plain value or predicate
-    $assertThrows (function () { throw new Error ('42') }, _.matches ({ message: '42' }))
+    $assertThrows (     function () { throw 42 }, 42) // accepts either plain value or predicate
+    $assertThrows (     function () { throw new Error ('42') }, _.matches ({ message: '42' }))
 
+    $assertFails (function () {
+        $assertThrows ( function () { throw 42 }, 24)
+        $assertThrows ( function () { throw new Error ('42') }, _.matches ({ message: '24' })) })
 
 /*  Ensuring execution
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -202,12 +205,19 @@ if (_.hasStdlib) {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     if ($assert === _.assertions.assert) {
-        $assertThrows (function () { $fail }) } },
+        $assertThrows (function () { $fail }) }
+
 
 /*  IMPLEMENTATION
     ======================================================================== */
 
-function () {
+}, function () {
+
+    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
+     */
+    $overrideUnderscore ('matches', function (matches) {
+        return function (a) {
+            return _.isObject (a) ? matches (a) : function (b) { return a === b } } })
 
     _.extend (_, _.assertions = {
 
@@ -286,7 +296,7 @@ function () {
         assertFails: function (what) {
             return _.assertThrows.call (this, what, _.isAssertionError) },
 
-        assertThrows: function (what, errorPattern /* optional */) {
+        assertThrows: function (what, errorPattern) {
                             var e = undefined, thrown = false
                                 try         { what.call (this) }
                                 catch (__)  { e = __; thrown = true }
@@ -294,7 +304,7 @@ function () {
                             _.assert.call (this, thrown)
 
                             if (arguments.length > 1) {
-                                _.assertMatches.apply (this, [e].concat (_.rest (arguments))) } },
+                                _.assertMatches.call (this, e, errorPattern) } },
 
         assertNotThrows: function (what) {
             return _.assertEveryCalled (function (ok) { what (); ok () }) },

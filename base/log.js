@@ -179,10 +179,12 @@ _.extend (log, {
 
             var backendParams = {
                 color: config.color || log.readColor (args),
+                indentation:   indentation,
                 indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
                 trailNewlines: match[1],
-                codeLocation: location,
-                config:       config }
+                codeLocation:  location,
+                args:          args,
+                config:        config }
 
             writeBackend (backendParams)
 

@@ -441,12 +441,6 @@ _.array = _.tuple = function () {
 _.cons = function (head, tail) {
     return [head].concat(tail || []);
 };
-_.concat = function (first, rest) {
-    rest = _.rest(arguments);
-    return _.isArray(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
-        return a + b;
-    });
-};
 _.atIndex = function (n) {
     return function (arr) {
         return arr[n];
@@ -808,7 +802,7 @@ _.mixin({
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map));
 _.mapKeys = function (x, fn) {
     if (_.isArray(x)) {
-        return _.map(x, _.mapKeys.tails2(fn));
+        return _.map(x, _.tails2(_.mapKeys, fn));
     } else if (_.isStrictlyObject(x)) {
         return _.object(_.map(_.pairs(x), function (kv) {
             return [
@@ -896,6 +890,16 @@ _.reduceReduce = function (_1, _2, _3) {
     }
     return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(initial, value, op);
 };
+_.concat = function (first, rest) {
+    rest = _.rest(arguments);
+    return _.isArray(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
+        if (_.isObject(a) && _.isObject(b)) {
+            return _.extend({}, a, b);
+        } else {
+            return a + b;
+        }
+    });
+};
 _.mixin({
     zipObjectsWith: function (objects, fn) {
         return _.reduce(_.rest(objects), function (memo, obj) {
@@ -927,6 +931,24 @@ _.mixin({
     }
 });
 _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
+_.extend = $restArg(_.extend);
+_.extended = _.partial(_.extend, {});
+_.extendWith = _.flip(_.extend);
+_.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
+_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
+    return b === undefined ? a : b;
+});
+_.extend2 = $restArg(function (what) {
+    return _.extend(what, _.reduceRight(arguments, function (right, left) {
+        return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
+            var lvalue = left[key];
+            return [
+                key,
+                key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
+            ];
+        }));
+    }, {}));
+});
 _.find2 = function (value, pred) {
     for (var i = 0, n = value.length; i < n; i++) {
         var x = pred(value[i], i, value);
@@ -968,23 +990,6 @@ _.findFind = function (obj, pred_) {
         return false;
     })(obj, pred_);
 };
-_.extend = $restArg(_.extend);
-_.extendWith = _.flip(_.extend);
-_.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
-_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
-    return b === undefined ? a : b;
-});
-_.extend2 = $restArg(function (what) {
-    return _.extend(what, _.reduceRight(arguments, function (right, left) {
-        return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
-            var lvalue = left[key];
-            return [
-                key,
-                key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
-            ];
-        }));
-    }, {}));
-});
 _.nonempty = function (obj) {
     return _.filter2(obj, _.isNonempty);
 };
@@ -3514,6 +3519,10 @@ Component = $prototype({
                     def[name] = Tags.modifySubject(value, function (value) {
                         value = _.extendedDeep(value, $untag(def[name] || {}));
                         _.each($untag(def.$traits), function (trait) {
+                            if (!trait) {
+                                log.e(def.$traits);
+                                throw new Error('invalid $traits value');
+                            }
                             var traitVal = trait.$definition[name];
                             if (traitVal) {
                                 value = _.extendedDeep($untag(traitVal), value);
@@ -3584,7 +3593,7 @@ Component = $prototype({
             var def = this.constructor.$definition[k];
             if (!(def && def.$property)) {
                 var fn = this[k];
-                if (predicate(def) && _.isFunction(fn) && !_.isPrototypeConstructor(fn)) {
+                if (_.isFunction(fn) && !_.isPrototypeConstructor(fn) && predicate(def)) {
                     this[k] = iterator.call(this, fn, k, def) || fn;
                 }
             }

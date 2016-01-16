@@ -28,7 +28,7 @@ _.defineTagKeyword ('async')
     place tests for that module in _.tests.foo — it will be picked up by tests framework
     automagically ©
  */
-_.tests.itself = {
+_.tests.Testosterone = {
 
     /*  For reference on basic syntax of assertions, see assert.js, here's only
         extra function provided by this module:
@@ -125,7 +125,7 @@ Testosterone = $singleton ({
 
         /*  Read cfg.suites
          */
-        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suitesIsArray = _.isArray (cfg.suites || cfg.tests) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
         var suites = _.map (cfg.suites || [], this.$ (function (suite, name) {
             return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
 
@@ -368,6 +368,41 @@ Test = $prototype ({
     evalLogCalls: function () {
         _.each (this.logCalls, log.writeBackend ().arity1) } })
 
+
+/*
+ */
+_.defineTagKeyword ('recursive')
+
+Testosterone.ValidatesMethodContracts = $trait ({
+
+    $test: function () {
+
+        var test = new ($component ({
+
+            $traits: [Testosterone.ValidatesMethodContracts],
+
+            foo: function () {},
+            bar: function () { this.bar () },
+            baz: $recursive ({ max: 2 }, function () { this.baz () }),
+            qux: $recursive (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
+
+                       test.foo ()
+        $assertThrows (test.bar, { message: 'Max recursion depth reached (0)' })
+        $assertThrows (test.baz, { message: 'Max recursion depth reached (2)' })
+                       test.qux () },
+
+    beforeInit: (function (){ var limitRecursion = function (max, fn) {
+                                                        var depth = -1
+                                                            return function () {
+                                                                if (depth > max) {
+                                                                    throw new Error ('Max recursion depth reached (' + max + ')') }
+                                                                else {
+                                                                    var result = ((++depth), fn.apply (this, arguments)); depth--
+                                                                        return result } } }
+        return function () {
+                this.mapMethods (
+                    function (          def) { return !def || !def.$recursive || (def.$recursive.max !== undefined) },
+                    function (fn, name, def) { return limitRecursion ((def && def.$recursive && def.$recursive.max) || 0, fn) }) } }) () })
 
 if (Platform.NodeJS) {
     module.exports = Testosterone }

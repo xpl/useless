@@ -380,7 +380,7 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
-_.deferTest ('assert.js bootstrap', function () {
+_.withTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -489,9 +489,12 @@ if (_.hasStdlib) {
 /*  Ensuring throw (strict version)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assertThrows (function () { throw 42 }, 42) // accepts either plain value or predicate
-    $assertThrows (function () { throw new Error ('42') }, _.matches ({ message: '42' }))
+    $assertThrows (     function () { throw 42 }, 42) // accepts either plain value or predicate
+    $assertThrows (     function () { throw new Error ('42') }, _.matches ({ message: '42' }))
 
+    $assertFails (function () {
+        $assertThrows ( function () { throw 42 }, 24)
+        $assertThrows ( function () { throw new Error ('42') }, _.matches ({ message: '24' })) })
 
 /*  Ensuring execution
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -528,12 +531,19 @@ if (_.hasStdlib) {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     if ($assert === _.assertions.assert) {
-        $assertThrows (function () { $fail }) } },
+        $assertThrows (function () { $fail }) }
+
 
 /*  IMPLEMENTATION
     ======================================================================== */
 
-function () {
+}, function () {
+
+    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
+     */
+    $overrideUnderscore ('matches', function (matches) {
+        return function (a) {
+            return _.isObject (a) ? matches (a) : function (b) { return a === b } } })
 
     _.extend (_, _.assertions = {
 
@@ -612,7 +622,7 @@ function () {
         assertFails: function (what) {
             return _.assertThrows.call (this, what, _.isAssertionError) },
 
-        assertThrows: function (what, errorPattern /* optional */) {
+        assertThrows: function (what, errorPattern) {
                             var e = undefined, thrown = false
                                 try         { what.call (this) }
                                 catch (__)  { e = __; thrown = true }
@@ -620,7 +630,7 @@ function () {
                             _.assert.call (this, thrown)
 
                             if (arguments.length > 1) {
-                                _.assertMatches.apply (this, [e].concat (_.rest (arguments))) } },
+                                _.assertMatches.call (this, e, errorPattern) } },
 
         assertNotThrows: function (what) {
             return _.assertEveryCalled (function (ok) { what (); ok () }) },
@@ -1156,11 +1166,6 @@ _.array = _.tuple = function () {
 
 _.cons = function (head, tail) { return [head].concat (tail || []) }
 
-_.concat = function (first, rest) {                rest = _.rest (arguments)
-      return _.isArray (first)
-                      ? first.concat.apply (first, rest)
-                      :          _.reduce2 (first, rest, function (a, b) { return a + b }) }
-
 _.atIndex = function (n) {
                 return function (arr) { return arr[n] } }
 
@@ -1693,7 +1698,7 @@ _.notImplemented = _.throwsError ('not implemented')
 /*  Abstract _.values
     ======================================================================== */
 
-_.deferTest (['stdlib', 'values2'], function () {
+_.withTest (['stdlib', 'values2'], function () {
 
     $assert (_.values2 (undefined), [])
     $assert (_.values2 (_.identity), [_.identity])
@@ -1708,13 +1713,14 @@ _.deferTest (['stdlib', 'values2'], function () {
                         else if (_.isEmpty (x))             { return [] }
                         else                                { return [x] } } }) })
 
+
 /*  Map 2.0
     ======================================================================== */
 
 /*  Semantically-correct abstract map (maps any type of value)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'map2'], function () {
+_.withTest (['stdlib', 'map2'], function () {
                                  var plusBar = _.appends ('bar')
     $assert (_.map2 (       'foo',   plusBar),         'foobar'  )
     $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
@@ -1731,14 +1737,14 @@ _.deferTest (['stdlib', 'map2'], function () {
 /*  Semantically-correct abstract map (maps any type of value)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'mapKeys'], function () {
+_.withTest (['stdlib', 'mapKeys'], function () {
 
     $assert (_.mapKeys ({ 'foo':    [1, 2,{ 'gay':    3 }]}, _.appends ('bar')),
                         { 'foobar': [1, 2,{ 'gaybar': 3 }]})
 
 }, function () { _.mapKeys = function (x, fn) {
                         if (_.isArray (x)) {
-                            return _.map (x, _.mapKeys.tails2 (fn)) }
+                            return _.map (x, _.tails2 (_.mapKeys, fn)) }
                         else if (_.isStrictlyObject (x)) {
                             return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
                         else {
@@ -1748,7 +1754,7 @@ _.deferTest (['stdlib', 'mapKeys'], function () {
 /*  Hyper map (deep) #1 — maps leafs
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'mapMap'], function () {
+_.withTest (['stdlib', 'mapMap'], function () {
 
     $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
     $assert (_.mapMap ([7], _.typeOf), ['number'])
@@ -1769,7 +1775,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
 /*  Filter 2.0
     ======================================================================== */
 
-_.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
+_.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
 
     // generic filter behavior for any container type
 
@@ -1888,13 +1894,35 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
                                                 _.goDeeperAlwaysIfPossible) (initial,      value,      op) }
  })
 
+
+/*  Abstract concat
+    ======================================================================== */
+
+_.withTest (['stdlib', 'concat2'], function () {
+
+    $assert (_.concat ([1,2], [3], [4,5]), [1,2,3,4,5])
+    $assert (_.concat ({ foo: 1 }, { bar: 2 }), { foo: 1, bar: 2 })
+    $assert (_.concat (1,2,3), 6)
+
+}, function () { 
+
+    _.concat = function (   first,                     rest) {
+                                                       rest = _.rest (arguments)
+          return _.isArray (first)
+                          ? first.concat.apply (first, rest)
+                          :          _.reduce2 (first, rest, function (              a,  b) {
+                                                                if (_.isObject (     a) &&
+                                                                    _.isObject (         b)) {
+                                                                return _.extend ({}, a,  b)  }
+                                                        else {  return               a + b   } }) } })
+
 /*  Zip 2.0
     ======================================================================== */
 
 /*  Abstract zip that reduces any types of matrices.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'zip2'], function () {
+_.withTest (['stdlib', 'zip2'], function () {
 
     $assert (_.zip2 ([  'f',
                         'o',
@@ -1949,10 +1977,11 @@ _.deferTest (['stdlib', 'zip2'], function () {
             else {
                 return _.reduce2 (rows, fn) } } } }) })
 
+
 /*  Hyperzip (deep one).
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'zipZip'], function () {
+_.withTest (['stdlib', 'zipZip'], function () {
 
     $assert (_.zipZip (
             { phones: [{ number: 'number' }] },
@@ -1973,43 +2002,6 @@ _.deferTest (['stdlib', 'zipZip'], function () {
 function () {
 
     _.mixin ({ zipZip: _.hyperOperator (_.binary, _.zip2) }) })
-
-
-/*  Find 2.0 + Hyperfind
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_.deferTest (['stdlib', 'findFind'], function () {
-
-    var obj = { x: 1, y: { z: 2 }}
-
-    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.constant (false)), false)
-    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),       2)
-    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)),     obj) },
-
-function () {
-
-    _.find2 = function (value, pred) {
-        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
-                          if (typeof x !== 'boolean') { return x }
-                                 else if (x === true) { return value[i] } } }
-
-    _.findFind = function (obj, pred_) {
-                    return _.hyperOperator (_.unary,
-                             function (value, pred) {
-                                    if (_.isArray (value)) {                                
-                                        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
-                                                          if (typeof x !== 'boolean') { return x }
-                                                                 else if (x === true) { return value[i] } } }
-
-                                    else if (_.isStrictlyObject (value)) {        
-                                        for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
-                                                                                 if (typeof x !== 'boolean') { return x }
-                                                                                        else if (x === true) { return value[k] } } }
-
-                                                                                          var x = pred_ (value)
-                                                            if (typeof x !== 'boolean') { return x }
-                                                                   else if (x === true) { return value }
-                                                                                          return false }) (obj, pred_) } })
 
 
 /*  Most useful _.extend derivatives
@@ -2057,6 +2049,8 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
 
+    _.extended = _.partial (_.extend, {}) // referentially-transparent version
+
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
 
@@ -2072,6 +2066,42 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
                                                                                     _.extend (lvalue, right[key]) :
                                                                                     right[key]) :
                                                                                 lvalue] }))}, {})) }) })
+
+/*  Find 2.0 + Hyperfind
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'findFind'], function () {
+
+    var obj = { x: 1, y: { z: 2 }}
+
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.constant (false)), false)
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),       2)
+    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)),     obj) },
+
+function () {
+
+    _.find2 = function (value, pred) {
+        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
+                          if (typeof x !== 'boolean') { return x }
+                                 else if (x === true) { return value[i] } } }
+
+    _.findFind = function (obj, pred_) {
+                    return _.hyperOperator (_.unary,
+                             function (value, pred) {
+                                    if (_.isArray (value)) {                                
+                                        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
+                                                          if (typeof x !== 'boolean') { return x }
+                                                                 else if (x === true) { return value[i] } } }
+
+                                    else if (_.isStrictlyObject (value)) {        
+                                        for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
+                                                                                 if (typeof x !== 'boolean') { return x }
+                                                                                        else if (x === true) { return value[k] } } }
+
+                                                                                          var x = pred_ (value)
+                                                            if (typeof x !== 'boolean') { return x }
+                                                                   else if (x === true) { return value }
+                                                                                          return false }) (obj, pred_) } })
 
 
 /*  removes empty contents from any kinds of objects
@@ -2112,7 +2142,9 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
 }, function () { _.extend (_, {
 
-    cloneDeep: _.tails2 (_.mapMap, function (value) { return (_.isStrictlyObject (value) && !_.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
+    cloneDeep: _.tails2 (_.mapMap, function (value) {
+        return (_.isStrictlyObject (value) && !
+                _.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,
@@ -6502,6 +6534,11 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
+
+    '(regression) undefined was allowed as trait': function () {
+        $assertThrows (function () {
+            var Compo = $component ({ $traits: [undefined] }) }, { message: 'invalid $traits value' }) },
+
     '(regression) undefined members fail': function () {
         var Compo = $component ({ yoba: undefined })
         $assert ('yoba' in Compo.prototype) },
@@ -6589,9 +6626,10 @@ Component = $prototype ({
      */
     $impl: {
 
-        contributeTraits: function (base) { return _.sequence ([this.expandTraitsDependencies,
+        contributeTraits: function (base) { return _.sequence ([
+                                                    this.expandTraitsDependencies,
                                                     $prototype.impl.contributeTraits (base),
-                                                              this.mergeExtendables (base)]).bind (this) },
+                                                    this.mergeExtendables (base)]).bind (this) },
         
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
@@ -6623,7 +6661,8 @@ Component = $prototype ({
                                             function (                      value) {
                                                                             value =    _.extendedDeep (value, $untag (def[name] || {}))
                                         _.each ($untag (def.$traits),
-                                                    function (trait) {
+                                                    function (trait) { if (!trait) {    log.e (def.$traits)
+                                                                                        throw new Error ('invalid $traits value') }
                                                           var traitVal = trait.$definition [name]
                                                           if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
                                                                    return   value }) }); 
@@ -6679,7 +6718,7 @@ Component = $prototype ({
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
-                if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
+                if (_.isFunction (fn) && !_.isPrototypeConstructor (fn) && predicate (def))  {
                     this[k] = iterator.call (this, fn, k, def) || fn } } } },
 
     enumMethods: function (_1, _2) {
@@ -7710,10 +7749,12 @@ _.extend (log, {
 
             var backendParams = {
                 color: config.color || log.readColor (args),
+                indentation:   indentation,
                 indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
                 trailNewlines: match[1],
-                codeLocation: location,
-                config:       config }
+                codeLocation:  location,
+                args:          args,
+                config:        config }
 
             writeBackend (backendParams)
 
@@ -7913,7 +7954,7 @@ _.defineTagKeyword ('async')
     place tests for that module in _.tests.foo — it will be picked up by tests framework
     automagically ©
  */
-_.tests.itself = {
+_.tests.Testosterone = {
 
     /*  For reference on basic syntax of assertions, see assert.js, here's only
         extra function provided by this module:
@@ -8010,7 +8051,7 @@ Testosterone = $singleton ({
 
         /*  Read cfg.suites
          */
-        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suitesIsArray = _.isArray (cfg.suites || cfg.tests) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
         var suites = _.map (cfg.suites || [], this.$ (function (suite, name) {
             return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
 
@@ -8253,6 +8294,41 @@ Test = $prototype ({
     evalLogCalls: function () {
         _.each (this.logCalls, log.writeBackend ().arity1) } })
 
+
+/*
+ */
+_.defineTagKeyword ('recursive')
+
+Testosterone.ValidatesMethodContracts = $trait ({
+
+    $test: function () {
+
+        var test = new ($component ({
+
+            $traits: [Testosterone.ValidatesMethodContracts],
+
+            foo: function () {},
+            bar: function () { this.bar () },
+            baz: $recursive ({ max: 2 }, function () { this.baz () }),
+            qux: $recursive (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
+
+                       test.foo ()
+        $assertThrows (test.bar, { message: 'Max recursion depth reached (0)' })
+        $assertThrows (test.baz, { message: 'Max recursion depth reached (2)' })
+                       test.qux () },
+
+    beforeInit: (function (){ var limitRecursion = function (max, fn) {
+                                                        var depth = -1
+                                                            return function () {
+                                                                if (depth > max) {
+                                                                    throw new Error ('Max recursion depth reached (' + max + ')') }
+                                                                else {
+                                                                    var result = ((++depth), fn.apply (this, arguments)); depth--
+                                                                        return result } } }
+        return function () {
+                this.mapMethods (
+                    function (          def) { return !def || !def.$recursive || (def.$recursive.max !== undefined) },
+                    function (fn, name, def) { return limitRecursion ((def && def.$recursive && def.$recursive.max) || 0, fn) }) } }) () })
 
 if (Platform.NodeJS) {
     module.exports = Testosterone };

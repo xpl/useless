@@ -515,6 +515,11 @@ _.tests.component = {
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
 
+
+    '(regression) undefined was allowed as trait': function () {
+        $assertThrows (function () {
+            var Compo = $component ({ $traits: [undefined] }) }, { message: 'invalid $traits value' }) },
+
     '(regression) undefined members fail': function () {
         var Compo = $component ({ yoba: undefined })
         $assert ('yoba' in Compo.prototype) },
@@ -602,9 +607,10 @@ Component = $prototype ({
      */
     $impl: {
 
-        contributeTraits: function (base) { return _.sequence ([this.expandTraitsDependencies,
+        contributeTraits: function (base) { return _.sequence ([
+                                                    this.expandTraitsDependencies,
                                                     $prototype.impl.contributeTraits (base),
-                                                              this.mergeExtendables (base)]).bind (this) },
+                                                    this.mergeExtendables (base)]).bind (this) },
         
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
@@ -636,7 +642,8 @@ Component = $prototype ({
                                             function (                      value) {
                                                                             value =    _.extendedDeep (value, $untag (def[name] || {}))
                                         _.each ($untag (def.$traits),
-                                                    function (trait) {
+                                                    function (trait) { if (!trait) {    log.e (def.$traits)
+                                                                                        throw new Error ('invalid $traits value') }
                                                           var traitVal = trait.$definition [name]
                                                           if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
                                                                    return   value }) }); 
@@ -692,7 +699,7 @@ Component = $prototype ({
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
-                if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
+                if (_.isFunction (fn) && !_.isPrototypeConstructor (fn) && predicate (def))  {
                     this[k] = iterator.call (this, fn, k, def) || fn } } } },
 
     enumMethods: function (_1, _2) {

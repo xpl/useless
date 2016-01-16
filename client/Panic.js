@@ -6,6 +6,8 @@ Error reporting UI
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+/*  ======================================================================== */
+
 (function ($ /* JQUERY */) {
 
 if (typeof UI === 'undefined') {
@@ -133,12 +135,21 @@ Panic.widget = $singleton (Component, {
 
 	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
-		log.withWriteBackend (
-			function (params) {
-				logEl.append ($('<div>').css ({ color: params.color.css }).html (
-					_.escape (params.indentedText) +
-					((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
-					(params.trailNewlines || '').replace (/\n/g, '<br>'))) },
+		log.withWriteBackend (this.$ (
+
+			function (params) { var args = params.args
+
+
+				if (_.isTypeOf (Error, args.first)) {
+					logEl.append ([
+						params.indentation,
+						logEl.append ($('<span class="inline-exception">').css ({ color: params.color.css })
+							.append (this.printError (args.first)))]) }
+				else {
+					logEl.append ($('<div>').css ({ color: params.color.css }).html (
+						_.escape (params.indentedText) +
+						((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
+						(params.trailNewlines || '').replace (/\n/g, '<br>'))) } }),
 
 			function (done) {
 				test.evalLogCalls ()

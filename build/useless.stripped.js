@@ -261,6 +261,13 @@ _.extend(_, {
         }
     }
 });
+$overrideUnderscore('matches', function (matches) {
+    return function (a) {
+        return _.isObject(a) ? matches(a) : function (b) {
+            return a === b;
+        };
+    };
+});
 _.extend(_, _.assertions = {
     assert: function (__) {
         var args = [].splice.call(arguments, 0);
@@ -377,7 +384,7 @@ _.extend(_, _.assertions = {
         }
         _.assert.call(this, thrown);
         if (arguments.length > 1) {
-            _.assertMatches.apply(this, [e].concat(_.rest(arguments)));
+            _.assertMatches.call(this, e, errorPattern);
         }
     },
     assertNotThrows: function (what) {
@@ -797,12 +804,6 @@ _.array = _.tuple = function () {
 _.cons = function (head, tail) {
     return [head].concat(tail || []);
 };
-_.concat = function (first, rest) {
-    rest = _.rest(arguments);
-    return _.isArray(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
-        return a + b;
-    });
-};
 _.atIndex = function (n) {
     return function (arr) {
         return arr[n];
@@ -1164,7 +1165,7 @@ _.mixin({
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map));
 _.mapKeys = function (x, fn) {
     if (_.isArray(x)) {
-        return _.map(x, _.mapKeys.tails2(fn));
+        return _.map(x, _.tails2(_.mapKeys, fn));
     } else if (_.isStrictlyObject(x)) {
         return _.object(_.map(_.pairs(x), function (kv) {
             return [
@@ -1252,6 +1253,16 @@ _.reduceReduce = function (_1, _2, _3) {
     }
     return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(initial, value, op);
 };
+_.concat = function (first, rest) {
+    rest = _.rest(arguments);
+    return _.isArray(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
+        if (_.isObject(a) && _.isObject(b)) {
+            return _.extend({}, a, b);
+        } else {
+            return a + b;
+        }
+    });
+};
 _.mixin({
     zipObjectsWith: function (objects, fn) {
         return _.reduce(_.rest(objects), function (memo, obj) {
@@ -1283,6 +1294,24 @@ _.mixin({
     }
 });
 _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
+_.extend = $restArg(_.extend);
+_.extended = _.partial(_.extend, {});
+_.extendWith = _.flip(_.extend);
+_.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
+_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
+    return b === undefined ? a : b;
+});
+_.extend2 = $restArg(function (what) {
+    return _.extend(what, _.reduceRight(arguments, function (right, left) {
+        return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
+            var lvalue = left[key];
+            return [
+                key,
+                key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
+            ];
+        }));
+    }, {}));
+});
 _.find2 = function (value, pred) {
     for (var i = 0, n = value.length; i < n; i++) {
         var x = pred(value[i], i, value);
@@ -1324,23 +1353,6 @@ _.findFind = function (obj, pred_) {
         return false;
     })(obj, pred_);
 };
-_.extend = $restArg(_.extend);
-_.extendWith = _.flip(_.extend);
-_.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
-_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
-    return b === undefined ? a : b;
-});
-_.extend2 = $restArg(function (what) {
-    return _.extend(what, _.reduceRight(arguments, function (right, left) {
-        return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
-            var lvalue = left[key];
-            return [
-                key,
-                key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
-            ];
-        }));
-    }, {}));
-});
 _.nonempty = function (obj) {
     return _.filter2(obj, _.isNonempty);
 };
@@ -4051,6 +4063,10 @@ Component = $prototype({
                     def[name] = Tags.modifySubject(value, function (value) {
                         value = _.extendedDeep(value, $untag(def[name] || {}));
                         _.each($untag(def.$traits), function (trait) {
+                            if (!trait) {
+                                log.e(def.$traits);
+                                throw new Error('invalid $traits value');
+                            }
                             var traitVal = trait.$definition[name];
                             if (traitVal) {
                                 value = _.extendedDeep($untag(traitVal), value);
@@ -4121,7 +4137,7 @@ Component = $prototype({
             var def = this.constructor.$definition[k];
             if (!(def && def.$property)) {
                 var fn = this[k];
-                if (predicate(def) && _.isFunction(fn) && !_.isPrototypeConstructor(fn)) {
+                if (_.isFunction(fn) && !_.isPrototypeConstructor(fn) && predicate(def)) {
                     this[k] = iterator.call(this, fn, k, def) || fn;
                 }
             }
@@ -4975,9 +4991,11 @@ _.extend(log, {
                 var location = config.location && log.impl.location(config.where || $callStack[stackOffset + (config.stackOffset || 0)]) || '';
                 var backendParams = {
                     color: config.color || log.readColor(args),
+                    indentation: indentation,
                     indentedText: match[2].reversed.split('\n').map(_.prepends(indentation)).join('\n'),
                     trailNewlines: match[1],
                     codeLocation: location,
+                    args: args,
                     config: config
                 };
                 writeBackend(backendParams);
@@ -5176,7 +5194,7 @@ Testosterone = $singleton({
             }
         };
         var cfg = this.runConfig = _.extend(defaults, cfg_);
-        var suitesIsArray = _.isArray(cfg.suites);
+        var suitesIsArray = _.isArray(cfg.suites || cfg.tests);
         var suites = _.map(cfg.suites || [], this.$(function (suite, name) {
             return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context);
         }));
@@ -5456,6 +5474,53 @@ Test = $prototype({
     evalLogCalls: function () {
         _.each(this.logCalls, log.writeBackend().arity1);
     }
+});
+_.defineTagKeyword('recursive');
+Testosterone.ValidatesMethodContracts = $trait({
+    $test: function () {
+        var test = new ($component({
+            $traits: [Testosterone.ValidatesMethodContracts],
+            foo: function () {
+            },
+            bar: function () {
+                this.bar();
+            },
+            baz: $recursive({ max: 2 }, function () {
+                this.baz();
+            }),
+            qux: $recursive(function () {
+                if (!this.quxCalled) {
+                    this.quxCalled = true;
+                    this.qux();
+                }
+            })
+        }))();
+        test.foo();
+        $assertThrows(test.bar, { message: 'Max recursion depth reached (0)' });
+        $assertThrows(test.baz, { message: 'Max recursion depth reached (2)' });
+        test.qux();
+    },
+    beforeInit: function () {
+        var limitRecursion = function (max, fn) {
+            var depth = -1;
+            return function () {
+                if (depth > max) {
+                    throw new Error('Max recursion depth reached (' + max + ')');
+                } else {
+                    var result = (++depth, fn.apply(this, arguments));
+                    depth--;
+                    return result;
+                }
+            };
+        };
+        return function () {
+            this.mapMethods(function (def) {
+                return !def || !def.$recursive || def.$recursive.max !== undefined;
+            }, function (fn, name, def) {
+                return limitRecursion(def && def.$recursive && def.$recursive.max || 0, fn);
+            });
+        };
+    }()
 });
 if (Platform.NodeJS) {
     module.exports = Testosterone;
