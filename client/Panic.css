@@ -65,7 +65,7 @@
 
 .panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }
 
-.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 1.2em; left: 0; top: 1em; display: block; text-align: right; }
+.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }
 .panic-alert-error .clean-toggle:hover { text-decoration: underline; }
 .panic-alert-error .clean-toggle:before,
 .panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }
@@ -101,10 +101,14 @@
 .panic-alert-error .callstack-entry.native .src:empty:before           { content: '<< NATIVE CODE >>'; color: rgba(0,0,0,0.25); }
 .panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: '<< SOURCE LOADING >>'; color: rgba(0,0,0,0.5); }
 
+.panic-alert-error .test-log .location { color: black; opacity: 0.25; }
+
 .panic-alert-error .callstack-entry .line:after { content: ' '; }
 
-.panic-alert-error pre { font-family: Menlo, monospace; overflow: scroll; border-radius: 2px; white-space: pre; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; font-size: 11px; }
+.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }
+.panic-alert-error pre,
+.panic-alert-error pre > * { font-family: Menlo, monospace; font-size: 11px !important; white-space: pre !important; }
 
-.panic-aler-error .inline-exception { position: relative; }
+.panic-alert-error  .inline-exception { position: relative; display: inline-block;  }
 
 

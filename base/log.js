@@ -152,22 +152,40 @@ _.extend (log, {
 
     writeBackend: function () {
         return arguments.callee.value || log.impl.defaultWriteBackend },
-    
+
+    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: 1 }, config]))
+                     var result = what (); log.impl.configStack.pop ();
+                  return result },
+
+    currentConfig: function () { return log.impl.configure (log.impl.configStack) },
+
     /*  Internals
      */
     impl: {
 
+        configStack: [],
+
+        configure: function (configs) {
+            return _.reduce2 (
+                { stackOffset: 0, indent: 0 },
+                _.nonempty (configs), function (memo, cfg) {
+                                        return _.extend (memo, _.nonempty (cfg), {
+                                            indent:      memo.indent      + (cfg.indent || 0),
+                                            stackOffset: memo.stackOffset + (cfg.stackOffset || 0) }) }) },
+
         /*  Nuts & guts
          */
-        write: function (defaultCfg) { return $restArg (function () { var writeBackend = log.writeBackend ()
+        write: $restArg (function () { var writeBackend = log.writeBackend ()
 
             var args            = _.asArray (arguments)
             var cleanArgs       = log.cleanArgs (args)
 
-            var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
-            var stackOffset     = Platform.NodeJS ? 1 : 3
+            var config          = log.impl.configure (_.concat ([{ stackOffset: Platform.NodeJS ? 1 : 3 }],
+                                                                   log.impl.configStack,
+                                                                   _.filter (args, log.Config.isTypeOf)))
 
-            var indent          = (writeBackend.indent || 0) + config.indent
+
+            var indent          = (writeBackend.indent || 0) + (config.indent || 0)
 
             var text            = log.impl.stringifyArguments (cleanArgs, config)
             var indentation     = _.times (indent, _.constant ('\t')).join ('')
@@ -175,7 +193,7 @@ _.extend (log, {
 
             var location = (
                 config.location &&
-                log.impl.location (config.where || $callStack[stackOffset + (config.stackOffset || 0)])) || ''
+                log.impl.location (config.where || $callStack[config.stackOffset] || {})) || ''
 
             var backendParams = {
                 color: config.color || log.readColor (args),
@@ -188,7 +206,7 @@ _.extend (log, {
 
             writeBackend (backendParams)
 
-            return cleanArgs[0] }) },
+            return cleanArgs[0] }),
         
         defaultWriteBackend: function (params) {
             var color           = params.color,
@@ -198,18 +216,16 @@ _.extend (log, {
 
             var colorValue = color && (Platform.NodeJS ? color.shell : color.css)
                 
-            if (colorValue) {
-                if (Platform.NodeJS) {
-                    console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
-                else {
-                    var lines = indentedText.split ('\n')
-                    var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
-                            [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
-
-                    console.log ('%c'      + allButFirstLinePaddedWithSpace.join ('\n'),
-                                 'color: ' + colorValue, codeLocation, trailNewlines) }}
+            if (Platform.NodeJS) {
+                if (colorValue) { console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
+                           else { console.log (             indentedText,               codeLocation, trailNewlines) } }
             else {
-                console.log (indentedText, codeLocation, trailNewlines) } },
+                var lines = indentedText.split ('\n')
+                var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
+                        [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
+
+                console.log ((colorValue ? '%c' : '') + allButFirstLinePaddedWithSpace.join ('\n'),
+                             (colorValue ? ('color: ' + colorValue) : ''), codeLocation, trailNewlines) } },
 
 
         /*  Formats that "function @ source.js:321" thing
@@ -253,7 +269,10 @@ _.extend (log, {
                 var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
 
-                return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }
+                return ('[EXCEPTION] ' + why + '\n\n') +
+                    (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
+                                        log.impl.stringify.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+                    log.impl.stringifyCallStack (stack) + '\n' }
             catch (sub) {
                 return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
                     '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
@@ -273,16 +292,16 @@ _.extend (log, {
    _.extend (log,
              log.printAPI =
                     _.object (
-                    _.concat (            [[            'newline', write ().$ ('') ],
-                                           [              'write', write ()        ]],
+                    _.concat (            [[            'newline', write.$ ('', log.config ({ location: false })) ],
+                                           [              'write', write                                          ]],
                             _.flat (_.map (['red failure error e',
                                                     'blue info i',
                                           'orange warning warn w',
                                              'green success ok g' ],
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
-                                                  function (name,                     i,                        names      )  {
-                                                   return  [name,  write ({ location: i !== 0, color: log.color[names.first]  }) ] })))))))
+                                                  function (name,                                   i,                        names      )  {
+                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color[names.first] })) ] })))))))
 
 }) ()
 

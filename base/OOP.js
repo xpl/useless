@@ -8,7 +8,7 @@ Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
 
 _.hasOOP = true
 
-_.deferTest ('OOP', {
+_.withTest ('OOP', {
 
     '$prototype / $extends': function () {
 
@@ -352,7 +352,7 @@ _.deferTest ('OOP', {
             else {
                 $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
 
-        macroTag: function (name, fn) {
+        macroTag: function (name, fn) { _.defineTagKeyword (name)
             $prototype.impl.tagTriggeredMacros[_.keyword (name)] = fn },
 
         each: function (visitor) { var namespace = $global
@@ -385,24 +385,28 @@ _.deferTest ('OOP', {
             memberNameTriggeredMacros: {},
             tagTriggeredMacros:        {},
 
-            compile: function (def, base) {
-                return ((base && base.$impl) || this)._compile (def, base) },
+            compile: function (def, base) {    var impl = ((base && base.$impl) || this)
+                                    return $untag (impl
+                                                    .sequence (def, base)
+                                                    .call (impl, def || {})
+                                                    .constructor) },
 
-           _compile: function (def, base) { return Tags.unwrap (_.sequence (
-                    this.extendWithTags,
-                    this.flatten,
-                    this.generateCustomCompilerImpl (base),
-                    this.generateArgumentContractsIfNeeded,
-                    this.ensureFinalContracts (base),
-                    this.generateConstructor (base),
-                    this.evalAlwaysTriggeredMacros (base),
-                    this.evalMemberTriggeredMacros (base),
-                    this.contributeTraits (base),
-                    this.generateBuiltInMembers (base),
-                    this.expandAliases,
-                    this.defineStaticMembers,
-                    this.defineInstanceMembers,
-                    this.callStaticConstructor).call (this, def || {}).constructor) },
+            sequence: function (def, base) { return _.sequence (
+                this.extendWithTags,
+                this.flatten,
+                this.generateCustomCompilerImpl (base),
+                this.generateArgumentContractsIfNeeded,
+                this.ensureFinalContracts (base),
+                this.generateConstructor (base),
+                this.evalAlwaysTriggeredMacros (base),
+                this.evalMemberTriggeredMacros (base),
+                this.contributeTraits (base),
+                this.evalPrototypeSpecificMacros (base),
+                this.generateBuiltInMembers (base),
+                this.callStaticConstructor,
+                this.expandAliases,
+                this.defineStaticMembers,
+                this.defineInstanceMembers) },
 
             compileMixin: function (def) {
                 return _.sequence (
@@ -428,6 +432,15 @@ _.deferTest ('OOP', {
                         _.each (_.keys (value), function (tag) { if (tags.hasOwnProperty (tag)) {
                             def = (tags [tag] (def, value, name, base)) || def } }) })
                      return def } },
+
+            evalPrototypeSpecificMacros: function (base) { return function (def) {
+                if (!def.isTraitOf) {
+                    var macroTags = $untag (def.$macroTags || (base && base.$macroTags))
+                    if (macroTags) {
+                        _.each (def, function (memberDef, memberName) {
+                            _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
+                                if (tagName in memberDef) {
+                                    def[memberName] = macroFn (def, memberDef, memberName) || memberDef } }) }) } } return def } },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -464,18 +477,26 @@ _.deferTest ('OOP', {
             extendWithTags: function (def) {                    
                 return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
 
-            callStaticConstructor: function (def) {
-                         if (def.$constructor) {
-                Tags.unwrap (def.$constructor).call (def) } return def },
+            callStaticConstructor: function (def) { 
+                if (!def.isTraitOf) { 
+                    _.each ($untag (def.$traits), function (T) {
+                                                    if (T.$definition.$constructor) {
+                                                        $untag (T.$definition.$constructor).call (def) } })
+                    if (def.$constructor) {
+                        $untag (def.$constructor).call (def) } } return def },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
-                    Tags.modifySubject (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
+                    Tags.modify (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
                         function (fn) {
                             if (base) { fn.prototype.__proto__ = base.prototype }
                             return fn }) }) } },
 
             generateBuiltInMembers: function (base) { return function (def) {
+
+                if (def.$constructor) {
+                    def.$constructor = $builtin ($static (def.$constructor)) }
+
                 return _.defaults (def, {
                     $base:          $builtin ($static ($property (_.constant (base && base.prototype)))),
                     $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
@@ -550,7 +571,7 @@ _.deferTest ('OOP', {
             (also known as "mixin" in some languages)
     ======================================================================== */
 
-    _.withTest (['OOP', '$traits'], function () {
+    _.deferTest (['OOP', '$traits'], function () {
 
         var Closeable = $trait ({
             close: function () {} })
@@ -590,9 +611,19 @@ _.deferTest ('OOP', {
         $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
         $assertMatches (JustCloseable,      { $traits: [Closeable] })
 
-        /*$assertEveryCalledOnce (function (mkay) {
-            var WithStaticConstructor = $trait ({ $constructor: function () { mkay () } })
-            var Proto = $prototype ({ $traits: [WithStaticConstructor] }) })*/                        }, function () {
+        $assertCallOrder (function (t1_constructed, t2_constructed, proto_constructed) {
+
+            var T1, T2
+
+            $assertNotCalled (function (not_now) {
+                T1 = $trait ({ $constructor: function () { not_now (); t1_constructed () } })
+                T2 = $trait ({ $constructor: function () { not_now (); t2_constructed () } }) })
+
+            var Proto = $prototype ({
+                            $traits: [T1, T2],
+                            $constructor: function () { proto_constructed () } }) })
+
+}, function () {
 
     _.isTraitOf = function (Trait, instance) {
         var constructor = instance && instance.constructor
@@ -610,6 +641,13 @@ _.deferTest ('OOP', {
                             return _.isTraitOf (constructor, instance) })) })
 
         return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) } })
+
+
+/*  $macroTags
+    ======================================================================== */
+
+    $prototype.macro ('$macroTags', function (def, value, name) {
+        _.each ($untag (value), function (v, k) { _.defineTagKeyword (_.keywordName (k)) }) })
 
 
 /*  Context-free implementation of this.$

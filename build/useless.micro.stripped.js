@@ -668,13 +668,16 @@ _.bullet = function (bullet, str) {
         return i === 0 ? bullet + line : indent + line;
     }));
 };
+_.stringifyOneLine = function (x, cfg) {
+    return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
+};
 _.pretty = function (x, cfg) {
     return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
 };
 _.stringify = function (x, cfg) {
     cfg = cfg || {};
-    var s = _.stringifyImpl(x, [], [], 0, cfg);
-    return s.length < 80 || 'pretty' in cfg ? s : _.stringifyImpl(x, [], [], 0, _.extend(cfg, { pretty: true }));
+    var measured = _.stringifyImpl(x, [], [], 0, cfg);
+    return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
 };
 _.stringifyPrototype = function (x) {
     if (Platform.NodeJS) {
@@ -709,8 +712,8 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     } else if (typeof x === 'string') {
         return _.quoteWith('"', x);
     } else if (_.isTypeOf(Tags, x)) {
-        return _.reduce(_.keys(Tags.get(x)), function (memo, tag) {
-            return tag + ' ' + memo.quote('()');
+        return _.reduce(Tags.get(x), function (memo, value, tag) {
+            return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
         }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
     } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
         return x.toString();
@@ -890,8 +893,15 @@ _.reduceReduce = function (_1, _2, _3) {
     }
     return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(initial, value, op);
 };
-_.concat = function (first, rest) {
-    rest = _.rest(arguments);
+_.concat = function (a, b) {
+    var first, rest;
+    if (arguments.length === 1) {
+        first = a[0];
+        rest = _.rest(a);
+    } else {
+        first = a;
+        rest = _.rest(arguments);
+    }
     return _.isArray(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
         if (_.isObject(a) && _.isObject(b)) {
             return _.extend({}, a, b);
@@ -1179,7 +1189,7 @@ Tags = _.extend2(function (subject) {
         clone: function (newSubject) {
             return _.extend(new Tags(newSubject || this.subject), _.pick(this, _.keyIsKeyword));
         },
-        modifySubject: function (changesFn) {
+        modify: function (changesFn) {
             this.subject = changesFn(this.subject);
             if (_.isTypeOf(Tags, this.subject)) {
                 return _.extend(this.subject, _.pick(this, _.keyIsKeyword));
@@ -1211,13 +1221,13 @@ Tags = _.extend2(function (subject) {
     wrap: function (what) {
         return _.isTypeOf(Tags, what) ? what : arguments.length === 0 ? new Tags() : new Tags(what);
     },
-    modifySubject: function (what, changesFn) {
-        return _.isTypeOf(Tags, what) ? what.clone().modifySubject(changesFn) : changesFn(what);
+    modify: function (what, changesFn) {
+        return _.isTypeOf(Tags, what) ? what.clone().modify(changesFn) : changesFn(what);
     },
     map: function (obj, op) {
-        return Tags.modifySubject(obj, function (obj) {
+        return Tags.modify(obj, function (obj) {
             return _.map2(obj, function (t, k) {
-                return Tags.modifySubject(t, function (v) {
+                return Tags.modify(t, function (v) {
                     return op(v, k, _.isTypeOf(Tags, t) ? t : undefined);
                 });
             });
@@ -1285,7 +1295,7 @@ _([
 ]).each(_.defineTagKeyword);
 _.defineModifierKeyword = function (name, fn) {
     _.defineKeyword(name, function (val) {
-        return Tags.modifySubject(val, fn);
+        return Tags.modify(val, fn);
     });
 };
 _.deleteKeyword = function (name) {
@@ -1682,6 +1692,12 @@ $extensionMethods(Function, {
         };
     }
 });
+if (typeof Promise !== 'undefined') {
+    Promise.prototype.done = function (resolve, reject) {
+        return this.then(resolve, reject).catch(_.globalUncaughtExceptionHandler || _.throws);
+    };
+}
+;
 $extensionMethods(Array, {
     each: _.each,
     map: _.map,
@@ -1923,7 +1939,7 @@ $extensionMethods(String, {
         'onceAfter',
         'before',
         'after',
-        ''
+        'intercept'
     ];
     var copyHooks = function (from, to) {
         _.extend(to, _.map2(_.pick(from, hooks), _.clone));
@@ -2285,6 +2301,7 @@ _.extend($prototype, {
         }
     },
     macroTag: function (name, fn) {
+        _.defineTagKeyword(name);
         $prototype.impl.tagTriggeredMacros[_.keyword(name)] = fn;
     },
     each: function (visitor) {
@@ -2321,10 +2338,11 @@ _.extend($prototype, {
         memberNameTriggeredMacros: {},
         tagTriggeredMacros: {},
         compile: function (def, base) {
-            return (base && base.$impl || this)._compile(def, base);
+            var impl = base && base.$impl || this;
+            return $untag(impl.sequence(def, base).call(impl, def || {}).constructor);
         },
-        _compile: function (def, base) {
-            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers, this.callStaticConstructor).call(this, def || {}).constructor);
+        sequence: function (def, base) {
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
         },
         compileMixin: function (def) {
             return _.sequence(this.flatten, this.contributeTraits(), this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
@@ -2351,6 +2369,24 @@ _.extend($prototype, {
                         }
                     });
                 });
+                return def;
+            };
+        },
+        evalPrototypeSpecificMacros: function (base) {
+            return function (def) {
+                if (!def.isTraitOf) {
+                    var macroTags = $untag(def.$macroTags || base && base.$macroTags);
+                    if (macroTags) {
+                        _.each(def, function (memberDef, memberName) {
+                            _.each(macroTags, function (macroFn, tagName) {
+                                memberDef = def[memberName];
+                                if (tagName in memberDef) {
+                                    def[memberName] = macroFn(def, memberDef, memberName) || memberDef;
+                                }
+                            });
+                        });
+                    }
+                }
                 return def;
             };
         },
@@ -2396,15 +2432,22 @@ _.extend($prototype, {
             return _.extendWith(Tags.unwrap(def), _.mapObject(Tags.get(def), $static.arity1));
         },
         callStaticConstructor: function (def) {
-            if (def.$constructor) {
-                Tags.unwrap(def.$constructor).call(def);
+            if (!def.isTraitOf) {
+                _.each($untag(def.$traits), function (T) {
+                    if (T.$definition.$constructor) {
+                        $untag(T.$definition.$constructor).call(def);
+                    }
+                });
+                if (def.$constructor) {
+                    $untag(def.$constructor).call(def);
+                }
             }
             return def;
         },
         generateConstructor: function (base) {
             return function (def) {
                 return _.extend(def, {
-                    constructor: Tags.modifySubject(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
+                    constructor: Tags.modify(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
                         if (base) {
                             fn.prototype.__proto__ = base.prototype;
                         }
@@ -2415,6 +2458,9 @@ _.extend($prototype, {
         },
         generateBuiltInMembers: function (base) {
             return function (def) {
+                if (def.$constructor) {
+                    def.$constructor = $builtin($static(def.$constructor));
+                }
                 return _.defaults(def, {
                     $base: $builtin($static($property(_.constant(base && base.prototype)))),
                     $definition: $builtin($static($property(_.constant(_.extend({}, base && base.$definition, def))))),
@@ -2525,6 +2571,11 @@ $trait = function (arg1, arg2) {
     });
     return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
 };
+$prototype.macro('$macroTags', function (def, value, name) {
+    _.each($untag(value), function (v, k) {
+        _.defineTagKeyword(_.keywordName(k));
+    });
+});
 _.$ = function (this_, fn) {
     var arguments_ = _.rest(arguments, 2);
     var result = arguments_.length ? _.bind.apply(undefined, [
@@ -3482,13 +3533,10 @@ $prototype.macroTag('extendable', function (def, value, name) {
 Component = $prototype({
     $defaults: $extendable({}),
     $requires: $extendable({}),
+    $macroTags: $extendable({}),
     $impl: {
-        contributeTraits: function (base) {
-            return _.sequence([
-                this.expandTraitsDependencies,
-                $prototype.impl.contributeTraits(base),
-                this.mergeExtendables(base)
-            ]).bind(this);
+        sequence: function (def, base) {
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
         },
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
@@ -3516,7 +3564,7 @@ Component = $prototype({
         mergeExtendables: function (base) {
             return function (def) {
                 _.each(_.pick(base.$definition, $extendable.is), function (value, name) {
-                    def[name] = Tags.modifySubject(value, function (value) {
+                    def[name] = Tags.modify(value, function (value) {
                         value = _.extendedDeep(value, $untag(def[name] || {}));
                         _.each($untag(def.$traits), function (trait) {
                             if (!trait) {
@@ -3535,8 +3583,7 @@ Component = $prototype({
             };
         },
         mergeTraitsMembers: function (def, traits) {
-            var pool = {};
-            var bindables = {};
+            var pool = {}, bindables = {};
             _.each([def].concat(_.pluck(traits, '$definition')), function (def) {
                 _.each(_.omit(def, _.or($builtin.matches, _.key(_.equals('constructor')))), function (member, name) {
                     if ($bindable.is(member)) {
@@ -3561,26 +3608,34 @@ Component = $prototype({
                     }
                 }
             });
-            _.each(bindables, function (member, name) {
-                var bound = _.nonempty(_.map(_.bindable.hooks, function (hook, i) {
+            def.__bindables = bindables;
+            def.__members = pool;
+        },
+        mergeBindables: function (def) {
+            var pool = def.__members;
+            _.each(def.__bindables, function (member, name) {
+                var bound = _.filter2(_.bindable.hooks, function (hook, i) {
                     var bound = pool[_.bindable.hooksShort[i] + name.capitalized];
-                    return bound && [
+                    return bound ? [
                         hook,
                         bound
-                    ];
-                }));
+                    ] : false;
+                });
                 if (bound.length) {
-                    var bindable = (def[name] = Tags.clone(member, _.bindable($untag(member)))).subject;
+                    var hooks = {};
                     _.each(bound, function (kv) {
                         _.each(kv[1], function (fn) {
                             fn = $untag(fn);
                             if (_.isFunction(fn)) {
-                                bindable[kv[0]](fn);
+                                var k = '_' + kv[0];
+                                (hooks[k] || (hooks[k] = [])).push(fn);
                             }
                         });
                     });
+                    def[name] = $bindable({ hooks: hooks }, Tags.clone(def[name]));
                 }
             });
+            return def;
         }
     },
     isStreamDefinition: $static(function (def) {
@@ -3693,10 +3748,7 @@ Component = $prototype({
                     this[name] = _.interlocked(this[name]);
                 }
                 if (def.$bindable) {
-                    if (_.hasAsserts) {
-                        $assert(_.isFunction(this[name]));
-                    }
-                    this[name] = _.extendWith(def.defaultHooks || {}, _.bindable(this[name], this));
+                    this[name] = _.extend(_.bindable(this[name], this), _.map2(def.$bindable.hooks || {}, _.mapsWith(this.$.bind(this).arity1)));
                 }
                 if (def.$debounce) {
                     var fn = this[name], opts = _.coerceToObject(def.$debounce);
@@ -3733,7 +3785,13 @@ Component = $prototype({
         }, this);
         if (_.hasAsserts) {
             _.each(this.constructor.$requires, function (contract, name) {
-                $assertTypeMatches(this[name], contract);
+                $assertTypeMatches(_.object([[
+                        name,
+                        this[name]
+                    ]]), _.object([[
+                        name,
+                        contract
+                    ]]));
             }, this);
         }
         _.each(initialStreamListeners, function (v) {

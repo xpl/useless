@@ -68,7 +68,7 @@ _.deferTest ('bindable', function () {
     /*  Internal impl
      */
     var hooks      = ['onceBefore', 'onceAfter', 'onBefore', 'onAfter', 'intercept']
-    var hooksShort = ['onceBefore', 'onceAfter', 'before', 'after', '']
+    var hooksShort = ['onceBefore', 'onceAfter', 'before', 'after', 'intercept']
 
     var copyHooks = function (from, to) {
         _.extend (to, _.map2 (_.pick (from, hooks), _.clone)) }

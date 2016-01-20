@@ -63,9 +63,9 @@ _.withTest ('keywords', function () {
 
     /*  You can replace value that might be tagged, i.e. $foo($bar(x)) → $foo($bar(y))
      */
-    $assert (43,                Tags.modifySubject (42,         function (subject) { return subject + 1 })) // not tagged
-    $assert ($foo (43),         Tags.modifySubject ($foo (42),  _.constant (43)))
-    $assert ($foo ($bar (43)),  Tags.modifySubject ($foo (42),  function (subject) { return $bar (subject + 1) }))
+    $assert (43,                Tags.modify (42,         function (subject) { return subject + 1 })) // not tagged
+    $assert ($foo (43),         Tags.modify ($foo (42),  _.constant (43)))
+    $assert ($foo ($bar (43)),  Tags.modify ($foo (42),  function (subject) { return $bar (subject + 1) }))
 
     /*  Previous mechanism is essential to so-called 'modifier keywords'
      */
@@ -110,7 +110,7 @@ _.withTest ('keywords', function () {
         clone: function (newSubject) {
             return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
 
-        modifySubject: function (changesFn) {
+        modify: function (changesFn) {
                             this.subject = changesFn (this.subject)
                             if (_.isTypeOf (Tags, this.subject)) {
                                 return _.extend (this.subject, _.pick (this, _.keyIsKeyword)) }
@@ -140,14 +140,14 @@ _.withTest ('keywords', function () {
         wrap: function (what) {
             return _.isTypeOf (Tags, what) ? what : ((arguments.length === 0) ? new Tags () : new Tags (what)) },
 
-        modifySubject: function (what, changesFn) {
+        modify: function (what, changesFn) {
                             return _.isTypeOf (Tags, what) ?
-                                        what.clone ().modifySubject (changesFn) : changesFn (what) }, // short circuits if not wrapped
+                                        what.clone ().modify (changesFn) : changesFn (what) }, // short circuits if not wrapped
 
-        map: function (obj, op) { return Tags.modifySubject (obj,
+        map: function (obj, op) { return Tags.modify (obj,
                                                 function (obj) {
                                                     return _.map2 (obj, function (t, k) {
-                                                        return Tags.modifySubject (t, function (v) {
+                                                        return Tags.modify (t, function (v) {
                                                             return op (v, k, _.isTypeOf (Tags, t) ? t : undefined) }) }) }) },
 
         add: function (name, toWhat, additionalData) {
@@ -203,7 +203,7 @@ _.withTest ('keywords', function () {
 
     _.defineModifierKeyword = function (name, fn) {
                                 _.defineKeyword (name, function (val) {
-                                                            return Tags.modifySubject (val, fn) }) }
+                                                            return Tags.modify (val, fn) }) }
 
     _.deleteKeyword = function (name) {
                         delete $global[_.keyword (name)] } } )

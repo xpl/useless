@@ -135,21 +135,16 @@ Panic.widget = $singleton (Component, {
 
 	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
-		log.withWriteBackend (this.$ (
+		log.withWriteBackend (
+			this.$ (function (params) { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
 
-			function (params) { var args = params.args
-
-
-				if (_.isTypeOf (Error, args.first)) {
-					logEl.append ([
-						params.indentation,
-						logEl.append ($('<span class="inline-exception">').css ({ color: params.color.css })
-							.append (this.printError (args.first)))]) }
-				else {
-					logEl.append ($('<div>').css ({ color: params.color.css }).html (
-						_.escape (params.indentedText) +
-						((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
-						(params.trailNewlines || '').replace (/\n/g, '<br>'))) } }),
+				logEl.append (_.isTypeOf (Error, params.args.first)
+						? $('<div>').css ({ color: params.color.css, display: 'inline-block' }).append (
+							[params.indentation, $('<div class="inline-exception">').append (this.printError (params.args.first))])
+						: $('<div>').css ({ color: params.color.css }).append ([
+								_.escape (params.indentedText) +
+								((params.codeLocation && (' <span class="location">' + _.escape (params.codeLocation) + '</span>')) || '') +
+								(params.trailNewlines || '').replace (/\n/g, '<br>')])) }),
 
 			function (done) {
 				test.evalLogCalls ()
@@ -160,7 +155,6 @@ Panic.widget = $singleton (Component, {
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
 	printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
-
 		return [
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
@@ -173,6 +167,9 @@ Panic.widget = $singleton (Component, {
 						.toggleClass ('all')
 						.transitionend (this.$ (function () {
 							this.modalBody.scroll () })) })),
+
+			$('<div class="not-matching" style="margin-top: 5px; padding-left: 10px;">').append (_.map (_.coerceToArray (e.notMatching || []), function (s) {
+				return $('<pre>').text (log.impl.stringify (s)) })),
 
 			$('<ul class="callstack">').append (_.map (stackEntries, this.$ (function (entry) {
 

@@ -16,10 +16,10 @@ _.deferTest (['type', 'stringify'], function () {
 
         if (_.hasTags) {
 
-            var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+            var complex =  { foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
                 complex.bar[0].bar = complex.bar
 
-            var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+            var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
             var Proto = $prototype ({})
 
@@ -54,14 +54,15 @@ _.deferTest (['type', 'stringify'], function () {
                                                                                  ? (bullet + line)
                                                                                  : (indent + line) })) }
                         
-                                            _.pretty = function (x, cfg) {
-                                            return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
+    _.stringifyOneLine = function (x, cfg) {
+                            return _.stringify (x, _.extend (cfg || {}, { pretty: false })) }
 
-                                        _.stringify = function  (x, cfg) {       cfg = cfg || {}
-                                        var s = _.stringifyImpl (x, [], [], 0,   cfg)
-                                    return (s.length < 80 ||    'pretty' in      cfg) ?
-                                            s : _.stringifyImpl (x, [], [], 0, _.extend (cfg, {
-                                                                 pretty: true })) }
+    _.pretty = function (x, cfg) {
+                    return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
+
+    _.stringify = function  (x, cfg) { cfg = cfg || {}
+                    var measured = _.stringifyImpl (x, [], [], 0, cfg)
+                    return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
 
     _.stringifyPrototype = function (x) {
             if (Platform.NodeJS) { var name = ''
@@ -101,8 +102,11 @@ _.deferTest (['type', 'stringify'], function () {
                                 return _.quoteWith ('"', x) }
 
                             else if (_.isTypeOf (Tags, x)) {
-                                return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
-                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
+                                return _.reduce (Tags.get (x), function (memo, value, tag) {
+                                                                    return _.isBoolean (value)
+                                                                        ? (tag + ' ' + memo.quote ('()'))
+                                                                        : (tag + ' (' + _.stringifyImpl (value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')') },
+                                    _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
 
                             else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }

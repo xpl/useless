@@ -202,3 +202,15 @@ $extensionMethods (Function, { catch_:  function (fn, catch_, then, finally_) { 
                                                      if (!catched) {   result = then (result) }
                                                   return finally_  (   result) } } })
 
+
+if (typeof Promise !== 'undefined') {
+    Promise.prototype.done = function (resolve, reject) {
+        return this.then (resolve, reject)
+                   .catch (_.globalUncaughtExceptionHandler || _.throws) } }
+
+
+
+
+
+
+

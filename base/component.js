@@ -374,13 +374,14 @@ _.tests.component = {
 
     'binding to bindables with traits': function () {
 
-        $assertCallOrder (function (beforeCalled, bindableCalled, afterCalled) { var this_ = undefined
+        $assertCallOrder (function (beforeCalled, interceptCalled, bindableCalled, afterCalled) { var this_ = undefined
 
             var Trait = $trait ({
                 doSomething: $bindable (function (x) { $assert (this, this_); bindableCalled () }) })
 
             var Other = $trait ({
-                beforeDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); beforeCalled () } })
+                beforeDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); beforeCalled () },
+                interceptDoSomething: function (_42, impl) { interceptCalled (); $assert (this, this_); return impl (_42) } })
 
             var Compo = $component ({
                 $traits: [Trait, Other],
@@ -504,6 +505,28 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
+    '$macroTags for component-specific macros': function () {
+
+        var Trait =    $trait ({   $macroTags: {
+                                        $add_2: function (def, fn, name) {
+                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (2)) }) } } })
+
+        var Base = $component ({   $macroTags: {
+                                        $add_20: function (def, fn, name) {
+                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (20)) }) } } })
+
+        var Compo = $extends (Base, {
+            $traits: [Trait],
+            $macroTags: { $dummy: function () {} },
+
+             testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
+
+        $assert (42, Compo.testValue ())
+        $assertMatches (_.keys (Compo.$macroTags), ['$dummy', '$add_2', '$add_20'])
+
+        _.deleteKeyword ('add_2')
+        _.deleteKeyword ('add_20')
+        _.deleteKeyword ('dummy') },
 
     /*  Auto-unbinding
      */
@@ -600,18 +623,34 @@ $prototype.macroTag ('extendable',
 
 Component = $prototype ({
 
-    $defaults: $extendable ({}),
-    $requires: $extendable ({}),
+    $defaults:  $extendable ({}),
+    $requires:  $extendable ({}),
+    $macroTags: $extendable ({}),
 
-    /*  Overrides default OOP.js implementation of traits (providing method chaining)
+    /*  Overrides default OOP.js implementation
      */
     $impl: {
 
-        contributeTraits: function (base) { return _.sequence ([
-                                                    this.expandTraitsDependencies,
-                                                    $prototype.impl.contributeTraits (base),
-                                                    this.mergeExtendables (base)]).bind (this) },
-        
+        sequence: function (def, base) { return _.sequence (
+            this.extendWithTags,
+            this.flatten,
+            this.generateCustomCompilerImpl (base),
+            this.generateArgumentContractsIfNeeded,
+            this.ensureFinalContracts (base),
+            this.generateConstructor (base),
+            this.evalAlwaysTriggeredMacros (base),
+            this.evalMemberTriggeredMacros (base),
+            this.expandTraitsDependencies,
+            this.mergeExtendables (base),
+            this.contributeTraits (base),
+            this.evalPrototypeSpecificMacros (base),
+            this.mergeBindables,
+            this.generateBuiltInMembers (base),
+            this.callStaticConstructor,
+            this.expandAliases,
+            this.defineStaticMembers,
+            this.defineInstanceMembers) },
+
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
                             var edges = []
@@ -628,9 +667,8 @@ Component = $prototype ({
                                                      _.linearMerge (edges, { key: _.property ('__tempId') }))),
                             function (obj) {
                                 delete obj.__tempId }) }
-        return def },
+            return def },
 
-        
         mergeExtendables: function (base) { return function (def) {
 
                 _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
@@ -638,20 +676,19 @@ Component = $prototype ({
                     //var ownPropName = '$own' +        _.capitalized (_.keywordName (name))
                     //def[ownPropName] =       $builtin ($const (_.cloneDeep (value)))
 
-                    def[name]        = Tags.modifySubject (                 value,
+                    def[name]        = Tags.modify (                 value,
                                             function (                      value) {
                                                                             value =    _.extendedDeep (value, $untag (def[name] || {}))
+
                                         _.each ($untag (def.$traits),
                                                     function (trait) { if (!trait) {    log.e (def.$traits)
                                                                                         throw new Error ('invalid $traits value') }
                                                           var traitVal = trait.$definition [name]
                                                           if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
                                                                    return   value }) }); 
-                                                                                    return def } },
+               return def } },
 
-        mergeTraitsMembers: function (def, traits) {
-            var pool = {}
-            var bindables = {}
+        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}
 
             _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
                 _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),
@@ -671,16 +708,26 @@ Component = $prototype ({
                 else { if (!def[name]) {
                             def[name] = pool[name][0] } } })
 
-            _.each (bindables, function (member, name) {
-                var bound = _.nonempty (_.map (_.bindable.hooks, function (hook, i) {
-                                                    var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
-                                                    return bound && [hook, bound] }))
-                if (bound.length) {
-                    var bindable = (def[name] = Tags.clone (member, _.bindable ($untag (member)))).subject
+            def.__bindables = bindables
+            def.__members = pool },
+
+        mergeBindables: function (def) { var pool  = def.__members
+
+            _.each (def.__bindables, function (member, name) {
+                var bound = _.filter2 (_.bindable.hooks, function (hook, i) {
+                                                            var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
+                                                            return bound ? [hook, bound] : false })
+
+                if (bound.length) { var hooks = {}
+
                     _.each (bound, function (kv) {
                         _.each (kv[1], function (fn) { fn = $untag (fn)
-                            if (_.isFunction (fn)) {
-                                bindable[kv[0]] (fn) } }) }) } }) } },
+                            if (_.isFunction (fn)) { var k = '_' + kv[0]; (hooks[k] || (hooks[k] = [])).push (fn) } }) })
+
+                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (def[name])) } })
+
+            return def } },
+
 
     /*  Syntax helper
      */
@@ -818,8 +865,10 @@ Component = $prototype ({
 
             /*  Expand $bindable
              */
-            if (def.$bindable) { if (_.hasAsserts) { $assert (_.isFunction (this[name])) }
-                this[name] = _.extendWith (def.defaultHooks || {}, _.bindable (this[name], this)) }
+            if (def.$bindable) {
+                this[name] = _.extend (_.bindable (this[name], this),
+                                       _.map2 (def.$bindable.hooks || {},
+                                        _.mapsWith (this.$.bind (this).arity1))) }
 
             /*  Expand $debounce
              */
@@ -871,7 +920,8 @@ Component = $prototype ({
          */
         if (_.hasAsserts) {
             _.each (this.constructor.$requires, function (contract, name) {
-                $assertTypeMatches (this[name], contract) }, this) }
+                $assertTypeMatches (_.object ([[name, this[name]]]),
+                                    _.object ([[name, contract]])) }, this) }
 
 
         /*  Subscribe default listeners
@@ -999,4 +1049,3 @@ Component = $prototype ({
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
                             return this } })
-

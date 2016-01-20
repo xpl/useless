@@ -917,10 +917,10 @@ _.deferTest (['type', 'stringify'], function () {
 
         if (_.hasTags) {
 
-            var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+            var complex =  { foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
                 complex.bar[0].bar = complex.bar
 
-            var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+            var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
             var Proto = $prototype ({})
 
@@ -955,14 +955,15 @@ _.deferTest (['type', 'stringify'], function () {
                                                                                  ? (bullet + line)
                                                                                  : (indent + line) })) }
                         
-                                            _.pretty = function (x, cfg) {
-                                            return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
+    _.stringifyOneLine = function (x, cfg) {
+                            return _.stringify (x, _.extend (cfg || {}, { pretty: false })) }
 
-                                        _.stringify = function  (x, cfg) {       cfg = cfg || {}
-                                        var s = _.stringifyImpl (x, [], [], 0,   cfg)
-                                    return (s.length < 80 ||    'pretty' in      cfg) ?
-                                            s : _.stringifyImpl (x, [], [], 0, _.extend (cfg, {
-                                                                 pretty: true })) }
+    _.pretty = function (x, cfg) {
+                    return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
+
+    _.stringify = function  (x, cfg) { cfg = cfg || {}
+                    var measured = _.stringifyImpl (x, [], [], 0, cfg)
+                    return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
 
     _.stringifyPrototype = function (x) {
             if (Platform.NodeJS) { var name = ''
@@ -1002,8 +1003,11 @@ _.deferTest (['type', 'stringify'], function () {
                                 return _.quoteWith ('"', x) }
 
                             else if (_.isTypeOf (Tags, x)) {
-                                return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
-                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
+                                return _.reduce (Tags.get (x), function (memo, value, tag) {
+                                                                    return _.isBoolean (value)
+                                                                        ? (tag + ' ' + memo.quote ('()'))
+                                                                        : (tag + ' (' + _.stringifyImpl (value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')') },
+                                    _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
 
                             else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }
@@ -1307,14 +1311,17 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
 _.withTest (['stdlib', 'concat2'], function () {
 
     $assert (_.concat ([1,2], [3], [4,5]), [1,2,3,4,5])
-    $assert (_.concat ({ foo: 1 }, { bar: 2 }), { foo: 1, bar: 2 })
+    $assert (_.concat ( { foo: 1 }, { bar: 2 }),  { foo: 1, bar: 2 })
+    $assert (_.concat ([{ foo: 1 }, { bar: 2 }]), { foo: 1, bar: 2 })
     $assert (_.concat (1,2,3), 6)
 
 }, function () { 
 
-    _.concat = function (   first,                     rest) {
-                                                       rest = _.rest (arguments)
-          return _.isArray (first)
+    _.concat = function (a, b) { var      first,          rest
+            if (arguments.length === 1) { first = a[0];   rest =  _.rest (a) }
+            else {                        first = a;      rest =  _.rest (arguments) }
+
+            return _.isArray (first)
                           ? first.concat.apply (first, rest)
                           :          _.reduce2 (first, rest, function (              a,  b) {
                                                                 if (_.isObject (     a) &&
@@ -1899,9 +1906,9 @@ _.withTest ('keywords', function () {
 
     /*  You can replace value that might be tagged, i.e. $foo($bar(x)) → $foo($bar(y))
      */
-    $assert (43,                Tags.modifySubject (42,         function (subject) { return subject + 1 })) // not tagged
-    $assert ($foo (43),         Tags.modifySubject ($foo (42),  _.constant (43)))
-    $assert ($foo ($bar (43)),  Tags.modifySubject ($foo (42),  function (subject) { return $bar (subject + 1) }))
+    $assert (43,                Tags.modify (42,         function (subject) { return subject + 1 })) // not tagged
+    $assert ($foo (43),         Tags.modify ($foo (42),  _.constant (43)))
+    $assert ($foo ($bar (43)),  Tags.modify ($foo (42),  function (subject) { return $bar (subject + 1) }))
 
     /*  Previous mechanism is essential to so-called 'modifier keywords'
      */
@@ -1946,7 +1953,7 @@ _.withTest ('keywords', function () {
         clone: function (newSubject) {
             return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
 
-        modifySubject: function (changesFn) {
+        modify: function (changesFn) {
                             this.subject = changesFn (this.subject)
                             if (_.isTypeOf (Tags, this.subject)) {
                                 return _.extend (this.subject, _.pick (this, _.keyIsKeyword)) }
@@ -1976,14 +1983,14 @@ _.withTest ('keywords', function () {
         wrap: function (what) {
             return _.isTypeOf (Tags, what) ? what : ((arguments.length === 0) ? new Tags () : new Tags (what)) },
 
-        modifySubject: function (what, changesFn) {
+        modify: function (what, changesFn) {
                             return _.isTypeOf (Tags, what) ?
-                                        what.clone ().modifySubject (changesFn) : changesFn (what) }, // short circuits if not wrapped
+                                        what.clone ().modify (changesFn) : changesFn (what) }, // short circuits if not wrapped
 
-        map: function (obj, op) { return Tags.modifySubject (obj,
+        map: function (obj, op) { return Tags.modify (obj,
                                                 function (obj) {
                                                     return _.map2 (obj, function (t, k) {
-                                                        return Tags.modifySubject (t, function (v) {
+                                                        return Tags.modify (t, function (v) {
                                                             return op (v, k, _.isTypeOf (Tags, t) ? t : undefined) }) }) }) },
 
         add: function (name, toWhat, additionalData) {
@@ -2039,7 +2046,7 @@ _.withTest ('keywords', function () {
 
     _.defineModifierKeyword = function (name, fn) {
                                 _.defineKeyword (name, function (val) {
-                                                            return Tags.modifySubject (val, fn) }) }
+                                                            return Tags.modify (val, fn) }) }
 
     _.deleteKeyword = function (name) {
                         delete $global[_.keyword (name)] } } )
@@ -2688,6 +2695,18 @@ $extensionMethods (Function, { catch_:  function (fn, catch_, then, finally_) { 
                                                      if (!catched) {   result = then (result) }
                                                   return finally_  (   result) } } })
 
+
+if (typeof Promise !== 'undefined') {
+    Promise.prototype.done = function (resolve, reject) {
+        return this.then (resolve, reject)
+                   .catch (_.globalUncaughtExceptionHandler || _.throws) } }
+
+
+
+
+
+
+
 ;
 /*  Array extensions
     ======================================================================== */
@@ -3060,7 +3079,7 @@ _.deferTest ('bindable', function () {
     /*  Internal impl
      */
     var hooks      = ['onceBefore', 'onceAfter', 'onBefore', 'onAfter', 'intercept']
-    var hooksShort = ['onceBefore', 'onceAfter', 'before', 'after', '']
+    var hooksShort = ['onceBefore', 'onceAfter', 'before', 'after', 'intercept']
 
     var copyHooks = function (from, to) {
         _.extend (to, _.map2 (_.pick (from, hooks), _.clone)) }
@@ -3562,7 +3581,7 @@ Hot-wires some common C++/Java/C# ways to OOP with JavaScript's ones.
 
 _.hasOOP = true
 
-_.deferTest ('OOP', {
+_.withTest ('OOP', {
 
     '$prototype / $extends': function () {
 
@@ -3906,7 +3925,7 @@ _.deferTest ('OOP', {
             else {
                 $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
 
-        macroTag: function (name, fn) {
+        macroTag: function (name, fn) { _.defineTagKeyword (name)
             $prototype.impl.tagTriggeredMacros[_.keyword (name)] = fn },
 
         each: function (visitor) { var namespace = $global
@@ -3939,24 +3958,28 @@ _.deferTest ('OOP', {
             memberNameTriggeredMacros: {},
             tagTriggeredMacros:        {},
 
-            compile: function (def, base) {
-                return ((base && base.$impl) || this)._compile (def, base) },
+            compile: function (def, base) {    var impl = ((base && base.$impl) || this)
+                                    return $untag (impl
+                                                    .sequence (def, base)
+                                                    .call (impl, def || {})
+                                                    .constructor) },
 
-           _compile: function (def, base) { return Tags.unwrap (_.sequence (
-                    this.extendWithTags,
-                    this.flatten,
-                    this.generateCustomCompilerImpl (base),
-                    this.generateArgumentContractsIfNeeded,
-                    this.ensureFinalContracts (base),
-                    this.generateConstructor (base),
-                    this.evalAlwaysTriggeredMacros (base),
-                    this.evalMemberTriggeredMacros (base),
-                    this.contributeTraits (base),
-                    this.generateBuiltInMembers (base),
-                    this.expandAliases,
-                    this.defineStaticMembers,
-                    this.defineInstanceMembers,
-                    this.callStaticConstructor).call (this, def || {}).constructor) },
+            sequence: function (def, base) { return _.sequence (
+                this.extendWithTags,
+                this.flatten,
+                this.generateCustomCompilerImpl (base),
+                this.generateArgumentContractsIfNeeded,
+                this.ensureFinalContracts (base),
+                this.generateConstructor (base),
+                this.evalAlwaysTriggeredMacros (base),
+                this.evalMemberTriggeredMacros (base),
+                this.contributeTraits (base),
+                this.evalPrototypeSpecificMacros (base),
+                this.generateBuiltInMembers (base),
+                this.callStaticConstructor,
+                this.expandAliases,
+                this.defineStaticMembers,
+                this.defineInstanceMembers) },
 
             compileMixin: function (def) {
                 return _.sequence (
@@ -3982,6 +4005,15 @@ _.deferTest ('OOP', {
                         _.each (_.keys (value), function (tag) { if (tags.hasOwnProperty (tag)) {
                             def = (tags [tag] (def, value, name, base)) || def } }) })
                      return def } },
+
+            evalPrototypeSpecificMacros: function (base) { return function (def) {
+                if (!def.isTraitOf) {
+                    var macroTags = $untag (def.$macroTags || (base && base.$macroTags))
+                    if (macroTags) {
+                        _.each (def, function (memberDef, memberName) {
+                            _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
+                                if (tagName in memberDef) {
+                                    def[memberName] = macroFn (def, memberDef, memberName) || memberDef } }) }) } } return def } },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -4018,18 +4050,26 @@ _.deferTest ('OOP', {
             extendWithTags: function (def) {                    
                 return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
 
-            callStaticConstructor: function (def) {
-                         if (def.$constructor) {
-                Tags.unwrap (def.$constructor).call (def) } return def },
+            callStaticConstructor: function (def) { 
+                if (!def.isTraitOf) { 
+                    _.each ($untag (def.$traits), function (T) {
+                                                    if (T.$definition.$constructor) {
+                                                        $untag (T.$definition.$constructor).call (def) } })
+                    if (def.$constructor) {
+                        $untag (def.$constructor).call (def) } } return def },
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
-                    Tags.modifySubject (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
+                    Tags.modify (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
                         function (fn) {
                             if (base) { fn.prototype.__proto__ = base.prototype }
                             return fn }) }) } },
 
             generateBuiltInMembers: function (base) { return function (def) {
+
+                if (def.$constructor) {
+                    def.$constructor = $builtin ($static (def.$constructor)) }
+
                 return _.defaults (def, {
                     $base:          $builtin ($static ($property (_.constant (base && base.prototype)))),
                     $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
@@ -4104,7 +4144,7 @@ _.deferTest ('OOP', {
             (also known as "mixin" in some languages)
     ======================================================================== */
 
-    _.withTest (['OOP', '$traits'], function () {
+    _.deferTest (['OOP', '$traits'], function () {
 
         var Closeable = $trait ({
             close: function () {} })
@@ -4144,9 +4184,19 @@ _.deferTest ('OOP', {
         $assertMatches (MovableEnumerable,  { $traits: [Movable, Enumerable] })
         $assertMatches (JustCloseable,      { $traits: [Closeable] })
 
-        /*$assertEveryCalledOnce (function (mkay) {
-            var WithStaticConstructor = $trait ({ $constructor: function () { mkay () } })
-            var Proto = $prototype ({ $traits: [WithStaticConstructor] }) })*/                        }, function () {
+        $assertCallOrder (function (t1_constructed, t2_constructed, proto_constructed) {
+
+            var T1, T2
+
+            $assertNotCalled (function (not_now) {
+                T1 = $trait ({ $constructor: function () { not_now (); t1_constructed () } })
+                T2 = $trait ({ $constructor: function () { not_now (); t2_constructed () } }) })
+
+            var Proto = $prototype ({
+                            $traits: [T1, T2],
+                            $constructor: function () { proto_constructed () } }) })
+
+}, function () {
 
     _.isTraitOf = function (Trait, instance) {
         var constructor = instance && instance.constructor
@@ -4164,6 +4214,13 @@ _.deferTest ('OOP', {
                             return _.isTraitOf (constructor, instance) })) })
 
         return (constructor = $prototype.impl.compile (def, arguments.length > 1 ? arg1 : arg2)) } })
+
+
+/*  $macroTags
+    ======================================================================== */
+
+    $prototype.macro ('$macroTags', function (def, value, name) {
+        _.each ($untag (value), function (v, k) { _.defineTagKeyword (_.keywordName (k)) }) })
 
 
 /*  Context-free implementation of this.$
@@ -5552,13 +5609,14 @@ _.tests.component = {
 
     'binding to bindables with traits': function () {
 
-        $assertCallOrder (function (beforeCalled, bindableCalled, afterCalled) { var this_ = undefined
+        $assertCallOrder (function (beforeCalled, interceptCalled, bindableCalled, afterCalled) { var this_ = undefined
 
             var Trait = $trait ({
                 doSomething: $bindable (function (x) { $assert (this, this_); bindableCalled () }) })
 
             var Other = $trait ({
-                beforeDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); beforeCalled () } })
+                beforeDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); beforeCalled () },
+                interceptDoSomething: function (_42, impl) { interceptCalled (); $assert (this, this_); return impl (_42) } })
 
             var Compo = $component ({
                 $traits: [Trait, Other],
@@ -5682,6 +5740,28 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
+    '$macroTags for component-specific macros': function () {
+
+        var Trait =    $trait ({   $macroTags: {
+                                        $add_2: function (def, fn, name) {
+                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (2)) }) } } })
+
+        var Base = $component ({   $macroTags: {
+                                        $add_20: function (def, fn, name) {
+                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (20)) }) } } })
+
+        var Compo = $extends (Base, {
+            $traits: [Trait],
+            $macroTags: { $dummy: function () {} },
+
+             testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
+
+        $assert (42, Compo.testValue ())
+        $assertMatches (_.keys (Compo.$macroTags), ['$dummy', '$add_2', '$add_20'])
+
+        _.deleteKeyword ('add_2')
+        _.deleteKeyword ('add_20')
+        _.deleteKeyword ('dummy') },
 
     /*  Auto-unbinding
      */
@@ -5778,18 +5858,34 @@ $prototype.macroTag ('extendable',
 
 Component = $prototype ({
 
-    $defaults: $extendable ({}),
-    $requires: $extendable ({}),
+    $defaults:  $extendable ({}),
+    $requires:  $extendable ({}),
+    $macroTags: $extendable ({}),
 
-    /*  Overrides default OOP.js implementation of traits (providing method chaining)
+    /*  Overrides default OOP.js implementation
      */
     $impl: {
 
-        contributeTraits: function (base) { return _.sequence ([
-                                                    this.expandTraitsDependencies,
-                                                    $prototype.impl.contributeTraits (base),
-                                                    this.mergeExtendables (base)]).bind (this) },
-        
+        sequence: function (def, base) { return _.sequence (
+            this.extendWithTags,
+            this.flatten,
+            this.generateCustomCompilerImpl (base),
+            this.generateArgumentContractsIfNeeded,
+            this.ensureFinalContracts (base),
+            this.generateConstructor (base),
+            this.evalAlwaysTriggeredMacros (base),
+            this.evalMemberTriggeredMacros (base),
+            this.expandTraitsDependencies,
+            this.mergeExtendables (base),
+            this.contributeTraits (base),
+            this.evalPrototypeSpecificMacros (base),
+            this.mergeBindables,
+            this.generateBuiltInMembers (base),
+            this.callStaticConstructor,
+            this.expandAliases,
+            this.defineStaticMembers,
+            this.defineInstanceMembers) },
+
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
                             var edges = []
@@ -5806,9 +5902,8 @@ Component = $prototype ({
                                                      _.linearMerge (edges, { key: _.property ('__tempId') }))),
                             function (obj) {
                                 delete obj.__tempId }) }
-        return def },
+            return def },
 
-        
         mergeExtendables: function (base) { return function (def) {
 
                 _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
@@ -5816,20 +5911,19 @@ Component = $prototype ({
                     //var ownPropName = '$own' +        _.capitalized (_.keywordName (name))
                     //def[ownPropName] =       $builtin ($const (_.cloneDeep (value)))
 
-                    def[name]        = Tags.modifySubject (                 value,
+                    def[name]        = Tags.modify (                 value,
                                             function (                      value) {
                                                                             value =    _.extendedDeep (value, $untag (def[name] || {}))
+
                                         _.each ($untag (def.$traits),
                                                     function (trait) { if (!trait) {    log.e (def.$traits)
                                                                                         throw new Error ('invalid $traits value') }
                                                           var traitVal = trait.$definition [name]
                                                           if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
                                                                    return   value }) }); 
-                                                                                    return def } },
+               return def } },
 
-        mergeTraitsMembers: function (def, traits) {
-            var pool = {}
-            var bindables = {}
+        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}
 
             _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
                 _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),
@@ -5849,16 +5943,26 @@ Component = $prototype ({
                 else { if (!def[name]) {
                             def[name] = pool[name][0] } } })
 
-            _.each (bindables, function (member, name) {
-                var bound = _.nonempty (_.map (_.bindable.hooks, function (hook, i) {
-                                                    var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
-                                                    return bound && [hook, bound] }))
-                if (bound.length) {
-                    var bindable = (def[name] = Tags.clone (member, _.bindable ($untag (member)))).subject
+            def.__bindables = bindables
+            def.__members = pool },
+
+        mergeBindables: function (def) { var pool  = def.__members
+
+            _.each (def.__bindables, function (member, name) {
+                var bound = _.filter2 (_.bindable.hooks, function (hook, i) {
+                                                            var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
+                                                            return bound ? [hook, bound] : false })
+
+                if (bound.length) { var hooks = {}
+
                     _.each (bound, function (kv) {
                         _.each (kv[1], function (fn) { fn = $untag (fn)
-                            if (_.isFunction (fn)) {
-                                bindable[kv[0]] (fn) } }) }) } }) } },
+                            if (_.isFunction (fn)) { var k = '_' + kv[0]; (hooks[k] || (hooks[k] = [])).push (fn) } }) })
+
+                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (def[name])) } })
+
+            return def } },
+
 
     /*  Syntax helper
      */
@@ -5996,8 +6100,10 @@ Component = $prototype ({
 
             /*  Expand $bindable
              */
-            if (def.$bindable) { if (_.hasAsserts) { $assert (_.isFunction (this[name])) }
-                this[name] = _.extendWith (def.defaultHooks || {}, _.bindable (this[name], this)) }
+            if (def.$bindable) {
+                this[name] = _.extend (_.bindable (this[name], this),
+                                       _.map2 (def.$bindable.hooks || {},
+                                        _.mapsWith (this.$.bind (this).arity1))) }
 
             /*  Expand $debounce
              */
@@ -6049,7 +6155,8 @@ Component = $prototype ({
          */
         if (_.hasAsserts) {
             _.each (this.constructor.$requires, function (contract, name) {
-                $assertTypeMatches (this[name], contract) }, this) }
+                $assertTypeMatches (_.object ([[name, this[name]]]),
+                                    _.object ([[name, contract]])) }, this) }
 
 
         /*  Subscribe default listeners
@@ -6177,7 +6284,6 @@ Component = $prototype ({
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
                             return this } })
-
 ;
 
 
@@ -6974,7 +7080,7 @@ if (_.hasStdlib) {
                 if (then) { then (); return true; } }) },
 
         assertNotCalled: function (context) {
-            context (function () { $fail }) },
+            var inContext = true; context (function () { if (inContext) { $fail } }); inContext = false },
 
         assertEveryCalledOnce: function (fn, then) {
             return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
@@ -7018,16 +7124,16 @@ if (_.hasStdlib) {
         assertType: function (value, contract) {
             return _.assert (_.decideType (value), contract) },
 
-        assertTypeMatches: function (value, contract) { var mismatches
-                                return _.isEmpty (_.typeMismatches (contract, value))
+        assertTypeMatches: function (value, contract) { 
+                                return _.isEmpty (mismatches = _.typeMismatches (contract, value))
                                     ? true
                                     : _.assertionFailed ({
+                                        message: 'provided value type not matches required contract',
                                         asColumns: true,
                                         notMatching: [
-                                            { value:        value },
-                                            { type:         _.decideType (value) },
-                                            { contract:     contract },
-                                            { mismatches:   mismatches }] }) },
+                                            { provided: value },
+                                            { required: contract },
+                                            { mismatches: mismatches }] }) },
 
         assertFails: function (what) {
             return _.assertThrows.call (this, what, _.isAssertionError) },
@@ -7082,7 +7188,8 @@ if (_.hasStdlib) {
     _.extend (_, {
 
         assertionError: function (additionalInfo) {
-                            return _.extend (new Error ('assertion failed'), additionalInfo, { assertion: true }) },
+                            return _.extend (new Error (
+                                (additionalInfo && additionalInfo.message) || 'assertion failed'), additionalInfo, { assertion: true }) },
 
         assertionFailed: function (additionalInfo) {
                             throw _.extend (_.assertionError (additionalInfo), {
@@ -7731,22 +7838,40 @@ _.extend (log, {
 
     writeBackend: function () {
         return arguments.callee.value || log.impl.defaultWriteBackend },
-    
+
+    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: 1 }, config]))
+                     var result = what (); log.impl.configStack.pop ();
+                  return result },
+
+    currentConfig: function () { return log.impl.configure (log.impl.configStack) },
+
     /*  Internals
      */
     impl: {
 
+        configStack: [],
+
+        configure: function (configs) {
+            return _.reduce2 (
+                { stackOffset: 0, indent: 0 },
+                _.nonempty (configs), function (memo, cfg) {
+                                        return _.extend (memo, _.nonempty (cfg), {
+                                            indent:      memo.indent      + (cfg.indent || 0),
+                                            stackOffset: memo.stackOffset + (cfg.stackOffset || 0) }) }) },
+
         /*  Nuts & guts
          */
-        write: function (defaultCfg) { return $restArg (function () { var writeBackend = log.writeBackend ()
+        write: $restArg (function () { var writeBackend = log.writeBackend ()
 
             var args            = _.asArray (arguments)
             var cleanArgs       = log.cleanArgs (args)
 
-            var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
-            var stackOffset     = Platform.NodeJS ? 1 : 3
+            var config          = log.impl.configure (_.concat ([{ stackOffset: Platform.NodeJS ? 1 : 3 }],
+                                                                   log.impl.configStack,
+                                                                   _.filter (args, log.Config.isTypeOf)))
 
-            var indent          = (writeBackend.indent || 0) + config.indent
+
+            var indent          = (writeBackend.indent || 0) + (config.indent || 0)
 
             var text            = log.impl.stringifyArguments (cleanArgs, config)
             var indentation     = _.times (indent, _.constant ('\t')).join ('')
@@ -7754,7 +7879,7 @@ _.extend (log, {
 
             var location = (
                 config.location &&
-                log.impl.location (config.where || $callStack[stackOffset + (config.stackOffset || 0)])) || ''
+                log.impl.location (config.where || $callStack[config.stackOffset] || {})) || ''
 
             var backendParams = {
                 color: config.color || log.readColor (args),
@@ -7767,7 +7892,7 @@ _.extend (log, {
 
             writeBackend (backendParams)
 
-            return cleanArgs[0] }) },
+            return cleanArgs[0] }),
         
         defaultWriteBackend: function (params) {
             var color           = params.color,
@@ -7777,18 +7902,16 @@ _.extend (log, {
 
             var colorValue = color && (Platform.NodeJS ? color.shell : color.css)
                 
-            if (colorValue) {
-                if (Platform.NodeJS) {
-                    console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
-                else {
-                    var lines = indentedText.split ('\n')
-                    var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
-                            [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
-
-                    console.log ('%c'      + allButFirstLinePaddedWithSpace.join ('\n'),
-                                 'color: ' + colorValue, codeLocation, trailNewlines) }}
+            if (Platform.NodeJS) {
+                if (colorValue) { console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
+                           else { console.log (             indentedText,               codeLocation, trailNewlines) } }
             else {
-                console.log (indentedText, codeLocation, trailNewlines) } },
+                var lines = indentedText.split ('\n')
+                var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
+                        [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
+
+                console.log ((colorValue ? '%c' : '') + allButFirstLinePaddedWithSpace.join ('\n'),
+                             (colorValue ? ('color: ' + colorValue) : ''), codeLocation, trailNewlines) } },
 
 
         /*  Formats that "function @ source.js:321" thing
@@ -7832,7 +7955,10 @@ _.extend (log, {
                 var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
 
-                return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }
+                return ('[EXCEPTION] ' + why + '\n\n') +
+                    (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
+                                        log.impl.stringify.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+                    log.impl.stringifyCallStack (stack) + '\n' }
             catch (sub) {
                 return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
                     '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
@@ -7852,16 +7978,16 @@ _.extend (log, {
    _.extend (log,
              log.printAPI =
                     _.object (
-                    _.concat (            [[            'newline', write ().$ ('') ],
-                                           [              'write', write ()        ]],
+                    _.concat (            [[            'newline', write.$ ('', log.config ({ location: false })) ],
+                                           [              'write', write                                          ]],
                             _.flat (_.map (['red failure error e',
                                                     'blue info i',
                                           'orange warning warn w',
                                              'green success ok g' ],
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
-                                                  function (name,                     i,                        names      )  {
-                                                   return  [name,  write ({ location: i !== 0, color: log.color[names.first]  }) ] })))))))
+                                                  function (name,                                   i,                        names      )  {
+                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color[names.first] })) ] })))))))
 
 }) ()
 
@@ -7993,17 +8119,15 @@ _.tests.Testosterone = {
         DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
         DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
 
-        /*  $test/$tests renders to static immutable property
+        /*  $test/$tests renders to static immutable property $tests
          */
-        $assertThrows (function () { DummyPrototypeWithTest .$test  = 42 })
+        $assertTypeMatches (DummyPrototypeWithTests.$tests, [{ '*': 'function' }])
         $assertThrows (function () { DummyPrototypeWithTests.$tests = 42 })
 
         /*  Tests are added to Testosterone.prototypeTests
          */
-        $assert ([DummyPrototypeWithTest .$test,
-                  DummyPrototypeWithTests.$tests], _.filter2 (Testosterone.prototypeTests, function (def) {
-                                                        return ((def.tests === DummyPrototypeWithTest .$test) ||
-                                                                (def.tests === DummyPrototypeWithTests.$tests)) ? def.tests : false })) }
+        $assertMatches (_.pluck (Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest .$tests,
+                                                                         DummyPrototypeWithTests.$tests]) }
  }
 
 
@@ -8035,9 +8159,12 @@ Testosterone = $singleton ({
             $prototype.macro ('$test',  register)
             $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
                                                         this.prototypeTests.push ({
-                                                            readPrototypeMeta: Tags.unwrap (def.$meta),
+                                                            proto: def.constructor,
                                                             tests: value })
-                                                        def[name] = $static ($property ($constant (def[name])))
+
+                                                        def.$tests = $static ($property ($constant (
+                                                            (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
+
                                                         return def }))
 
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
@@ -8050,9 +8177,11 @@ Testosterone = $singleton ({
         /*  Configuration
          */
         var defaults = {
+            suites: [],
             silent:  true,
             verbose: false,
             timeout: 2000,
+            filter: _.identity,
             testStarted:  function (test) {},
             testComplete: function (test) {} }
 
@@ -8060,8 +8189,8 @@ Testosterone = $singleton ({
 
         /*  Read cfg.suites
          */
-        var suitesIsArray = _.isArray (cfg.suites || cfg.tests) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
-        var suites = _.map (cfg.suites || [], this.$ (function (suite, name) {
+        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suites = _.map (cfg.suites, this.$ (function (suite, name) {
             return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
 
         var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
@@ -8080,21 +8209,25 @@ Testosterone = $singleton ({
              */
             this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-                /*  Go
-                 */
-                _.cps.each (this.runningTests,
-                        this.$ (this.runTest),
-                        this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
+            _.assertTypeMatches (_.map (_.pluck (this.runningTests, 'routine'), $untag), ['function'])
 
-                                    _.assert (cfg.done !== true)
-                                              cfg.done   = true
+            this.runningTests = _.filter (this.runningTests, cfg.filter || _.identity)
 
-                                    this.printLog (cfg)
-                                    this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                                    this.failed = (this.failedTests.length > 0)
-                                    then (!this.failed)
-                                    
-                                    releaseLock () }) ) })) }),
+            /*  Go
+             */
+            _.cps.each (this.runningTests,
+                    this.$ (this.runTest),
+                    this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
+
+                                _.assert (cfg.done !== true)
+                                          cfg.done   = true
+
+                                this.printLog (cfg)
+                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+                                this.failed = (this.failedTests.length > 0)
+                                then (!this.failed)
+                                
+                                releaseLock () }) ) })) }),
 
     onException: function (e) {
         if (this.currentAssertion) 
@@ -8129,14 +8262,14 @@ Testosterone = $singleton ({
 
     collectPrototypeTests: function (then) {
         _.cps.map (this.prototypeTests, this.$ (function (def, then) {
-            def.readPrototypeMeta (this.$ (function (meta) {
-                then (this.testSuite (meta.name, def.tests)) })) }), then) },
+            def.proto.$meta (this.$ (function (meta) {
+                then (this.testSuite (meta.name, def.tests, undefined, def.proto)) })) }), then) },
 
-    testSuite: function (name, tests, context) { return { 
+    testSuite: function (name, tests, context, proto) { return { 
         name: name || '',
         tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
-                        var test = new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context })
+                        var test = new Test ({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context })
                             test.complete (function () {
                                 if (!(test.hasLog = (test.logCalls.length > 0))) {
                                          if (test.failed)  { log.red   ('FAIL') }
@@ -8146,7 +8279,7 @@ Testosterone = $singleton ({
 
     defineAssertion: function (name, def) { var self = this
         _.deleteKeyword (name)
-        _.defineKeyword (name, Tags.modifySubject (def,
+        _.defineKeyword (name, Tags.modify (def,
                                     function (fn) {
                                         return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (1)
                                             if (!self.currentAssertion) {
@@ -8204,7 +8337,7 @@ Test = $prototype ({
             timeout: this.timeout / 2,
             verbose: this.verbose,
             silent:  this.silent,
-            routine: Tags.modifySubject (def, function (fn) {
+            routine: Tags.modify (def, function (fn) {
                         return function (done) {
                                 if ($async.is (args[0])) {
                                     _.cps.apply (fn, self.context, args, function (args, then) {
@@ -8308,13 +8441,25 @@ Test = $prototype ({
  */
 _.defineTagKeyword ('recursive')
 
-Testosterone.ValidatesMethodContracts = $trait ({
+_.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
+                        var depth       = -1
+                        var reported    = false
+                            return function () {
+                                if (!reported) {
+                                    if (depth > max) { reported = true
+                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + _.stringify (arg) }) },
+                                            new Error (name + ': max recursion depth reached (' + max + ')')) }
+                                    else {
+                                        var result = ((++depth), fn.apply (this, arguments)); depth--
+                                            return result } } } }
+                                            
+Testosterone.ValidatesRecursion = $trait ({
 
     $test: function () {
 
         var test = new ($component ({
 
-            $traits: [Testosterone.ValidatesMethodContracts],
+            $traits: [Testosterone.ValidatesRecursion],
 
             foo: function () {},
             bar: function () { this.bar () },
@@ -8322,22 +8467,49 @@ Testosterone.ValidatesMethodContracts = $trait ({
             qux: $recursive (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
 
                        test.foo ()
-        $assertThrows (test.bar, { message: 'Max recursion depth reached (0)' })
-        $assertThrows (test.baz, { message: 'Max recursion depth reached (2)' })
+        $assertThrows (test.bar, { message: 'bar: max recursion depth reached (0)' })
+                       test.bar () // should not report second time (to prevent overflood in case of buggy code)
+        $assertThrows (test.baz, { message: 'baz: max recursion depth reached (2)' })
                        test.qux () },
 
-    beforeInit: (function (){ var limitRecursion = function (max, fn) {
-                                                        var depth = -1
-                                                            return function () {
-                                                                if (depth > max) {
-                                                                    throw new Error ('Max recursion depth reached (' + max + ')') }
-                                                                else {
-                                                                    var result = ((++depth), fn.apply (this, arguments)); depth--
-                                                                        return result } } }
-        return function () {
-                this.mapMethods (
-                    function (          def) { return !def || !def.$recursive || (def.$recursive.max !== undefined) },
-                    function (fn, name, def) { return limitRecursion ((def && def.$recursive && def.$recursive.max) || 0, fn) }) } }) () })
+    $constructor: function () {
+        _.each (this, function (member, name) {
+            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$recursive || (member.$recursive.max !== undefined))) {
+                this[name] = Tags.modify (member, function (fn) {
+                    return _.limitRecursion ((member && member.$recursive && member.$recursive.max) || 0, fn, name) }) } }, this) } })
+
+/*  $log for methods
+ */
+Testosterone.LogsMethodCalls = $trait ({
+
+    $test: function () {
+        var compo = new ($prototype ({ $traits: [Testosterone.LogsMethodCalls], foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
+        $assert (compo.foo (42), 24) },
+
+    $macroTags: {
+
+        $log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
+
+            return Tags.modify (value, function (fn) { return function () { var this_      = this,
+                                                                                arguments_ = arguments
+
+                log (name + _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'),
+                     log.config ({
+                        stackOffset: 2, location: true }))
+
+                return log.withConfig ({ indent: 1,
+                                         color: color }, function () {
+
+                                                            var result = fn.apply (this_, arguments_);          
+
+                                                            if (result !== undefined) {
+                                                                log ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
+
+                                                            if (log.currentConfig ().indent < 2) {
+                                                                log.newline () }
+
+                                                            return result }) } }) } } })
+
 
 if (Platform.NodeJS) {
     module.exports = Testosterone };
@@ -8526,21 +8698,16 @@ Panic.widget = $singleton (Component, {
 
 	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
-		log.withWriteBackend (this.$ (
+		log.withWriteBackend (
+			this.$ (function (params) { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
 
-			function (params) { var args = params.args
-
-
-				if (_.isTypeOf (Error, args.first)) {
-					logEl.append ([
-						params.indentation,
-						logEl.append ($('<span class="inline-exception">').css ({ color: params.color.css })
-							.append (this.printError (args.first)))]) }
-				else {
-					logEl.append ($('<div>').css ({ color: params.color.css }).html (
-						_.escape (params.indentedText) +
-						((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
-						(params.trailNewlines || '').replace (/\n/g, '<br>'))) } }),
+				logEl.append (_.isTypeOf (Error, params.args.first)
+						? $('<div>').css ({ color: params.color.css, display: 'inline-block' }).append (
+							[params.indentation, $('<div class="inline-exception">').append (this.printError (params.args.first))])
+						: $('<div>').css ({ color: params.color.css }).append ([
+								_.escape (params.indentedText) +
+								((params.codeLocation && (' <span class="location">' + _.escape (params.codeLocation) + '</span>')) || '') +
+								(params.trailNewlines || '').replace (/\n/g, '<br>')])) }),
 
 			function (done) {
 				test.evalLogCalls ()
@@ -8551,7 +8718,6 @@ Panic.widget = $singleton (Component, {
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
 	printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
-
 		return [
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
@@ -8564,6 +8730,9 @@ Panic.widget = $singleton (Component, {
 						.toggleClass ('all')
 						.transitionend (this.$ (function () {
 							this.modalBody.scroll () })) })),
+
+			$('<div class="not-matching" style="margin-top: 5px; padding-left: 10px;">').append (_.map (_.coerceToArray (e.notMatching || []), function (s) {
+				return $('<pre>').text (log.impl.stringify (s)) })),
 
 			$('<ul class="callstack">').append (_.map (stackEntries, this.$ (function (entry) {
 
@@ -8683,5 +8852,5 @@ Modal overlay that outputs log.js for debugging purposes
 	           (file.indexOf ('mootools') >= 0) })
 
     $('head').append ([
-    	$('<style type="text/css">').text ("@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 1.2em; left: 0; top: 1em; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' → \'; }\n\n.panic-alert-error:not(.all) .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all) .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { font-family: Menlo, monospace; overflow: scroll; border-radius: 2px; white-space: pre; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; font-size: 11px; }\n\n.panic-aler-error .inline-exception { position: relative; }\n\n\n"),
+    	$('<style type="text/css">').text ("@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' → \'; }\n\n.panic-alert-error:not(.all) .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all) .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { color: black; opacity: 0.25; }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre > * { font-family: Menlo, monospace; font-size: 11px !important; white-space: pre !important; }\n\n.panic-alert-error  .inline-exception { position: relative; display: inline-block;  }\n\n\n"),
     	$('<style type="text/css">').text (".useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;\n					   white-space: pre;\n					   font-family: Menlo, monospace;\n					   font-size: 11px;\n					   pointer-events: none;\n					   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }\n\n.ulo-line 		{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }") ]) }) (jQuery);;

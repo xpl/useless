@@ -238,7 +238,7 @@ if (_.hasStdlib) {
                 if (then) { then (); return true; } }) },
 
         assertNotCalled: function (context) {
-            context (function () { $fail }) },
+            var inContext = true; context (function () { if (inContext) { $fail } }); inContext = false },
 
         assertEveryCalledOnce: function (fn, then) {
             return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
@@ -282,16 +282,16 @@ if (_.hasStdlib) {
         assertType: function (value, contract) {
             return _.assert (_.decideType (value), contract) },
 
-        assertTypeMatches: function (value, contract) { var mismatches
-                                return _.isEmpty (_.typeMismatches (contract, value))
+        assertTypeMatches: function (value, contract) { 
+                                return _.isEmpty (mismatches = _.typeMismatches (contract, value))
                                     ? true
                                     : _.assertionFailed ({
+                                        message: 'provided value type not matches required contract',
                                         asColumns: true,
                                         notMatching: [
-                                            { value:        value },
-                                            { type:         _.decideType (value) },
-                                            { contract:     contract },
-                                            { mismatches:   mismatches }] }) },
+                                            { provided: value },
+                                            { required: contract },
+                                            { mismatches: mismatches }] }) },
 
         assertFails: function (what) {
             return _.assertThrows.call (this, what, _.isAssertionError) },
@@ -346,7 +346,8 @@ if (_.hasStdlib) {
     _.extend (_, {
 
         assertionError: function (additionalInfo) {
-                            return _.extend (new Error ('assertion failed'), additionalInfo, { assertion: true }) },
+                            return _.extend (new Error (
+                                (additionalInfo && additionalInfo.message) || 'assertion failed'), additionalInfo, { assertion: true }) },
 
         assertionFailed: function (additionalInfo) {
                             throw _.extend (_.assertionError (additionalInfo), {

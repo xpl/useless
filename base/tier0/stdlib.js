@@ -223,14 +223,17 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
 _.withTest (['stdlib', 'concat2'], function () {
 
     $assert (_.concat ([1,2], [3], [4,5]), [1,2,3,4,5])
-    $assert (_.concat ({ foo: 1 }, { bar: 2 }), { foo: 1, bar: 2 })
+    $assert (_.concat ( { foo: 1 }, { bar: 2 }),  { foo: 1, bar: 2 })
+    $assert (_.concat ([{ foo: 1 }, { bar: 2 }]), { foo: 1, bar: 2 })
     $assert (_.concat (1,2,3), 6)
 
 }, function () { 
 
-    _.concat = function (   first,                     rest) {
-                                                       rest = _.rest (arguments)
-          return _.isArray (first)
+    _.concat = function (a, b) { var      first,          rest
+            if (arguments.length === 1) { first = a[0];   rest =  _.rest (a) }
+            else {                        first = a;      rest =  _.rest (arguments) }
+
+            return _.isArray (first)
                           ? first.concat.apply (first, rest)
                           :          _.reduce2 (first, rest, function (              a,  b) {
                                                                 if (_.isObject (     a) &&
