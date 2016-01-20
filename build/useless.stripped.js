@@ -1046,7 +1046,7 @@ _.stringify = function (x, cfg) {
     return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
 };
 _.stringifyPrototype = function (x) {
-    if (Platform.NodeJS) {
+    if (Platform.NodeJS && x.$meta) {
         var name = '';
         x.$meta(function (values) {
             name = values.name;
@@ -2833,12 +2833,12 @@ _.extend($prototype, {
         evalPrototypeSpecificMacros: function (base) {
             return function (def) {
                 if (!def.isTraitOf) {
-                    var macroTags = $untag(def.$macroTags || base && base.$macroTags);
+                    var macroTags = $untag(def.$macroTags || base && base.$definition && base.$definition.$macroTags);
                     if (macroTags) {
                         _.each(def, function (memberDef, memberName) {
                             _.each(macroTags, function (macroFn, tagName) {
                                 memberDef = def[memberName];
-                                if (tagName in memberDef) {
+                                if (_.keyword(tagName) in memberDef) {
                                     def[memberName] = macroFn(def, memberDef, memberName) || memberDef;
                                 }
                             });
@@ -3031,7 +3031,7 @@ $trait = function (arg1, arg2) {
 };
 $prototype.macro('$macroTags', function (def, value, name) {
     _.each($untag(value), function (v, k) {
-        _.defineTagKeyword(_.keywordName(k));
+        _.defineTagKeyword(k);
     });
 });
 _.$ = function (this_, fn) {
@@ -4968,7 +4968,10 @@ $prototype.macro(function (def, base) {
 });
 _.hasLog = true;
 _.extend(log = function () {
-    return log.write.apply(this, arguments);
+    return log.write.apply(this, [log.config({
+            location: true,
+            stackOffset: 1
+        })].concat(_.asArray(arguments)));
 }, {
     Color: $prototype(),
     Config: $prototype(),
@@ -5039,7 +5042,7 @@ _.extend(log, {
     },
     withConfig: function (config, what) {
         log.impl.configStack.push(log.impl.configure([
-            { stackOffset: 1 },
+            { stackOffset: -1 },
             config
         ]));
         var result = what();
@@ -5071,13 +5074,14 @@ _.extend(log, {
             var text = log.impl.stringifyArguments(cleanArgs, config);
             var indentation = _.times(indent, _.constant('\t')).join('');
             var match = text.reversed.match(/(\n*)([^]*)/);
-            var location = config.location && log.impl.location(config.where || $callStack[config.stackOffset] || {}) || '';
+            var where = config.where || $callStack[config.stackOffset] || {};
             var backendParams = {
                 color: config.color || log.readColor(args),
                 indentation: indentation,
                 indentedText: match[2].reversed.split('\n').map(_.prepends(indentation)).join('\n'),
                 trailNewlines: match[1],
-                codeLocation: location,
+                codeLocation: config.location && log.impl.location(where) || '',
+                where: config.location && where || undefined,
                 args: args,
                 config: config
             };
@@ -5627,32 +5631,43 @@ Testosterone.ValidatesRecursion = $trait({
 });
 Testosterone.LogsMethodCalls = $trait({
     $test: function () {
-        var compo = new ($prototype({
-            $traits: [Testosterone.LogsMethodCalls],
+        var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
+        var compo = new ($extends(Proto, {
             foo: $log(function (_42) {
                 $assert(_42, 42);
                 return 24;
             })
         }))();
         $assert(compo.foo(42), 24);
+        $assert(_.pluck(this.logCalls, 'indentedText'), [
+            '\tfoo',
+            '\t\t\u2192 24',
+            '\t\t'
+        ]);
     },
     $macroTags: {
-        $log: function (def, value, name) {
+        log: function (def, value, name) {
             var color = _.isBoolean(value.$log) ? undefined : log.color[value.$log];
+            var protoName = '';
+            $untag(def.$meta)(function (meta) {
+                protoName = meta.name;
+            });
             return Tags.modify(value, function (fn) {
                 return function () {
                     var this_ = this, arguments_ = arguments;
-                    log(name + _.map(arguments, _.stringifyOneLine).join(', ').quote(' ()'), log.config({
-                        stackOffset: 2,
-                        location: true
-                    }));
+                    var isProtoNameRedundant = log.currentConfig().protoName === protoName;
+                    log.write(isProtoNameRedundant ? name : _.nonempty([
+                        protoName,
+                        name
+                    ]).join('.') + _.map(arguments, _.stringifyOneLine).join(', ').quote(' ()'), log.config({ location: true }));
                     return log.withConfig({
                         indent: 1,
-                        color: color
+                        color: color,
+                        protoName: protoName
                     }, function () {
                         var result = fn.apply(this_, arguments_);
                         if (result !== undefined) {
-                            log('\u2192', _.stringifyOneLine(result), log.config({ color: color }));
+                            log.write('\u2192', _.stringifyOneLine(result), log.config({ color: color }));
                         }
                         if (log.currentConfig().indent < 2) {
                             log.newline();

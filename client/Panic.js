@@ -133,18 +133,26 @@ Panic.widget = $singleton (Component, {
 	printUnknownStuff: function (what, raw) {
 		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 
+	printLocation: function (where) {
+		return $('<span class="location">')
+					.append ([$('<span class="callee">').text (where.calleeShort),
+							  $('<span class="file">')  .text (where.fileName),
+							  $('<span class="line">')  .text (where.line)]) },
+
 	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
 		log.withWriteBackend (
 			this.$ (function (params) { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
 
 				logEl.append (_.isTypeOf (Error, params.args.first)
-						? $('<div>').css ({ color: params.color.css, display: 'inline-block' }).append (
-							[params.indentation, $('<div class="inline-exception">').append (this.printError (params.args.first))])
-						: $('<div>').css ({ color: params.color.css }).append ([
-								_.escape (params.indentedText) +
-								((params.codeLocation && (' <span class="location">' + _.escape (params.codeLocation) + '</span>')) || '') +
-								(params.trailNewlines || '').replace (/\n/g, '<br>')])) }),
+						? ($('<div>')
+								.css ({ color: params.color.css, display: 'inline-block' })
+								.append ([params.indentation, $('<div class="inline-exception">').append (this.printError (params.args.first))]))
+						: ($('<div>')
+								.css ({ color: params.color.css })
+								.text (params.indentedText)
+								.append (params.where && this.printLocation (params.where))
+								.append ((params.trailNewlines || '').replace (/\n/g, '<br>')))) }),
 
 			function (done) {
 				test.evalLogCalls ()

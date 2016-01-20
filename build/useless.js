@@ -1561,7 +1561,7 @@ _.deferTest (['type', 'stringify'], function () {
                     return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
 
     _.stringifyPrototype = function (x) {
-            if (Platform.NodeJS) { var name = ''
+            if (Platform.NodeJS && x.$meta) { var name = ''
                 x.$meta (function (values) { name = values.name })
                 return name && (name + ' ()') }
             else return '<prototype>' }
@@ -4756,11 +4756,11 @@ _.withTest ('OOP', {
 
             evalPrototypeSpecificMacros: function (base) { return function (def) {
                 if (!def.isTraitOf) {
-                    var macroTags = $untag (def.$macroTags || (base && base.$macroTags))
+                    var macroTags = $untag (def.$macroTags || (base && base.$definition && base.$definition.$macroTags))
                     if (macroTags) {
                         _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
-                                if (tagName in memberDef) {
+                                if (_.keyword (tagName) in memberDef) {
                                     def[memberName] = macroFn (def, memberDef, memberName) || memberDef } }) }) } } return def } },
 
             generateCustomCompilerImpl: function (base) {
@@ -4968,7 +4968,7 @@ _.withTest ('OOP', {
     ======================================================================== */
 
     $prototype.macro ('$macroTags', function (def, value, name) {
-        _.each ($untag (value), function (v, k) { _.defineTagKeyword (_.keywordName (k)) }) })
+        _.each ($untag (value), function (v, k) { _.defineTagKeyword (k) }) })
 
 
 /*  Context-free implementation of this.$
@@ -6585,25 +6585,23 @@ _.tests.component = {
     '$macroTags for component-specific macros': function () {
 
         var Trait =    $trait ({   $macroTags: {
-                                        $add_2: function (def, fn, name) {
+                                        add_2: function (def, fn, name) {
                                             return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (2)) }) } } })
 
         var Base = $component ({   $macroTags: {
-                                        $add_20: function (def, fn, name) {
+                                        add_20: function (def, fn, name) {
                                             return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (20)) }) } } })
 
         var Compo = $extends (Base, {
             $traits: [Trait],
-            $macroTags: { $dummy: function () {} },
+            $macroTags: { dummy: function () {} },
 
              testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
 
         $assert (42, Compo.testValue ())
-        $assertMatches (_.keys (Compo.$macroTags), ['$dummy', '$add_2', '$add_20'])
+        $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
 
-        _.deleteKeyword ('add_2')
-        _.deleteKeyword ('add_20')
-        _.deleteKeyword ('dummy') },
+        _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
 
     /*  Auto-unbinding
      */
@@ -6653,11 +6651,10 @@ _.tests.component = {
 
         $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
-    '(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
+    /*'(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
         $singleton (Component, {
             foo: function () { foo (); },
-            init: function () {
-                this.foo.postpone () } }) }), testDone) },
+            init: function () { this.foo.postpone () } }) }), testDone) },*/
 
     '(regression) undefined at definition': function () { $singleton (Component, { fail: undefined }) },
 
@@ -7747,8 +7744,8 @@ _.extend (
 
     /*  Basic API
      */
-    log = function () {                         
-        return log.write.apply (this, arguments) }, {
+    log = function () {
+        return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
 
 
     Color: $prototype (),
@@ -7830,7 +7827,7 @@ _.extend (log, {
     writeBackend: function () {
         return arguments.callee.value || log.impl.defaultWriteBackend },
 
-    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: 1 }, config]))
+    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
                      var result = what (); log.impl.configStack.pop ();
                   return result },
 
@@ -7868,16 +7865,15 @@ _.extend (log, {
             var indentation     = _.times (indent, _.constant ('\t')).join ('')
             var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
 
-            var location = (
-                config.location &&
-                log.impl.location (config.where || $callStack[config.stackOffset] || {})) || ''
+            var where           = config.where || $callStack[config.stackOffset] || {}
 
             var backendParams = {
-                color: config.color || log.readColor (args),
+                color:         config.color || log.readColor (args),
                 indentation:   indentation,
                 indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
                 trailNewlines: match[1],
-                codeLocation:  location,
+                codeLocation:  (config.location && log.impl.location (where)) || '',
+                where:         (config.location && where) || undefined,
                 args:          args,
                 config:        config }
 
@@ -8474,32 +8470,43 @@ Testosterone.ValidatesRecursion = $trait ({
 Testosterone.LogsMethodCalls = $trait ({
 
     $test: function () {
-        var compo = new ($prototype ({ $traits: [Testosterone.LogsMethodCalls], foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
-        $assert (compo.foo (42), 24) },
+            
+        var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+        var compo = new ($extends (Proto, {
+                            foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
+
+        $assert (compo.foo (42), 24)
+        $assert (_.pluck (this.logCalls, 'indentedText'), ['\tfoo', '\t\t→ 24', '\t\t']) },
 
     $macroTags: {
 
-        $log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
+        log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
+                                           var protoName = ''
+
+            $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
 
             return Tags.modify (value, function (fn) { return function () { var this_      = this,
                                                                                 arguments_ = arguments
 
-                log (name + _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'),
-                     log.config ({
-                        stackOffset: 2, location: true }))
+                       var isProtoNameRedundant = (log.currentConfig ().protoName === protoName)
+                log.write (isProtoNameRedundant
+                                ? name
+                                : _.nonempty ([protoName, name]).join ('.') +
+                                _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'), log.config ({ location: true }))
 
                 return log.withConfig ({ indent: 1,
-                                         color: color }, function () {
+                                         color: color,
+                                         protoName: protoName }, function () {
 
-                                                            var result = fn.apply (this_, arguments_);          
+                                                                    var result = fn.apply (this_, arguments_);          
 
-                                                            if (result !== undefined) {
-                                                                log ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
+                                                                    if (result !== undefined) {
+                                                                        log.write ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
 
-                                                            if (log.currentConfig ().indent < 2) {
-                                                                log.newline () }
+                                                                    if (log.currentConfig ().indent < 2) {
+                                                                        log.newline () }
 
-                                                            return result }) } }) } } })
+                                                                    return result }) } }) } } })
 
 
 if (Platform.NodeJS) {

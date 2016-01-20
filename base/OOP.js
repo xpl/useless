@@ -435,11 +435,11 @@ _.withTest ('OOP', {
 
             evalPrototypeSpecificMacros: function (base) { return function (def) {
                 if (!def.isTraitOf) {
-                    var macroTags = $untag (def.$macroTags || (base && base.$macroTags))
+                    var macroTags = $untag (def.$macroTags || (base && base.$definition && base.$definition.$macroTags))
                     if (macroTags) {
                         _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
-                                if (tagName in memberDef) {
+                                if (_.keyword (tagName) in memberDef) {
                                     def[memberName] = macroFn (def, memberDef, memberName) || memberDef } }) }) } } return def } },
 
             generateCustomCompilerImpl: function (base) {
@@ -647,7 +647,7 @@ _.withTest ('OOP', {
     ======================================================================== */
 
     $prototype.macro ('$macroTags', function (def, value, name) {
-        _.each ($untag (value), function (v, k) { _.defineTagKeyword (_.keywordName (k)) }) })
+        _.each ($untag (value), function (v, k) { _.defineTagKeyword (k) }) })
 
 
 /*  Context-free implementation of this.$

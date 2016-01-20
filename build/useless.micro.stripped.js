@@ -680,7 +680,7 @@ _.stringify = function (x, cfg) {
     return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
 };
 _.stringifyPrototype = function (x) {
-    if (Platform.NodeJS) {
+    if (Platform.NodeJS && x.$meta) {
         var name = '';
         x.$meta(function (values) {
             name = values.name;
@@ -2375,12 +2375,12 @@ _.extend($prototype, {
         evalPrototypeSpecificMacros: function (base) {
             return function (def) {
                 if (!def.isTraitOf) {
-                    var macroTags = $untag(def.$macroTags || base && base.$macroTags);
+                    var macroTags = $untag(def.$macroTags || base && base.$definition && base.$definition.$macroTags);
                     if (macroTags) {
                         _.each(def, function (memberDef, memberName) {
                             _.each(macroTags, function (macroFn, tagName) {
                                 memberDef = def[memberName];
-                                if (tagName in memberDef) {
+                                if (_.keyword(tagName) in memberDef) {
                                     def[memberName] = macroFn(def, memberDef, memberName) || memberDef;
                                 }
                             });
@@ -2573,7 +2573,7 @@ $trait = function (arg1, arg2) {
 };
 $prototype.macro('$macroTags', function (def, value, name) {
     _.each($untag(value), function (v, k) {
-        _.defineTagKeyword(_.keywordName(k));
+        _.defineTagKeyword(k);
     });
 });
 _.$ = function (this_, fn) {

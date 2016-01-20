@@ -101,7 +101,17 @@
 .panic-alert-error .callstack-entry.native .src:empty:before           { content: '<< NATIVE CODE >>'; color: rgba(0,0,0,0.25); }
 .panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: '<< SOURCE LOADING >>'; color: rgba(0,0,0,0.5); }
 
-.panic-alert-error .test-log .location { color: black; opacity: 0.25; }
+.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.panic-alert-error .test-log .location:hover { opacity: 1; }
+
+.panic-alert-error .test-log .location:before { content: ' @ '; }
+
+.panic-alert-error .test-log .location .callee:after { content: ', '; }
+.panic-alert-error .test-log .location .file { opacity: 0.5; }
+.panic-alert-error .test-log .location .line:before  { content: ':'; }
+.panic-alert-error .test-log .location .line { opacity: 0.25; }
+
+.panic-alert-error .test-log > div:after { content: ' '; }
 
 .panic-alert-error .callstack-entry .line:after { content: ' '; }
 

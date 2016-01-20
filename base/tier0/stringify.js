@@ -65,7 +65,7 @@ _.deferTest (['type', 'stringify'], function () {
                     return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
 
     _.stringifyPrototype = function (x) {
-            if (Platform.NodeJS) { var name = ''
+            if (Platform.NodeJS && x.$meta) { var name = ''
                 x.$meta (function (values) { name = values.name })
                 return name && (name + ' ()') }
             else return '<prototype>' }

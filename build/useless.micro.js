@@ -966,7 +966,7 @@ _.deferTest (['type', 'stringify'], function () {
                     return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
 
     _.stringifyPrototype = function (x) {
-            if (Platform.NodeJS) { var name = ''
+            if (Platform.NodeJS && x.$meta) { var name = ''
                 x.$meta (function (values) { name = values.name })
                 return name && (name + ' ()') }
             else return '<prototype>' }
@@ -4008,11 +4008,11 @@ _.withTest ('OOP', {
 
             evalPrototypeSpecificMacros: function (base) { return function (def) {
                 if (!def.isTraitOf) {
-                    var macroTags = $untag (def.$macroTags || (base && base.$macroTags))
+                    var macroTags = $untag (def.$macroTags || (base && base.$definition && base.$definition.$macroTags))
                     if (macroTags) {
                         _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
-                                if (tagName in memberDef) {
+                                if (_.keyword (tagName) in memberDef) {
                                     def[memberName] = macroFn (def, memberDef, memberName) || memberDef } }) }) } } return def } },
 
             generateCustomCompilerImpl: function (base) {
@@ -4220,7 +4220,7 @@ _.withTest ('OOP', {
     ======================================================================== */
 
     $prototype.macro ('$macroTags', function (def, value, name) {
-        _.each ($untag (value), function (v, k) { _.defineTagKeyword (_.keywordName (k)) }) })
+        _.each ($untag (value), function (v, k) { _.defineTagKeyword (k) }) })
 
 
 /*  Context-free implementation of this.$
@@ -5743,25 +5743,23 @@ _.tests.component = {
     '$macroTags for component-specific macros': function () {
 
         var Trait =    $trait ({   $macroTags: {
-                                        $add_2: function (def, fn, name) {
+                                        add_2: function (def, fn, name) {
                                             return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (2)) }) } } })
 
         var Base = $component ({   $macroTags: {
-                                        $add_20: function (def, fn, name) {
+                                        add_20: function (def, fn, name) {
                                             return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (20)) }) } } })
 
         var Compo = $extends (Base, {
             $traits: [Trait],
-            $macroTags: { $dummy: function () {} },
+            $macroTags: { dummy: function () {} },
 
              testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
 
         $assert (42, Compo.testValue ())
-        $assertMatches (_.keys (Compo.$macroTags), ['$dummy', '$add_2', '$add_20'])
+        $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
 
-        _.deleteKeyword ('add_2')
-        _.deleteKeyword ('add_20')
-        _.deleteKeyword ('dummy') },
+        _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
 
     /*  Auto-unbinding
      */
@@ -5811,11 +5809,10 @@ _.tests.component = {
 
         $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
-    '(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
+    /*'(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
         $singleton (Component, {
             foo: function () { foo (); },
-            init: function () {
-                this.foo.postpone () } }) }), testDone) },
+            init: function () { this.foo.postpone () } }) }), testDone) },*/
 
     '(regression) undefined at definition': function () { $singleton (Component, { fail: undefined }) },
 

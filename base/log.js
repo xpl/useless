@@ -70,8 +70,8 @@ _.extend (
 
     /*  Basic API
      */
-    log = function () {                         
-        return log.write.apply (this, arguments) }, {
+    log = function () {
+        return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
 
 
     Color: $prototype (),
@@ -153,7 +153,7 @@ _.extend (log, {
     writeBackend: function () {
         return arguments.callee.value || log.impl.defaultWriteBackend },
 
-    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: 1 }, config]))
+    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
                      var result = what (); log.impl.configStack.pop ();
                   return result },
 
@@ -191,16 +191,15 @@ _.extend (log, {
             var indentation     = _.times (indent, _.constant ('\t')).join ('')
             var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
 
-            var location = (
-                config.location &&
-                log.impl.location (config.where || $callStack[config.stackOffset] || {})) || ''
+            var where           = config.where || $callStack[config.stackOffset] || {}
 
             var backendParams = {
-                color: config.color || log.readColor (args),
+                color:         config.color || log.readColor (args),
                 indentation:   indentation,
                 indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
                 trailNewlines: match[1],
-                codeLocation:  location,
+                codeLocation:  (config.location && log.impl.location (where)) || '',
+                where:         (config.location && where) || undefined,
                 args:          args,
                 config:        config }
 

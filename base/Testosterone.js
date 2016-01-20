@@ -422,32 +422,43 @@ Testosterone.ValidatesRecursion = $trait ({
 Testosterone.LogsMethodCalls = $trait ({
 
     $test: function () {
-        var compo = new ($prototype ({ $traits: [Testosterone.LogsMethodCalls], foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
-        $assert (compo.foo (42), 24) },
+            
+        var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+        var compo = new ($extends (Proto, {
+                            foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
+
+        $assert (compo.foo (42), 24)
+        $assert (_.pluck (this.logCalls, 'indentedText'), ['\tfoo', '\t\t→ 24', '\t\t']) },
 
     $macroTags: {
 
-        $log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
+        log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
+                                           var protoName = ''
+
+            $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
 
             return Tags.modify (value, function (fn) { return function () { var this_      = this,
                                                                                 arguments_ = arguments
 
-                log (name + _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'),
-                     log.config ({
-                        stackOffset: 2, location: true }))
+                       var isProtoNameRedundant = (log.currentConfig ().protoName === protoName)
+                log.write (isProtoNameRedundant
+                                ? name
+                                : _.nonempty ([protoName, name]).join ('.') +
+                                _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'), log.config ({ location: true }))
 
                 return log.withConfig ({ indent: 1,
-                                         color: color }, function () {
+                                         color: color,
+                                         protoName: protoName }, function () {
 
-                                                            var result = fn.apply (this_, arguments_);          
+                                                                    var result = fn.apply (this_, arguments_);          
 
-                                                            if (result !== undefined) {
-                                                                log ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
+                                                                    if (result !== undefined) {
+                                                                        log.write ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
 
-                                                            if (log.currentConfig ().indent < 2) {
-                                                                log.newline () }
+                                                                    if (log.currentConfig ().indent < 2) {
+                                                                        log.newline () }
 
-                                                            return result }) } }) } } })
+                                                                    return result }) } }) } } })
 
 
 if (Platform.NodeJS) {
