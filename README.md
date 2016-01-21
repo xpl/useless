@@ -8,45 +8,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
-# New features (update)
-
-## $depends for dependency resolving in traits
-
-What for: making $traits know their dependencies, resolving them in compile time. Traits compiler builds graph of dependencies and then linearizes it, respecting both vertical (hierarchy) and horizontal (list order) constraints. Result is rendered to the $traits member at the final component (App in this example).
-
-Before (flat list of pluggable traits):
-
-```javascript
-App = $singleton (Component, {
-
-	$traits: [
-	
-		ExceptionHandling,
-		IO,
-		CommandLineArguments,
-		RequireThatFetchesFromNPM,
-		UnitTests,
-		Supervisor
-		...
-```
-
-After: 
-```javascript
-Tests = $trait ({
-	
-	$depends: [ExceptionHandling, CommandLineArguments, ...
-```  
-```javascript
-Supervisor = $trait ({
-
-	$depends: [CommandLineArguments, RequireThatFetchesFromNPM, ...
-```
-```javascript
-App = $singleton (Component, {
-
-	$depends: [Tests, Supervisor, ...
-```
-
 ### Browser builds
 
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
@@ -634,3 +595,43 @@ This will add test & build phase to app startup sequence, aborting if something 
 For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`. **Important notice:** you should add `./node_modules/useless/build/` folder to `.nodemonignore` file in root directory of your project, to prevent restart loop.
 
 Currenly it re-builds only `useless.js`, with no compression applied.
+
+
+# New features (update)
+
+## Dependency resolving for pluggable traits
+
+What for: making $traits know their dependencies, resolving them in compile time. Traits compiler builds graph of dependencies and then linearizes it, respecting both vertical (hierarchy) and horizontal (list order) constraints. Result is rendered to the $traits member at the final component (App in this example).
+
+Before (flat list of pluggable traits):
+
+```javascript
+App = $singleton (Component, {
+
+	$traits: [
+	
+		ExceptionHandling,
+		IO,
+		CommandLineArguments,
+		RequireThatFetchesFromNPM,
+		UnitTests,
+		Supervisor
+		...
+```
+
+After: 
+```javascript
+Tests = $trait ({
+	
+	$depends: [ExceptionHandling, CommandLineArguments, ...
+```  
+```javascript
+Supervisor = $trait ({
+
+	$depends: [CommandLineArguments, RequireThatFetchesFromNPM, ...
+```
+```javascript
+App = $singleton (Component, {
+
+	$depends: [Tests, Supervisor, ...
+```
