@@ -13,12 +13,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
 * Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
 
-### Dependencies and limitations
-
-Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology. The rest of the code base should be cross-browser (at least it attemps to).
-
-Database-related utility depends on MongoDB (not included in `npm` dependency list, should install manually). Anyway, it does not work well at the moment...
-
 ### Running example app
 
 ```bash
@@ -601,3 +595,43 @@ This will add test & build phase to app startup sequence, aborting if something 
 For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`. **Important notice:** you should add `./node_modules/useless/build/` folder to `.nodemonignore` file in root directory of your project, to prevent restart loop.
 
 Currenly it re-builds only `useless.js`, with no compression applied.
+
+
+# New features (update)
+
+## Dependency resolving for pluggable traits
+
+What for: making $traits know their dependencies, resolving them in compile time. Traits compiler builds graph of dependencies and then linearizes it, respecting both vertical (hierarchy) and horizontal (list order) constraints. Result is rendered to the $traits member at the final component (App in this example).
+
+Before (flat list of pluggable traits):
+
+```javascript
+App = $singleton (Component, {
+
+	$traits: [
+	
+		ExceptionHandling,
+		IO,
+		CommandLineArguments,
+		RequireThatFetchesFromNPM,
+		UnitTests,
+		Supervisor
+		...
+```
+
+After: 
+```javascript
+Tests = $trait ({
+	
+	$depends: [ExceptionHandling, CommandLineArguments, ...
+```  
+```javascript
+Supervisor = $trait ({
+
+	$depends: [CommandLineArguments, RequireThatFetchesFromNPM, ...
+```
+```javascript
+App = $singleton (Component, {
+
+	$depends: [Tests, Supervisor, ...
+```
