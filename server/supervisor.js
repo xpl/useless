@@ -39,7 +39,7 @@ module.exports = Supervisor = $trait ({
 							    						args: _.concat (this.args.all, ['spawned-by-supervisor']) })
 
 						this.supervisedProcess.on('watch:restart', this.$ (function(info) {
-							log.bloody ('\nRestarting because', info.stat, 'changed\n')
+							log.e ('\nRestarting because', log.color.bloody, info.stat, log.color.red, 'changed\n')
 							if (!this.supervisedProcess.args.contains ('respawned-because-code-change')) {
 								 this.supervisedProcess.args.push     ('respawned-because-code-change') } }))
 

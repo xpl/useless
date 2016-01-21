@@ -659,7 +659,14 @@ Component = $prototype ({
                             var edges = []
                             var lastId = 0
                             var drill =  function ( depends,           T        ) { if (!T.__tempId) { T.__tempId = lastId++ }
-                                            //_.reduce2 (depends, // TODO: add horizontal dependency edges
+                                            
+                                            /*  Horizontal dependency edges (first mentioned should init first)
+                                             */
+                                            _.reduce2 (depends, function (TBefore, TAfter) {
+                                                edges.push ([TAfter, TBefore]); return TAfter })
+
+                                            /*  Vertical dependency edges (parents should init first)
+                                             */
                                             _.each (depends, function (   TSuper) {
                                                           edges.push ([T, TSuper])
                                                                     drill (TSuper.$depends || [], TSuper) }) }

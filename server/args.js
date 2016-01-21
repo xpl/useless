@@ -24,6 +24,6 @@ module.exports = CommandLineArguments = $trait ({
 	        		_.index (keysCamelCase), { keys: 			keysCamelCase,
 	        								   keysDashed: 		incomingKeys,
 	        								   all:      		arguments,
-	            							   values: 		  _.without.apply (null, [arguments].concat (proposedKeys)) }) } } })
+	            							   values: 		  _.without.apply (null, [arguments].concat (incomingKeys)) }) } } })
 
 /*	======================================================================== */
