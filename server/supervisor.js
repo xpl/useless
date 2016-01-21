@@ -27,7 +27,7 @@ module.exports = Supervisor = $trait ({
 			    spawnedBySupervisor:		_.cps.identity,
 			    respawnedBecauseCodeChange: _.cps.identity,
 
-			    supervisor: function () { log.w ('Spawning supervised process')
+			    supervisor: function () { log.pink ('Spawning supervised process')
 
 			    	this.require ('foreverMonitor', function () {
 
@@ -39,12 +39,12 @@ module.exports = Supervisor = $trait ({
 							    						args: _.concat (this.args.all, ['spawned-by-supervisor']) })
 
 						this.supervisedProcess.on('watch:restart', this.$ (function(info) {
-							log.e ('\nRestarting because', info.stat, 'changed\n')
+							log.bloody ('\nRestarting because', info.stat, 'changed\n')
 							if (!this.supervisedProcess.args.contains ('respawned-because-code-change')) {
 								 this.supervisedProcess.args.push     ('respawned-because-code-change') } }))
 
 						this.supervisedProcess.on ('exit:code', this.$ (function (code) {
-							log.w ('Exited with code', code)
+							log.brown ('Exited with code', code)
 							log.w ('Waiting for file change (or press Ctrl-C to exit)....')
 							this.supervisedProcess.stop () /* prevents Forever from restarting it */ }))
 

@@ -72,7 +72,8 @@ _.deferTest (['type', 'stringify'], function () {
 
     _.builtInTypes = {
         'Event':         { target: $any },
-        'MutationEvent': { target: $any, attrName: $any, prevValue: $any } }
+        'MutationEvent': { target: $any, attrName: $any, prevValue: $any },
+        'Range':         { startContainer: $any, startOffset: $any, endContainer: $any, endOffset: $any } }
 
     _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
@@ -132,7 +133,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     if ((_.platform ().engine === 'browser')) {
                                         if (_.isTypeOf (Element, x)) {
-                                            return '<' + x.tagName.lowercase + '>' }
+                                            return x.tagName.lowercase.quote ('<>') } //x.outerHTML.substr (0, 10) + '…' }
                                         else if (_.isTypeOf (Text, x)) {
                                             return '@' + x.wholeText } }
 

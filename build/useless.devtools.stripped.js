@@ -599,56 +599,141 @@ _.extend(log, {
     },
     color: _.extend(function (x) {
         return (log.color[x] || {}).color;
-    }, {
-        none: log.config({
-            color: {
-                shell: '\x1B[0m',
-                css: ''
-            }
-        }),
-        red: log.config({
-            color: {
-                shell: '\x1B[31m',
-                css: 'crimson'
-            }
-        }),
-        blue: log.config({
-            color: {
-                shell: '\x1B[36m',
-                css: 'royalblue'
-            }
-        }),
-        darkBlue: log.config({
-            color: {
-                shell: '\x1B[36m\x1B[2m',
-                css: 'rgba(65,105,225,0.5)'
-            }
-        }),
-        orange: log.config({
-            color: {
-                shell: '\x1B[33m',
-                css: 'saddlebrown'
-            }
-        }),
-        green: log.config({
-            color: {
-                shell: '\x1B[32m',
-                css: 'forestgreen'
-            }
-        }),
-        pink: log.config({
-            color: {
-                shell: '\x1B[35m',
-                css: 'magenta'
-            }
-        }),
-        dark: log.config({
-            color: {
-                shell: '\x1B[0m\x1B[2m',
-                css: 'rgba(0,0,0,0.25)'
-            }
-        })
-    }),
+    }, _.object(_.map([
+        [
+            'none',
+            '0m',
+            ''
+        ],
+        [
+            'bloody',
+            [
+                '31m',
+                '1m'
+            ],
+            'crimson;font-weight:bold'
+        ],
+        [
+            'red',
+            '31m',
+            'crimson'
+        ],
+        [
+            'darkRed',
+            [
+                '31m',
+                '2m'
+            ],
+            'crimson'
+        ],
+        [
+            'blue',
+            '36m',
+            'royalblue'
+        ],
+        [
+            'boldBlue',
+            [
+                '36m',
+                '1m'
+            ],
+            'royalblue'
+        ],
+        [
+            'darkBlue',
+            [
+                '36m',
+                '2m'
+            ],
+            'rgba(65,105,225,0.5)'
+        ],
+        [
+            'sunny',
+            [
+                '33m',
+                '1m'
+            ],
+            'saddlebrown'
+        ],
+        [
+            'orange',
+            '33m',
+            'saddlebrown'
+        ],
+        [
+            'brown',
+            [
+                '33m',
+                '2m'
+            ],
+            'saddlebrown'
+        ],
+        [
+            'green',
+            '32m',
+            'forestgreen'
+        ],
+        [
+            'greener',
+            [
+                '32m',
+                '1m'
+            ],
+            'forestgreen;font-weight:bold'
+        ],
+        [
+            'pink',
+            '35m',
+            'magenta'
+        ],
+        [
+            'boldPink',
+            [
+                '35m',
+                '1m'
+            ],
+            'magenta'
+        ],
+        [
+            'purple',
+            [
+                '35m',
+                '2m'
+            ],
+            'magenta'
+        ],
+        [
+            'black',
+            '0m',
+            'black'
+        ],
+        [
+            'bright',
+            [
+                '0m',
+                '1m'
+            ],
+            'rgba(0,0,0);font-weight:bold'
+        ],
+        [
+            'dark',
+            [
+                '0m',
+                '2m'
+            ],
+            'rgba(0,0,0,0.25)'
+        ]
+    ], function (def) {
+        return [
+            def[0],
+            log.config({
+                color: {
+                    shell: _.coerceToArray(_.map2(def[1], _.prepends('\x1B['))).join(),
+                    css: def[2]
+                }
+            })
+        ];
+    }))),
     boldLine: '======================================',
     line: '--------------------------------------',
     thinLine: '......................................',
@@ -735,7 +820,7 @@ _.extend(log, {
                 });
             }))));
             var totalText = _.pluck(runs, 'text').join('');
-            var where = config.where || $callStack[config.stackOffset] || {};
+            var where = config.where || log.impl.walkStack($callStack) || {};
             var indentation = _.times(config.indent, _.constant('\t')).join('');
             writeBackend({
                 lines: lines,
@@ -751,12 +836,17 @@ _.extend(log, {
             });
             return _.find(args, _.not(_.isTypeOf.$(log.Config)));
         }),
+        walkStack: function (stack) {
+            return _.find(stack.clean, function (entry) {
+                return entry.fileShort.indexOf('base/log.js') < 0;
+            }) || stack[0];
+        },
         defaultWriteBackend: function (params) {
             var codeLocation = params.codeLocation, trailNewlines = params.trailNewlines;
             if (Platform.NodeJS) {
                 console.log(_.map(params.lines, function (line) {
-                    return _.map(line, function (run) {
-                        return run.config.color ? run.config.color.shell + params.indentation + run.text + '\x1B[0m' : params.indentation + run.text;
+                    return params.indentation + _.map(line, function (run) {
+                        return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
                     }).join('');
                 }).join('\n'), log.color('dark').shell + codeLocation + '\x1B[0m', trailNewlines);
             } else {
@@ -847,7 +937,16 @@ _.extend(log, {
         'orange warning warn w',
         'green success ok g',
         'pink notice alert p',
-        'dark hint d'
+        'boldPink pp',
+        'dark hint d',
+        'greener gg',
+        'bright b',
+        'bloody bad ee',
+        'purple dp',
+        'brown br',
+        'sunny ww',
+        'darkRed er',
+        'boldBlue ii'
     ], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
         return [
             name,
@@ -1251,7 +1350,7 @@ Test = $prototype({
         _.each(this.logCalls, log.writeBackend().arity1);
     }
 });
-_.defineTagKeyword('recursive');
+_.defineTagKeyword('allowsRecursion');
 _.limitRecursion = function (max, fn, name) {
     if (!fn) {
         fn = max;
@@ -1285,10 +1384,10 @@ Testosterone.ValidatesRecursion = $trait({
             bar: function () {
                 this.bar();
             },
-            baz: $recursive({ max: 2 }, function () {
+            baz: $allowsRecursion({ max: 2 }, function () {
                 this.baz();
             }),
-            qux: $recursive(function () {
+            qux: $allowsRecursion(function () {
                 if (!this.quxCalled) {
                     this.quxCalled = true;
                     this.qux();
@@ -1303,31 +1402,27 @@ Testosterone.ValidatesRecursion = $trait({
     },
     $constructor: function () {
         _.each(this, function (member, name) {
-            if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$recursive || member.$recursive.max !== undefined)) {
+            if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
                 this[name] = Tags.modify(member, function (fn) {
-                    return _.limitRecursion(member && member.$recursive && member.$recursive.max || 0, fn, name);
+                    return _.limitRecursion(member && member.$allowsRecursion && member.$allowsRecursion.max || 0, fn, name);
                 });
             }
         }, this);
     }
 });
 (function () {
-    var colors = [
-        'red',
-        'green',
-        'blue',
-        'orange',
-        'pink'
-    ];
+    var colors = _.keys(_.omit(log.color, 'none'));
     colors.each(_.defineTagKeyword);
+    _.defineTagKeyword('verbose');
     Testosterone.LogsMethodCalls = $trait({
-        $test: function (testDone) {
+        $test: Platform.Browser ? function () {
+        } : function (testDone) {
             var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
             var Compo = $extends(Proto, {
-                foo: $log($red(function (_42) {
+                foo: $log($pink($verbose(function (_42) {
                     $assert(_42, 42);
                     return 24;
-                }))
+                })))
             });
             var compo = new Compo();
             var testContext = this;
@@ -1338,37 +1433,39 @@ Testosterone.ValidatesRecursion = $trait({
                     '\u2192 24',
                     ''
                 ]);
-                $assert(testContext.logCalls[0].color === log.color('red'));
+                $assert(testContext.logCalls[0].color === log.color('pink'));
                 testDone();
             });
         },
         $macroTags: {
             log: function (def, value, name) {
-                var param = _.isBoolean(value.$log) ? undefined : value.$log;
-                var protoName = '';
+                var param = (_.isBoolean(value.$log) ? undefined : value.$log) || (value.$verbose ? '{{$proto}}' : '');
+                var meta = {};
                 var color = _.find2(colors, function (color) {
                     return log.color(value['$' + color] && color) || false;
                 });
-                var template = _.template(param || '{{$proto}}');
-                $untag(def.$meta)(function (meta) {
-                    protoName = meta.name;
+                var template = param && _.template(param);
+                $untag(def.$meta)(function (x) {
+                    meta = x;
                 });
-                return Tags.modify(value, function (fn) {
+                return $prototype.impl.wrapMemberFunction(value, function (fn, name_) {
                     return function () {
                         var this_ = this, arguments_ = _.asArray(arguments);
-                        var this_dump = template(_.extend({ $proto: protoName }, _.map2(this, _.stringifyOneLine.arity1)));
-                        var args_dump = _.map(arguments_, _.stringifyOneLine).join(', ').quote('()');
+                        var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, _.stringifyOneLine.arity1))) || this.desc || '';
+                        var args_dump = _.map(arguments_, _.stringifyOneLine.arity1).join(', ').quote('()');
                         log.write(log.config({
                             color: color,
-                            location: true
+                            location: true,
+                            where: value.$verbose ? undefined : { calleeShort: meta.name }
                         }), _.nonempty([
                             this_dump,
-                            name
+                            name,
+                            name_
                         ]).join('.'), args_dump);
                         return log.withConfig({
                             indent: 1,
                             color: color,
-                            protoName: protoName
+                            protoName: meta.name
                         }, function () {
                             var numWritesBefore = log.impl.numWrites;
                             var result = fn.apply(this_, arguments_);
@@ -1702,7 +1799,7 @@ _.perfTest = function (arg, then) {
         return file.indexOf('underscore') >= 0 || file.indexOf('jquery') >= 0 || file.indexOf('useless') >= 0 || file.indexOf('mootools') >= 0;
     });
     $('head').append([
-        $('<style type="text/css">').text('@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \u2192 \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after { content: \', \'; }\n.panic-alert-error .test-log .location .file { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before  { content: \':\'; }\n.panic-alert-error .test-log .location .line { opacity: 0.25; }\n\n.panic-alert-error .test-log .log-entry .line:after { content: \' \'; }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { border-top: 1px solid #904C34; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n\n'),
+        $('<style type="text/css">').text('@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \u2192 \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after { content: \', \'; }\n.panic-alert-error .test-log .location .file { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before  { content: \':\'; }\n.panic-alert-error .test-log .location .line { opacity: 0.25; }\n\n.panic-alert-error .test-log .log-entry .line:after { content: \' \'; }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { border-top: 1px solid #904C34; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n\n'),
         $('<style type="text/css">').text('.useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;\n\t\t\t\t\t   white-space: pre;\n\t\t\t\t\t   font-family: Menlo, monospace;\n\t\t\t\t\t   font-size: 11px;\n\t\t\t\t\t   pointer-events: none;\n\t\t\t\t\t   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }')
     ]);
 }(jQuery));

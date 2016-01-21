@@ -2799,7 +2799,8 @@ _.deferTest (['type', 'stringify'], function () {
 
     _.builtInTypes = {
         'Event':         { target: $any },
-        'MutationEvent': { target: $any, attrName: $any, prevValue: $any } }
+        'MutationEvent': { target: $any, attrName: $any, prevValue: $any },
+        'Range':         { startContainer: $any, startOffset: $any, endContainer: $any, endOffset: $any } }
 
     _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
@@ -2859,7 +2860,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     if ((_.platform ().engine === 'browser')) {
                                         if (_.isTypeOf (Element, x)) {
-                                            return '<' + x.tagName.lowercase + '>' }
+                                            return x.tagName.lowercase.quote ('<>') } //x.outerHTML.substr (0, 10) + '…' }
                                         else if (_.isTypeOf (Text, x)) {
                                             return '@' + x.wholeText } }
 
@@ -4912,10 +4913,13 @@ _.withTest ('OOP', {
                 if (!def.isTraitOf) {
                     var macroTags = $untag (def.$macroTags || (base && base.$definition && base.$definition.$macroTags))
                     if (macroTags) {
-                        _.each (def, function (memberDef, memberName) {
+                        this.applyMacroTags (macroTags, def) } } return def } },
+
+            applyMacroTags: function (macroTags, def) {
+                 _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }) } } return def } },
+                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }); return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -5039,7 +5043,11 @@ _.withTest ('OOP', {
                 return _.extend (memberDefinitions, mergedKeywordGroups) },
 
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
-                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
+                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
+
+            wrapMemberFunction: function (member, wrapper) {
+                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), wrapper)) })) ||
+                       (_.isFunction ($untag (member)) && Tags.modify (member, wrapper)) || member } } }) })
 
 
 /*  $trait  A combinatoric-style alternative to inheritance.
@@ -6589,13 +6597,15 @@ _.tests.component = {
 
     'binding to streams with traits': function () {
 
+        _.defineTagKeyword ('dummy')
+
         $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
 
             var Trait = $trait ({
                 somethingHappened: $trigger () })
 
             var Other = $trait ({
-                somethingHappened: function (_42) { $assert (this, this_); $assert (_42, 42); mkay1 () } })
+                somethingHappened: $dummy (function (_42) { $assert (this, this_); $assert (_42, 42); mkay1 () }) })
 
             var Compo = $component ({
                 $traits: [Trait, Other],
@@ -6741,17 +6751,21 @@ _.tests.component = {
 
         var Trait =    $trait ({   $macroTags: {
                                         add_2: function (def, fn, name) {
-                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (2)) }) } } })
+                                            return Tags.modify (fn, function (fn) {
+                                                return fn.then (_.sum.$ (2)) }) } } })
 
         var Base = $component ({   $macroTags: {
                                         add_20: function (def, fn, name) {
-                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (20)) }) } } })
+                                            return Tags.modify (fn, function (fn) {
+                                                return fn.then (_.sum.$ (20)) }) } } })
 
         var Compo = $extends (Base, {
             $traits: [Trait],
             $macroTags: { dummy: function () {} },
 
              testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
+
+        log.i (Compo.testValue.toString ())
 
         $assert (42, Compo.testValue ())
         $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
@@ -6872,7 +6886,7 @@ Component = $prototype ({
             this.expandTraitsDependencies,
             this.mergeExtendables (base),
             this.contributeTraits (base),
-            this.evalPrototypeSpecificMacros (base),
+            this.mergeStreams,
             this.mergeBindables,
             this.generateBuiltInMembers (base),
             this.callStaticConstructor,
@@ -6900,47 +6914,49 @@ Component = $prototype ({
 
         mergeExtendables: function (base) { return function (def) {
 
-                _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
-
-                    //var ownPropName = '$own' +        _.capitalized (_.keywordName (name))
-                    //def[ownPropName] =       $builtin ($const (_.cloneDeep (value)))
-
-                    def[name]        = Tags.modify (                 value,
-                                            function (                      value) {
-                                                                            value =    _.extendedDeep (value, $untag (def[name] || {}))
-
-                                        _.each ($untag (def.$traits),
-                                                    function (trait) { if (!trait) {    log.e (def.$traits)
-                                                                                        throw new Error ('invalid $traits value') }
-                                                          var traitVal = trait.$definition [name]
-                                                          if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
-                                                                   return   value }) }); 
+                _.each (base.$definition, function (value, name) {
+                    if (value && value.$extendable) {
+                        def[name] = Tags.modify (                       value,
+                                        function (                      value) {
+                                                                        value =    _.extendedDeep (value, $untag (def[name] || {}))
+                                    _.each ($untag (def.$traits),
+                                                function (trait) { if (!trait) {    log.e (def.$traits)
+                                                                                    throw new Error ('invalid $traits value') }
+                                                      var traitVal = trait.$definition [name]
+                                                      if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
+                                                               return   value }) } }); 
                return def } },
 
-        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}
+        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}, streams = {}
 
-            _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
-                _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),
+            var macroTags = $untag (def.$macroTags)
+
+            _.each (_.pluck (traits, '$definition').concat (_.clone (def)), function (traitDef) {
+                _.each ((macroTags && this.applyMacroTags (macroTags, _.clone (traitDef))) || traitDef,
                     function (member, name) {
-                        if ($bindable.is (member)) {
-                             bindables[name] = member }
-                        (pool[name] || (pool[name] = [])).push (member) }) })
+                        if ($builtin.isNot (member) &&
+                            $builtin.isNot (def[name]) && (name !== 'constructor')) {
 
-            _.each (pool, function (members, name) {
-                var stream = _.find (members, Component.isStreamDefinition)
-                if (stream) {
+                            if ($bindable.is (member))                  { bindables[name] = member }
+                            if (Component.isStreamDefinition (member))  {   streams[name] = member }
+                            (pool[name] || (pool[name] = [])).push (member);    def[name] = member } }) }, this)
+
+            def.__bindables     = bindables
+            def.__streams       = streams
+            def.__membersByName = pool },
+
+        mergeStreams: function (def) { var pool = def.__membersByName
+
+            _.each (def.__streams, function (stream, name) {
+
                     var clonedStream = def[name] = Tags.clone (stream)
                         clonedStream.listeners = []
-                    _.each (members, function (member) {
-                                             if (member !== stream) {
-                                                 clonedStream.listeners.push (member) } }) }
-                else { if (!def[name]) {
-                            def[name] = pool[name][0] } } })
 
-            def.__bindables = bindables
-            def.__members = pool },
+                    _.each (pool[name], function (member) {
+                                            if (member !== stream) {
+                                                clonedStream.listeners.push ($untag (member)) } }) }); return def },
 
-        mergeBindables: function (def) { var pool  = def.__members
+        mergeBindables: function (def) { var pool = def.__membersByName
 
             _.each (def.__bindables, function (member, name) {
                 var bound = _.filter2 (_.bindable.hooks, function (hook, i) {
@@ -7890,7 +7906,7 @@ _.tests.log = {
 
         log.withConfig (log.indent (1), function () {
             log.pink ('Config stack + scopes + higher order API test:')
-            _.each ([5,6,7], logs.pink ('item =', log.color.blue)) }) } }
+            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) }) } }
 
 _.extend (
 
@@ -7917,15 +7933,30 @@ _.extend (log, {
     stackOffset: function (n) {
         return log.config ({ stackOffset: n }) },
 
-    color: _.extend (function (x) { return (log.color[x] || {}).color }, {
-                                                                    none:     log.config ({ color: { shell: '\u001B[0m',  css: '' } }),
-                                                                    red:      log.config ({ color: { shell: '\u001b[31m', css: 'crimson' } }),
-                                                                    blue:     log.config ({ color: { shell: '\u001b[36m', css: 'royalblue' } }),
-                                                                    darkBlue: log.config ({ color: { shell: '\u001b[36m\u001B[2m', css: 'rgba(65,105,225,0.5)' } }),
-                                                                    orange:   log.config ({ color: { shell: '\u001b[33m', css: 'saddlebrown' } }),
-                                                                    green:    log.config ({ color: { shell: '\u001b[32m', css: 'forestgreen' } }),
-                                                                    pink:     log.config ({ color: { shell: '\u001B[35m', css: 'magenta' } }),
-                                                                    dark:     log.config ({ color: { shell: '\u001B[0m\u001B[2m', css: 'rgba(0,0,0,0.25)' } }) }),
+    color: _.extend (function (x) { return (log.color[x] || {}).color },
+
+        _.object (
+        _.map  ([['none',        '0m',           ''],
+                 ['bloody',     ['31m', '1m'],   'crimson;font-weight:bold'],
+                 ['red',         '31m',          'crimson'],
+                 ['darkRed',    ['31m', '2m'],   'crimson'],
+                 ['blue',        '36m',          'royalblue'],
+                 ['boldBlue',   ['36m', '1m'],   'royalblue'],
+                 ['darkBlue',   ['36m', '2m'],   'rgba(65,105,225,0.5)'],
+                 ['sunny',      ['33m', '1m'],   'saddlebrown'],
+                 ['orange',      '33m',          'saddlebrown'],
+                 ['brown',      ['33m', '2m'],   'saddlebrown'],
+                 ['green',       '32m',          'forestgreen'],
+                 ['greener',    ['32m', '1m'],   'forestgreen;font-weight:bold'],
+                 ['pink',        '35m',          'magenta'],
+                 ['boldPink',   ['35m', '1m'],   'magenta'],
+                 ['purple',     ['35m', '2m'],   'magenta'],
+                 ['black',       '0m',           'black'],
+                 ['bright',     ['0m', '1m'],    'rgba(0,0,0);font-weight:bold'],
+                 ['dark',       ['0m', '2m'],    'rgba(0,0,0,0.25)']],
+
+             function (def) {
+                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
 
     /*  Need one? Take! I have plenty of them!
      */
@@ -8020,7 +8051,7 @@ _.extend (log, {
                                                                                             emit (newline) } }) }))))
 
             var totalText       = _.pluck (runs, 'text').join ('')
-            var where           = config.where || $callStack[config.stackOffset] || {}
+            var where           = config.where || log.impl.walkStack ($callStack) || {}
             var indentation     = _.times (config.indent, _.constant ('\t')).join ('')
 
             writeBackend ({
@@ -8039,6 +8070,9 @@ _.extend (log, {
 
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
         
+        walkStack: function (stack) {
+            return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
+
         defaultWriteBackend: function (params) {
 
             var codeLocation    = params.codeLocation,
@@ -8046,10 +8080,10 @@ _.extend (log, {
 
             if (Platform.NodeJS) {
                 console.log (_.map (params.lines, function (line) {
-                    return _.map (line, function (run) {
+                    return params.indentation + _.map (line, function (run) {
                         return (run.config.color
-                                    ? (run.config.color.shell + params.indentation + run.text + '\u001b[0m')
-                                    : (                         params.indentation + run.text)) }).join ('') }).join ('\n'),
+                                    ? (run.config.color.shell + run.text + '\u001b[0m')
+                                    : (                         run.text)) }).join ('') }).join ('\n'),
 
                                     log.color ('dark').shell + codeLocation + '\u001b[0m',
                                     trailNewlines) }
@@ -8138,7 +8172,16 @@ _.extend (log, {
                                           'orange warning warn w',
                                              'green success ok g',
                                             'pink notice alert p',
-                                                    'dark hint d' ],
+                                                    'boldPink pp',
+                                                    'dark hint d',
+                                                     'greener gg',
+                                                       'bright b',
+                                                  'bloody bad ee',
+                                                       'purple dp',
+                                                        'brown br',
+                                                        'sunny ww',
+                                                      'darkRed er',
+                                                     'boldBlue ii' ],
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
                                                   function (name,                                   i,                         names      )  {
@@ -8603,7 +8646,7 @@ Test = $prototype ({
 
 /*
  */
-_.defineTagKeyword ('recursive')
+_.defineTagKeyword ('allowsRecursion')
 
 _.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
                         var depth       = -1
@@ -8627,8 +8670,8 @@ Testosterone.ValidatesRecursion = $trait ({
 
             foo: function () {},
             bar: function () { this.bar () },
-            baz: $recursive ({ max: 2 }, function () { this.baz () }),
-            qux: $recursive (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
+            baz: $allowsRecursion ({ max: 2 }, function () { this.baz () }),
+            qux: $allowsRecursion (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
 
                        test.foo ()
         $assertThrows (test.bar, { message: 'bar: max recursion depth reached (0)' })
@@ -8638,52 +8681,57 @@ Testosterone.ValidatesRecursion = $trait ({
 
     $constructor: function () {
         _.each (this, function (member, name) {
-            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$recursive || (member.$recursive.max !== undefined))) {
+            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$allowsRecursion || (member.$allowsRecursion.max !== undefined))) {
                 this[name] = Tags.modify (member, function (fn) {
-                    return _.limitRecursion ((member && member.$recursive && member.$recursive.max) || 0, fn, name) }) } }, this) } })
+                    return _.limitRecursion ((member && member.$allowsRecursion && member.$allowsRecursion.max) || 0, fn, name) }) } }, this) } })
 
 /*  $log for methods
  */
-;(function () { var colors = ['red', 'green', 'blue', 'orange', 'pink']
+;(function () { var colors = _.keys (_.omit (log.color, 'none'))
                     colors.each (_.defineTagKeyword)
+
+    _.defineTagKeyword ('verbose')
 
     Testosterone.LogsMethodCalls = $trait ({
 
-        $test: function (testDone) {
-                
-            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-            var Compo = $extends (Proto, {
-                                foo: $log ($red (function (_42) { $assert (_42, 42); return 24 })) })
+        $test: Platform.Browser ? (function () {}) : function (testDone) {
 
-            var compo = new Compo ()
-            var testContext = this
+                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+                    var Compo = $extends (Proto, {
+                                        foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
 
-            Compo.$meta (function () {
-                $assert (compo.foo (42), 24)
-                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
-                $assert (testContext.logCalls[0].color === log.color ('red'))
-                testDone () }) },
+                    var compo = new Compo ()
+                    var testContext = this
+
+                    Compo.$meta (function () {
+                        $assert (compo.foo (42), 24)
+                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                        $assert (testContext.logCalls[0].color === log.color ('pink'))
+                        testDone () }) },
 
         $macroTags: {
 
-            log: function (def, value, name) {  var param       = _.isBoolean (value.$log) ? undefined : value.$log
-                                                var protoName   = ''
-                                                var color       = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
-                                                var template    = _.template (param || '{{$proto}}')
+            log: function (def, value, name) {  var param         = (_.isBoolean (value.$log) ? undefined : value.$log) || (value.$verbose ? '{{$proto}}' : '')
+                                                var meta          = {}
+                                                var color         = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
+                                                var template      = param && _.template (param)
 
-                $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
+                $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
 
-                return Tags.modify (value, function (fn) { return function () { var this_      = this,
-                                                                                    arguments_ = _.asArray (arguments)
+                return $prototype.impl.wrapMemberFunction (value, function (fn, name_) { return function () { var this_      = this,
+                                                                                                                  arguments_ = _.asArray (arguments)
 
-                        var this_dump = template (_.extend ({ $proto: protoName }, _.map2 (this, _.stringifyOneLine.arity1)))
-                        var args_dump = _.map (arguments_, _.stringifyOneLine).join (', ').quote ('()')
+                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
+                        var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
 
-                    log.write (log.config ({ color: color, location: true }), _.nonempty ([this_dump, name]).join ('.'), args_dump)
+                    log.write (log.config ({
+                        color: color,
+                        location: true,
+                        where: value.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
 
                     return log.withConfig ({ indent: 1,
                                              color: color,
-                                             protoName: protoName }, function () {
+                                             protoName: meta.name }, function () {
 
                                                                         var numWritesBefore = log.impl.numWrites
                                                                         var result          = fn.apply (this_, arguments_);          

@@ -1422,6 +1422,12 @@ _.builtInTypes = {
         target: $any,
         attrName: $any,
         prevValue: $any
+    },
+    'Range': {
+        startContainer: $any,
+        startOffset: $any,
+        endContainer: $any,
+        endOffset: $any
     }
 };
 _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
@@ -1463,7 +1469,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             var pretty = cfg.pretty || false;
             if (_.platform().engine === 'browser') {
                 if (_.isTypeOf(Element, x)) {
-                    return '<' + x.tagName.lowercase + '>';
+                    return x.tagName.lowercase.quote('<>');
                 } else if (_.isTypeOf(Text, x)) {
                     return '@' + x.wholeText;
                 }
@@ -2599,18 +2605,22 @@ _.extend($prototype, {
                 if (!def.isTraitOf) {
                     var macroTags = $untag(def.$macroTags || base && base.$definition && base.$definition.$macroTags);
                     if (macroTags) {
-                        _.each(def, function (memberDef, memberName) {
-                            _.each(macroTags, function (macroFn, tagName) {
-                                memberDef = def[memberName];
-                                if (_.keyword(tagName) in memberDef) {
-                                    def[memberName] = macroFn.call(macroTags, def, memberDef, memberName) || memberDef;
-                                }
-                            });
-                        });
+                        this.applyMacroTags(macroTags, def);
                     }
                 }
                 return def;
             };
+        },
+        applyMacroTags: function (macroTags, def) {
+            _.each(def, function (memberDef, memberName) {
+                _.each(macroTags, function (macroFn, tagName) {
+                    memberDef = def[memberName];
+                    if (_.keyword(tagName) in memberDef) {
+                        def[memberName] = macroFn.call(macroTags, def, memberDef, memberName) || memberDef;
+                    }
+                });
+            });
+            return def;
         },
         generateCustomCompilerImpl: function (base) {
             return function (def) {
@@ -2775,6 +2785,11 @@ _.extend($prototype, {
         isTagKeywordGroup: function (value_, key) {
             var value = Tags.unwrap(value_);
             return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
+        },
+        wrapMemberFunction: function (member, wrapper) {
+            return $property.is(member) && Tags.modify(member, function (value) {
+                return _.extend(value, _.map2(_.pick(value, 'get', 'set'), wrapper));
+            }) || _.isFunction($untag(member)) && Tags.modify(member, wrapper) || member;
         }
     }
 });
@@ -3758,7 +3773,7 @@ Component = $prototype({
     $macroTags: $extendable({}),
     $impl: {
         sequence: function (def, base) {
-            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
         },
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
@@ -3785,56 +3800,63 @@ Component = $prototype({
         },
         mergeExtendables: function (base) {
             return function (def) {
-                _.each(_.pick(base.$definition, $extendable.is), function (value, name) {
-                    def[name] = Tags.modify(value, function (value) {
-                        value = _.extendedDeep(value, $untag(def[name] || {}));
-                        _.each($untag(def.$traits), function (trait) {
-                            if (!trait) {
-                                log.e(def.$traits);
-                                throw new Error('invalid $traits value');
-                            }
-                            var traitVal = trait.$definition[name];
-                            if (traitVal) {
-                                value = _.extendedDeep($untag(traitVal), value);
-                            }
+                _.each(base.$definition, function (value, name) {
+                    if (value && value.$extendable) {
+                        def[name] = Tags.modify(value, function (value) {
+                            value = _.extendedDeep(value, $untag(def[name] || {}));
+                            _.each($untag(def.$traits), function (trait) {
+                                if (!trait) {
+                                    log.e(def.$traits);
+                                    throw new Error('invalid $traits value');
+                                }
+                                var traitVal = trait.$definition[name];
+                                if (traitVal) {
+                                    value = _.extendedDeep($untag(traitVal), value);
+                                }
+                            });
+                            return value;
                         });
-                        return value;
-                    });
+                    }
                 });
                 return def;
             };
         },
         mergeTraitsMembers: function (def, traits) {
-            var pool = {}, bindables = {};
-            _.each([def].concat(_.pluck(traits, '$definition')), function (def) {
-                _.each(_.omit(def, _.or($builtin.matches, _.key(_.equals('constructor')))), function (member, name) {
-                    if ($bindable.is(member)) {
-                        bindables[name] = member;
+            var pool = {}, bindables = {}, streams = {};
+            var macroTags = $untag(def.$macroTags);
+            _.each(_.pluck(traits, '$definition').concat(_.clone(def)), function (traitDef) {
+                _.each(macroTags && this.applyMacroTags(macroTags, _.clone(traitDef)) || traitDef, function (member, name) {
+                    if ($builtin.isNot(member) && $builtin.isNot(def[name]) && name !== 'constructor') {
+                        if ($bindable.is(member)) {
+                            bindables[name] = member;
+                        }
+                        if (Component.isStreamDefinition(member)) {
+                            streams[name] = member;
+                        }
+                        (pool[name] || (pool[name] = [])).push(member);
+                        def[name] = member;
                     }
-                    (pool[name] || (pool[name] = [])).push(member);
+                });
+            }, this);
+            def.__bindables = bindables;
+            def.__streams = streams;
+            def.__membersByName = pool;
+        },
+        mergeStreams: function (def) {
+            var pool = def.__membersByName;
+            _.each(def.__streams, function (stream, name) {
+                var clonedStream = def[name] = Tags.clone(stream);
+                clonedStream.listeners = [];
+                _.each(pool[name], function (member) {
+                    if (member !== stream) {
+                        clonedStream.listeners.push($untag(member));
+                    }
                 });
             });
-            _.each(pool, function (members, name) {
-                var stream = _.find(members, Component.isStreamDefinition);
-                if (stream) {
-                    var clonedStream = def[name] = Tags.clone(stream);
-                    clonedStream.listeners = [];
-                    _.each(members, function (member) {
-                        if (member !== stream) {
-                            clonedStream.listeners.push(member);
-                        }
-                    });
-                } else {
-                    if (!def[name]) {
-                        def[name] = pool[name][0];
-                    }
-                }
-            });
-            def.__bindables = bindables;
-            def.__members = pool;
+            return def;
         },
         mergeBindables: function (def) {
-            var pool = def.__members;
+            var pool = def.__membersByName;
             _.each(def.__bindables, function (member, name) {
                 var bound = _.filter2(_.bindable.hooks, function (hook, i) {
                     var bound = pool[_.bindable.hooksShort[i] + name.capitalized];

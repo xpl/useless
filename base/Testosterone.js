@@ -391,7 +391,7 @@ Test = $prototype ({
 
 /*
  */
-_.defineTagKeyword ('recursive')
+_.defineTagKeyword ('allowsRecursion')
 
 _.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
                         var depth       = -1
@@ -415,8 +415,8 @@ Testosterone.ValidatesRecursion = $trait ({
 
             foo: function () {},
             bar: function () { this.bar () },
-            baz: $recursive ({ max: 2 }, function () { this.baz () }),
-            qux: $recursive (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
+            baz: $allowsRecursion ({ max: 2 }, function () { this.baz () }),
+            qux: $allowsRecursion (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
 
                        test.foo ()
         $assertThrows (test.bar, { message: 'bar: max recursion depth reached (0)' })
@@ -426,52 +426,57 @@ Testosterone.ValidatesRecursion = $trait ({
 
     $constructor: function () {
         _.each (this, function (member, name) {
-            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$recursive || (member.$recursive.max !== undefined))) {
+            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$allowsRecursion || (member.$allowsRecursion.max !== undefined))) {
                 this[name] = Tags.modify (member, function (fn) {
-                    return _.limitRecursion ((member && member.$recursive && member.$recursive.max) || 0, fn, name) }) } }, this) } })
+                    return _.limitRecursion ((member && member.$allowsRecursion && member.$allowsRecursion.max) || 0, fn, name) }) } }, this) } })
 
 /*  $log for methods
  */
-;(function () { var colors = ['red', 'green', 'blue', 'orange', 'pink']
+;(function () { var colors = _.keys (_.omit (log.color, 'none'))
                     colors.each (_.defineTagKeyword)
+
+    _.defineTagKeyword ('verbose')
 
     Testosterone.LogsMethodCalls = $trait ({
 
-        $test: function (testDone) {
-                
-            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-            var Compo = $extends (Proto, {
-                                foo: $log ($red (function (_42) { $assert (_42, 42); return 24 })) })
+        $test: Platform.Browser ? (function () {}) : function (testDone) {
 
-            var compo = new Compo ()
-            var testContext = this
+                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+                    var Compo = $extends (Proto, {
+                                        foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
 
-            Compo.$meta (function () {
-                $assert (compo.foo (42), 24)
-                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
-                $assert (testContext.logCalls[0].color === log.color ('red'))
-                testDone () }) },
+                    var compo = new Compo ()
+                    var testContext = this
+
+                    Compo.$meta (function () {
+                        $assert (compo.foo (42), 24)
+                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                        $assert (testContext.logCalls[0].color === log.color ('pink'))
+                        testDone () }) },
 
         $macroTags: {
 
-            log: function (def, value, name) {  var param       = _.isBoolean (value.$log) ? undefined : value.$log
-                                                var protoName   = ''
-                                                var color       = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
-                                                var template    = _.template (param || '{{$proto}}')
+            log: function (def, value, name) {  var param         = (_.isBoolean (value.$log) ? undefined : value.$log) || (value.$verbose ? '{{$proto}}' : '')
+                                                var meta          = {}
+                                                var color         = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
+                                                var template      = param && _.template (param)
 
-                $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
+                $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
 
-                return Tags.modify (value, function (fn) { return function () { var this_      = this,
-                                                                                    arguments_ = _.asArray (arguments)
+                return $prototype.impl.wrapMemberFunction (value, function (fn, name_) { return function () { var this_      = this,
+                                                                                                                  arguments_ = _.asArray (arguments)
 
-                        var this_dump = template (_.extend ({ $proto: protoName }, _.map2 (this, _.stringifyOneLine.arity1)))
-                        var args_dump = _.map (arguments_, _.stringifyOneLine).join (', ').quote ('()')
+                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
+                        var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
 
-                    log.write (log.config ({ color: color, location: true }), _.nonempty ([this_dump, name]).join ('.'), args_dump)
+                    log.write (log.config ({
+                        color: color,
+                        location: true,
+                        where: value.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
 
                     return log.withConfig ({ indent: 1,
                                              color: color,
-                                             protoName: protoName }, function () {
+                                             protoName: meta.name }, function () {
 
                                                                         var numWritesBefore = log.impl.numWrites
                                                                         var result          = fn.apply (this_, arguments_);          

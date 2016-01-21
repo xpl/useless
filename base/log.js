@@ -61,7 +61,7 @@ _.tests.log = {
 
         log.withConfig (log.indent (1), function () {
             log.pink ('Config stack + scopes + higher order API test:')
-            _.each ([5,6,7], logs.pink ('item =', log.color.blue)) }) } }
+            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) }) } }
 
 _.extend (
 
@@ -88,15 +88,30 @@ _.extend (log, {
     stackOffset: function (n) {
         return log.config ({ stackOffset: n }) },
 
-    color: _.extend (function (x) { return (log.color[x] || {}).color }, {
-                                                                    none:     log.config ({ color: { shell: '\u001B[0m',  css: '' } }),
-                                                                    red:      log.config ({ color: { shell: '\u001b[31m', css: 'crimson' } }),
-                                                                    blue:     log.config ({ color: { shell: '\u001b[36m', css: 'royalblue' } }),
-                                                                    darkBlue: log.config ({ color: { shell: '\u001b[36m\u001B[2m', css: 'rgba(65,105,225,0.5)' } }),
-                                                                    orange:   log.config ({ color: { shell: '\u001b[33m', css: 'saddlebrown' } }),
-                                                                    green:    log.config ({ color: { shell: '\u001b[32m', css: 'forestgreen' } }),
-                                                                    pink:     log.config ({ color: { shell: '\u001B[35m', css: 'magenta' } }),
-                                                                    dark:     log.config ({ color: { shell: '\u001B[0m\u001B[2m', css: 'rgba(0,0,0,0.25)' } }) }),
+    color: _.extend (function (x) { return (log.color[x] || {}).color },
+
+        _.object (
+        _.map  ([['none',        '0m',           ''],
+                 ['bloody',     ['31m', '1m'],   'crimson;font-weight:bold'],
+                 ['red',         '31m',          'crimson'],
+                 ['darkRed',    ['31m', '2m'],   'crimson'],
+                 ['blue',        '36m',          'royalblue'],
+                 ['boldBlue',   ['36m', '1m'],   'royalblue'],
+                 ['darkBlue',   ['36m', '2m'],   'rgba(65,105,225,0.5)'],
+                 ['sunny',      ['33m', '1m'],   'saddlebrown'],
+                 ['orange',      '33m',          'saddlebrown'],
+                 ['brown',      ['33m', '2m'],   'saddlebrown'],
+                 ['green',       '32m',          'forestgreen'],
+                 ['greener',    ['32m', '1m'],   'forestgreen;font-weight:bold'],
+                 ['pink',        '35m',          'magenta'],
+                 ['boldPink',   ['35m', '1m'],   'magenta'],
+                 ['purple',     ['35m', '2m'],   'magenta'],
+                 ['black',       '0m',           'black'],
+                 ['bright',     ['0m', '1m'],    'rgba(0,0,0);font-weight:bold'],
+                 ['dark',       ['0m', '2m'],    'rgba(0,0,0,0.25)']],
+
+             function (def) {
+                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
 
     /*  Need one? Take! I have plenty of them!
      */
@@ -191,7 +206,7 @@ _.extend (log, {
                                                                                             emit (newline) } }) }))))
 
             var totalText       = _.pluck (runs, 'text').join ('')
-            var where           = config.where || $callStack[config.stackOffset] || {}
+            var where           = config.where || log.impl.walkStack ($callStack) || {}
             var indentation     = _.times (config.indent, _.constant ('\t')).join ('')
 
             writeBackend ({
@@ -210,6 +225,9 @@ _.extend (log, {
 
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
         
+        walkStack: function (stack) {
+            return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
+
         defaultWriteBackend: function (params) {
 
             var codeLocation    = params.codeLocation,
@@ -217,10 +235,10 @@ _.extend (log, {
 
             if (Platform.NodeJS) {
                 console.log (_.map (params.lines, function (line) {
-                    return _.map (line, function (run) {
+                    return params.indentation + _.map (line, function (run) {
                         return (run.config.color
-                                    ? (run.config.color.shell + params.indentation + run.text + '\u001b[0m')
-                                    : (                         params.indentation + run.text)) }).join ('') }).join ('\n'),
+                                    ? (run.config.color.shell + run.text + '\u001b[0m')
+                                    : (                         run.text)) }).join ('') }).join ('\n'),
 
                                     log.color ('dark').shell + codeLocation + '\u001b[0m',
                                     trailNewlines) }
@@ -309,7 +327,16 @@ _.extend (log, {
                                           'orange warning warn w',
                                              'green success ok g',
                                             'pink notice alert p',
-                                                    'dark hint d' ],
+                                                    'boldPink pp',
+                                                    'dark hint d',
+                                                     'greener gg',
+                                                       'bright b',
+                                                  'bloody bad ee',
+                                                       'purple dp',
+                                                        'brown br',
+                                                        'sunny ww',
+                                                      'darkRed er',
+                                                     'boldBlue ii' ],
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
                                                   function (name,                                   i,                         names      )  {

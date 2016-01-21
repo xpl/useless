@@ -357,13 +357,15 @@ _.tests.component = {
 
     'binding to streams with traits': function () {
 
+        _.defineTagKeyword ('dummy')
+
         $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
 
             var Trait = $trait ({
                 somethingHappened: $trigger () })
 
             var Other = $trait ({
-                somethingHappened: function (_42) { $assert (this, this_); $assert (_42, 42); mkay1 () } })
+                somethingHappened: $dummy (function (_42) { $assert (this, this_); $assert (_42, 42); mkay1 () }) })
 
             var Compo = $component ({
                 $traits: [Trait, Other],
@@ -509,17 +511,21 @@ _.tests.component = {
 
         var Trait =    $trait ({   $macroTags: {
                                         add_2: function (def, fn, name) {
-                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (2)) }) } } })
+                                            return Tags.modify (fn, function (fn) {
+                                                return fn.then (_.sum.$ (2)) }) } } })
 
         var Base = $component ({   $macroTags: {
                                         add_20: function (def, fn, name) {
-                                            return Tags.modify (fn, function (fn) { return fn.then (_.sum.$ (20)) }) } } })
+                                            return Tags.modify (fn, function (fn) {
+                                                return fn.then (_.sum.$ (20)) }) } } })
 
         var Compo = $extends (Base, {
             $traits: [Trait],
             $macroTags: { dummy: function () {} },
 
              testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
+
+        log.i (Compo.testValue.toString ())
 
         $assert (42, Compo.testValue ())
         $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
@@ -640,7 +646,7 @@ Component = $prototype ({
             this.expandTraitsDependencies,
             this.mergeExtendables (base),
             this.contributeTraits (base),
-            this.evalPrototypeSpecificMacros (base),
+            this.mergeStreams,
             this.mergeBindables,
             this.generateBuiltInMembers (base),
             this.callStaticConstructor,
@@ -668,47 +674,49 @@ Component = $prototype ({
 
         mergeExtendables: function (base) { return function (def) {
 
-                _.each (_.pick (base.$definition, $extendable.is), function (value, name) {
-
-                    //var ownPropName = '$own' +        _.capitalized (_.keywordName (name))
-                    //def[ownPropName] =       $builtin ($const (_.cloneDeep (value)))
-
-                    def[name]        = Tags.modify (                 value,
-                                            function (                      value) {
-                                                                            value =    _.extendedDeep (value, $untag (def[name] || {}))
-
-                                        _.each ($untag (def.$traits),
-                                                    function (trait) { if (!trait) {    log.e (def.$traits)
-                                                                                        throw new Error ('invalid $traits value') }
-                                                          var traitVal = trait.$definition [name]
-                                                          if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
-                                                                   return   value }) }); 
+                _.each (base.$definition, function (value, name) {
+                    if (value && value.$extendable) {
+                        def[name] = Tags.modify (                       value,
+                                        function (                      value) {
+                                                                        value =    _.extendedDeep (value, $untag (def[name] || {}))
+                                    _.each ($untag (def.$traits),
+                                                function (trait) { if (!trait) {    log.e (def.$traits)
+                                                                                    throw new Error ('invalid $traits value') }
+                                                      var traitVal = trait.$definition [name]
+                                                      if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
+                                                               return   value }) } }); 
                return def } },
 
-        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}
+        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}, streams = {}
 
-            _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
-                _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),
+            var macroTags = $untag (def.$macroTags)
+
+            _.each (_.pluck (traits, '$definition').concat (_.clone (def)), function (traitDef) {
+                _.each ((macroTags && this.applyMacroTags (macroTags, _.clone (traitDef))) || traitDef,
                     function (member, name) {
-                        if ($bindable.is (member)) {
-                             bindables[name] = member }
-                        (pool[name] || (pool[name] = [])).push (member) }) })
+                        if ($builtin.isNot (member) &&
+                            $builtin.isNot (def[name]) && (name !== 'constructor')) {
 
-            _.each (pool, function (members, name) {
-                var stream = _.find (members, Component.isStreamDefinition)
-                if (stream) {
+                            if ($bindable.is (member))                  { bindables[name] = member }
+                            if (Component.isStreamDefinition (member))  {   streams[name] = member }
+                            (pool[name] || (pool[name] = [])).push (member);    def[name] = member } }) }, this)
+
+            def.__bindables     = bindables
+            def.__streams       = streams
+            def.__membersByName = pool },
+
+        mergeStreams: function (def) { var pool = def.__membersByName
+
+            _.each (def.__streams, function (stream, name) {
+
                     var clonedStream = def[name] = Tags.clone (stream)
                         clonedStream.listeners = []
-                    _.each (members, function (member) {
-                                             if (member !== stream) {
-                                                 clonedStream.listeners.push (member) } }) }
-                else { if (!def[name]) {
-                            def[name] = pool[name][0] } } })
 
-            def.__bindables = bindables
-            def.__members = pool },
+                    _.each (pool[name], function (member) {
+                                            if (member !== stream) {
+                                                clonedStream.listeners.push ($untag (member)) } }) }); return def },
 
-        mergeBindables: function (def) { var pool  = def.__members
+        mergeBindables: function (def) { var pool = def.__membersByName
 
             _.each (def.__bindables, function (member, name) {
                 var bound = _.filter2 (_.bindable.hooks, function (hook, i) {

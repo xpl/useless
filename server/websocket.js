@@ -30,7 +30,7 @@ ServerWebsocket = module.exports = $trait ({
 
         _.invoke (peers, 'send', msg) },
 
-    afterInit: function (then) { log.info ('Starting WebSocket')
+    afterInit: function (then) { log.minor ('Starting WebSocket...')
 
         var websocket = require ('websocket')
         

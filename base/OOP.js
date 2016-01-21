@@ -437,10 +437,13 @@ _.withTest ('OOP', {
                 if (!def.isTraitOf) {
                     var macroTags = $untag (def.$macroTags || (base && base.$definition && base.$definition.$macroTags))
                     if (macroTags) {
-                        _.each (def, function (memberDef, memberName) {
+                        this.applyMacroTags (macroTags, def) } } return def } },
+
+            applyMacroTags: function (macroTags, def) {
+                 _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }) } } return def } },
+                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }); return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -564,7 +567,11 @@ _.withTest ('OOP', {
                 return _.extend (memberDefinitions, mergedKeywordGroups) },
 
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
-                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) } } }) })
+                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
+
+            wrapMemberFunction: function (member, wrapper) {
+                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), wrapper)) })) ||
+                       (_.isFunction ($untag (member)) && Tags.modify (member, wrapper)) || member } } }) })
 
 
 /*  $trait  A combinatoric-style alternative to inheritance.
