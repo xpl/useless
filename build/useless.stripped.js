@@ -4249,6 +4249,13 @@ Component = $prototype({
                     if (!T.__tempId) {
                         T.__tempId = lastId++;
                     }
+                    _.reduce2(depends, function (TBefore, TAfter) {
+                        edges.push([
+                            TAfter,
+                            TBefore
+                        ]);
+                        return TAfter;
+                    });
                     _.each(depends, function (TSuper) {
                         edges.push([
                             T,
