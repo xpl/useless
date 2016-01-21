@@ -33,10 +33,10 @@ BuildApp = $singleton (Component, {
         this.buildPath  =  path.resolve (process.cwd (), _.first (directories['true'])  || this.buildPath)
 
         if (!this.args.spawnedBySupervisor) {
-            log.g (log.config ({ pretty: true }),
-                    _.extend ({ keys: args.keysDashed },
-                    _.pick (this, 'inputFiles',
-                                  'buildPath'))) } },
+            log.pink (log.config ({ pretty: true }),
+                        _.extend ({ keys: args.keysDashed },
+                        _.pick (this, 'inputFiles',
+                                      'buildPath'))) } },
 
 /*  ======================================================================== */
 

@@ -1,6 +1,6 @@
  module.exports = NiceExceptions = $trait ({
 
-    beforeInit: function (then) { log.info ('Setting up exception handling')
+    beforeInit: function (then) { log.minor ('Setting up exception handling')
 
         _.withUncaughtExceptionHandler (this.$ (function (e) {
 
