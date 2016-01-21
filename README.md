@@ -8,7 +8,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
-
 # New features (update)
 
 ## $depends for dependency resolving in traits
@@ -35,41 +34,23 @@ After:
 ```javascript
 Tests = $trait ({
 	
-	$depends: [
-	
-		ExceptionHandling,
-		CommandLineArguments,
-		...
+	$depends: [ExceptionHandling, CommandLineArguments, ...
 ```  
 ```javascript
 Supervisor = $trait ({
 
-	$depends: [
-	
-		CommandLineArguments,
-		RequireThatFetchesFromNPM,
-		...
+	$depends: [CommandLineArguments, RequireThatFetchesFromNPM, ...
 ```
 ```javascript
 App = $singleton (Component, {
 
-	$depends: [
-	
-		Tests,
-		Supervisor
-        	...
+	$depends: [Tests, Supervisor, ...
 ```
 
 ### Browser builds
 
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
 * Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
-
-### Dependencies and limitations
-
-Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology. The rest of the code base should be cross-browser (at least it attemps to).
-
-Database-related utility depends on MongoDB (not included in `npm` dependency list, should install manually). Anyway, it does not work well at the moment...
 
 ### Running example app
 
