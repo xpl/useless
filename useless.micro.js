@@ -14,7 +14,6 @@ if (typeof require !== 'undefined') {
     _ = require ('underscore')
     $include = require }
 
-
 /*  Bootstrap code (couple of absolutely urgent fixes to underscore.js)
     ======================================================================== */
 
@@ -30,6 +29,8 @@ _ = (function () {
         throw new Error ('_.zipWith broken') }
 
     return _ }) ()
+
+_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g }
 
 /*  Tests stub
  */
@@ -49,11 +50,11 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     $include ('./base/tier0/function')    // function-centric utilities
     $include ('./base/tier0/busybox')     // a vocabulary for functional expressions that process real stuff
     $include ('./base/tier0/type')        // type system extensions
-    $include ('./base/tier0/stringify')   // configurable object printer
     $include ('./base/tier0/stdlib')      // consider it as underscore 2.0
     $include ('./base/tier0/properties')  // properties 2.0
     $include ('./base/tier0/keywords')    // metaprogramming utility
-//  $include ('./base/tier0/typeMatch')   // advanced type system extensions
+    $include ('./base/tier0/typeMatch')   // advanced type system extensions
+    $include ('./base/tier0/stringify')   // configurable object printer
 
     $include ('./base/CPS')
 

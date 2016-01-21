@@ -48,12 +48,21 @@ _.withTest (['stdlib', 'map2'], function () {
     $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
     $assert (_.map2 ({ foo: 'foo' }, plusBar),  { foo: 'foobar' })
 
+    $assert ([1,10,2,20,3,30],           _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
+    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
                                      _.isArray (value) ? _.map       (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
-                    _.mapWith  = _.flip2 (_.map)) })
+                    _.mapWith  = _.flip2 (_.map2))
+
+                _.scatter = function (obj, elem) { var result = undefined
+                    _.map2 (obj, function (x, i) {
+                                     elem (x, i, function (v, k) {
+                                                    if (arguments.length < 2) { (result = result || []).push (v) }  
+                                                                         else { (result = result || {})[k] = v } }) }); return result } })
 
 
 /*  Semantically-correct abstract map (maps any type of value)
@@ -370,11 +379,19 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
             var plus    = { foo:42, bar: { baz:1 } }
             var gives   = { foo:42, bar: { baz:1, qux:1 }}
 
-            $assert (_.extendedDeep (input, plus), gives) }) ()]  }, function () {
+            $assert (_.extendedDeep (input, plus), gives) }),
+
+        /*  Referentially-transparent version (to be used in functional expressions)
+         */
+        (function () {
+            var x = { foo: 1 }
+
+            $assert (_.extended (x, { bar: 1 }), { foo: 1, bar: 1 })
+            $assert (            x,              { foo: 1 }) }) ]  }, function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
 
-    _.extended = _.partial (_.extend, {}) // referentially-transparent version
+    _.extended = $restArg (function () { return _.extend.apply (this, [{}].concat (_.asArray (arguments))) }) // referentially-transparent version
 
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
@@ -406,9 +423,14 @@ _.withTest (['stdlib', 'findFind'], function () {
 function () {
 
     _.find2 = function (value, pred) {
-        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
-                          if (typeof x !== 'boolean') { return x }
-                                 else if (x === true) { return value[i] } } }
+        if (_.isArray (value)) {                                
+            for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
+                              if (typeof x !== 'boolean') { return x }
+                                     else if (x === true) { return value[i] } } }
+        else if (_.isStrictlyObject (value)) {        
+            for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k], k, value)
+                                                     if (typeof x !== 'boolean') { return x }
+                                                            else if (x === true) { return value[k] } } } }
 
     _.findFind = function (obj, pred_) {
                     return _.hyperOperator (_.unary,
@@ -569,25 +591,26 @@ _.withTest (['stdlib', 'quote'], function () {
 _.withTest (['stdlib', 'partition2'], function () {
 
         $assert (_.partition2 (
-                    [ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty),
-                    [['a', 'b', 'c'], [undefined, undefined], ['d']]) }, function () {
+                    [ 'a', 'b', 'c',   undefined, undefined,   42], _.isNonempty),
+                    [['a', 'b', 'c'], [undefined, undefined], [42]])
 
-    _.partition2 = function (arr, pred) { var prevColor = undefined
+        $assert (_.partition3 ([ 'a', 'b', 'c', undefined, undefined, 42], _.typeOf),
+                [{ label: 'string',    items: ['a', 'b', 'c'] },
+                 { label: 'undefined', items: [undefined, undefined] },
+                 { label: 'number',    items: [42] }]) }, function () {
 
-            var result = []
-            var group = []
+    _.partition2 = function (arr, pred) { return _.pluck (_.partition3 (arr, pred), 'items') }
 
-            _.each (arr, function (x) { var color = pred (x)
-                if (prevColor != color && group.length) {
-                    result.push (group)
-                    group = [] }
-                group.push (x)
-                prevColor = color })
+    _.partition3 = function (arr, pred) { var spans = [],
+                                              span  = { label: undefined, items: [arr.first] }
 
-            if (group.length) {
-                result.push (group) }
+            _.each (arr, function (x) { var label = pred (x)
+                if ((span.label != label) &&
+                     span.items.length) { spans.push (span = { label: label, items: [x] }) }
+                                   else { span.items.push (x) } })
 
-            return result } })
+            return (span.length && spans.push (span)),
+                    spans } })
 
 /*  Merges arrays, keeping given element order.
     TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
@@ -644,6 +667,47 @@ _.withTest (['stdlib', 'linearMerge'], function () {
                 else                     { a.next.push (b); return a } }))) }
 
         return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
+
+
+/*  Taken from  npmjs.com/package/longest-common-substring
+    Props to    npmjs.com/~mirkok
+    ======================================================================== */
+
+
+_.withTest (['stdlib', 'longestCommonSubstring'], function () {
+
+    $assert ('foo', _.longestCommonSubstring ('foo', 'ffooa'))
+
+}, function () {
+    
+    var indexMap = function(list) {
+        var map = {}
+        _.each (list, function(each, i) {
+            map[each] = map[each] || []
+            map[each].push(i) })
+        return map }
+
+    _.longestCommonSubstring = function (a, b) {
+        var where = _.indexOfLongestCommonSubstring (a, b)
+        return (where.length) ? a.substr (where.a, where.length) : undefined }
+
+    _.indexOfLongestCommonSubstring = function(a, b) {
+        var result = { a:0, b:0, length:0}
+        var indexMapBefore = indexMap(a)
+        var previousOverlap = []
+        _.each (b, function(eachAfter, indexAfter) {
+            var overlapLength
+            var overlap = []
+            var indexesBefore = indexMapBefore[eachAfter] || []
+            _.each (indexesBefore, function(indexBefore) {
+                overlapLength = ((indexBefore && previousOverlap[indexBefore-1]) || 0) + 1;
+                if (overlapLength > result.length) {
+                    result.length = overlapLength;
+                    result.a = indexBefore - overlapLength + 1;
+                    result.b = indexAfter - overlapLength + 1; }
+                overlap[indexBefore] = overlapLength })
+            previousOverlap = overlap })
+        return result } })
 
 
 /*  experimental shit (subject to removal)

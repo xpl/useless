@@ -70,6 +70,10 @@ _.deferTest (['type', 'stringify'], function () {
                 return name && (name + ' ()') }
             else return '<prototype>' }
 
+    _.builtInTypes = {
+        'Event':         { target: $any },
+        'MutationEvent': { target: $any, attrName: $any, prevValue: $any } }
+
     _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
                             var customFormat = cfg.formatter && cfg.formatter (x)
@@ -96,7 +100,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return 'null' }
 
                             else if (_.isFunction (x)) {
-                                return cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>') }
+                                return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
                                 return _.quoteWith ('"', x) }
@@ -111,60 +115,71 @@ _.deferTest (['type', 'stringify'], function () {
                             else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }
 
-                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
+                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) {
 
-                                var pretty = cfg.pretty || false
+                                var builtInValue = _.find2 (_.builtInTypes, function (schema, name) {
+                                                                                return ($global[name] &&
+                                                                                    (x instanceof $global[name]) &&
+                                                                                    (name + ' ' + _.stringifyOneLine (
+                                                                                                        _.omitTypeMismatches (schema, x)))) || false })
+                                if (builtInValue) {
+                                    return builtInValue }
+                                    
+                                else {
+                                    var isArray = _.isArray (x)
 
-                                if ((_.platform ().engine === 'browser')) {
-                                    if (_.isTypeOf (Element, x)) {
-                                        return '<' + x.tagName.lowercase + '>' }
-                                    else if (_.isTypeOf (Text, x)) {
-                                        return '@' + x.wholeText } }
+                                    var pretty = cfg.pretty || false
 
-                                if (x.toJSON) {
-                                    return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
+                                    if ((_.platform ().engine === 'browser')) {
+                                        if (_.isTypeOf (Element, x)) {
+                                            return '<' + x.tagName.lowercase + '>' }
+                                        else if (_.isTypeOf (Text, x)) {
+                                            return '@' + x.wholeText } }
 
-                                if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
-                                    return isArray ? '<array[' + x.length + ']>' : '<object>' }
+                                    if (x.toJSON) {
+                                        return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
-                                var parentsPlusX = parents.concat ([x])
+                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
+                                        return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
-                                siblings.push (x)
+                                    var parentsPlusX = parents.concat ([x])
 
-                                var values  = _.pairs (x)
+                                    siblings.push (x)
 
-                                var oneLine = !pretty || (values.length < 2)
+                                    var values  = _.pairs (x)
 
-                                var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
+                                    var oneLine = !pretty || (values.length < 2)
 
-                                if (pretty) {
-                                        values        = _.values (x)
-                                    var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
-                                    var printedValues =                            values.map (impl)
+                                    var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
 
-                                    var leftPaddings = printedValues.map (function (x, i) {
-                                                                            return (((x[0] === '[') ||
-                                                                                     (x[0] === '{')) ? 3 :
-                                                                                        _.isString (values[i]) ? 1 : 0) })
-                                    var maxLeftPadding = _.max (leftPaddings)
+                                    if (pretty) {
+                                            values        = _.values (x)
+                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
+                                        var printedValues =                            values.map (impl)
 
-                                    var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
-                                                                 return ' '.repeats (maxLeftPadding - padding) + x })
+                                        var leftPaddings = printedValues.map (function (x, i) {
+                                                                                return (((x[0] === '[') ||
+                                                                                         (x[0] === '{')) ? 3 :
+                                                                                            _.isString (values[i]) ? 1 : 0) })
+                                        var maxLeftPadding = _.max (leftPaddings)
 
-                                    var internals = isArray ? indentedValues :
-                                                [printedKeys, indentedValues].zip (_.bullet)
+                                        var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
+                                                                     return ' '.repeats (maxLeftPadding - padding) + x })
 
-                                    var printed = _.bullet (isArray ? '[ ' :
-                                                                      '{ ', internals.join (',\n'))
-                                    var lines = printed.split ('\n')
+                                        var internals = isArray ? indentedValues :
+                                                    [printedKeys, indentedValues].zip (_.bullet)
 
-                                    return printed +  (' '.repeats (_.max (lines.map (_.count)) -
-                                                                    _.count (lines.last)) + (isArray ? ' ]' :
-                                                                                                       ' }')) }
+                                        var printed = _.bullet (isArray ? '[ ' :
+                                                                          '{ ', internals.join (',\n'))
+                                        var lines = printed.split ('\n')
 
-                                return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
-                                            _.map (values, function (kv) {
-                                                        return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) }
+                                        return printed +  (' '.repeats (_.max (lines.map (_.count)) -
+                                                                        _.count (lines.last)) + (isArray ? ' ]' :
+                                                                                                           ' }')) }
+
+                                    return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
+                                                _.map (values, function (kv) {
+                                                            return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) } }
 
                             else if (_.isDecimal (x) && (cfg.precision > 0)) {
                                 return _.toFixed (x,     cfg.precision) }

@@ -295,7 +295,7 @@ Test = $prototype ({
             Testosterone.currentAssertion = self
             if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
                     assertion.location.sourceReady (function (src) {
-                        log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
+                        log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
                         assertion.evalLogCalls ()
                         doneWithAssertion () }) }
             else {
@@ -325,7 +325,20 @@ Test = $prototype ({
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            _.each (notMatching, function (what, i) { log.orange (_.bullet ('• ', log.impl.stringify (what))) }) } } }
+                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('• ')))
+                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
+                            if (common.length < 4) {
+                                common = undefined }
+
+                            _.each (cases, function (what) {
+
+                                    if (common) {                  var where  = what.indexOf (common)
+                                        log.write ( log.color.orange,  what.substr (0, where),
+                                                    log.color.dark,    common,
+                                                    log.color.orange,  what.substr (where + common.length)) }
+
+                                    else {
+                                        log.orange (what) } }) }} }
                         
                     // print exception
                 else {
@@ -419,46 +432,57 @@ Testosterone.ValidatesRecursion = $trait ({
 
 /*  $log for methods
  */
-Testosterone.LogsMethodCalls = $trait ({
+;(function () { var colors = ['red', 'green', 'blue', 'orange', 'pink']
+                    colors.each (_.defineTagKeyword)
 
-    $test: function () {
-            
-        var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-        var compo = new ($extends (Proto, {
-                            foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
+    Testosterone.LogsMethodCalls = $trait ({
 
-        $assert (compo.foo (42), 24)
-        $assert (_.pluck (this.logCalls, 'indentedText'), ['\tfoo', '\t\t→ 24', '\t\t']) },
+        $test: function (testDone) {
+                
+            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+            var Compo = $extends (Proto, {
+                                foo: $log ($red (function (_42) { $assert (_42, 42); return 24 })) })
 
-    $macroTags: {
+            var compo = new Compo ()
+            var testContext = this
 
-        log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
-                                           var protoName = ''
+            Compo.$meta (function () {
+                $assert (compo.foo (42), 24)
+                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                $assert (testContext.logCalls[0].color === log.color ('red'))
+                testDone () }) },
 
-            $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
+        $macroTags: {
 
-            return Tags.modify (value, function (fn) { return function () { var this_      = this,
-                                                                                arguments_ = arguments
+            log: function (def, value, name) {  var param       = _.isBoolean (value.$log) ? undefined : value.$log
+                                                var protoName   = ''
+                                                var color       = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
+                                                var template    = _.template (param || '{{$proto}}')
 
-                       var isProtoNameRedundant = (log.currentConfig ().protoName === protoName)
-                log.write (isProtoNameRedundant
-                                ? name
-                                : _.nonempty ([protoName, name]).join ('.') +
-                                _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'), log.config ({ location: true }))
+                $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
 
-                return log.withConfig ({ indent: 1,
-                                         color: color,
-                                         protoName: protoName }, function () {
+                return Tags.modify (value, function (fn) { return function () { var this_      = this,
+                                                                                    arguments_ = _.asArray (arguments)
 
-                                                                    var result = fn.apply (this_, arguments_);          
+                        var this_dump = template (_.extend ({ $proto: protoName }, _.map2 (this, _.stringifyOneLine.arity1)))
+                        var args_dump = _.map (arguments_, _.stringifyOneLine).join (', ').quote ('()')
 
-                                                                    if (result !== undefined) {
-                                                                        log.write ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
+                    log.write (log.config ({ color: color, location: true }), _.nonempty ([this_dump, name]).join ('.'), args_dump)
 
-                                                                    if (log.currentConfig ().indent < 2) {
-                                                                        log.newline () }
+                    return log.withConfig ({ indent: 1,
+                                             color: color,
+                                             protoName: protoName }, function () {
 
-                                                                    return result }) } }) } } })
+                                                                        var numWritesBefore = log.impl.numWrites
+                                                                        var result          = fn.apply (this_, arguments_);          
+
+                                                                        if (result !== undefined) {
+                                                                            log.write ('→', _.stringifyOneLine (result)) }
+
+                                                                        if ((log.currentConfig ().indent < 2) &&
+                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
+
+                                                                        return result }) } }) } } }) }) ();
 
 
 if (Platform.NodeJS) {

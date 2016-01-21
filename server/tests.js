@@ -86,7 +86,7 @@ module.exports = TestsItself = $trait ({
     withTestDb: function (what) {
 
         if (!this.dbName) {
-            log.info ('Skipping DB tests')
+            log.minor ('Skipping DB tests')
             what (_.identity) }
             
         else {

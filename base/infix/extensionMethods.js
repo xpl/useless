@@ -1,7 +1,7 @@
 /*  Extensions methods
     ======================================================================== */
 
-_(['method', 'property', 'flipped']) // keywords recognized by $extensionMethods
+_(['method', 'property', 'flipped', 'forceOverride']) // keywords recognized by $extensionMethods
     .each (_.defineTagKeyword)
 
 $extensionMethods = function (Type, methods) {
@@ -16,14 +16,14 @@ $extensionMethods = function (Type, methods) {
         /*  define as property of Type
          */
         if (!tags.$method && (tags.$property || (_.oneArg (fn)))) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 _.defineHiddenProperty (Type.prototype, name, function () {
                     return fn (this) }) } }
 
         /*  define as method
          */
         else if (!tags.$property) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 Type.prototype[name] = _.asMethod (tags.$flipped ? _.flip (fn) : fn) } }
 
         else {

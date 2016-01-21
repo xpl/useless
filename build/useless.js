@@ -32,6 +32,7 @@ _ = (function () {
 
     return _ }) ()
 
+_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g }
 
 /*  Internal dependencies
     ======================================================================== */
@@ -352,7 +353,7 @@ _.extend (_, {
 
     withTest:   function (name, test, defineSubject) {
                     defineSubject ()
-                    _.runTest (test)
+                    _.runTest (name, test)
                     _.publishToTestsNamespace (name, test) },
 
 /*  Publishes to _.tests namespace, but does not run
@@ -365,11 +366,15 @@ _.extend (_, {
     /*  INTERNALS (you won't need that)
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-        runTest:    function (test) {
-                        if (_.isFunction (test)) {
-                            test () }
-                        else {
-                            _.each (test, function (fn) { fn () }) } },
+        runTest:    function (name, test) {
+                        try {
+                            if (_.isFunction (test)) {                               test () }
+                                                else { _.each (test, function (fn) { fn () }) } }
+                        catch (e) {
+                            if (_.isAssertionError (e)) { var printedName = ((_.isArray (name) && name) || [name]).join ('.')
+                                                          console.log (printedName + ':', e.message, '\n' + _.times (printedName.length, _.constant ('~')).join ('') + '\n')
+                                                         _.each (e.notMatching, function (x) { console.log ('  •', x) }) }
+                            throw e } },
 
         publishToTestsNamespace: function (name, test) {
                         if (_.isArray (name)) { // [suite, name] case
@@ -826,6 +831,12 @@ $overrideUnderscore ('bind',
                                     bind.apply (this, arguments)) }) })
 
 ;
+/*  Useful for debugging and tests
+    ======================================================================== */
+
+_.debugEcho = function () { return [this].concat (_.asArray (arguments)) }
+
+
 /*  Limits function to given number of arguments
     ======================================================================== */
 
@@ -861,6 +872,78 @@ _.tails2 = $restArg (function (fn) { var tailArgs = _.rest (arguments)
 _.tails3 = $restArg (function (fn) { var tailArgs = _.rest (arguments)
                                         return function (a, b) {
                                             return fn.apply (this, [a, b].concat (tailArgs)) }})
+
+
+/*  Userful for higher order operations
+    ======================================================================== */
+
+_.withTest (['function', 'calls / tails'], function () {
+
+    var fn       = _.debugEcho
+    var  foo42_  = _.callsWith ('foo', 42)
+    var _foo42   = _.tailsWith ('foo', 42)
+
+    var foo42_fn =   foo42_ (fn)
+    var fn_foo42 =  _foo42  (fn)
+
+    var _fn       = _.callsTo (fn)
+    var  fn_      = _.tailsTo (fn)
+    var fn_bar24  =  fn_ ('bar', 24)
+    var bar24_fn  = _fn  ('bar', 24)
+
+    $assert (foo42_fn.call ('lol', 777), ['lol', 'foo', 42, 777])
+    $assert (bar24_fn.call ('lol', 777), ['lol', 'bar', 24, 777])
+
+    $assert (fn_foo42.call ('lol', 777), ['lol', 777, 'foo', 42])
+    $assert (fn_bar24.call ('lol', 777), ['lol', 777, 'bar', 24])
+
+    $assertEveryCalledOnce (function (mkay) {
+        _.argumentPrependingWrapper (fn, function (fn) {
+            $assert (fn (777), ['lol', 777, 'foo', 42]); mkay () }).call ('lol', 'foo', 42) })
+
+}, function () {
+
+    _.callsTo = function (fn) {
+                    return $restArg (function () {
+                        return _.callsWith.apply (null, arguments) (fn) }) }
+
+    _.tailsTo = function (fn, then) {
+                    return $restArg (function () {
+                        return _.tailsWith.apply (null, arguments) (fn) }) }
+
+    _.callsWith = $restArg (function (/* args */) { var args = _.asArray (arguments)
+                                        return function (fn) {
+                                            return _.withSameArgs (fn, function () {
+                                                return fn.apply (this, args.concat (_.asArray (arguments))) }) } })
+
+
+    _.tailsWith = $restArg (function (/* args */) { var args = _.asArray (arguments)
+                                        return function (fn) {
+                                            return _.withSameArgs (fn, function () {
+                                                return fn.apply (this, _.asArray (arguments).concat (args)) }) } })
+
+    _.argumentAppendingWrapper = function (fn, then) {
+        return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
+                                        return then (function () {
+                                            return fn.apply (this_, args.concat (_.asArray (arguments))) }) }) }
+
+    _.argumentPrependingWrapper = function (fn, then) {
+        return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
+                                        return then (function () {
+                                            return fn.apply (this_, _.asArray (arguments).concat (args)) }) }) } })
+
+
+/*  binding to constructor arguments (cannot do this with bind/partial)
+    ======================================================================== */
+
+_.new_ = $restArg (function (Constructor, a, b, c, d) {
+            switch (arguments.length) {
+                case 1: return new Constructor ()
+                case 2: return new Constructor (a)
+                case 3: return new Constructor (a, b)
+                case 4: return new Constructor (a, b, c)
+                case 5: return new Constructor (a, b, c, d)
+                default: _.notImplemented () } })
 
 /*  Flips function signature (argument order)
     ======================================================================== */
@@ -983,7 +1066,7 @@ _.withTest (['function', 'higherOrder'], function () {
 
         $assert (file, ['foo', 'foo', 'foo']) }, function () {
 
-    _.higherOrder = function (fn) { return _.partial (_.partial, fn) } })
+    _.higherOrder = _.callsTo })
 
 /*  coerces x|fn()→x to x (useful for configuration parameters)
     ======================================================================== */
@@ -1024,28 +1107,6 @@ _.asFreeFunction = function (fn) { return function (this_, restArg) {
 
 _.asMethod = function (fn) { return function () {
                                         return fn.apply (undefined, [this].concat (_.asArray (arguments))) } }
-
-
-/*  Wrapper generator
-    ======================================================================== */
-
-_.appendsArguments = function (fn, wrapper) {
-                        return _.withSameArgs (fn, function () {
-                                                        var this_ = this
-                                                        var args = _.asArray (arguments)
-                                                        return wrapper (function () {
-                                                                            fn.apply (
-                                                                                this_,
-                                                                                args.concat (_.asArray (arguments))) }) }) }
-
-_.prependsArguments = function (fn, wrapper) {
-                        return _.withSameArgs (fn, function () {
-                                                var this_ = this
-                                                var args = _.asArray (arguments)
-                                                return wrapper (function () {
-                                                                    fn.apply (
-                                                                        this_,
-                                                                        _.asArray (arguments).concat (args)) }) }) }
 
 
 /*  _.once
@@ -1494,193 +1555,6 @@ _.withTest (['type', 'empty-centric routines'], function () {
 
 
 ;
-/*  Tired of wrapping JSON.parse to try/catch? Here's solution.
-    Also, it's two-way (can either parse, or stringify).
-    ======================================================================== */
-
-_.json = function (arg) {
-            if (typeof arg === 'string') {
-                try         { return JSON.parse (arg) }
-                catch (e)   { return {} } }
-            else {
-                return JSON.stringify (arg) } }
-                
-/*  Object stringifier
-    ======================================================================== */
-
-_.deferTest (['type', 'stringify'], function () {
-
-        if (_.hasTags) {
-
-            var complex =  { foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
-                complex.bar[0].bar = complex.bar
-
-            var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
-
-            var Proto = $prototype ({})
-
-            $assert (_.stringify (Proto),   Platform.NodeJS ? 'Proto ()' : '<prototype>')
-
-            $assert (_.stringify (undefined),'undefined')
-            $assert (_.stringify (123),     '123')
-            $assert (_.stringify (complex, { pretty: false }), renders) }
-
-        $assert (_.pretty ({    array: ['foo',
-                                        'bar',
-                                        'baz'],
-                                 more:  'qux',
-                             evenMore:   42    }), ['{    array: [ "foo",'    ,
-                                                    '              "bar",'    ,
-                                                    '              "baz"  ],' ,
-                                                    '      more:   "qux",'    ,
-                                                    '  evenMore:    42       }'].join ('\n'))
-
-        var obj = {}
-        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
-
-    _.alignStringsRight = function (strings) {
-                                                var              lengths = strings.map (_.count)
-                                                var max = _.max (lengths)
-                            return                              [lengths,  strings].zip (function (ln,   str) {
-                                return ' '.repeats (max -                                          ln) + str }) }
-
-    _.bullet = function (bullet,        str) { var indent = ' '.repeats (bullet.length)
-              return _.joinWith  ('\n',
-                     _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
-                                                                                 ? (bullet + line)
-                                                                                 : (indent + line) })) }
-                        
-    _.stringifyOneLine = function (x, cfg) {
-                            return _.stringify (x, _.extend (cfg || {}, { pretty: false })) }
-
-    _.pretty = function (x, cfg) {
-                    return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
-
-    _.stringify = function  (x, cfg) { cfg = cfg || {}
-                    var measured = _.stringifyImpl (x, [], [], 0, cfg)
-                    return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
-
-    _.stringifyPrototype = function (x) {
-            if (Platform.NodeJS && x.$meta) { var name = ''
-                x.$meta (function (values) { name = values.name })
-                return name && (name + ' ()') }
-            else return '<prototype>' }
-
-    _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
-
-                            var customFormat = cfg.formatter && cfg.formatter (x)
-
-                            if (customFormat) {
-                                return customFormat }
-
-                            if ((typeof jQuery !== 'undefined') && _.isTypeOf (jQuery, x)) {
-                                x = _.asArray (x) }
-
-                            if (x === $global) {
-                                return '$global' }
-
-                            else if (parents.indexOf (x) >= 0) {
-                                return cfg.pure ? undefined : '<cyclic>' }
-
-                            else if (siblings.indexOf (x) >= 0) {
-                                return cfg.pure ? undefined : '<ref:' + siblings.indexOf (x) + '>' }
-
-                            else if (x === undefined) {
-                                return 'undefined' }
-
-                            else if (x === null) {
-                                return 'null' }
-
-                            else if (_.isFunction (x)) {
-                                return cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>') }
-
-                            else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x) }
-
-                            else if (_.isTypeOf (Tags, x)) {
-                                return _.reduce (Tags.get (x), function (memo, value, tag) {
-                                                                    return _.isBoolean (value)
-                                                                        ? (tag + ' ' + memo.quote ('()'))
-                                                                        : (tag + ' (' + _.stringifyImpl (value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')') },
-                                    _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
-
-                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
-                                return x.toString () }
-
-                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
-
-                                var pretty = cfg.pretty || false
-
-                                if ((_.platform ().engine === 'browser')) {
-                                    if (_.isTypeOf (Element, x)) {
-                                        return '<' + x.tagName.lowercase + '>' }
-                                    else if (_.isTypeOf (Text, x)) {
-                                        return '@' + x.wholeText } }
-
-                                if (x.toJSON) {
-                                    return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
-
-                                if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
-                                    return isArray ? '<array[' + x.length + ']>' : '<object>' }
-
-                                var parentsPlusX = parents.concat ([x])
-
-                                siblings.push (x)
-
-                                var values  = _.pairs (x)
-
-                                var oneLine = !pretty || (values.length < 2)
-
-                                var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
-
-                                if (pretty) {
-                                        values        = _.values (x)
-                                    var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
-                                    var printedValues =                            values.map (impl)
-
-                                    var leftPaddings = printedValues.map (function (x, i) {
-                                                                            return (((x[0] === '[') ||
-                                                                                     (x[0] === '{')) ? 3 :
-                                                                                        _.isString (values[i]) ? 1 : 0) })
-                                    var maxLeftPadding = _.max (leftPaddings)
-
-                                    var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
-                                                                 return ' '.repeats (maxLeftPadding - padding) + x })
-
-                                    var internals = isArray ? indentedValues :
-                                                [printedKeys, indentedValues].zip (_.bullet)
-
-                                    var printed = _.bullet (isArray ? '[ ' :
-                                                                      '{ ', internals.join (',\n'))
-                                    var lines = printed.split ('\n')
-
-                                    return printed +  (' '.repeats (_.max (lines.map (_.count)) -
-                                                                    _.count (lines.last)) + (isArray ? ' ]' :
-                                                                                                       ' }')) }
-
-                                return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
-                                            _.map (values, function (kv) {
-                                                        return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) }
-
-                            else if (_.isDecimal (x) && (cfg.precision > 0)) {
-                                return _.toFixed (x,     cfg.precision) }
-
-                            else {
-                                return x + '' } } })
-
-/*  Safe version of toFixed
-    ======================================================================== */
-
-_.toFixed = function (x, precision) {
-    return (x && x.toFixed && x.toFixed (precision)) || undefined }
-
-_.toFixed2 = function (x) {
-    return _.toFixed (x, 2) }
-
-_.toFixed3 = function (x) {
-    return _.toFixed (x, 3) }
-
-;
 _.hasStdlib = true
 
 /*  _.throwsError
@@ -1731,12 +1605,21 @@ _.withTest (['stdlib', 'map2'], function () {
     $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
     $assert (_.map2 ({ foo: 'foo' }, plusBar),  { foo: 'foobar' })
 
+    $assert ([1,10,2,20,3,30],           _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
+    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
                                      _.isArray (value) ? _.map       (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
-                    _.mapWith  = _.flip2 (_.map)) })
+                    _.mapWith  = _.flip2 (_.map2))
+
+                _.scatter = function (obj, elem) { var result = undefined
+                    _.map2 (obj, function (x, i) {
+                                     elem (x, i, function (v, k) {
+                                                    if (arguments.length < 2) { (result = result || []).push (v) }  
+                                                                         else { (result = result || {})[k] = v } }) }); return result } })
 
 
 /*  Semantically-correct abstract map (maps any type of value)
@@ -2053,11 +1936,19 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
             var plus    = { foo:42, bar: { baz:1 } }
             var gives   = { foo:42, bar: { baz:1, qux:1 }}
 
-            $assert (_.extendedDeep (input, plus), gives) }) ()]  }, function () {
+            $assert (_.extendedDeep (input, plus), gives) }),
+
+        /*  Referentially-transparent version (to be used in functional expressions)
+         */
+        (function () {
+            var x = { foo: 1 }
+
+            $assert (_.extended (x, { bar: 1 }), { foo: 1, bar: 1 })
+            $assert (            x,              { foo: 1 }) }) ]  }, function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
 
-    _.extended = _.partial (_.extend, {}) // referentially-transparent version
+    _.extended = $restArg (function () { return _.extend.apply (this, [{}].concat (_.asArray (arguments))) }) // referentially-transparent version
 
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
@@ -2089,9 +1980,14 @@ _.withTest (['stdlib', 'findFind'], function () {
 function () {
 
     _.find2 = function (value, pred) {
-        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
-                          if (typeof x !== 'boolean') { return x }
-                                 else if (x === true) { return value[i] } } }
+        if (_.isArray (value)) {                                
+            for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
+                              if (typeof x !== 'boolean') { return x }
+                                     else if (x === true) { return value[i] } } }
+        else if (_.isStrictlyObject (value)) {        
+            for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k], k, value)
+                                                     if (typeof x !== 'boolean') { return x }
+                                                            else if (x === true) { return value[k] } } } }
 
     _.findFind = function (obj, pred_) {
                     return _.hyperOperator (_.unary,
@@ -2252,25 +2148,26 @@ _.withTest (['stdlib', 'quote'], function () {
 _.withTest (['stdlib', 'partition2'], function () {
 
         $assert (_.partition2 (
-                    [ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty),
-                    [['a', 'b', 'c'], [undefined, undefined], ['d']]) }, function () {
+                    [ 'a', 'b', 'c',   undefined, undefined,   42], _.isNonempty),
+                    [['a', 'b', 'c'], [undefined, undefined], [42]])
 
-    _.partition2 = function (arr, pred) { var prevColor = undefined
+        $assert (_.partition3 ([ 'a', 'b', 'c', undefined, undefined, 42], _.typeOf),
+                [{ label: 'string',    items: ['a', 'b', 'c'] },
+                 { label: 'undefined', items: [undefined, undefined] },
+                 { label: 'number',    items: [42] }]) }, function () {
 
-            var result = []
-            var group = []
+    _.partition2 = function (arr, pred) { return _.pluck (_.partition3 (arr, pred), 'items') }
 
-            _.each (arr, function (x) { var color = pred (x)
-                if (prevColor != color && group.length) {
-                    result.push (group)
-                    group = [] }
-                group.push (x)
-                prevColor = color })
+    _.partition3 = function (arr, pred) { var spans = [],
+                                              span  = { label: undefined, items: [arr.first] }
 
-            if (group.length) {
-                result.push (group) }
+            _.each (arr, function (x) { var label = pred (x)
+                if ((span.label != label) &&
+                     span.items.length) { spans.push (span = { label: label, items: [x] }) }
+                                   else { span.items.push (x) } })
 
-            return result } })
+            return (span.length && spans.push (span)),
+                    spans } })
 
 /*  Merges arrays, keeping given element order.
     TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
@@ -2327,6 +2224,47 @@ _.withTest (['stdlib', 'linearMerge'], function () {
                 else                     { a.next.push (b); return a } }))) }
 
         return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
+
+
+/*  Taken from  npmjs.com/package/longest-common-substring
+    Props to    npmjs.com/~mirkok
+    ======================================================================== */
+
+
+_.withTest (['stdlib', 'longestCommonSubstring'], function () {
+
+    $assert ('foo', _.longestCommonSubstring ('foo', 'ffooa'))
+
+}, function () {
+    
+    var indexMap = function(list) {
+        var map = {}
+        _.each (list, function(each, i) {
+            map[each] = map[each] || []
+            map[each].push(i) })
+        return map }
+
+    _.longestCommonSubstring = function (a, b) {
+        var where = _.indexOfLongestCommonSubstring (a, b)
+        return (where.length) ? a.substr (where.a, where.length) : undefined }
+
+    _.indexOfLongestCommonSubstring = function(a, b) {
+        var result = { a:0, b:0, length:0}
+        var indexMapBefore = indexMap(a)
+        var previousOverlap = []
+        _.each (b, function(eachAfter, indexAfter) {
+            var overlapLength
+            var overlap = []
+            var indexesBefore = indexMapBefore[eachAfter] || []
+            _.each (indexesBefore, function(indexBefore) {
+                overlapLength = ((indexBefore && previousOverlap[indexBefore-1]) || 0) + 1;
+                if (overlapLength > result.length) {
+                    result.length = overlapLength;
+                    result.a = indexBefore - overlapLength + 1;
+                    result.b = indexAfter - overlapLength + 1; }
+                overlap[indexBefore] = overlapLength })
+            previousOverlap = overlap })
+        return result } })
 
 
 /*  experimental shit (subject to removal)
@@ -2647,6 +2585,8 @@ _.withTest ('keywords', function () {
                         delete $global[_.keyword (name)] } } )
 
 ;
+_.hasTypeMatch = true
+
 /*  Type matching for arbitrary complex structures (TODO: test)
     ======================================================================== */
 
@@ -2783,6 +2723,208 @@ _.deferTest (['type', 'type matching'], function () {
                 return value.constructor }
             else {
                 return _.isEmptyArray (value) ? value : (typeof value) } }) } }) // TODO: fix hyperOperator to remove additional check for []
+
+;
+/*  Tired of wrapping JSON.parse to try/catch? Here's solution.
+    Also, it's two-way (can either parse, or stringify).
+    ======================================================================== */
+
+_.json = function (arg) {
+            if (typeof arg === 'string') {
+                try         { return JSON.parse (arg) }
+                catch (e)   { return {} } }
+            else {
+                return JSON.stringify (arg) } }
+                
+/*  Object stringifier
+    ======================================================================== */
+
+_.deferTest (['type', 'stringify'], function () {
+
+        if (_.hasTags) {
+
+            var complex =  { foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+                complex.bar[0].bar = complex.bar
+
+            var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+
+            var Proto = $prototype ({})
+
+            $assert (_.stringify (Proto),   Platform.NodeJS ? 'Proto ()' : '<prototype>')
+
+            $assert (_.stringify (undefined),'undefined')
+            $assert (_.stringify (123),     '123')
+            $assert (_.stringify (complex, { pretty: false }), renders) }
+
+        $assert (_.pretty ({    array: ['foo',
+                                        'bar',
+                                        'baz'],
+                                 more:  'qux',
+                             evenMore:   42    }), ['{    array: [ "foo",'    ,
+                                                    '              "bar",'    ,
+                                                    '              "baz"  ],' ,
+                                                    '      more:   "qux",'    ,
+                                                    '  evenMore:    42       }'].join ('\n'))
+
+        var obj = {}
+        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
+
+    _.alignStringsRight = function (strings) {
+                                                var              lengths = strings.map (_.count)
+                                                var max = _.max (lengths)
+                            return                              [lengths,  strings].zip (function (ln,   str) {
+                                return ' '.repeats (max -                                          ln) + str }) }
+
+    _.bullet = function (bullet,        str) { var indent = ' '.repeats (bullet.length)
+              return _.joinWith  ('\n',
+                     _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
+                                                                                 ? (bullet + line)
+                                                                                 : (indent + line) })) }
+                        
+    _.stringifyOneLine = function (x, cfg) {
+                            return _.stringify (x, _.extend (cfg || {}, { pretty: false })) }
+
+    _.pretty = function (x, cfg) {
+                    return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
+
+    _.stringify = function  (x, cfg) { cfg = cfg || {}
+                    var measured = _.stringifyImpl (x, [], [], 0, cfg)
+                    return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
+
+    _.stringifyPrototype = function (x) {
+            if (Platform.NodeJS && x.$meta) { var name = ''
+                x.$meta (function (values) { name = values.name })
+                return name && (name + ' ()') }
+            else return '<prototype>' }
+
+    _.builtInTypes = {
+        'Event':         { target: $any },
+        'MutationEvent': { target: $any, attrName: $any, prevValue: $any } }
+
+    _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
+
+                            var customFormat = cfg.formatter && cfg.formatter (x)
+
+                            if (customFormat) {
+                                return customFormat }
+
+                            if ((typeof jQuery !== 'undefined') && _.isTypeOf (jQuery, x)) {
+                                x = _.asArray (x) }
+
+                            if (x === $global) {
+                                return '$global' }
+
+                            else if (parents.indexOf (x) >= 0) {
+                                return cfg.pure ? undefined : '<cyclic>' }
+
+                            else if (siblings.indexOf (x) >= 0) {
+                                return cfg.pure ? undefined : '<ref:' + siblings.indexOf (x) + '>' }
+
+                            else if (x === undefined) {
+                                return 'undefined' }
+
+                            else if (x === null) {
+                                return 'null' }
+
+                            else if (_.isFunction (x)) {
+                                return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
+
+                            else if (typeof x === 'string') {
+                                return _.quoteWith ('"', x) }
+
+                            else if (_.isTypeOf (Tags, x)) {
+                                return _.reduce (Tags.get (x), function (memo, value, tag) {
+                                                                    return _.isBoolean (value)
+                                                                        ? (tag + ' ' + memo.quote ('()'))
+                                                                        : (tag + ' (' + _.stringifyImpl (value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')') },
+                                    _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
+
+                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
+                                return x.toString () }
+
+                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) {
+
+                                var builtInValue = _.find2 (_.builtInTypes, function (schema, name) {
+                                                                                return ($global[name] &&
+                                                                                    (x instanceof $global[name]) &&
+                                                                                    (name + ' ' + _.stringifyOneLine (
+                                                                                                        _.omitTypeMismatches (schema, x)))) || false })
+                                if (builtInValue) {
+                                    return builtInValue }
+                                    
+                                else {
+                                    var isArray = _.isArray (x)
+
+                                    var pretty = cfg.pretty || false
+
+                                    if ((_.platform ().engine === 'browser')) {
+                                        if (_.isTypeOf (Element, x)) {
+                                            return '<' + x.tagName.lowercase + '>' }
+                                        else if (_.isTypeOf (Text, x)) {
+                                            return '@' + x.wholeText } }
+
+                                    if (x.toJSON) {
+                                        return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
+
+                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
+                                        return isArray ? '<array[' + x.length + ']>' : '<object>' }
+
+                                    var parentsPlusX = parents.concat ([x])
+
+                                    siblings.push (x)
+
+                                    var values  = _.pairs (x)
+
+                                    var oneLine = !pretty || (values.length < 2)
+
+                                    var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
+
+                                    if (pretty) {
+                                            values        = _.values (x)
+                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
+                                        var printedValues =                            values.map (impl)
+
+                                        var leftPaddings = printedValues.map (function (x, i) {
+                                                                                return (((x[0] === '[') ||
+                                                                                         (x[0] === '{')) ? 3 :
+                                                                                            _.isString (values[i]) ? 1 : 0) })
+                                        var maxLeftPadding = _.max (leftPaddings)
+
+                                        var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
+                                                                     return ' '.repeats (maxLeftPadding - padding) + x })
+
+                                        var internals = isArray ? indentedValues :
+                                                    [printedKeys, indentedValues].zip (_.bullet)
+
+                                        var printed = _.bullet (isArray ? '[ ' :
+                                                                          '{ ', internals.join (',\n'))
+                                        var lines = printed.split ('\n')
+
+                                        return printed +  (' '.repeats (_.max (lines.map (_.count)) -
+                                                                        _.count (lines.last)) + (isArray ? ' ]' :
+                                                                                                           ' }')) }
+
+                                    return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
+                                                _.map (values, function (kv) {
+                                                            return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) } }
+
+                            else if (_.isDecimal (x) && (cfg.precision > 0)) {
+                                return _.toFixed (x,     cfg.precision) }
+
+                            else {
+                                return x + '' } } })
+
+/*  Safe version of toFixed
+    ======================================================================== */
+
+_.toFixed = function (x, precision) {
+    return (x && x.toFixed && x.toFixed (precision)) || undefined }
+
+_.toFixed2 = function (x) {
+    return _.toFixed (x, 2) }
+
+_.toFixed3 = function (x) {
+    return _.toFixed (x, 3) }
 
 ;
 
@@ -3204,7 +3346,7 @@ _.deferTest (['cps', 'trySequence'], function () {
 /*  Extensions methods
     ======================================================================== */
 
-_(['method', 'property', 'flipped']) // keywords recognized by $extensionMethods
+_(['method', 'property', 'flipped', 'forceOverride']) // keywords recognized by $extensionMethods
     .each (_.defineTagKeyword)
 
 $extensionMethods = function (Type, methods) {
@@ -3219,14 +3361,14 @@ $extensionMethods = function (Type, methods) {
         /*  define as property of Type
          */
         if (!tags.$method && (tags.$property || (_.oneArg (fn)))) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 _.defineHiddenProperty (Type.prototype, name, function () {
                     return fn (this) }) } }
 
         /*  define as method
          */
         else if (!tags.$property) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 Type.prototype[name] = _.asMethod (tags.$flipped ? _.flip (fn) : fn) } }
 
         else {
@@ -3240,10 +3382,10 @@ _.tests.Function = {
              var sum = function (a, b) { return a + b }
         $assert (sum.$ (5) (42), 47) },
 
-    'Fn.calls': function () {
+    'Fn.callsWith': function () {
         $assert (42, (function (a,b,c) {
                       $assert ([a,b,c],
-                               [1,2,3]); return 42; }).calls (1,2,3) ()) },
+                               [1,2,3]); return 42; }).callsWith (1,2) (3)) },
 
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
@@ -3298,13 +3440,14 @@ $extensionMethods (Function, {
     compose:        _.compose,
     then:           _.then,
     flip:           _.flip,
+    with_:          _.flipN,
     flip2:          _.flip2,
     flip3:          _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod:       _.asMethod,
 
-    calls: function (             fn) {
-            return _.higherOrder (fn) },
+    callsWith: _.callsTo,
+    tailsWith: _.tailsTo,
 
     returns: function (              fn,                                returns) {
                 return function () { fn.apply (this, arguments); return returns } },
@@ -3315,11 +3458,8 @@ $extensionMethods (Function, {
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
 
-    wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w);
-                      return f },
-
+    wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w); return f },
     wrapped: function (f) { return f._wrapped || f },
-
     original: function (f) {  while (f && f._wrapped) {
                                      f  = f._wrapped } return f },
 
@@ -3333,6 +3473,8 @@ $extensionMethods (Function, {
     not:    _.not,
 
     applies: _.applies,
+
+    new_: _.new_,
 
     oneShot: function (fn) { var called = false
         return function () {   if (!called) {
@@ -3491,6 +3633,12 @@ _.withTest ('Array extensions', function () {
     $assert ([1].random === 1) // returns random item from array
     $assert ([].random === undefined)
 
+    $assert ([['foo', 'bar'].join (),
+              ['foo', 'bar'].join ('.'),
+              ['foo', 'bar'].join (777),
+              ['foo'       ].join (777),
+              [       'bar'].join ('.')], ['foobar', 'foo.bar', ['foo', 777, 'bar'], 'foo', 'bar'])
+
 }, function () {
 
     $extensionMethods (Array, {
@@ -3505,6 +3653,12 @@ _.withTest ('Array extensions', function () {
         filter:      _.filter,
         flat:        _.flatten.tails2 (true),
         object:      _.object,
+
+        join: (function (strJoin) {
+                    return $forceOverride (function (arr, delim) { delim = (arguments.length < 2) ? '' : delim
+                                                if (/*_.isString (arr[0]) && */ // semantically correct, but breaks compat
+                                                    _.isString (delim)) { return strJoin.call (arr, delim) }
+                                                                   else { return _.reduce2 (arr, function (a, b) { return [a].concat ([delim, b]) }) } }) }) (Array.prototype.join),
 
         contains: function (arr, item) { return arr.indexOf (item) >= 0 },
 
@@ -4357,13 +4511,13 @@ _.withTest ('OOP', {
             staticProperty: $static ($property (function () { return 'Foo.staticProperty' })),
 
         /*  Tags on members can be grouped like this, to reduce clutter if you have lots
-            of members tagged with same keyword. Currently no more than one level is
-            supported.                                                                      */
+            of members tagged with same keyword.                                            */
 
             $static: {
-                one: function () { return 1 },
-                two: function () { return 2 },
-                three: $property (3) },
+                $property: {
+                    one: 1,
+                    two: 2,
+                    three: 3 } },
 
         /*  Demonstrates some semantics of property definitions, provided by properties.js
             See that module for further investigation.                                      */
@@ -4761,7 +4915,7 @@ _.withTest ('OOP', {
                         _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn (def, memberDef, memberName) || memberDef } }) }) } } return def } },
+                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }) } } return def } },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -4877,8 +5031,8 @@ _.withTest ('OOP', {
             flatten: function (def) {
                 var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
                 var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
-                    return _.map (membersDef, function (member, memberName) {
-                        return [memberName, $global[keyword] (member)] }) }), true))
+                    return _.map (this.flatten (membersDef), function (member, memberName) {
+                        return [memberName, $global[keyword] (member)] }) }, this), true))
 
                 var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
 
@@ -5432,24 +5586,25 @@ Lock = $prototype ({
  */
 _.interlocked = function (fn) { var lock = new Lock ()
     return _.extendWith ({ wait: lock.$ (lock.wait) },
-        _.prependsArguments (Tags.unwrap (fn), function (context) {
-                                                    lock.acquire (function () {
-                                                        context (lock.$ (lock.release)) }) })) }
+        _.argumentPrependingWrapper (Tags.unwrap (fn),
+                                        function (fn) {
+                                            lock.acquire (function () {
+                                                fn (lock.$ (lock.release)) }) })) }
 
 
 /*  EXPERIMENTAL (TBD)
  */
 _.defineKeyword ('scope', function (fn) { var releaseStack = undefined
                                                     
-    return _.prependsArguments (Tags.unwrap (fn),
+    return _.argumentPrependingWrapper (Tags.unwrap (fn),
 
-            function /* acquire */ (context) {
+            function /* acquire */ (fn) {
 
                             var released     = { when: undefined };
                                (releaseStack = (releaseStack || [])).push (released)
 
-                    context (function /* release */ (then) { if (released.when) throw new Error ('$scope: release called twice')
-                                                                 released.when = then
+                    fn (function /* release */ (then) { if (released.when) throw new Error ('$scope: release called twice')
+                                                            released.when = then
                         while (releaseStack &&
                                releaseStack.last &&
                                releaseStack.last.when) { var trigger =  releaseStack.last.when
@@ -7701,18 +7856,26 @@ _.tests.log = {
         $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
                                                             // (as it returns it first argument, like in _.identity)
 
-        log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
+        log.info    (log.stackOffset (2), 'log.info (log.config ({ stackOffset: 2 }), ...)')
 
-        log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
+        log.write   ('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace')
+
+        log.write (                     'Multi',
+                    log.color.red,      'Colored',
+                    log.color.green,    'Output',
+                    log.color.blue,     'For',
+                    log.color.orange,   'The',
+                    log.color.pink,     'Fucking',
+                    log.color.none,     'Win')
 
         log.write   (log.boldLine)  //  ASCII art <hr>
         log.write   (log.thinLine)
         log.write   (log.line)
 
-        log.write   (log.color.green,
-                        ['You can set indentation',
-                         'that is nicely handled',
-                         'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
+        log.write   (log.indent (1),
+                     ['You can set indentation',
+                      'that is nicely handled',
+                      'in case of multiline text'].join ('\n'))
 
         log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
         log.orange  (log.config ({ indent: 2, table: true }), [
@@ -7723,22 +7886,11 @@ _.tests.log = {
         log.write ('Array:', [1, 2, 3])                             //  Arrays too
         log.write ('Function:', _.identity)                         //  Prints code of a function
 
-        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') },
+        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n');
 
-/*
-    'write backend control': function (testDone) { var calls = []
-
-        var backend1 = function (cfg) { calls.push ('1: ' + cfg.indentedText) }
-        var backend2 = function (cfg) { calls.push ('2: ' + cfg.indentedText)}
-
-        log.withWriteBackend (backend1, function (done) {     log ('backend1 ready')
-            log.withWriteBackend (backend2, function (done) { log ('backend2 ready')
-                done () }, function () {                      log ('backend2 released') })
-                                                              log ('backend1 on hold')
-            done () }, function () {                          log ('backend1 released')
-                $assert (calls, ['1: backend1 ready', 
-                                 '1: backend1 on hold',
-                                 '2: backend2 ready']); testDone () }) }*/ }
+        log.withConfig (log.indent (1), function () {
+            log.pink ('Config stack + scopes + higher order API test:')
+            _.each ([5,6,7], logs.pink ('item =', log.color.blue)) }) } }
 
 _.extend (
 
@@ -7747,59 +7899,33 @@ _.extend (
     log = function () {
         return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
 
-
-    Color: $prototype (),
     Config: $prototype (),
-
-
-    /*  Returns arguments clean of config (non-value) parameters
-     */
-    cleanArgs: function (args) {
-        return _.reject (args, _.or (log.Color.isTypeOf, log.Config.isTypeOf)) },
-
-
-    /*  Monadic operators to help read and modify those control structures 
-        in argument lists (internal impl.)
-     */
-    read: function (type, args) {
-        return _.find (args, type.isTypeOf) || new type ({}) },
-
-    modify: function (type, args, operator) {
-                return _.reject (args, type.isTypeOf)
-                            .concat (
-                                operator (log.read (type, args))) } })
-
-
-_.extend (log, {
 
     /*  Could be passed as any argument to any write function.
      */
     config: function (cfg) {
-        return new log.Config (cfg) },
+        return new log.Config (cfg) } })
 
 
-    /*  Shortcut for common case
+_.extend (log, {
+
+    /*  Shortcut for common cases
      */
     indent: function (n) {
         return log.config ({ indent: n }) },
 
+    stackOffset: function (n) {
+        return log.config ({ stackOffset: n }) },
 
-    /*  There could be many colors in log message (NOT YET), therefore it's a separate from config entity.
-     */
-    color: {
-        red:    new log.Color ({ shell: '\u001b[31m', css: 'crimson' }),
-        blue:   new log.Color ({ shell: '\u001b[36m', css: 'royalblue' }),
-        orange: new log.Color ({ shell: '\u001b[33m', css: 'saddlebrown' }),
-        green:  new log.Color ({ shell: '\u001b[32m', css: 'forestgreen' }) },
-
-
-    /*  Actual arguments API
-     */
-    readColor:      log.read.partial (log.Color),
-    readConfig:     log.read.partial (log.Config),
-    modifyColor:    log.modify.partial (log.Color),
-    modifyConfig:   log.modify.partial (log.Config),
-
+    color: _.extend (function (x) { return (log.color[x] || {}).color }, {
+                                                                    none:     log.config ({ color: { shell: '\u001B[0m',  css: '' } }),
+                                                                    red:      log.config ({ color: { shell: '\u001b[31m', css: 'crimson' } }),
+                                                                    blue:     log.config ({ color: { shell: '\u001b[36m', css: 'royalblue' } }),
+                                                                    darkBlue: log.config ({ color: { shell: '\u001b[36m\u001B[2m', css: 'rgba(65,105,225,0.5)' } }),
+                                                                    orange:   log.config ({ color: { shell: '\u001b[33m', css: 'saddlebrown' } }),
+                                                                    green:    log.config ({ color: { shell: '\u001b[32m', css: 'forestgreen' } }),
+                                                                    pink:     log.config ({ color: { shell: '\u001B[35m', css: 'magenta' } }),
+                                                                    dark:     log.config ({ color: { shell: '\u001B[0m\u001B[2m', css: 'rgba(0,0,0,0.25)' } }) }),
 
     /*  Need one? Take! I have plenty of them!
      */
@@ -7838,6 +7964,7 @@ _.extend (log, {
     impl: {
 
         configStack: [],
+        numWrites: 0,
 
         configure: function (configs) {
             return _.reduce2 (
@@ -7851,55 +7978,94 @@ _.extend (log, {
          */
         write: $restArg (function () { var writeBackend = log.writeBackend ()
 
-            var args            = _.asArray (arguments)
-            var cleanArgs       = log.cleanArgs (args)
+            log.impl.numWrites++
 
-            var config          = log.impl.configure (_.concat ([{ stackOffset: Platform.NodeJS ? 1 : 3 }],
-                                                                   log.impl.configStack,
-                                                                   _.filter (args, log.Config.isTypeOf)))
+            var args   = _.asArray (arguments)
+            var config = log.impl.configure ([{ stackOffset: Platform.NodeJS ? 1 : 3,
+                                                indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
+
+            var runs = _.reduce2 (
+
+                /*  Initial memo
+                 */
+                [],
+                
+                /*  Arguments split by configs
+                 */
+                _.partition3 (args, _.isTypeOf.$ (log.Config)),
+                
+                /*  Gather function
+                 */
+                function (runs, span) {
+                    if (span.label === true) { config = log.impl.configure ([config].concat (span.items))
+                                               return runs }
+                                        else { return runs.concat ({ config: config,
+                                                                     text: log.impl.stringifyArguments (span.items, config) }) } })
+
+            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match (/(\n*)([^]*)/)
+            var trailNewlines = (trailNewlinesMatch && trailNewlinesMatch[1]) // dumb way to select trailing newlines (i'm no good at regex)
+            if (trailNewlinesMatch) {
+                runs.last.text = trailNewlinesMatch[2].reversed }
 
 
-            var indent          = (writeBackend.indent || 0) + (config.indent || 0)
+            /*  Split by linebreaks
+             */
+            var newline = {}
+            var lines = _.pluck.with_ ('items',
+                            _.reject.with_ (_.property ('label'),
+                                _.partition3.with_ (_.equals (newline),
+                                    _.scatter (runs, function (run, i, emit) {
+                                                        _.each (run.text.split ('\n'), function (line, i, arr) {
+                                                                                            emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
+                                                                                            emit (newline) } }) }))))
 
-            var text            = log.impl.stringifyArguments (cleanArgs, config)
-            var indentation     = _.times (indent, _.constant ('\t')).join ('')
-            var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
-
+            var totalText       = _.pluck (runs, 'text').join ('')
             var where           = config.where || $callStack[config.stackOffset] || {}
+            var indentation     = _.times (config.indent, _.constant ('\t')).join ('')
 
-            var backendParams = {
-                color:         config.color || log.readColor (args),
+            writeBackend ({
+                lines:         lines,
+                config:        config,
+                color:         config.color,
+                args:          arguments,
                 indentation:   indentation,
-                indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
-                trailNewlines: match[1],
+                indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
+                                                 _.joinsWith (''),
+                                                 _.prepends (indentation))).join ('\n'),
+                text:          totalText,
                 codeLocation:  (config.location && log.impl.location (where)) || '',
-                where:         (config.location && where) || undefined,
-                args:          args,
-                config:        config }
+                trailNewlines: trailNewlines || '',
+                where:         (config.location && where) || undefined })
 
-            writeBackend (backendParams)
-
-            return cleanArgs[0] }),
+            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
         
         defaultWriteBackend: function (params) {
-            var color           = params.color,
-                indentedText    = params.indentedText,
-                codeLocation    = params.codeLocation,
+
+            var codeLocation    = params.codeLocation,
                 trailNewlines   = params.trailNewlines
 
-            var colorValue = color && (Platform.NodeJS ? color.shell : color.css)
-                
             if (Platform.NodeJS) {
-                if (colorValue) { console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
-                           else { console.log (             indentedText,               codeLocation, trailNewlines) } }
+                console.log (_.map (params.lines, function (line) {
+                    return _.map (line, function (run) {
+                        return (run.config.color
+                                    ? (run.config.color.shell + params.indentation + run.text + '\u001b[0m')
+                                    : (                         params.indentation + run.text)) }).join ('') }).join ('\n'),
+
+                                    log.color ('dark').shell + codeLocation + '\u001b[0m',
+                                    trailNewlines) }
             else {
-                var lines = indentedText.split ('\n')
-                var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
-                        [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
+                console.log.apply (console, _.reject.with_ (_.equals (undefined), [].concat (
 
-                console.log ((colorValue ? '%c' : '') + allButFirstLinePaddedWithSpace.join ('\n'),
-                             (colorValue ? ('color: ' + colorValue) : ''), codeLocation, trailNewlines) } },
+                    _.map (params.lines, function (line, i) {
+                                            return params.indentation + _.reduce2 ('', line, function (s, run) {
+                                                return s + (run.text && ((run.config.color ? '%c' : '') +
+                                                    run.text) || '') }) }).join ('\n') + (codeLocation && ('%c ' + codeLocation) || ''),
 
+                    (_.scatter (params.lines, function (line, i, emit) {
+                        _.each (line, function (run) {
+                            if (run.config.color) { emit ('color:' + run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+
+                    trailNewlines))) } },
 
         /*  Formats that "function @ source.js:321" thing
          */
@@ -7955,8 +8121,7 @@ _.extend (log, {
                 function (entry) { return [
                     '\t' + 'at ' + entry.calleeShort.first (30),
                     _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-                    (entry.source || '').first (80)] })).join ('\n') }
-} })
+                    (entry.source || '').first (80)] })).join ('\n') } } })
 
 
 /*  Printing API
@@ -7965,27 +8130,27 @@ _.extend (log, {
    _.extend (log,
              log.printAPI =
                     _.object (
-                    _.concat (            [[            'newline', write.$ ('', log.config ({ location: false })) ],
-                                           [              'write', write                                          ]],
+                    _.concat (            [[            'newline', write.$ (log.config ({ location: false }), '') ],
+                                           [              'write', write                                                          ]],
                             _.flat (_.map (['red failure error e',
                                                     'blue info i',
+                                               'darkBlue minor m',
                                           'orange warning warn w',
-                                             'green success ok g' ],
+                                             'green success ok g',
+                                            'pink notice alert p',
+                                                    'dark hint d' ],
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
-                                                  function (name,                                   i,                        names      )  {
-                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color[names.first] })) ] })))))))
+                                                  function (name,                                   i,                         names      )  {
+                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first), stackOffset: 2 })) ] })))))))
 
 }) ()
 
+
 /*  Higher order API
  */
-log.writes =            _.higherOrder (log.write)       // generates write functions
-logs       = _.mapWith (_.higherOrder, log.printAPI)    // higher order API
+logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
 
-/*  Pretty printing API
- */
-log.pretty = _.map2 (log.printAPI, _.partial.tails2 (log.config ({ pretty: true })))
 
 /*  Experimental formatting shit.
  */
@@ -8039,7 +8204,6 @@ _.extend (log, {
                  _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
                  .then (_.joinsWith ('  ')) ) } }
 })
-
 
 if (Platform.NodeJS) {
     module.exports = log }
@@ -8343,7 +8507,7 @@ Test = $prototype ({
             Testosterone.currentAssertion = self
             if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
                     assertion.location.sourceReady (function (src) {
-                        log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
+                        log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
                         assertion.evalLogCalls ()
                         doneWithAssertion () }) }
             else {
@@ -8373,7 +8537,20 @@ Test = $prototype ({
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            _.each (notMatching, function (what, i) { log.orange (_.bullet ('• ', log.impl.stringify (what))) }) } } }
+                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('• ')))
+                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
+                            if (common.length < 4) {
+                                common = undefined }
+
+                            _.each (cases, function (what) {
+
+                                    if (common) {                  var where  = what.indexOf (common)
+                                        log.write ( log.color.orange,  what.substr (0, where),
+                                                    log.color.dark,    common,
+                                                    log.color.orange,  what.substr (where + common.length)) }
+
+                                    else {
+                                        log.orange (what) } }) }} }
                         
                     // print exception
                 else {
@@ -8467,46 +8644,57 @@ Testosterone.ValidatesRecursion = $trait ({
 
 /*  $log for methods
  */
-Testosterone.LogsMethodCalls = $trait ({
+;(function () { var colors = ['red', 'green', 'blue', 'orange', 'pink']
+                    colors.each (_.defineTagKeyword)
 
-    $test: function () {
-            
-        var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-        var compo = new ($extends (Proto, {
-                            foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
+    Testosterone.LogsMethodCalls = $trait ({
 
-        $assert (compo.foo (42), 24)
-        $assert (_.pluck (this.logCalls, 'indentedText'), ['\tfoo', '\t\t→ 24', '\t\t']) },
+        $test: function (testDone) {
+                
+            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+            var Compo = $extends (Proto, {
+                                foo: $log ($red (function (_42) { $assert (_42, 42); return 24 })) })
 
-    $macroTags: {
+            var compo = new Compo ()
+            var testContext = this
 
-        log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
-                                           var protoName = ''
+            Compo.$meta (function () {
+                $assert (compo.foo (42), 24)
+                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                $assert (testContext.logCalls[0].color === log.color ('red'))
+                testDone () }) },
 
-            $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
+        $macroTags: {
 
-            return Tags.modify (value, function (fn) { return function () { var this_      = this,
-                                                                                arguments_ = arguments
+            log: function (def, value, name) {  var param       = _.isBoolean (value.$log) ? undefined : value.$log
+                                                var protoName   = ''
+                                                var color       = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
+                                                var template    = _.template (param || '{{$proto}}')
 
-                       var isProtoNameRedundant = (log.currentConfig ().protoName === protoName)
-                log.write (isProtoNameRedundant
-                                ? name
-                                : _.nonempty ([protoName, name]).join ('.') +
-                                _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'), log.config ({ location: true }))
+                $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
 
-                return log.withConfig ({ indent: 1,
-                                         color: color,
-                                         protoName: protoName }, function () {
+                return Tags.modify (value, function (fn) { return function () { var this_      = this,
+                                                                                    arguments_ = _.asArray (arguments)
 
-                                                                    var result = fn.apply (this_, arguments_);          
+                        var this_dump = template (_.extend ({ $proto: protoName }, _.map2 (this, _.stringifyOneLine.arity1)))
+                        var args_dump = _.map (arguments_, _.stringifyOneLine).join (', ').quote ('()')
 
-                                                                    if (result !== undefined) {
-                                                                        log.write ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
+                    log.write (log.config ({ color: color, location: true }), _.nonempty ([this_dump, name]).join ('.'), args_dump)
 
-                                                                    if (log.currentConfig ().indent < 2) {
-                                                                        log.newline () }
+                    return log.withConfig ({ indent: 1,
+                                             color: color,
+                                             protoName: protoName }, function () {
 
-                                                                    return result }) } }) } } })
+                                                                        var numWritesBefore = log.impl.numWrites
+                                                                        var result          = fn.apply (this_, arguments_);          
+
+                                                                        if (result !== undefined) {
+                                                                            log.write ('→', _.stringifyOneLine (result)) }
+
+                                                                        if ((log.currentConfig ().indent < 2) &&
+                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
+
+                                                                        return result }) } }) } } }) }) ();
 
 
 if (Platform.NodeJS) {

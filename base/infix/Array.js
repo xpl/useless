@@ -41,6 +41,12 @@ _.withTest ('Array extensions', function () {
     $assert ([1].random === 1) // returns random item from array
     $assert ([].random === undefined)
 
+    $assert ([['foo', 'bar'].join (),
+              ['foo', 'bar'].join ('.'),
+              ['foo', 'bar'].join (777),
+              ['foo'       ].join (777),
+              [       'bar'].join ('.')], ['foobar', 'foo.bar', ['foo', 777, 'bar'], 'foo', 'bar'])
+
 }, function () {
 
     $extensionMethods (Array, {
@@ -55,6 +61,12 @@ _.withTest ('Array extensions', function () {
         filter:      _.filter,
         flat:        _.flatten.tails2 (true),
         object:      _.object,
+
+        join: (function (strJoin) {
+                    return $forceOverride (function (arr, delim) { delim = (arguments.length < 2) ? '' : delim
+                                                if (/*_.isString (arr[0]) && */ // semantically correct, but breaks compat
+                                                    _.isString (delim)) { return strJoin.call (arr, delim) }
+                                                                   else { return _.reduce2 (arr, function (a, b) { return [a].concat ([delim, b]) }) } }) }) (Array.prototype.join),
 
         contains: function (arr, item) { return arr.indexOf (item) >= 0 },
 

@@ -33,6 +33,7 @@ _ = function () {
     }
     return _;
 }();
+_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g };
 _.tests = {};
 _.deferTest = _.withTest = function (name, test, subj) {
     subj();
@@ -156,6 +157,9 @@ $overrideUnderscore('bind', function (bind) {
         return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 2)), fn._ra, bind.apply(this, arguments));
     });
 });
+_.debugEcho = function () {
+    return [this].concat(_.asArray(arguments));
+};
 _.arity = function (N, fn) {
     return function () {
         return fn.apply(this, _.first(arguments, N));
@@ -204,6 +208,64 @@ _.tails3 = $restArg(function (fn) {
             b
         ].concat(tailArgs));
     };
+});
+_.callsTo = function (fn) {
+    return $restArg(function () {
+        return _.callsWith.apply(null, arguments)(fn);
+    });
+};
+_.tailsTo = function (fn, then) {
+    return $restArg(function () {
+        return _.tailsWith.apply(null, arguments)(fn);
+    });
+};
+_.callsWith = $restArg(function () {
+    var args = _.asArray(arguments);
+    return function (fn) {
+        return _.withSameArgs(fn, function () {
+            return fn.apply(this, args.concat(_.asArray(arguments)));
+        });
+    };
+});
+_.tailsWith = $restArg(function () {
+    var args = _.asArray(arguments);
+    return function (fn) {
+        return _.withSameArgs(fn, function () {
+            return fn.apply(this, _.asArray(arguments).concat(args));
+        });
+    };
+});
+_.argumentAppendingWrapper = function (fn, then) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this, args = _.asArray(arguments);
+        return then(function () {
+            return fn.apply(this_, args.concat(_.asArray(arguments)));
+        });
+    });
+};
+_.argumentPrependingWrapper = function (fn, then) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this, args = _.asArray(arguments);
+        return then(function () {
+            return fn.apply(this_, _.asArray(arguments).concat(args));
+        });
+    });
+};
+_.new_ = $restArg(function (Constructor, a, b, c, d) {
+    switch (arguments.length) {
+    case 1:
+        return new Constructor();
+    case 2:
+        return new Constructor(a);
+    case 3:
+        return new Constructor(a, b);
+    case 4:
+        return new Constructor(a, b, c);
+    case 5:
+        return new Constructor(a, b, c, d);
+    default:
+        _.notImplemented();
+    }
 });
 _.flipN = function (fn) {
     return $restArg(function () {
@@ -319,9 +381,7 @@ _.extend(_, {
     _.binary = 2;
     _.unary = 1;
 }());
-_.higherOrder = function (fn) {
-    return _.partial(_.partial, fn);
-};
+_.higherOrder = _.callsTo;
 _.eval = function (x) {
     return _.isFunction(x) ? x.call(this) : x;
 };
@@ -346,24 +406,6 @@ _.asMethod = function (fn) {
     return function () {
         return fn.apply(undefined, [this].concat(_.asArray(arguments)));
     };
-};
-_.appendsArguments = function (fn, wrapper) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this;
-        var args = _.asArray(arguments);
-        return wrapper(function () {
-            fn.apply(this_, args.concat(_.asArray(arguments)));
-        });
-    });
-};
-_.prependsArguments = function (fn, wrapper) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this;
-        var args = _.asArray(arguments);
-        return wrapper(function () {
-            fn.apply(this_, _.asArray(arguments).concat(args));
-        });
-    });
 };
 _.once = function (fn) {
     var called = false;
@@ -641,143 +683,6 @@ _.extend(_, {
         return v === undefined || v === null || v === Math.NaN || v === '' || _.isPOD(v) && (_.isEmptyObject(v) || v.length === 0) ? undefined : v;
     }
 });
-_.json = function (arg) {
-    if (typeof arg === 'string') {
-        try {
-            return JSON.parse(arg);
-        } catch (e) {
-            return {};
-        }
-    } else {
-        return JSON.stringify(arg);
-    }
-};
-_.alignStringsRight = function (strings) {
-    var lengths = strings.map(_.count);
-    var max = _.max(lengths);
-    return [
-        lengths,
-        strings
-    ].zip(function (ln, str) {
-        return ' '.repeats(max - ln) + str;
-    });
-};
-_.bullet = function (bullet, str) {
-    var indent = ' '.repeats(bullet.length);
-    return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
-        return i === 0 ? bullet + line : indent + line;
-    }));
-};
-_.stringifyOneLine = function (x, cfg) {
-    return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
-};
-_.pretty = function (x, cfg) {
-    return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
-};
-_.stringify = function (x, cfg) {
-    cfg = cfg || {};
-    var measured = _.stringifyImpl(x, [], [], 0, cfg);
-    return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
-};
-_.stringifyPrototype = function (x) {
-    if (Platform.NodeJS && x.$meta) {
-        var name = '';
-        x.$meta(function (values) {
-            name = values.name;
-        });
-        return name && name + ' ()';
-    } else
-        return '<prototype>';
-};
-_.stringifyImpl = function (x, parents, siblings, depth, cfg) {
-    var customFormat = cfg.formatter && cfg.formatter(x);
-    if (customFormat) {
-        return customFormat;
-    }
-    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
-        x = _.asArray(x);
-    }
-    if (x === $global) {
-        return '$global';
-    } else if (parents.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<cyclic>';
-    } else if (siblings.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
-    } else if (x === undefined) {
-        return 'undefined';
-    } else if (x === null) {
-        return 'null';
-    } else if (_.isFunction(x)) {
-        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
-    } else if (typeof x === 'string') {
-        return _.quoteWith('"', x);
-    } else if (_.isTypeOf(Tags, x)) {
-        return _.reduce(Tags.get(x), function (memo, value, tag) {
-            return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
-        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
-    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
-        return x.toString();
-    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
-        var isArray = _.isArray(x);
-        var pretty = cfg.pretty || false;
-        if (_.platform().engine === 'browser') {
-            if (_.isTypeOf(Element, x)) {
-                return '<' + x.tagName.lowercase + '>';
-            } else if (_.isTypeOf(Text, x)) {
-                return '@' + x.wholeText;
-            }
-        }
-        if (x.toJSON) {
-            return _.quoteWith('"', x.toJSON());
-        }
-        if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
-            return isArray ? '<array[' + x.length + ']>' : '<object>';
-        }
-        var parentsPlusX = parents.concat([x]);
-        siblings.push(x);
-        var values = _.pairs(x);
-        var oneLine = !pretty || values.length < 2;
-        var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
-        if (pretty) {
-            values = _.values(x);
-            var printedKeys = _.alignStringsRight(_.keys(x).map(_.appends(': ')));
-            var printedValues = values.map(impl);
-            var leftPaddings = printedValues.map(function (x, i) {
-                return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
-            });
-            var maxLeftPadding = _.max(leftPaddings);
-            var indentedValues = [
-                leftPaddings,
-                printedValues
-            ].zip(function (padding, x) {
-                return ' '.repeats(maxLeftPadding - padding) + x;
-            });
-            var internals = isArray ? indentedValues : [
-                printedKeys,
-                indentedValues
-            ].zip(_.bullet);
-            var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
-            var lines = printed.split('\n');
-            return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
-        }
-        return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
-            return (isArray ? '' : kv[0] + ': ') + impl(kv[1]);
-        })));
-    } else if (_.isDecimal(x) && cfg.precision > 0) {
-        return _.toFixed(x, cfg.precision);
-    } else {
-        return x + '';
-    }
-};
-_.toFixed = function (x, precision) {
-    return x && x.toFixed && x.toFixed(precision) || undefined;
-};
-_.toFixed2 = function (x) {
-    return _.toFixed(x, 2);
-};
-_.toFixed3 = function (x) {
-    return _.toFixed(x, 3);
-};
 _.hasStdlib = true;
 _.throwsError = _.higherOrder(_.throwError = function (msg) {
     throw new Error(msg);
@@ -802,7 +707,20 @@ _.mixin({
         return _.isArray(value) ? _.map(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
     }
 });
-_.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map));
+_.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
+_.scatter = function (obj, elem) {
+    var result = undefined;
+    _.map2(obj, function (x, i) {
+        elem(x, i, function (v, k) {
+            if (arguments.length < 2) {
+                (result = result || []).push(v);
+            } else {
+                (result = result || {})[k] = v;
+            }
+        });
+    });
+    return result;
+};
 _.mapKeys = function (x, fn) {
     if (_.isArray(x)) {
         return _.map(x, _.tails2(_.mapKeys, fn));
@@ -942,7 +860,9 @@ _.mixin({
 });
 _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
 _.extend = $restArg(_.extend);
-_.extended = _.partial(_.extend, {});
+_.extended = $restArg(function () {
+    return _.extend.apply(this, [{}].concat(_.asArray(arguments)));
+});
 _.extendWith = _.flip(_.extend);
 _.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
 _.extendedDeep = _.tails3(_.zipZip, function (a, b) {
@@ -960,12 +880,24 @@ _.extend2 = $restArg(function (what) {
     }, {}));
 });
 _.find2 = function (value, pred) {
-    for (var i = 0, n = value.length; i < n; i++) {
-        var x = pred(value[i], i, value);
-        if (typeof x !== 'boolean') {
-            return x;
-        } else if (x === true) {
-            return value[i];
+    if (_.isArray(value)) {
+        for (var i = 0, n = value.length; i < n; i++) {
+            var x = pred(value[i], i, value);
+            if (typeof x !== 'boolean') {
+                return x;
+            } else if (x === true) {
+                return value[i];
+            }
+        }
+    } else if (_.isStrictlyObject(value)) {
+        for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
+            var k = ks[i];
+            var x = pred(value[k], k, value);
+            if (typeof x !== 'boolean') {
+                return x;
+            } else if (x === true) {
+                return value[k];
+            }
         }
     }
 };
@@ -1039,22 +971,25 @@ _.quote = function (s, pattern_) {
 _.quoteWith = _.flip2(_.quote);
 _.quotesWith = _.higherOrder(_.quoteWith);
 _.partition2 = function (arr, pred) {
-    var prevColor = undefined;
-    var result = [];
-    var group = [];
+    return _.pluck(_.partition3(arr, pred), 'items');
+};
+_.partition3 = function (arr, pred) {
+    var spans = [], span = {
+            label: undefined,
+            items: [arr.first]
+        };
     _.each(arr, function (x) {
-        var color = pred(x);
-        if (prevColor != color && group.length) {
-            result.push(group);
-            group = [];
+        var label = pred(x);
+        if (span.label != label && span.items.length) {
+            spans.push(span = {
+                label: label,
+                items: [x]
+            });
+        } else {
+            span.items.push(x);
         }
-        group.push(x);
-        prevColor = color;
     });
-    if (group.length) {
-        result.push(group);
-    }
-    return result;
+    return span.length && spans.push(span), spans;
 };
 _.linearMerge = function (arrays, cfg) {
     cfg = cfg || { key: _.identity };
@@ -1108,6 +1043,45 @@ _.linearMerge = function (arrays, cfg) {
     };
     return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
 };
+(function () {
+    var indexMap = function (list) {
+        var map = {};
+        _.each(list, function (each, i) {
+            map[each] = map[each] || [];
+            map[each].push(i);
+        });
+        return map;
+    };
+    _.longestCommonSubstring = function (a, b) {
+        var where = _.indexOfLongestCommonSubstring(a, b);
+        return where.length ? a.substr(where.a, where.length) : undefined;
+    };
+    _.indexOfLongestCommonSubstring = function (a, b) {
+        var result = {
+            a: 0,
+            b: 0,
+            length: 0
+        };
+        var indexMapBefore = indexMap(a);
+        var previousOverlap = [];
+        _.each(b, function (eachAfter, indexAfter) {
+            var overlapLength;
+            var overlap = [];
+            var indexesBefore = indexMapBefore[eachAfter] || [];
+            _.each(indexesBefore, function (indexBefore) {
+                overlapLength = (indexBefore && previousOverlap[indexBefore - 1] || 0) + 1;
+                if (overlapLength > result.length) {
+                    result.length = overlapLength;
+                    result.a = indexBefore - overlapLength + 1;
+                    result.b = indexAfter - overlapLength + 1;
+                }
+                overlap[indexBefore] = overlapLength;
+            });
+            previousOverlap = overlap;
+        });
+        return result;
+    };
+}());
 _.key = function (fn) {
     return function (value, key) {
         return fn(key);
@@ -1300,6 +1274,251 @@ _.defineModifierKeyword = function (name, fn) {
 };
 _.deleteKeyword = function (name) {
     delete $global[_.keyword(name)];
+};
+_.hasTypeMatch = true;
+_.defineTagKeyword('required');
+_.defineTagKeyword('atom');
+_.defineKeyword('any', _.identity);
+(function () {
+    _.isMeta = function (x) {
+        return x === $any || $atom.is(x) === true || $required.is(x) === true;
+    };
+    var zip = function (type, value, pred) {
+        var required = Tags.unwrapAll(_.filter2(type, $required.matches));
+        var match = _.nonempty(_.zip2(Tags.unwrapAll(type), value, pred));
+        if (_.isEmpty(required)) {
+            return match;
+        } else {
+            var requiredMatch = _.nonempty(_.zip2(required, value, pred));
+            var allSatisfied = _.values2(required).length === _.values2(requiredMatch).length;
+            return allSatisfied ? match : _.coerceToEmpty(value);
+        }
+    };
+    var hyperMatch = _.hyperOperator(_.binary, function (type_, value, pred) {
+        var type = Tags.unwrap(type_);
+        if (_.isArray(type)) {
+            if (_.isArray(value)) {
+                return zip(_.times(value.length, _.constant(type[0])), value, pred);
+            } else {
+                return undefined;
+            }
+        } else if (_.isStrictlyObject(type) && type['*']) {
+            if (_.isStrictlyObject(value)) {
+                return zip(_.extend(_.map2(value, _.constant(type['*'])), _.omit(type, '*')), value, pred);
+            } else {
+                return undefined;
+            }
+        } else {
+            return zip(type_, value, pred);
+        }
+    });
+    var typeMatchesValue = function (c, v) {
+        var contract = Tags.unwrap(c);
+        return contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
+    };
+    _.mismatches = function (op, contract, value) {
+        return hyperMatch(contract, value, function (contract, v) {
+            return op(contract, v) ? undefined : contract;
+        });
+    };
+    _.omitMismatches = function (op, contract, value) {
+        return hyperMatch(contract, value, function (contract, v) {
+            return op(contract, v) ? v : undefined;
+        });
+    };
+    _.typeMismatches = _.partial(_.mismatches, typeMatchesValue);
+    _.omitTypeMismatches = _.partial(_.omitMismatches, typeMatchesValue);
+    _.valueMismatches = _.partial(_.mismatches, function (a, b) {
+        return a === $any || b === $any || a === b;
+    });
+    var unifyType = function (value) {
+        if (_.isArray(value)) {
+            return _.nonempty([_.reduce(_.rest(value), function (a, b) {
+                    return _.undiff(a, b);
+                }, _.first(value) || undefined)]);
+        } else if (_.isStrictlyObject(value)) {
+            var pairs = _.pairs(value);
+            var unite = _.map(_.reduce(_.rest(pairs), function (a, b) {
+                return _.undiff(a, b);
+            }, _.first(pairs) || [
+                undefined,
+                undefined
+            ]), _.nonempty);
+            return _.isEmpty(unite) || _.isEmpty(unite[1]) ? value : _.object([[
+                    unite[0] || '*',
+                    unite[1]
+                ]]);
+        } else {
+            return value;
+        }
+    };
+    _.decideType = function (value) {
+        var operator = _.hyperOperator(_.unary, function (value, pred) {
+            if (value && value.constructor && value.constructor.$definition) {
+                return value.constructor;
+            }
+            return unifyType(_.map2(value, pred));
+        });
+        return operator(value, function (value) {
+            if (_.isPrototypeInstance(value)) {
+                return value.constructor;
+            } else {
+                return _.isEmptyArray(value) ? value : typeof value;
+            }
+        });
+    };
+}());
+_.json = function (arg) {
+    if (typeof arg === 'string') {
+        try {
+            return JSON.parse(arg);
+        } catch (e) {
+            return {};
+        }
+    } else {
+        return JSON.stringify(arg);
+    }
+};
+_.alignStringsRight = function (strings) {
+    var lengths = strings.map(_.count);
+    var max = _.max(lengths);
+    return [
+        lengths,
+        strings
+    ].zip(function (ln, str) {
+        return ' '.repeats(max - ln) + str;
+    });
+};
+_.bullet = function (bullet, str) {
+    var indent = ' '.repeats(bullet.length);
+    return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
+        return i === 0 ? bullet + line : indent + line;
+    }));
+};
+_.stringifyOneLine = function (x, cfg) {
+    return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
+};
+_.pretty = function (x, cfg) {
+    return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
+};
+_.stringify = function (x, cfg) {
+    cfg = cfg || {};
+    var measured = _.stringifyImpl(x, [], [], 0, cfg);
+    return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
+};
+_.stringifyPrototype = function (x) {
+    if (Platform.NodeJS && x.$meta) {
+        var name = '';
+        x.$meta(function (values) {
+            name = values.name;
+        });
+        return name && name + ' ()';
+    } else
+        return '<prototype>';
+};
+_.builtInTypes = {
+    'Event': { target: $any },
+    'MutationEvent': {
+        target: $any,
+        attrName: $any,
+        prevValue: $any
+    }
+};
+_.stringifyImpl = function (x, parents, siblings, depth, cfg) {
+    var customFormat = cfg.formatter && cfg.formatter(x);
+    if (customFormat) {
+        return customFormat;
+    }
+    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
+        x = _.asArray(x);
+    }
+    if (x === $global) {
+        return '$global';
+    } else if (parents.indexOf(x) >= 0) {
+        return cfg.pure ? undefined : '<cyclic>';
+    } else if (siblings.indexOf(x) >= 0) {
+        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
+    } else if (x === undefined) {
+        return 'undefined';
+    } else if (x === null) {
+        return 'null';
+    } else if (_.isFunction(x)) {
+        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
+    } else if (typeof x === 'string') {
+        return _.quoteWith('"', x);
+    } else if (_.isTypeOf(Tags, x)) {
+        return _.reduce(Tags.get(x), function (memo, value, tag) {
+            return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
+        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
+    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
+        return x.toString();
+    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
+        var builtInValue = _.find2(_.builtInTypes, function (schema, name) {
+            return $global[name] && x instanceof $global[name] && name + ' ' + _.stringifyOneLine(_.omitTypeMismatches(schema, x)) || false;
+        });
+        if (builtInValue) {
+            return builtInValue;
+        } else {
+            var isArray = _.isArray(x);
+            var pretty = cfg.pretty || false;
+            if (_.platform().engine === 'browser') {
+                if (_.isTypeOf(Element, x)) {
+                    return '<' + x.tagName.lowercase + '>';
+                } else if (_.isTypeOf(Text, x)) {
+                    return '@' + x.wholeText;
+                }
+            }
+            if (x.toJSON) {
+                return _.quoteWith('"', x.toJSON());
+            }
+            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
+                return isArray ? '<array[' + x.length + ']>' : '<object>';
+            }
+            var parentsPlusX = parents.concat([x]);
+            siblings.push(x);
+            var values = _.pairs(x);
+            var oneLine = !pretty || values.length < 2;
+            var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
+            if (pretty) {
+                values = _.values(x);
+                var printedKeys = _.alignStringsRight(_.keys(x).map(_.appends(': ')));
+                var printedValues = values.map(impl);
+                var leftPaddings = printedValues.map(function (x, i) {
+                    return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
+                });
+                var maxLeftPadding = _.max(leftPaddings);
+                var indentedValues = [
+                    leftPaddings,
+                    printedValues
+                ].zip(function (padding, x) {
+                    return ' '.repeats(maxLeftPadding - padding) + x;
+                });
+                var internals = isArray ? indentedValues : [
+                    printedKeys,
+                    indentedValues
+                ].zip(_.bullet);
+                var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
+                var lines = printed.split('\n');
+                return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
+            }
+            return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
+                return (isArray ? '' : kv[0] + ': ') + impl(kv[1]);
+            })));
+        }
+    } else if (_.isDecimal(x) && cfg.precision > 0) {
+        return _.toFixed(x, cfg.precision);
+    } else {
+        return x + '';
+    }
+};
+_.toFixed = function (x, precision) {
+    return x && x.toFixed && x.toFixed(precision) || undefined;
+};
+_.toFixed2 = function (x) {
+    return _.toFixed(x, 2);
+};
+_.toFixed3 = function (x) {
+    return _.toFixed(x, 3);
 };
 _.cps = function () {
     return _.cps.sequence.apply(null, arguments);
@@ -1501,7 +1720,8 @@ _.cps.trySequence = function (functions, then, err) {
 _([
     'method',
     'property',
-    'flipped'
+    'flipped',
+    'forceOverride'
 ]).each(_.defineTagKeyword);
 $extensionMethods = function (Type, methods) {
     _.each(methods, function (tags, name) {
@@ -1510,13 +1730,13 @@ $extensionMethods = function (Type, methods) {
             _[name] = _[name] || fn;
         }
         if (!tags.$method && (tags.$property || _.oneArg(fn))) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 _.defineHiddenProperty(Type.prototype, name, function () {
                     return fn(this);
                 });
             }
         } else if (!tags.$property) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 Type.prototype[name] = _.asMethod(tags.$flipped ? _.flip(fn) : fn);
             }
         } else {
@@ -1534,13 +1754,13 @@ $extensionMethods(Function, {
     compose: _.compose,
     then: _.then,
     flip: _.flip,
+    with_: _.flipN,
     flip2: _.flip2,
     flip3: _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod: _.asMethod,
-    calls: function (fn) {
-        return _.higherOrder(fn);
-    },
+    callsWith: _.callsTo,
+    tailsWith: _.tailsTo,
     returns: function (fn, returns) {
         return function () {
             fn.apply(this, arguments);
@@ -1576,6 +1796,7 @@ $extensionMethods(Function, {
     and: _.and,
     not: _.not,
     applies: _.applies,
+    new_: _.new_,
     oneShot: function (fn) {
         var called = false;
         return function () {
@@ -1654,20 +1875,6 @@ $extensionMethods(Function, {
         };
     }
 });
-_.tests.Function.catches = function () {
-    $assert('yo', _.constant('yo').catches($fails)(), _.identity.catches($fails)('yo'), _.throwsError('xx').catches('yo')());
-    $assertThrows(function () {
-        _.constant('yo').catches(function () {
-            $assert('catch handler shoudnt work on passed continuations');
-        }, _.throwsError('xx'))();
-    });
-    $assert(function (x) {
-        throw x;
-    }.catches(_.appends('+error_case'), _.appends('+no_error_case'), _.appends('+finally'))('foo'), 'foo+error_case+finally');
-    $assertMatches(_.throwError.catches()('yo'), { message: 'yo' });
-    $assert(_.catches(_.throwsError(42), $assertMatches.$({ message: 42 }).returns('yo'))(), 'yo');
-    $assertCPS(_.constant('yo').catches($fails), 'yo');
-};
 $extensionMethods(Function, {
     catch_: function (fn, catch_, then, finally_) {
         return fn.catches(catch_, then)();
@@ -1709,6 +1916,21 @@ $extensionMethods(Array, {
     filter: _.filter,
     flat: _.flatten.tails2(true),
     object: _.object,
+    join: function (strJoin) {
+        return $forceOverride(function (arr, delim) {
+            delim = arguments.length < 2 ? '' : delim;
+            if (_.isString(delim)) {
+                return strJoin.call(arr, delim);
+            } else {
+                return _.reduce2(arr, function (a, b) {
+                    return [a].concat([
+                        delim,
+                        b
+                    ]);
+                });
+            }
+        });
+    }(Array.prototype.join),
     contains: function (arr, item) {
         return arr.indexOf(item) >= 0;
     },
@@ -2381,7 +2603,7 @@ _.extend($prototype, {
                             _.each(macroTags, function (macroFn, tagName) {
                                 memberDef = def[memberName];
                                 if (_.keyword(tagName) in memberDef) {
-                                    def[memberName] = macroFn(def, memberDef, memberName) || memberDef;
+                                    def[memberName] = macroFn.call(macroTags, def, memberDef, memberName) || memberDef;
                                 }
                             });
                         });
@@ -2540,13 +2762,13 @@ _.extend($prototype, {
         flatten: function (def) {
             var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
             var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
-                return _.map(membersDef, function (member, memberName) {
+                return _.map(this.flatten(membersDef), function (member, memberName) {
                     return [
                         memberName,
                         $global[keyword](member)
                     ];
                 });
-            }), true));
+            }, this), true));
             var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
             return _.extend(memberDefinitions, mergedKeywordGroups);
         },
@@ -3469,18 +3691,18 @@ Lock = $prototype({
 });
 _.interlocked = function (fn) {
     var lock = new Lock();
-    return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
+    return _.extendWith({ wait: lock.$(lock.wait) }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         lock.acquire(function () {
-            context(lock.$(lock.release));
+            fn(lock.$(lock.release));
         });
     }));
 };
 _.defineKeyword('scope', function (fn) {
     var releaseStack = undefined;
-    return _.prependsArguments(Tags.unwrap(fn), function (context) {
+    return _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         var released = { when: undefined };
         (releaseStack = releaseStack || []).push(released);
-        context(function (then) {
+        fn(function (then) {
             if (released.when)
                 throw new Error('$scope: release called twice');
             released.when = then;

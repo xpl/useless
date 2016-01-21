@@ -71,8 +71,8 @@
 .panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }
 .panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: 'more'; }
 .panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: 'less'; }
-.panic-alert-error.all .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }
-.panic-alert-error:not(.all) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }
+.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }
+.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }
 
 .panic-alert-error:last-child { margin-bottom: 0; }
 
@@ -84,8 +84,8 @@
 .panic-alert-error .callstack-entry .file { }
 .panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: ' → '; }
 
-.panic-alert-error:not(.all) .callstack-entry.third-party:not(:first-child),
-.panic-alert-error:not(.all) .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }
+.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),
+.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }
 
 .panic-alert-error .callstack-entry,
 .panic-alert-error .callstack-entry * { line-height: initial; }
@@ -111,14 +111,14 @@
 .panic-alert-error .test-log .location .line:before  { content: ':'; }
 .panic-alert-error .test-log .location .line { opacity: 0.25; }
 
-.panic-alert-error .test-log > div:after { content: ' '; }
+.panic-alert-error .test-log .log-entry .line:after { content: ' '; }
 
 .panic-alert-error .callstack-entry .line:after { content: ' '; }
 
 .panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }
 .panic-alert-error pre,
-.panic-alert-error pre > * { font-family: Menlo, monospace; font-size: 11px !important; white-space: pre !important; }
+.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }
 
-.panic-alert-error  .inline-exception { position: relative; display: inline-block;  }
-
+.panic-alert-error.inline-exception { border-top: 1px solid #904C34; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }
+.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }
 

@@ -26,7 +26,7 @@ _.extend (_, {
 
     withTest:   function (name, test, defineSubject) {
                     defineSubject ()
-                    _.runTest (test)
+                    _.runTest (name, test)
                     _.publishToTestsNamespace (name, test) },
 
 /*  Publishes to _.tests namespace, but does not run
@@ -39,11 +39,15 @@ _.extend (_, {
     /*  INTERNALS (you won't need that)
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-        runTest:    function (test) {
-                        if (_.isFunction (test)) {
-                            test () }
-                        else {
-                            _.each (test, function (fn) { fn () }) } },
+        runTest:    function (name, test) {
+                        try {
+                            if (_.isFunction (test)) {                               test () }
+                                                else { _.each (test, function (fn) { fn () }) } }
+                        catch (e) {
+                            if (_.isAssertionError (e)) { var printedName = ((_.isArray (name) && name) || [name]).join ('.')
+                                                          console.log (printedName + ':', e.message, '\n' + _.times (printedName.length, _.constant ('~')).join ('') + '\n')
+                                                         _.each (e.notMatching, function (x) { console.log ('  •', x) }) }
+                            throw e } },
 
         publishToTestsNamespace: function (name, test) {
                         if (_.isArray (name)) { // [suite, name] case

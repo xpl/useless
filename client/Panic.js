@@ -146,13 +146,22 @@ Panic.widget = $singleton (Component, {
 
 				logEl.append (_.isTypeOf (Error, params.args.first)
 						? ($('<div>')
-								.css ({ color: params.color.css, display: 'inline-block' })
-								.append ([params.indentation, $('<div class="inline-exception">').append (this.printError (params.args.first))]))
-						: ($('<div>')
-								.css ({ color: params.color.css })
-								.text (params.indentedText)
-								.append (params.where && this.printLocation (params.where))
-								.append ((params.trailNewlines || '').replace (/\n/g, '<br>')))) }),
+								.css ({ color: (params.color && params.color.css) || '' })
+								.append ([_.escape (params.indentation),
+											$('<div class="panic-alert-error inline-exception all-stack-entries">').append (
+												this.printError (params.args.first))]))
+						: $('<div class="log-entry">')
+								.append (
+									_.map (params.lines, function (line, i, lines) {
+															return $('<div class="line">')
+																		.append (_.escape (params.indentation))
+																		.append (_.map (line, function (run) {
+																								return $('<span>')
+																									.css ({ color: (run.config.color && run.config.color.css) || '' })
+																									.text (run.text) }))
+																		.append ((i === lines.lastIndex) ?
+																			[params.where && this.printLocation (params.where),
+																			 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) }),
 
 			function (done) {
 				test.evalLogCalls ()
@@ -172,7 +181,7 @@ Panic.widget = $singleton (Component, {
 							: '')
 				.click (this.$ (function (e) {
 					$(e.delegateTarget).parent ()
-						.toggleClass ('all')
+						.toggleClass ('all-stack-entries')
 						.transitionend (this.$ (function () {
 							this.modalBody.scroll () })) })),
 

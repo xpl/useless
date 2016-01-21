@@ -33,6 +33,7 @@ _ = function () {
     }
     return _;
 }();
+_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g };
 _.tests = {};
 _.deferTest = _.withTest = function (name, test, subj) {
     subj();
@@ -156,6 +157,9 @@ $overrideUnderscore('bind', function (bind) {
         return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 2)), fn._ra, bind.apply(this, arguments));
     });
 });
+_.debugEcho = function () {
+    return [this].concat(_.asArray(arguments));
+};
 _.arity = function (N, fn) {
     return function () {
         return fn.apply(this, _.first(arguments, N));
@@ -204,6 +208,64 @@ _.tails3 = $restArg(function (fn) {
             b
         ].concat(tailArgs));
     };
+});
+_.callsTo = function (fn) {
+    return $restArg(function () {
+        return _.callsWith.apply(null, arguments)(fn);
+    });
+};
+_.tailsTo = function (fn, then) {
+    return $restArg(function () {
+        return _.tailsWith.apply(null, arguments)(fn);
+    });
+};
+_.callsWith = $restArg(function () {
+    var args = _.asArray(arguments);
+    return function (fn) {
+        return _.withSameArgs(fn, function () {
+            return fn.apply(this, args.concat(_.asArray(arguments)));
+        });
+    };
+});
+_.tailsWith = $restArg(function () {
+    var args = _.asArray(arguments);
+    return function (fn) {
+        return _.withSameArgs(fn, function () {
+            return fn.apply(this, _.asArray(arguments).concat(args));
+        });
+    };
+});
+_.argumentAppendingWrapper = function (fn, then) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this, args = _.asArray(arguments);
+        return then(function () {
+            return fn.apply(this_, args.concat(_.asArray(arguments)));
+        });
+    });
+};
+_.argumentPrependingWrapper = function (fn, then) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this, args = _.asArray(arguments);
+        return then(function () {
+            return fn.apply(this_, _.asArray(arguments).concat(args));
+        });
+    });
+};
+_.new_ = $restArg(function (Constructor, a, b, c, d) {
+    switch (arguments.length) {
+    case 1:
+        return new Constructor();
+    case 2:
+        return new Constructor(a);
+    case 3:
+        return new Constructor(a, b);
+    case 4:
+        return new Constructor(a, b, c);
+    case 5:
+        return new Constructor(a, b, c, d);
+    default:
+        _.notImplemented();
+    }
 });
 _.flipN = function (fn) {
     return $restArg(function () {
@@ -319,9 +381,7 @@ _.extend(_, {
     _.binary = 2;
     _.unary = 1;
 }());
-_.higherOrder = function (fn) {
-    return _.partial(_.partial, fn);
-};
+_.higherOrder = _.callsTo;
 _.eval = function (x) {
     return _.isFunction(x) ? x.call(this) : x;
 };
@@ -346,24 +406,6 @@ _.asMethod = function (fn) {
     return function () {
         return fn.apply(undefined, [this].concat(_.asArray(arguments)));
     };
-};
-_.appendsArguments = function (fn, wrapper) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this;
-        var args = _.asArray(arguments);
-        return wrapper(function () {
-            fn.apply(this_, args.concat(_.asArray(arguments)));
-        });
-    });
-};
-_.prependsArguments = function (fn, wrapper) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this;
-        var args = _.asArray(arguments);
-        return wrapper(function () {
-            fn.apply(this_, _.asArray(arguments).concat(args));
-        });
-    });
 };
 _.once = function (fn) {
     var called = false;
@@ -641,143 +683,6 @@ _.extend(_, {
         return v === undefined || v === null || v === Math.NaN || v === '' || _.isPOD(v) && (_.isEmptyObject(v) || v.length === 0) ? undefined : v;
     }
 });
-_.json = function (arg) {
-    if (typeof arg === 'string') {
-        try {
-            return JSON.parse(arg);
-        } catch (e) {
-            return {};
-        }
-    } else {
-        return JSON.stringify(arg);
-    }
-};
-_.alignStringsRight = function (strings) {
-    var lengths = strings.map(_.count);
-    var max = _.max(lengths);
-    return [
-        lengths,
-        strings
-    ].zip(function (ln, str) {
-        return ' '.repeats(max - ln) + str;
-    });
-};
-_.bullet = function (bullet, str) {
-    var indent = ' '.repeats(bullet.length);
-    return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
-        return i === 0 ? bullet + line : indent + line;
-    }));
-};
-_.stringifyOneLine = function (x, cfg) {
-    return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
-};
-_.pretty = function (x, cfg) {
-    return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
-};
-_.stringify = function (x, cfg) {
-    cfg = cfg || {};
-    var measured = _.stringifyImpl(x, [], [], 0, cfg);
-    return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
-};
-_.stringifyPrototype = function (x) {
-    if (Platform.NodeJS && x.$meta) {
-        var name = '';
-        x.$meta(function (values) {
-            name = values.name;
-        });
-        return name && name + ' ()';
-    } else
-        return '<prototype>';
-};
-_.stringifyImpl = function (x, parents, siblings, depth, cfg) {
-    var customFormat = cfg.formatter && cfg.formatter(x);
-    if (customFormat) {
-        return customFormat;
-    }
-    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
-        x = _.asArray(x);
-    }
-    if (x === $global) {
-        return '$global';
-    } else if (parents.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<cyclic>';
-    } else if (siblings.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
-    } else if (x === undefined) {
-        return 'undefined';
-    } else if (x === null) {
-        return 'null';
-    } else if (_.isFunction(x)) {
-        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
-    } else if (typeof x === 'string') {
-        return _.quoteWith('"', x);
-    } else if (_.isTypeOf(Tags, x)) {
-        return _.reduce(Tags.get(x), function (memo, value, tag) {
-            return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
-        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
-    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
-        return x.toString();
-    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
-        var isArray = _.isArray(x);
-        var pretty = cfg.pretty || false;
-        if (_.platform().engine === 'browser') {
-            if (_.isTypeOf(Element, x)) {
-                return '<' + x.tagName.lowercase + '>';
-            } else if (_.isTypeOf(Text, x)) {
-                return '@' + x.wholeText;
-            }
-        }
-        if (x.toJSON) {
-            return _.quoteWith('"', x.toJSON());
-        }
-        if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
-            return isArray ? '<array[' + x.length + ']>' : '<object>';
-        }
-        var parentsPlusX = parents.concat([x]);
-        siblings.push(x);
-        var values = _.pairs(x);
-        var oneLine = !pretty || values.length < 2;
-        var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
-        if (pretty) {
-            values = _.values(x);
-            var printedKeys = _.alignStringsRight(_.keys(x).map(_.appends(': ')));
-            var printedValues = values.map(impl);
-            var leftPaddings = printedValues.map(function (x, i) {
-                return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
-            });
-            var maxLeftPadding = _.max(leftPaddings);
-            var indentedValues = [
-                leftPaddings,
-                printedValues
-            ].zip(function (padding, x) {
-                return ' '.repeats(maxLeftPadding - padding) + x;
-            });
-            var internals = isArray ? indentedValues : [
-                printedKeys,
-                indentedValues
-            ].zip(_.bullet);
-            var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
-            var lines = printed.split('\n');
-            return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
-        }
-        return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
-            return (isArray ? '' : kv[0] + ': ') + impl(kv[1]);
-        })));
-    } else if (_.isDecimal(x) && cfg.precision > 0) {
-        return _.toFixed(x, cfg.precision);
-    } else {
-        return x + '';
-    }
-};
-_.toFixed = function (x, precision) {
-    return x && x.toFixed && x.toFixed(precision) || undefined;
-};
-_.toFixed2 = function (x) {
-    return _.toFixed(x, 2);
-};
-_.toFixed3 = function (x) {
-    return _.toFixed(x, 3);
-};
 _.hasStdlib = true;
 _.throwsError = _.higherOrder(_.throwError = function (msg) {
     throw new Error(msg);
@@ -802,7 +707,20 @@ _.mixin({
         return _.isArray(value) ? _.map(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
     }
 });
-_.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map));
+_.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
+_.scatter = function (obj, elem) {
+    var result = undefined;
+    _.map2(obj, function (x, i) {
+        elem(x, i, function (v, k) {
+            if (arguments.length < 2) {
+                (result = result || []).push(v);
+            } else {
+                (result = result || {})[k] = v;
+            }
+        });
+    });
+    return result;
+};
 _.mapKeys = function (x, fn) {
     if (_.isArray(x)) {
         return _.map(x, _.tails2(_.mapKeys, fn));
@@ -942,7 +860,9 @@ _.mixin({
 });
 _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
 _.extend = $restArg(_.extend);
-_.extended = _.partial(_.extend, {});
+_.extended = $restArg(function () {
+    return _.extend.apply(this, [{}].concat(_.asArray(arguments)));
+});
 _.extendWith = _.flip(_.extend);
 _.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
 _.extendedDeep = _.tails3(_.zipZip, function (a, b) {
@@ -960,12 +880,24 @@ _.extend2 = $restArg(function (what) {
     }, {}));
 });
 _.find2 = function (value, pred) {
-    for (var i = 0, n = value.length; i < n; i++) {
-        var x = pred(value[i], i, value);
-        if (typeof x !== 'boolean') {
-            return x;
-        } else if (x === true) {
-            return value[i];
+    if (_.isArray(value)) {
+        for (var i = 0, n = value.length; i < n; i++) {
+            var x = pred(value[i], i, value);
+            if (typeof x !== 'boolean') {
+                return x;
+            } else if (x === true) {
+                return value[i];
+            }
+        }
+    } else if (_.isStrictlyObject(value)) {
+        for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
+            var k = ks[i];
+            var x = pred(value[k], k, value);
+            if (typeof x !== 'boolean') {
+                return x;
+            } else if (x === true) {
+                return value[k];
+            }
         }
     }
 };
@@ -1039,22 +971,25 @@ _.quote = function (s, pattern_) {
 _.quoteWith = _.flip2(_.quote);
 _.quotesWith = _.higherOrder(_.quoteWith);
 _.partition2 = function (arr, pred) {
-    var prevColor = undefined;
-    var result = [];
-    var group = [];
+    return _.pluck(_.partition3(arr, pred), 'items');
+};
+_.partition3 = function (arr, pred) {
+    var spans = [], span = {
+            label: undefined,
+            items: [arr.first]
+        };
     _.each(arr, function (x) {
-        var color = pred(x);
-        if (prevColor != color && group.length) {
-            result.push(group);
-            group = [];
+        var label = pred(x);
+        if (span.label != label && span.items.length) {
+            spans.push(span = {
+                label: label,
+                items: [x]
+            });
+        } else {
+            span.items.push(x);
         }
-        group.push(x);
-        prevColor = color;
     });
-    if (group.length) {
-        result.push(group);
-    }
-    return result;
+    return span.length && spans.push(span), spans;
 };
 _.linearMerge = function (arrays, cfg) {
     cfg = cfg || { key: _.identity };
@@ -1108,6 +1043,45 @@ _.linearMerge = function (arrays, cfg) {
     };
     return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
 };
+(function () {
+    var indexMap = function (list) {
+        var map = {};
+        _.each(list, function (each, i) {
+            map[each] = map[each] || [];
+            map[each].push(i);
+        });
+        return map;
+    };
+    _.longestCommonSubstring = function (a, b) {
+        var where = _.indexOfLongestCommonSubstring(a, b);
+        return where.length ? a.substr(where.a, where.length) : undefined;
+    };
+    _.indexOfLongestCommonSubstring = function (a, b) {
+        var result = {
+            a: 0,
+            b: 0,
+            length: 0
+        };
+        var indexMapBefore = indexMap(a);
+        var previousOverlap = [];
+        _.each(b, function (eachAfter, indexAfter) {
+            var overlapLength;
+            var overlap = [];
+            var indexesBefore = indexMapBefore[eachAfter] || [];
+            _.each(indexesBefore, function (indexBefore) {
+                overlapLength = (indexBefore && previousOverlap[indexBefore - 1] || 0) + 1;
+                if (overlapLength > result.length) {
+                    result.length = overlapLength;
+                    result.a = indexBefore - overlapLength + 1;
+                    result.b = indexAfter - overlapLength + 1;
+                }
+                overlap[indexBefore] = overlapLength;
+            });
+            previousOverlap = overlap;
+        });
+        return result;
+    };
+}());
 _.key = function (fn) {
     return function (value, key) {
         return fn(key);
@@ -1300,6 +1274,251 @@ _.defineModifierKeyword = function (name, fn) {
 };
 _.deleteKeyword = function (name) {
     delete $global[_.keyword(name)];
+};
+_.hasTypeMatch = true;
+_.defineTagKeyword('required');
+_.defineTagKeyword('atom');
+_.defineKeyword('any', _.identity);
+(function () {
+    _.isMeta = function (x) {
+        return x === $any || $atom.is(x) === true || $required.is(x) === true;
+    };
+    var zip = function (type, value, pred) {
+        var required = Tags.unwrapAll(_.filter2(type, $required.matches));
+        var match = _.nonempty(_.zip2(Tags.unwrapAll(type), value, pred));
+        if (_.isEmpty(required)) {
+            return match;
+        } else {
+            var requiredMatch = _.nonempty(_.zip2(required, value, pred));
+            var allSatisfied = _.values2(required).length === _.values2(requiredMatch).length;
+            return allSatisfied ? match : _.coerceToEmpty(value);
+        }
+    };
+    var hyperMatch = _.hyperOperator(_.binary, function (type_, value, pred) {
+        var type = Tags.unwrap(type_);
+        if (_.isArray(type)) {
+            if (_.isArray(value)) {
+                return zip(_.times(value.length, _.constant(type[0])), value, pred);
+            } else {
+                return undefined;
+            }
+        } else if (_.isStrictlyObject(type) && type['*']) {
+            if (_.isStrictlyObject(value)) {
+                return zip(_.extend(_.map2(value, _.constant(type['*'])), _.omit(type, '*')), value, pred);
+            } else {
+                return undefined;
+            }
+        } else {
+            return zip(type_, value, pred);
+        }
+    });
+    var typeMatchesValue = function (c, v) {
+        var contract = Tags.unwrap(c);
+        return contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
+    };
+    _.mismatches = function (op, contract, value) {
+        return hyperMatch(contract, value, function (contract, v) {
+            return op(contract, v) ? undefined : contract;
+        });
+    };
+    _.omitMismatches = function (op, contract, value) {
+        return hyperMatch(contract, value, function (contract, v) {
+            return op(contract, v) ? v : undefined;
+        });
+    };
+    _.typeMismatches = _.partial(_.mismatches, typeMatchesValue);
+    _.omitTypeMismatches = _.partial(_.omitMismatches, typeMatchesValue);
+    _.valueMismatches = _.partial(_.mismatches, function (a, b) {
+        return a === $any || b === $any || a === b;
+    });
+    var unifyType = function (value) {
+        if (_.isArray(value)) {
+            return _.nonempty([_.reduce(_.rest(value), function (a, b) {
+                    return _.undiff(a, b);
+                }, _.first(value) || undefined)]);
+        } else if (_.isStrictlyObject(value)) {
+            var pairs = _.pairs(value);
+            var unite = _.map(_.reduce(_.rest(pairs), function (a, b) {
+                return _.undiff(a, b);
+            }, _.first(pairs) || [
+                undefined,
+                undefined
+            ]), _.nonempty);
+            return _.isEmpty(unite) || _.isEmpty(unite[1]) ? value : _.object([[
+                    unite[0] || '*',
+                    unite[1]
+                ]]);
+        } else {
+            return value;
+        }
+    };
+    _.decideType = function (value) {
+        var operator = _.hyperOperator(_.unary, function (value, pred) {
+            if (value && value.constructor && value.constructor.$definition) {
+                return value.constructor;
+            }
+            return unifyType(_.map2(value, pred));
+        });
+        return operator(value, function (value) {
+            if (_.isPrototypeInstance(value)) {
+                return value.constructor;
+            } else {
+                return _.isEmptyArray(value) ? value : typeof value;
+            }
+        });
+    };
+}());
+_.json = function (arg) {
+    if (typeof arg === 'string') {
+        try {
+            return JSON.parse(arg);
+        } catch (e) {
+            return {};
+        }
+    } else {
+        return JSON.stringify(arg);
+    }
+};
+_.alignStringsRight = function (strings) {
+    var lengths = strings.map(_.count);
+    var max = _.max(lengths);
+    return [
+        lengths,
+        strings
+    ].zip(function (ln, str) {
+        return ' '.repeats(max - ln) + str;
+    });
+};
+_.bullet = function (bullet, str) {
+    var indent = ' '.repeats(bullet.length);
+    return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
+        return i === 0 ? bullet + line : indent + line;
+    }));
+};
+_.stringifyOneLine = function (x, cfg) {
+    return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
+};
+_.pretty = function (x, cfg) {
+    return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
+};
+_.stringify = function (x, cfg) {
+    cfg = cfg || {};
+    var measured = _.stringifyImpl(x, [], [], 0, cfg);
+    return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
+};
+_.stringifyPrototype = function (x) {
+    if (Platform.NodeJS && x.$meta) {
+        var name = '';
+        x.$meta(function (values) {
+            name = values.name;
+        });
+        return name && name + ' ()';
+    } else
+        return '<prototype>';
+};
+_.builtInTypes = {
+    'Event': { target: $any },
+    'MutationEvent': {
+        target: $any,
+        attrName: $any,
+        prevValue: $any
+    }
+};
+_.stringifyImpl = function (x, parents, siblings, depth, cfg) {
+    var customFormat = cfg.formatter && cfg.formatter(x);
+    if (customFormat) {
+        return customFormat;
+    }
+    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
+        x = _.asArray(x);
+    }
+    if (x === $global) {
+        return '$global';
+    } else if (parents.indexOf(x) >= 0) {
+        return cfg.pure ? undefined : '<cyclic>';
+    } else if (siblings.indexOf(x) >= 0) {
+        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
+    } else if (x === undefined) {
+        return 'undefined';
+    } else if (x === null) {
+        return 'null';
+    } else if (_.isFunction(x)) {
+        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
+    } else if (typeof x === 'string') {
+        return _.quoteWith('"', x);
+    } else if (_.isTypeOf(Tags, x)) {
+        return _.reduce(Tags.get(x), function (memo, value, tag) {
+            return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
+        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
+    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
+        return x.toString();
+    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
+        var builtInValue = _.find2(_.builtInTypes, function (schema, name) {
+            return $global[name] && x instanceof $global[name] && name + ' ' + _.stringifyOneLine(_.omitTypeMismatches(schema, x)) || false;
+        });
+        if (builtInValue) {
+            return builtInValue;
+        } else {
+            var isArray = _.isArray(x);
+            var pretty = cfg.pretty || false;
+            if (_.platform().engine === 'browser') {
+                if (_.isTypeOf(Element, x)) {
+                    return '<' + x.tagName.lowercase + '>';
+                } else if (_.isTypeOf(Text, x)) {
+                    return '@' + x.wholeText;
+                }
+            }
+            if (x.toJSON) {
+                return _.quoteWith('"', x.toJSON());
+            }
+            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
+                return isArray ? '<array[' + x.length + ']>' : '<object>';
+            }
+            var parentsPlusX = parents.concat([x]);
+            siblings.push(x);
+            var values = _.pairs(x);
+            var oneLine = !pretty || values.length < 2;
+            var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
+            if (pretty) {
+                values = _.values(x);
+                var printedKeys = _.alignStringsRight(_.keys(x).map(_.appends(': ')));
+                var printedValues = values.map(impl);
+                var leftPaddings = printedValues.map(function (x, i) {
+                    return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
+                });
+                var maxLeftPadding = _.max(leftPaddings);
+                var indentedValues = [
+                    leftPaddings,
+                    printedValues
+                ].zip(function (padding, x) {
+                    return ' '.repeats(maxLeftPadding - padding) + x;
+                });
+                var internals = isArray ? indentedValues : [
+                    printedKeys,
+                    indentedValues
+                ].zip(_.bullet);
+                var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
+                var lines = printed.split('\n');
+                return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
+            }
+            return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
+                return (isArray ? '' : kv[0] + ': ') + impl(kv[1]);
+            })));
+        }
+    } else if (_.isDecimal(x) && cfg.precision > 0) {
+        return _.toFixed(x, cfg.precision);
+    } else {
+        return x + '';
+    }
+};
+_.toFixed = function (x, precision) {
+    return x && x.toFixed && x.toFixed(precision) || undefined;
+};
+_.toFixed2 = function (x) {
+    return _.toFixed(x, 2);
+};
+_.toFixed3 = function (x) {
+    return _.toFixed(x, 3);
 };
 _.cps = function () {
     return _.cps.sequence.apply(null, arguments);
@@ -1501,7 +1720,8 @@ _.cps.trySequence = function (functions, then, err) {
 _([
     'method',
     'property',
-    'flipped'
+    'flipped',
+    'forceOverride'
 ]).each(_.defineTagKeyword);
 $extensionMethods = function (Type, methods) {
     _.each(methods, function (tags, name) {
@@ -1510,13 +1730,13 @@ $extensionMethods = function (Type, methods) {
             _[name] = _[name] || fn;
         }
         if (!tags.$method && (tags.$property || _.oneArg(fn))) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 _.defineHiddenProperty(Type.prototype, name, function () {
                     return fn(this);
                 });
             }
         } else if (!tags.$property) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 Type.prototype[name] = _.asMethod(tags.$flipped ? _.flip(fn) : fn);
             }
         } else {
@@ -1534,13 +1754,13 @@ $extensionMethods(Function, {
     compose: _.compose,
     then: _.then,
     flip: _.flip,
+    with_: _.flipN,
     flip2: _.flip2,
     flip3: _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod: _.asMethod,
-    calls: function (fn) {
-        return _.higherOrder(fn);
-    },
+    callsWith: _.callsTo,
+    tailsWith: _.tailsTo,
     returns: function (fn, returns) {
         return function () {
             fn.apply(this, arguments);
@@ -1576,6 +1796,7 @@ $extensionMethods(Function, {
     and: _.and,
     not: _.not,
     applies: _.applies,
+    new_: _.new_,
     oneShot: function (fn) {
         var called = false;
         return function () {
@@ -1654,20 +1875,6 @@ $extensionMethods(Function, {
         };
     }
 });
-_.tests.Function.catches = function () {
-    $assert('yo', _.constant('yo').catches($fails)(), _.identity.catches($fails)('yo'), _.throwsError('xx').catches('yo')());
-    $assertThrows(function () {
-        _.constant('yo').catches(function () {
-            $assert('catch handler shoudnt work on passed continuations');
-        }, _.throwsError('xx'))();
-    });
-    $assert(function (x) {
-        throw x;
-    }.catches(_.appends('+error_case'), _.appends('+no_error_case'), _.appends('+finally'))('foo'), 'foo+error_case+finally');
-    $assertMatches(_.throwError.catches()('yo'), { message: 'yo' });
-    $assert(_.catches(_.throwsError(42), $assertMatches.$({ message: 42 }).returns('yo'))(), 'yo');
-    $assertCPS(_.constant('yo').catches($fails), 'yo');
-};
 $extensionMethods(Function, {
     catch_: function (fn, catch_, then, finally_) {
         return fn.catches(catch_, then)();
@@ -1709,6 +1916,21 @@ $extensionMethods(Array, {
     filter: _.filter,
     flat: _.flatten.tails2(true),
     object: _.object,
+    join: function (strJoin) {
+        return $forceOverride(function (arr, delim) {
+            delim = arguments.length < 2 ? '' : delim;
+            if (_.isString(delim)) {
+                return strJoin.call(arr, delim);
+            } else {
+                return _.reduce2(arr, function (a, b) {
+                    return [a].concat([
+                        delim,
+                        b
+                    ]);
+                });
+            }
+        });
+    }(Array.prototype.join),
     contains: function (arr, item) {
         return arr.indexOf(item) >= 0;
     },
@@ -2381,7 +2603,7 @@ _.extend($prototype, {
                             _.each(macroTags, function (macroFn, tagName) {
                                 memberDef = def[memberName];
                                 if (_.keyword(tagName) in memberDef) {
-                                    def[memberName] = macroFn(def, memberDef, memberName) || memberDef;
+                                    def[memberName] = macroFn.call(macroTags, def, memberDef, memberName) || memberDef;
                                 }
                             });
                         });
@@ -2540,13 +2762,13 @@ _.extend($prototype, {
         flatten: function (def) {
             var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
             var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
-                return _.map(membersDef, function (member, memberName) {
+                return _.map(this.flatten(membersDef), function (member, memberName) {
                     return [
                         memberName,
                         $global[keyword](member)
                     ];
                 });
-            }), true));
+            }, this), true));
             var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
             return _.extend(memberDefinitions, mergedKeywordGroups);
         },
@@ -3469,18 +3691,18 @@ Lock = $prototype({
 });
 _.interlocked = function (fn) {
     var lock = new Lock();
-    return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
+    return _.extendWith({ wait: lock.$(lock.wait) }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         lock.acquire(function () {
-            context(lock.$(lock.release));
+            fn(lock.$(lock.release));
         });
     }));
 };
 _.defineKeyword('scope', function (fn) {
     var releaseStack = undefined;
-    return _.prependsArguments(Tags.unwrap(fn), function (context) {
+    return _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         var released = { when: undefined };
         (releaseStack = releaseStack || []).push(released);
-        context(function (then) {
+        fn(function (then) {
             if (released.when)
                 throw new Error('$scope: release called twice');
             released.when = then;
@@ -4264,117 +4486,36 @@ if (jQuery) {
 ;
 ;
 $uselessFile = 'panic.js';
-_.defineTagKeyword('required');
-_.defineTagKeyword('atom');
-_.defineKeyword('any', _.identity);
-(function () {
-    _.isMeta = function (x) {
-        return x === $any || $atom.is(x) === true || $required.is(x) === true;
-    };
-    var zip = function (type, value, pred) {
-        var required = Tags.unwrapAll(_.filter2(type, $required.matches));
-        var match = _.nonempty(_.zip2(Tags.unwrapAll(type), value, pred));
-        if (_.isEmpty(required)) {
-            return match;
-        } else {
-            var requiredMatch = _.nonempty(_.zip2(required, value, pred));
-            var allSatisfied = _.values2(required).length === _.values2(requiredMatch).length;
-            return allSatisfied ? match : _.coerceToEmpty(value);
-        }
-    };
-    var hyperMatch = _.hyperOperator(_.binary, function (type_, value, pred) {
-        var type = Tags.unwrap(type_);
-        if (_.isArray(type)) {
-            if (_.isArray(value)) {
-                return zip(_.times(value.length, _.constant(type[0])), value, pred);
-            } else {
-                return undefined;
-            }
-        } else if (_.isStrictlyObject(type) && type['*']) {
-            if (_.isStrictlyObject(value)) {
-                return zip(_.extend(_.map2(value, _.constant(type['*'])), _.omit(type, '*')), value, pred);
-            } else {
-                return undefined;
-            }
-        } else {
-            return zip(type_, value, pred);
-        }
-    });
-    var typeMatchesValue = function (c, v) {
-        var contract = Tags.unwrap(c);
-        return contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
-    };
-    _.mismatches = function (op, contract, value) {
-        return hyperMatch(contract, value, function (contract, v) {
-            return op(contract, v) ? undefined : contract;
-        });
-    };
-    _.omitMismatches = function (op, contract, value) {
-        return hyperMatch(contract, value, function (contract, v) {
-            return op(contract, v) ? v : undefined;
-        });
-    };
-    _.typeMismatches = _.partial(_.mismatches, typeMatchesValue);
-    _.omitTypeMismatches = _.partial(_.omitMismatches, typeMatchesValue);
-    _.valueMismatches = _.partial(_.mismatches, function (a, b) {
-        return a === $any || b === $any || a === b;
-    });
-    var unifyType = function (value) {
-        if (_.isArray(value)) {
-            return _.nonempty([_.reduce(_.rest(value), function (a, b) {
-                    return _.undiff(a, b);
-                }, _.first(value) || undefined)]);
-        } else if (_.isStrictlyObject(value)) {
-            var pairs = _.pairs(value);
-            var unite = _.map(_.reduce(_.rest(pairs), function (a, b) {
-                return _.undiff(a, b);
-            }, _.first(pairs) || [
-                undefined,
-                undefined
-            ]), _.nonempty);
-            return _.isEmpty(unite) || _.isEmpty(unite[1]) ? value : _.object([[
-                    unite[0] || '*',
-                    unite[1]
-                ]]);
-        } else {
-            return value;
-        }
-    };
-    _.decideType = function (value) {
-        var operator = _.hyperOperator(_.unary, function (value, pred) {
-            if (value && value.constructor && value.constructor.$definition) {
-                return value.constructor;
-            }
-            return unifyType(_.map2(value, pred));
-        });
-        return operator(value, function (value) {
-            if (_.isPrototypeInstance(value)) {
-                return value.constructor;
-            } else {
-                return _.isEmptyArray(value) ? value : typeof value;
-            }
-        });
-    };
-}());
 _.hasAsserts = true;
 _.extend(_, {
     tests: {},
     withTest: function (name, test, defineSubject) {
         defineSubject();
-        _.runTest(test);
+        _.runTest(name, test);
         _.publishToTestsNamespace(name, test);
     },
     deferTest: function (name, test, defineSubject) {
         defineSubject();
         _.publishToTestsNamespace(name, test);
     },
-    runTest: function (test) {
-        if (_.isFunction(test)) {
-            test();
-        } else {
-            _.each(test, function (fn) {
-                fn();
-            });
+    runTest: function (name, test) {
+        try {
+            if (_.isFunction(test)) {
+                test();
+            } else {
+                _.each(test, function (fn) {
+                    fn();
+                });
+            }
+        } catch (e) {
+            if (_.isAssertionError(e)) {
+                var printedName = (_.isArray(name) && name || [name]).join('.');
+                console.log(printedName + ':', e.message, '\n' + _.times(printedName.length, _.constant('~')).join('') + '\n');
+                _.each(e.notMatching, function (x) {
+                    console.log('  \u2022', x);
+                });
+            }
+            throw e;
         }
     },
     publishToTestsNamespace: function (name, test) {
@@ -4930,47 +5071,70 @@ _.extend(log = function () {
             stackOffset: 1
         })].concat(_.asArray(arguments)));
 }, {
-    Color: $prototype(),
     Config: $prototype(),
-    cleanArgs: function (args) {
-        return _.reject(args, _.or(log.Color.isTypeOf, log.Config.isTypeOf));
-    },
-    read: function (type, args) {
-        return _.find(args, type.isTypeOf) || new type({});
-    },
-    modify: function (type, args, operator) {
-        return _.reject(args, type.isTypeOf).concat(operator(log.read(type, args)));
+    config: function (cfg) {
+        return new log.Config(cfg);
     }
 });
 _.extend(log, {
-    config: function (cfg) {
-        return new log.Config(cfg);
-    },
     indent: function (n) {
         return log.config({ indent: n });
     },
-    color: {
-        red: new log.Color({
-            shell: '\x1B[31m',
-            css: 'crimson'
-        }),
-        blue: new log.Color({
-            shell: '\x1B[36m',
-            css: 'royalblue'
-        }),
-        orange: new log.Color({
-            shell: '\x1B[33m',
-            css: 'saddlebrown'
-        }),
-        green: new log.Color({
-            shell: '\x1B[32m',
-            css: 'forestgreen'
-        })
+    stackOffset: function (n) {
+        return log.config({ stackOffset: n });
     },
-    readColor: log.read.partial(log.Color),
-    readConfig: log.read.partial(log.Config),
-    modifyColor: log.modify.partial(log.Color),
-    modifyConfig: log.modify.partial(log.Config),
+    color: _.extend(function (x) {
+        return (log.color[x] || {}).color;
+    }, {
+        none: log.config({
+            color: {
+                shell: '\x1B[0m',
+                css: ''
+            }
+        }),
+        red: log.config({
+            color: {
+                shell: '\x1B[31m',
+                css: 'crimson'
+            }
+        }),
+        blue: log.config({
+            color: {
+                shell: '\x1B[36m',
+                css: 'royalblue'
+            }
+        }),
+        darkBlue: log.config({
+            color: {
+                shell: '\x1B[36m\x1B[2m',
+                css: 'rgba(65,105,225,0.5)'
+            }
+        }),
+        orange: log.config({
+            color: {
+                shell: '\x1B[33m',
+                css: 'saddlebrown'
+            }
+        }),
+        green: log.config({
+            color: {
+                shell: '\x1B[32m',
+                css: 'forestgreen'
+            }
+        }),
+        pink: log.config({
+            color: {
+                shell: '\x1B[35m',
+                css: 'magenta'
+            }
+        }),
+        dark: log.config({
+            color: {
+                shell: '\x1B[0m\x1B[2m',
+                css: 'rgba(0,0,0,0.25)'
+            }
+        })
+    }),
     boldLine: '======================================',
     line: '--------------------------------------',
     thinLine: '......................................',
@@ -5011,6 +5175,7 @@ _.extend(log, {
     },
     impl: {
         configStack: [],
+        numWrites: 0,
         configure: function (configs) {
             return _.reduce2({
                 stackOffset: 0,
@@ -5024,40 +5189,74 @@ _.extend(log, {
         },
         write: $restArg(function () {
             var writeBackend = log.writeBackend();
+            log.impl.numWrites++;
             var args = _.asArray(arguments);
-            var cleanArgs = log.cleanArgs(args);
-            var config = log.impl.configure(_.concat([{ stackOffset: Platform.NodeJS ? 1 : 3 }], log.impl.configStack, _.filter(args, log.Config.isTypeOf)));
-            var indent = (writeBackend.indent || 0) + (config.indent || 0);
-            var text = log.impl.stringifyArguments(cleanArgs, config);
-            var indentation = _.times(indent, _.constant('\t')).join('');
-            var match = text.reversed.match(/(\n*)([^]*)/);
+            var config = log.impl.configure([{
+                    stackOffset: Platform.NodeJS ? 1 : 3,
+                    indent: writeBackend.indent || 0
+                }].concat(log.impl.configStack));
+            var runs = _.reduce2([], _.partition3(args, _.isTypeOf.$(log.Config)), function (runs, span) {
+                if (span.label === true) {
+                    config = log.impl.configure([config].concat(span.items));
+                    return runs;
+                } else {
+                    return runs.concat({
+                        config: config,
+                        text: log.impl.stringifyArguments(span.items, config)
+                    });
+                }
+            });
+            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match(/(\n*)([^]*)/);
+            var trailNewlines = trailNewlinesMatch && trailNewlinesMatch[1];
+            if (trailNewlinesMatch) {
+                runs.last.text = trailNewlinesMatch[2].reversed;
+            }
+            var newline = {};
+            var lines = _.pluck.with_('items', _.reject.with_(_.property('label'), _.partition3.with_(_.equals(newline), _.scatter(runs, function (run, i, emit) {
+                _.each(run.text.split('\n'), function (line, i, arr) {
+                    emit(_.extended(run, { text: line }));
+                    if (i !== arr.lastIndex) {
+                        emit(newline);
+                    }
+                });
+            }))));
+            var totalText = _.pluck(runs, 'text').join('');
             var where = config.where || $callStack[config.stackOffset] || {};
-            var backendParams = {
-                color: config.color || log.readColor(args),
+            var indentation = _.times(config.indent, _.constant('\t')).join('');
+            writeBackend({
+                lines: lines,
+                config: config,
+                color: config.color,
+                args: arguments,
                 indentation: indentation,
-                indentedText: match[2].reversed.split('\n').map(_.prepends(indentation)).join('\n'),
-                trailNewlines: match[1],
+                indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
+                text: totalText,
                 codeLocation: config.location && log.impl.location(where) || '',
-                where: config.location && where || undefined,
-                args: args,
-                config: config
-            };
-            writeBackend(backendParams);
-            return cleanArgs[0];
+                trailNewlines: trailNewlines || '',
+                where: config.location && where || undefined
+            });
+            return _.find(args, _.not(_.isTypeOf.$(log.Config)));
         }),
         defaultWriteBackend: function (params) {
-            var color = params.color, indentedText = params.indentedText, codeLocation = params.codeLocation, trailNewlines = params.trailNewlines;
-            var colorValue = color && (Platform.NodeJS ? color.shell : color.css);
+            var codeLocation = params.codeLocation, trailNewlines = params.trailNewlines;
             if (Platform.NodeJS) {
-                if (colorValue) {
-                    console.log(colorValue + indentedText + '\x1B[0m', codeLocation, trailNewlines);
-                } else {
-                    console.log(indentedText, codeLocation, trailNewlines);
-                }
+                console.log(_.map(params.lines, function (line) {
+                    return _.map(line, function (run) {
+                        return run.config.color ? run.config.color.shell + params.indentation + run.text + '\x1B[0m' : params.indentation + run.text;
+                    }).join('');
+                }).join('\n'), log.color('dark').shell + codeLocation + '\x1B[0m', trailNewlines);
             } else {
-                var lines = indentedText.split('\n');
-                var allButFirstLinePaddedWithSpace = [_.first(lines) || ''].concat(_.rest(lines).map(_.prepends(' ')));
-                console.log((colorValue ? '%c' : '') + allButFirstLinePaddedWithSpace.join('\n'), colorValue ? 'color: ' + colorValue : '', codeLocation, trailNewlines);
+                console.log.apply(console, _.reject.with_(_.equals(undefined), [].concat(_.map(params.lines, function (line, i) {
+                    return params.indentation + _.reduce2('', line, function (s, run) {
+                        return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
+                    });
+                }).join('\n') + (codeLocation && '%c ' + codeLocation || ''), (_.scatter(params.lines, function (line, i, emit) {
+                    _.each(line, function (run) {
+                        if (run.config.color) {
+                            emit('color:' + run.config.color.css);
+                        }
+                    });
+                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), trailNewlines)));
             }
         },
         location: function (where) {
@@ -5121,7 +5320,7 @@ _.extend(log, {
     _.extend(log, log.printAPI = _.object(_.concat([
         [
             'newline',
-            write.$('', log.config({ location: false }))
+            write.$(log.config({ location: false }), '')
         ],
         [
             'write',
@@ -5130,21 +5329,23 @@ _.extend(log, {
     ], _.flat(_.map([
         'red failure error e',
         'blue info i',
+        'darkBlue minor m',
         'orange warning warn w',
-        'green success ok g'
+        'green success ok g',
+        'pink notice alert p',
+        'dark hint d'
     ], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
         return [
             name,
             write.$(log.config({
                 location: i !== 0,
-                color: log.color[names.first]
+                color: log.color(names.first),
+                stackOffset: 2
             }))
         ];
     })))))));
 }());
-log.writes = _.higherOrder(log.write);
-logs = _.mapWith(_.higherOrder, log.printAPI);
-log.pretty = _.map2(log.printAPI, _.partial.tails2(log.config({ pretty: true })));
+logs = _.mapWith(_.callsTo.compose(_.callsWith(log.stackOffset(1))), log.printAPI);
 _.extend(log, {
     asTable: function (arrayOfObjects) {
         var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
@@ -5425,10 +5626,10 @@ Test = $prototype({
             Testosterone.currentAssertion = self;
             if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
                 assertion.location.sourceReady(function (src) {
-                    log.red(src, log.config({
+                    log.red(log.config({
                         location: assertion.location,
                         where: assertion.location
-                    }));
+                    }), src);
                     assertion.evalLogCalls();
                     doneWithAssertion();
                 });
@@ -5465,8 +5666,18 @@ Test = $prototype({
                             ];
                         })).join('\n'));
                     } else {
-                        _.each(notMatching, function (what, i) {
-                            log.orange(_.bullet('\u2022 ', log.impl.stringify(what)));
+                        var cases = _.map(notMatching, log.impl.stringify.arity1.then(_.bullet.$('\u2022 ')));
+                        var common = _.reduce2(cases, _.longestCommonSubstring) || '';
+                        if (common.length < 4) {
+                            common = undefined;
+                        }
+                        _.each(cases, function (what) {
+                            if (common) {
+                                var where = what.indexOf(common);
+                                log.write(log.color.orange, what.substr(0, where), log.color.dark, common, log.color.orange, what.substr(where + common.length));
+                            } else {
+                                log.orange(what);
+                            }
                         });
                     }
                 }
@@ -5586,56 +5797,81 @@ Testosterone.ValidatesRecursion = $trait({
         }, this);
     }
 });
-Testosterone.LogsMethodCalls = $trait({
-    $test: function () {
-        var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
-        var compo = new ($extends(Proto, {
-            foo: $log(function (_42) {
-                $assert(_42, 42);
-                return 24;
-            })
-        }))();
-        $assert(compo.foo(42), 24);
-        $assert(_.pluck(this.logCalls, 'indentedText'), [
-            '\tfoo',
-            '\t\t\u2192 24',
-            '\t\t'
-        ]);
-    },
-    $macroTags: {
-        log: function (def, value, name) {
-            var color = _.isBoolean(value.$log) ? undefined : log.color[value.$log];
-            var protoName = '';
-            $untag(def.$meta)(function (meta) {
-                protoName = meta.name;
+(function () {
+    var colors = [
+        'red',
+        'green',
+        'blue',
+        'orange',
+        'pink'
+    ];
+    colors.each(_.defineTagKeyword);
+    Testosterone.LogsMethodCalls = $trait({
+        $test: function (testDone) {
+            var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
+            var Compo = $extends(Proto, {
+                foo: $log($red(function (_42) {
+                    $assert(_42, 42);
+                    return 24;
+                }))
             });
-            return Tags.modify(value, function (fn) {
-                return function () {
-                    var this_ = this, arguments_ = arguments;
-                    var isProtoNameRedundant = log.currentConfig().protoName === protoName;
-                    log.write(isProtoNameRedundant ? name : _.nonempty([
-                        protoName,
-                        name
-                    ]).join('.') + _.map(arguments, _.stringifyOneLine).join(', ').quote(' ()'), log.config({ location: true }));
-                    return log.withConfig({
-                        indent: 1,
-                        color: color,
-                        protoName: protoName
-                    }, function () {
-                        var result = fn.apply(this_, arguments_);
-                        if (result !== undefined) {
-                            log.write('\u2192', _.stringifyOneLine(result), log.config({ color: color }));
-                        }
-                        if (log.currentConfig().indent < 2) {
-                            log.newline();
-                        }
-                        return result;
-                    });
-                };
+            var compo = new Compo();
+            var testContext = this;
+            Compo.$meta(function () {
+                $assert(compo.foo(42), 24);
+                $assert(_.pluck(testContext.logCalls, 'text'), [
+                    'Compo.foo (42)',
+                    '\u2192 24',
+                    ''
+                ]);
+                $assert(testContext.logCalls[0].color === log.color('red'));
+                testDone();
             });
+        },
+        $macroTags: {
+            log: function (def, value, name) {
+                var param = _.isBoolean(value.$log) ? undefined : value.$log;
+                var protoName = '';
+                var color = _.find2(colors, function (color) {
+                    return log.color(value['$' + color] && color) || false;
+                });
+                var template = _.template(param || '{{$proto}}');
+                $untag(def.$meta)(function (meta) {
+                    protoName = meta.name;
+                });
+                return Tags.modify(value, function (fn) {
+                    return function () {
+                        var this_ = this, arguments_ = _.asArray(arguments);
+                        var this_dump = template(_.extend({ $proto: protoName }, _.map2(this, _.stringifyOneLine.arity1)));
+                        var args_dump = _.map(arguments_, _.stringifyOneLine).join(', ').quote('()');
+                        log.write(log.config({
+                            color: color,
+                            location: true
+                        }), _.nonempty([
+                            this_dump,
+                            name
+                        ]).join('.'), args_dump);
+                        return log.withConfig({
+                            indent: 1,
+                            color: color,
+                            protoName: protoName
+                        }, function () {
+                            var numWritesBefore = log.impl.numWrites;
+                            var result = fn.apply(this_, arguments_);
+                            if (result !== undefined) {
+                                log.write('\u2192', _.stringifyOneLine(result));
+                            }
+                            if (log.currentConfig().indent < 2 && log.impl.numWrites - numWritesBefore > 0) {
+                                log.newline();
+                            }
+                            return result;
+                        });
+                    };
+                });
+            }
         }
-    }
-});
+    });
+}());
 if (Platform.NodeJS) {
     module.exports = Testosterone;
 }
@@ -5813,13 +6049,17 @@ _.perfTest = function (arg, then) {
                 if (_.isTypeOf(Error, params.args.first)) {
                     console.log(params.args.first);
                 }
-                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').css({
-                    color: params.color.css,
-                    display: 'inline-block'
-                }).append([
-                    params.indentation,
-                    $('<div class="inline-exception">').append(this.printError(params.args.first))
-                ]) : $('<div>').css({ color: params.color.css }).text(params.indentedText).append(params.where && this.printLocation(params.where)).append((params.trailNewlines || '').replace(/\n/g, '<br>')));
+                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').css({ color: params.color && params.color.css || '' }).append([
+                    _.escape(params.indentation),
+                    $('<div class="panic-alert-error inline-exception all-stack-entries">').append(this.printError(params.args.first))
+                ]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
+                    return $('<div class="line">').append(_.escape(params.indentation)).append(_.map(line, function (run) {
+                        return $('<span>').css({ color: run.config.color && run.config.color.css || '' }).text(run.text);
+                    })).append(i === lines.lastIndex ? [
+                        params.where && this.printLocation(params.where),
+                        params.trailNewlines.replace(/\n/g, '<br>')
+                    ] : []);
+                }, this)));
             }), function (done) {
                 test.evalLogCalls();
                 done();
@@ -5835,7 +6075,7 @@ _.perfTest = function (arg, then) {
                 $('<div class="panic-alert-error-message" style="font-weight: bold;">').text(e.message).append(_.any(stackEntries, function (e, i) {
                     return (e.thirdParty || e['native']) && i !== 0;
                 }) ? '<a class="clean-toggle" href="javascript:{}"></a>' : '').click(this.$(function (e) {
-                    $(e.delegateTarget).parent().toggleClass('all').transitionend(this.$(function () {
+                    $(e.delegateTarget).parent().toggleClass('all-stack-entries').transitionend(this.$(function () {
                         this.modalBody.scroll();
                     }));
                 })),
@@ -5915,6 +6155,8 @@ _.perfTest = function (arg, then) {
             $(document).keydown(this.$(function (e) {
                 if (e.keyCode === 192) {
                     this.toggle();
+                } else if (e.keyCode === 27) {
+                    this.el.empty();
                 }
             }));
         },
@@ -5924,12 +6166,15 @@ _.perfTest = function (arg, then) {
         toggle: function (yes) {
             this.el.toggle(yes);
         },
+        visible: $property(function () {
+            return this.el.is(':visible');
+        }),
         write: function (params) {
             this.toggle(true);
             if (params.config.clear) {
                 this.el.empty();
             }
-            this.el.append($('<div class="ulo-line">').css('color', params.color.css).append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
+            this.el.append($('<div class="ulo-line">').css('color', params.color && params.color.css || '').append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
             if (!this.opaque) {
                 log.impl.defaultWriteBackend(params);
             }
@@ -5943,7 +6188,7 @@ _.perfTest = function (arg, then) {
         return file.indexOf('underscore') >= 0 || file.indexOf('jquery') >= 0 || file.indexOf('useless') >= 0 || file.indexOf('mootools') >= 0;
     });
     $('head').append([
-        $('<style type="text/css">').text('@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \u2192 \'; }\n\n.panic-alert-error:not(.all) .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all) .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after { content: \', \'; }\n.panic-alert-error .test-log .location .file { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before  { content: \':\'; }\n.panic-alert-error .test-log .location .line { opacity: 0.25; }\n\n.panic-alert-error .test-log > div:after { content: \' \'; }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre > * { font-family: Menlo, monospace; font-size: 11px !important; white-space: pre !important; }\n\n.panic-alert-error  .inline-exception { position: relative; display: inline-block;  }\n\n\n'),
+        $('<style type="text/css">').text('@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \u2192 \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after { content: \', \'; }\n.panic-alert-error .test-log .location .file { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before  { content: \':\'; }\n.panic-alert-error .test-log .location .line { opacity: 0.25; }\n\n.panic-alert-error .test-log .log-entry .line:after { content: \' \'; }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { border-top: 1px solid #904C34; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n\n'),
         $('<style type="text/css">').text('.useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;\n\t\t\t\t\t   white-space: pre;\n\t\t\t\t\t   font-family: Menlo, monospace;\n\t\t\t\t\t   font-size: 11px;\n\t\t\t\t\t   pointer-events: none;\n\t\t\t\t\t   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }')
     ]);
 }(jQuery));

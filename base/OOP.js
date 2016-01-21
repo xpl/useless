@@ -36,13 +36,13 @@ _.withTest ('OOP', {
             staticProperty: $static ($property (function () { return 'Foo.staticProperty' })),
 
         /*  Tags on members can be grouped like this, to reduce clutter if you have lots
-            of members tagged with same keyword. Currently no more than one level is
-            supported.                                                                      */
+            of members tagged with same keyword.                                            */
 
             $static: {
-                one: function () { return 1 },
-                two: function () { return 2 },
-                three: $property (3) },
+                $property: {
+                    one: 1,
+                    two: 2,
+                    three: 3 } },
 
         /*  Demonstrates some semantics of property definitions, provided by properties.js
             See that module for further investigation.                                      */
@@ -440,7 +440,7 @@ _.withTest ('OOP', {
                         _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn (def, memberDef, memberName) || memberDef } }) }) } } return def } },
+                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }) } } return def } },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -556,8 +556,8 @@ _.withTest ('OOP', {
             flatten: function (def) {
                 var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
                 var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
-                    return _.map (membersDef, function (member, memberName) {
-                        return [memberName, $global[keyword] (member)] }) }), true))
+                    return _.map (this.flatten (membersDef), function (member, memberName) {
+                        return [memberName, $global[keyword] (member)] }) }, this), true))
 
                 var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
 

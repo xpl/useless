@@ -33,7 +33,8 @@ BuildApp = $singleton (Component, {
         this.buildPath  =  path.resolve (process.cwd (), _.first (directories['true'])  || this.buildPath)
 
         if (!this.args.spawnedBySupervisor) {
-            log.pretty.g (_.extend ({ keys: args.keysDashed },
+            log.g (log.config ({ pretty: true }),
+                    _.extend ({ keys: args.keysDashed },
                     _.pick (this, 'inputFiles',
                                   'buildPath'))) } },
 
@@ -78,7 +79,7 @@ BuildApp = $singleton (Component, {
             post_req.end () },
 
     stripCommentsAndTests: function (src, name, path) {
-        log.warn ('Stripping comments and tests...')
+        log.hint ('Stripping comments and tests...')
 
         var matchesRequire =
             _.matches ({  expression: { operator: "=",
@@ -97,6 +98,14 @@ BuildApp = $singleton (Component, {
                                                         object:   {
                                                             object:   { name: "_"  },
                                                             property: { name: "tests"  }  }  } } })
+
+        var matchesTestsDefExpr2 = _.matches ({ expression:  {
+                                                    operator: "=",
+                                                    left:     {
+                                                        object:   {
+                                                            object:   { object:   { name: "_"  },
+                                                                        property: { name: "tests"  } },
+                                                            property: {}  }  } } })
 
         var matchesTest = _.matches (testExpr ('deferTest')).or (
                           _.matches (testExpr ('withTest')))
@@ -138,7 +147,8 @@ BuildApp = $singleton (Component, {
                         return hasModules[expr.test.property.name] ? expr : false }
 
                     else if (matchesRequire (expr) ||
-                        matchesTestsDefExpr (expr)) { return false }
+                             matchesTestsDefExpr (expr) ||
+                             matchesTestsDefExpr2 (expr)) { return false }
 
                     else if (matchesTest (expr)) {
 

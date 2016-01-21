@@ -7,10 +7,10 @@ _.tests.Function = {
              var sum = function (a, b) { return a + b }
         $assert (sum.$ (5) (42), 47) },
 
-    'Fn.calls': function () {
+    'Fn.callsWith': function () {
         $assert (42, (function (a,b,c) {
                       $assert ([a,b,c],
-                               [1,2,3]); return 42; }).calls (1,2,3) ()) },
+                               [1,2,3]); return 42; }).callsWith (1,2) (3)) },
 
     /*  Converts regular function (which returns result) to CPS function (which passes result to 'then')
      */
@@ -65,13 +65,14 @@ $extensionMethods (Function, {
     compose:        _.compose,
     then:           _.then,
     flip:           _.flip,
+    with_:          _.flipN,
     flip2:          _.flip2,
     flip3:          _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod:       _.asMethod,
 
-    calls: function (             fn) {
-            return _.higherOrder (fn) },
+    callsWith: _.callsTo,
+    tailsWith: _.tailsTo,
 
     returns: function (              fn,                                returns) {
                 return function () { fn.apply (this, arguments); return returns } },
@@ -82,11 +83,8 @@ $extensionMethods (Function, {
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
 
-    wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w);
-                      return f },
-
+    wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w); return f },
     wrapped: function (f) { return f._wrapped || f },
-
     original: function (f) {  while (f && f._wrapped) {
                                      f  = f._wrapped } return f },
 
@@ -100,6 +98,8 @@ $extensionMethods (Function, {
     not:    _.not,
 
     applies: _.applies,
+
+    new_: _.new_,
 
     oneShot: function (fn) { var called = false
         return function () {   if (!called) {

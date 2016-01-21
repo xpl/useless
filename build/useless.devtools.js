@@ -1,141 +1,3 @@
-/*  Type matching for arbitrary complex structures (TODO: test)
-    ======================================================================== */
-
-_.defineTagKeyword ('required')
-
-_.defineTagKeyword ('atom')
-
-_.defineKeyword ('any', _.identity)
-
-_.deferTest (['type', 'type matching'], function () {
-
-    $assert (_.omitTypeMismatches ( { '*': $any, foo: $required ('number'), bar: $required ('number') },
-                                    { baz: 'x', foo: 42,            bar: 'foo' }),
-                                    { })
-
-    $assert (_.omitTypeMismatches ( { foo: { '*': $any } },
-                                    { foo: { bar: 42, baz: 'qux' } }),
-                                    { foo: { bar: 42, baz: 'qux' } })
-
-    $assert (_.omitTypeMismatches ( { foo: { bar: $required(42), '*': $any } },
-                                    { foo: { bar: 'foo', baz: 'qux' } }),
-                                    { })
-
-    $assert (_.omitTypeMismatches ( [{ foo: $required ('number'), bar: 'number' }],
-                                    [{ foo: 42,                   bar: 42 },
-                                     { foo: 24,                           },
-                                     {                            bar: 42 }]), [{ foo: 42, bar: 42 }, { foo: 24 }])
-
-    $assert (_.omitTypeMismatches ({ '*': 'number' }, { foo: 42, bar: 42 }), { foo: 42, bar: 42 })
-
-    $assert (_.decideType ([]), [])
-    $assert (_.decideType (42),         'number')
-    $assert (_.decideType (_.identity), 'function')
-    $assert (_.decideType ([{ foo: 1 }, { foo: 2 }]), [{ foo: 'number' }])
-    $assert (_.decideType ([{ foo: 1 }, { bar: 2 }]), [])
-
-    $assert (_.decideType ( { foo: { bar: 1        }, foo: { baz: [] } }),
-                            { foo: { bar: 'number' }, foo: { baz: [] } })
-
-    $assert (_.decideType ( { foo: { bar: 1        }, foo: { bar: 2 } }),
-                            { foo: { bar: 'number' } })
-
-    $assert (_.decideType ( { foo:         { bar: 1        },
-                              bar:         { bar: 2        } }),
-                            { '*':         { bar: 'number' } })
-
-    if (_.hasOOP) {
-        var Type = $prototype ()
-        $assert (_.decideType ({ x: new Type () }), { x: Type }) }
-
-}, function () {
-
-    _.isMeta = function (x) { return (x === $any) || ($atom.is (x) === true) || ($required.is (x) === true)  }
-
-    var zip = function (type, value, pred) {
-        var required    = Tags.unwrapAll (_.filter2 (type, $required.matches))
-        var match       = _.nonempty (_.zip2 (Tags.unwrapAll (type), value, pred))
-
-        if (_.isEmpty (required)) {
-                return match }
-        
-        else {  var requiredMatch = _.nonempty (_.zip2 (required, value, pred))
-                var allSatisfied  = _.values2 (required).length === _.values2 (requiredMatch).length
-                return allSatisfied ?
-                            match : _.coerceToEmpty (value) } }
-
-    var hyperMatch = _.hyperOperator (_.binary,
-        function (type_, value, pred) { var type = Tags.unwrap (type_)
-
-            if (_.isArray (type)) { // matches [ItemType] → [item, item, ..., N]
-                if (_.isArray (value)) {
-                    return zip (_.times (value.length, _.constant (type[0])), value, pred) }
-                else {
-                    return undefined } }
-
-            else if (_.isStrictlyObject (type) && type['*']) { // matches { *: .. } → { a: .., b: .., c: .. }
-                if (_.isStrictlyObject (value)) {
-                    return zip (_.extend (  _.map2 (value, _.constant (type['*'])),
-                                            _.omit (type, '*')), value, pred) }
-                else {
-                    return undefined } }
-
-            else {
-                return zip (type_, value, pred) } })
-
-    var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
-
-                                return  ((contract === undefined) && (v === undefined)) ||
-                                        (_.isFunction (contract) && (
-                                            _.isPrototypeConstructor (contract) ?
-                                                _.isTypeOf (contract, v) :  // constructor type
-                                                contract (v))) ||           // test predicate
-                                        (typeof v === contract) ||          // plain JS type
-                                        (v === contract) }                  // constant match
-
-    _.mismatches = function (op, contract, value) {
-                            return hyperMatch (contract, value,
-                                        function (contract, v) {
-                                            return op (contract, v) ? undefined : contract }) }
-
-    _.omitMismatches = function (op, contract, value) {
-                            return hyperMatch (contract, value,
-                                        function (contract, v) {
-                                            return op (contract, v) ? v : undefined }) }
-
-    _.typeMismatches     = _.partial (_.mismatches,     typeMatchesValue)
-    _.omitTypeMismatches = _.partial (_.omitMismatches, typeMatchesValue)
-
-    _.valueMismatches = _.partial (_.mismatches, function (a, b) { return (a === $any) || (b === $any) || (a === b) })
-
-    var unifyType = function (value) {
-        if (_.isArray (value)) {
-            return _.nonempty ([_.reduce (_.rest (value), function (a, b) { return _.undiff (a, b) }, _.first (value) || undefined)]) }
-        
-        else if (_.isStrictlyObject (value)) {
-            var pairs = _.pairs (value)
-            var unite = _.map ( _.reduce (_.rest (pairs), function (a, b) { return _.undiff (a, b) }, _.first (pairs) || [undefined, undefined]),
-                                _.nonempty)
-
-            return (_.isEmpty (unite) || _.isEmpty (unite[1])) ? value : _.object ([[unite[0] || '*', unite[1]]]) }
-        
-        else {
-            return value } }
-
-    _.decideType = function (value) {
-        var operator = _.hyperOperator (_.unary,
-                            function (value, pred) {
-                                if (value && value.constructor && value.constructor.$definition) {
-                                    return value.constructor }
-                                return unifyType (_.map2 (value, pred)) })
-
-        return operator (value, function (value) {
-            if (_.isPrototypeInstance (value)) {
-                return value.constructor }
-            else {
-                return _.isEmptyArray (value) ? value : (typeof value) } }) } }) // TODO: fix hyperOperator to remove additional check for []
-
-;
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -164,7 +26,7 @@ _.extend (_, {
 
     withTest:   function (name, test, defineSubject) {
                     defineSubject ()
-                    _.runTest (test)
+                    _.runTest (name, test)
                     _.publishToTestsNamespace (name, test) },
 
 /*  Publishes to _.tests namespace, but does not run
@@ -177,11 +39,15 @@ _.extend (_, {
     /*  INTERNALS (you won't need that)
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-        runTest:    function (test) {
-                        if (_.isFunction (test)) {
-                            test () }
-                        else {
-                            _.each (test, function (fn) { fn () }) } },
+        runTest:    function (name, test) {
+                        try {
+                            if (_.isFunction (test)) {                               test () }
+                                                else { _.each (test, function (fn) { fn () }) } }
+                        catch (e) {
+                            if (_.isAssertionError (e)) { var printedName = ((_.isArray (name) && name) || [name]).join ('.')
+                                                          console.log (printedName + ':', e.message, '\n' + _.times (printedName.length, _.constant ('~')).join ('') + '\n')
+                                                         _.each (e.notMatching, function (x) { console.log ('  •', x) }) }
+                            throw e } },
 
         publishToTestsNamespace: function (name, test) {
                         if (_.isArray (name)) { // [suite, name] case
@@ -1009,18 +875,26 @@ _.tests.log = {
         $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
                                                             // (as it returns it first argument, like in _.identity)
 
-        log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
+        log.info    (log.stackOffset (2), 'log.info (log.config ({ stackOffset: 2 }), ...)')
 
-        log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
+        log.write   ('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace')
+
+        log.write (                     'Multi',
+                    log.color.red,      'Colored',
+                    log.color.green,    'Output',
+                    log.color.blue,     'For',
+                    log.color.orange,   'The',
+                    log.color.pink,     'Fucking',
+                    log.color.none,     'Win')
 
         log.write   (log.boldLine)  //  ASCII art <hr>
         log.write   (log.thinLine)
         log.write   (log.line)
 
-        log.write   (log.color.green,
-                        ['You can set indentation',
-                         'that is nicely handled',
-                         'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
+        log.write   (log.indent (1),
+                     ['You can set indentation',
+                      'that is nicely handled',
+                      'in case of multiline text'].join ('\n'))
 
         log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
         log.orange  (log.config ({ indent: 2, table: true }), [
@@ -1031,22 +905,11 @@ _.tests.log = {
         log.write ('Array:', [1, 2, 3])                             //  Arrays too
         log.write ('Function:', _.identity)                         //  Prints code of a function
 
-        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') },
+        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n');
 
-/*
-    'write backend control': function (testDone) { var calls = []
-
-        var backend1 = function (cfg) { calls.push ('1: ' + cfg.indentedText) }
-        var backend2 = function (cfg) { calls.push ('2: ' + cfg.indentedText)}
-
-        log.withWriteBackend (backend1, function (done) {     log ('backend1 ready')
-            log.withWriteBackend (backend2, function (done) { log ('backend2 ready')
-                done () }, function () {                      log ('backend2 released') })
-                                                              log ('backend1 on hold')
-            done () }, function () {                          log ('backend1 released')
-                $assert (calls, ['1: backend1 ready', 
-                                 '1: backend1 on hold',
-                                 '2: backend2 ready']); testDone () }) }*/ }
+        log.withConfig (log.indent (1), function () {
+            log.pink ('Config stack + scopes + higher order API test:')
+            _.each ([5,6,7], logs.pink ('item =', log.color.blue)) }) } }
 
 _.extend (
 
@@ -1055,59 +918,33 @@ _.extend (
     log = function () {
         return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
 
-
-    Color: $prototype (),
     Config: $prototype (),
-
-
-    /*  Returns arguments clean of config (non-value) parameters
-     */
-    cleanArgs: function (args) {
-        return _.reject (args, _.or (log.Color.isTypeOf, log.Config.isTypeOf)) },
-
-
-    /*  Monadic operators to help read and modify those control structures 
-        in argument lists (internal impl.)
-     */
-    read: function (type, args) {
-        return _.find (args, type.isTypeOf) || new type ({}) },
-
-    modify: function (type, args, operator) {
-                return _.reject (args, type.isTypeOf)
-                            .concat (
-                                operator (log.read (type, args))) } })
-
-
-_.extend (log, {
 
     /*  Could be passed as any argument to any write function.
      */
     config: function (cfg) {
-        return new log.Config (cfg) },
+        return new log.Config (cfg) } })
 
 
-    /*  Shortcut for common case
+_.extend (log, {
+
+    /*  Shortcut for common cases
      */
     indent: function (n) {
         return log.config ({ indent: n }) },
 
+    stackOffset: function (n) {
+        return log.config ({ stackOffset: n }) },
 
-    /*  There could be many colors in log message (NOT YET), therefore it's a separate from config entity.
-     */
-    color: {
-        red:    new log.Color ({ shell: '\u001b[31m', css: 'crimson' }),
-        blue:   new log.Color ({ shell: '\u001b[36m', css: 'royalblue' }),
-        orange: new log.Color ({ shell: '\u001b[33m', css: 'saddlebrown' }),
-        green:  new log.Color ({ shell: '\u001b[32m', css: 'forestgreen' }) },
-
-
-    /*  Actual arguments API
-     */
-    readColor:      log.read.partial (log.Color),
-    readConfig:     log.read.partial (log.Config),
-    modifyColor:    log.modify.partial (log.Color),
-    modifyConfig:   log.modify.partial (log.Config),
-
+    color: _.extend (function (x) { return (log.color[x] || {}).color }, {
+                                                                    none:     log.config ({ color: { shell: '\u001B[0m',  css: '' } }),
+                                                                    red:      log.config ({ color: { shell: '\u001b[31m', css: 'crimson' } }),
+                                                                    blue:     log.config ({ color: { shell: '\u001b[36m', css: 'royalblue' } }),
+                                                                    darkBlue: log.config ({ color: { shell: '\u001b[36m\u001B[2m', css: 'rgba(65,105,225,0.5)' } }),
+                                                                    orange:   log.config ({ color: { shell: '\u001b[33m', css: 'saddlebrown' } }),
+                                                                    green:    log.config ({ color: { shell: '\u001b[32m', css: 'forestgreen' } }),
+                                                                    pink:     log.config ({ color: { shell: '\u001B[35m', css: 'magenta' } }),
+                                                                    dark:     log.config ({ color: { shell: '\u001B[0m\u001B[2m', css: 'rgba(0,0,0,0.25)' } }) }),
 
     /*  Need one? Take! I have plenty of them!
      */
@@ -1146,6 +983,7 @@ _.extend (log, {
     impl: {
 
         configStack: [],
+        numWrites: 0,
 
         configure: function (configs) {
             return _.reduce2 (
@@ -1159,55 +997,94 @@ _.extend (log, {
          */
         write: $restArg (function () { var writeBackend = log.writeBackend ()
 
-            var args            = _.asArray (arguments)
-            var cleanArgs       = log.cleanArgs (args)
+            log.impl.numWrites++
 
-            var config          = log.impl.configure (_.concat ([{ stackOffset: Platform.NodeJS ? 1 : 3 }],
-                                                                   log.impl.configStack,
-                                                                   _.filter (args, log.Config.isTypeOf)))
+            var args   = _.asArray (arguments)
+            var config = log.impl.configure ([{ stackOffset: Platform.NodeJS ? 1 : 3,
+                                                indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
+
+            var runs = _.reduce2 (
+
+                /*  Initial memo
+                 */
+                [],
+                
+                /*  Arguments split by configs
+                 */
+                _.partition3 (args, _.isTypeOf.$ (log.Config)),
+                
+                /*  Gather function
+                 */
+                function (runs, span) {
+                    if (span.label === true) { config = log.impl.configure ([config].concat (span.items))
+                                               return runs }
+                                        else { return runs.concat ({ config: config,
+                                                                     text: log.impl.stringifyArguments (span.items, config) }) } })
+
+            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match (/(\n*)([^]*)/)
+            var trailNewlines = (trailNewlinesMatch && trailNewlinesMatch[1]) // dumb way to select trailing newlines (i'm no good at regex)
+            if (trailNewlinesMatch) {
+                runs.last.text = trailNewlinesMatch[2].reversed }
 
 
-            var indent          = (writeBackend.indent || 0) + (config.indent || 0)
+            /*  Split by linebreaks
+             */
+            var newline = {}
+            var lines = _.pluck.with_ ('items',
+                            _.reject.with_ (_.property ('label'),
+                                _.partition3.with_ (_.equals (newline),
+                                    _.scatter (runs, function (run, i, emit) {
+                                                        _.each (run.text.split ('\n'), function (line, i, arr) {
+                                                                                            emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
+                                                                                            emit (newline) } }) }))))
 
-            var text            = log.impl.stringifyArguments (cleanArgs, config)
-            var indentation     = _.times (indent, _.constant ('\t')).join ('')
-            var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
-
+            var totalText       = _.pluck (runs, 'text').join ('')
             var where           = config.where || $callStack[config.stackOffset] || {}
+            var indentation     = _.times (config.indent, _.constant ('\t')).join ('')
 
-            var backendParams = {
-                color:         config.color || log.readColor (args),
+            writeBackend ({
+                lines:         lines,
+                config:        config,
+                color:         config.color,
+                args:          arguments,
                 indentation:   indentation,
-                indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
-                trailNewlines: match[1],
+                indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
+                                                 _.joinsWith (''),
+                                                 _.prepends (indentation))).join ('\n'),
+                text:          totalText,
                 codeLocation:  (config.location && log.impl.location (where)) || '',
-                where:         (config.location && where) || undefined,
-                args:          args,
-                config:        config }
+                trailNewlines: trailNewlines || '',
+                where:         (config.location && where) || undefined })
 
-            writeBackend (backendParams)
-
-            return cleanArgs[0] }),
+            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
         
         defaultWriteBackend: function (params) {
-            var color           = params.color,
-                indentedText    = params.indentedText,
-                codeLocation    = params.codeLocation,
+
+            var codeLocation    = params.codeLocation,
                 trailNewlines   = params.trailNewlines
 
-            var colorValue = color && (Platform.NodeJS ? color.shell : color.css)
-                
             if (Platform.NodeJS) {
-                if (colorValue) { console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
-                           else { console.log (             indentedText,               codeLocation, trailNewlines) } }
+                console.log (_.map (params.lines, function (line) {
+                    return _.map (line, function (run) {
+                        return (run.config.color
+                                    ? (run.config.color.shell + params.indentation + run.text + '\u001b[0m')
+                                    : (                         params.indentation + run.text)) }).join ('') }).join ('\n'),
+
+                                    log.color ('dark').shell + codeLocation + '\u001b[0m',
+                                    trailNewlines) }
             else {
-                var lines = indentedText.split ('\n')
-                var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
-                        [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
+                console.log.apply (console, _.reject.with_ (_.equals (undefined), [].concat (
 
-                console.log ((colorValue ? '%c' : '') + allButFirstLinePaddedWithSpace.join ('\n'),
-                             (colorValue ? ('color: ' + colorValue) : ''), codeLocation, trailNewlines) } },
+                    _.map (params.lines, function (line, i) {
+                                            return params.indentation + _.reduce2 ('', line, function (s, run) {
+                                                return s + (run.text && ((run.config.color ? '%c' : '') +
+                                                    run.text) || '') }) }).join ('\n') + (codeLocation && ('%c ' + codeLocation) || ''),
 
+                    (_.scatter (params.lines, function (line, i, emit) {
+                        _.each (line, function (run) {
+                            if (run.config.color) { emit ('color:' + run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+
+                    trailNewlines))) } },
 
         /*  Formats that "function @ source.js:321" thing
          */
@@ -1263,8 +1140,7 @@ _.extend (log, {
                 function (entry) { return [
                     '\t' + 'at ' + entry.calleeShort.first (30),
                     _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-                    (entry.source || '').first (80)] })).join ('\n') }
-} })
+                    (entry.source || '').first (80)] })).join ('\n') } } })
 
 
 /*  Printing API
@@ -1273,27 +1149,27 @@ _.extend (log, {
    _.extend (log,
              log.printAPI =
                     _.object (
-                    _.concat (            [[            'newline', write.$ ('', log.config ({ location: false })) ],
-                                           [              'write', write                                          ]],
+                    _.concat (            [[            'newline', write.$ (log.config ({ location: false }), '') ],
+                                           [              'write', write                                                          ]],
                             _.flat (_.map (['red failure error e',
                                                     'blue info i',
+                                               'darkBlue minor m',
                                           'orange warning warn w',
-                                             'green success ok g' ],
+                                             'green success ok g',
+                                            'pink notice alert p',
+                                                    'dark hint d' ],
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
-                                                  function (name,                                   i,                        names      )  {
-                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color[names.first] })) ] })))))))
+                                                  function (name,                                   i,                         names      )  {
+                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first), stackOffset: 2 })) ] })))))))
 
 }) ()
 
+
 /*  Higher order API
  */
-log.writes =            _.higherOrder (log.write)       // generates write functions
-logs       = _.mapWith (_.higherOrder, log.printAPI)    // higher order API
+logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
 
-/*  Pretty printing API
- */
-log.pretty = _.map2 (log.printAPI, _.partial.tails2 (log.config ({ pretty: true })))
 
 /*  Experimental formatting shit.
  */
@@ -1347,7 +1223,6 @@ _.extend (log, {
                  _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
                  .then (_.joinsWith ('  ')) ) } }
 })
-
 
 if (Platform.NodeJS) {
     module.exports = log }
@@ -1651,7 +1526,7 @@ Test = $prototype ({
             Testosterone.currentAssertion = self
             if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
                     assertion.location.sourceReady (function (src) {
-                        log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
+                        log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
                         assertion.evalLogCalls ()
                         doneWithAssertion () }) }
             else {
@@ -1681,7 +1556,20 @@ Test = $prototype ({
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            _.each (notMatching, function (what, i) { log.orange (_.bullet ('• ', log.impl.stringify (what))) }) } } }
+                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('• ')))
+                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
+                            if (common.length < 4) {
+                                common = undefined }
+
+                            _.each (cases, function (what) {
+
+                                    if (common) {                  var where  = what.indexOf (common)
+                                        log.write ( log.color.orange,  what.substr (0, where),
+                                                    log.color.dark,    common,
+                                                    log.color.orange,  what.substr (where + common.length)) }
+
+                                    else {
+                                        log.orange (what) } }) }} }
                         
                     // print exception
                 else {
@@ -1775,46 +1663,57 @@ Testosterone.ValidatesRecursion = $trait ({
 
 /*  $log for methods
  */
-Testosterone.LogsMethodCalls = $trait ({
+;(function () { var colors = ['red', 'green', 'blue', 'orange', 'pink']
+                    colors.each (_.defineTagKeyword)
 
-    $test: function () {
-            
-        var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-        var compo = new ($extends (Proto, {
-                            foo: $log (function (_42) { $assert (_42, 42); return 24 }) }))
+    Testosterone.LogsMethodCalls = $trait ({
 
-        $assert (compo.foo (42), 24)
-        $assert (_.pluck (this.logCalls, 'indentedText'), ['\tfoo', '\t\t→ 24', '\t\t']) },
+        $test: function (testDone) {
+                
+            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+            var Compo = $extends (Proto, {
+                                foo: $log ($red (function (_42) { $assert (_42, 42); return 24 })) })
 
-    $macroTags: {
+            var compo = new Compo ()
+            var testContext = this
 
-        log: function (def, value, name) { var color = _.isBoolean (value.$log) ? undefined : log.color[value.$log]
-                                           var protoName = ''
+            Compo.$meta (function () {
+                $assert (compo.foo (42), 24)
+                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                $assert (testContext.logCalls[0].color === log.color ('red'))
+                testDone () }) },
 
-            $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
+        $macroTags: {
 
-            return Tags.modify (value, function (fn) { return function () { var this_      = this,
-                                                                                arguments_ = arguments
+            log: function (def, value, name) {  var param       = _.isBoolean (value.$log) ? undefined : value.$log
+                                                var protoName   = ''
+                                                var color       = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
+                                                var template    = _.template (param || '{{$proto}}')
 
-                       var isProtoNameRedundant = (log.currentConfig ().protoName === protoName)
-                log.write (isProtoNameRedundant
-                                ? name
-                                : _.nonempty ([protoName, name]).join ('.') +
-                                _.map (arguments, _.stringifyOneLine).join (', ').quote (' ()'), log.config ({ location: true }))
+                $untag (def.$meta) (function (meta) { protoName = meta.name}) // fetch prototype name
 
-                return log.withConfig ({ indent: 1,
-                                         color: color,
-                                         protoName: protoName }, function () {
+                return Tags.modify (value, function (fn) { return function () { var this_      = this,
+                                                                                    arguments_ = _.asArray (arguments)
 
-                                                                    var result = fn.apply (this_, arguments_);          
+                        var this_dump = template (_.extend ({ $proto: protoName }, _.map2 (this, _.stringifyOneLine.arity1)))
+                        var args_dump = _.map (arguments_, _.stringifyOneLine).join (', ').quote ('()')
 
-                                                                    if (result !== undefined) {
-                                                                        log.write ('→', _.stringifyOneLine (result), log.config ({ color: color })) }
+                    log.write (log.config ({ color: color, location: true }), _.nonempty ([this_dump, name]).join ('.'), args_dump)
 
-                                                                    if (log.currentConfig ().indent < 2) {
-                                                                        log.newline () }
+                    return log.withConfig ({ indent: 1,
+                                             color: color,
+                                             protoName: protoName }, function () {
 
-                                                                    return result }) } }) } } })
+                                                                        var numWritesBefore = log.impl.numWrites
+                                                                        var result          = fn.apply (this_, arguments_);          
+
+                                                                        if (result !== undefined) {
+                                                                            log.write ('→', _.stringifyOneLine (result)) }
+
+                                                                        if ((log.currentConfig ().indent < 2) &&
+                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
+
+                                                                        return result }) } }) } } }) }) ();
 
 
 if (Platform.NodeJS) {
@@ -2015,13 +1914,22 @@ Panic.widget = $singleton (Component, {
 
 				logEl.append (_.isTypeOf (Error, params.args.first)
 						? ($('<div>')
-								.css ({ color: params.color.css, display: 'inline-block' })
-								.append ([params.indentation, $('<div class="inline-exception">').append (this.printError (params.args.first))]))
-						: ($('<div>')
-								.css ({ color: params.color.css })
-								.text (params.indentedText)
-								.append (params.where && this.printLocation (params.where))
-								.append ((params.trailNewlines || '').replace (/\n/g, '<br>')))) }),
+								.css ({ color: (params.color && params.color.css) || '' })
+								.append ([_.escape (params.indentation),
+											$('<div class="panic-alert-error inline-exception all-stack-entries">').append (
+												this.printError (params.args.first))]))
+						: $('<div class="log-entry">')
+								.append (
+									_.map (params.lines, function (line, i, lines) {
+															return $('<div class="line">')
+																		.append (_.escape (params.indentation))
+																		.append (_.map (line, function (run) {
+																								return $('<span>')
+																									.css ({ color: (run.config.color && run.config.color.css) || '' })
+																									.text (run.text) }))
+																		.append ((i === lines.lastIndex) ?
+																			[params.where && this.printLocation (params.where),
+																			 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) }),
 
 			function (done) {
 				test.evalLogCalls ()
@@ -2041,7 +1949,7 @@ Panic.widget = $singleton (Component, {
 							: '')
 				.click (this.$ (function (e) {
 					$(e.delegateTarget).parent ()
-						.toggleClass ('all')
+						.toggleClass ('all-stack-entries')
 						.transitionend (this.$ (function () {
 							this.modalBody.scroll () })) })),
 
@@ -2126,7 +2034,9 @@ Modal overlay that outputs log.js for debugging purposes
 
 			$(document).keydown (this.$ (function (e) {
 				if (e.keyCode === 192) { // ~
-					this.toggle () } })) },
+					this.toggle () }
+				else if (e.keyCode === 27) { // Esc
+					this.el.empty () } })) },
 
 		el: $memoized ($property (function () {
 			return $('<div class="useless-log-overlay" style="display: none;">').appendTo (document.body) })),
@@ -2134,12 +2044,15 @@ Modal overlay that outputs log.js for debugging purposes
 		toggle: function (yes) {
 			this.el.toggle (yes) },
 
+		visible: $property (function () {
+			return this.el.is (':visible') }),
+
 		write: function (params) {
 			this.toggle (true)
 			if (params.config.clear) {
 				this.el.empty () }
             this.el.append ($('<div class="ulo-line">')
-				            	.css ('color', params.color.css)
+				            	.css ('color', (params.color && params.color.css) || '')
 				            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
 				            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
 				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
@@ -2166,5 +2079,5 @@ Modal overlay that outputs log.js for debugging purposes
 	           (file.indexOf ('mootools') >= 0) })
 
     $('head').append ([
-    	$('<style type="text/css">').text ("@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' → \'; }\n\n.panic-alert-error:not(.all) .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all) .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after { content: \', \'; }\n.panic-alert-error .test-log .location .file { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before  { content: \':\'; }\n.panic-alert-error .test-log .location .line { opacity: 0.25; }\n\n.panic-alert-error .test-log > div:after { content: \' \'; }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre > * { font-family: Menlo, monospace; font-size: 11px !important; white-space: pre !important; }\n\n.panic-alert-error  .inline-exception { position: relative; display: inline-block;  }\n\n\n"),
+    	$('<style type="text/css">').text ("@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 600px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' → \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after { content: \', \'; }\n.panic-alert-error .test-log .location .file { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before  { content: \':\'; }\n.panic-alert-error .test-log .location .line { opacity: 0.25; }\n\n.panic-alert-error .test-log .log-entry .line:after { content: \' \'; }\n\n.panic-alert-error .callstack-entry .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { border-top: 1px solid #904C34; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n\n"),
     	$('<style type="text/css">').text (".useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;\n					   white-space: pre;\n					   font-family: Menlo, monospace;\n					   font-size: 11px;\n					   pointer-events: none;\n					   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }\n\n.ulo-line 		{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }") ]) }) (jQuery);
