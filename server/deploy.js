@@ -13,7 +13,7 @@ var fs              = require ('fs'),
 
     buildTargetPath: function (file) { return path.join (this.buildPath, file) },
 
-    buildScript: function (name) { log.w ('Building monolithic ' + name)
+    buildScript: function (name) { log.blue ('Building monolithic ', log.color.pink, name)
 
         util.compileScript ({ sourceFile:    name,
                               includePaths:  this.buildScriptPaths,

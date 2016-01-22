@@ -23,32 +23,47 @@ module.exports = Supervisor = $trait ({
     beforeInit: function (then) {
     	this[this.supervisorState] (then) },
 
-			    noSupervisor:        		_.cps.identity,
-			    spawnedBySupervisor:		_.cps.identity,
-			    respawnedBecauseCodeChange: _.cps.identity,
+    noSupervisor:        		_.cps.identity,
+    spawnedBySupervisor:		_.cps.identity,
+    respawnedBecauseCodeChange: _.cps.identity,
 
-			    supervisor: function () { log.gg ('Spawning supervised process')
+    sourceChanged: $trigger (function (stat, file) {
 
-			    	this.require ('foreverMonitor', function () {
+		log.e ('\nRestarting because ', log.color.bloody, file, log.color.red, ' changed\n')
 
-						this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {
-							    						max: 0,																    						silent: false,
-							    						watch: true,
-							    						watchDirectory: process.cwd (),
-							    						watchIgnorePatterns: [path.join (this.buildPath || process.cwd (), '*')],
-							    						args: _.concat (this.args.all, ['spawned-by-supervisor']) })
+		if (!this.supervisedProcess.args.contains ('respawned-because-code-change')) {
+			 this.supervisedProcess.args.push     ('respawned-because-code-change') }
 
-						this.supervisedProcess.on('watch:restart', this.$ (function(info) {
-							log.e ('\nRestarting because ', log.color.bloody, info.stat, log.color.red, ' changed\n')
-							if (!this.supervisedProcess.args.contains ('respawned-because-code-change')) {
-								 this.supervisedProcess.args.push     ('respawned-because-code-change') } }))
+		this.supervisedProcess.restart () }),
 
-						this.supervisedProcess.on ('exit:code', this.$ (function (code) {
-							log.brown ('Exited with code', code)
-							log.w ('Waiting for file change (or press Ctrl-C to exit)....')
-							this.supervisedProcess.stop () /* prevents Forever from restarting it */ }))
+    onSourceChange: function (stat, file) {
 
-						this.supervisedProcess.start () }) },
+		if ((stat !== 'add') && (stat !== 'addDir')) {
+
+			if (!(file.contains (this.buildPath) ||
+				 (file.contains (path.join (process.cwd (), './node_modules') &&
+				 !file.contains ($uselessPath) &&
+				 !file.contains (path.join ($uselessPath, './node_modules')))))) {
+
+				 this.sourceChanged (stat, file) } } },
+
+	spawnSupervisedProcess: function () { log.gg ('Spawning supervised process')
+
+		this.require ('foreverMonitor', function () {
+
+			this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {
+				    						max: 0,																    	
+				    						args: _.concat (this.args.all, ['spawned-by-supervisor']) })
+
+			this.supervisedProcess.on ('exit:code', this.$ (function (code) {
+				log.brown ('Exited with code', code)
+				log.w ('Waiting for file change (or press Ctrl-C to exit)....')
+				this.supervisedProcess.stop () /* prevents Forever from restarting it */ }))
+
+			this.supervisedProcess.start () }) },
+
+    supervisor: function () {
+			this.watchDirectory (process.cwd (), this.onSourceChange, this.spawnSupervisedProcess) },
 
     restart: function () 	 { log.e ('\nRestarting', log.line, '\n')
     	if (this.supervised) { process.exit (0) }
@@ -57,9 +72,15 @@ module.exports = Supervisor = $trait ({
     MonitorReady: $barrier (function () {
     							Monitor.start () }),
 
-    watchFile: function (path, changed) {
-			        this.require ('Monitor', function () {
-			        	Monitor.FileProbe.watch (util.locateFile (path), {}, this.$ (changed)) }) }
+    watchDirectory: function (path, changed, then) {
+				        this.require ('chokidar', function () {
+
+				        	log.pink ('Watching:', path)
+
+							chokidar.watch (path, {}).on ('all', function(stat, f) { changed (stat, f) })
+
+							if (then)
+								then () }) }
 
 })
 

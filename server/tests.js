@@ -5,14 +5,14 @@ module.exports = TestsItself = $trait ({
 
     $defaults: {
         argKeys: {
-            runTests: 1 },
+            noTests: 1 },
 
         supressAllTests:          false,
         supressCodeBaseTests:     false,
         supressAppComponentTests: false },
 
     argsReady: function (args) {
-        this.supressAllTests = args.runTests ? true : false },
+        this.supressAllTests = args.noTests === true },
 
     /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
      */

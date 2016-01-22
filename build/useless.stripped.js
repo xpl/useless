@@ -4914,7 +4914,6 @@ _.defineKeyword('sourcePath', _.memoize(function () {
     return local ? local + '/' : $uselessPath;
 }));
 SourceFiles = $singleton(Component, {
-    apiConfig: {},
     line: function (file, line, then) {
         SourceFiles.read(file, function (data) {
             then((data.split('\n')[line] || '').trimmed);
@@ -5116,23 +5115,25 @@ CallStack = $extends(Array, {
         });
     })
 });
-$prototype.macro(function (def, base) {
-    var stack = CallStack.currentAsRawString;
-    if (!def.$meta) {
-        def.$meta = $static(_.cps.memoize(function (then) {
-            _.cps.find(CallStack.fromRawString(stack).reversed, function (entry, found) {
-                entry.sourceReady(function (text) {
-                    var match = (text || '').match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/);
-                    found(match && {
-                        name: match[1],
-                        type: match[2],
-                        file: entry.fileShort
-                    } || false);
-                });
-            }, function (found) {
-                then(found || {});
+$prototype.impl.findMeta = function (stack) {
+    return function (then) {
+        _.cps.find(CallStack.fromRawString(stack).reversed, function (entry, found) {
+            entry.sourceReady(function (text) {
+                var match = (text || '').match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/);
+                found(match && {
+                    name: match[1],
+                    type: match[2],
+                    file: entry.fileShort
+                } || false);
             });
-        }));
+        }, function (found) {
+            then(found || {});
+        });
+    };
+};
+$prototype.macro(function (def, base) {
+    if (!def.$meta) {
+        def.$meta = $static(_.cps.memoize($prototype.impl.findMeta(CallStack.currentAsRawString)));
     }
     return def;
 });
