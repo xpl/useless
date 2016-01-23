@@ -8,6 +8,41 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
+### Recent updates / changelog
+
+- Forget `nodemon`, it is now built-in. Just add `server/supervisor` trait to your app component, and get auto-restart on code changes. You can also track arbitrary files and folders with simple API.
+
+- **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
+
+- Smart merging of **$trait** methods for **$component**-based prototypes: methods are bound to streams (having same name), `afterXXX`/`beforeXXX`/`interceptXXX` are bound to bindables automagically™ (at prototype construction). Now component logic can be distributed across traits with unprecedented level of legibility.
+
+- **$defaults** and **$requires** defined in traits now deeply merged at [**$component**](https://github.com/xpl/useless/wiki/$component)-based prototypes. You can utilize this mechanics for custom members by tagging them with **$extendable** syntax.
+
+- [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) now understands nested tag groups, e.g. `$static: { $property: { ... }`
+
+- `Panic (...)` UI now understands `Test` instances as input. Useful for printing out failed client-side tests. It also understands exception messages in log, printing them with its specialized UI (respecting indentation and stuff).
+
+- **Testosterone.ValidatesRecursion** trait, which prohibits recursion on all methods until explicitly marked with **$allowsRecursion**. Allows setting max recursion depth with `max` parameter. Useful for debugging heavy DOM-modifying code that hangs browser and its built-in debugging tools.
+
+- **Testosterone.LogsMethodCalls** trait, which adds **$log** syntax. Tag methods with it to enable printing of method calls, with its arguments and return value. It arranges nested calls to nice hierarchy, to give overview of whats going on. You can parametrize log calls with colors (e.g. `$log ($red (...))`) and with template which prints `this` contents, e.g. `$log ('Called with this.foo value: {{foo}}', ...)` 
+
+- More ANSI colors for log messages, e.g. `pinkBold`. Supported with console renderer on WebKit, `LogOverlay` and `Panic`.
+
+- Multi colored log messages, ex. `log (log.color.red, 'multi', log.color.blue, 'color')`
+
+- New object formatter for `_.stringify`. It automatically decides between one-line and pretty-printed variants (based on output length). Added reading of prototype names (via `$meta`) and comprehensions of some built-in types (e.g. Node). Example output:
+
+```javascript
+args: {
+             someParam:    true,
+        someOtherParam:    true,
+                   arr: [ "pretty printed" ],
+              DOMNodes: [ <div>,
+                          <p>,
+                          @I am text node ]    },
+```
+
+
 ### Browser builds
 
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
@@ -563,75 +598,23 @@ To make reduced/extended distribution (with some submodules disabled or enabled)
 
 There exists `./useless.micro.js` as an example of reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
 
-## Automatic builds on source change
+## Integrated build
 
-### Using external tools
-
-You can run `build.js` under `nodemon` (which can be installed from npm). This will trigger automatic re-builds on source change.
-
-```bash
-nodemon build.js <header-file> <output-folder>
-```
-
-This will work for applications that dont rely on `useless/server` to implement app lifecycle. For frequent re-builds, you may turn off compression, re-building only `useless.js` (Google Closure Compiler has limited call quota per IP):
-
-```bash
-> nodemon build.js no-compress
-```
-
-### Using `useless/server/deploy`
-
-Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
+Applications that are based on top of `useless/server` can easily enable rebuild-on-restart feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
 
 ```javascript
 $traits: [        
-        require ('useless/server/exceptions'),
         require ('useless/server/tests'),
         require ('useless/server/deploy'),
+        require ('useless/server/supervisor')
 ```
 
-This will add test & build phase to app startup sequence, aborting if something went wrong.
+This will add test & build phase to app startup sequence, aborting if something went wrong. For automatic re-building on source change, add `` trait.
 
-For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`. **Important notice:** you should add `./node_modules/useless/build/` folder to `.nodemonignore` file in root directory of your project, to prevent restart loop.
-
-Currenly it re-builds only `useless.js`, with no compression applied.
-
-
-# New features (update)
-
-## Dependency resolving for pluggable traits
-
-What for: making $traits know their dependencies, resolving them in compile time. Traits compiler builds graph of dependencies and then linearizes it, respecting both vertical (hierarchy) and horizontal (list order) constraints. Result is rendered to the $traits member at the final component (App in this example).
-
-Before (flat list of pluggable traits):
+Default settings:
 
 ```javascript
-App = $singleton (Component, {
-
-	$traits: [
-	
-		ExceptionHandling,
-		IO,
-		CommandLineArguments,
-		RequireThatFetchesFromNPM,
-		UnitTests,
-		Supervisor
-		...
-```
-
-After: 
-```javascript
-Tests = $trait ({
-	
-	$depends: [ExceptionHandling, CommandLineArguments, ...
-```  
-```javascript
-Supervisor = $trait ({
-
-	$depends: [CommandLineArguments, RequireThatFetchesFromNPM, ...
-```
-```javascript
-App = $singleton (Component, {
-
-	$depends: [Tests, Supervisor, ...
+buildScriptPaths: [process.cwd (), $uselessPath],
+buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
+buildPath: $uselessPath + 'build/',
 ```
