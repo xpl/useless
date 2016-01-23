@@ -612,12 +612,12 @@ _.extend(log, {
                 '31m',
                 '1m'
             ],
-            'crimson;font-weight:bold'
+            'color:crimson;font-weight:bold'
         ],
         [
             'red',
             '31m',
-            'crimson'
+            'color:crimson'
         ],
         [
             'darkRed',
@@ -625,12 +625,12 @@ _.extend(log, {
                 '31m',
                 '2m'
             ],
-            'crimson'
+            'color:crimson'
         ],
         [
             'blue',
             '36m',
-            'royalblue'
+            'color:royalblue'
         ],
         [
             'boldBlue',
@@ -638,7 +638,7 @@ _.extend(log, {
                 '36m',
                 '1m'
             ],
-            'royalblue'
+            'color:royalblue'
         ],
         [
             'darkBlue',
@@ -646,20 +646,20 @@ _.extend(log, {
                 '36m',
                 '2m'
             ],
-            'rgba(65,105,225,0.5)'
+            'color:rgba(65,105,225,0.5)'
         ],
         [
-            'sunny',
+            'boldOrange',
             [
                 '33m',
                 '1m'
             ],
-            'saddlebrown'
+            'color:saddlebrown'
         ],
         [
             'orange',
             '33m',
-            'saddlebrown'
+            'color:saddlebrown'
         ],
         [
             'brown',
@@ -667,12 +667,12 @@ _.extend(log, {
                 '33m',
                 '2m'
             ],
-            'saddlebrown'
+            'color:saddlebrown'
         ],
         [
             'green',
             '32m',
-            'forestgreen'
+            'color:forestgreen'
         ],
         [
             'greener',
@@ -680,12 +680,12 @@ _.extend(log, {
                 '32m',
                 '1m'
             ],
-            'forestgreen;font-weight:bold'
+            'color:forestgreen;font-weight:bold'
         ],
         [
             'pink',
             '35m',
-            'magenta'
+            'color:magenta'
         ],
         [
             'boldPink',
@@ -693,7 +693,7 @@ _.extend(log, {
                 '35m',
                 '1m'
             ],
-            'magenta'
+            'color:magenta'
         ],
         [
             'purple',
@@ -701,12 +701,12 @@ _.extend(log, {
                 '35m',
                 '2m'
             ],
-            'magenta'
+            'color:magenta'
         ],
         [
             'black',
             '0m',
-            'black'
+            'color:black'
         ],
         [
             'bright',
@@ -714,7 +714,7 @@ _.extend(log, {
                 '0m',
                 '1m'
             ],
-            'rgba(0,0,0);font-weight:bold'
+            'color:rgba(0,0,0);font-weight:bold'
         ],
         [
             'dark',
@@ -722,7 +722,7 @@ _.extend(log, {
                 '0m',
                 '2m'
             ],
-            'rgba(0,0,0,0.25)'
+            'color:rgba(0,0,0,0.25)'
         ]
     ], function (def) {
         return [
@@ -858,7 +858,7 @@ _.extend(log, {
                 }).join('\n') + (codeLocation && '%c ' + codeLocation || ''), (_.scatter(params.lines, function (line, i, emit) {
                     _.each(line, function (run) {
                         if (run.config.color) {
-                            emit('color:' + run.config.color.css);
+                            emit(run.config.color.css);
                         }
                     });
                 }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), trailNewlines)));
@@ -945,7 +945,7 @@ _.extend(log, {
         'bloody bad ee',
         'purple dp',
         'brown br',
-        'sunny ww',
+        'boldOrange ww',
         'darkRed er',
         'boldBlue ii'
     ], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
@@ -1661,7 +1661,7 @@ _.perfTest = function (arg, then) {
                 if (_.isTypeOf(Error, params.args.first)) {
                     console.log(params.args.first);
                 }
-                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').css({ color: params.color && params.color.css || '' }).append([
+                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').attr('style', params.color && params.color.css || '').append([
                     _.escape(params.indentation),
                     $('<div class="panic-alert-error inline-exception all-stack-entries">').append(this.printError(params.args.first))
                 ]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
@@ -1786,7 +1786,7 @@ _.perfTest = function (arg, then) {
             if (params.config.clear) {
                 this.el.empty();
             }
-            this.el.append($('<div class="ulo-line">').css('color', params.color && params.color.css || '').append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
+            this.el.append($('<div class="ulo-line">').attr('style', params.color && params.color.css || '').append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
             if (!this.opaque) {
                 log.impl.defaultWriteBackend(params);
             }

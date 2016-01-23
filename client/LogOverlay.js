@@ -38,7 +38,7 @@ Modal overlay that outputs log.js for debugging purposes
 			if (params.config.clear) {
 				this.el.empty () }
             this.el.append ($('<div class="ulo-line">')
-				            	.css ('color', (params.color && params.color.css) || '')
+				            	.attr ('style', (params.color && params.color.css) || '')
 				            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
 				            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
 				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))

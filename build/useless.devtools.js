@@ -944,23 +944,23 @@ _.extend (log, {
 
         _.object (
         _.map  ([['none',        '0m',           ''],
-                 ['bloody',     ['31m', '1m'],   'crimson;font-weight:bold'],
-                 ['red',         '31m',          'crimson'],
-                 ['darkRed',    ['31m', '2m'],   'crimson'],
-                 ['blue',        '36m',          'royalblue'],
-                 ['boldBlue',   ['36m', '1m'],   'royalblue'],
-                 ['darkBlue',   ['36m', '2m'],   'rgba(65,105,225,0.5)'],
-                 ['sunny',      ['33m', '1m'],   'saddlebrown'],
-                 ['orange',      '33m',          'saddlebrown'],
-                 ['brown',      ['33m', '2m'],   'saddlebrown'],
-                 ['green',       '32m',          'forestgreen'],
-                 ['greener',    ['32m', '1m'],   'forestgreen;font-weight:bold'],
-                 ['pink',        '35m',          'magenta'],
-                 ['boldPink',   ['35m', '1m'],   'magenta'],
-                 ['purple',     ['35m', '2m'],   'magenta'],
-                 ['black',       '0m',           'black'],
-                 ['bright',     ['0m', '1m'],    'rgba(0,0,0);font-weight:bold'],
-                 ['dark',       ['0m', '2m'],    'rgba(0,0,0,0.25)']],
+                 ['bloody',     ['31m', '1m'],   'color:crimson;font-weight:bold'],
+                 ['red',         '31m',          'color:crimson'],
+                 ['darkRed',    ['31m', '2m'],   'color:crimson'],
+                 ['blue',        '36m',          'color:royalblue'],
+                 ['boldBlue',   ['36m', '1m'],   'color:royalblue'],
+                 ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
+                 ['boldOrange', ['33m', '1m'],   'color:saddlebrown'],
+                 ['orange',      '33m',          'color:saddlebrown'],
+                 ['brown',      ['33m', '2m'],   'color:saddlebrown'],
+                 ['green',       '32m',          'color:forestgreen'],
+                 ['greener',    ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
+                 ['pink',        '35m',          'color:magenta'],
+                 ['boldPink',   ['35m', '1m'],   'color:magenta'],
+                 ['purple',     ['35m', '2m'],   'color:magenta'],
+                 ['black',       '0m',           'color:black'],
+                 ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
+                 ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
 
              function (def) {
                 return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
@@ -1104,7 +1104,7 @@ _.extend (log, {
 
                     (_.scatter (params.lines, function (line, i, emit) {
                         _.each (line, function (run) {
-                            if (run.config.color) { emit ('color:' + run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+                            if (run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
 
                     trailNewlines))) } },
 
@@ -1184,11 +1184,11 @@ _.extend (log, {
                                                      'greener gg',
                                                        'bright b',
                                                   'bloody bad ee',
-                                                       'purple dp',
-                                                        'brown br',
-                                                        'sunny ww',
-                                                      'darkRed er',
-                                                     'boldBlue ii' ],
+                                                      'purple dp',
+                                                       'brown br',
+                                                  'boldOrange ww',
+                                                     'darkRed er',
+                                                    'boldBlue ii' ],
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
                                                   function (name,                                   i,                         names      )  {
@@ -1950,7 +1950,7 @@ Panic.widget = $singleton (Component, {
 
 				logEl.append (_.isTypeOf (Error, params.args.first)
 						? ($('<div>')
-								.css ({ color: (params.color && params.color.css) || '' })
+								.attr ('style', (params.color && params.color.css) || '')
 								.append ([_.escape (params.indentation),
 											$('<div class="panic-alert-error inline-exception all-stack-entries">').append (
 												this.printError (params.args.first))]))
@@ -2088,7 +2088,7 @@ Modal overlay that outputs log.js for debugging purposes
 			if (params.config.clear) {
 				this.el.empty () }
             this.el.append ($('<div class="ulo-line">')
-				            	.css ('color', (params.color && params.color.css) || '')
+				            	.attr ('style', (params.color && params.color.css) || '')
 				            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
 				            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
 				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))

@@ -12,7 +12,7 @@ module.exports = TestsItself = $trait ({
         supressAppComponentTests: false },
 
     argsReady: function (args) {
-        this.supressAllTests = args.noTests === true },
+        this.supressAllTests = (args.noTests === true) },
 
     /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
      */
@@ -35,7 +35,7 @@ module.exports = TestsItself = $trait ({
         if ((this.testsAlreadyExecutedAtMasterProcess = (this.args.spawnedBySupervisor && !this.args.respawnedBecauseCodeChange)) ||
              this.supressAllTests || this.supressCodeBaseTests) { then () }
 
-        else {  log.info ('Running code base tests')
+        else {  log.ii ('Running code base tests')
                 Testosterone.run ({
                     verbose: false,
                     silent:  true }, this.$ (function (okay) {

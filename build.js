@@ -20,8 +20,8 @@ BuildApp = $singleton (Component, {
 
     $depends: [
         require ('./server/args'),
-        require ('./server/supervisor'),
-        require ('./server/tests')],
+        require ('./server/tests'),
+        require ('./server/supervisor')],
 
     argsReady: function (args) {
 
@@ -176,7 +176,7 @@ BuildApp = $singleton (Component, {
 
         return output },
 
-    compileFile: function (file) { log.w ('Compiling', file)
+    compileFile: function (file) { log.w ('Compiling', log.color.boldOrange, ' ' + file)
 
         var name = _.initial (path.basename (file).split ('.')).join ('.')
         var compiledSrc = util.compileScript ({ sourceFile: file })
