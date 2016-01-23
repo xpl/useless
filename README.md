@@ -595,7 +595,7 @@ There exists `./useless.micro.js` as an example of reduced build. Running `node 
 
 ## Integrated build
 
-Applications that are based on top of `useless/server` can easily enable rebuild-on-restart feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
+Applications that are based on top of `useless/server` can easily enable automatic rebuilds feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
 
 ```javascript
 $traits: [        
@@ -604,7 +604,7 @@ $traits: [
         require ('useless/server/supervisor')
 ```
 
-This will add test & build phase to app startup sequence, aborting if something went wrong. For automatic re-building on source change, add `` trait.
+This will add test & build phase to app startup sequence, aborting if something went wrong and re-starting if source code has changed.
 
 Default settings:
 
