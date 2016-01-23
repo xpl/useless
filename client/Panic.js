@@ -146,7 +146,6 @@ Panic.widget = $singleton (Component, {
 
 				logEl.append (_.isTypeOf (Error, params.args.first)
 						? ($('<div>')
-								.attr ('style', (params.color && params.color.css) || '')
 								.append ([_.escape (params.indentation),
 											$('<div class="panic-alert-error inline-exception all-stack-entries">').append (
 												this.printError (params.args.first))]))
@@ -157,7 +156,7 @@ Panic.widget = $singleton (Component, {
 																		.append (_.escape (params.indentation))
 																		.append (_.map (line, function (run) {
 																								return $('<span>')
-																									.css ({ color: (run.config.color && run.config.color.css) || '' })
+																									.attr ('style', (run.config.color && run.config.color.css) || '')
 																									.text (run.text) }))
 																		.append ((i === lines.lastIndex) ?
 																			[params.where && this.printLocation (params.where),

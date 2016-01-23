@@ -259,7 +259,9 @@ _.extend (log, {
         /*  Formats that "function @ source.js:321" thing
          */
         location: function (where) {
-            return _.quoteWith ('()', _.nonempty ([where.calleeShort, where.fileName + ':' + where.line]).join (' @ ')) },
+            return _.quoteWith ('()', _.nonempty ([where.calleeShort,
+                                      _.nonempty ([where.fileName,
+                                                   where.line]).join (':')]).join (' @ ')) },
 
 
         /*  This could be re-used by outer code for turning arbitrary argument lists into string
