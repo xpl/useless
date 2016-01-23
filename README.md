@@ -10,6 +10,10 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Added **$mixin** for extending existing types with [**$prototype**](https://github.com/xpl/useless/wiki/$prototype)-style definitions. Example: `$mixin (Node, { ... })`
+
+- Tag prototype methods with **$callableAsFreeFunction** to get dual call interface. Example: `isLinebreak: $callableAsFreeFunction ($property (function () { ... }))` renders to `node.isLinebreak` and `Node.isLinebreak (node)` call interfaces.
+
 - Added `_.longestCommonSubstring` which is used to highlight differences in `$assert` argument mismatches:
  
  ![example](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert3.png)
