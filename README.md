@@ -12,8 +12,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - Forget `nodemon`, it is now built-in. Just add `server/supervisor` trait to your app component, and get auto-restart on code changes. You can also track arbitrary files and folders with simple API.
 
-- New object formatter for `_.stringify`. It automatically decides between one-line and pretty-printed variants (based on output length). Added reading of prototype names (via `$meta`) and comprehensions of some built-in types (e.g. Node).
-
 - **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
 
 - Smart merging of **$trait** methods for **$component**-based prototypes: methods are bound to streams (having same name), `afterXXX`/`beforeXXX`/`interceptXXX` are bound to bindables automagically™ (at prototype construction). Now component logic can be distributed across traits with unprecedented level of legibility.
@@ -31,6 +29,19 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 - More ANSI colors for log messages, e.g. `pinkBold`. Supported with console renderer on WebKit, `LogOverlay` and `Panic`.
 
 - Multi colored log messages, ex. `log (log.color.red, 'multi', log.color.blue, 'color')`
+
+- New object formatter for `_.stringify`. It automatically decides between one-line and pretty-printed variants (based on output length). Added reading of prototype names (via `$meta`) and comprehensions of some built-in types (e.g. Node). Example output:
+
+```javascript
+args: {
+             someParam:    true,
+        someOtherParam:    true,
+                   arr: [ "pretty printed" ],
+              DOMNodes: [ <div>,
+                          <p>,
+                          @I am text node ]    },
+```
+
 
 ### Browser builds
 
