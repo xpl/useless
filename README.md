@@ -8,7 +8,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
-### Recent updates
+### Recent updates / changelog
+
+- New object formatter for `_.stringify`. It automatically decides between one-line and pretty-printed variants (based on output length). Added reading of prototype names (via `$meta`) and comprehensions of some built-in types (e.g. Node).
 
 - **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
 
@@ -26,7 +28,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - More ANSI colors for log messages, e.g. `pinkBold`. Supported with console renderer on WebKit, `LogOverlay` and `Panic`.
 
-- Multi colored log messages, ex. `log (log.color.red, 'multi', log.color.blue, color)`
+- Multi colored log messages, ex. `log (log.color.red, 'multi', log.color.blue, 'color')`
 
 ### Browser builds
 
