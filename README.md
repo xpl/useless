@@ -16,12 +16,12 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ```javascript
 args: {
-              noCompress:    true,
-     spawnedBySupervisor:    true,
-                    keys: [ "noCompress",
-                            "spawnedBySupervisor" ],
-              keysDashed: [ "no-compress",
-                            "spawned-by-supervisor" ] },
+             someParam:    true,
+	someOtherParam:    true,
+                   arr: [ "pretty printed" ],
+              DOMNodes: [ <div>,
+                	  <p>,
+                          @I am text node ]    },
 ```
 
 - **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
