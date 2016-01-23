@@ -12,6 +12,10 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
 
+- Smart merging of **$trait** methods for **$component**-based prototypes: methods are bound to streams (having same name), `afterXXX`/`beforeXXX`/`interceptXXX` are bound to bindables automagically™ (at prototype construction). Now component logic can be distributed across traits with unprecedented level of legibility.
+
+- **$defaults** and **$requires** defined in traits now deeply merged at [**$component**](https://github.com/xpl/useless/wiki/$component)-based prototypes. You can utilize this mechanics for custom members by tagging them with **$extendable** syntax.
+
 - [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) now understands nested tag groups, e.g. `$static: { $property: { ... }`
 
 - `Panic (...)` UI now understands `Test` instances as input. Useful for printing out failed client-side tests. It also understands exception messages in log, printing them with its specialized UI (respecting indentation and stuff).
