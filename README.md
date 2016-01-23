@@ -587,25 +587,9 @@ To make reduced/extended distribution (with some submodules disabled or enabled)
 
 There exists `./useless.micro.js` as an example of reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
 
-## Automatic builds on source change
+## Integrated build
 
-### Using external tools
-
-You can run `build.js` under `nodemon` (which can be installed from npm). This will trigger automatic re-builds on source change.
-
-```bash
-nodemon build.js <header-file> <output-folder>
-```
-
-This will work for applications that dont rely on `useless/server` to implement app lifecycle. For frequent re-builds, you may turn off compression, re-building only `useless.js` (Google Closure Compiler has limited call quota per IP):
-
-```bash
-> nodemon build.js no-compress
-```
-
-### Using `useless/server/deploy`
-
-Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
+Applications that are based on top of `useless/server` can easily enable rebuild-on-restart feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
 
 ```javascript
 $traits: [        
@@ -614,8 +598,12 @@ $traits: [
         require ('useless/server/deploy'),
 ```
 
-This will add test & build phase to app startup sequence, aborting if something went wrong.
+This will add test & build phase to app startup sequence, aborting if something went wrong. For automatic re-building on source change, add `useless/server/Supervisor` trait.
 
-For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`. **Important notice:** you should add `./node_modules/useless/build/` folder to `.nodemonignore` file in root directory of your project, to prevent restart loop.
+Default settings:
 
-Currenly it re-builds only `useless.js`, with no compression applied.
+```javascript
+buildScriptPaths: [process.cwd (), $uselessPath],
+buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
+buildPath: $uselessPath + 'build/',
+```
