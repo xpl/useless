@@ -593,12 +593,12 @@ Applications that are based on top of `useless/server` can easily enable rebuild
 
 ```javascript
 $traits: [        
-        require ('useless/server/exceptions'),
         require ('useless/server/tests'),
         require ('useless/server/deploy'),
+        require ('useless/server/supervisor')
 ```
 
-This will add test & build phase to app startup sequence, aborting if something went wrong. For automatic re-building on source change, add `useless/server/Supervisor` trait.
+This will add test & build phase to app startup sequence, aborting if something went wrong. For automatic re-building on source change, add `` trait.
 
 Default settings:
 
