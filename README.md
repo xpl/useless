@@ -73,9 +73,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain. Currently I'm focused to make the basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
 
-Stay tuned and thanks for your attention!
-
-Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
+Stay tuned and thanks for your attention! Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
 
 # `./base` features
 
