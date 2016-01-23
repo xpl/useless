@@ -71,12 +71,7 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ### A notice to brave hackers
 
-It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain.
-
-Its main (unreleased for now) feature will be a flexible schema layer over MongoDB which allows to configure various data access widgets (table views, popover selections, form dialogs) directly from that schema, providing real-time synchronization with remote database. It also will act as declarative contract for API validation / security layer. Thats why there's so many code related to abstract data processing / type matching.
-
-It also features various widgets with rendering virtualization, allowing to render vast amounts of data with smooth scrolling and no pagination (TableView, TileView, ListView). They're already there, but not yet working as they depend on that schema mentioned before. Need to separate this thing from my elder private projects properly...
-Currently I'm focused to make the basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
+It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain. Currently I'm focused to make the basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
 
 Stay tuned and thanks for your attention!
 
