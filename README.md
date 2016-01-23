@@ -8,6 +8,20 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
+### Recent updates
+
+- **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
+
+- `Panic` UI now understands `Test` instances as input. Useful for printing out failed client-side tests. It also understands exception messages in log, printing them with its specialized UI (respecting indentation and stuff).
+
+- `Testosterone.ValidatesRecursion` trait, which prohibits recursion on all methods until explicitly marked with `$allowsRecursion`. Allows setting max recursion depth with `max` parameter. Useful for debugging heavy DOM-modifying code that hangs browser and its built-in debugging tools.
+
+- `Testosterone.LogsMethodCalls` trait, which adds **$log** syntax. Tag methods with it to enable printing of method calls, with its arguments and return value. It arranges nested calls to nice hierarchy, to give overview of whats going on. You can parametrize log calls with colors (e.g. `$log ($red (...))`) and with template which prints `this` contents, e.g. `$log ('Called with this.foo value: {{foo}}', ...)` 
+
+- More ANSI colors for log messages, e.g. `pinkBold`. Supported with console renderer on WebKit, `LogOverlay` and `Panic`.
+
+- Multi colored log messages, ex. `log (log.color.red, 'multi', log.color.blue, color)`
+
 ### Browser builds
 
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
