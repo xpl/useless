@@ -10,6 +10,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Forget `nodemon`, it is now built-in. Just add `server/Supervisor` trait to your app component, and get auto-restart on code changes. It is also has API for monitoring file changes for custom purposes.
+
 - New object formatter for `_.stringify`. It automatically decides between one-line and pretty-printed variants (based on output length). Added reading of prototype names (via `$meta`) and comprehensions of some built-in types (e.g. Node).
 
 - **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
