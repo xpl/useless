@@ -10,7 +10,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- Added `_.longestCommonSubstring` which is used to highlight differences in `$assert` argument mismatches: ![example](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert3.png)
+- Added `_.longestCommonSubstring` which is used to highlight differences in `$assert` argument mismatches:
+ 
+ ![example](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert3.png)
 
 - Forget `nodemon`, it is now built-in. Just add `server/supervisor` trait to your app component, and get auto-restart on code changes. You can also track arbitrary files and folders with simple API.
 
