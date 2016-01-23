@@ -436,7 +436,7 @@ $(handle).drag ({
 	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
 ```
 
-## Panic.js &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_// error handling done right_
+## Panic.js
 
 > Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
 
