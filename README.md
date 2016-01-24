@@ -12,7 +12,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - Added **$mixin** for extending existing types with [**$prototype**](https://github.com/xpl/useless/wiki/$prototype)-style definitions. Example: `$mixin (Node, { ... })`
 
-- New member compherension: `isLinebreak: $callableAsFreeFunction ($property (function () { ... }))` renders to `node.isLinebreak` (instance property accessor) and `Node.isLinebreak (node)` (static function). Latter is useful in functional expressions.
+- New member comprehension: `isLinebreak: $callableAsFreeFunction ($property (function () { ... }))` renders to `node.isLinebreak` (instance property accessor) and `Node.isLinebreak (node)` (static function). Latter is useful in functional expressions.
 
 - Added `_.longestCommonSubstring` which is used to highlight differences in `$assert` argument mismatches:
  
