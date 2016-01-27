@@ -35,8 +35,6 @@ _.atIndex = function (n) {
 _.takesFirst = _.higherOrder (_.first)
 _.takesLast  = _.higherOrder (_.last)
 
-_.call    = function (fn) { return fn () }
-
 _.applies = function (fn, this_, args) {
                 return function () { return fn.apply (this_, args) } }
 

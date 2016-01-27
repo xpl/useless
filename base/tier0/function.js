@@ -4,6 +4,11 @@
 _.debugEcho = function () { return [this].concat (_.asArray (arguments)) }
 
 
+/*  Context-free version of fn.call (for consistency)
+    ======================================================================== */
+
+_.call = function (fn, this_, args) { return fn.apply (this_, _.rest (arguments, 2)) }
+
 /*  Limits function to given number of arguments
     ======================================================================== */
 
