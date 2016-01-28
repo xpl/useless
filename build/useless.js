@@ -837,6 +837,11 @@ $overrideUnderscore ('bind',
 _.debugEcho = function () { return [this].concat (_.asArray (arguments)) }
 
 
+/*  Context-free version of fn.call (for consistency)
+    ======================================================================== */
+
+_.call = function (fn, this_, args) { return fn.apply (this_, _.rest (arguments, 2)) }
+
 /*  Limits function to given number of arguments
     ======================================================================== */
 
@@ -1233,8 +1238,6 @@ _.atIndex = function (n) {
 
 _.takesFirst = _.higherOrder (_.first)
 _.takesLast  = _.higherOrder (_.last)
-
-_.call    = function (fn) { return fn () }
 
 _.applies = function (fn, this_, args) {
                 return function () { return fn.apply (this_, args) } }
@@ -2325,7 +2328,7 @@ _.withTest ('properties', function () { var obj = {}
             obj._42, 42) }) }, function () { _.extend (_, {
 
     defineProperty: function (targetObject, name, def, defaultCfg) {
-        if (Object.hasOwnProperty (targetObject, name)) {
+        if (_.isObject (targetObject) && targetObject.hasOwnProperty (name)) {
             throw new Error ('_.defineProperty: targetObject already has property ' + name) }
         else {
             Object.defineProperty (targetObject, name,
@@ -2860,7 +2863,11 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     if ((_.platform ().engine === 'browser')) {
                                         if (_.isTypeOf (Element, x)) {
-                                            return x.tagName.lowercase.quote ('<>') } //x.outerHTML.substr (0, 10) + '…' }
+                                            return (x.tagName.lowercase +
+                                                        ((x.id && ('#' + x.id)) || '') +
+                                                        ((x.className && ('.' + x.className)) || '')).quote ('<>') }
+                                            //return x.outerHTML.substr (0, 12) + '…' }
+                                            //return x.tagName.lowercase.quote ('<>') }
                                         else if (_.isTypeOf (Text, x)) {
                                             return '@' + x.wholeText } }
 
@@ -7948,19 +7955,19 @@ _.extend (log, {
 
         _.object (
         _.map  ([['none',        '0m',           ''],
-                 ['bloody',     ['31m', '1m'],   'color:crimson;font-weight:bold'],
+                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
                  ['red',         '31m',          'color:crimson'],
                  ['darkRed',    ['31m', '2m'],   'color:crimson'],
                  ['blue',        '36m',          'color:royalblue'],
-                 ['boldBlue',   ['36m', '1m'],   'color:royalblue'],
+                 ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
                  ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
-                 ['boldOrange', ['33m', '1m'],   'color:saddlebrown'],
+                 ['boldOrange', ['33m', '1m'],   'color:saddlebrown;font-weight:bold;'],
                  ['orange',      '33m',          'color:saddlebrown'],
                  ['brown',      ['33m', '2m'],   'color:saddlebrown'],
                  ['green',       '32m',          'color:forestgreen'],
                  ['greener',    ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
                  ['pink',        '35m',          'color:magenta'],
-                 ['boldPink',   ['35m', '1m'],   'color:magenta'],
+                 ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
                  ['purple',     ['35m', '2m'],   'color:magenta'],
                  ['black',       '0m',           'color:black'],
                  ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
@@ -8108,14 +8115,16 @@ _.extend (log, {
 
                     (_.scatter (params.lines, function (line, i, emit) {
                         _.each (line, function (run) {
-                            if (run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+                            if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
 
                     trailNewlines))) } },
 
         /*  Formats that "function @ source.js:321" thing
          */
         location: function (where) {
-            return _.quoteWith ('()', _.nonempty ([where.calleeShort, where.fileName + ':' + where.line]).join (' @ ')) },
+            return _.quoteWith ('()', _.nonempty ([where.calleeShort,
+                                      _.nonempty ([where.fileName,
+                                                   where.line]).join (':')]).join (' @ ')) },
 
 
         /*  This could be re-used by outer code for turning arbitrary argument lists into string
@@ -8187,7 +8196,7 @@ _.extend (log, {
                                                     'dark hint d',
                                                      'greener gg',
                                                        'bright b',
-                                                  'bloody bad ee',
+                                          'boldRed bloody bad ee',
                                                       'purple dp',
                                                        'brown br',
                                                   'boldOrange ww',
@@ -8449,6 +8458,8 @@ Testosterone = $singleton ({
     /*  Internal impl
      */
     runTest: function (test, i, then) { var self = this, runConfig = this.runConfig
+
+        log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
     
         runConfig.testStarted (test)
         
@@ -9052,6 +9063,16 @@ _.extend ($, {
      */
     attrInt: function (name) { return (this.attr (name) || '').integerValue },
     cssInt:  function (name) { return (this.css  (name) || '').integerValue },
+
+    /*  Removes and then inserts node at the same place
+     */
+    reinsert: function () { var node = this[0]
+        var parentNode = node.parentNode
+        var next       = node.nextSibling
+        if (parentNode) {
+            parentNode.removeChild (node)
+            parentNode.insertBefore (node, next) }
+        return this },
 
     /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
      */

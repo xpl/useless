@@ -183,6 +183,8 @@ Testosterone = $singleton ({
     /*  Internal impl
      */
     runTest: function (test, i, then) { var self = this, runConfig = this.runConfig
+
+        log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
     
         runConfig.testStarted (test)
         

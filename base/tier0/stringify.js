@@ -133,7 +133,11 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     if ((_.platform ().engine === 'browser')) {
                                         if (_.isTypeOf (Element, x)) {
-                                            return x.tagName.lowercase.quote ('<>') } //x.outerHTML.substr (0, 10) + '…' }
+                                            return (x.tagName.lowercase +
+                                                        ((x.id && ('#' + x.id)) || '') +
+                                                        ((x.className && ('.' + x.className)) || '')).quote ('<>') }
+                                            //return x.outerHTML.substr (0, 12) + '…' }
+                                            //return x.tagName.lowercase.quote ('<>') }
                                         else if (_.isTypeOf (Text, x)) {
                                             return '@' + x.wholeText } }
 

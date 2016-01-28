@@ -607,7 +607,7 @@ _.extend(log, {
             ''
         ],
         [
-            'bloody',
+            'boldRed',
             [
                 '31m',
                 '1m'
@@ -638,7 +638,7 @@ _.extend(log, {
                 '36m',
                 '1m'
             ],
-            'color:royalblue'
+            'color:royalblue;font-weight:bold;'
         ],
         [
             'darkBlue',
@@ -654,7 +654,7 @@ _.extend(log, {
                 '33m',
                 '1m'
             ],
-            'color:saddlebrown'
+            'color:saddlebrown;font-weight:bold;'
         ],
         [
             'orange',
@@ -693,7 +693,7 @@ _.extend(log, {
                 '35m',
                 '1m'
             ],
-            'color:magenta'
+            'color:magenta;font-weight:bold;'
         ],
         [
             'purple',
@@ -857,7 +857,7 @@ _.extend(log, {
                     });
                 }).join('\n') + (codeLocation && '%c ' + codeLocation || ''), (_.scatter(params.lines, function (line, i, emit) {
                     _.each(line, function (run) {
-                        if (run.config.color) {
+                        if (run.text && run.config.color) {
                             emit(run.config.color.css);
                         }
                     });
@@ -867,7 +867,10 @@ _.extend(log, {
         location: function (where) {
             return _.quoteWith('()', _.nonempty([
                 where.calleeShort,
-                where.fileName + ':' + where.line
+                _.nonempty([
+                    where.fileName,
+                    where.line
+                ]).join(':')
             ]).join(' @ '));
         },
         stringifyArguments: function (args, cfg) {
@@ -942,7 +945,7 @@ _.extend(log, {
         'dark hint d',
         'greener gg',
         'bright b',
-        'bloody bad ee',
+        'boldRed bloody bad ee',
         'purple dp',
         'brown br',
         'boldOrange ww',
@@ -1098,6 +1101,7 @@ Testosterone = $singleton({
     },
     runTest: function (test, i, then) {
         var self = this, runConfig = this.runConfig;
+        log.impl.configStack = [];
         runConfig.testStarted(test);
         test.verbose = runConfig.verbose;
         test.timeout = runConfig.timeout;
@@ -1661,12 +1665,12 @@ _.perfTest = function (arg, then) {
                 if (_.isTypeOf(Error, params.args.first)) {
                     console.log(params.args.first);
                 }
-                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').attr('style', params.color && params.color.css || '').append([
+                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').append([
                     _.escape(params.indentation),
                     $('<div class="panic-alert-error inline-exception all-stack-entries">').append(this.printError(params.args.first))
                 ]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
                     return $('<div class="line">').append(_.escape(params.indentation)).append(_.map(line, function (run) {
-                        return $('<span>').css({ color: run.config.color && run.config.color.css || '' }).text(run.text);
+                        return $('<span>').attr('style', run.config.color && run.config.color.css || '').text(run.text);
                     })).append(i === lines.lastIndex ? [
                         params.where && this.printLocation(params.where),
                         params.trailNewlines.replace(/\n/g, '<br>')

@@ -238,6 +238,11 @@ $overrideUnderscore ('bind',
 _.debugEcho = function () { return [this].concat (_.asArray (arguments)) }
 
 
+/*  Context-free version of fn.call (for consistency)
+    ======================================================================== */
+
+_.call = function (fn, this_, args) { return fn.apply (this_, _.rest (arguments, 2)) }
+
 /*  Limits function to given number of arguments
     ======================================================================== */
 
@@ -634,8 +639,6 @@ _.atIndex = function (n) {
 
 _.takesFirst = _.higherOrder (_.first)
 _.takesLast  = _.higherOrder (_.last)
-
-_.call    = function (fn) { return fn () }
 
 _.applies = function (fn, this_, args) {
                 return function () { return fn.apply (this_, args) } }
@@ -1726,7 +1729,7 @@ _.withTest ('properties', function () { var obj = {}
             obj._42, 42) }) }, function () { _.extend (_, {
 
     defineProperty: function (targetObject, name, def, defaultCfg) {
-        if (Object.hasOwnProperty (targetObject, name)) {
+        if (_.isObject (targetObject) && targetObject.hasOwnProperty (name)) {
             throw new Error ('_.defineProperty: targetObject already has property ' + name) }
         else {
             Object.defineProperty (targetObject, name,
@@ -2261,7 +2264,11 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     if ((_.platform ().engine === 'browser')) {
                                         if (_.isTypeOf (Element, x)) {
-                                            return x.tagName.lowercase.quote ('<>') } //x.outerHTML.substr (0, 10) + '…' }
+                                            return (x.tagName.lowercase +
+                                                        ((x.id && ('#' + x.id)) || '') +
+                                                        ((x.className && ('.' + x.className)) || '')).quote ('<>') }
+                                            //return x.outerHTML.substr (0, 12) + '…' }
+                                            //return x.tagName.lowercase.quote ('<>') }
                                         else if (_.isTypeOf (Text, x)) {
                                             return '@' + x.wholeText } }
 
@@ -6728,6 +6735,16 @@ _.extend ($, {
      */
     attrInt: function (name) { return (this.attr (name) || '').integerValue },
     cssInt:  function (name) { return (this.css  (name) || '').integerValue },
+
+    /*  Removes and then inserts node at the same place
+     */
+    reinsert: function () { var node = this[0]
+        var parentNode = node.parentNode
+        var next       = node.nextSibling
+        if (parentNode) {
+            parentNode.removeChild (node)
+            parentNode.insertBefore (node, next) }
+        return this },
 
     /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
      */

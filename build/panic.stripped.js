@@ -160,6 +160,9 @@ $overrideUnderscore('bind', function (bind) {
 _.debugEcho = function () {
     return [this].concat(_.asArray(arguments));
 };
+_.call = function (fn, this_, args) {
+    return fn.apply(this_, _.rest(arguments, 2));
+};
 _.arity = function (N, fn) {
     return function () {
         return fn.apply(this, _.first(arguments, N));
@@ -490,9 +493,6 @@ _.atIndex = function (n) {
 };
 _.takesFirst = _.higherOrder(_.first);
 _.takesLast = _.higherOrder(_.last);
-_.call = function (fn) {
-    return fn();
-};
 _.applies = function (fn, this_, args) {
     return function () {
         return fn.apply(this_, args);
@@ -1109,7 +1109,7 @@ _.omitKeys = function (obj, predicate) {
 };
 _.extend(_, {
     defineProperty: function (targetObject, name, def, defaultCfg) {
-        if (Object.hasOwnProperty(targetObject, name)) {
+        if (_.isObject(targetObject) && targetObject.hasOwnProperty(name)) {
             throw new Error('_.defineProperty: targetObject already has property ' + name);
         } else {
             Object.defineProperty(targetObject, name, _.extend({ enumerable: true }, defaultCfg, _.coerceToPropertyDefinition(def, name)));
@@ -1469,7 +1469,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             var pretty = cfg.pretty || false;
             if (_.platform().engine === 'browser') {
                 if (_.isTypeOf(Element, x)) {
-                    return x.tagName.lowercase.quote('<>');
+                    return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
                 } else if (_.isTypeOf(Text, x)) {
                     return '@' + x.wholeText;
                 }
@@ -4255,6 +4255,16 @@ if (jQuery) {
             cssInt: function (name) {
                 return (this.css(name) || '').integerValue;
             },
+            reinsert: function () {
+                var node = this[0];
+                var parentNode = node.parentNode;
+                var next = node.nextSibling;
+                if (parentNode) {
+                    parentNode.removeChild(node);
+                    parentNode.insertBefore(node, next);
+                }
+                return this;
+            },
             eachChild: function (selector, fn) {
                 _.each(this.find(selector), function (el) {
                     fn($(el));
@@ -5122,7 +5132,7 @@ _.extend(log, {
             ''
         ],
         [
-            'bloody',
+            'boldRed',
             [
                 '31m',
                 '1m'
@@ -5153,7 +5163,7 @@ _.extend(log, {
                 '36m',
                 '1m'
             ],
-            'color:royalblue'
+            'color:royalblue;font-weight:bold;'
         ],
         [
             'darkBlue',
@@ -5169,7 +5179,7 @@ _.extend(log, {
                 '33m',
                 '1m'
             ],
-            'color:saddlebrown'
+            'color:saddlebrown;font-weight:bold;'
         ],
         [
             'orange',
@@ -5208,7 +5218,7 @@ _.extend(log, {
                 '35m',
                 '1m'
             ],
-            'color:magenta'
+            'color:magenta;font-weight:bold;'
         ],
         [
             'purple',
@@ -5372,7 +5382,7 @@ _.extend(log, {
                     });
                 }).join('\n') + (codeLocation && '%c ' + codeLocation || ''), (_.scatter(params.lines, function (line, i, emit) {
                     _.each(line, function (run) {
-                        if (run.config.color) {
+                        if (run.text && run.config.color) {
                             emit(run.config.color.css);
                         }
                     });
@@ -5382,7 +5392,10 @@ _.extend(log, {
         location: function (where) {
             return _.quoteWith('()', _.nonempty([
                 where.calleeShort,
-                where.fileName + ':' + where.line
+                _.nonempty([
+                    where.fileName,
+                    where.line
+                ]).join(':')
             ]).join(' @ '));
         },
         stringifyArguments: function (args, cfg) {
@@ -5457,7 +5470,7 @@ _.extend(log, {
         'dark hint d',
         'greener gg',
         'bright b',
-        'bloody bad ee',
+        'boldRed bloody bad ee',
         'purple dp',
         'brown br',
         'boldOrange ww',
@@ -5613,6 +5626,7 @@ Testosterone = $singleton({
     },
     runTest: function (test, i, then) {
         var self = this, runConfig = this.runConfig;
+        log.impl.configStack = [];
         runConfig.testStarted(test);
         test.verbose = runConfig.verbose;
         test.timeout = runConfig.timeout;
@@ -6176,12 +6190,12 @@ _.perfTest = function (arg, then) {
                 if (_.isTypeOf(Error, params.args.first)) {
                     console.log(params.args.first);
                 }
-                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').attr('style', params.color && params.color.css || '').append([
+                logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div>').append([
                     _.escape(params.indentation),
                     $('<div class="panic-alert-error inline-exception all-stack-entries">').append(this.printError(params.args.first))
                 ]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
                     return $('<div class="line">').append(_.escape(params.indentation)).append(_.map(line, function (run) {
-                        return $('<span>').css({ color: run.config.color && run.config.color.css || '' }).text(run.text);
+                        return $('<span>').attr('style', run.config.color && run.config.color.css || '').text(run.text);
                     })).append(i === lines.lastIndex ? [
                         params.where && this.printLocation(params.where),
                         params.trailNewlines.replace(/\n/g, '<br>')
