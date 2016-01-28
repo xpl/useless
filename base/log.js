@@ -252,7 +252,7 @@ _.extend (log, {
 
                     (_.scatter (params.lines, function (line, i, emit) {
                         _.each (line, function (run) {
-                            if (run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+                            if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
 
                     trailNewlines))) } },
 
