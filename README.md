@@ -242,6 +242,7 @@ var mouseMoved = _.trigger ()
  */
 mouseMoved (function (x, y) { }) // bind
 mouseMoved (someCallback)        // bind another
+mouseMoved.once (someCallback)   // bind with 'once' semantics (auto-unbinds itself upon calling)
 
 /*  Calling
  */
