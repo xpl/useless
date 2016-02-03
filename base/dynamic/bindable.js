@@ -155,9 +155,9 @@ _.deferTest ('bindable', function () {
 
                     /*  Call onceAfter
                      */
-                    if (onceAfter.length) {
-                        for (i = 0, ni = onceAfter.length; i < ni; i++) {
-                            onceAfter[i].apply (this_, args) }
-                        onceAfter.removeAll () } }
+                    if (onceAfter.length) { var arr = onceAfter.copy
+                                                      onceAfter.removeAll ()
+                        for (i = 0, ni = arr.length; i < ni; i++) {
+                            arr[i].apply (this_, args) } } }
 
                 return result } )) }) }) })

@@ -213,7 +213,7 @@ _.extend (log, {
                 lines:         lines,
                 config:        config,
                 color:         config.color,
-                args:          arguments,
+                args:          _.reject (args, _.isTypeOf.$ (log.Config)),
                 indentation:   indentation,
                 indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
                                                  _.joinsWith (''),

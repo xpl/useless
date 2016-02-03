@@ -4072,10 +4072,10 @@ _.deferTest ('bindable', function () {
 
                     /*  Call onceAfter
                      */
-                    if (onceAfter.length) {
-                        for (i = 0, ni = onceAfter.length; i < ni; i++) {
-                            onceAfter[i].apply (this_, args) }
-                        onceAfter.removeAll () } }
+                    if (onceAfter.length) { var arr = onceAfter.copy
+                                                      onceAfter.removeAll ()
+                        for (i = 0, ni = arr.length; i < ni; i++) {
+                            arr[i].apply (this_, args) } } }
 
                 return result } )) }) }) })
 ;
@@ -4345,7 +4345,7 @@ _.extend (_, {
                 stream (function (val) {
                     if (matchFn (val)) {
                         stream.off (arguments.callee)
-                        then (val) } }) } }) },
+                        then.apply (this, arguments) } }) } }) },
 
 
     barrier: function (defaultValue) { var defaultListener = undefined
@@ -8076,7 +8076,7 @@ _.extend (log, {
                 lines:         lines,
                 config:        config,
                 color:         config.color,
-                args:          arguments,
+                args:          _.reject (args, _.isTypeOf.$ (log.Config)),
                 indentation:   indentation,
                 indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
                                                  _.joinsWith (''),

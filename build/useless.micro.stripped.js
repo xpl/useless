@@ -2255,10 +2255,11 @@ $extensionMethods(String, {
                         after[i].apply(this_, args);
                     }
                     if (onceAfter.length) {
-                        for (i = 0, ni = onceAfter.length; i < ni; i++) {
-                            onceAfter[i].apply(this_, args);
-                        }
+                        var arr = onceAfter.copy;
                         onceAfter.removeAll();
+                        for (i = 0, ni = arr.length; i < ni; i++) {
+                            arr[i].apply(this_, args);
+                        }
                     }
                 }
                 return result;
@@ -2341,7 +2342,7 @@ _.extend(_, {
                 stream(function (val) {
                     if (matchFn(val)) {
                         stream.off(arguments.callee);
-                        then(val);
+                        then.apply(this, arguments);
                     }
                 });
             }

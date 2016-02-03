@@ -67,8 +67,11 @@ Panic.widget = $singleton (Component, {
 
 		return el })),
 
-	layout: function () {
-		this.modal.css ('max-height', $(window).height () - 100)
+	layout: function () { var shouldExpandHorizontally = (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))) > this.modal.width ())
+
+		this.modal.css ({ 'max-height': $(window).height () - 100,
+						  'width':  shouldExpandHorizontally ? '90%' : '' })
+
 		this.modalBody.scroll () },
 
 	toggleVisibility: function (yes) {
@@ -115,7 +118,6 @@ Panic.widget = $singleton (Component, {
 												.append ('<span class="panic-alert-counter">')
 												.append (this.print (what, raw))
 												.insertAfter (this.el.find ('.panic-modal-title')) }
-
 		this.toggleVisibility (true)
 		this.layout ()  },
 
@@ -145,9 +147,9 @@ Panic.widget = $singleton (Component, {
 			this.$ (function (params) { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
 
 				logEl.append (_.isTypeOf (Error, params.args.first)
-						? ($('<div>')
+						? ($('<div class="inline-exception-entry">')
 								.append ([_.escape (params.indentation),
-											$('<div class="panic-alert-error inline-exception all-stack-entries">').append (
+											$('<div class="panic-alert-error inline-exception">').append (
 												this.printError (params.args.first))]))
 						: $('<div class="log-entry">')
 								.append (
