@@ -70,6 +70,11 @@ _.deferTest ('String extensions', function () {
     $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
     $assert  (_.asArray ('foo'.bytes), [102, 111, 111])
 
+    $assert  (['foobar'  .limitedTo (6),
+               'tooloong'.limitedTo (6),
+               ''        .limitedTo (0)], ['foobar',
+                                           'toolo…', ''])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -90,6 +95,9 @@ _.deferTest ('String extensions', function () {
 
     trimmed: function (s) {
         return s.trim () },
+
+    limitedTo: function (s, n) {
+        return s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')) },
 
     escaped: function (s) {
         return _.escape (s) },

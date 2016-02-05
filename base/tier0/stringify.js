@@ -104,7 +104,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x) }
+                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 20)) }
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (Tags.get (x), function (memo, value, tag) {
@@ -139,7 +139,7 @@ _.deferTest (['type', 'stringify'], function () {
                                             //return x.outerHTML.substr (0, 12) + '…' }
                                             //return x.tagName.lowercase.quote ('<>') }
                                         else if (_.isTypeOf (Text, x)) {
-                                            return '@' + x.wholeText } }
+                                            return '@' + x.wholeText.limitedTo (20) } }
 
                                     if (x.toJSON) {
                                         return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
