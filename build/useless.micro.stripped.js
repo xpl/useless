@@ -598,6 +598,9 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return x && x.$definition !== undefined || false;
 };
+_.coerceToNaN = function (x) {
+    return _.isFinite(x) ? x : Number.NaN;
+};
 _.coerceToArray = function (x) {
     return x === undefined ? [] : _.isArray(x) ? x : [x];
 };
@@ -708,18 +711,34 @@ _.mixin({
     }
 });
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
-_.scatter = function (obj, elem) {
-    var result = undefined;
-    _.map2(obj, function (x, i) {
-        elem(x, i, function (v, k) {
-            if (arguments.length < 2) {
-                (result = result || []).push(v);
-            } else {
-                (result = result || {})[k] = v;
-            }
+_.mixin({
+    scatter: function (obj, elem) {
+        var result = undefined;
+        _.map2(obj, function (x, i) {
+            elem(x, i, function (v, k) {
+                if (arguments.length < 2) {
+                    (result = result || []).push(v);
+                } else {
+                    (result = result || {})[k] = v;
+                }
+            });
         });
+        return result;
+    }
+});
+_.obj = function (emitItems) {
+    var x = undefined;
+    emitItems(function (v, k) {
+        (x = x || {})[k] = v;
     });
-    return result;
+    return x;
+};
+_.arr = function (emitItems) {
+    var x = undefined;
+    emitItems(function (v) {
+        (x = x || []).push(arguments.length < 2 ? v : _.asArray(arguments));
+    });
+    return x;
 };
 _.mapKeys = function (x, fn) {
     if (_.isArray(x)) {
@@ -1177,6 +1196,15 @@ Tags = _.extend2(function (subject) {
     },
     get: function (def) {
         return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
+    },
+    each: function (def, accept) {
+        if (_.isTypeOf(Tags, def)) {
+            _.each(def, function (v, k) {
+                if (k[0] === '$') {
+                    accept(k.slice(1));
+                }
+            });
+        }
     },
     hasSubject: function (def) {
         return _.isTypeOf(Tags, def) && 'subject' in def;
@@ -2571,10 +2599,23 @@ _.extend($prototype, {
             return $untag(impl.sequence(def, base).call(impl, def || {}).constructor);
         },
         sequence: function (def, base) {
-            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
         },
         compileMixin: function (def) {
             return _.sequence(this.flatten, this.contributeTraits(), this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
+        },
+        flatten: function (def) {
+            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
+            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
+                return _.map(this.flatten(membersDef), function (member, memberName) {
+                    return [
+                        memberName,
+                        $global[keyword](member)
+                    ];
+                });
+            }, this), true));
+            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
+            return _.extend(memberDefinitions, mergedKeywordGroups);
         },
         evalAlwaysTriggeredMacros: function (base) {
             return function (def) {
@@ -2617,7 +2658,7 @@ _.extend($prototype, {
                 _.each(macroTags, function (macroFn, tagName) {
                     memberDef = def[memberName];
                     if (_.keyword(tagName) in memberDef) {
-                        def[memberName] = macroFn.call(macroTags, def, memberDef, memberName) || memberDef;
+                        def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
                     }
                 });
             });
@@ -2701,11 +2742,12 @@ _.extend($prototype, {
                     isInstanceOf: $builtin(function (constructor) {
                         return _.isTypeOf(constructor, this);
                     }),
-                    $: $builtin(function (fn) {
-                        return _.$.apply(null, [this].concat(_.asArray(arguments)));
-                    })
+                    $: $builtin($prototype.impl.$)
                 });
             };
+        },
+        $: function (fn) {
+            return _.$.apply(null, [this].concat(_.asArray(arguments)));
         },
         defaultConstructor: function (base) {
             return base ? function () {
@@ -2770,18 +2812,15 @@ _.extend($prototype, {
                 }) : def[name] : v;
             });
         },
-        flatten: function (def) {
-            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
-            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
-                return _.map(this.flatten(membersDef), function (member, memberName) {
-                    return [
-                        memberName,
-                        $global[keyword](member)
-                    ];
+        groupMembersByTagForFastEnumeration: function (def) {
+            var membersByTag = {};
+            _.each(def, function (m, name) {
+                Tags.each(m, function (tag) {
+                    (membersByTag[tag] = membersByTag[tag] || {})[name] = m;
                 });
-            }, this), true));
-            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
-            return _.extend(memberDefinitions, mergedKeywordGroups);
+            });
+            def.$membersByTag = $static($builtin($property(membersByTag)));
+            return def;
         },
         isTagKeywordGroup: function (value_, key) {
             var value = Tags.unwrap(value_);
@@ -3774,7 +3813,7 @@ Component = $prototype({
     $macroTags: $extendable({}),
     $impl: {
         sequence: function (def, base) {
-            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
         },
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
@@ -3832,8 +3871,9 @@ Component = $prototype({
         mergeTraitsMembers: function (def, traits) {
             var pool = {}, bindables = {}, streams = {};
             var macroTags = $untag(def.$macroTags);
-            _.each(_.pluck(traits, '$definition').concat(_.clone(def)), function (traitDef) {
-                _.each(macroTags && this.applyMacroTags(macroTags, _.clone(traitDef)) || traitDef, function (member, name) {
+            var definitions = _.pluck(traits, '$definition').concat(_.clone(def));
+            _.each(definitions, function (traitDef) {
+                _.each(macroTags && this.applyMacroTags(macroTags, _.extend(_.clone(traitDef), { constructor: def.constructor })) || traitDef, function (member, name) {
                     if ($builtin.isNot(member) && $builtin.isNot(def[name]) && name !== 'constructor') {
                         if ($bindable.is(member)) {
                             bindables[name] = member;

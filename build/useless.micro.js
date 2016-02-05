@@ -727,6 +727,15 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return (x && (x.$definition !== undefined)) || false }
 
+
+/*  NaN has interesting property: Number.NaN !== Number.NaN, this makes it
+    more preferable than undefined/null in some cases. This function converts
+    anything that is not a number to NaN.
+    ======================================================================== */
+
+_.coerceToNaN = function (x) { return _.isFinite (x) ? x : Number.NaN }
+
+
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
 
@@ -1004,29 +1013,62 @@ _.withTest (['stdlib', 'values2'], function () {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 _.withTest (['stdlib', 'map2'], function () {
-                                 var plusBar = _.appends ('bar')
-    $assert (_.map2 (       'foo',   plusBar),         'foobar'  )
-    $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
-    $assert (_.map2 ({ foo: 'foo' }, plusBar),  { foo: 'foobar' })
 
-    $assert ([1,10,2,20,3,30],           _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
-    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+                                 var plusBar =   _.appends ('bar')
+
+    $assert (_.map2 (       'foo',   plusBar),           'foobar'  )
+    $assert (_.map2 ([      'foo'],  plusBar),    [      'foobar' ])
+    $assert (_.map2 ({ foo: 'foo' }, plusBar),    { foo: 'foobar' })
+
+    /*  With flipped order of arguments (callback first)
+     */
+    $assert (_.mapWith (plusBar, { foo: 'foo' }), { foo: 'foobar' })
 
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
                                      _.isArray (value) ? _.map       (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
-                    _.mapWith  = _.flip2 (_.map2))
-
-                _.scatter = function (obj, elem) { var result = undefined
-                    _.map2 (obj, function (x, i) {
-                                     elem (x, i, function (v, k) {
-                                                    if (arguments.length < 2) { (result = result || []).push (v) }  
-                                                                         else { (result = result || {})[k] = v } }) }); return result } })
+                    _.mapWith  = _.flip2 (_.map2)) })
 
 
-/*  Semantically-correct abstract map (maps any type of value)
+/*  Maps one-to-many
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'scatter/obj/arr'], function () {
+
+    $assert (undefined, _.scatter ([], _.noop))
+
+    $assert ([1,10, 2,20, 3,30],         _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
+    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+
+    $assert (_.obj (_.noop),
+             _.arr (_.noop), undefined)
+
+    $assert (_.obj (function (emit) {
+                              emit (42, 'foo')
+                              emit (43, 'bar') }), { foo: 42, bar: 43 })
+
+    $assert (_.arr (function (emit) {
+                              emit (42)
+                              emit (43, 44) }), [42, [43, 44]])
+
+}, function () { _.mixin ({
+                    scatter: function (obj, elem) { var result = undefined
+                                _.map2 (obj, function (x, i) {
+                                                 elem (x, i, function (v, k) {
+                                                                if (arguments.length < 2) { (result = result || []).push (v) }  
+                                                                                     else { (result = result || {})[k] = v } }) }); return result } })
+                 _.obj = function (emitItems) {
+                            var x = undefined; emitItems (function (v, k)  { (x = x || {})[k] = v  })
+                         return x }
+
+                 _.arr = function (emitItems) {
+                            var x = undefined; emitItems (function (v    ) { (x = x || []).push ((arguments.length < 2) ? v : _.asArray (arguments)) })
+                         return x } })
+
+
+/*  Maps keys (instead of values)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 _.withTest (['stdlib', 'mapKeys'], function () {
@@ -1867,6 +1909,10 @@ _.withTest ('keywords', function () {
     $assert (     $qux ([8, 9, $foo ($bar (10))]),
         Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
 
+    /*  Enumerating tags with Tags.each (obj, iter)
+     */
+    $assertMatches (['foo', 'bar', 'qux'], _.arr (function (iter) { Tags.each (test.fourtyTwo, iter) }))
+
     /*  Tagging with non-boolean data
      */
     $assert ($foo ({ some: 'params' }, 42).$foo, { some: 'params' })
@@ -1900,10 +1946,13 @@ _.withTest ('keywords', function () {
         /* static methods (actual API)
          */
         clone: function (what, newSubject) {
-            return _.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what) },
+                        return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
 
         get: function (def) {
-            return _.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {} },
+                        return (_.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {}) },
+
+        each: function (def, accept) {
+                        if (_.isTypeOf (Tags, def)) { _.each (def, function (v, k) { if (k[0] === '$') { accept (k.slice (1)) } }) } },
 
         hasSubject: function (def) {
                         return (_.isTypeOf (Tags, def) && ('subject' in def)) },
@@ -4170,6 +4219,18 @@ _.withTest ('OOP', {
         obj.noMistake () },
 
 
+/*  You can enumerate members grouped by tag name via $membersByTag
+    ======================================================================== */
+
+    '$membersByTag': function () {
+
+        var foo = $static ($property (1)),
+            bar =          $property (2)
+
+        $assertMatches ($prototype ({ foo: foo, bar: bar }).$membersByTag, { 'static'  : { 'foo': foo },
+                                                                             'property': { 'foo': foo, 'bar': bar } }) },
+
+
 /*  Tags on definition render to static properties
     ======================================================================== */
 
@@ -4260,6 +4321,9 @@ _.withTest ('OOP', {
                                                     .constructor) },
 
             sequence: function (def, base) { return _.sequence (
+
+                /*  TODO: optimize performance (there's PLENTY of room to do that)
+                 */
                 this.extendWithTags,
                 this.flatten,
                 this.generateCustomCompilerImpl (base),
@@ -4273,6 +4337,7 @@ _.withTest ('OOP', {
                 this.generateBuiltInMembers (base),
                 this.callStaticConstructor,
                 this.expandAliases,
+                this.groupMembersByTagForFastEnumeration,
                 this.defineStaticMembers,
                 this.defineInstanceMembers) },
 
@@ -4284,6 +4349,16 @@ _.withTest ('OOP', {
                     this.evalMemberTriggeredMacros (),
                     this.defineStaticMembers,
                     this.defineInstanceMembers).call (this, def || {}).constructor },
+
+            flatten: function (def) {
+                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
+                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
+                    return _.map (this.flatten (membersDef), function (member, memberName) {
+                        return [memberName, $global[keyword] (member)] }) }, this), true))
+
+                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+
+                return _.extend (memberDefinitions, mergedKeywordGroups) },
 
             evalAlwaysTriggeredMacros: function (base) {
                 return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
@@ -4311,7 +4386,7 @@ _.withTest ('OOP', {
                  _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }); return def },
+                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }) }); return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -4373,8 +4448,10 @@ _.withTest ('OOP', {
                     $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
                     isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, Tags.unwrap (def.constructor)))),
                     isInstanceOf:   $builtin (function (constructor) { return _.isTypeOf (constructor, this) }),
-                    $:              $builtin (function (fn)          { return _.$.apply (null, [this].concat (_.asArray (arguments))) }) }) }},
+                    $:              $builtin ($prototype.impl.$) }) }},
 
+            $: function (fn) { return _.$.apply (null, [this].concat (_.asArray (arguments))) },
+            
             defaultConstructor: function (base) {
                 return (base ?
                     function ()    { base.prototype.constructor.apply (this, arguments) } :
@@ -4424,15 +4501,13 @@ _.withTest ('OOP', {
                                     get: function ()  { return this[name] },
                                     set: function (x) { this[name] = x } }) : def[name]) : v) }) },
 
-            flatten: function (def) {
-                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
-                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
-                    return _.map (this.flatten (membersDef), function (member, memberName) {
-                        return [memberName, $global[keyword] (member)] }) }, this), true))
+            groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 
-                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+                                                    _.each (def, function (m, name) {
+                                                        Tags.each (m, function (tag) {
+                                                            (membersByTag[tag] = (membersByTag[tag] || {}))[name] = m }) })
 
-                return _.extend (memberDefinitions, mergedKeywordGroups) },
+                                                    def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
@@ -6189,6 +6264,7 @@ Component = $prototype ({
             this.generateBuiltInMembers (base),
             this.callStaticConstructor,
             this.expandAliases,
+            this.groupMembersByTagForFastEnumeration,
             this.defineStaticMembers,
             this.defineInstanceMembers) },
 
@@ -6235,9 +6311,12 @@ Component = $prototype ({
         mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}, streams = {}
 
             var macroTags = $untag (def.$macroTags)
+            var definitions = _.pluck (traits, '$definition').concat (_.clone (def))
 
-            _.each (_.pluck (traits, '$definition').concat (_.clone (def)), function (traitDef) {
-                _.each ((macroTags && this.applyMacroTags (macroTags, _.clone (traitDef))) || traitDef,
+            _.each (definitions, function (traitDef) {
+                _.each ((macroTags && this.applyMacroTags (macroTags,
+                                                _.extend (_.clone (traitDef), {
+                                                    constructor: def.constructor }))) || traitDef,
                     function (member, name) {
                         if ($builtin.isNot (member) &&
                             $builtin.isNot (def[name]) && (name !== 'constructor')) {

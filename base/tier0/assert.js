@@ -63,9 +63,13 @@ _.withTest ('assert.js bootstrap', function () {
 /*  One-argument $assert (requires its argument to be strictly 'true')
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+    $assert (true)
+
     $assert (                       // public front end, may be replaced by environment)
         _.assert ===                // member of _ namespace (original implementation, do not mess with that)
         _.assertions.assert)        // member of _.assertions (for enumeration purposes)
+
+    $assertNot (false)
 
 /*  Multi-argument assert (requires its arguments be strictly equal to each other)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -74,6 +78,8 @@ _.withTest ('assert.js bootstrap', function () {
     $assert ({ foo: [1,2,3] }, { foo: [1,2,3] }) // compares objects (deep match)
     $assert ({ foo: { bar: 1 }, baz: 2 },        // ignores order of properties
              { baz: 2, foo: { bar: 1 } })
+
+    $assertNot (2 + 2, 5)
 
 /*  Nonstrict matching (a wrapup over _.matches)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -186,12 +192,27 @@ if (_.hasStdlib) {
         $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
         $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
 
-/*  Ensuring CPS routine result
+
+/*  TODO:   1) add CPS support
+            2) replace $assertCPS with this
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+
+            $assertCalledWithArguments (   ['foo',
+                                           ['foo', 'bar']], function (fn) {
+
+                                        fn ('foo')
+                                        fn ('foo', 'bar') }) }
+
+
+/*  Ensuring CPS routine result (DEPRECATED)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $assertCPS (function (then) { then ('foo', 'bar') }, ['foo', 'bar'])
     $assertCPS (function (then) { then ('foo') }, 'foo')
     $assertCPS (function (then) { then () })
+
 
 /*  Ensuring assertion failure
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -217,6 +238,18 @@ if (_.hasStdlib) {
 
 }, function () {
 
+    var assertImpl = function (shouldMatch) {
+                        return function (__) {  var args = [].splice.call (arguments, 0)
+
+                                                if (args.length === 1) {
+                                                    if (args[0] !== shouldMatch) {
+                                                        _.assertionFailed ({ notMatching: args }) } }
+
+                                                else if (_.allEqual (args) !== shouldMatch) {
+                                                    _.assertionFailed ({ notMatching: args }) }
+
+                                                return true } }
+
     /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
      */
     $overrideUnderscore ('matches', function (matches) {
@@ -225,16 +258,8 @@ if (_.hasStdlib) {
 
     _.extend (_, _.assertions = {
 
-        assert: function (__) { var args = [].splice.call (arguments, 0)
-
-                    if (args.length === 1) {
-                        if (args[0] !== true) {
-                            _.assertionFailed ({ notMatching: args }) } }
-
-                    else if (!_.allEqual (args)) {
-                        _.assertionFailed ({ notMatching: args }) }
-
-                    return true },
+        assert:    assertImpl (true),
+        assertNot: assertImpl (false),
 
         assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
             fn (function () {
@@ -268,6 +293,9 @@ if (_.hasStdlib) {
 
             if (!async)   { _.assert (status, contracts)
                 if (then) { then () } } },
+
+        assertCalledWithArguments: function (argsPattern, generateCalls) {
+                                        return _.assert (_.arr (generateCalls), argsPattern) },
 
         assertCallOrder: function (fn) {
             var callIndex = 0

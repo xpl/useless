@@ -1,9 +1,19 @@
-.useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;
-					   white-space: pre;
-					   font-family: Menlo, monospace;
-					   font-size: 11px;
-					   pointer-events: none;
-					   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }
+.useless-log-overlay {	position: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;
+						overflow: hidden;
+						pointer-events: none;
+						-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,
+							color-stop(0.00, rgba(0,0,0,0)),
+							color-stop(0.50, rgba(0,0,0,0)),
+							color-stop(0.60, rgba(0,0,0,0.8)),
+							color-stop(1.00, rgba(0,0,0,1))); }
+
+.useless-log-overlay-body {
+
+	font-family: Menlo, monospace;
+	font-size: 11px;
+	white-space: pre;
+	background: rgba(255,255,255,1);
+	text-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }
 
 .ulo-line 		{ white-space: pre; word-wrap: normal; }
 .ulo-line-where { color: black; opacity: 0.25; }

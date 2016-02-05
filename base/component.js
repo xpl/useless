@@ -651,6 +651,7 @@ Component = $prototype ({
             this.generateBuiltInMembers (base),
             this.callStaticConstructor,
             this.expandAliases,
+            this.groupMembersByTagForFastEnumeration,
             this.defineStaticMembers,
             this.defineInstanceMembers) },
 
@@ -697,9 +698,12 @@ Component = $prototype ({
         mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}, streams = {}
 
             var macroTags = $untag (def.$macroTags)
+            var definitions = _.pluck (traits, '$definition').concat (_.clone (def))
 
-            _.each (_.pluck (traits, '$definition').concat (_.clone (def)), function (traitDef) {
-                _.each ((macroTags && this.applyMacroTags (macroTags, _.clone (traitDef))) || traitDef,
+            _.each (definitions, function (traitDef) {
+                _.each ((macroTags && this.applyMacroTags (macroTags,
+                                                _.extend (_.clone (traitDef), {
+                                                    constructor: def.constructor }))) || traitDef,
                     function (member, name) {
                         if ($builtin.isNot (member) &&
                             $builtin.isNot (def[name]) && (name !== 'constructor')) {

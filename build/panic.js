@@ -727,6 +727,15 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return (x && (x.$definition !== undefined)) || false }
 
+
+/*  NaN has interesting property: Number.NaN !== Number.NaN, this makes it
+    more preferable than undefined/null in some cases. This function converts
+    anything that is not a number to NaN.
+    ======================================================================== */
+
+_.coerceToNaN = function (x) { return _.isFinite (x) ? x : Number.NaN }
+
+
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
 
@@ -1004,29 +1013,62 @@ _.withTest (['stdlib', 'values2'], function () {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 _.withTest (['stdlib', 'map2'], function () {
-                                 var plusBar = _.appends ('bar')
-    $assert (_.map2 (       'foo',   plusBar),         'foobar'  )
-    $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
-    $assert (_.map2 ({ foo: 'foo' }, plusBar),  { foo: 'foobar' })
 
-    $assert ([1,10,2,20,3,30],           _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
-    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+                                 var plusBar =   _.appends ('bar')
+
+    $assert (_.map2 (       'foo',   plusBar),           'foobar'  )
+    $assert (_.map2 ([      'foo'],  plusBar),    [      'foobar' ])
+    $assert (_.map2 ({ foo: 'foo' }, plusBar),    { foo: 'foobar' })
+
+    /*  With flipped order of arguments (callback first)
+     */
+    $assert (_.mapWith (plusBar, { foo: 'foo' }), { foo: 'foobar' })
 
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
                                      _.isArray (value) ? _.map       (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
-                    _.mapWith  = _.flip2 (_.map2))
-
-                _.scatter = function (obj, elem) { var result = undefined
-                    _.map2 (obj, function (x, i) {
-                                     elem (x, i, function (v, k) {
-                                                    if (arguments.length < 2) { (result = result || []).push (v) }  
-                                                                         else { (result = result || {})[k] = v } }) }); return result } })
+                    _.mapWith  = _.flip2 (_.map2)) })
 
 
-/*  Semantically-correct abstract map (maps any type of value)
+/*  Maps one-to-many
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'scatter/obj/arr'], function () {
+
+    $assert (undefined, _.scatter ([], _.noop))
+
+    $assert ([1,10, 2,20, 3,30],         _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
+    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+
+    $assert (_.obj (_.noop),
+             _.arr (_.noop), undefined)
+
+    $assert (_.obj (function (emit) {
+                              emit (42, 'foo')
+                              emit (43, 'bar') }), { foo: 42, bar: 43 })
+
+    $assert (_.arr (function (emit) {
+                              emit (42)
+                              emit (43, 44) }), [42, [43, 44]])
+
+}, function () { _.mixin ({
+                    scatter: function (obj, elem) { var result = undefined
+                                _.map2 (obj, function (x, i) {
+                                                 elem (x, i, function (v, k) {
+                                                                if (arguments.length < 2) { (result = result || []).push (v) }  
+                                                                                     else { (result = result || {})[k] = v } }) }); return result } })
+                 _.obj = function (emitItems) {
+                            var x = undefined; emitItems (function (v, k)  { (x = x || {})[k] = v  })
+                         return x }
+
+                 _.arr = function (emitItems) {
+                            var x = undefined; emitItems (function (v    ) { (x = x || []).push ((arguments.length < 2) ? v : _.asArray (arguments)) })
+                         return x } })
+
+
+/*  Maps keys (instead of values)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 _.withTest (['stdlib', 'mapKeys'], function () {
@@ -1867,6 +1909,10 @@ _.withTest ('keywords', function () {
     $assert (     $qux ([8, 9, $foo ($bar (10))]),
         Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
 
+    /*  Enumerating tags with Tags.each (obj, iter)
+     */
+    $assertMatches (['foo', 'bar', 'qux'], _.arr (function (iter) { Tags.each (test.fourtyTwo, iter) }))
+
     /*  Tagging with non-boolean data
      */
     $assert ($foo ({ some: 'params' }, 42).$foo, { some: 'params' })
@@ -1900,10 +1946,13 @@ _.withTest ('keywords', function () {
         /* static methods (actual API)
          */
         clone: function (what, newSubject) {
-            return _.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what) },
+                        return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
 
         get: function (def) {
-            return _.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {} },
+                        return (_.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {}) },
+
+        each: function (def, accept) {
+                        if (_.isTypeOf (Tags, def)) { _.each (def, function (v, k) { if (k[0] === '$') { accept (k.slice (1)) } }) } },
 
         hasSubject: function (def) {
                         return (_.isTypeOf (Tags, def) && ('subject' in def)) },
@@ -4170,6 +4219,18 @@ _.withTest ('OOP', {
         obj.noMistake () },
 
 
+/*  You can enumerate members grouped by tag name via $membersByTag
+    ======================================================================== */
+
+    '$membersByTag': function () {
+
+        var foo = $static ($property (1)),
+            bar =          $property (2)
+
+        $assertMatches ($prototype ({ foo: foo, bar: bar }).$membersByTag, { 'static'  : { 'foo': foo },
+                                                                             'property': { 'foo': foo, 'bar': bar } }) },
+
+
 /*  Tags on definition render to static properties
     ======================================================================== */
 
@@ -4260,6 +4321,9 @@ _.withTest ('OOP', {
                                                     .constructor) },
 
             sequence: function (def, base) { return _.sequence (
+
+                /*  TODO: optimize performance (there's PLENTY of room to do that)
+                 */
                 this.extendWithTags,
                 this.flatten,
                 this.generateCustomCompilerImpl (base),
@@ -4273,6 +4337,7 @@ _.withTest ('OOP', {
                 this.generateBuiltInMembers (base),
                 this.callStaticConstructor,
                 this.expandAliases,
+                this.groupMembersByTagForFastEnumeration,
                 this.defineStaticMembers,
                 this.defineInstanceMembers) },
 
@@ -4284,6 +4349,16 @@ _.withTest ('OOP', {
                     this.evalMemberTriggeredMacros (),
                     this.defineStaticMembers,
                     this.defineInstanceMembers).call (this, def || {}).constructor },
+
+            flatten: function (def) {
+                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
+                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
+                    return _.map (this.flatten (membersDef), function (member, memberName) {
+                        return [memberName, $global[keyword] (member)] }) }, this), true))
+
+                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+
+                return _.extend (memberDefinitions, mergedKeywordGroups) },
 
             evalAlwaysTriggeredMacros: function (base) {
                 return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
@@ -4311,7 +4386,7 @@ _.withTest ('OOP', {
                  _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }); return def },
+                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }) }); return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -4373,8 +4448,10 @@ _.withTest ('OOP', {
                     $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
                     isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, Tags.unwrap (def.constructor)))),
                     isInstanceOf:   $builtin (function (constructor) { return _.isTypeOf (constructor, this) }),
-                    $:              $builtin (function (fn)          { return _.$.apply (null, [this].concat (_.asArray (arguments))) }) }) }},
+                    $:              $builtin ($prototype.impl.$) }) }},
 
+            $: function (fn) { return _.$.apply (null, [this].concat (_.asArray (arguments))) },
+            
             defaultConstructor: function (base) {
                 return (base ?
                     function ()    { base.prototype.constructor.apply (this, arguments) } :
@@ -4424,15 +4501,13 @@ _.withTest ('OOP', {
                                     get: function ()  { return this[name] },
                                     set: function (x) { this[name] = x } }) : def[name]) : v) }) },
 
-            flatten: function (def) {
-                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
-                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
-                    return _.map (this.flatten (membersDef), function (member, memberName) {
-                        return [memberName, $global[keyword] (member)] }) }, this), true))
+            groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 
-                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+                                                    _.each (def, function (m, name) {
+                                                        Tags.each (m, function (tag) {
+                                                            (membersByTag[tag] = (membersByTag[tag] || {}))[name] = m }) })
 
-                return _.extend (memberDefinitions, mergedKeywordGroups) },
+                                                    def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
@@ -6189,6 +6264,7 @@ Component = $prototype ({
             this.generateBuiltInMembers (base),
             this.callStaticConstructor,
             this.expandAliases,
+            this.groupMembersByTagForFastEnumeration,
             this.defineStaticMembers,
             this.defineInstanceMembers) },
 
@@ -6235,9 +6311,12 @@ Component = $prototype ({
         mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}, streams = {}
 
             var macroTags = $untag (def.$macroTags)
+            var definitions = _.pluck (traits, '$definition').concat (_.clone (def))
 
-            _.each (_.pluck (traits, '$definition').concat (_.clone (def)), function (traitDef) {
-                _.each ((macroTags && this.applyMacroTags (macroTags, _.clone (traitDef))) || traitDef,
+            _.each (definitions, function (traitDef) {
+                _.each ((macroTags && this.applyMacroTags (macroTags,
+                                                _.extend (_.clone (traitDef), {
+                                                    constructor: def.constructor }))) || traitDef,
                     function (member, name) {
                         if ($builtin.isNot (member) &&
                             $builtin.isNot (def[name]) && (name !== 'constructor')) {
@@ -7092,9 +7171,13 @@ _.withTest ('assert.js bootstrap', function () {
 /*  One-argument $assert (requires its argument to be strictly 'true')
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+    $assert (true)
+
     $assert (                       // public front end, may be replaced by environment)
         _.assert ===                // member of _ namespace (original implementation, do not mess with that)
         _.assertions.assert)        // member of _.assertions (for enumeration purposes)
+
+    $assertNot (false)
 
 /*  Multi-argument assert (requires its arguments be strictly equal to each other)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -7103,6 +7186,8 @@ _.withTest ('assert.js bootstrap', function () {
     $assert ({ foo: [1,2,3] }, { foo: [1,2,3] }) // compares objects (deep match)
     $assert ({ foo: { bar: 1 }, baz: 2 },        // ignores order of properties
              { baz: 2, foo: { bar: 1 } })
+
+    $assertNot (2 + 2, 5)
 
 /*  Nonstrict matching (a wrapup over _.matches)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -7215,12 +7300,27 @@ if (_.hasStdlib) {
         $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
         $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
 
-/*  Ensuring CPS routine result
+
+/*  TODO:   1) add CPS support
+            2) replace $assertCPS with this
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+
+            $assertCalledWithArguments (   ['foo',
+                                           ['foo', 'bar']], function (fn) {
+
+                                        fn ('foo')
+                                        fn ('foo', 'bar') }) }
+
+
+/*  Ensuring CPS routine result (DEPRECATED)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $assertCPS (function (then) { then ('foo', 'bar') }, ['foo', 'bar'])
     $assertCPS (function (then) { then ('foo') }, 'foo')
     $assertCPS (function (then) { then () })
+
 
 /*  Ensuring assertion failure
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -7246,6 +7346,18 @@ if (_.hasStdlib) {
 
 }, function () {
 
+    var assertImpl = function (shouldMatch) {
+                        return function (__) {  var args = [].splice.call (arguments, 0)
+
+                                                if (args.length === 1) {
+                                                    if (args[0] !== shouldMatch) {
+                                                        _.assertionFailed ({ notMatching: args }) } }
+
+                                                else if (_.allEqual (args) !== shouldMatch) {
+                                                    _.assertionFailed ({ notMatching: args }) }
+
+                                                return true } }
+
     /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
      */
     $overrideUnderscore ('matches', function (matches) {
@@ -7254,16 +7366,8 @@ if (_.hasStdlib) {
 
     _.extend (_, _.assertions = {
 
-        assert: function (__) { var args = [].splice.call (arguments, 0)
-
-                    if (args.length === 1) {
-                        if (args[0] !== true) {
-                            _.assertionFailed ({ notMatching: args }) } }
-
-                    else if (!_.allEqual (args)) {
-                        _.assertionFailed ({ notMatching: args }) }
-
-                    return true },
+        assert:    assertImpl (true),
+        assertNot: assertImpl (false),
 
         assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
             fn (function () {
@@ -7297,6 +7401,9 @@ if (_.hasStdlib) {
 
             if (!async)   { _.assert (status, contracts)
                 if (then) { then () } } },
+
+        assertCalledWithArguments: function (argsPattern, generateCalls) {
+                                        return _.assert (_.arr (generateCalls), argsPattern) },
 
         assertCallOrder: function (fn) {
             var callIndex = 0
@@ -7506,7 +7613,9 @@ if (_.hasStdlib) {
                     var args = _.asArray (arguments)
                     var fn   = args[callbackArgumentIndex]
 
-                     fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
+                    if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
+
+                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
 
                         globalAsyncContext = asyncContext
 
@@ -9106,10 +9215,15 @@ Modal overlay that outputs log.js for debugging purposes
 				if (e.keyCode === 192) { // ~
 					this.toggle () }
 				else if (e.keyCode === 27) { // Esc
-					this.el.empty () } })) },
+					this.body.empty () } })) },
 
 		el: $memoized ($property (function () {
-			return $('<div class="useless-log-overlay" style="display: none;">').appendTo (document.body) })),
+			return $('<div class="useless-log-overlay" style="display: none;">')
+						.append ('<div class="useless-log-overlay-body">')
+						.appendTo (document.body) })),
+
+		body: $memoized ($property (function () {
+			return this.el.find ('.useless-log-overlay-body') })),
 
 		toggle: function (yes) {
 			this.el.toggle (yes) },
@@ -9117,11 +9231,12 @@ Modal overlay that outputs log.js for debugging purposes
 		visible: $property (function () {
 			return this.el.is (':visible') }),
 
-		write: function (params) {
-			this.toggle (true)
+		write: function (params) { this.toggle (true)
+
 			if (params.config.clear) {
-				this.el.empty () }
-            this.el.append ($('<div class="ulo-line">')
+				this.body.empty () }
+
+            this.body.append ($('<div class="ulo-line">')
 				            	.attr ('style', (params.color && params.color.css) || '')
 				            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
 				            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
@@ -9150,4 +9265,4 @@ Modal overlay that outputs log.js for debugging purposes
 
     $('head').append ([
     	$('<style type="text/css">').text ("@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' → \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after  { content: \', \'; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: \':\'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: \' \'; }\n.panic-alert-error .test-log .log-entry        .line:after { content: \' \'; }\n.panic-alert-error           .callstack-entry  .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { border-top: 1px solid #904C34; border-radius: 0; margin: 10px 0 0 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n\n"),
-    	$('<style type="text/css">').text (".useless-log-overlay { position: fixed; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.75); z-index: 5000;\n					   white-space: pre;\n					   font-family: Menlo, monospace;\n					   font-size: 11px;\n					   pointer-events: none;\n					   text-shadow: 1px 1px 0px rgba(0,0,0,0.07); }\n\n.ulo-line 		{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }") ]) }) (jQuery);;
+    	$('<style type="text/css">').text (".useless-log-overlay {	position: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;\n						overflow: hidden;\n						pointer-events: none;\n						-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,\n							color-stop(0.00, rgba(0,0,0,0)),\n							color-stop(0.50, rgba(0,0,0,0)),\n							color-stop(0.60, rgba(0,0,0,0.8)),\n							color-stop(1.00, rgba(0,0,0,1))); }\n\n.useless-log-overlay-body {\n\n	font-family: Menlo, monospace;\n	font-size: 11px;\n	white-space: pre;\n	background: rgba(255,255,255,1);\n	text-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }\n\n.ulo-line 		{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }") ]) }) (jQuery);;

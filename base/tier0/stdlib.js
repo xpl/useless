@@ -43,29 +43,62 @@ _.withTest (['stdlib', 'values2'], function () {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 _.withTest (['stdlib', 'map2'], function () {
-                                 var plusBar = _.appends ('bar')
-    $assert (_.map2 (       'foo',   plusBar),         'foobar'  )
-    $assert (_.map2 ([      'foo'],  plusBar),  [      'foobar' ])
-    $assert (_.map2 ({ foo: 'foo' }, plusBar),  { foo: 'foobar' })
 
-    $assert ([1,10,2,20,3,30],           _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
-    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+                                 var plusBar =   _.appends ('bar')
+
+    $assert (_.map2 (       'foo',   plusBar),           'foobar'  )
+    $assert (_.map2 ([      'foo'],  plusBar),    [      'foobar' ])
+    $assert (_.map2 ({ foo: 'foo' }, plusBar),    { foo: 'foobar' })
+
+    /*  With flipped order of arguments (callback first)
+     */
+    $assert (_.mapWith (plusBar, { foo: 'foo' }), { foo: 'foobar' })
 
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
                                      _.isArray (value) ? _.map       (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
-                    _.mapWith  = _.flip2 (_.map2))
-
-                _.scatter = function (obj, elem) { var result = undefined
-                    _.map2 (obj, function (x, i) {
-                                     elem (x, i, function (v, k) {
-                                                    if (arguments.length < 2) { (result = result || []).push (v) }  
-                                                                         else { (result = result || {})[k] = v } }) }); return result } })
+                    _.mapWith  = _.flip2 (_.map2)) })
 
 
-/*  Semantically-correct abstract map (maps any type of value)
+/*  Maps one-to-many
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'scatter/obj/arr'], function () {
+
+    $assert (undefined, _.scatter ([], _.noop))
+
+    $assert ([1,10, 2,20, 3,30],         _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
+    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+
+    $assert (_.obj (_.noop),
+             _.arr (_.noop), undefined)
+
+    $assert (_.obj (function (emit) {
+                              emit (42, 'foo')
+                              emit (43, 'bar') }), { foo: 42, bar: 43 })
+
+    $assert (_.arr (function (emit) {
+                              emit (42)
+                              emit (43, 44) }), [42, [43, 44]])
+
+}, function () { _.mixin ({
+                    scatter: function (obj, elem) { var result = undefined
+                                _.map2 (obj, function (x, i) {
+                                                 elem (x, i, function (v, k) {
+                                                                if (arguments.length < 2) { (result = result || []).push (v) }  
+                                                                                     else { (result = result || {})[k] = v } }) }); return result } })
+                 _.obj = function (emitItems) {
+                            var x = undefined; emitItems (function (v, k)  { (x = x || {})[k] = v  })
+                         return x }
+
+                 _.arr = function (emitItems) {
+                            var x = undefined; emitItems (function (v    ) { (x = x || []).push ((arguments.length < 2) ? v : _.asArray (arguments)) })
+                         return x } })
+
+
+/*  Maps keys (instead of values)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 _.withTest (['stdlib', 'mapKeys'], function () {

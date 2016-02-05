@@ -22,10 +22,15 @@ Modal overlay that outputs log.js for debugging purposes
 				if (e.keyCode === 192) { // ~
 					this.toggle () }
 				else if (e.keyCode === 27) { // Esc
-					this.el.empty () } })) },
+					this.body.empty () } })) },
 
 		el: $memoized ($property (function () {
-			return $('<div class="useless-log-overlay" style="display: none;">').appendTo (document.body) })),
+			return $('<div class="useless-log-overlay" style="display: none;">')
+						.append ('<div class="useless-log-overlay-body">')
+						.appendTo (document.body) })),
+
+		body: $memoized ($property (function () {
+			return this.el.find ('.useless-log-overlay-body') })),
 
 		toggle: function (yes) {
 			this.el.toggle (yes) },
@@ -33,11 +38,12 @@ Modal overlay that outputs log.js for debugging purposes
 		visible: $property (function () {
 			return this.el.is (':visible') }),
 
-		write: function (params) {
-			this.toggle (true)
+		write: function (params) { this.toggle (true)
+
 			if (params.config.clear) {
-				this.el.empty () }
-            this.el.append ($('<div class="ulo-line">')
+				this.body.empty () }
+
+            this.body.append ($('<div class="ulo-line">')
 				            	.attr ('style', (params.color && params.color.css) || '')
 				            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
 				            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))

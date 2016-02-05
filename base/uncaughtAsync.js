@@ -34,7 +34,9 @@
                     var args = _.asArray (arguments)
                     var fn   = args[callbackArgumentIndex]
 
-                     fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
+                    if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
+
+                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
 
                         globalAsyncContext = asyncContext
 

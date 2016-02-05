@@ -302,6 +302,18 @@ _.withTest ('OOP', {
         obj.noMistake () },
 
 
+/*  You can enumerate members grouped by tag name via $membersByTag
+    ======================================================================== */
+
+    '$membersByTag': function () {
+
+        var foo = $static ($property (1)),
+            bar =          $property (2)
+
+        $assertMatches ($prototype ({ foo: foo, bar: bar }).$membersByTag, { 'static'  : { 'foo': foo },
+                                                                             'property': { 'foo': foo, 'bar': bar } }) },
+
+
 /*  Tags on definition render to static properties
     ======================================================================== */
 
@@ -392,6 +404,9 @@ _.withTest ('OOP', {
                                                     .constructor) },
 
             sequence: function (def, base) { return _.sequence (
+
+                /*  TODO: optimize performance (there's PLENTY of room to do that)
+                 */
                 this.extendWithTags,
                 this.flatten,
                 this.generateCustomCompilerImpl (base),
@@ -405,6 +420,7 @@ _.withTest ('OOP', {
                 this.generateBuiltInMembers (base),
                 this.callStaticConstructor,
                 this.expandAliases,
+                this.groupMembersByTagForFastEnumeration,
                 this.defineStaticMembers,
                 this.defineInstanceMembers) },
 
@@ -416,6 +432,16 @@ _.withTest ('OOP', {
                     this.evalMemberTriggeredMacros (),
                     this.defineStaticMembers,
                     this.defineInstanceMembers).call (this, def || {}).constructor },
+
+            flatten: function (def) {
+                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
+                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
+                    return _.map (this.flatten (membersDef), function (member, memberName) {
+                        return [memberName, $global[keyword] (member)] }) }, this), true))
+
+                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+
+                return _.extend (memberDefinitions, mergedKeywordGroups) },
 
             evalAlwaysTriggeredMacros: function (base) {
                 return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
@@ -443,7 +469,7 @@ _.withTest ('OOP', {
                  _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (macroTags, def, memberDef, memberName) || memberDef } }) }); return def },
+                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }) }); return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -505,8 +531,10 @@ _.withTest ('OOP', {
                     $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
                     isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, Tags.unwrap (def.constructor)))),
                     isInstanceOf:   $builtin (function (constructor) { return _.isTypeOf (constructor, this) }),
-                    $:              $builtin (function (fn)          { return _.$.apply (null, [this].concat (_.asArray (arguments))) }) }) }},
+                    $:              $builtin ($prototype.impl.$) }) }},
 
+            $: function (fn) { return _.$.apply (null, [this].concat (_.asArray (arguments))) },
+            
             defaultConstructor: function (base) {
                 return (base ?
                     function ()    { base.prototype.constructor.apply (this, arguments) } :
@@ -556,15 +584,13 @@ _.withTest ('OOP', {
                                     get: function ()  { return this[name] },
                                     set: function (x) { this[name] = x } }) : def[name]) : v) }) },
 
-            flatten: function (def) {
-                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
-                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
-                    return _.map (this.flatten (membersDef), function (member, memberName) {
-                        return [memberName, $global[keyword] (member)] }) }, this), true))
+            groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 
-                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+                                                    _.each (def, function (m, name) {
+                                                        Tags.each (m, function (tag) {
+                                                            (membersByTag[tag] = (membersByTag[tag] || {}))[name] = m }) })
 
-                return _.extend (memberDefinitions, mergedKeywordGroups) },
+                                                    def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 
             isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },

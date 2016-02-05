@@ -23,6 +23,15 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return (x && (x.$definition !== undefined)) || false }
 
+
+/*  NaN has interesting property: Number.NaN !== Number.NaN, this makes it
+    more preferable than undefined/null in some cases. This function converts
+    anything that is not a number to NaN.
+    ======================================================================== */
+
+_.coerceToNaN = function (x) { return _.isFinite (x) ? x : Number.NaN }
+
+
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
 

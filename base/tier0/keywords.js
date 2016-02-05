@@ -87,6 +87,10 @@ _.withTest ('keywords', function () {
     $assert (     $qux ([8, 9, $foo ($bar (10))]),
         Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
 
+    /*  Enumerating tags with Tags.each (obj, iter)
+     */
+    $assertMatches (['foo', 'bar', 'qux'], _.arr (function (iter) { Tags.each (test.fourtyTwo, iter) }))
+
     /*  Tagging with non-boolean data
      */
     $assert ($foo ({ some: 'params' }, 42).$foo, { some: 'params' })
@@ -120,10 +124,13 @@ _.withTest ('keywords', function () {
         /* static methods (actual API)
          */
         clone: function (what, newSubject) {
-            return _.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what) },
+                        return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
 
         get: function (def) {
-            return _.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {} },
+                        return (_.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {}) },
+
+        each: function (def, accept) {
+                        if (_.isTypeOf (Tags, def)) { _.each (def, function (v, k) { if (k[0] === '$') { accept (k.slice (1)) } }) } },
 
         hasSubject: function (def) {
                         return (_.isTypeOf (Tags, def) && ('subject' in def)) },

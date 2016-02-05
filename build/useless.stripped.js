@@ -273,202 +273,211 @@ _.extend(_, {
         }
     }
 });
-$overrideUnderscore('matches', function (matches) {
-    return function (a) {
-        return _.isObject(a) ? matches(a) : function (b) {
-            return a === b;
-        };
-    };
-});
-_.extend(_, _.assertions = {
-    assert: function (__) {
-        var args = [].splice.call(arguments, 0);
-        if (args.length === 1) {
-            if (args[0] !== true) {
+(function () {
+    var assertImpl = function (shouldMatch) {
+        return function (__) {
+            var args = [].splice.call(arguments, 0);
+            if (args.length === 1) {
+                if (args[0] !== shouldMatch) {
+                    _.assertionFailed({ notMatching: args });
+                }
+            } else if (_.allEqual(args) !== shouldMatch) {
                 _.assertionFailed({ notMatching: args });
             }
-        } else if (!_.allEqual(args)) {
-            _.assertionFailed({ notMatching: args });
-        }
-        return true;
-    },
-    assertCPS: function (fn, args, then) {
-        var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
-        fn(function () {
-            $assert([].splice.call(arguments, 0), requiredResult);
-            if (then) {
-                then();
-                return true;
-            }
-        });
-    },
-    assertNotCalled: function (context) {
-        var inContext = true;
-        context(function () {
-            if (inContext) {
-                $fail;
-            }
-        });
-        inContext = false;
-    },
-    assertEveryCalledOnce: function (fn, then) {
-        return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
-    },
-    assertEveryCalled: function (fn_, then) {
-        var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
-        once = _.hasTags ? $once.is(fn_) : fn_.once;
-        var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
-        var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
-            var parts = arg.trim().match(/^(.+)__(.+)$/);
-            return parts && parseInt(parts[2], 10) || true;
-        });
-        var status = _.times(fn.length, _.constant(false));
-        var callbacks = _.times(fn.length, function (i) {
-            return function () {
-                status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
-                if (async && _.isEqual(status, contracts))
+            return true;
+        };
+    };
+    $overrideUnderscore('matches', function (matches) {
+        return function (a) {
+            return _.isObject(a) ? matches(a) : function (b) {
+                return a === b;
+            };
+        };
+    });
+    _.extend(_, _.assertions = {
+        assert: assertImpl(true),
+        assertNot: assertImpl(false),
+        assertCPS: function (fn, args, then) {
+            var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
+            fn(function () {
+                $assert([].splice.call(arguments, 0), requiredResult);
+                if (then) {
                     then();
-            };
-        });
-        fn.apply(null, callbacks);
-        if (!async) {
-            _.assert(status, contracts);
-            if (then) {
-                then();
+                    return true;
+                }
+            });
+        },
+        assertNotCalled: function (context) {
+            var inContext = true;
+            context(function () {
+                if (inContext) {
+                    $fail;
+                }
+            });
+            inContext = false;
+        },
+        assertEveryCalledOnce: function (fn, then) {
+            return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
+        },
+        assertEveryCalled: function (fn_, then) {
+            var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
+            once = _.hasTags ? $once.is(fn_) : fn_.once;
+            var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
+            var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
+                var parts = arg.trim().match(/^(.+)__(.+)$/);
+                return parts && parseInt(parts[2], 10) || true;
+            });
+            var status = _.times(fn.length, _.constant(false));
+            var callbacks = _.times(fn.length, function (i) {
+                return function () {
+                    status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
+                    if (async && _.isEqual(status, contracts))
+                        then();
+                };
+            });
+            fn.apply(null, callbacks);
+            if (!async) {
+                _.assert(status, contracts);
+                if (then) {
+                    then();
+                }
             }
-        }
-    },
-    assertCallOrder: function (fn) {
-        var callIndex = 0;
-        var callbacks = _.times(fn.length, function (i) {
-            return function () {
-                arguments.callee.callIndex = callIndex++;
-            };
-        });
-        fn.apply(null, callbacks);
-        return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
-    },
-    assertMatches: function (value, pattern) {
-        try {
-            return _.assert(_.matches.apply(null, _.rest(arguments))(value));
-        } catch (e) {
-            throw _.isAssertionError(e) ? _.extend(e, {
-                notMatching: [
-                    value,
-                    pattern
-                ]
-            }) : e;
-        }
-    },
-    assertNotMatches: function (value, pattern) {
-        try {
-            return _.assert(!_.matches.apply(null, _.rest(arguments))(value));
-        } catch (e) {
-            throw _.isAssertionError(e) ? _.extend(e, {
-                notMatching: [
-                    value,
-                    pattern
-                ]
-            }) : e;
-        }
-    },
-    assertType: function (value, contract) {
-        return _.assert(_.decideType(value), contract);
-    },
-    assertTypeMatches: function (value, contract) {
-        return _.isEmpty(mismatches = _.typeMismatches(contract, value)) ? true : _.assertionFailed({
-            message: 'provided value type not matches required contract',
-            asColumns: true,
-            notMatching: [
-                { provided: value },
-                { required: contract },
-                { mismatches: mismatches }
-            ]
-        });
-    },
-    assertFails: function (what) {
-        return _.assertThrows.call(this, what, _.isAssertionError);
-    },
-    assertThrows: function (what, errorPattern) {
-        var e = undefined, thrown = false;
-        try {
-            what.call(this);
-        } catch (__) {
-            e = __;
-            thrown = true;
-        }
-        _.assert.call(this, thrown);
-        if (arguments.length > 1) {
-            _.assertMatches.call(this, e, errorPattern);
-        }
-    },
-    assertNotThrows: function (what) {
-        return _.assertEveryCalled(function (ok) {
-            what();
-            ok();
-        });
-    },
-    assertArguments: function (args, callee, name) {
-        var fn = (callee || args.callee).toString();
-        var match = fn.match(/.*function[^\(]\(([^\)]+)\)/);
-        if (match) {
-            var valuesPassed = _.asArray(args);
-            var valuesNeeded = _.map(match[1].split(','), function (_s) {
-                var s = _s.trim()[0] === '_' ? _s.replace(/_/g, ' ').trim() : undefined;
-                var n = parseInt(s, 10);
-                return _.isFinite(n) ? n : s;
+        },
+        assertCalledWithArguments: function (argsPattern, generateCalls) {
+            return _.assert(_.arr(generateCalls), argsPattern);
+        },
+        assertCallOrder: function (fn) {
+            var callIndex = 0;
+            var callbacks = _.times(fn.length, function (i) {
+                return function () {
+                    arguments.callee.callIndex = callIndex++;
+                };
             });
-            var zap = _.zipWith([
-                valuesNeeded,
-                valuesPassed
-            ], function (a, b) {
-                return a === undefined ? true : a === b;
+            fn.apply(null, callbacks);
+            return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
+        },
+        assertMatches: function (value, pattern) {
+            try {
+                return _.assert(_.matches.apply(null, _.rest(arguments))(value));
+            } catch (e) {
+                throw _.isAssertionError(e) ? _.extend(e, {
+                    notMatching: [
+                        value,
+                        pattern
+                    ]
+                }) : e;
+            }
+        },
+        assertNotMatches: function (value, pattern) {
+            try {
+                return _.assert(!_.matches.apply(null, _.rest(arguments))(value));
+            } catch (e) {
+                throw _.isAssertionError(e) ? _.extend(e, {
+                    notMatching: [
+                        value,
+                        pattern
+                    ]
+                }) : e;
+            }
+        },
+        assertType: function (value, contract) {
+            return _.assert(_.decideType(value), contract);
+        },
+        assertTypeMatches: function (value, contract) {
+            return _.isEmpty(mismatches = _.typeMismatches(contract, value)) ? true : _.assertionFailed({
+                message: 'provided value type not matches required contract',
+                asColumns: true,
+                notMatching: [
+                    { provided: value },
+                    { required: contract },
+                    { mismatches: mismatches }
+                ]
             });
-            if (!_.every(zap)) {
-                _.assertionFailed({
-                    notMatching: _.nonempty([
-                        [
-                            name,
-                            fn
-                        ].join(': '),
-                        valuesNeeded,
-                        valuesPassed
-                    ])
+        },
+        assertFails: function (what) {
+            return _.assertThrows.call(this, what, _.isAssertionError);
+        },
+        assertThrows: function (what, errorPattern) {
+            var e = undefined, thrown = false;
+            try {
+                what.call(this);
+            } catch (__) {
+                e = __;
+                thrown = true;
+            }
+            _.assert.call(this, thrown);
+            if (arguments.length > 1) {
+                _.assertMatches.call(this, e, errorPattern);
+            }
+        },
+        assertNotThrows: function (what) {
+            return _.assertEveryCalled(function (ok) {
+                what();
+                ok();
+            });
+        },
+        assertArguments: function (args, callee, name) {
+            var fn = (callee || args.callee).toString();
+            var match = fn.match(/.*function[^\(]\(([^\)]+)\)/);
+            if (match) {
+                var valuesPassed = _.asArray(args);
+                var valuesNeeded = _.map(match[1].split(','), function (_s) {
+                    var s = _s.trim()[0] === '_' ? _s.replace(/_/g, ' ').trim() : undefined;
+                    var n = parseInt(s, 10);
+                    return _.isFinite(n) ? n : s;
                 });
+                var zap = _.zipWith([
+                    valuesNeeded,
+                    valuesPassed
+                ], function (a, b) {
+                    return a === undefined ? true : a === b;
+                });
+                if (!_.every(zap)) {
+                    _.assertionFailed({
+                        notMatching: _.nonempty([
+                            [
+                                name,
+                                fn
+                            ].join(': '),
+                            valuesNeeded,
+                            valuesPassed
+                        ])
+                    });
+                }
             }
+        },
+        fail: function () {
+            _.assertionFailed();
+        },
+        fails: _.constant(function () {
+            _.assertionFailed();
+        }),
+        stub: function () {
+            _.assertionFailed();
         }
-    },
-    fail: function () {
-        _.assertionFailed();
-    },
-    fails: _.constant(function () {
-        _.assertionFailed();
-    }),
-    stub: function () {
-        _.assertionFailed();
-    }
-});
-_.extend(_, {
-    assertionError: function (additionalInfo) {
-        return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
-    },
-    assertionFailed: function (additionalInfo) {
-        throw _.extend(_.assertionError(additionalInfo), { stack: _.rest(new Error().stack.split('\n'), 3).join('\n') });
-    },
-    isAssertionError: function (e) {
-        return e.assertion === true;
-    }
-});
-_.extend(_, {
-    allEqual: function (values) {
-        return _.reduce(values, function (prevEqual, x) {
-            return prevEqual && _.isEqual(values[0], x);
-        }, true);
-    }
-});
-_.each(_.keys(_.assertions), function (name) {
-    _.defineGlobalProperty('$' + name, _[name], { configurable: true });
-});
+    });
+    _.extend(_, {
+        assertionError: function (additionalInfo) {
+            return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
+        },
+        assertionFailed: function (additionalInfo) {
+            throw _.extend(_.assertionError(additionalInfo), { stack: _.rest(new Error().stack.split('\n'), 3).join('\n') });
+        },
+        isAssertionError: function (e) {
+            return e.assertion === true;
+        }
+    });
+    _.extend(_, {
+        allEqual: function (values) {
+            return _.reduce(values, function (prevEqual, x) {
+                return prevEqual && _.isEqual(values[0], x);
+            }, true);
+        }
+    });
+    _.each(_.keys(_.assertions), function (name) {
+        _.defineGlobalProperty('$' + name, _[name], { configurable: true });
+    });
+}());
 _.extend(_, {
     asArray: function (x) {
         return x.length !== undefined ? [].slice.call(x, 0) : [x];
@@ -975,6 +984,9 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return x && x.$definition !== undefined || false;
 };
+_.coerceToNaN = function (x) {
+    return _.isFinite(x) ? x : Number.NaN;
+};
 _.coerceToArray = function (x) {
     return x === undefined ? [] : _.isArray(x) ? x : [x];
 };
@@ -1085,18 +1097,34 @@ _.mixin({
     }
 });
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
-_.scatter = function (obj, elem) {
-    var result = undefined;
-    _.map2(obj, function (x, i) {
-        elem(x, i, function (v, k) {
-            if (arguments.length < 2) {
-                (result = result || []).push(v);
-            } else {
-                (result = result || {})[k] = v;
-            }
+_.mixin({
+    scatter: function (obj, elem) {
+        var result = undefined;
+        _.map2(obj, function (x, i) {
+            elem(x, i, function (v, k) {
+                if (arguments.length < 2) {
+                    (result = result || []).push(v);
+                } else {
+                    (result = result || {})[k] = v;
+                }
+            });
         });
+        return result;
+    }
+});
+_.obj = function (emitItems) {
+    var x = undefined;
+    emitItems(function (v, k) {
+        (x = x || {})[k] = v;
     });
-    return result;
+    return x;
+};
+_.arr = function (emitItems) {
+    var x = undefined;
+    emitItems(function (v) {
+        (x = x || []).push(arguments.length < 2 ? v : _.asArray(arguments));
+    });
+    return x;
 };
 _.mapKeys = function (x, fn) {
     if (_.isArray(x)) {
@@ -1554,6 +1582,15 @@ Tags = _.extend2(function (subject) {
     },
     get: function (def) {
         return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
+    },
+    each: function (def, accept) {
+        if (_.isTypeOf(Tags, def)) {
+            _.each(def, function (v, k) {
+                if (k[0] === '$') {
+                    accept(k.slice(1));
+                }
+            });
+        }
     },
     hasSubject: function (def) {
         return _.isTypeOf(Tags, def) && 'subject' in def;
@@ -2948,10 +2985,23 @@ _.extend($prototype, {
             return $untag(impl.sequence(def, base).call(impl, def || {}).constructor);
         },
         sequence: function (def, base) {
-            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
         },
         compileMixin: function (def) {
             return _.sequence(this.flatten, this.contributeTraits(), this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
+        },
+        flatten: function (def) {
+            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
+            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
+                return _.map(this.flatten(membersDef), function (member, memberName) {
+                    return [
+                        memberName,
+                        $global[keyword](member)
+                    ];
+                });
+            }, this), true));
+            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
+            return _.extend(memberDefinitions, mergedKeywordGroups);
         },
         evalAlwaysTriggeredMacros: function (base) {
             return function (def) {
@@ -2994,7 +3044,7 @@ _.extend($prototype, {
                 _.each(macroTags, function (macroFn, tagName) {
                     memberDef = def[memberName];
                     if (_.keyword(tagName) in memberDef) {
-                        def[memberName] = macroFn.call(macroTags, def, memberDef, memberName) || memberDef;
+                        def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
                     }
                 });
             });
@@ -3078,11 +3128,12 @@ _.extend($prototype, {
                     isInstanceOf: $builtin(function (constructor) {
                         return _.isTypeOf(constructor, this);
                     }),
-                    $: $builtin(function (fn) {
-                        return _.$.apply(null, [this].concat(_.asArray(arguments)));
-                    })
+                    $: $builtin($prototype.impl.$)
                 });
             };
+        },
+        $: function (fn) {
+            return _.$.apply(null, [this].concat(_.asArray(arguments)));
         },
         defaultConstructor: function (base) {
             return base ? function () {
@@ -3147,18 +3198,15 @@ _.extend($prototype, {
                 }) : def[name] : v;
             });
         },
-        flatten: function (def) {
-            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
-            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
-                return _.map(this.flatten(membersDef), function (member, memberName) {
-                    return [
-                        memberName,
-                        $global[keyword](member)
-                    ];
+        groupMembersByTagForFastEnumeration: function (def) {
+            var membersByTag = {};
+            _.each(def, function (m, name) {
+                Tags.each(m, function (tag) {
+                    (membersByTag[tag] = membersByTag[tag] || {})[name] = m;
                 });
-            }, this), true));
-            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
-            return _.extend(memberDefinitions, mergedKeywordGroups);
+            });
+            def.$membersByTag = $static($builtin($property(membersByTag)));
+            return def;
         },
         isTagKeywordGroup: function (value_, key) {
             var value = Tags.unwrap(value_);
@@ -4240,7 +4288,7 @@ Component = $prototype({
     $macroTags: $extendable({}),
     $impl: {
         sequence: function (def, base) {
-            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers);
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
         },
         expandTraitsDependencies: function (def) {
             if (def.$depends) {
@@ -4298,8 +4346,9 @@ Component = $prototype({
         mergeTraitsMembers: function (def, traits) {
             var pool = {}, bindables = {}, streams = {};
             var macroTags = $untag(def.$macroTags);
-            _.each(_.pluck(traits, '$definition').concat(_.clone(def)), function (traitDef) {
-                _.each(macroTags && this.applyMacroTags(macroTags, _.clone(traitDef)) || traitDef, function (member, name) {
+            var definitions = _.pluck(traits, '$definition').concat(_.clone(def));
+            _.each(definitions, function (traitDef) {
+                _.each(macroTags && this.applyMacroTags(macroTags, _.extend(_.clone(traitDef), { constructor: def.constructor })) || traitDef, function (member, name) {
                     if ($builtin.isNot(member) && $builtin.isNot(def[name]) && name !== 'constructor') {
                         if ($bindable.is(member)) {
                             bindables[name] = member;
