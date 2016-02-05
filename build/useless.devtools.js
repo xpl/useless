@@ -984,7 +984,7 @@ _.extend (log, {
                  ['orange',      '33m',          'color:saddlebrown'],
                  ['brown',      ['33m', '2m'],   'color:saddlebrown'],
                  ['green',       '32m',          'color:forestgreen'],
-                 ['greener',    ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
+                 ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
                  ['pink',        '35m',          'color:magenta'],
                  ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
                  ['purple',     ['35m', '2m'],   'color:magenta'],
@@ -1179,7 +1179,7 @@ _.extend (log, {
         stringifyError: function (e) {
             try {       
                 var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
-                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
+                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') +
                     (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
@@ -1213,7 +1213,7 @@ _.extend (log, {
                                             'pink notice alert p',
                                                     'boldPink pp',
                                                     'dark hint d',
-                                                     'greener gg',
+                                                   'boldGreen gg',
                                                        'bright b',
                                           'boldRed bloody bad ee',
                                                       'purple dp',
@@ -1487,9 +1487,10 @@ Testosterone = $singleton ({
 
         test.startTime = Date.now ()
 
-        test.run (function () {
-            runConfig.testComplete (test); test.time = Date.now () - test.startTime
-            then () }) },
+        test.run (function () { test.time = Date.now () - test.startTime;
+
+            if (_.numArgs (runConfig.testComplete) === 2) { runConfig.testComplete (test,  then)   }
+                                                    else  { runConfig.testComplete (test); then () } }) },
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {

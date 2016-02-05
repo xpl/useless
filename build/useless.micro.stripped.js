@@ -1479,7 +1479,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     } else if (_.isFunction(x)) {
         return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
     } else if (typeof x === 'string') {
-        return _.quoteWith('"', x);
+        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 40));
     } else if (_.isTypeOf(Tags, x)) {
         return _.reduce(Tags.get(x), function (memo, value, tag) {
             return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
@@ -1499,7 +1499,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
                 if (_.isTypeOf(Element, x)) {
                     return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
                 } else if (_.isTypeOf(Text, x)) {
-                    return '@' + x.wholeText;
+                    return '@' + x.wholeText.limitedTo(20);
                 }
             }
             if (x.toJSON) {
@@ -2061,6 +2061,9 @@ $extensionMethods(String, {
     },
     trimmed: function (s) {
         return s.trim();
+    },
+    limitedTo: function (s, n) {
+        return s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026');
     },
     escaped: function (s) {
         return _.escape(s);

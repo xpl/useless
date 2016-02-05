@@ -1479,7 +1479,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     } else if (_.isFunction(x)) {
         return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
     } else if (typeof x === 'string') {
-        return _.quoteWith('"', x);
+        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 40));
     } else if (_.isTypeOf(Tags, x)) {
         return _.reduce(Tags.get(x), function (memo, value, tag) {
             return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
@@ -1499,7 +1499,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
                 if (_.isTypeOf(Element, x)) {
                     return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
                 } else if (_.isTypeOf(Text, x)) {
-                    return '@' + x.wholeText;
+                    return '@' + x.wholeText.limitedTo(20);
                 }
             }
             if (x.toJSON) {
@@ -2061,6 +2061,9 @@ $extensionMethods(String, {
     },
     trimmed: function (s) {
         return s.trim();
+    },
+    limitedTo: function (s, n) {
+        return s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026');
     },
     escaped: function (s) {
         return _.escape(s);
@@ -5253,7 +5256,7 @@ _.extend(log, {
             'color:forestgreen'
         ],
         [
-            'greener',
+            'boldGreen',
             [
                 '32m',
                 '1m'
@@ -5480,7 +5483,7 @@ _.extend(log, {
         stringifyError: function (e) {
             try {
                 var stack = CallStack.fromErrorWithAsync(e).clean.offset(e.stackOffset || 0);
-                var why = (e.message || '').replace(/\r|\n/g, '').trimmed.first(120);
+                var why = (e.message || '').replace(/\r|\n/g, '').trimmed.limitedTo(120);
                 return '[EXCEPTION] ' + why + '\n\n' + (e.notMatching && _.map(_.coerceToArray(e.notMatching || []), log.impl.stringify.then(_.prepends('\t'))).join('\n') + '\n\n' || '') + log.impl.stringifyCallStack(stack) + '\n';
             } catch (sub) {
                 return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n';
@@ -5521,7 +5524,7 @@ _.extend(log, {
         'pink notice alert p',
         'boldPink pp',
         'dark hint d',
-        'greener gg',
+        'boldGreen gg',
         'bright b',
         'boldRed bloody bad ee',
         'purple dp',
@@ -5685,9 +5688,13 @@ Testosterone = $singleton({
         test.timeout = runConfig.timeout;
         test.startTime = Date.now();
         test.run(function () {
-            runConfig.testComplete(test);
             test.time = Date.now() - test.startTime;
-            then();
+            if (_.numArgs(runConfig.testComplete) === 2) {
+                runConfig.testComplete(test, then);
+            } else {
+                runConfig.testComplete(test);
+                then();
+            }
         });
     },
     collectTests: function () {

@@ -193,9 +193,10 @@ Testosterone = $singleton ({
 
         test.startTime = Date.now ()
 
-        test.run (function () {
-            runConfig.testComplete (test); test.time = Date.now () - test.startTime
-            then () }) },
+        test.run (function () { test.time = Date.now () - test.startTime;
+
+            if (_.numArgs (runConfig.testComplete) === 2) { runConfig.testComplete (test,  then)   }
+                                                    else  { runConfig.testComplete (test); then () } }) },
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {

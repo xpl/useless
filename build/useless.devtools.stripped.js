@@ -687,7 +687,7 @@ _.extend(log, {
             'color:forestgreen'
         ],
         [
-            'greener',
+            'boldGreen',
             [
                 '32m',
                 '1m'
@@ -914,7 +914,7 @@ _.extend(log, {
         stringifyError: function (e) {
             try {
                 var stack = CallStack.fromErrorWithAsync(e).clean.offset(e.stackOffset || 0);
-                var why = (e.message || '').replace(/\r|\n/g, '').trimmed.first(120);
+                var why = (e.message || '').replace(/\r|\n/g, '').trimmed.limitedTo(120);
                 return '[EXCEPTION] ' + why + '\n\n' + (e.notMatching && _.map(_.coerceToArray(e.notMatching || []), log.impl.stringify.then(_.prepends('\t'))).join('\n') + '\n\n' || '') + log.impl.stringifyCallStack(stack) + '\n';
             } catch (sub) {
                 return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n';
@@ -955,7 +955,7 @@ _.extend(log, {
         'pink notice alert p',
         'boldPink pp',
         'dark hint d',
-        'greener gg',
+        'boldGreen gg',
         'bright b',
         'boldRed bloody bad ee',
         'purple dp',
@@ -1119,9 +1119,13 @@ Testosterone = $singleton({
         test.timeout = runConfig.timeout;
         test.startTime = Date.now();
         test.run(function () {
-            runConfig.testComplete(test);
             test.time = Date.now() - test.startTime;
-            then();
+            if (_.numArgs(runConfig.testComplete) === 2) {
+                runConfig.testComplete(test, then);
+            } else {
+                runConfig.testComplete(test);
+                then();
+            }
         });
     },
     collectTests: function () {

@@ -104,7 +104,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 20)) }
+                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 40)) }
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (Tags.get (x), function (memo, value, tag) {

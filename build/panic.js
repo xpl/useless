@@ -2284,7 +2284,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x) }
+                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 40)) }
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (Tags.get (x), function (memo, value, tag) {
@@ -2319,7 +2319,7 @@ _.deferTest (['type', 'stringify'], function () {
                                             //return x.outerHTML.substr (0, 12) + '…' }
                                             //return x.tagName.lowercase.quote ('<>') }
                                         else if (_.isTypeOf (Text, x)) {
-                                            return '@' + x.wholeText } }
+                                            return '@' + x.wholeText.limitedTo (20) } }
 
                                     if (x.toJSON) {
                                         return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
@@ -3236,6 +3236,11 @@ _.deferTest ('String extensions', function () {
     $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
     $assert  (_.asArray ('foo'.bytes), [102, 111, 111])
 
+    $assert  (['foobar'  .limitedTo (6),
+               'tooloong'.limitedTo (6),
+               ''        .limitedTo (0)], ['foobar',
+                                           'toolo…', ''])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -3256,6 +3261,9 @@ _.deferTest ('String extensions', function () {
 
     trimmed: function (s) {
         return s.trim () },
+
+    limitedTo: function (s, n) {
+        return s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')) },
 
     escaped: function (s) {
         return _.escape (s) },
@@ -8092,7 +8100,7 @@ _.extend (log, {
                  ['orange',      '33m',          'color:saddlebrown'],
                  ['brown',      ['33m', '2m'],   'color:saddlebrown'],
                  ['green',       '32m',          'color:forestgreen'],
-                 ['greener',    ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
+                 ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
                  ['pink',        '35m',          'color:magenta'],
                  ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
                  ['purple',     ['35m', '2m'],   'color:magenta'],
@@ -8287,7 +8295,7 @@ _.extend (log, {
         stringifyError: function (e) {
             try {       
                 var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
-                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
+                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') +
                     (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
@@ -8321,7 +8329,7 @@ _.extend (log, {
                                             'pink notice alert p',
                                                     'boldPink pp',
                                                     'dark hint d',
-                                                     'greener gg',
+                                                   'boldGreen gg',
                                                        'bright b',
                                           'boldRed bloody bad ee',
                                                       'purple dp',
@@ -8595,9 +8603,10 @@ Testosterone = $singleton ({
 
         test.startTime = Date.now ()
 
-        test.run (function () {
-            runConfig.testComplete (test); test.time = Date.now () - test.startTime
-            then () }) },
+        test.run (function () { test.time = Date.now () - test.startTime;
+
+            if (_.numArgs (runConfig.testComplete) === 2) { runConfig.testComplete (test,  then)   }
+                                                    else  { runConfig.testComplete (test); then () } }) },
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {

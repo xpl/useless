@@ -2284,7 +2284,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x) }
+                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 40)) }
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (Tags.get (x), function (memo, value, tag) {
@@ -2319,7 +2319,7 @@ _.deferTest (['type', 'stringify'], function () {
                                             //return x.outerHTML.substr (0, 12) + '…' }
                                             //return x.tagName.lowercase.quote ('<>') }
                                         else if (_.isTypeOf (Text, x)) {
-                                            return '@' + x.wholeText } }
+                                            return '@' + x.wholeText.limitedTo (20) } }
 
                                     if (x.toJSON) {
                                         return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
@@ -3236,6 +3236,11 @@ _.deferTest ('String extensions', function () {
     $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
     $assert  (_.asArray ('foo'.bytes), [102, 111, 111])
 
+    $assert  (['foobar'  .limitedTo (6),
+               'tooloong'.limitedTo (6),
+               ''        .limitedTo (0)], ['foobar',
+                                           'toolo…', ''])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -3256,6 +3261,9 @@ _.deferTest ('String extensions', function () {
 
     trimmed: function (s) {
         return s.trim () },
+
+    limitedTo: function (s, n) {
+        return s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')) },
 
     escaped: function (s) {
         return _.escape (s) },
