@@ -70,6 +70,7 @@ _.withTest ('assert.js bootstrap', function () {
         _.assertions.assert)        // member of _.assertions (for enumeration purposes)
 
     $assertNot (false)
+    $assertNot (5)                  // NB: assertNot means 'assert not true', hence this will pass
 
 /*  Multi-argument assert (requires its arguments be strictly equal to each other)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -238,14 +239,14 @@ if (_.hasStdlib) {
 
 }, function () {
 
-    var assertImpl = function (shouldMatch) {
+    var assertImpl = function (positive) {
                         return function (__) {  var args = [].splice.call (arguments, 0)
 
                                                 if (args.length === 1) {
-                                                    if (args[0] !== shouldMatch) {
+                                                    if (positive && (args[0] !== true)) {
                                                         _.assertionFailed ({ notMatching: args }) } }
 
-                                                else if (_.allEqual (args) !== shouldMatch) {
+                                                else if (positive && (_.allEqual (args) !== true)) {
                                                     _.assertionFailed ({ notMatching: args }) }
 
                                                 return true } }

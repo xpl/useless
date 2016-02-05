@@ -659,7 +659,7 @@ Component = $prototype ({
             if (def.$depends) {
                             var edges = []
                             var lastId = 0
-                            var drill =  function ( depends,           T        ) { if (!T.__tempId) { T.__tempId = lastId++ }
+                            var drill =  function (depends, T) { if (!T.__tempId) { T.__tempId = lastId++ }
                                             
                                             /*  Horizontal dependency edges (first mentioned should init first)
                                              */
@@ -668,8 +668,8 @@ Component = $prototype ({
 
                                             /*  Vertical dependency edges (parents should init first)
                                              */
-                                            _.each (depends, function (   TSuper) {
-                                                          edges.push ([T, TSuper])
+                                            _.each (depends, function (    TSuper) {
+                                                          edges.push ([T,  TSuper])
                                                                     drill (TSuper.$depends || [], TSuper) }) }
                                                                     drill ($untag (def.$depends), {})
 
@@ -885,7 +885,6 @@ Component = $prototype ({
                 this[name] = _.extend (_.bindable (this[name], this),
                                        _.map2 (def.$bindable.hooks || {},
                                         _.mapsWith (this.$.bind (this).arity1))) }
-
             /*  Expand $debounce
              */
             if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)

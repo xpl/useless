@@ -1189,10 +1189,16 @@ Tags = _.extend2(function (subject) {
             } else {
                 return this;
             }
+        },
+        extend: function (other) {
+            return _.isTypeOf(Tags, other) ? _.extend(this, _.pick(other, _.keyIsKeyword)) : this;
         }
     },
     clone: function (what, newSubject) {
         return _.isTypeOf(Tags, what) ? what.clone(newSubject) : newSubject || what;
+    },
+    extend: function (what, other) {
+        return _.isTypeOf(Tags, what) ? what.clone().extend(other) : _.isTypeOf(Tags, other) ? Tags.wrap(what).extend(other) : what;
     },
     get: function (def) {
         return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
@@ -2803,16 +2809,20 @@ _.extend($prototype, {
             };
         },
         expandAliases: function (def) {
-            return _.mapObject(def, function (v) {
-                var name = Tags.unwrap(v);
-                return $alias.is(v) ? $property.is(v) ? $property({
-                    get: function () {
-                        return this[name];
-                    },
-                    set: function (x) {
-                        this[name] = x;
-                    }
-                }) : def[name] : v;
+            return _.map2(def, function (v) {
+                if ($alias.is(v)) {
+                    var name = $untag(v);
+                    return $property.is(v) ? $property({
+                        get: function () {
+                            return this[name];
+                        },
+                        set: function (x) {
+                            this[name] = x;
+                        }
+                    }) : Tags.extend(def[name], v);
+                } else {
+                    return v;
+                }
             });
         },
         groupMembersByTagForFastEnumeration: function (def) {

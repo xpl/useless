@@ -1869,7 +1869,7 @@ _.withTest ('keywords', function () {
 
     /*  This is how you coerce what-might-be-tagged to actual values:
      */
-    $assert (Tags.unwrap (42), Tags.unwrap (test.fourtyTwo), 42)
+    $assert ($untag (42), Tags.unwrap (42), Tags.unwrap (test.fourtyTwo), 42)
     $assert (Tags.unwrapAll (test), { fourtyTwo: 42, fourtyOne: 41, notTagged: 40 })
 
     /*  Tags have .matches property, which is a predicate to test objects for those tags.
@@ -1917,6 +1917,14 @@ _.withTest ('keywords', function () {
      */
     $assert ($foo ({ some: 'params' }, 42).$foo, { some: 'params' })
 
+    /*  'Extend' algebra
+     */
+    $assert (Tags.extend ($foo (7), $bar (8)), $foo ($bar (7)))
+    $assert (Tags.extend ($foo (7),       8),  $foo (      7))
+    $assert (Tags.extend (      7,  $foo (8)), $foo (      7))
+    $assert (Tags.extend (      7,        8),              7)
+
+
 }, function () {
 
     Tags = _.extend2 (
@@ -1928,25 +1936,31 @@ _.withTest ('keywords', function () {
 
     prototype: {
 
-        /* instance methods (internal impl)
-         */
-        add: function (name, additionalData) {
-                return this[_.keyword (name)] = additionalData || true, this },
+            /* instance methods (internal impl)
+             */
+            add: function (name, additionalData) {
+                    return this[_.keyword (name)] = additionalData || true, this },
 
-        clone: function (newSubject) {
-            return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
+            clone: function (newSubject) {
+                return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
 
-        modify: function (changesFn) {
-                            this.subject = changesFn (this.subject)
-                            if (_.isTypeOf (Tags, this.subject)) {
-                                return _.extend (this.subject, _.pick (this, _.keyIsKeyword)) }
-                            else {
-                                return this }} },
+            modify: function (changesFn) {
+                                this.subject = changesFn (this.subject)
+                                if (_.isTypeOf (Tags, this.subject)) {
+                                    return _.extend (this.subject, _.pick (this, _.keyIsKeyword)) }
+                                else {
+                                    return this }},
+
+            extend: function (other) {
+                        return (_.isTypeOf (Tags, other)) ? _.extend (this, _.pick (other, _.keyIsKeyword)) : this } },
 
         /* static methods (actual API)
          */
         clone: function (what, newSubject) {
                         return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
+
+        extend: function (what, other) { return _.isTypeOf (Tags, what)  ? what.clone ().extend (other) : (
+                                                _.isTypeOf (Tags, other) ? Tags.wrap (what).extend (other) : what) },
 
         get: function (def) {
                         return (_.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {}) },
@@ -4078,17 +4092,24 @@ _.withTest ('OOP', {
     '$alias': function () {
 
         var foo = new ($prototype ({
-            failure: $alias ('error'),
-            crash:   $alias ('error'),
-            error:   function () { return 'foo.error' } })) ()
 
-        $assert (foo.crash, foo.failure, foo.error) // all point to same function
+            error: function () { return 'foo.error' },
 
+            failure:         $alias ('error'),
+            crash:   $final ($alias ('error'))  })) ()
+                
+                $assert    (foo.constructor.$definition.crash.$final)   // you can add new tags to alias members
+                $assertNot (foo.constructor.$definition.error.$final)   // adding tags to alias members does not affect original members 
+
+                $assert (foo.crash, foo.failure, foo.error) // all point to same function
+
+        /*  Ad-hoc property aliases (applicable even when there's no explicitly declared member at what alias points to)
+         */
         var size = new ($prototype ({
-            w: $alias ($property ('x')),
-            h: $alias ($property ('y')) })) ()
+            w:  $alias ($property ('x')),
+            h:  $alias ($property ('y')) })) ()
 
-        $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) }, // property aliases
+                $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) },
 
 
 /*  Static (compile-time) constructor gets called at prototype generation
@@ -4503,11 +4524,12 @@ _.withTest ('OOP', {
                 return def } },
 
             expandAliases: function (def) {
-                return _.mapObject (def, function (v) { var name = Tags.unwrap (v)
-                    return ($alias.is (v) ?
-                                ($property.is (v) ? $property ({
-                                    get: function ()  { return this[name] },
-                                    set: function (x) { this[name] = x } }) : def[name]) : v) }) },
+                                return _.map2 (def, function (v) {
+                                                        if ($alias.is (v)) {                                     var name = $untag (v)
+                                                            return ($property.is (v) ?
+                                                                        $property ({ get: function ()  { return this[name]     },
+                                                                                     set: function (x) {        this[name] = x } }) : Tags.extend (def[name], v)) }
+                                                        else { return v } }) },
 
             groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 
@@ -6280,7 +6302,7 @@ Component = $prototype ({
             if (def.$depends) {
                             var edges = []
                             var lastId = 0
-                            var drill =  function ( depends,           T        ) { if (!T.__tempId) { T.__tempId = lastId++ }
+                            var drill =  function (depends, T) { if (!T.__tempId) { T.__tempId = lastId++ }
                                             
                                             /*  Horizontal dependency edges (first mentioned should init first)
                                              */
@@ -6289,8 +6311,8 @@ Component = $prototype ({
 
                                             /*  Vertical dependency edges (parents should init first)
                                              */
-                                            _.each (depends, function (   TSuper) {
-                                                          edges.push ([T, TSuper])
+                                            _.each (depends, function (    TSuper) {
+                                                          edges.push ([T,  TSuper])
                                                                     drill (TSuper.$depends || [], TSuper) }) }
                                                                     drill ($untag (def.$depends), {})
 
@@ -6506,7 +6528,6 @@ Component = $prototype ({
                 this[name] = _.extend (_.bindable (this[name], this),
                                        _.map2 (def.$bindable.hooks || {},
                                         _.mapsWith (this.$.bind (this).arity1))) }
-
             /*  Expand $debounce
              */
             if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)

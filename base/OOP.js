@@ -153,17 +153,24 @@ _.withTest ('OOP', {
     '$alias': function () {
 
         var foo = new ($prototype ({
-            failure: $alias ('error'),
-            crash:   $alias ('error'),
-            error:   function () { return 'foo.error' } })) ()
 
-        $assert (foo.crash, foo.failure, foo.error) // all point to same function
+            error: function () { return 'foo.error' },
 
+            failure:         $alias ('error'),
+            crash:   $final ($alias ('error'))  })) ()
+                
+                $assert    (foo.constructor.$definition.crash.$final)   // you can add new tags to alias members
+                $assertNot (foo.constructor.$definition.error.$final)   // adding tags to alias members does not affect original members 
+
+                $assert (foo.crash, foo.failure, foo.error) // all point to same function
+
+        /*  Ad-hoc property aliases (applicable even when there's no explicitly declared member at what alias points to)
+         */
         var size = new ($prototype ({
-            w: $alias ($property ('x')),
-            h: $alias ($property ('y')) })) ()
+            w:  $alias ($property ('x')),
+            h:  $alias ($property ('y')) })) ()
 
-        $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) }, // property aliases
+                $assert ([size.x = 42, size.y = 24], [size.w, size.h], [42, 24]) },
 
 
 /*  Static (compile-time) constructor gets called at prototype generation
@@ -578,11 +585,12 @@ _.withTest ('OOP', {
                 return def } },
 
             expandAliases: function (def) {
-                return _.mapObject (def, function (v) { var name = Tags.unwrap (v)
-                    return ($alias.is (v) ?
-                                ($property.is (v) ? $property ({
-                                    get: function ()  { return this[name] },
-                                    set: function (x) { this[name] = x } }) : def[name]) : v) }) },
+                                return _.map2 (def, function (v) {
+                                                        if ($alias.is (v)) {                                     var name = $untag (v)
+                                                            return ($property.is (v) ?
+                                                                        $property ({ get: function ()  { return this[name]     },
+                                                                                     set: function (x) {        this[name] = x } }) : Tags.extend (def[name], v)) }
+                                                        else { return v } }) },
 
             groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 

@@ -38,6 +38,13 @@ Modal overlay that outputs log.js for debugging purposes
 		visible: $property (function () {
 			return this.el.is (':visible') }),
 
+		clip: function () {
+            var elHeight   = this.el.height ()
+            var bodyHeight = this.body.height ()
+
+            this.body.children ().filter (this.$ (function (i, line) {
+            	return (elHeight - (bodyHeight - $(line).offsetInParent ().y)) < (elHeight / 2) })).remove () },
+
 		write: function (params) { this.toggle (true)
 
 			if (params.config.clear) {
@@ -48,6 +55,9 @@ Modal overlay that outputs log.js for debugging purposes
 				            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
 				            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
 				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
+
+
+            this.clip.postpone ()
 
             if (!this.opaque) {
 				log.impl.defaultWriteBackend (params) } }
