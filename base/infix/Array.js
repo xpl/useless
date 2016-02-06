@@ -49,6 +49,8 @@ _.withTest ('Array extensions', function () {
 
 }, function () {
 
+    /*  TODO: rewrite using new $mixin facility
+     */
     $extensionMethods (Array, {
 
         each:        _.each,
@@ -120,4 +122,3 @@ _.withTest ('Array extensions', function () {
         return _.reduce (_.rest (_.initial (arguments)), function (memo, row) {
                         return _.times (Math.max (memo.length, row.length), function (i) {
                             return zippo (memo[i], row[i]) }) }, firstArg) } })
-

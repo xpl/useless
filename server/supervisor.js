@@ -77,7 +77,7 @@ module.exports = Supervisor = $trait ({
 
                             log.pink ('Watching:', path)
 
-                            chokidar.watch (path, {}).on ('all', function(stat, f) { changed (stat, f) })
+                            chokidar.watch (path, {}).on ('all', function (stat, f) { changed (stat, fs.realpathSync (f)) })
 
                             if (then)
                                 then () }) }

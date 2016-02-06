@@ -801,7 +801,8 @@ Component = $prototype ({
 
         /*  Add thiscall semantics to methods
          */
-        this.mapMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { return this.$ (fn) } })
+        if (!this.$disableAutoThisBoundMethods) {
+             this.mapMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { return this.$ (fn) } }) }
 
 
         /*  Listen self destroy method
@@ -931,9 +932,10 @@ Component = $prototype ({
 
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
-        _.each (componentDefinition, function (def, name) {
-            if (def && def.$alias) {
-                this[name] = this[$untag (def)] } }, this)
+        if (!this.$disableAutoThisBoundMethods) {
+            _.each (componentDefinition, function (def, name) {
+                if (def && def.$alias) {
+                    this[name] = this[$untag (def)] } }, this) }
 
 
         /*  Check $overrideThis

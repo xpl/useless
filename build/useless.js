@@ -3752,6 +3752,8 @@ _.withTest ('Array extensions', function () {
 
 }, function () {
 
+    /*  TODO: rewrite using new $mixin facility
+     */
     $extensionMethods (Array, {
 
         each:        _.each,
@@ -3823,7 +3825,6 @@ _.withTest ('Array extensions', function () {
         return _.reduce (_.rest (_.initial (arguments)), function (memo, row) {
                         return _.times (Math.max (memo.length, row.length), function (i) {
                             return zippo (memo[i], row[i]) }) }, firstArg) } })
-
 ;
 /*  String extensions
     ======================================================================== */
@@ -7204,7 +7205,8 @@ Component = $prototype ({
 
         /*  Add thiscall semantics to methods
          */
-        this.mapMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { return this.$ (fn) } })
+        if (!this.$disableAutoThisBoundMethods) {
+             this.mapMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { return this.$ (fn) } }) }
 
 
         /*  Listen self destroy method
@@ -7334,9 +7336,10 @@ Component = $prototype ({
 
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
-        _.each (componentDefinition, function (def, name) {
-            if (def && def.$alias) {
-                this[name] = this[$untag (def)] } }, this)
+        if (!this.$disableAutoThisBoundMethods) {
+            _.each (componentDefinition, function (def, name) {
+                if (def && def.$alias) {
+                    this[name] = this[$untag (def)] } }, this) }
 
 
         /*  Check $overrideThis
