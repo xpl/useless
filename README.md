@@ -10,6 +10,20 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- `LogOverlay` now automatically clips its output (removing invisible lines) to reduce page freezes on a huge amount of log output. It is also gradients itself with `-webkit-mask-image`. Screenshot shows log output built automatically with **$log** and `Testosterone.LogsMethodCalls`:  ![showcase](http://img.leprosorium.com/2492460)
+
+- `_.scatter` for general-purpose many-to-many mapping. Can output arrays and objects. There also exists `_.arr` and `_.obj` as it's specialized derivatives. See [`stdlib.js`](https://github.com/xpl/useless/blob/master/base/tier0/stdlib.js) for details.
+
+- `String.limitedTo` for limiting long strings with ellipsis. Now `_.stringify` output is way more compact and readable.
+
+- `$macroTags` member for defining prototype/trait-specific macros. See `Testosterone.LogsMethodCalls` trait for the demo/how-to. It's super convenient when you want to bring some custom semantics to your prototype definitions, but don't want to make it a global macro - which can cause all kinds of performance/compatibility issuses. Imagine something like `DOMEvents` trait that defines `eventName: $on (function () { .. })` syntax that automatically binds component methods to DOM events, or `UndoRedoHistory` trait that proposes a `$silent` tag, which disables arbitrary methods from recording to history. It's a really powerful tool that brings DSL flavor to JavaScript.
+
+- `Prototype.$membersByTag` for fast/convenient enumeration of tagged members.
+
+- Improved **$alias** semantics (still somewhat buggy when used with $component/$traits).
+
+- **$constructor** for static constructor. Gets called by the prototype compiler. When defined by [**$trait**](https://github.com/xpl/useless/wiki/$trait), gets called at the host prototype assembling. This way [**$trait**](https://github.com/xpl/useless/wiki/$trait) can add something to the host [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) at the compilation stage.
+
 - Added **$mixin** for extending existing types with [**$prototype**](https://github.com/xpl/useless/wiki/$prototype)-style definitions. Example: `$mixin (Node, { ... })`
 
 - New member comprehension: `isLinebreak: $callableAsFreeFunction ($property (function () { ... }))` renders to `node.isLinebreak` (instance property accessor) and `Node.isLinebreak (node)` (static function). Latter is useful in functional expressions.
