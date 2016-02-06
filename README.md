@@ -12,7 +12,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - `LogOverlay` now automatically clips its output (removing invisible lines) to reduce page freezes on a huge amount of log output. It is also gradients itself with `-webkit-mask-image`. Screenshot shows log output built automatically with **$log** and `Testosterone.LogsMethodCalls`:  ![showcase](http://img.leprosorium.com/2492460)
 
-- `_.scatter` for general-purpose one-to-many mapping. Can output arrays and objects. There also exists `_.arr` and `_.obj` as it's specialized derivatives. See [`stdlib.js`](https://github.com/xpl/useless/blob/master/base/stdlib.js) for details.
+- `_.scatter` for general-purpose one-to-many mapping. Can output arrays and objects. There also exists `_.arr` and `_.obj` as it's specialized derivatives. See [`stdlib.js`](https://github.com/xpl/useless/blob/master/base/tier0/stdlib.js) for details.
 
 - `String.limitedTo` for limiting long strings with ellipsis. Now `_.stringify` output is way more compact and readable.
 
