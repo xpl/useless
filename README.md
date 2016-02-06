@@ -24,7 +24,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - **$constructor** for static constructor. Gets called by the prototype compiler. When defined by [**$trait**](https://github.com/xpl/useless/wiki/$trait), gets called at the host prototype assembling. This way [**$trait**](https://github.com/xpl/useless/wiki/$trait) can add something to the host [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) at the compilation stage.
 
-- 
 - Added **$mixin** for extending existing types with [**$prototype**](https://github.com/xpl/useless/wiki/$prototype)-style definitions. Example: `$mixin (Node, { ... })`
 
 - New member comprehension: `isLinebreak: $callableAsFreeFunction ($property (function () { ... }))` renders to `node.isLinebreak` (instance property accessor) and `Node.isLinebreak (node)` (static function). Latter is useful in functional expressions.
