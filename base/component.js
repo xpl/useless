@@ -331,8 +331,8 @@ _.tests.component = {
 
         var compo = new Compo ({
             color: 'blue',
-            colorChange: function (now, was) { log.ok ($callStack); log.ok (now, was); if (was) { fromConfig ()
-                $assert ([now, was], ['green', 'blue']) } } })
+            colorChange: function (now, was) { if (was) {   fromConfig ()
+                                                            $assert ([now, was], ['green', 'blue']) } } })
 
         compo.smellChange (function (now, was) { fromLateBoundListener ()
             $assert (compo.smell, now, 'bad')
@@ -525,12 +525,24 @@ _.tests.component = {
 
              testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
 
-        log.i (Compo.testValue.toString ())
-
         $assert (42, Compo.testValue ())
         $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
 
         _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
+
+    /*  $alias (TODO: fix bugs)
+     */
+    /*'$alias': function () { var value = 41
+
+        var compo = $singleton (Component, {
+
+            foo: function () { return ++value },
+            bar: $bindable ($alias ('foo')),
+            baz: $memoize  ($alias ('bar')) })
+
+        $assertEveryCalled (function (mkay) { compo.bar.onBefore (mkay)
+            $assert (compo.baz (),
+                     compo.baz (), 42) }) },*/
 
     /*  Auto-unbinding
      */
@@ -740,7 +752,7 @@ Component = $prototype ({
                         _.each (kv[1], function (fn) { fn = $untag (fn)
                             if (_.isFunction (fn)) { var k = '_' + kv[0]; (hooks[k] || (hooks[k] = [])).push (fn) } }) })
 
-                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (def[name])) } })
+                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (member)) } }, this)
 
             return def } },
 
@@ -869,7 +881,7 @@ Component = $prototype ({
                 var defaultListener = cfg[name]                
                 if (defaultListener) { initialStreamListeners.push ([stream, defaultListener]) } }
 
-            /*  Expand $listener
+            /*  Expand $listener (TODO: REMOVE)
              */
             if (def.$listener) {
                 this[name].queuedBy = [] }
@@ -884,7 +896,7 @@ Component = $prototype ({
             if (def.$bindable) {
                 this[name] = _.extend (_.bindable (this[name], this),
                                        _.map2 (def.$bindable.hooks || {},
-                                        _.mapsWith (this.$.bind (this).arity1))) }
+                                       _.mapsWith (this.$.bind (this).arity1))) }
             /*  Expand $debounce
              */
             if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)
@@ -921,7 +933,7 @@ Component = $prototype ({
          */
         _.each (componentDefinition, function (def, name) {
             if (def && def.$alias) {
-                this[name] = this[Tags.unwrap (def)] } }, this)
+                this[name] = this[$untag (def)] } }, this)
 
 
         /*  Check $overrideThis

@@ -102,13 +102,17 @@ _.withTest ('keywords', function () {
     $assert (Tags.extend (      7,  $foo (8)), $foo (      7))
     $assert (Tags.extend (      7,        8),              7)
 
+    /*  Tags.omit
+     */
+    $assert (Tags.omit (            7,   '$foo'),          7)
+    $assert (Tags.omit ($foo ($bar (7)), '$foo',  '$bar'), 7)
+    $assert (Tags.omit ($foo ($bar (7)), '$foo'),  $bar (  7))
 
 }, function () {
 
     Tags = _.extend2 (
-
-        function (subject) { if (subject !== undefined) {
-                                this.subject = subject } }, {
+                function (subject, keys) { if (subject !== undefined) { this.subject = subject }
+                                           if (keys    !== undefined) { _.extend (this, keys) } }, {
 
     $definition: {}, // to make it recognizeable by _.isPrototypeInstance
 
@@ -134,6 +138,13 @@ _.withTest ('keywords', function () {
 
         /* static methods (actual API)
          */
+        omit: $restArg (function (what, ___) {
+            if (_.isTypeOf (Tags, what)) {                var keysToOmit = _.index (_.rest (arguments))
+                                                          var keysLeft   = _.pick (what, function (v, k) { return _.isKeyword (k) && !(k in keysToOmit) })
+                        return (!_.isEmptyObject (            keysLeft)
+                                    ? new Tags (what.subject, keysLeft)
+                                    :           what.subject) }             else { return what } }),
+  
         clone: function (what, newSubject) {
                         return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
 

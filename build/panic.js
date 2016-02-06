@@ -1924,13 +1924,17 @@ _.withTest ('keywords', function () {
     $assert (Tags.extend (      7,  $foo (8)), $foo (      7))
     $assert (Tags.extend (      7,        8),              7)
 
+    /*  Tags.omit
+     */
+    $assert (Tags.omit (            7,   '$foo'),          7)
+    $assert (Tags.omit ($foo ($bar (7)), '$foo',  '$bar'), 7)
+    $assert (Tags.omit ($foo ($bar (7)), '$foo'),  $bar (  7))
 
 }, function () {
 
     Tags = _.extend2 (
-
-        function (subject) { if (subject !== undefined) {
-                                this.subject = subject } }, {
+                function (subject, keys) { if (subject !== undefined) { this.subject = subject }
+                                           if (keys    !== undefined) { _.extend (this, keys) } }, {
 
     $definition: {}, // to make it recognizeable by _.isPrototypeInstance
 
@@ -1956,6 +1960,13 @@ _.withTest ('keywords', function () {
 
         /* static methods (actual API)
          */
+        omit: $restArg (function (what, ___) {
+            if (_.isTypeOf (Tags, what)) {                var keysToOmit = _.index (_.rest (arguments))
+                                                          var keysLeft   = _.pick (what, function (v, k) { return _.isKeyword (k) && !(k in keysToOmit) })
+                        return (!_.isEmptyObject (            keysLeft)
+                                    ? new Tags (what.subject, keysLeft)
+                                    :           what.subject) }             else { return what } }),
+  
         clone: function (what, newSubject) {
                         return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
 
@@ -4095,13 +4106,17 @@ _.withTest ('OOP', {
 
             error: function () { return 'foo.error' },
 
-            failure:         $alias ('error'),
-            crash:   $final ($alias ('error'))  })) ()
+            failure:              $alias ('error'),
+            crash:                $alias ('error'),
+            finalCrash:   $final ($alias ('crash')) /* chaining works */        })) ()
                 
-                $assert    (foo.constructor.$definition.crash.$final)   // you can add new tags to alias members
-                $assertNot (foo.constructor.$definition.error.$final)   // adding tags to alias members does not affect original members 
+                var def = foo.constructor.$definition
 
-                $assert (foo.crash, foo.failure, foo.error) // all point to same function
+                $assert (foo.finalCrash, foo.crash, foo.failure, foo.error) // all point to same function
+
+                $assert    (def.finalCrash.$final)   // you can add new tags to alias members
+                $assertNot (def.crash.$final)        // adding tags to alias members does not affect original members 
+                $assertNot (def.error.$final)
 
         /*  Ad-hoc property aliases (applicable even when there's no explicitly declared member at what alias points to)
          */
@@ -4415,7 +4430,7 @@ _.withTest ('OOP', {
                  _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }) }); return def },
+                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }, this) }, this); return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -4450,7 +4465,7 @@ _.withTest ('OOP', {
                         _.or ($builtin.matches, _.key (_.equals ('constructor'))))) }) },
 
             extendWithTags: function (def) {                    
-                return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
+                return _.extendWith ($untag (def), _.mapObject (Tags.get (def), $static.arity1)) },
 
             callStaticConstructor: function (def) { 
                 if (!def.isTraitOf) { 
@@ -4475,7 +4490,7 @@ _.withTest ('OOP', {
                 return _.defaults (def, {
                     $base:          $builtin ($static ($property (_.constant (base && base.prototype)))),
                     $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
-                    isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, Tags.unwrap (def.constructor)))),
+                    isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, $untag (def.constructor)))),
                     isInstanceOf:   $builtin (function (constructor) { return _.isTypeOf (constructor, this) }),
                     $:              $builtin ($prototype.impl.$) }) }},
 
@@ -4487,11 +4502,11 @@ _.withTest ('OOP', {
                     function (cfg) { _.extend (this, cfg || {}) }) },
 
             defineStaticMembers: function (def) {
-                this.defineMembers (Tags.unwrap (def.constructor), _.pick (def, $static.matches))
+                this.defineMembers ($untag (def.constructor), _.pick (def, $static.matches))
                 return def },
 
             defineInstanceMembers: function (def) {
-                this.defineMembers (Tags.unwrap (def.constructor).prototype, _.omit (def, $static.matches))
+                this.defineMembers ($untag (def.constructor).prototype, _.omit (def, $static.matches))
                 return def },
 
             defineMembers: function (targetObject, def) {
@@ -4506,30 +4521,37 @@ _.withTest ('OOP', {
                     else {
                         _.defineProperty (targetObject, key, def) } }
                 else {
-                    var what = Tags.unwrap (def)
+                    var what = $untag (def)
                     targetObject[key] = what } },
 
             ensureFinalContracts: function (base) { return function (def) {
-                if (base) {
-                    if (base.$final) {
-                        throw new Error ('Cannot derive from $final-marked prototype') }
+                                        if (base) {
+                                            if (base.$final) {
+                                                throw new Error ('Cannot derive from $final-marked prototype') }
 
-                    if (base.$definition) {
-                        var invalidMembers = _.intersection (
-                            _.keys (_.pick (base.$definition, $final.matches)),
-                            _.keys (def))
-                        if (invalidMembers.length) {
-                            throw new Error ('Cannot override $final ' + invalidMembers.join (', ')) } } }
+                                            if (base.$definition) {
+                                                var invalidMembers = _.intersection (
+                                                    _.keys (_.pick (base.$definition, $final.matches)),
+                                                    _.keys (def))
+                                                if (invalidMembers.length) {
+                                                    throw new Error ('Cannot override $final ' + invalidMembers.join (', ')) } } }
 
-                return def } },
+                                        return def } },
 
             expandAliases: function (def) {
-                                return _.map2 (def, function (v) {
-                                                        if ($alias.is (v)) {                                     var name = $untag (v)
-                                                            return ($property.is (v) ?
-                                                                        $property ({ get: function ()  { return this[name]     },
-                                                                                     set: function (x) {        this[name] = x } }) : Tags.extend (def[name], v)) }
-                                                        else { return v } }) },
+                                _.each (def, function (v, k) { def[k] = this.resolveMember (def, k, v)[1] }, this); return def },
+
+            resolveMember: function (def, name, member) { member = member || def[name]
+
+                                if ($alias.is (member)) { var ref      = this.resolveMember (def, $untag (member))
+                                                          var refName  = ref[0]
+                                                          var refValue = ref[1]
+
+                                    return [refName, ($property.is (member) ?
+                                                      $property ({ get: function ()  { return this[refName]     },
+                                                                   set: function (x) {        this[refName] = x } }) : Tags.extend (refValue, Tags.omit (member, '$alias'))) ] }
+
+                                else { return [name, member] } },
 
             groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 
@@ -4539,19 +4561,19 @@ _.withTest ('OOP', {
 
                                                     def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 
-            isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
+            isTagKeywordGroup: function (value_, key) { var value = $untag (value_)
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
 
-            wrapMemberFunction: function (member, wrapper) {
-                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), wrapper)) })) ||
-                       (_.isFunction ($untag (member)) && Tags.modify (member, wrapper)) || member } } }) })
+            modifyMember: function (member, newValue) {
+                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), newValue)) })) ||
+                       (_.isFunction ($untag (member)) && Tags.modify (member, newValue)) || member } } }) })
 
 
 /*  $trait  A combinatoric-style alternative to inheritance.
             (also known as "mixin" in some languages)
     ======================================================================== */
 
-    _.deferTest (['OOP', '$traits'], function () {
+    _.withTest (['OOP', '$traits'], function () {
 
         var Closeable = $trait ({
             close: function () {} })
@@ -4686,7 +4708,7 @@ _.withTest ('OOP', {
         _.defineTagKeyword  ('callableAsFreeFunction')
         $prototype.macroTag ('callableAsFreeFunction',
             function (def, value, name) {
-                      def.constructor[name] = Tags.unwrap (value).asFreeFunction
+                      def.constructor[name] = $untag (value).asFreeFunction
                return def }) })
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
@@ -5974,8 +5996,8 @@ _.tests.component = {
 
         var compo = new Compo ({
             color: 'blue',
-            colorChange: function (now, was) { log.ok ($callStack); log.ok (now, was); if (was) { fromConfig ()
-                $assert ([now, was], ['green', 'blue']) } } })
+            colorChange: function (now, was) { if (was) {   fromConfig ()
+                                                            $assert ([now, was], ['green', 'blue']) } } })
 
         compo.smellChange (function (now, was) { fromLateBoundListener ()
             $assert (compo.smell, now, 'bad')
@@ -6168,12 +6190,24 @@ _.tests.component = {
 
              testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
 
-        log.i (Compo.testValue.toString ())
-
         $assert (42, Compo.testValue ())
         $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
 
         _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
+
+    /*  $alias (TODO: fix bugs)
+     */
+    /*'$alias': function () { var value = 41
+
+        var compo = $singleton (Component, {
+
+            foo: function () { return ++value },
+            bar: $bindable ($alias ('foo')),
+            baz: $memoize  ($alias ('bar')) })
+
+        $assertEveryCalled (function (mkay) { compo.bar.onBefore (mkay)
+            $assert (compo.baz (),
+                     compo.baz (), 42) }) },*/
 
     /*  Auto-unbinding
      */
@@ -6383,7 +6417,7 @@ Component = $prototype ({
                         _.each (kv[1], function (fn) { fn = $untag (fn)
                             if (_.isFunction (fn)) { var k = '_' + kv[0]; (hooks[k] || (hooks[k] = [])).push (fn) } }) })
 
-                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (def[name])) } })
+                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (member)) } }, this)
 
             return def } },
 
@@ -6512,7 +6546,7 @@ Component = $prototype ({
                 var defaultListener = cfg[name]                
                 if (defaultListener) { initialStreamListeners.push ([stream, defaultListener]) } }
 
-            /*  Expand $listener
+            /*  Expand $listener (TODO: REMOVE)
              */
             if (def.$listener) {
                 this[name].queuedBy = [] }
@@ -6527,7 +6561,7 @@ Component = $prototype ({
             if (def.$bindable) {
                 this[name] = _.extend (_.bindable (this[name], this),
                                        _.map2 (def.$bindable.hooks || {},
-                                        _.mapsWith (this.$.bind (this).arity1))) }
+                                       _.mapsWith (this.$.bind (this).arity1))) }
             /*  Expand $debounce
              */
             if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)
@@ -6564,7 +6598,7 @@ Component = $prototype ({
          */
         _.each (componentDefinition, function (def, name) {
             if (def && def.$alias) {
-                this[name] = this[Tags.unwrap (def)] } }, this)
+                this[name] = this[$untag (def)] } }, this)
 
 
         /*  Check $overrideThis
@@ -8891,15 +8925,15 @@ Testosterone.ValidatesRecursion = $trait ({
 
         $macroTags: {
 
-            log: function (def, value, name) {  var param         = (_.isBoolean (value.$log) ? undefined : value.$log) || (value.$verbose ? '{{$proto}}' : '')
+            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
                                                 var meta          = {}
-                                                var color         = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
+                                                var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
                                                 var template      = param && _.template (param)
 
                 $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
 
-                return $prototype.impl.wrapMemberFunction (value, function (fn, name_) { return function () { var this_      = this,
-                                                                                                                  arguments_ = _.asArray (arguments)
+                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
+                                                                                                             arguments_ = _.asArray (arguments)
 
                         var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
                         var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
@@ -8907,7 +8941,7 @@ Testosterone.ValidatesRecursion = $trait ({
                     log.write (log.config ({
                         color: color,
                         location: true,
-                        where: value.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
+                        where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
 
                     return log.withConfig ({ indent: 1,
                                              color: color,

@@ -1754,15 +1754,15 @@ Testosterone.ValidatesRecursion = $trait ({
 
         $macroTags: {
 
-            log: function (def, value, name) {  var param         = (_.isBoolean (value.$log) ? undefined : value.$log) || (value.$verbose ? '{{$proto}}' : '')
+            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
                                                 var meta          = {}
-                                                var color         = _.find2 (colors, function (color) { return log.color ((value['$' + color] && color)) || false })
+                                                var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
                                                 var template      = param && _.template (param)
 
                 $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
 
-                return $prototype.impl.wrapMemberFunction (value, function (fn, name_) { return function () { var this_      = this,
-                                                                                                                  arguments_ = _.asArray (arguments)
+                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
+                                                                                                             arguments_ = _.asArray (arguments)
 
                         var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
                         var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
@@ -1770,7 +1770,7 @@ Testosterone.ValidatesRecursion = $trait ({
                     log.write (log.config ({
                         color: color,
                         location: true,
-                        where: value.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
+                        where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
 
                     return log.withConfig ({ indent: 1,
                                              color: color,

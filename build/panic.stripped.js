@@ -1169,9 +1169,12 @@ _.extend(_, {
     }
 });
 _.hasTags = true;
-Tags = _.extend2(function (subject) {
+Tags = _.extend2(function (subject, keys) {
     if (subject !== undefined) {
         this.subject = subject;
+    }
+    if (keys !== undefined) {
+        _.extend(this, keys);
     }
 }, {
     $definition: {},
@@ -1194,6 +1197,17 @@ Tags = _.extend2(function (subject) {
             return _.isTypeOf(Tags, other) ? _.extend(this, _.pick(other, _.keyIsKeyword)) : this;
         }
     },
+    omit: $restArg(function (what, ___) {
+        if (_.isTypeOf(Tags, what)) {
+            var keysToOmit = _.index(_.rest(arguments));
+            var keysLeft = _.pick(what, function (v, k) {
+                return _.isKeyword(k) && !(k in keysToOmit);
+            });
+            return !_.isEmptyObject(keysLeft) ? new Tags(what.subject, keysLeft) : what.subject;
+        } else {
+            return what;
+        }
+    }),
     clone: function (what, newSubject) {
         return _.isTypeOf(Tags, what) ? what.clone(newSubject) : newSubject || what;
     },
@@ -2669,8 +2683,8 @@ _.extend($prototype, {
                     if (_.keyword(tagName) in memberDef) {
                         def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
                     }
-                });
-            });
+                }, this);
+            }, this);
             return def;
         },
         generateCustomCompilerImpl: function (base) {
@@ -2712,7 +2726,7 @@ _.extend($prototype, {
             });
         },
         extendWithTags: function (def) {
-            return _.extendWith(Tags.unwrap(def), _.mapObject(Tags.get(def), $static.arity1));
+            return _.extendWith($untag(def), _.mapObject(Tags.get(def), $static.arity1));
         },
         callStaticConstructor: function (def) {
             if (!def.isTraitOf) {
@@ -2747,7 +2761,7 @@ _.extend($prototype, {
                 return _.defaults(def, {
                     $base: $builtin($static($property(_.constant(base && base.prototype)))),
                     $definition: $builtin($static($property(_.constant(_.extend({}, base && base.$definition, def))))),
-                    isTypeOf: $builtin($static(_.partial(_.isTypeOf, Tags.unwrap(def.constructor)))),
+                    isTypeOf: $builtin($static(_.partial(_.isTypeOf, $untag(def.constructor)))),
                     isInstanceOf: $builtin(function (constructor) {
                         return _.isTypeOf(constructor, this);
                     }),
@@ -2766,11 +2780,11 @@ _.extend($prototype, {
             };
         },
         defineStaticMembers: function (def) {
-            this.defineMembers(Tags.unwrap(def.constructor), _.pick(def, $static.matches));
+            this.defineMembers($untag(def.constructor), _.pick(def, $static.matches));
             return def;
         },
         defineInstanceMembers: function (def) {
-            this.defineMembers(Tags.unwrap(def.constructor).prototype, _.omit(def, $static.matches));
+            this.defineMembers($untag(def.constructor).prototype, _.omit(def, $static.matches));
             return def;
         },
         defineMembers: function (targetObject, def) {
@@ -2788,7 +2802,7 @@ _.extend($prototype, {
                     _.defineProperty(targetObject, key, def);
                 }
             } else {
-                var what = Tags.unwrap(def);
+                var what = $untag(def);
                 targetObject[key] = what;
             }
         },
@@ -2809,21 +2823,34 @@ _.extend($prototype, {
             };
         },
         expandAliases: function (def) {
-            return _.map2(def, function (v) {
-                if ($alias.is(v)) {
-                    var name = $untag(v);
-                    return $property.is(v) ? $property({
+            _.each(def, function (v, k) {
+                def[k] = this.resolveMember(def, k, v)[1];
+            }, this);
+            return def;
+        },
+        resolveMember: function (def, name, member) {
+            member = member || def[name];
+            if ($alias.is(member)) {
+                var ref = this.resolveMember(def, $untag(member));
+                var refName = ref[0];
+                var refValue = ref[1];
+                return [
+                    refName,
+                    $property.is(member) ? $property({
                         get: function () {
-                            return this[name];
+                            return this[refName];
                         },
                         set: function (x) {
-                            this[name] = x;
+                            this[refName] = x;
                         }
-                    }) : Tags.extend(def[name], v);
-                } else {
-                    return v;
-                }
-            });
+                    }) : Tags.extend(refValue, Tags.omit(member, '$alias'))
+                ];
+            } else {
+                return [
+                    name,
+                    member
+                ];
+            }
         },
         groupMembersByTagForFastEnumeration: function (def) {
             var membersByTag = {};
@@ -2836,13 +2863,13 @@ _.extend($prototype, {
             return def;
         },
         isTagKeywordGroup: function (value_, key) {
-            var value = Tags.unwrap(value_);
+            var value = $untag(value_);
             return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
         },
-        wrapMemberFunction: function (member, wrapper) {
+        modifyMember: function (member, newValue) {
             return $property.is(member) && Tags.modify(member, function (value) {
-                return _.extend(value, _.map2(_.pick(value, 'get', 'set'), wrapper));
-            }) || _.isFunction($untag(member)) && Tags.modify(member, wrapper) || member;
+                return _.extend(value, _.map2(_.pick(value, 'get', 'set'), newValue));
+            }) || _.isFunction($untag(member)) && Tags.modify(member, newValue) || member;
         }
     }
 });
@@ -2888,7 +2915,7 @@ _.defineKeyword('const', function (x) {
 });
 _.defineTagKeyword('callableAsFreeFunction');
 $prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
-    def.constructor[name] = Tags.unwrap(value).asFreeFunction;
+    def.constructor[name] = $untag(value).asFreeFunction;
     return def;
 });
 $singleton = function (arg1, arg2) {
@@ -3937,9 +3964,9 @@ Component = $prototype({
                             }
                         });
                     });
-                    def[name] = $bindable({ hooks: hooks }, Tags.clone(def[name]));
+                    def[name] = $bindable({ hooks: hooks }, Tags.clone(member));
                 }
-            });
+            }, this);
             return def;
         }
     },
@@ -4085,7 +4112,7 @@ Component = $prototype({
         }, this);
         _.each(componentDefinition, function (def, name) {
             if (def && def.$alias) {
-                this[name] = this[Tags.unwrap(def)];
+                this[name] = this[$untag(def)];
             }
         }, this);
         if (_.hasAsserts) {
@@ -6038,17 +6065,17 @@ Testosterone.ValidatesRecursion = $trait({
             });
         },
         $macroTags: {
-            log: function (def, value, name) {
-                var param = (_.isBoolean(value.$log) ? undefined : value.$log) || (value.$verbose ? '{{$proto}}' : '');
+            log: function (def, member, name) {
+                var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
                 var meta = {};
                 var color = _.find2(colors, function (color) {
-                    return log.color(value['$' + color] && color) || false;
+                    return log.color(member['$' + color] && color) || false;
                 });
                 var template = param && _.template(param);
                 $untag(def.$meta)(function (x) {
                     meta = x;
                 });
-                return $prototype.impl.wrapMemberFunction(value, function (fn, name_) {
+                return $prototype.impl.modifyMember(member, function (fn, name_) {
                     return function () {
                         var this_ = this, arguments_ = _.asArray(arguments);
                         var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, _.stringifyOneLine.arity1))) || this.desc || '';
@@ -6056,7 +6083,7 @@ Testosterone.ValidatesRecursion = $trait({
                         log.write(log.config({
                             color: color,
                             location: true,
-                            where: value.$verbose ? undefined : { calleeShort: meta.name }
+                            where: member.$verbose ? undefined : { calleeShort: meta.name }
                         }), _.nonempty([
                             this_dump,
                             name,

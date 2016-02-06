@@ -156,13 +156,17 @@ _.withTest ('OOP', {
 
             error: function () { return 'foo.error' },
 
-            failure:         $alias ('error'),
-            crash:   $final ($alias ('error'))  })) ()
+            failure:              $alias ('error'),
+            crash:                $alias ('error'),
+            finalCrash:   $final ($alias ('crash')) /* chaining works */        })) ()
                 
-                $assert    (foo.constructor.$definition.crash.$final)   // you can add new tags to alias members
-                $assertNot (foo.constructor.$definition.error.$final)   // adding tags to alias members does not affect original members 
+                var def = foo.constructor.$definition
 
-                $assert (foo.crash, foo.failure, foo.error) // all point to same function
+                $assert (foo.finalCrash, foo.crash, foo.failure, foo.error) // all point to same function
+
+                $assert    (def.finalCrash.$final)   // you can add new tags to alias members
+                $assertNot (def.crash.$final)        // adding tags to alias members does not affect original members 
+                $assertNot (def.error.$final)
 
         /*  Ad-hoc property aliases (applicable even when there's no explicitly declared member at what alias points to)
          */
@@ -476,7 +480,7 @@ _.withTest ('OOP', {
                  _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
                                 if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }) }); return def },
+                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }, this) }, this); return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
@@ -511,7 +515,7 @@ _.withTest ('OOP', {
                         _.or ($builtin.matches, _.key (_.equals ('constructor'))))) }) },
 
             extendWithTags: function (def) {                    
-                return _.extendWith (Tags.unwrap (def), _.mapObject (Tags.get (def), $static.arity1)) },
+                return _.extendWith ($untag (def), _.mapObject (Tags.get (def), $static.arity1)) },
 
             callStaticConstructor: function (def) { 
                 if (!def.isTraitOf) { 
@@ -536,7 +540,7 @@ _.withTest ('OOP', {
                 return _.defaults (def, {
                     $base:          $builtin ($static ($property (_.constant (base && base.prototype)))),
                     $definition:    $builtin ($static ($property (_.constant (_.extend ({}, base && base.$definition, def))))),
-                    isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, Tags.unwrap (def.constructor)))),
+                    isTypeOf:       $builtin ($static (_.partial (_.isTypeOf, $untag (def.constructor)))),
                     isInstanceOf:   $builtin (function (constructor) { return _.isTypeOf (constructor, this) }),
                     $:              $builtin ($prototype.impl.$) }) }},
 
@@ -548,11 +552,11 @@ _.withTest ('OOP', {
                     function (cfg) { _.extend (this, cfg || {}) }) },
 
             defineStaticMembers: function (def) {
-                this.defineMembers (Tags.unwrap (def.constructor), _.pick (def, $static.matches))
+                this.defineMembers ($untag (def.constructor), _.pick (def, $static.matches))
                 return def },
 
             defineInstanceMembers: function (def) {
-                this.defineMembers (Tags.unwrap (def.constructor).prototype, _.omit (def, $static.matches))
+                this.defineMembers ($untag (def.constructor).prototype, _.omit (def, $static.matches))
                 return def },
 
             defineMembers: function (targetObject, def) {
@@ -567,30 +571,37 @@ _.withTest ('OOP', {
                     else {
                         _.defineProperty (targetObject, key, def) } }
                 else {
-                    var what = Tags.unwrap (def)
+                    var what = $untag (def)
                     targetObject[key] = what } },
 
             ensureFinalContracts: function (base) { return function (def) {
-                if (base) {
-                    if (base.$final) {
-                        throw new Error ('Cannot derive from $final-marked prototype') }
+                                        if (base) {
+                                            if (base.$final) {
+                                                throw new Error ('Cannot derive from $final-marked prototype') }
 
-                    if (base.$definition) {
-                        var invalidMembers = _.intersection (
-                            _.keys (_.pick (base.$definition, $final.matches)),
-                            _.keys (def))
-                        if (invalidMembers.length) {
-                            throw new Error ('Cannot override $final ' + invalidMembers.join (', ')) } } }
+                                            if (base.$definition) {
+                                                var invalidMembers = _.intersection (
+                                                    _.keys (_.pick (base.$definition, $final.matches)),
+                                                    _.keys (def))
+                                                if (invalidMembers.length) {
+                                                    throw new Error ('Cannot override $final ' + invalidMembers.join (', ')) } } }
 
-                return def } },
+                                        return def } },
 
             expandAliases: function (def) {
-                                return _.map2 (def, function (v) {
-                                                        if ($alias.is (v)) {                                     var name = $untag (v)
-                                                            return ($property.is (v) ?
-                                                                        $property ({ get: function ()  { return this[name]     },
-                                                                                     set: function (x) {        this[name] = x } }) : Tags.extend (def[name], v)) }
-                                                        else { return v } }) },
+                                _.each (def, function (v, k) { def[k] = this.resolveMember (def, k, v)[1] }, this); return def },
+
+            resolveMember: function (def, name, member) { member = member || def[name]
+
+                                if ($alias.is (member)) { var ref      = this.resolveMember (def, $untag (member))
+                                                          var refName  = ref[0]
+                                                          var refValue = ref[1]
+
+                                    return [refName, ($property.is (member) ?
+                                                      $property ({ get: function ()  { return this[refName]     },
+                                                                   set: function (x) {        this[refName] = x } }) : Tags.extend (refValue, Tags.omit (member, '$alias'))) ] }
+
+                                else { return [name, member] } },
 
             groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 
@@ -600,19 +611,19 @@ _.withTest ('OOP', {
 
                                                     def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 
-            isTagKeywordGroup: function (value_, key) { var value = Tags.unwrap (value_)
+            isTagKeywordGroup: function (value_, key) { var value = $untag (value_)
                 return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
 
-            wrapMemberFunction: function (member, wrapper) {
-                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), wrapper)) })) ||
-                       (_.isFunction ($untag (member)) && Tags.modify (member, wrapper)) || member } } }) })
+            modifyMember: function (member, newValue) {
+                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), newValue)) })) ||
+                       (_.isFunction ($untag (member)) && Tags.modify (member, newValue)) || member } } }) })
 
 
 /*  $trait  A combinatoric-style alternative to inheritance.
             (also known as "mixin" in some languages)
     ======================================================================== */
 
-    _.deferTest (['OOP', '$traits'], function () {
+    _.withTest (['OOP', '$traits'], function () {
 
         var Closeable = $trait ({
             close: function () {} })
@@ -747,7 +758,7 @@ _.withTest ('OOP', {
         _.defineTagKeyword  ('callableAsFreeFunction')
         $prototype.macroTag ('callableAsFreeFunction',
             function (def, value, name) {
-                      def.constructor[name] = Tags.unwrap (value).asFreeFunction
+                      def.constructor[name] = $untag (value).asFreeFunction
                return def }) })
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
