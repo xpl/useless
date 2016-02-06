@@ -536,8 +536,8 @@ _.tests.component = {
             method:          function (this_) { $assert (this_ === this) },
             rawMethod: $raw (function (this_) { $assert (this_ !== this) }) }))
 
-        compo.method    (compo)
-        compo.rawMethod (compo) },
+        var    method = compo.   method;    method (compo)
+        var rawMethod = compo.rawMethod; rawMethod (compo) },
 
     /*  $alias (TODO: fix bugs)
      */

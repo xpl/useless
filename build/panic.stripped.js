@@ -3833,7 +3833,8 @@ _([
     'overrideThis',
     'listener',
     'postpones',
-    'reference'
+    'reference',
+    'raw'
 ]).each(_.defineTagKeyword);
 _.defineTagKeyword('observableProperty', _.flip);
 _.defineKeyword('observableRef', function (x) {
@@ -4000,13 +4001,11 @@ Component = $prototype({
         if (this.constructor.$defaults) {
             cfg = this.cfg = _.extend(_.cloneDeep(this.constructor.$defaults), cfg);
         }
-        if (!this.$disableAutoThisBoundMethods) {
-            this.mapMethods(function (fn, name) {
-                if (name !== '$' && name !== 'init') {
-                    return this.$(fn);
-                }
-            });
-        }
+        this.mapMethods(function (fn, name, def) {
+            if (name !== '$' && name !== 'init' && !(def && def.$raw)) {
+                return this.$(fn);
+            }
+        });
         _.onBefore(this, 'destroy', this.beforeDestroy);
         _.onAfter(this, 'destroy', this.afterDestroy);
         var initialStreamListeners = [];
@@ -4112,13 +4111,11 @@ Component = $prototype({
                 this[name] = _.isFunction(value) ? this.$(value) : value;
             }
         }, this);
-        if (!this.$disableAutoThisBoundMethods) {
-            _.each(componentDefinition, function (def, name) {
-                if (def && def.$alias) {
-                    this[name] = this[$untag(def)];
-                }
-            }, this);
-        }
+        _.each(componentDefinition, function (def, name) {
+            if (def && def.$alias && !def.$raw) {
+                this[name] = this[$untag(def)];
+            }
+        }, this);
         if (_.hasAsserts) {
             _.each(this.constructor.$requires, function (contract, name) {
                 $assertTypeMatches(_.object([[
