@@ -530,6 +530,15 @@ _.tests.component = {
 
         _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
 
+    '$raw for performance-critical methods (disables thiscall proxy)': function () {
+
+        var compo = new ($component ({
+            method:          function (this_) { $assert (this_ === this) },
+            rawMethod: $raw (function (this_) { $assert (this_ !== this) }) }))
+
+        compo.method    (compo)
+        compo.rawMethod (compo) },
+
     /*  $alias (TODO: fix bugs)
      */
     /*'$alias': function () { var value = 41
@@ -620,7 +629,7 @@ _.defineKeyword ('component', function (definition) {
                                 return $extends (Component, definition) })
 
 _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
-    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw'])
     .each (_.defineTagKeyword)
 
 _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
@@ -801,8 +810,7 @@ Component = $prototype ({
 
         /*  Add thiscall semantics to methods
          */
-        if (!this.$disableAutoThisBoundMethods) {
-             this.mapMethods (function (fn, name) { if ((name !== '$') && (name !== 'init')) { return this.$ (fn) } }) }
+        this.mapMethods (function (fn, name, def) { if ((name !== '$') && (name !== 'init') && !(def && def.$raw)) { return this.$ (fn) } })
 
 
         /*  Listen self destroy method
@@ -932,10 +940,9 @@ Component = $prototype ({
 
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
-        if (!this.$disableAutoThisBoundMethods) {
-            _.each (componentDefinition, function (def, name) {
-                if (def && def.$alias) {
-                    this[name] = this[$untag (def)] } }, this) }
+        _.each (componentDefinition, function (def, name) {
+            if (def && def.$alias && !def.$raw) {
+                this[name] = this[$untag (def)] } }, this)
 
 
         /*  Check $overrideThis
