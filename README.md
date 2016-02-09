@@ -332,6 +332,16 @@ AddsLoggingToButton = $aspect (Button, {
     afterDestroy: function () { log.red   ('Button is now destroyed') } })
 ```
 
+Adds CORS proxy to existing XMLHttpRequest prototype:
+
+```javascript
+XMLHttpRequestWithCORS = $aspect (XMLHttpRequest, {
+    open: function (method, path, async, impl) {
+                return impl.call (this, method, (!path.contains ('cors.io') &&
+                                                 !path.contains (window.location.host))
+                                                    ? ('http://cors.io/?u=' + path) : path, async) } })
+```
+
 ## Math utility for front-end works
 
 [Reference](https://github.com/xpl/useless/blob/master/base/math.js)
