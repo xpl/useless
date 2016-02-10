@@ -10,6 +10,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- `$raw` methods for disabling thiscall semantics for performance-critical methods in components. In other words, it disables auto binding of methods to `this`, which comes with performance penalty of one extra call.
+
 - `LogOverlay` now automatically clips its output (removing invisible lines) to reduce page freezes on a huge amount of log output. It is also gradients itself with `-webkit-mask-image`. Screenshot shows log output built automatically with **$log** and `Testosterone.LogsMethodCalls`:  ![showcase](http://img.leprosorium.com/2492460)
 
 - `_.scatter` for general-purpose many-to-many mapping. Can output arrays and objects. There also exists `_.arr` and `_.obj` as it's specialized derivatives. See [`stdlib.js`](https://github.com/xpl/useless/blob/master/base/tier0/stdlib.js) for details.
@@ -328,6 +330,16 @@ AddsLoggingToButton = $aspect (Button, {
 
     beforeCreate: function () { log.green ('Button is about to be created') },
     afterDestroy: function () { log.red   ('Button is now destroyed') } })
+```
+
+Adds CORS proxy to existing XMLHttpRequest prototype:
+
+```javascript
+XMLHttpRequestWithCORS = $aspect (XMLHttpRequest, {
+    open: function (method, path, async, impl) {
+                return impl.call (this, method, (!path.contains ('cors.io') &&
+                                                 !path.contains (window.location.host))
+                                                    ? ('http://cors.io/?u=' + path) : path, async) } })
 ```
 
 ## Math utility for front-end works
