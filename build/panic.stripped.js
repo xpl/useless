@@ -4337,16 +4337,6 @@ if (jQuery) {
             cssInt: function (name) {
                 return (this.css(name) || '').integerValue;
             },
-            reinsert: function () {
-                var node = this[0];
-                var parentNode = node.parentNode;
-                var next = node.nextSibling;
-                if (parentNode) {
-                    parentNode.removeChild(node);
-                    parentNode.insertBefore(node, next);
-                }
-                return this;
-            },
             eachChild: function (selector, fn) {
                 _.each(this.find(selector), function (el) {
                     fn($(el));
@@ -6419,7 +6409,10 @@ _.perfTest = function (arg, then) {
             var elHeight = this.el.height();
             var bodyHeight = this.body.height();
             this.body.children().filter(this.$(function (i, line) {
-                return elHeight - (bodyHeight - $(line).offsetInParent().y) < elHeight / 2;
+                var lineTop = bodyHeight - $(line).offsetInParent().y;
+                var lineBottom = lineTop - $(line).height();
+                var clipHeight = elHeight / 2;
+                return lineTop > clipHeight && lineBottom > clipHeight;
             })).remove();
         },
         write: function (params) {

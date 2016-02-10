@@ -4337,16 +4337,6 @@ if (jQuery) {
             cssInt: function (name) {
                 return (this.css(name) || '').integerValue;
             },
-            reinsert: function () {
-                var node = this[0];
-                var parentNode = node.parentNode;
-                var next = node.nextSibling;
-                if (parentNode) {
-                    parentNode.removeChild(node);
-                    parentNode.insertBefore(node, next);
-                }
-                return this;
-            },
             eachChild: function (selector, fn) {
                 _.each(this.find(selector), function (el) {
                     fn($(el));

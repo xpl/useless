@@ -9246,16 +9246,6 @@ _.extend ($, {
     attrInt: function (name) { return (this.attr (name) || '').integerValue },
     cssInt:  function (name) { return (this.css  (name) || '').integerValue },
 
-    /*  Removes and then inserts node at the same place
-     */
-    reinsert: function () { var node = this[0]
-        var parentNode = node.parentNode
-        var next       = node.nextSibling
-        if (parentNode) {
-            parentNode.removeChild (node)
-            parentNode.insertBefore (node, next) }
-        return this },
-
     /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
      */
     eachChild: function (selector, fn) {

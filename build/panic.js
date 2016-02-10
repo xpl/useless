@@ -6888,16 +6888,6 @@ _.extend ($, {
     attrInt: function (name) { return (this.attr (name) || '').integerValue },
     cssInt:  function (name) { return (this.css  (name) || '').integerValue },
 
-    /*  Removes and then inserts node at the same place
-     */
-    reinsert: function () { var node = this[0]
-        var parentNode = node.parentNode
-        var next       = node.nextSibling
-        if (parentNode) {
-            parentNode.removeChild (node)
-            parentNode.insertBefore (node, next) }
-        return this },
-
     /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
      */
     eachChild: function (selector, fn) {
@@ -9269,7 +9259,7 @@ $.fn.extend ({
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
-Modal overlay that outputs log.js for debugging purposes
+Modal overlay that renders log.js output for debugging purposes
 
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -9283,54 +9273,56 @@ Modal overlay that outputs log.js for debugging purposes
 			init:   false }, // deferred init
 
 		init: function () {
-			
-			log.withWriteBackend (this.write, function () {})
+				log.withWriteBackend (this.write, function () {})
 
-			$(document).keydown (this.$ (function (e) {
-				if (e.keyCode === 192) { // ~
-					this.toggle () }
-				else if (e.keyCode === 27) { // Esc
-					this.body.empty () } })) },
+				$(document).keydown (this.$ (function (e) {
+					if (e.keyCode === 192) { // ~
+						this.toggle () }
+					else if (e.keyCode === 27) { // Esc
+						this.body.empty () } })) },
 
 		el: $memoized ($property (function () {
-			return $('<div class="useless-log-overlay" style="display: none;">')
-						.append ('<div class="useless-log-overlay-body">')
-						.appendTo (document.body) })),
+									return $('<div class="useless-log-overlay" style="display: none;">')
+												.append ('<div class="useless-log-overlay-body">')
+												.appendTo (document.body) })),
 
 		body: $memoized ($property (function () {
-			return this.el.find ('.useless-log-overlay-body') })),
+										return this.el.find ('.useless-log-overlay-body') })),
 
 		toggle: function (yes) {
-			this.el.toggle (yes) },
+					this.el.toggle (yes) },
 
 		visible: $property (function () {
-			return this.el.is (':visible') }),
+								return this.el.is (':visible') }),
 
 		clip: function () {
-            var elHeight   = this.el.height ()
-            var bodyHeight = this.body.height ()
+		            var elHeight   = this.el.height ()
+		            var bodyHeight = this.body.height ()
 
-            this.body.children ().filter (this.$ (function (i, line) {
-            	return (elHeight - (bodyHeight - $(line).offsetInParent ().y)) < (elHeight / 2) })).remove () },
+		            this.body.children ().filter (this.$ (function (i, line) {
 
-		write: function (params) { this.toggle (true)
+		            	var lineTop 	= bodyHeight - $(line).offsetInParent ().y
+		            	var lineBottom  = lineTop    - $(line).height ()
+		            	var clipHeight  = elHeight / 2
 
-			if (params.config.clear) {
-				this.body.empty () }
+		            	return (lineTop    > clipHeight) &&
+		            		   (lineBottom > clipHeight) })).remove () },
 
-            this.body.append ($('<div class="ulo-line">')
-				            	.attr ('style', (params.color && params.color.css) || '')
-				            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
-				            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
-				            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
+		write: function (params) { 	this.toggle (true)
 
+									if (params.config.clear) {
+										this.body.empty () }
 
-            this.clip.postpone ()
+						            this.body.append ($('<div class="ulo-line">')
+										            	.attr ('style', (params.color && params.color.css) || '')
+										            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
+										            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
+										            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
 
-            if (!this.opaque) {
-				log.impl.defaultWriteBackend (params) } }
+						            this.clip.postpone ()
 
-	})
+						            if (!this.opaque) {
+										log.impl.defaultWriteBackend (params) } } })
 
 // -- end of namespace
 

@@ -1812,7 +1812,10 @@ _.perfTest = function (arg, then) {
             var elHeight = this.el.height();
             var bodyHeight = this.body.height();
             this.body.children().filter(this.$(function (i, line) {
-                return elHeight - (bodyHeight - $(line).offsetInParent().y) < elHeight / 2;
+                var lineTop = bodyHeight - $(line).offsetInParent().y;
+                var lineBottom = lineTop - $(line).height();
+                var clipHeight = elHeight / 2;
+                return lineTop > clipHeight && lineBottom > clipHeight;
             })).remove();
         },
         write: function (params) {
