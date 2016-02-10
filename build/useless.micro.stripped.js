@@ -1476,6 +1476,14 @@ _.builtInTypes = {
         startOffset: $any,
         endContainer: $any,
         endOffset: $any
+    },
+    'ClientRect': {
+        left: $any,
+        top: $any,
+        right: $any,
+        bottom: $any,
+        width: $any,
+        height: $any
     }
 };
 _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
