@@ -10,6 +10,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
+
 - `$raw` methods for disabling thiscall semantics for performance-critical methods in components. In other words, it disables auto binding of methods to `this`, which comes with performance penalty of one extra call.
 
 - `LogOverlay` now automatically clips its output (removing invisible lines) to reduce page freezes on a huge amount of log output. It is also gradients itself with `-webkit-mask-image`. Screenshot shows log output built automatically with **$log** and `Testosterone.LogsMethodCalls`:  ![showcase](http://img.leprosorium.com/2492460)
