@@ -10,7 +10,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- `$callableAsMethod` which is a cousin to recent `$callableAsFreeFunction`. Allows to define instance methods that also exhibit static call interface (as a type member). See [`OOP.js`](https://github.com/xpl/useless/blob/master/base/base/OOP.js) for details.
+- `$callableAsMethod` which is a cousin to recent `$callableAsFreeFunction`. Allows to define instance methods that also exhibit static call interface (as a type member). See [`OOP.js`](https://github.com/xpl/useless/blob/master/base/OOP.js) for details.
 
 - `$raw` methods for disabling thiscall semantics for performance-critical methods in components. In other words, it disables auto binding of methods to `this`, which comes with performance penalty of one extra call.
 
