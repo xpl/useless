@@ -296,7 +296,7 @@ compo.didLayout (function () {
 
 compo.layoutReady (function () {
     /*  Postpones until DOM is ready.
-        If already, calls immediately (like document.ready) */ })
+        If already, calls immediately (like $(document).ready) */ })
 
 compo.valueChange (function (value, oldValue) {
     /*  Gets called whenether property has assigned distinct value */ })
