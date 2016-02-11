@@ -23,11 +23,29 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return (x && (x.$definition !== undefined)) || false }
 
+
+/*  NaN has interesting property: Number.NaN !== Number.NaN, this makes it
+    more preferable than undefined/null in some cases. This function converts
+    anything that is not a number to NaN.
+    ======================================================================== */
+
+_.coerceToNaN = function (x) { return _.isFinite (x) ? x : Number.NaN }
+
+
 /*  Useful for defining functions that accept either [x] or x as argument
     ======================================================================== */
 
 _.coerceToArray = function (x) {
-                        return (x === undefined) ? [] : (_.isArray (x) ? x : [x]) }
+                    return (x === undefined) ? []
+                                             : (_.isArray (x) ? x :
+                                                               [x]) }
+
+/*  Useful for defining flow control parameterization
+    ======================================================================== */
+
+_.coerceToFunction = function (x) {
+          return _.isFunction (x) ?             x
+                                  : _.constant (x) }
 
 /*  Fixes _.isArray to account objects that derive from Array prototype
     ======================================================================== */

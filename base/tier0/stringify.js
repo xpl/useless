@@ -14,24 +14,69 @@ _.json = function (arg) {
 
 _.deferTest (['type', 'stringify'], function () {
 
-        var complex =  { foo: $constant ($get (1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
-            complex.bar[0].bar = complex.bar
+        if (_.hasTags) {
 
-        var renders = '{ foo: $constant ($get (1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
+            var complex =  { foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
+                complex.bar[0].bar = complex.bar
 
-        var Proto = $prototype ({})
+            var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
 
-        $assert (_.stringify (Proto),   '<prototype>')
+            var Proto = $prototype ({})
 
-        $assert (_.stringify (123),     '123')
-        $assert (_.stringify (complex), renders)
+            $assert (_.stringify (Proto),   Platform.NodeJS ? 'Proto ()' : '<prototype>')
+
+            $assert (_.stringify (undefined),'undefined')
+            $assert (_.stringify (123),     '123')
+            $assert (_.stringify (complex, { pretty: false }), renders) }
+
+        $assert (_.pretty ({    array: ['foo',
+                                        'bar',
+                                        'baz'],
+                                 more:  'qux',
+                             evenMore:   42    }), ['{    array: [ "foo",'    ,
+                                                    '              "bar",'    ,
+                                                    '              "baz"  ],' ,
+                                                    '      more:   "qux",'    ,
+                                                    '  evenMore:    42       }'].join ('\n'))
 
         var obj = {}
         $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
 
-    _.stringify         = function (x, cfg) { return _.stringifyImpl (x, [], [], 0, cfg || {}, -1) }
+    _.alignStringsRight = function (strings) {
+                                                var              lengths = strings.map (_.count)
+                                                var max = _.max (lengths)
+                            return                              [lengths,  strings].zip (function (ln,   str) {
+                                return ' '.repeats (max -                                          ln) + str }) }
 
-    _.stringifyImpl     = function (x, parents, siblings, depth, cfg, prevIndent) {
+    _.bullet = function (bullet,        str) { var indent = ' '.repeats (bullet.length)
+              return _.joinWith  ('\n',
+                     _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
+                                                                                 ? (bullet + line)
+                                                                                 : (indent + line) })) }
+                        
+    _.stringifyOneLine = function (x, cfg) {
+                            return _.stringify (x, _.extend (cfg || {}, { pretty: false })) }
+
+    _.pretty = function (x, cfg) {
+                    return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
+
+    _.stringify = function  (x, cfg) { cfg = cfg || {}
+                    var measured = _.stringifyImpl (x, [], [], 0, cfg)
+                    return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
+
+    _.stringifyPrototype = function (x) {
+            if (Platform.NodeJS && x.$meta) { var name = ''
+                x.$meta (function (values) { name = values.name })
+                return name && (name + ' ()') }
+            else return '<prototype>' }
+
+    _.builtInTypes = {
+        'Event':         { target: $any },
+        'MutationEvent': { target: $any, attrName: $any, prevValue: $any },
+        'Range':         { startContainer: $any, startOffset: $any, endContainer: $any, endOffset: $any },
+        'ClientRect':    { left: $any, top: $any, right: $any, bottom: $any, width: $any, height: $any } }
+
+    _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
 
                             var customFormat = cfg.formatter && cfg.formatter (x)
 
@@ -57,57 +102,90 @@ _.deferTest (['type', 'stringify'], function () {
                                 return 'null' }
 
                             else if (_.isFunction (x)) {
-                                return cfg.pure ? x.toString () : (_.isPrototypeConstructor (x) ? '<prototype>' : '<function>') }
+                                return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x) }
+                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 40)) }
 
                             else if (_.isTypeOf (Tags, x)) {
-                                return _.reduce (_.keys (Tags.get (x)), function (memo, tag) { return tag + ' ' + memo.quote ('()') },
-                                            _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg, indent)) }
+                                return _.reduce (Tags.get (x), function (memo, value, tag) {
+                                                                    return _.isBoolean (value)
+                                                                        ? (tag + ' ' + memo.quote ('()'))
+                                                                        : (tag + ' (' + _.stringifyImpl (value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')') },
+                                    _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
 
                             else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
                                 return x.toString () }
 
-                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) { var isArray = _.isArray (x)
+                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) {
 
-                                var pretty = cfg.pretty || false
+                                var builtInValue = _.find2 (_.builtInTypes, function (schema, name) {
+                                                                                return ($global[name] &&
+                                                                                    (x instanceof $global[name]) &&
+                                                                                    (name + ' ' + _.stringifyOneLine (
+                                                                                                        _.omitTypeMismatches (schema, x)))) || false })
+                                if (builtInValue) {
+                                    return builtInValue }
+                                    
+                                else {
+                                    var isArray = _.isArray (x)
 
-                                if ((_.platform ().engine === 'browser')) {
-                                    if (_.isTypeOf (Element, x)) {
-                                        return '<' + x.tagName.lowercase + '>' }
-                                    else if (_.isTypeOf (Text, x)) {
-                                        return '@' + x.wholeText } }
+                                    var pretty = cfg.pretty || false
 
-                                if (x.toJSON) {
-                                    return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
+                                    if ((_.platform ().engine === 'browser')) {
+                                        if (_.isTypeOf (Element, x)) {
+                                            return (x.tagName.lowercase +
+                                                        ((x.id && ('#' + x.id)) || '') +
+                                                        ((x.className && ('.' + x.className)) || '')).quote ('<>') }
+                                            //return x.outerHTML.substr (0, 12) + '…' }
+                                            //return x.tagName.lowercase.quote ('<>') }
+                                        else if (_.isTypeOf (Text, x)) {
+                                            return '@' + x.wholeText.limitedTo (20) } }
 
-                                if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
-                                    return isArray ? '<array[' + x.length + ']>' : '<object>' }
+                                    if (x.toJSON) {
+                                        return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
-                                var parentsPlusX = parents.concat ([x])
+                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
+                                        return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
-                                siblings.push (x)
+                                    var parentsPlusX = parents.concat ([x])
 
-                                var values  = _.pairs (x)
+                                    siblings.push (x)
 
-                                var oneLine = !pretty || (values.length < 2)
+                                    var values  = _.pairs (x)
 
-                                var indent  = prevIndent + 1
-                                var tabs    = !oneLine ? '\t'.repeats (indent) : ''
+                                    var oneLine = !pretty || (values.length < 2)
 
-                                if (pretty && !isArray) {
-                                    var max = _.reduce (_.map (_.keys (x), _.count), _.largest, 0)
-                                    values = _.map (values, function (v) {
-                                        return [v[0], v[1], ' '.repeats (max - v[0].length)] }) }
+                                    var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
 
-                                var square  = !oneLine ? '[\n  ]' : '[]'
-                                var fig     = !oneLine ? '{\n  }' : '{  }'
-                                
-                                return _.quoteWith (isArray ? square : fig, _.joinWith (oneLine ?  ', ' : ',\n',
-                                            _.map (values, function (kv) {
-                                                        return tabs + (isArray ? '' : (kv[0] + ': ' + (kv[2] || ''))) +
-                                                            _.stringifyImpl (kv[1], parentsPlusX, siblings, depth + 1, cfg, indent) }))) }
+                                    if (pretty) {
+                                            values        = _.values (x)
+                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
+                                        var printedValues =                            values.map (impl)
+
+                                        var leftPaddings = printedValues.map (function (x, i) {
+                                                                                return (((x[0] === '[') ||
+                                                                                         (x[0] === '{')) ? 3 :
+                                                                                            _.isString (values[i]) ? 1 : 0) })
+                                        var maxLeftPadding = _.max (leftPaddings)
+
+                                        var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
+                                                                     return ' '.repeats (maxLeftPadding - padding) + x })
+
+                                        var internals = isArray ? indentedValues :
+                                                    [printedKeys, indentedValues].zip (_.bullet)
+
+                                        var printed = _.bullet (isArray ? '[ ' :
+                                                                          '{ ', internals.join (',\n'))
+                                        var lines = printed.split ('\n')
+
+                                        return printed +  (' '.repeats (_.max (lines.map (_.count)) -
+                                                                        _.count (lines.last)) + (isArray ? ' ]' :
+                                                                                                           ' }')) }
+
+                                    return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
+                                                _.map (values, function (kv) {
+                                                            return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) } }
 
                             else if (_.isDecimal (x) && (cfg.precision > 0)) {
                                 return _.toFixed (x,     cfg.precision) }

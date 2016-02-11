@@ -1,4 +1,4 @@
-module.exports = $trait ({
+ServerAPI = module.exports = $trait ({
 
     tests: {
 
@@ -70,7 +70,7 @@ module.exports = $trait ({
     /*  Public API
      */
 
-    beforeInit: function (then) { log.info ('Reading API schema')
+    beforeInit: function (then) { log.minor ('Reading API schema')
 
         this.apiSchema = APISchema.collapse (
             _.flat (_.filter2 ((this.constructor.$traits || []).reversed, this.$ (function (Trait) {

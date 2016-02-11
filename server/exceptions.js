@@ -1,13 +1,17 @@
-module.exports = $trait ({
+ module.exports = NiceExceptions = $trait ({
 
-    beforeInit: function (then) { log.info ('Setting up exception handling')
+    beforeInit: function (then) { log.minor ('Setting up exception handling')
 
         _.withUncaughtExceptionHandler (this.$ (function (e) {
-            if (!this.restarting) {             // Swallow errors if we're restarting (as they're expected)
-                log.writeUsingDefaultBackend ('\n', e) }
-            if (e.fatal) {              
-                throw 'cannot continue' } }),   // Let nodemon/supervisor do their job
-            then) },
+
+            if (!this.restarting) {
+                log.writeUsingDefaultBackend ('\n', e) }  // Swallow errors if we're restarting (as they're expected)
+
+            if (e.fatal) {
+                log.e (log.boldLine + ' cannot continue ' + log.boldLine + '\n')
+                process.exit () } }))
+        
+        then () },
 
     /*  Mark your request processing chains with this method, to select proper error printer
      */

@@ -10,15 +10,17 @@ var path        = require ('path'),
     _           = require ('underscore'),
     jsStrEscape = require ('js-string-escape')
 
+path.joins     = _.higherOrder (path.join)
+path.joinWith  = _.flipN       (path.join)
+path.joinsWith = _.higherOrder (path.joinWith)
 
 _.tests.util = {
 
     'crypt': function () {
-        var util    =  module.exports
         var options = { key: 'f00bAя' }
         var message = 'Hello world'
-        var encrypted = util.encrypt (options, message)
-        var decrypted = util.decrypt (options, encrypted)
+        var encrypted = module.exports.encrypt (options, message)
+        var decrypted = module.exports.decrypt (options, encrypted)
 
         $assert (encrypted.length > 0)
         $assert (encrypted !== message)
@@ -45,47 +47,16 @@ module.exports = {
             log.error (e)
             return undefined } },
 
-    /*  Loaded modules are returned either as arguments:
-            1. require (['esprima', 'escodegen'], function (esprima, escodegen) { })
+    compileScript: function (cfg) { if (!cfg.source) {
+                                    if (!cfg.sourceFile) { module.exports.fatalError ('no sourceFile specified') }
+                                         cfg.source      = module.exports.readFile (cfg.sourceFile, cfg.includePaths) }
 
-        Or pushed to global namespace, if callback has no arguments:
-            2. require (['esprima', 'escodegen'], function () { $assert (esprima !== undefined) })
-     */
-    require: function (names, then) {
-        _.cps.map (names,
-                function (name, i, return_) {
-                    _.tryEval (function () { return require (name) },
-                               function (e) {
-                                    exec ('npm install ' + name, function (e, stdout, stderr) {
-                                                                        if (e) {
-                                                                            util.fatalError (stderr) }
-                                                                        else {
-                                                                            _.delay (function () {
-                                                                                var module = require (name)
-                                                                                if (module) {
-                                                                                    log.ok ('Installed', name) }
-                                                                                else {
-                                                                                    log.error ('Install failed:', name) }
-                                                                                return_ (module) }) } }) },
-                                function (module) { if (module) {
-                                                        log.info ('Loaded', name)
-                                                        return_ (module) } }) },
-                function (modules) {
-                    if (_.noArgs (then)) {
-                        _.each (modules, function (module, i) { $global[names[i]] = module }) }
-                    then.apply (null, _.coerceToArray (modules)) }) },
+                        var read = function (what) { var file = module.exports.locateFile (what, cfg.includePaths)
+                                                     return module.exports.compileScript ({
+                                                                includePaths: _.cons (path.dirname (file), cfg.includePaths), 
+                                                                source:       module.exports.readFile (file) }) }
 
-    compileScript: function (cfg) {
-
-                        var read = function (what) { var file = path.join (cfg.includePath, what)
-
-                            try       { return module.exports.compileScript ({
-                                                    includePath: path.dirname (file), 
-                                                    source:      fs.readFileSync (file, { encoding: 'utf-8' }) }) }
-
-                            catch (e) { module.exports.fatalError ('\nCannot read:', file) } }
-
-                        return _.map (cfg.source.split ('\n'), function (line) {
+                        var result = _.map (cfg.source.split ('\n'), function (line) {
 
                             var includeStrMatch = line.match (/^(.*)\$includeStr \(\'(.+)\'\)(.*)$/)
                             if (includeStrMatch) {
@@ -96,15 +67,31 @@ module.exports = {
                             if (moduleName) {
                                 return line.match (/^\s*\/\/.*/) ? '' : (read (moduleName + '.js') + ';') }
                             else {
-                                return line } }).join ('\n') },
+                                return line } }).join ('\n')
+
+                        if (cfg.outputFile) {
+                            module.exports.writeFile (cfg.outputFile, result) }
+
+                        return result },
 
     fatalError: function (explain) {
-                    log.error.apply (null, _.asArray (arguments).concat ('\n'))
+                    log.error.apply (null, _.cons (log.config ({ stackOffset: 1 }), _.asArray (arguments).concat ('\n')))
                     throw _.extend (new Error (_.asArray (arguments).join (' ')), { fatal: true, stackOffset: 1 }) },
                     
-    lstatSync: function (dst) {
+    lstatSync: function (dst) { // NOTE: replace with lstatSync.catches
                     try       { return fs.lstatSync (dst) }
                     catch (e) { return undefined } },
+
+    locateFile: function (name, searchPaths) {
+        return _.find (_.cons (name, (searchPaths || [process.cwd ()]).map (path.joinsWith (name).arity1)),
+                        fs.lstatSync.catches (false, true)) || module.exports.fatalError ('Unable to locate ' + name) },
+
+    readFile: function (name, searchPaths) {
+        return fs.readFileSync.catches (module.exports.fatalError.$ ('Cannot read', name)) (
+                                        module.exports.locateFile (name, searchPaths), { encoding: 'utf-8' }) },
+
+    writeFile: function (file, what) {
+        fs.writeFileSync.$ (file, what, { encoding: 'utf-8'}).catches (module.exports.fatalError.$ ('Cannot write', file)) ()  },
 
     mkdir: function (dirPath, root_) {
         var dirs = dirPath.split ('/')
@@ -127,7 +114,7 @@ module.exports = {
         return resultName
     },
     httpGet_and_downloadFile_example: function () {
-        util.httpGet ({
+        module.exports.httpGet ({
             path: '/',                  // URL part after the hostname
             host: 'www.cian.ru',        // if you encounter "getaddrinfo ENOTFOUND" error, probably your 'host' is not correct (DNS failure)
             port: 80,                   // 443 for HTTPS, any other (usually 80) for HTTP
@@ -145,7 +132,7 @@ module.exports = {
             success: function (data) { log.success ('httpGot', data) },
             failure: log.error
         })
-        util.downloadFile ({
+        module.exports.downloadFile ({
             overwrite: false, // if false, skips download if file already exists at 'dst' (default is true)
             dst: path.join (process.cwd (), 'static/photos/index.html'), // target path in file system
             src: {
@@ -185,7 +172,7 @@ module.exports = {
     },
     httpGet: function (cfg) {
         log.info ('httpGet:', cfg.host + cfg.path)
-        var req = (cfg.port === 443 ? https : http).get (cfg, util.readHttpResponse (cfg.encoding, cfg.success))
+        var req = (cfg.port === 443 ? https : http).get (cfg, module.exports.readHttpResponse (cfg.encoding, cfg.success))
         req.on ('error', cfg.failure)
     },
     downloadFile: function (cfg) {
@@ -195,7 +182,7 @@ module.exports = {
         } else {
             log.warn ('downloadFile: downloading', cfg.src.path)
             var req = (cfg.src.port === 443 ? https : http).get (cfg.src, function (response) {
-                util.writeRequestDataToFile (_.extend (_.pick (cfg, 'success', 'failure'), {
+                module.exports.writeRequestDataToFile (_.extend (_.pick (cfg, 'success', 'failure'), {
                     request: response,
                     filePath: cfg.dst
                 }))

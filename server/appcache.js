@@ -1,4 +1,4 @@
-module.exports = $trait ({
+ServerAppcache = module.exports = $trait ({
 
     api: function () {
             return {

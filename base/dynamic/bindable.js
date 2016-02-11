@@ -68,7 +68,7 @@ _.deferTest ('bindable', function () {
     /*  Internal impl
      */
     var hooks      = ['onceBefore', 'onceAfter', 'onBefore', 'onAfter', 'intercept']
-    var hooksShort = ['onceBefore', 'onceAfter', 'before', 'after', '']
+    var hooksShort = ['onceBefore', 'onceAfter', 'before', 'after', 'intercept']
 
     var copyHooks = function (from, to) {
         _.extend (to, _.map2 (_.pick (from, hooks), _.clone)) }
@@ -81,9 +81,9 @@ _.deferTest ('bindable', function () {
                                var bindable = makeBindable (obj, targetMethod)
                             return bindable[name].call (bindable, delegate) } }
 
-    var mixin = function (method) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
+    var mixin = function (method, context) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
 
-                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method },
+                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method, context: context },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */
@@ -119,7 +119,7 @@ _.deferTest ('bindable', function () {
             return (fn && fn._bindable) ? true : false },
 
         bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
-            return _.withSameArgs (method, _.extendWith (mixin (method), function () {   
+            return _.withSameArgs (method, _.extendWith (mixin (method, context), function () {   
 
                 var wrapper     = arguments.callee
                 var onceBefore  = wrapper._onceBefore
@@ -155,9 +155,9 @@ _.deferTest ('bindable', function () {
 
                     /*  Call onceAfter
                      */
-                    if (onceAfter.length) {
-                        for (i = 0, ni = onceAfter.length; i < ni; i++) {
-                            onceAfter[i].apply (this_, args) }
-                        onceAfter.removeAll () } }
+                    if (onceAfter.length) { var arr = onceAfter.copy
+                                                      onceAfter.removeAll ()
+                        for (i = 0, ni = arr.length; i < ni; i++) {
+                            arr[i].apply (this_, args) } } }
 
                 return result } )) }) }) })

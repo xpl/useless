@@ -443,23 +443,6 @@ _.partition2 ([ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty)
 //      gives [['a', 'b', 'c'], [undefined, undefined], ['d']]
 ```
 
-## _.tryEval (try, catch, then)
-
-A functional try-catch.
-
-```javascript
-/*  Safely evaluates a function
- */
-var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
-                        function ()  { return 'catched' },
-                        function (x) { return x /* should be 'catched' */ })
-
-/*  'Then' callback could be omited
- */
-var result = _.tryEval (function ()  { throw 'oh fock'; return 2 + 2 },
-                        function ()  { return 'catched' })
-```
-
 # typeMatch.js
 
 [Read its source for the reference](https://github.com/xpl/useless/blob/master/base/tier0/typeMatch.js), as docs are pending. Provides advanced type / pattern matching utility, allowing to match against deep structures.

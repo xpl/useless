@@ -3,15 +3,21 @@ var fs              = require ('fs'),
     util            = require ('./base/util'),
     exec            = require ('child_process').exec
 
-module.exports = $trait ({
+ module.exports = ServerDeploy = $trait ({
 
+    $depends: [require ('./io')],
+
+    buildScriptPaths: [process.cwd (), $uselessPath],
     buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
+    buildPath: $uselessPath + 'build/',
 
-    buildScript: function (name) { log.info ('Building monolithic ' + name)
+    buildTargetPath: function (file) { return path.join (this.buildPath, file) },
 
-        var includeFile = fs.readFileSync ($uselessPath + name, { encoding: 'utf8' })
-        var compiledSrc = util.compileScript ({ source: includeFile, includePath: $uselessPath })
-        fs.writeFileSync ($uselessPath + 'build/' + name, compiledSrc, { encoding: 'utf8' }) },
+    buildScript: function (name) { log.blue ('Building monolithic ', log.color.pink, name)
+
+        util.compileScript ({ sourceFile:    name,
+                              includePaths:  this.buildScriptPaths,
+                              outputFile:    this.buildTargetPath (name) }) },
 
     /*  Self deployment protocol
      */

@@ -1,6 +1,8 @@
 var fs = require ('fs')
 
-module.exports = $trait ({
+ServerTemplating = module.exports = $trait ({
+
+    $depends: [require ('./io')],
 
     /*  Front-end (as request processing chain primitive)
      */

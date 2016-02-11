@@ -1,3 +1,18 @@
+
+_.deferTest (['identifier naming style interpolation'], function () {
+
+    $assert (_.camelCaseToLoDashes        ('flyingBurritoOption'), 'flying_burrito_option')
+    $assert (_.camelCaseToDashes          ('flyingBurritoOption'), 'flying-burrito-option')
+    $assert (_.dashesToCamelCase          ('flying-burrito-option'), 'flyingBurritoOption')
+    $assert (_.loDashesToCamelCase        ('flying_burrito_option'), 'flyingBurritoOption')
+
+}, function () {
+
+    _.camelCaseToDashes   =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '-' + x[1].lowercase }) }
+    _.camelCaseToLoDashes =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '_' + x[1].lowercase }) }
+    _.dashesToCamelCase   =   function (x) { return x.replace (/(-.)/g,       function (x) { return x[1].uppercase }) } })
+    _.loDashesToCamelCase =   function (x) { return x.replace (/(_.)/g,       function (x) { return x[1].uppercase }) }
+
 Format = {
 
     /*  Use this to print objects as JavaScript (supports functions and $-tags output)
@@ -21,7 +36,6 @@ Format = {
 
     progressPercents: function (value, max) {
         return Math.floor ((value / max) * 100) + '%' },
-
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {

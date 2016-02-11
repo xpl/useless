@@ -19,6 +19,9 @@ _.deferTest ('String extensions', function () {
     $assert ('па'.prepend   ('жо'),
              'жо'.append    ('па'), 'жопа')
 
+    $assert (['жопа'.contains ('опа'),
+              'жопа'.contains ('апож')], [true, false])
+
     /*  Higher order version of former utility
      */
     $assert ([  _.map ([1, 2, 3], _.prepends ('foo')), // higher order version
@@ -67,9 +70,16 @@ _.deferTest ('String extensions', function () {
     $assert  (_.isTypeOf (Uint8Array, 'foo'.bytes))
     $assert  (_.asArray ('foo'.bytes), [102, 111, 111])
 
+    $assert  (['foobar'  .limitedTo (6),
+               'tooloong'.limitedTo (6),
+               ''        .limitedTo (0)], ['foobar',
+                                           'toolo…', ''])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
+
+    contains: function (s, other) { return s.indexOf (other) >= 0 },
 
     cut: function (s, from) {
         return s.substring (0, from - 1) + s.substring (from, s.length) },
@@ -85,6 +95,9 @@ _.deferTest ('String extensions', function () {
 
     trimmed: function (s) {
         return s.trim () },
+
+    limitedTo: function (s, n) {
+        return s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')) },
 
     escaped: function (s) {
         return _.escape (s) },

@@ -1,3 +1,14 @@
+/*  Useful for debugging and tests
+    ======================================================================== */
+
+_.debugEcho = function () { return [this].concat (_.asArray (arguments)) }
+
+
+/*  Context-free version of fn.call (for consistency)
+    ======================================================================== */
+
+_.call = function (fn, this_, args) { return fn.apply (this_, _.rest (arguments, 2)) }
+
 /*  Limits function to given number of arguments
     ======================================================================== */
 
@@ -34,19 +45,92 @@ _.tails3 = $restArg (function (fn) { var tailArgs = _.rest (arguments)
                                         return function (a, b) {
                                             return fn.apply (this, [a, b].concat (tailArgs)) }})
 
+
+/*  Userful for higher order operations
+    ======================================================================== */
+
+_.withTest (['function', 'calls / tails'], function () {
+
+    var fn       = _.debugEcho
+    var  foo42_  = _.callsWith ('foo', 42)
+    var _foo42   = _.tailsWith ('foo', 42)
+
+    var foo42_fn =   foo42_ (fn)
+    var fn_foo42 =  _foo42  (fn)
+
+    var _fn       = _.callsTo (fn)
+    var  fn_      = _.tailsTo (fn)
+    var fn_bar24  =  fn_ ('bar', 24)
+    var bar24_fn  = _fn  ('bar', 24)
+
+    $assert (foo42_fn.call ('lol', 777), ['lol', 'foo', 42, 777])
+    $assert (bar24_fn.call ('lol', 777), ['lol', 'bar', 24, 777])
+
+    $assert (fn_foo42.call ('lol', 777), ['lol', 777, 'foo', 42])
+    $assert (fn_bar24.call ('lol', 777), ['lol', 777, 'bar', 24])
+
+    $assertEveryCalledOnce (function (mkay) {
+        _.argumentPrependingWrapper (fn, function (fn) {
+            $assert (fn (777), ['lol', 777, 'foo', 42]); mkay () }).call ('lol', 'foo', 42) })
+
+}, function () {
+
+    _.callsTo = function (fn) {
+                    return $restArg (function () {
+                        return _.callsWith.apply (null, arguments) (fn) }) }
+
+    _.tailsTo = function (fn, then) {
+                    return $restArg (function () {
+                        return _.tailsWith.apply (null, arguments) (fn) }) }
+
+    _.callsWith = $restArg (function (/* args */) { var args = _.asArray (arguments)
+                                        return function (fn) {
+                                            return _.withSameArgs (fn, function () {
+                                                return fn.apply (this, args.concat (_.asArray (arguments))) }) } })
+
+
+    _.tailsWith = $restArg (function (/* args */) { var args = _.asArray (arguments)
+                                        return function (fn) {
+                                            return _.withSameArgs (fn, function () {
+                                                return fn.apply (this, _.asArray (arguments).concat (args)) }) } })
+
+    _.argumentAppendingWrapper = function (fn, then) {
+        return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
+                                        return then (function () {
+                                            return fn.apply (this_, args.concat (_.asArray (arguments))) }) }) }
+
+    _.argumentPrependingWrapper = function (fn, then) {
+        return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
+                                        return then (function () {
+                                            return fn.apply (this_, _.asArray (arguments).concat (args)) }) }) } })
+
+
+/*  binding to constructor arguments (cannot do this with bind/partial)
+    ======================================================================== */
+
+_.new_ = $restArg (function (Constructor, a, b, c, d) {
+            switch (arguments.length) {
+                case 1: return new Constructor ()
+                case 2: return new Constructor (a)
+                case 3: return new Constructor (a, b)
+                case 4: return new Constructor (a, b, c)
+                case 5: return new Constructor (a, b, c, d)
+                default: _.notImplemented () } })
+
 /*  Flips function signature (argument order)
     ======================================================================== */
 
+_.flipN = function (fn) { return $restArg (function () {
+             return fn.apply (this, _.asArray (arguments).reverse ()) })}
+
 _.flip = function (fn) {
-            if (_.restArg (fn)) { return $restArg (function () {
-                return fn.apply (this, _.asArray (arguments).reverse ()) }) }
-            else {
-                switch (_.numArgs (fn)) {
-                    case 0:
-                    case 1: return fn
-                    case 2: return _.flip2 (fn)
-                    case 3: return _.flip3 (fn)
-                    default: throw new Error ('flip: unsupported arity') } } }
+            if (_.restArg (fn)) { return _.flipN (fn) }
+            else { switch (_.numArgs (fn)) {
+                                    case 0:
+                                    case 1: return fn
+                                    case 2: return _.flip2 (fn)
+                                    case 3: return _.flip3 (fn)
+                                    default: throw new Error ('flip: unsupported arity') } } }
 
 _.flip2 = function (fn) { return function (a, b) {
                                     return fn.call (this, b, a) }}
@@ -154,7 +238,7 @@ _.withTest (['function', 'higherOrder'], function () {
 
         $assert (file, ['foo', 'foo', 'foo']) }, function () {
 
-    _.higherOrder = function (fn) { return _.partial (_.partial, fn) } })
+    _.higherOrder = _.callsTo })
 
 /*  coerces x|fn()→x to x (useful for configuration parameters)
     ======================================================================== */
@@ -195,28 +279,6 @@ _.asFreeFunction = function (fn) { return function (this_, restArg) {
 
 _.asMethod = function (fn) { return function () {
                                         return fn.apply (undefined, [this].concat (_.asArray (arguments))) } }
-
-
-/*  Wrapper generator
-    ======================================================================== */
-
-_.appendsArguments = function (fn, wrapper) {
-                        return _.withSameArgs (fn, function () {
-                                                        var this_ = this
-                                                        var args = _.asArray (arguments)
-                                                        return wrapper (function () {
-                                                                            fn.apply (
-                                                                                this_,
-                                                                                args.concat (_.asArray (arguments))) }) }) }
-
-_.prependsArguments = function (fn, wrapper) {
-                        return _.withSameArgs (fn, function () {
-                                                var this_ = this
-                                                var args = _.asArray (arguments)
-                                                return wrapper (function () {
-                                                                    fn.apply (
-                                                                        this_,
-                                                                        _.asArray (arguments).concat (args)) }) }) }
 
 
 /*  _.once

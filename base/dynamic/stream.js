@@ -264,7 +264,7 @@ _.extend (_, {
                 stream (function (val) {
                     if (matchFn (val)) {
                         stream.off (arguments.callee)
-                        then (val) } }) } }) },
+                        then.apply (this, arguments) } }) } }) },
 
 
     barrier: function (defaultValue) { var defaultListener = undefined

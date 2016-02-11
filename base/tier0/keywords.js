@@ -47,7 +47,7 @@ _.withTest ('keywords', function () {
 
     /*  This is how you coerce what-might-be-tagged to actual values:
      */
-    $assert (Tags.unwrap (42), Tags.unwrap (test.fourtyTwo), 42)
+    $assert ($untag (42), Tags.unwrap (42), Tags.unwrap (test.fourtyTwo), 42)
     $assert (Tags.unwrapAll (test), { fourtyTwo: 42, fourtyOne: 41, notTagged: 40 })
 
     /*  Tags have .matches property, which is a predicate to test objects for those tags.
@@ -63,9 +63,9 @@ _.withTest ('keywords', function () {
 
     /*  You can replace value that might be tagged, i.e. $foo($bar(x)) → $foo($bar(y))
      */
-    $assert (43,                Tags.modifySubject (42,         function (subject) { return subject + 1 })) // not tagged
-    $assert ($foo (43),         Tags.modifySubject ($foo (42),  _.constant (43)))
-    $assert ($foo ($bar (43)),  Tags.modifySubject ($foo (42),  function (subject) { return $bar (subject + 1) }))
+    $assert (43,                Tags.modify (42,         function (subject) { return subject + 1 })) // not tagged
+    $assert ($foo (43),         Tags.modify ($foo (42),  _.constant (43)))
+    $assert ($foo ($bar (43)),  Tags.modify ($foo (42),  function (subject) { return $bar (subject + 1) }))
 
     /*  Previous mechanism is essential to so-called 'modifier keywords'
      */
@@ -87,43 +87,75 @@ _.withTest ('keywords', function () {
     $assert (     $qux ([8, 9, $foo ($bar (10))]),
         Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
 
+    /*  Enumerating tags with Tags.each (obj, iter)
+     */
+    $assertMatches (['foo', 'bar', 'qux'], _.arr (function (iter) { Tags.each (test.fourtyTwo, iter) }))
+
     /*  Tagging with non-boolean data
      */
     $assert ($foo ({ some: 'params' }, 42).$foo, { some: 'params' })
 
+    /*  'Extend' algebra
+     */
+    $assert (Tags.extend ($foo (7), $bar (8)), $foo ($bar (7)))
+    $assert (Tags.extend ($foo (7),       8),  $foo (      7))
+    $assert (Tags.extend (      7,  $foo (8)), $foo (      7))
+    $assert (Tags.extend (      7,        8),              7)
+
+    /*  Tags.omit
+     */
+    $assert (Tags.omit (            7,   '$foo'),          7)
+    $assert (Tags.omit ($foo ($bar (7)), '$foo',  '$bar'), 7)
+    $assert (Tags.omit ($foo ($bar (7)), '$foo'),  $bar (  7))
+
 }, function () {
 
     Tags = _.extend2 (
-
-        function (subject) { if (subject !== undefined) {
-                                this.subject = subject } }, {
+                function (subject, keys) { if (subject !== undefined) { this.subject = subject }
+                                           if (keys    !== undefined) { _.extend (this, keys) } }, {
 
     $definition: {}, // to make it recognizeable by _.isPrototypeInstance
 
     prototype: {
 
-        /* instance methods (internal impl)
-         */
-        add: function (name, additionalData) {
-                return this[_.keyword (name)] = additionalData || true, this },
+            /* instance methods (internal impl)
+             */
+            add: function (name, additionalData) {
+                    return this[_.keyword (name)] = additionalData || true, this },
 
-        clone: function (newSubject) {
-            return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
+            clone: function (newSubject) {
+                return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
 
-        modifySubject: function (changesFn) {
-                            this.subject = changesFn (this.subject)
-                            if (_.isTypeOf (Tags, this.subject)) {
-                                return _.extend (this.subject, _.pick (this, _.keyIsKeyword)) }
-                            else {
-                                return this }} },
+            modify: function (changesFn) {
+                                this.subject = changesFn (this.subject)
+                                if (_.isTypeOf (Tags, this.subject)) {
+                                    return _.extend (this.subject, _.pick (this, _.keyIsKeyword)) }
+                                else {
+                                    return this }},
+
+            extend: function (other) {
+                        return (_.isTypeOf (Tags, other)) ? _.extend (this, _.pick (other, _.keyIsKeyword)) : this } },
 
         /* static methods (actual API)
          */
+        omit: $restArg (function (what, ___) {
+            if (_.isTypeOf (Tags, what)) {                var keysToOmit = _.index (_.rest (arguments))
+                                                          var keysLeft   = _.pick (what, function (v, k) { return _.isKeyword (k) && !(k in keysToOmit) })
+                        return (!_.isEmptyObject (            keysLeft)
+                                    ? new Tags (what.subject, keysLeft)
+                                    :           what.subject) }             else { return what } }),
+  
         clone: function (what, newSubject) {
-            return _.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what) },
+                        return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
+
+        extend: function (what, other) { return _.isTypeOf (Tags, what)  ? what.clone ().extend (other) : (
+                                                _.isTypeOf (Tags, other) ? Tags.wrap (what).extend (other) : what) },
 
         get: function (def) {
-            return _.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {} },
+                        return (_.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {}) },
+
+        each: function (def, accept) {
+                        if (_.isTypeOf (Tags, def)) { _.each (def, function (v, k) { if (k[0] === '$') { accept (k.slice (1)) } }) } },
 
         hasSubject: function (def) {
                         return (_.isTypeOf (Tags, def) && ('subject' in def)) },
@@ -140,14 +172,14 @@ _.withTest ('keywords', function () {
         wrap: function (what) {
             return _.isTypeOf (Tags, what) ? what : ((arguments.length === 0) ? new Tags () : new Tags (what)) },
 
-        modifySubject: function (what, changesFn) {
+        modify: function (what, changesFn) {
                             return _.isTypeOf (Tags, what) ?
-                                        what.clone ().modifySubject (changesFn) : changesFn (what) }, // short circuits if not wrapped
+                                        what.clone ().modify (changesFn) : changesFn (what) }, // short circuits if not wrapped
 
-        map: function (obj, op) { return Tags.modifySubject (obj,
+        map: function (obj, op) { return Tags.modify (obj,
                                                 function (obj) {
                                                     return _.map2 (obj, function (t, k) {
-                                                        return Tags.modifySubject (t, function (v) {
+                                                        return Tags.modify (t, function (v) {
                                                             return op (v, k, _.isTypeOf (Tags, t) ? t : undefined) }) }) }) },
 
         add: function (name, toWhat, additionalData) {
@@ -203,7 +235,7 @@ _.withTest ('keywords', function () {
 
     _.defineModifierKeyword = function (name, fn) {
                                 _.defineKeyword (name, function (val) {
-                                                            return Tags.modifySubject (val, fn) }) }
+                                                            return Tags.modify (val, fn) }) }
 
     _.deleteKeyword = function (name) {
                         delete $global[_.keyword (name)] } } )

@@ -27,18 +27,26 @@ _.tests.log = {
         $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
                                                             // (as it returns it first argument, like in _.identity)
 
-        log.info    ('log.info (..., log.config ({ stackOffset: 2 }))', log.config ({ stackOffset: 2 }))
+        log.info    (log.stackOffset (2), 'log.info (log.config ({ stackOffset: 2 }), ...)')
 
-        log.write   ('Consequent', 'arguments', 'joins', 'with', 'whitespace')
+        log.write   ('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace')
+
+        log.write (                     'Multi',
+                    log.color.red,      'Colored',
+                    log.color.green,    'Output',
+                    log.color.blue,     'For',
+                    log.color.orange,   'The',
+                    log.color.pink,     'Fucking',
+                    log.color.none,     'Win')
 
         log.write   (log.boldLine)  //  ASCII art <hr>
         log.write   (log.thinLine)
         log.write   (log.line)
 
-        log.write   (log.color.green,
-                        ['You can set indentation',
-                         'that is nicely handled',
-                         'in case of multiline text'].join ('\n'), log.config ({ indent: 1 }))
+        log.write   (log.indent (1),
+                     ['You can set indentation',
+                      'that is nicely handled',
+                      'in case of multiline text'].join ('\n'))
 
         log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
         log.orange  (log.config ({ indent: 2, table: true }), [
@@ -49,83 +57,61 @@ _.tests.log = {
         log.write ('Array:', [1, 2, 3])                             //  Arrays too
         log.write ('Function:', _.identity)                         //  Prints code of a function
 
-        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n') },
+        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n');
 
-/*
-    'write backend control': function (testDone) { var calls = []
-
-        var backend1 = function (cfg) { calls.push ('1: ' + cfg.indentedText) }
-        var backend2 = function (cfg) { calls.push ('2: ' + cfg.indentedText)}
-
-        log.withWriteBackend (backend1, function (done) {     log ('backend1 ready')
-            log.withWriteBackend (backend2, function (done) { log ('backend2 ready')
-                done () }, function () {                      log ('backend2 released') })
-                                                              log ('backend1 on hold')
-            done () }, function () {                          log ('backend1 released')
-                $assert (calls, ['1: backend1 ready', 
-                                 '1: backend1 on hold',
-                                 '2: backend2 ready']); testDone () }) }*/ }
+        log.withConfig (log.indent (1), function () {
+            log.pink ('Config stack + scopes + higher order API test:')
+            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) }) } }
 
 _.extend (
 
     /*  Basic API
      */
-    log = function () {                         
-        return log.write.apply (this, arguments) }, {
+    log = function () {
+        return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
 
-
-    Color: $prototype (),
     Config: $prototype (),
-
-
-    /*  Returns arguments clean of config (non-value) parameters
-     */
-    cleanArgs: function (args) {
-        return _.reject (args, _.or (log.Color.isTypeOf, log.Config.isTypeOf)) },
-
-
-    /*  Monadic operators to help read and modify those control structures 
-        in argument lists (internal impl.)
-     */
-    read: function (type, args) {
-        return _.find (args, type.isTypeOf) || new type ({}) },
-
-    modify: function (type, args, operator) {
-                return _.reject (args, type.isTypeOf)
-                            .concat (
-                                operator (log.read (type, args))) } })
-
-
-_.extend (log, {
 
     /*  Could be passed as any argument to any write function.
      */
     config: function (cfg) {
-        return new log.Config (cfg) },
+        return new log.Config (cfg) } })
 
 
-    /*  Shortcut for common case
+_.extend (log, {
+
+    /*  Shortcut for common cases
      */
     indent: function (n) {
         return log.config ({ indent: n }) },
 
+    stackOffset: function (n) {
+        return log.config ({ stackOffset: n }) },
 
-    /*  There could be many colors in log message (NOT YET), therefore it's a separate from config entity.
-     */
-    color: {
-        red:    new log.Color ({ shell: '\u001b[31m', css: 'crimson' }),
-        blue:   new log.Color ({ shell: '\u001b[36m', css: 'royalblue' }),
-        orange: new log.Color ({ shell: '\u001b[33m', css: 'saddlebrown' }),
-        green:  new log.Color ({ shell: '\u001b[32m', css: 'forestgreen' }) },
+    color: _.extend (function (x) { return (log.color[x] || {}).color },
 
+        _.object (
+        _.map  ([['none',        '0m',           ''],
+                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
+                 ['red',         '31m',          'color:crimson'],
+                 ['darkRed',    ['31m', '2m'],   'color:crimson'],
+                 ['blue',        '36m',          'color:royalblue'],
+                 ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
+                 ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
+                 ['boldOrange', ['33m', '1m'],   'color:saddlebrown;font-weight:bold;'],
+                 ['orange',      '33m',          'color:saddlebrown'],
+                 ['brown',      ['33m', '2m'],   'color:saddlebrown'],
+                 ['green',       '32m',          'color:forestgreen'],
+                 ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
+                 ['pink',        '35m',          'color:magenta'],
+                 ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
+                 ['purple',     ['35m', '2m'],   'color:magenta'],
+                 ['black',       '0m',           'color:black'],
+                 ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
+                 ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
 
-    /*  Actual arguments API
-     */
-    readColor:      log.read.partial (log.Color),
-    readConfig:     log.read.partial (log.Config),
-    modifyColor:    log.modify.partial (log.Color),
-    modifyConfig:   log.modify.partial (log.Config),
-
+             function (def) {
+                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
 
     /*  Need one? Take! I have plenty of them!
      */
@@ -152,68 +138,130 @@ _.extend (log, {
 
     writeBackend: function () {
         return arguments.callee.value || log.impl.defaultWriteBackend },
-    
+
+    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
+                     var result = what (); log.impl.configStack.pop ();
+                  return result },
+
+    currentConfig: function () { return log.impl.configure (log.impl.configStack) },
+
     /*  Internals
      */
     impl: {
 
+        configStack: [],
+        numWrites: 0,
+
+        configure: function (configs) {
+            return _.reduce2 (
+                { stackOffset: 0, indent: 0 },
+                _.nonempty (configs), function (memo, cfg) {
+                                        return _.extend (memo, _.nonempty (cfg), {
+                                            indent:      memo.indent      + (cfg.indent || 0),
+                                            stackOffset: memo.stackOffset + (cfg.stackOffset || 0) }) }) },
+
         /*  Nuts & guts
          */
-        write: function (defaultCfg) { return $restArg (function () { var writeBackend = log.writeBackend ()
+        write: $restArg (function () { var writeBackend = log.writeBackend ()
 
-            var args            = _.asArray (arguments)
-            var cleanArgs       = log.cleanArgs (args)
+            log.impl.numWrites++
 
-            var config          = _.extend ({ indent: 0 }, defaultCfg, log.readConfig (args))
-            var stackOffset     = Platform.NodeJS ? 3 : 3
+            var args   = _.asArray (arguments)
+            var config = log.impl.configure ([{ stackOffset: Platform.NodeJS ? 1 : 3,
+                                                indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
 
-            var indent          = (writeBackend.indent || 0) + config.indent
+            var runs = _.reduce2 (
 
-            var text            = log.impl.stringifyArguments (cleanArgs, config)
-            var indentation     = _.times (indent, _.constant ('\t')).join ('')
-            var match           = text.reversed.match (/(\n*)([^]*)/) // dumb way to select trailing newlines (i'm no good at regex)
+                /*  Initial memo
+                 */
+                [],
+                
+                /*  Arguments split by configs
+                 */
+                _.partition3 (args, _.isTypeOf.$ (log.Config)),
+                
+                /*  Gather function
+                 */
+                function (runs, span) {
+                    if (span.label === true) { config = log.impl.configure ([config].concat (span.items))
+                                               return runs }
+                                        else { return runs.concat ({ config: config,
+                                                                     text: log.impl.stringifyArguments (span.items, config) }) } })
 
-            var location = (
-                config.location &&
-                log.impl.location (config.where || $callStack[stackOffset + (config.stackOffset || 0)])) || ''
+            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match (/(\n*)([^]*)/)
+            var trailNewlines = (trailNewlinesMatch && trailNewlinesMatch[1]) // dumb way to select trailing newlines (i'm no good at regex)
+            if (trailNewlinesMatch) {
+                runs.last.text = trailNewlinesMatch[2].reversed }
 
-            var backendParams = {
-                color: log.readColor (args),
-                indentedText:  match[2].reversed.split ('\n').map (_.prepends (indentation)).join ('\n'),
-                trailNewlines: match[1],
-                codeLocation: location,
-                config:       config }
 
-            writeBackend (backendParams)
+            /*  Split by linebreaks
+             */
+            var newline = {}
+            var lines = _.pluck.with_ ('items',
+                            _.reject.with_ (_.property ('label'),
+                                _.partition3.with_ (_.equals (newline),
+                                    _.scatter (runs, function (run, i, emit) {
+                                                        _.each (run.text.split ('\n'), function (line, i, arr) {
+                                                                                            emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
+                                                                                            emit (newline) } }) }))))
 
-            return cleanArgs[0] }) },
+            var totalText       = _.pluck (runs, 'text').join ('')
+            var where           = config.where || log.impl.walkStack ($callStack) || {}
+            var indentation     = _.times (config.indent, _.constant ('\t')).join ('')
+
+            writeBackend ({
+                lines:         lines,
+                config:        config,
+                color:         config.color,
+                args:          _.reject (args, _.isTypeOf.$ (log.Config)),
+                indentation:   indentation,
+                indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
+                                                 _.joinsWith (''),
+                                                 _.prepends (indentation))).join ('\n'),
+                text:          totalText,
+                codeLocation:  (config.location && log.impl.location (where)) || '',
+                trailNewlines: trailNewlines || '',
+                where:         (config.location && where) || undefined })
+
+            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
         
+        walkStack: function (stack) {
+            return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
+
         defaultWriteBackend: function (params) {
-            var color           = params.color,
-                indentedText    = params.indentedText,
-                codeLocation    = params.codeLocation,
+
+            var codeLocation    = params.codeLocation,
                 trailNewlines   = params.trailNewlines
 
-            var colorValue = color && (Platform.NodeJS ? color.shell : color.css)
-                
-            if (colorValue) {
-                if (Platform.NodeJS) {
-                    console.log (colorValue + indentedText + '\u001b[0m', codeLocation, trailNewlines) }
-                else {
-                    var lines = indentedText.split ('\n')
-                    var allButFirstLinePaddedWithSpace = // god please, make them burn.. why???
-                            [_.first (lines) || ''].concat (_.rest (lines).map (_.prepends (' ')))
+            if (Platform.NodeJS) {
+                console.log (_.map (params.lines, function (line) {
+                    return params.indentation + _.map (line, function (run) {
+                        return (run.config.color
+                                    ? (run.config.color.shell + run.text + '\u001b[0m')
+                                    : (                         run.text)) }).join ('') }).join ('\n'),
 
-                    console.log ('%c'      + allButFirstLinePaddedWithSpace.join ('\n'),
-                                 'color: ' + colorValue, codeLocation, trailNewlines) }}
+                                    log.color ('dark').shell + codeLocation + '\u001b[0m',
+                                    trailNewlines) }
             else {
-                console.log (indentedText, codeLocation, trailNewlines) } },
+                console.log.apply (console, _.reject.with_ (_.equals (undefined), [].concat (
 
+                    _.map (params.lines, function (line, i) {
+                                            return params.indentation + _.reduce2 ('', line, function (s, run) {
+                                                return s + (run.text && ((run.config.color ? '%c' : '') +
+                                                    run.text) || '') }) }).join ('\n') + (codeLocation && ('%c ' + codeLocation) || ''),
+
+                    (_.scatter (params.lines, function (line, i, emit) {
+                        _.each (line, function (run) {
+                            if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+
+                    trailNewlines))) } },
 
         /*  Formats that "function @ source.js:321" thing
          */
         location: function (where) {
-            return _.quoteWith ('()', _.nonempty ([where.calleeShort, where.fileName + ':' + where.line]).join (' @ ')) },
+            return _.quoteWith ('()', _.nonempty ([where.calleeShort,
+                                      _.nonempty ([where.fileName,
+                                                   where.line]).join (':')]).join (' @ ')) },
 
 
         /*  This could be re-used by outer code for turning arbitrary argument lists into string
@@ -248,10 +296,13 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromError (e).clean.offset (e.stackOffset || 0)
-                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.first (120)
+                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
+                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
 
-                return ('[EXCEPTION] ' + why + '\n\n') + log.impl.stringifyCallStack (stack) + '\n' }
+                return ('[EXCEPTION] ' + why + '\n\n') +
+                    (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
+                                        log.impl.stringify.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+                    log.impl.stringifyCallStack (stack) + '\n' }
             catch (sub) {
                 return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
                     '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
@@ -261,37 +312,45 @@ _.extend (log, {
                 function (entry) { return [
                     '\t' + 'at ' + entry.calleeShort.first (30),
                     _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-                    (entry.source || '').first (80)] })).join ('\n') }
-} })
+                    (entry.source || '').first (80)] })).join ('\n') } } })
 
 
 /*  Printing API
-    TODO: refactor dat copypasta!
  */
-_.extend (log, log.printAPI = {
+;(function () {                                                var write = log.impl.write
+   _.extend (log,
+             log.printAPI =
+                    _.object (
+                    _.concat (            [[            'newline', write.$ (log.config ({ location: false }), '') ],
+                                           [              'write', write                                                          ]],
+                            _.flat (_.map (['red failure error e',
+                                                    'blue info i',
+                                               'darkBlue minor m',
+                                          'orange warning warn w',
+                                             'green success ok g',
+                                            'pink notice alert p',
+                                                    'boldPink pp',
+                                                    'dark hint d',
+                                                   'boldGreen gg',
+                                                       'bright b',
+                                          'boldRed bloody bad ee',
+                                                      'purple dp',
+                                                       'brown br',
+                                                  'boldOrange ww',
+                                                     'darkRed er',
+                                                    'boldBlue ii' ],
+                                                    _.splitsWith  (' ').then (
+                                                      _.mapsWith  (
+                                                  function (name,                                   i,                         names      )  {
+                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first), stackOffset: 2 })) ] })))))))
 
-    newline:    log.impl.write ().partial (''),
-    write:      log.impl.write (),
-    red:        log.impl.write ().partial (log.color.red),
-    blue:       log.impl.write ().partial (log.color.blue),
-    orange:     log.impl.write ().partial (log.color.orange),
-    green:      log.impl.write ().partial (log.color.green),
+}) ()
 
-    failure:    log.impl.write ({ location: true }).partial (log.color.red),
-    error:      log.impl.write ({ location: true }).partial (log.color.red),
-    e:          log.impl.write ({ location: true }).partial (log.color.red),
-    info:       log.impl.write ({ location: true }).partial (log.color.blue),
-    i:          log.impl.write ({ location: true }).partial (log.color.blue),
-    w:          log.impl.write ({ location: true }).partial (log.color.orange),
-    warn:       log.impl.write ({ location: true }).partial (log.color.orange),
-    warning:    log.impl.write ({ location: true }).partial (log.color.orange),
-    success:    log.impl.write ({ location: true }).partial (log.color.green),
-    ok:         log.impl.write ({ location: true }).partial (log.color.green),
-    g:          log.impl.write ({ location: true }).partial (log.color.green) }) 
 
-log.writes = log.printAPI.writes = _.higherOrder (log.write) // generates write functions
+/*  Higher order API
+ */
+logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
 
-logs = _.map2 (log.printAPI, _.higherOrder) // higher order API
 
 /*  Experimental formatting shit.
  */
@@ -316,7 +375,7 @@ _.extend (log, {
             
             /*  convert column data to string, taking first line
              */
-            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return (col + '').split ('\n')[0] }))
+            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return _.asString (col).split ('\n')[0] }))
 
             /*  compute column widths (per row) and max widths (per column)
              */
@@ -345,7 +404,6 @@ _.extend (log, {
                  _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
                  .then (_.joinsWith ('  ')) ) } }
 })
-
 
 if (Platform.NodeJS) {
     module.exports = log }

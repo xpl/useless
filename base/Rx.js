@@ -42,7 +42,7 @@ R = $singleton ({
         this.initDSL () },
 
     expr: function (expr, subexprs) { subexprs = subexprs || []
-            return new R.Expr (R.reduce (expr, '', function (s, memo) {
+            return new R.Expr (R.reduce ('', expr, function (memo, s) {
                                                         if (R.isSubexpr (s)) { subexprs.push (s)
                                                             return memo + R.expr (R.root (s.value), subexprs).str }
                                                         else {

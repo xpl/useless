@@ -28,7 +28,7 @@ _.defineTagKeyword ('async')
     place tests for that module in _.tests.foo — it will be picked up by tests framework
     automagically ©
  */
-_.tests.itself = {
+_.tests.Testosterone = {
 
     /*  For reference on basic syntax of assertions, see assert.js, here's only
         extra function provided by this module:
@@ -58,17 +58,15 @@ _.tests.itself = {
         DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
         DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
 
-        /*  $test/$tests renders to static immutable property
+        /*  $test/$tests renders to static immutable property $tests
          */
-        $assertThrows (function () { DummyPrototypeWithTest .$test  = 42 })
+        $assertTypeMatches (DummyPrototypeWithTests.$tests, [{ '*': 'function' }])
         $assertThrows (function () { DummyPrototypeWithTests.$tests = 42 })
 
         /*  Tests are added to Testosterone.prototypeTests
          */
-        $assert ([DummyPrototypeWithTest .$test,
-                  DummyPrototypeWithTests.$tests], _.filter2 (Testosterone.prototypeTests, function (def) {
-                                                        return ((def.tests === DummyPrototypeWithTest .$test) ||
-                                                                (def.tests === DummyPrototypeWithTests.$tests)) ? def.tests : false })) }
+        $assertMatches (_.pluck (Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest .$tests,
+                                                                         DummyPrototypeWithTests.$tests]) }
  }
 
 
@@ -100,9 +98,12 @@ Testosterone = $singleton ({
             $prototype.macro ('$test',  register)
             $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
                                                         this.prototypeTests.push ({
-                                                            readPrototypeMeta: Tags.unwrap (def.$meta),
+                                                            proto: def.constructor,
                                                             tests: value })
-                                                        def[name] = $static ($property ($constant (def[name])))
+
+                                                        def.$tests = $static ($property ($constant (
+                                                            (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
+
                                                         return def }))
 
         this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
@@ -115,9 +116,11 @@ Testosterone = $singleton ({
         /*  Configuration
          */
         var defaults = {
+            suites: [],
             silent:  true,
             verbose: false,
             timeout: 2000,
+            filter: _.identity,
             testStarted:  function (test) {},
             testComplete: function (test) {} }
 
@@ -126,7 +129,7 @@ Testosterone = $singleton ({
         /*  Read cfg.suites
          */
         var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
-        var suites = _.map (cfg.suites || [], this.$ (function (suite, name) {
+        var suites = _.map (cfg.suites, this.$ (function (suite, name) {
             return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
 
         var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
@@ -145,21 +148,25 @@ Testosterone = $singleton ({
              */
             this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-                /*  Go
-                 */
-                _.cps.each (this.runningTests,
-                        this.$ (this.runTest),
-                        this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
+            _.assertTypeMatches (_.map (_.pluck (this.runningTests, 'routine'), $untag), ['function'])
 
-                                    _.assert (cfg.done !== true)
-                                              cfg.done   = true
+            this.runningTests = _.filter (this.runningTests, cfg.filter || _.identity)
 
-                                    this.printLog (cfg)
-                                    this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                                    this.failed = (this.failedTests.length > 0)
-                                    then (!this.failed)
-                                    
-                                    releaseLock () }) ) })) }),
+            /*  Go
+             */
+            _.cps.each (this.runningTests,
+                    this.$ (this.runTest),
+                    this.$ (function () { //console.log (_.reduce (this.runningTests, function (m, t) { return m + t.time / 1000 }, 0))
+
+                                _.assert (cfg.done !== true)
+                                          cfg.done   = true
+
+                                this.printLog (cfg)
+                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+                                this.failed = (this.failedTests.length > 0)
+                                then (!this.failed)
+                                
+                                releaseLock () }) ) })) }),
 
     onException: function (e) {
         if (this.currentAssertion) 
@@ -176,6 +183,8 @@ Testosterone = $singleton ({
     /*  Internal impl
      */
     runTest: function (test, i, then) { var self = this, runConfig = this.runConfig
+
+        log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
     
         runConfig.testStarted (test)
         
@@ -184,9 +193,10 @@ Testosterone = $singleton ({
 
         test.startTime = Date.now ()
 
-        test.run (function () {
-            runConfig.testComplete (test); test.time = Date.now () - test.startTime
-            then () }) },
+        test.run (function () { test.time = Date.now () - test.startTime;
+
+            if (_.numArgs (runConfig.testComplete) === 2) { runConfig.testComplete (test,  then)   }
+                                                    else  { runConfig.testComplete (test); then () } }) },
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {
@@ -194,14 +204,14 @@ Testosterone = $singleton ({
 
     collectPrototypeTests: function (then) {
         _.cps.map (this.prototypeTests, this.$ (function (def, then) {
-            def.readPrototypeMeta (this.$ (function (meta) {
-                then (this.testSuite (meta.name, def.tests)) })) }), then) },
+            def.proto.$meta (this.$ (function (meta) {
+                then (this.testSuite (meta.name, def.tests, undefined, def.proto)) })) }), then) },
 
-    testSuite: function (name, tests, context) { return { 
+    testSuite: function (name, tests, context, proto) { return { 
         name: name || '',
         tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
                 .map (function (keyValue) {
-                        var test = new Test ({ name: keyValue[0], routine: keyValue[1], suite: name, context: context })
+                        var test = new Test ({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context })
                             test.complete (function () {
                                 if (!(test.hasLog = (test.logCalls.length > 0))) {
                                          if (test.failed)  { log.red   ('FAIL') }
@@ -211,7 +221,7 @@ Testosterone = $singleton ({
 
     defineAssertion: function (name, def) { var self = this
         _.deleteKeyword (name)
-        _.defineKeyword (name, Tags.modifySubject (def,
+        _.defineKeyword (name, Tags.modify (def,
                                     function (fn) {
                                         return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (1)
                                             if (!self.currentAssertion) {
@@ -269,7 +279,7 @@ Test = $prototype ({
             timeout: this.timeout / 2,
             verbose: this.verbose,
             silent:  this.silent,
-            routine: Tags.modifySubject (def, function (fn) {
+            routine: Tags.modify (def, function (fn) {
                         return function (done) {
                                 if ($async.is (args[0])) {
                                     _.cps.apply (fn, self.context, args, function (args, then) {
@@ -288,7 +298,7 @@ Test = $prototype ({
             Testosterone.currentAssertion = self
             if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
                     assertion.location.sourceReady (function (src) {
-                        log.red (src, log.config ({ location: assertion.location, where: assertion.location }))
+                        log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
                         assertion.evalLogCalls ()
                         doneWithAssertion () }) }
             else {
@@ -318,8 +328,20 @@ Test = $prototype ({
                                 log.columns (_.map (notMatching, function (obj) {
                                     return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            _.each (notMatching, function (what, i) {
-                                log.orange ('•', what) }) } } }
+                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('• ')))
+                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
+                            if (common.length < 4) {
+                                common = undefined }
+
+                            _.each (cases, function (what) {
+
+                                    if (common) {                  var where  = what.indexOf (common)
+                                        log.write ( log.color.orange,  what.substr (0, where),
+                                                    log.color.dark,    common,
+                                                    log.color.orange,  what.substr (where + common.length)) }
+
+                                    else {
+                                        log.orange (what) } }) }} }
                         
                     // print exception
                 else {
@@ -368,6 +390,107 @@ Test = $prototype ({
 
     evalLogCalls: function () {
         _.each (this.logCalls, log.writeBackend ().arity1) } })
+
+
+/*
+ */
+_.defineTagKeyword ('allowsRecursion')
+
+_.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
+                        var depth       = -1
+                        var reported    = false
+                            return function () {
+                                if (!reported) {
+                                    if (depth > max) { reported = true
+                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + _.stringify (arg) }) },
+                                            new Error (name + ': max recursion depth reached (' + max + ')')) }
+                                    else {
+                                        var result = ((++depth), fn.apply (this, arguments)); depth--
+                                            return result } } } }
+                                            
+Testosterone.ValidatesRecursion = $trait ({
+
+    $test: function () {
+
+        var test = new ($component ({
+
+            $traits: [Testosterone.ValidatesRecursion],
+
+            foo: function () {},
+            bar: function () { this.bar () },
+            baz: $allowsRecursion ({ max: 2 }, function () { this.baz () }),
+            qux: $allowsRecursion (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
+
+                       test.foo ()
+        $assertThrows (test.bar, { message: 'bar: max recursion depth reached (0)' })
+                       test.bar () // should not report second time (to prevent overflood in case of buggy code)
+        $assertThrows (test.baz, { message: 'baz: max recursion depth reached (2)' })
+                       test.qux () },
+
+    $constructor: function () {
+        _.each (this, function (member, name) {
+            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$allowsRecursion || (member.$allowsRecursion.max !== undefined))) {
+                this[name] = Tags.modify (member, function (fn) {
+                    return _.limitRecursion ((member && member.$allowsRecursion && member.$allowsRecursion.max) || 0, fn, name) }) } }, this) } })
+
+/*  $log for methods
+ */
+;(function () { var colors = _.keys (_.omit (log.color, 'none'))
+                    colors.each (_.defineTagKeyword)
+
+    _.defineTagKeyword ('verbose')
+
+    Testosterone.LogsMethodCalls = $trait ({
+
+        $test: Platform.Browser ? (function () {}) : function (testDone) {
+
+                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+                    var Compo = $extends (Proto, {
+                                        foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
+
+                    var compo = new Compo ()
+                    var testContext = this
+
+                    Compo.$meta (function () {
+                        $assert (compo.foo (42), 24)
+                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                        $assert (testContext.logCalls[0].color === log.color ('pink'))
+                        testDone () }) },
+
+        $macroTags: {
+
+            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
+                                                var meta          = {}
+                                                var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
+                                                var template      = param && _.template (param)
+
+                $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
+
+                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
+                                                                                                             arguments_ = _.asArray (arguments)
+
+                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
+                        var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
+
+                    log.write (log.config ({
+                        color: color,
+                        location: true,
+                        where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
+
+                    return log.withConfig ({ indent: 1,
+                                             color: color,
+                                             protoName: meta.name }, function () {
+
+                                                                        var numWritesBefore = log.impl.numWrites
+                                                                        var result          = fn.apply (this_, arguments_);          
+
+                                                                        if (result !== undefined) {
+                                                                            log.write ('→', _.stringifyOneLine (result)) }
+
+                                                                        if ((log.currentConfig ().indent < 2) &&
+                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
+
+                                                                        return result }) } }) } } }) }) ();
 
 
 if (Platform.NodeJS) {

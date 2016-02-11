@@ -35,7 +35,7 @@ _.withTest ('properties', function () { var obj = {}
             obj._42, 42) }) }, function () { _.extend (_, {
 
     defineProperty: function (targetObject, name, def, defaultCfg) {
-        if (Object.hasOwnProperty (targetObject, name)) {
+        if (_.isObject (targetObject) && targetObject.hasOwnProperty (name)) {
             throw new Error ('_.defineProperty: targetObject already has property ' + name) }
         else {
             Object.defineProperty (targetObject, name,

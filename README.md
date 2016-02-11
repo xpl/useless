@@ -8,16 +8,69 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
+### Recent updates / changelog
+
+- `$raw` methods for disabling thiscall semantics for performance-critical methods in components. In other words, it disables auto binding of methods to `this`, which comes with performance penalty of one extra call.
+
+- `LogOverlay` now automatically clips its output (removing invisible lines) to reduce page freezes on a huge amount of log output. It is also gradients itself with `-webkit-mask-image`. Screenshot shows log output built automatically with **$log** and `Testosterone.LogsMethodCalls`:  ![showcase](http://img.leprosorium.com/2492460)
+
+- `_.scatter` for general-purpose many-to-many mapping. Can output arrays and objects. There also exists `_.arr` and `_.obj` as it's specialized derivatives. See [`stdlib.js`](https://github.com/xpl/useless/blob/master/base/tier0/stdlib.js) for details.
+
+- `String.limitedTo` for limiting long strings with ellipsis. Now `_.stringify` output is way more compact and readable.
+
+- `$macroTags` member for defining prototype/trait-specific macros. See `Testosterone.LogsMethodCalls` trait for the demo/how-to. It's super convenient when you want to bring some custom semantics to your prototype definitions, but don't want to make it a global macro - which can cause all kinds of performance/compatibility issuses. Imagine something like `DOMEvents` trait that defines `eventName: $on (function () { .. })` syntax that automatically binds component methods to DOM events, or `UndoRedoHistory` trait that proposes a `$silent` tag, which disables arbitrary methods from recording to history. It's a really powerful tool that brings DSL flavor to JavaScript.
+
+- `Prototype.$membersByTag` for fast/convenient enumeration of tagged members.
+
+- Improved **$alias** semantics (still somewhat buggy when used with $component/$traits).
+
+- **$constructor** for static constructor. Gets called by the prototype compiler. When defined by [**$trait**](https://github.com/xpl/useless/wiki/$trait), gets called at the host prototype assembling. This way [**$trait**](https://github.com/xpl/useless/wiki/$trait) can add something to the host [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) at the compilation stage.
+
+- Added **$mixin** for extending existing types with [**$prototype**](https://github.com/xpl/useless/wiki/$prototype)-style definitions. Example: `$mixin (Node, { ... })`
+
+- New member comprehension: `isLinebreak: $callableAsFreeFunction ($property (function () { ... }))` renders to `node.isLinebreak` (instance property accessor) and `Node.isLinebreak (node)` (static function). Latter is useful in functional expressions.
+
+- Added `_.longestCommonSubstring` which is used to highlight differences in `$assert` argument mismatches:
+ 
+ ![example](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert3.png)
+
+- Forget `nodemon`, it is now built-in. Just add `server/supervisor` trait to your app component, and get auto-restart on code changes. You can also track arbitrary files and folders with simple API.
+
+- **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
+
+- Smart merging of **$trait** methods for **$component**-based prototypes: methods are bound to streams (having same name), `afterXXX`/`beforeXXX`/`interceptXXX` are bound to bindables automagically™ (at prototype construction). Now component logic can be distributed across traits with unprecedented level of legibility.
+
+- **$defaults** and **$requires** defined in traits now deeply merged at [**$component**](https://github.com/xpl/useless/wiki/$component)-based prototypes. You can utilize this mechanics for custom members by tagging them with **$extendable** syntax.
+
+- [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) now understands nested tag groups, e.g. `$static: { $property: { ... }`
+
+- `Panic (...)` UI now understands `Test` instances as input. Useful for printing out failed client-side tests. It also understands exception messages in log, printing them with its specialized UI (respecting indentation and stuff).
+
+- **Testosterone.ValidatesRecursion** trait, which prohibits recursion on all methods until explicitly marked with **$allowsRecursion**. Allows setting max recursion depth with `max` parameter. Useful for debugging heavy DOM-modifying code that hangs browser and its built-in debugging tools.
+
+- **Testosterone.LogsMethodCalls** trait, which adds **$log** syntax. Tag methods with it to enable printing of method calls, with its arguments and return value. It arranges nested calls to nice hierarchy, to give overview of whats going on. You can parametrize log calls with colors (e.g. `$log ($red (...))`) and with template which prints `this` contents, e.g. `$log ('Called with this.foo value: {{foo}}', ...)` 
+
+- More ANSI colors for log messages, e.g. `boldPink`. Supported with console renderer on WebKit, `LogOverlay` and `Panic`.
+
+- Multi colored log messages, ex. `log (log.color.red, 'multi', log.color.blue, 'color')`
+
+- New object formatter for `_.stringify`. It automatically decides between one-line and pretty-printed variants (based on output length). Added reading of prototype names (via `$meta`) and comprehensions of some built-in types (e.g. Node). Example output:
+
+```javascript
+args: {
+             someParam:    true,
+        someOtherParam:    true,
+                   arr: [ "pretty printed" ],
+              DOMNodes: [ <div>,
+                          <p>,
+                          @I am text node ]    },
+```
+
+
 ### Browser builds
 
 * Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
 * Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
-
-### Dependencies and limitations
-
-Client side tools that depend on reflection utility (e.g. test framework / stack traces UI) work only in WebKit-based browsers at the moment. Server side tools are built on top of **Node.js** technology. The rest of the code base should be cross-browser (at least it attemps to).
-
-Database-related utility depends on MongoDB (not included in `npm` dependency list, should install manually). Anyway, it does not work well at the moment...
 
 ### Running example app
 
@@ -40,16 +93,9 @@ If everything's ok, example app will be running at <a href="http://localhost:133
 
 ### A notice to brave hackers
 
-It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain.
+It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain. Currently I'm focused to make the basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
 
-Its main (unreleased for now) feature will be a flexible schema layer over MongoDB which allows to configure various data access widgets (table views, popover selections, form dialogs) directly from that schema, providing real-time synchronization with remote database. It also will act as declarative contract for API validation / security layer. Thats why there's so many code related to abstract data processing / type matching.
-
-It also features various widgets with rendering virtualization, allowing to render vast amounts of data with smooth scrolling and no pagination (TableView, TileView, ListView). They're already there, but not yet working as they depend on that schema mentioned before. Need to separate this thing from my elder private projects properly...
-Currently I'm focused to make the basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
-
-Stay tuned and thanks for your attention!
-
-Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
+Stay tuned and thanks for your attention! Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
 
 # `./base` features
 
@@ -212,6 +258,7 @@ var mouseMoved = _.trigger ()
  */
 mouseMoved (function (x, y) { }) // bind
 mouseMoved (someCallback)        // bind another
+mouseMoved.once (someCallback)   // bind with 'once' semantics (auto-unbinds itself upon calling)
 
 /*  Calling
  */
@@ -283,6 +330,16 @@ AddsLoggingToButton = $aspect (Button, {
 
     beforeCreate: function () { log.green ('Button is about to be created') },
     afterDestroy: function () { log.red   ('Button is now destroyed') } })
+```
+
+Adds CORS proxy to existing XMLHttpRequest prototype:
+
+```javascript
+XMLHttpRequestWithCORS = $aspect (XMLHttpRequest, {
+    open: function (method, path, async, impl) {
+                return impl.call (this, method, (!path.contains ('cors.io') &&
+                                                 !path.contains (window.location.host))
+                                                    ? ('http://cors.io/?u=' + path) : path, async) } })
 ```
 
 ## Math utility for front-end works
@@ -412,7 +469,7 @@ $(handle).drag ({
 	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
 ```
 
-## Panic.js &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_// error handling done right_
+## Panic.js
 
 > Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
 
@@ -569,35 +626,23 @@ To make reduced/extended distribution (with some submodules disabled or enabled)
 
 There exists `./useless.micro.js` as an example of reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
 
-## Automatic builds on source change
+## Integrated build
 
-### Using external tools
-
-You can run `build.js` under `nodemon` (which can be installed from npm). This will trigger automatic re-builds on source change.
-
-```bash
-nodemon build.js <header-file> <output-folder>
-```
-
-This will work for applications that dont rely on `useless/server` to implement app lifecycle. For frequent re-builds, you may turn off compression, re-building only `useless.js` (Google Closure Compiler has limited call quota per IP):
-
-```bash
-> nodemon build.js no-compress
-```
-
-### Using `useless/server/deploy`
-
-Applications that are based on top of `useless/server` can easily enable automatic builds feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
+Applications that are based on top of `useless/server` can easily enable automatic rebuilds feature by adding following [**$traits**](https://github.com/xpl/useless/wiki/$trait) to main application component:
 
 ```javascript
 $traits: [        
-        require ('useless/server/exceptions'),
         require ('useless/server/tests'),
         require ('useless/server/deploy'),
+        require ('useless/server/supervisor')
 ```
 
-This will add test & build phase to app startup sequence, aborting if something went wrong.
+This will add test & build phase to app startup sequence, aborting if something went wrong and re-starting if source code has changed.
 
-For re-scheduling startup on source change, run your application under `nodemon` or `supervisor`. **Important notice:** you should add `./node_modules/useless/build/` folder to `.nodemonignore` file in root directory of your project, to prevent restart loop.
+Default settings:
 
-Currenly it re-builds only `useless.js`, with no compression applied.
+```javascript
+buildScriptPaths: [process.cwd (), $uselessPath],
+buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
+buildPath: $uselessPath + 'build/',
+```

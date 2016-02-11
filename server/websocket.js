@@ -1,4 +1,4 @@
-module.exports = $trait ({
+ServerWebsocket = module.exports = $trait ({
 
     /*  Override this to specify who can connect via WebSocket
      */
@@ -30,7 +30,7 @@ module.exports = $trait ({
 
         _.invoke (peers, 'send', msg) },
 
-    afterInit: function (then) { log.info ('Starting WebSocket')
+    afterInit: function (then) { log.minor ('Starting WebSocket...')
 
         var websocket = require ('websocket')
         
@@ -43,19 +43,19 @@ module.exports = $trait ({
             var connection = request.accept (null, request.origin)
             
             var drop = function (why) {
-                log.error ('dropping peer:', connection.remoteAddress, '(' + why + ')')
+                log.ee ('dropping peer:', connection.remoteAddress, '(' + why + ')')
                 connection.drop (websocket.connection.CLOSE_REASON_POLICY_VIOLATION, why) }
 
-            log.info ('peer connected: ' + connection.remoteAddress)
+            log.ww ('peer connected: ' + connection.remoteAddress)
 
             connection.on ('close', this.$ (function () {
                 this.peers = _.reject (this.peers, connection)
-                log.warn ('peer disconnected:', this.websocketStringifyUser (connection.user), '(' + connection.remoteAddress + ')') }))
+                log.dark ('peer disconnected:', this.websocketStringifyUser (connection.user), '(' + connection.remoteAddress + ')') }))
 
             connection.on ('message', this.$ (function (message) {
                 if (message.type === 'utf8') {
                     this.websocketAuth (_.json (message.utf8Data), this.$ (function (user) {
-                        log.success ('peer authorized:', this.websocketStringifyUser (user), '(' + connection.remoteAddress + ')')
+                        log.gg ('peer authorized:', this.websocketStringifyUser (user), '(' + connection.remoteAddress + ')')
                         connection.send (_.json ({ what: 'handshake', uptime: this.uptime ? this.uptime () : undefined }))
                         connection.user = user
                         this.peers.push (connection) }), drop) }

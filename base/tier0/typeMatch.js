@@ -1,3 +1,5 @@
+_.hasTypeMatch = true
+
 /*  Type matching for arbitrary complex structures (TODO: test)
     ======================================================================== */
 

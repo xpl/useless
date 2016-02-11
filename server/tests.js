@@ -1,4 +1,18 @@
-module.exports = $trait ({
+module.exports = TestsItself = $trait ({
+
+    $depends: [require ('./args'),
+               require ('./exceptions')],
+
+    $defaults: {
+        argKeys: {
+            noTests: 1 },
+
+        supressAllTests:          false,
+        supressCodeBaseTests:     false,
+        supressAppComponentTests: false },
+
+    argsReady: function (args) {
+        this.supressAllTests = (args.noTests === true) },
 
     /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
      */
@@ -16,66 +30,70 @@ module.exports = $trait ({
 
     /*  Tests codebase
      */
-    beforeInit: function (then) { log.info ('Running code base tests')
+    beforeInit: function (then) {
 
-        Testosterone.run ({
-            verbose: false,
-            silent:  true }, this.$ (function (okay) {
-                                        if (okay) {
-                                            if (this.deferAppComponentTests) {
-                                                then () }
-                                            else {
-                                                this.runAppComponentTests (then) } } })) },
+        if ((this.testsAlreadyExecutedAtMasterProcess = (this.args.spawnedBySupervisor && !this.args.respawnedBecauseCodeChange)) ||
+             this.supressAllTests || this.supressCodeBaseTests) { then () }
+
+        else {  log.ii ('Running code base tests')
+                Testosterone.run ({
+                    verbose: false,
+                    silent:  true }, this.$ (function (okay) {
+                                                if (okay) {
+                                                    if (this.deferAppComponentTests) {                            then () }
+                                                    else                             { this.runAppComponentTests (then) } } }))} },
 
     afterInit: function (then) {
-        if (this.deferAppComponentTests) {
-            this.runAppComponentTests (then) }
+        if (!this.testsAlreadyExecutedAtMasterProcess && !this.supressAllTests && this.deferAppComponentTests) {
+             this.runAppComponentTests (then) }
         else {
-            then () } },
+             then () } },
 
     /*  Tests $traits (app components)
      */
-    runAppComponentTests: function (then) { log.info ('Running app components tests')
+    runAppComponentTests: function (then) {
 
-        /*  Adds custom assertions to help test App framework
-         */
-        Testosterone.defineAssertions ({
+            log.info ('Running app components tests')
 
-            assertFoundInDatabase: $async (function (kind, query, then) {
-                                            this.db[kind].find (query).toArray (this.$ (function (e, items) {
-                                                $assert (e, null)
-                                                $assert (items.length > 0)
-                                                then (items.length === 1 ? items[0] : items) })) }),
+            /*  Adds custom assertions to help test App framework
+             */
+            Testosterone.defineAssertions ({
 
-            assertRequest: $async (function (url, ctx, then) { this.serveRequest (_.extend ({}, ctx, { url: url,
-                    
-                success: function (result) { then (this, result) },
-                failure: function (result) { log.error (result); $fail; then () } })) }) })
+                assertFoundInDatabase: $async (function (kind, query, then) {
+                                                this.db[kind].find (query).toArray (this.$ (function (e, items) {
+                                                    $assert (e, null)
+                                                    $assert (items.length > 0)
+                                                    then (items.length === 1 ? items[0] : items) })) }),
 
-        /*  Init test database and run tests within that context
-         */
-        this.withTestDb (this.$ (function (putBackProductionDb) {
+                assertRequest: $async (function (url, ctx, then) { this.serveRequest (_.extend ({}, ctx, { url: url,
+                        
+                    success: function (result) { then (this, result) },
+                    failure: function (result) { log.error (result); $fail; then () } })) }) })
 
-            _.cps.map (this.constructor.$traits || [], function (Trait, return_) {
+            /*  Init test database and run tests within that context
+             */
+            this.withTestDb (this.$ (function (putBackProductionDb) {
 
-                Trait.$meta (function (meta) {
-                    var tests = (Trait.prototype.test || 
-                                 Trait.prototype.tests)
-                    return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
+                _.cps.map (this.constructor.$traits || [], function (Trait, return_) {
 
-                this.$ (function (suites) {
-                    Testosterone.run ({                             
-                        context: this,
-                        codebase: false,
-                        verbose: false,
-                        silent: false,
-                        suites: _.nonempty (suites) }, function (okay) { putBackProductionDb (); then () }) })) })) },
+                    Trait.$meta (function (meta) {
+                        var tests = (Trait.prototype.test || 
+                                     Trait.prototype.tests)
+                        return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
+
+                    this.$ (function (suites) {
+                        Testosterone.run ({                             
+                            context: this,
+                            codebase: false,
+                            verbose: false,
+                            silent: false,
+                            suites: _.nonempty (suites) }, function (okay) { putBackProductionDb (); then () }) })) })) },
 
 
     withTestDb: function (what) {
 
         if (!this.dbName) {
-            log.info ('Skipping DB tests')
+            log.minor ('Skipping DB tests')
             what (_.identity) }
             
         else {

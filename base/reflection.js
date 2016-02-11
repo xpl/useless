@@ -117,10 +117,10 @@ _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPat
  */
 SourceFiles = $singleton (Component, {
 
-    apiConfig: {
-        /* port:      1338,
-           hostname: 'locahost',
-           protocol: 'http:' */ },
+    /*apiConfig: {
+        port:      1338,
+        hostname: 'locahost',
+        protocol: 'http:' },*/
 
     line: function (file, line, then) {
         SourceFiles.read (file, function (data) {
@@ -185,6 +185,16 @@ CallStack = $extends (Array, {
             return CallStack.fromRawString (e.stack).offset (e.stackOffset || 0) }
         else {
             return CallStack.fromParsedArray ([]) } }),
+
+    fromErrorWithAsync: $static (function (e) {
+        var stackEntries = CallStack.fromError (e),
+            asyncContext = e.asyncContext
+
+        while (asyncContext) {
+            stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
+            asyncContext = asyncContext.asyncContext }
+
+        return stackEntries.mergeDuplicateLines }),
 
     locationEquals: $static (function (a, b) {
         return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
@@ -313,23 +323,27 @@ CallStack = $extends (Array, {
 
 /*  Reflection for $prototypes
  */
+$prototype.impl.findMeta = function (stack) {
+
+    return function (then) {
+
+        _.cps.find (CallStack.fromRawString (stack).reversed,
+
+                    function (entry, found) {
+                        entry.sourceReady (function (text) { var match = (text || '').match (
+                                                                             /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
+                            found ((match && {
+                                name: match[1],
+                                type: match[2],
+                                file: entry.fileShort }) || false) }) },
+
+                    function (found) {
+                        then (found || {}) }) } }
+
 $prototype.macro (function (def, base) {
 
-    var stack = CallStack.currentAsRawString // save call stack (not parsing yet, for performance)
-
     if (!def.$meta) {
-        def.$meta = $static (_.cps.memoize (function (then) { _.cps.find (CallStack.fromRawString (stack).reversed,
-
-                function (entry, found) {
-                    entry.sourceReady (function (text) { var match = (text || '').match (
-                                                                         /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
-                        found ((match && {
-                            name: match[1],
-                            type: match[2],
-                            file: entry.fileShort }) || false) }) },
-
-                function (found) {
-                    then (found || {}) }) })) }
+        def.$meta = $static (_.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))) }
 
     return def })
 

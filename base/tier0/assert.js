@@ -26,7 +26,7 @@ _.extend (_, {
 
     withTest:   function (name, test, defineSubject) {
                     defineSubject ()
-                    _.runTest (test)
+                    _.runTest (name, test)
                     _.publishToTestsNamespace (name, test) },
 
 /*  Publishes to _.tests namespace, but does not run
@@ -39,11 +39,15 @@ _.extend (_, {
     /*  INTERNALS (you won't need that)
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-        runTest:    function (test) {
-                        if (_.isFunction (test)) {
-                            test () }
-                        else {
-                            _.each (test, function (fn) { fn () }) } },
+        runTest:    function (name, test) {
+                        try {
+                            if (_.isFunction (test)) {                               test () }
+                                                else { _.each (test, function (fn) { fn () }) } }
+                        catch (e) {
+                            if (_.isAssertionError (e)) { var printedName = ((_.isArray (name) && name) || [name]).join ('.')
+                                                          console.log (printedName + ':', e.message, '\n' + _.times (printedName.length, _.constant ('~')).join ('') + '\n')
+                                                         _.each (e.notMatching, function (x) { console.log ('  •', x) }) }
+                            throw e } },
 
         publishToTestsNamespace: function (name, test) {
                         if (_.isArray (name)) { // [suite, name] case
@@ -54,14 +58,19 @@ _.extend (_, {
 /*  TEST ITSELF
     ======================================================================== */
 
-_.deferTest ('assert.js bootstrap', function () {
+_.withTest ('assert.js bootstrap', function () {
 
 /*  One-argument $assert (requires its argument to be strictly 'true')
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+    $assert (true)
+
     $assert (                       // public front end, may be replaced by environment)
         _.assert ===                // member of _ namespace (original implementation, do not mess with that)
         _.assertions.assert)        // member of _.assertions (for enumeration purposes)
+
+    $assertNot (false)
+    $assertNot (5)                  // NB: assertNot means 'assert not true', hence this will pass
 
 /*  Multi-argument assert (requires its arguments be strictly equal to each other)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -70,6 +79,8 @@ _.deferTest ('assert.js bootstrap', function () {
     $assert ({ foo: [1,2,3] }, { foo: [1,2,3] }) // compares objects (deep match)
     $assert ({ foo: { bar: 1 }, baz: 2 },        // ignores order of properties
              { baz: 2, foo: { bar: 1 } })
+
+    $assertNot (2 + 2, 5)
 
 /*  Nonstrict matching (a wrapup over _.matches)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -163,9 +174,12 @@ if (_.hasStdlib) {
 /*  Ensuring throw (strict version)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assertThrows (function () { throw 42 }, 42) // accepts either plain value or predicate
-    $assertThrows (function () { throw new Error ('42') }, _.matches ({ message: '42' }))
+    $assertThrows (     function () { throw 42 }, 42) // accepts either plain value or predicate
+    $assertThrows (     function () { throw new Error ('42') }, _.matches ({ message: '42' }))
 
+    $assertFails (function () {
+        $assertThrows ( function () { throw 42 }, 24)
+        $assertThrows ( function () { throw new Error ('42') }, _.matches ({ message: '24' })) })
 
 /*  Ensuring execution
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -179,12 +193,27 @@ if (_.hasStdlib) {
         $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
         $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
 
-/*  Ensuring CPS routine result
+
+/*  TODO:   1) add CPS support
+            2) replace $assertCPS with this
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+
+            $assertCalledWithArguments (   ['foo',
+                                           ['foo', 'bar']], function (fn) {
+
+                                        fn ('foo')
+                                        fn ('foo', 'bar') }) }
+
+
+/*  Ensuring CPS routine result (DEPRECATED)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $assertCPS (function (then) { then ('foo', 'bar') }, ['foo', 'bar'])
     $assertCPS (function (then) { then ('foo') }, 'foo')
     $assertCPS (function (then) { then () })
+
 
 /*  Ensuring assertion failure
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -202,25 +231,36 @@ if (_.hasStdlib) {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     if ($assert === _.assertions.assert) {
-        $assertThrows (function () { $fail }) } },
+        $assertThrows (function () { $fail }) }
+
 
 /*  IMPLEMENTATION
     ======================================================================== */
 
-function () {
+}, function () {
+
+    var assertImpl = function (positive) {
+                        return function (__) {  var args = [].splice.call (arguments, 0)
+
+                                                if (args.length === 1) {
+                                                    if (positive && (args[0] !== true)) {
+                                                        _.assertionFailed ({ notMatching: args }) } }
+
+                                                else if (positive && (_.allEqual (args) !== true)) {
+                                                    _.assertionFailed ({ notMatching: args }) }
+
+                                                return true } }
+
+    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
+     */
+    $overrideUnderscore ('matches', function (matches) {
+        return function (a) {
+            return _.isObject (a) ? matches (a) : function (b) { return a === b } } })
 
     _.extend (_, _.assertions = {
 
-        assert: function (__) { var args = [].splice.call (arguments, 0)
-
-                    if (args.length === 1) {
-                        if (args[0] !== true) {
-                            _.assertionFailed ({ notMatching: args }) } }
-
-                    else if (!_.allEqual (args)) {
-                        _.assertionFailed ({ notMatching: args }) }
-
-                    return true },
+        assert:    assertImpl (true),
+        assertNot: assertImpl (false),
 
         assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
             fn (function () {
@@ -228,10 +268,10 @@ function () {
                 if (then) { then (); return true; } }) },
 
         assertNotCalled: function (context) {
-            context (function () { $fail }) },
+            var inContext = true; context (function () { if (inContext) { $fail } }); inContext = false },
 
         assertEveryCalledOnce: function (fn, then) {
-            return _.assertEveryCalled (_.hasTags ? $once (fn) : _.extend (fn, { once: true }), then) },
+            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
 
         assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
                                                       async = _.hasTags ? $async.is (fn_) : fn_.async
@@ -242,7 +282,7 @@ function () {
                                    _.map (match[1].split (','), function (arg) {
                                                                     var parts = (arg.trim ().match (/^(.+)__(.+)$/))
                                                                     return (parts && parseInt (parts[2], 10)) || true })
-            var status    = []
+            var status    = _.times (fn.length, _.constant (false))
             var callbacks = _.times (fn.length, function (i) {
                                                     return function () {
                                                         status[i] =
@@ -254,6 +294,9 @@ function () {
 
             if (!async)   { _.assert (status, contracts)
                 if (then) { then () } } },
+
+        assertCalledWithArguments: function (argsPattern, generateCalls) {
+                                        return _.assert (_.arr (generateCalls), argsPattern) },
 
         assertCallOrder: function (fn) {
             var callIndex = 0
@@ -272,21 +315,21 @@ function () {
         assertType: function (value, contract) {
             return _.assert (_.decideType (value), contract) },
 
-        assertTypeMatches: function (value, contract) { var mismatches
-                                return _.isEmpty (_.typeMismatches (contract, value))
+        assertTypeMatches: function (value, contract) { 
+                                return _.isEmpty (mismatches = _.typeMismatches (contract, value))
                                     ? true
                                     : _.assertionFailed ({
+                                        message: 'provided value type not matches required contract',
                                         asColumns: true,
                                         notMatching: [
-                                            { value:        value },
-                                            { type:         _.decideType (value) },
-                                            { contract:     contract },
-                                            { mismatches:   mismatches }] }) },
+                                            { provided: value },
+                                            { required: contract },
+                                            { mismatches: mismatches }] }) },
 
         assertFails: function (what) {
             return _.assertThrows.call (this, what, _.isAssertionError) },
 
-        assertThrows: function (what, errorPattern /* optional */) {
+        assertThrows: function (what, errorPattern) {
                             var e = undefined, thrown = false
                                 try         { what.call (this) }
                                 catch (__)  { e = __; thrown = true }
@@ -294,7 +337,7 @@ function () {
                             _.assert.call (this, thrown)
 
                             if (arguments.length > 1) {
-                                _.assertMatches.apply (this, [e].concat (_.rest (arguments))) } },
+                                _.assertMatches.call (this, e, errorPattern) } },
 
         assertNotThrows: function (what) {
             return _.assertEveryCalled (function (ok) { what (); ok () }) },
@@ -336,7 +379,8 @@ function () {
     _.extend (_, {
 
         assertionError: function (additionalInfo) {
-                            return _.extend (new Error ('assertion failed'), additionalInfo, { assertion: true }) },
+                            return _.extend (new Error (
+                                (additionalInfo && additionalInfo.message) || 'assertion failed'), additionalInfo, { assertion: true }) },
 
         assertionFailed: function (additionalInfo) {
                             throw _.extend (_.assertionError (additionalInfo), {

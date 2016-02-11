@@ -6,6 +6,8 @@ Error reporting UI
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+/*  ======================================================================== */
+
 (function ($ /* JQUERY */) {
 
 if (typeof UI === 'undefined') {
@@ -50,6 +52,8 @@ Panic.widget = $singleton (Component, {
 					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
 						.touchClick (this.close) ]) ]) ])
 
+		el.appendTo (document.body)
+		
 		$(document).ready (function () {
 			el.appendTo (document.body) })
 
@@ -63,8 +67,11 @@ Panic.widget = $singleton (Component, {
 
 		return el })),
 
-	layout: function () {
-		this.modal.css ('max-height', $(window).height () - 100)
+	layout: function () { var shouldExpandHorizontally = (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))) > this.modal.width ())
+
+		this.modal.css ({ 'max-height': $(window).height () - 100,
+						  'width':  shouldExpandHorizontally ? '90%' : '' })
+
 		this.modalBody.scroll () },
 
 	toggleVisibility: function (yes) {
@@ -111,7 +118,6 @@ Panic.widget = $singleton (Component, {
 												.append ('<span class="panic-alert-counter">')
 												.append (this.print (what, raw))
 												.insertAfter (this.el.find ('.panic-modal-title')) }
-
 		this.toggleVisibility (true)
 		this.layout ()  },
 
@@ -129,14 +135,34 @@ Panic.widget = $singleton (Component, {
 	printUnknownStuff: function (what, raw) {
 		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 
+	printLocation: function (where) {
+		return $('<span class="location">')
+					.append ([$('<span class="callee">').text (where.calleeShort),
+							  $('<span class="file">')  .text (where.fileName),
+							  $('<span class="line">')  .text (where.line)]) },
+
 	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
 		log.withWriteBackend (
-			function (params) {
-				logEl.append ($('<div>').css ({ color: params.color.css }).html (
-					_.escape (params.indentedText) +
-					((params.codeLocation && (' <span class="location">' + params.codeLocation + '</span>')) || '') +
-					(params.trailNewlines || '').replace (/\n/g, '<br>'))) },
+			this.$ (function (params) { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
+
+				logEl.append (_.isTypeOf (Error, params.args.first)
+						? ($('<div class="inline-exception-entry">')
+								.append ([_.escape (params.indentation),
+											$('<div class="panic-alert-error inline-exception">').append (
+												this.printError (params.args.first))]))
+						: $('<div class="log-entry">')
+								.append (
+									_.map (params.lines, function (line, i, lines) {
+															return $('<div class="line">')
+																		.append (_.escape (params.indentation))
+																		.append (_.map (line, function (run) {
+																								return $('<span>')
+																									.attr ('style', (run.config.color && run.config.color.css) || '')
+																									.text (run.text) }))
+																		.append ((i === lines.lastIndex) ?
+																			[params.where && this.printLocation (params.where),
+																			 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) }),
 
 			function (done) {
 				test.evalLogCalls ()
@@ -146,15 +172,7 @@ Panic.widget = $singleton (Component, {
 				    .text (test.name)
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
-	printError: function (e) { var stackEntries = CallStack.fromError (e),
-								   asyncContext = e.asyncContext
-
-		while (asyncContext) {
-			stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
-			asyncContext = asyncContext.asyncContext }
-
-		stackEntries = stackEntries.mergeDuplicateLines
-
+	printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
 		return [
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
@@ -164,9 +182,12 @@ Panic.widget = $singleton (Component, {
 							: '')
 				.click (this.$ (function (e) {
 					$(e.delegateTarget).parent ()
-						.toggleClass ('all')
+						.toggleClass ('all-stack-entries')
 						.transitionend (this.$ (function () {
 							this.modalBody.scroll () })) })),
+
+			$('<div class="not-matching" style="margin-top: 5px; padding-left: 10px;">').append (_.map (_.coerceToArray (e.notMatching || []), function (s) {
+				return $('<pre>').text (log.impl.stringify (s)) })),
 
 			$('<ul class="callstack">').append (_.map (stackEntries, this.$ (function (entry) {
 

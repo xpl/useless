@@ -153,19 +153,32 @@ _.tests.component = {
 
     /*  $defaults is convenient macro to extract _.defaults thing from init() to definition level
      */
+    '$defaults basic': function () {
+        var Compo = $component ({ $defaults:           { foo: 42 }})
+        $assert ($untag (Compo.$definition.$defaults), { foo: 42 })
+        $assert (        Compo.            $defaults,  { foo: 42 })
+
+        var Compo2 = $component ({ $traits: [$trait ({ $defaults: { foo: 11 } })], $defaults: { } })
+        $assert ($untag (Compo2.$definition.$defaults), { foo: 11 })
+        $assert (        Compo2.            $defaults,  { foo: 11 })
+    },
+
     '$defaults': function () {
         var Trait = $trait ({ $defaults: { pff: 'pff', inner: { fromTrait: 1 } }})
         var Base = $component ({ $defaults: { foo: 12, qux: 'override me', inner: { fromBase: 1 } } })
         var Derived = $extends (Base, {
             $traits: [Trait],
             $defaults: { bar: 34, qux: 'overriden', inner: { fromDerived: 1 } } })
+        
+        //$assert (Derived.$ownDefaults,
+        //               { bar: 34, qux: 'overriden', inner: { fromDerived: 1 } } )
 
         /* TODO: fix bug not allowing derived to not have $defaults
            var Derived2 = $extends (Derived, {}) */
  
         $assert (new Derived ().inner !== new Derived ().inner) // should clone $defaults at instance construction
 
-        $assertMatches (new Derived (), { pff: 'pff', foo: 12, bar: 34, qux: 'overriden', inner: { fromTrait: 1, fromBase: 1, fromDerived: 1 } }) },
+        $assertMatches (new Derived ({ pff: 'overriden from cfg' }), { pff: 'overriden from cfg', foo: 12, bar: 34, qux: 'overriden', inner: { fromTrait: 1, fromBase: 1, fromDerived: 1 } }) },
 
 
     /*  Use $requires to specify required config params along with their type signatures
@@ -306,19 +319,20 @@ _.tests.component = {
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener) {
+    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener, fromDefinition) {
 
         var Compo = $component ({
                         color: $observableProperty (),
                         smell: $observableProperty (),
+                        shape: $observableProperty ('round', function (now) { $assert (now, 'round'); fromDefinition () }),
                         init: function () {
                             this.colorChange (function (now, was) { if (was) { fromConstructor ()
                                 $assert ([now, was], ['green', 'blue']) } }) } })
 
         var compo = new Compo ({
             color: 'blue',
-            colorChange: function (now, was) { if (was) { fromConfig ()
-                $assert ([now, was], ['green', 'blue']) } } })
+            colorChange: function (now, was) { if (was) {   fromConfig ()
+                                                            $assert ([now, was], ['green', 'blue']) } } })
 
         compo.smellChange (function (now, was) { fromLateBoundListener ()
             $assert (compo.smell, now, 'bad')
@@ -343,13 +357,15 @@ _.tests.component = {
 
     'binding to streams with traits': function () {
 
+        _.defineTagKeyword ('dummy')
+
         $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
 
             var Trait = $trait ({
                 somethingHappened: $trigger () })
 
             var Other = $trait ({
-                somethingHappened: function (_42) { $assert (this, this_); $assert (_42, 42); mkay1 () } })
+                somethingHappened: $dummy (function (_42) { $assert (this, this_); $assert (_42, 42); mkay1 () }) })
 
             var Compo = $component ({
                 $traits: [Trait, Other],
@@ -360,13 +376,14 @@ _.tests.component = {
 
     'binding to bindables with traits': function () {
 
-        $assertCallOrder (function (beforeCalled, bindableCalled, afterCalled) { var this_ = undefined
+        $assertCallOrder (function (beforeCalled, interceptCalled, bindableCalled, afterCalled) { var this_ = undefined
 
             var Trait = $trait ({
                 doSomething: $bindable (function (x) { $assert (this, this_); bindableCalled () }) })
 
             var Other = $trait ({
-                beforeDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); beforeCalled () } })
+                beforeDoSomething: function (_42) { $assert (this, this_); $assert (_42, 42); beforeCalled () },
+                interceptDoSomething: function (_42, impl) { interceptCalled (); $assert (this, this_); return impl (_42) } })
 
             var Compo = $component ({
                 $traits: [Trait, Other],
@@ -442,8 +459,13 @@ _.tests.component = {
             $defaults: { init: false },
             init: function () { } })
 
-        compo.init ()
-    },
+        compo.init () },
+
+    'stream members should be available at property setters when inited from config': function () {
+        var compo = new ($component ({
+            ready: $barrier (),
+            value: $property ({
+                set: function (_42) { $assertTypeMatches (this.ready, 'function') } }) })) ({ value: 42 }) },
 
     'observableProperty.force (regression)': function () { $assertEveryCalled (function (mkay__2) {
         
@@ -485,6 +507,51 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
+    '$macroTags for component-specific macros': function () {
+
+        var Trait =    $trait ({   $macroTags: {
+                                        add_2: function (def, fn, name) {
+                                            return Tags.modify (fn, function (fn) {
+                                                return fn.then (_.sum.$ (2)) }) } } })
+
+        var Base = $component ({   $macroTags: {
+                                        add_20: function (def, fn, name) {
+                                            return Tags.modify (fn, function (fn) {
+                                                return fn.then (_.sum.$ (20)) }) } } })
+
+        var Compo = $extends (Base, {
+            $traits: [Trait],
+            $macroTags: { dummy: function () {} },
+
+             testValue: $static ($add_2 ($add_20 (_.constant (20)))) })
+
+        $assert (42, Compo.testValue ())
+        $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
+
+        _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
+
+    '$raw for performance-critical methods (disables thiscall proxy)': function () {
+
+        var compo = new ($component ({
+            method:          function (this_) { $assert (this_ === this) },
+            rawMethod: $raw (function (this_) { $assert (this_ !== this) }) }))
+
+        var    method = compo.   method;    method (compo)
+        var rawMethod = compo.rawMethod; rawMethod (compo) },
+
+    /*  $alias (TODO: fix bugs)
+     */
+    /*'$alias': function () { var value = 41
+
+        var compo = $singleton (Component, {
+
+            foo: function () { return ++value },
+            bar: $bindable ($alias ('foo')),
+            baz: $memoize  ($alias ('bar')) })
+
+        $assertEveryCalled (function (mkay) { compo.bar.onBefore (mkay)
+            $assert (compo.baz (),
+                     compo.baz (), 42) }) },*/
 
     /*  Auto-unbinding
      */
@@ -495,6 +562,28 @@ _.tests.component = {
         somethingHappened (compo.fail)
         compo.destroy ()
         somethingHappened () }, // should not invoke compo.fail
+
+
+    '(regression) undefined was allowed as trait': function () {
+        $assertThrows (function () {
+            var Compo = $component ({ $traits: [undefined] }) }, { message: 'invalid $traits value' }) },
+
+    '(regression) undefined members fail': function () {
+        var Compo = $component ({ yoba: undefined })
+        $assert ('yoba' in Compo.prototype) },
+
+    '(regression) $defaults with $traits fail': function () {
+        var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})], $defaults: { a: {}, b: [], c: 0 } })
+        $assert (Compo.$defaults, { x: 1, a: {}, b: [], c: 0 }) },
+
+    '(regression) $defaults with $traits fail #2': function () {
+        var Compo = $component ({ $traits: [$trait ({ $defaults: { x: 1 }})] })
+        $assert (Compo.$defaults, { x: 1 }) },
+
+    '(regression) method overriding broken': function () {
+        var Compo = $component ({ method: function () { $fail } })
+        var compo = new Compo ({ value: 42, method: function () { return this.value } })
+        $assert (compo.method (), 42) },
 
     '(regression) $observableProperty (false)': function () {
         $assertEveryCalledOnce (function (mkay) {
@@ -512,11 +601,10 @@ _.tests.component = {
 
         $assertTypeMatches (bar, { fooChange: 'function', barChange: 'function' }) },
 
-    '(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
+    /*'(regression) postpone': function (testDone) { $assertEveryCalledOnce ($async (function (foo) {
         $singleton (Component, {
             foo: function () { foo (); },
-            init: function () {
-                this.foo.postpone () } }) }), testDone) },
+            init: function () { this.foo.postpone () } }) }), testDone) },*/
 
     '(regression) undefined at definition': function () { $singleton (Component, { fail: undefined }) },
 
@@ -534,77 +622,149 @@ _.tests.component = {
 
             $assert (test.close, test.destroy) } }
 
+
 /*  General syntax
  */
 _.defineKeyword ('component', function (definition) {
-    return $extends (Component, definition) })
+                                return $extends (Component, definition) })
 
-_([ 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
-    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference'])
+_([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw'])
     .each (_.defineTagKeyword)
 
 _.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
-/*  Make $defaults and $requires inherit base values + $traits support
- */
-$prototype.inheritsBaseValues = function (keyword) {
-    $prototype.macro (keyword, function (def, value, name, Base) {
+$prototype.macro ('$depends', function  (def, value, name) {
+                                       (def.$depends = $builtin ($const (_.coerceToArray (value))))
+                                 return def })
 
-        value = _.extendedDeep ((Base && Base[keyword]) || {}, value)
+$prototype.macroTag ('extendable',
+            function (def, value, name) {
+                      def[name] = $builtin ($const (value))
+               return def })
 
-        _.each (def.$traits, function (Trait) {
-            value = _.extendedDeep (Trait[keyword], value) })
-
-        def[keyword] = $static ($builtin ($property (_.constant (value))))
-
-        return def }) } 
-
-$prototype.inheritsBaseValues ('$defaults')
-$prototype.inheritsBaseValues ('$requires')
-
-/*  Impl
- */
 Component = $prototype ({
 
-    /*  Overrides default OOP.js implementation of traits (providing method chaining)
+    $defaults:  $extendable ({}),
+    $requires:  $extendable ({}),
+    $macroTags: $extendable ({}),
+
+    /*  Overrides default OOP.js implementation
      */
     $impl: {
 
-        mergeTraitsMembers: function (def, traits) {
+        sequence: function (def, base) { return _.sequence (
+            this.extendWithTags,
+            this.flatten,
+            this.generateCustomCompilerImpl (base),
+            this.generateArgumentContractsIfNeeded,
+            this.ensureFinalContracts (base),
+            this.generateConstructor (base),
+            this.evalAlwaysTriggeredMacros (base),
+            this.evalMemberTriggeredMacros (base),
+            this.expandTraitsDependencies,
+            this.mergeExtendables (base),
+            this.contributeTraits (base),
+            this.mergeStreams,
+            this.mergeBindables,
+            this.generateBuiltInMembers (base),
+            this.callStaticConstructor,
+            this.expandAliases,
+            this.groupMembersByTagForFastEnumeration,
+            this.defineStaticMembers,
+            this.defineInstanceMembers) },
 
-            var pool = {}
-            var bindables = {}
+        expandTraitsDependencies: function (def) {
+            if (def.$depends) {
+                            var edges = []
+                            var lastId = 0
+                            var drill =  function (depends, T) { if (!T.__tempId) { T.__tempId = lastId++ }
+                                            
+                                            /*  Horizontal dependency edges (first mentioned should init first)
+                                             */
+                                            _.reduce2 (depends, function (TBefore, TAfter) {
+                                                edges.push ([TAfter, TBefore]); return TAfter })
 
-            _.each ([def].concat (_.pluck (traits, '$definition')), function (def) {
-                _.each (_.omit (def, _.or ($builtin.matches, _.key (_.equals ('constructor')))),
+                                            /*  Vertical dependency edges (parents should init first)
+                                             */
+                                            _.each (depends, function (    TSuper) {
+                                                          edges.push ([T,  TSuper])
+                                                                    drill (TSuper.$depends || [], TSuper) }) }
+                                                                    drill ($untag (def.$depends), {})
+
+                    _.each (def.$traits =               _.reversed (
+                                                            _.rest (
+                                                     _.linearMerge (edges, { key: _.property ('__tempId') }))),
+                            function (obj) {
+                                delete obj.__tempId }) }
+            return def },
+
+        mergeExtendables: function (base) { return function (def) {
+
+                _.each (base.$definition, function (value, name) {
+                    if (value && value.$extendable) {
+                        def[name] = Tags.modify (                       value,
+                                        function (                      value) {
+                                                                        value =    _.extendedDeep (value, $untag (def[name] || {}))
+                                    _.each ($untag (def.$traits),
+                                                function (trait) { if (!trait) {    log.e (def.$traits)
+                                                                                    throw new Error ('invalid $traits value') }
+                                                      var traitVal = trait.$definition [name]
+                                                      if (traitVal) {   value =   _.extendedDeep ($untag (traitVal), value) } })
+                                                               return   value }) } }); 
+               return def } },
+
+        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}, streams = {}
+
+            var macroTags = $untag (def.$macroTags)
+            var definitions = _.pluck (traits, '$definition').concat (_.clone (def))
+
+            _.each (definitions, function (traitDef) {
+                _.each ((macroTags && this.applyMacroTags (macroTags,
+                                                _.extend (_.clone (traitDef), {
+                                                    constructor: def.constructor }))) || traitDef,
                     function (member, name) {
-                        if (member.$bindable) {
-                            bindables[name] = member }
-                        (pool[name] || (pool[name] = [])).push (member) }) })
+                        if ($builtin.isNot (member) &&
+                            $builtin.isNot (def[name]) && (name !== 'constructor')) {
 
-            _.each (pool, function (members, name) {
-                var stream = _.find (members, Component.isStreamDefinition)
-                if (stream) {
+                            if ($bindable.is (member))                  { bindables[name] = member }
+                            if (Component.isStreamDefinition (member))  {   streams[name] = member }
+                            (pool[name] || (pool[name] = [])).push (member);    def[name] = member } }) }, this)
+
+            def.__bindables     = bindables
+            def.__streams       = streams
+            def.__membersByName = pool },
+
+        mergeStreams: function (def) { var pool = def.__membersByName
+
+            _.each (def.__streams, function (stream, name) {
+
                     var clonedStream = def[name] = Tags.clone (stream)
                         clonedStream.listeners = []
-                    _.each (members, function (member) {
-                                             if (member !== stream) {
-                                                 clonedStream.listeners.push (member) } }) }
-                else { if (!def[name]) {
-                            def[name] = pool[name][0] } } })
 
-            _.each (bindables, function (member, name) {
-                var bound = _.nonempty (_.map (_.bindable.hooks, function (hook, i) {
-                                                    var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
-                                                    return bound && [hook, bound] }))
-                if (bound.length) {
-                    var bindable = (def[name] = Tags.clone (member, _.bindable ($untag (member)))).subject
+                    _.each (pool[name], function (member) {
+                                            if (member !== stream) {
+                                                clonedStream.listeners.push ($untag (member)) } }) }); return def },
+
+        mergeBindables: function (def) { var pool = def.__membersByName
+
+            _.each (def.__bindables, function (member, name) {
+                var bound = _.filter2 (_.bindable.hooks, function (hook, i) {
+                                                            var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
+                                                            return bound ? [hook, bound] : false })
+
+                if (bound.length) { var hooks = {}
+
                     _.each (bound, function (kv) {
                         _.each (kv[1], function (fn) { fn = $untag (fn)
-                            if (_.isFunction (fn)) {
-                                bindable[kv[0]] (fn) } }) }) } }) } },
+                            if (_.isFunction (fn)) { var k = '_' + kv[0]; (hooks[k] || (hooks[k] = [])).push (fn) } }) })
+
+                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (member)) } }, this)
+
+            return def } },
+
 
     /*  Syntax helper
      */
@@ -617,18 +777,26 @@ Component = $prototype ({
     /*  Another helper (it was needed because _.methods actually evaluate $property values while enumerating keys,
         and it ruins most of application code, because it happens before Component is actually created).
      */
-    enumMethods: function (/* [predicate, ] iterator */) { var iterator  = _.last (arguments),
+    mapMethods: function (/* [predicate, ] iterator */) { var iterator  = _.last (arguments),
                                                                predicate = (arguments.length === 1 ? _.constant (true) : arguments[0])
         var methods = []
         for (var k in this) {
             var def = this.constructor.$definition[k]
             if (!(def && def.$property)) { var fn = this[k]
-                if (predicate (def) && _.isFunction (fn) && !_.isPrototypeConstructor (fn))  {
-                    iterator.call (this, fn, k) } } } },
+                if (_.isFunction (fn) && !_.isPrototypeConstructor (fn) && predicate (def))  {
+                    this[k] = iterator.call (this, fn, k, def) || fn } } } },
+
+    enumMethods: function (_1, _2) {
+        if (arguments.length === 2) { this.mapMethods (_1, _2.returns (undefined)) }
+                               else { this.mapMethods (    _1.returns (undefined)) } },
+
 
     /*  Thou shall not override this
      */
     constructor: $final (function (arg1, arg2) {
+
+        this.parent_ = undefined
+        this.children_ = []
 
         var cfg                 = this.cfg = ((typeof arg1 === 'object') ? arg1 : {}),
             componentDefinition = this.constructor.$definition
@@ -637,7 +805,12 @@ Component = $prototype ({
         /*  Apply $defaults
          */
         if (this.constructor.$defaults) {
-            _.extend (cfg, _.cloneDeep (this.constructor.$defaults)) }
+            cfg = this.cfg = _.extend (_.cloneDeep (this.constructor.$defaults), cfg) }
+
+
+        /*  Add thiscall semantics to methods
+         */
+        this.mapMethods (function (fn, name, def) { if ((name !== '$') && (name !== 'init') && !(def && def.$raw)) { return this.$ (fn) } })
 
 
         /*  Listen self destroy method
@@ -646,21 +819,9 @@ Component = $prototype ({
         _.onAfter   (this, 'destroy', this.afterDestroy)
 
 
-        /*  Apply cfg thing (stream definitions, init and attach will be handled later)
-         */
-        _.extend (this, {
-            parent_: undefined,
-            children_: [] },
-            _.omit (_.omit (cfg, 'init', 'attachTo', 'attach'), function (v, k) {
-                    return Component.isStreamDefinition (componentDefinition[k]) }, this))
-
-
-        /*  Add thiscall semantics to methods
-         */
-        this.enumMethods (function (fn, name) { if (name !== '$' && name !== 'init') { this[name] = this.$ (fn) } })
-
-
         var initialStreamListeners = []
+        var excludeFromCfg = { init: true }
+
 
         /*  Expand macros
             TODO: execute this substitution at $prototype code-gen level, not at instance level
@@ -670,11 +831,13 @@ Component = $prototype ({
             /*  Expand $observableProperty
                 TODO: rewrite with $prototype.macro
              */
-            if (def.$observableProperty) {  var definitionValue = this[name] // from $component definition
-                                                defaultValue    = (name in cfg ? cfg[name] : definitionValue)
+            if (def.$observableProperty) {  var definitionValue = def.subject
+                                            var defaultValue = (name in cfg) ? cfg[name] : definitionValue
+                                            var streamName   = name + 'Change'
+
                 /*  xxxChange stream
                  */
-                var observable           = this[name + 'Change'] = _.observable ()
+                var observable           = excludeFromCfg[streamName] = this[streamName] = _.observable ()
                     observable.context   = this
                     observable.postpones = def.$postpones
 
@@ -695,27 +858,30 @@ Component = $prototype ({
                         get: function ()  { return observable.value },
                         set: function (x) { observable.call (this, x) } })
 
+                /*  Default listeners (come from traits)
+                 */
                 if (def.listeners) {
                     _.each (def.listeners, function (value) {
                         initialStreamListeners.push ([observable, value]) }) }
 
-                if (_.isFunction (def.$observableProperty)) { // default listener param
+                /*  Default listener which comes from $observableProperty (defValue, defListener) syntax
+                 */
+                if (_.isFunction (def.$observableProperty)) {
                       initialStreamListeners.push ([observable, def.$observableProperty]) }
 
                 /*  write default value
                  */
                 if (defaultValue !== undefined) {
-                    observable (_.isFunction (defaultValue) ? this.$ (defaultValue) : defaultValue) } }
+                    observable (defaultValue) } }
 
             /*  Expand streams
              */
             else if (Component.isStreamDefinition (def)) {
-                var stream =    (def.$trigger       ? _.trigger :
+                var stream = excludeFromCfg[name] = this[name] = _.extend (
+                                (def.$trigger       ? _.trigger :
                                 (def.$triggerOnce   ? _.triggerOnce :
                                 (def.$observable    ? _.observable :
-                                (def.$barrier       ? _.barrier : undefined)))) (this[name])
-
-                this[name] = _.extend (stream, { context: this, postpones: def.$postpones })
+                                (def.$barrier       ? _.barrier : undefined)))) (def.subject), { context: this, postpones: def.$postpones })
 
                 if (def.listeners) {
                     _.each (def.listeners, function (value) {
@@ -724,7 +890,7 @@ Component = $prototype ({
                 var defaultListener = cfg[name]                
                 if (defaultListener) { initialStreamListeners.push ([stream, defaultListener]) } }
 
-            /*  Expand $listener
+            /*  Expand $listener (TODO: REMOVE)
              */
             if (def.$listener) {
                 this[name].queuedBy = [] }
@@ -736,9 +902,10 @@ Component = $prototype ({
 
             /*  Expand $bindable
              */
-            if (def.$bindable) { if (_.hasAsserts) { $assert (_.isFunction (this[name])) }
-                this[name] = _.extendWith (def.defaultHooks || {}, _.bindable (this[name], this)) }
-
+            if (def.$bindable) {
+                this[name] = _.extend (_.bindable (this[name], this),
+                                       _.map2 (def.$bindable.hooks || {},
+                                       _.mapsWith (this.$.bind (this).arity1))) }
             /*  Expand $debounce
              */
             if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)
@@ -760,15 +927,22 @@ Component = $prototype ({
         /*  Bind stuff to init (either in CPS, or in sequential flow control style)
          */
         _.intercept (this, 'init', function (init) {
-
             var evalChain = _.hasArgs (this.constructor.prototype.init) ? _.cps.sequence : _.sequence
                 evalChain ([this._beforeInit, init.bind (this), this._afterInit]).call (this) })
+
+
+        /*  Apply cfg thing
+         */
+        _.each (cfg, function (value, name) {
+            if (!(name in excludeFromCfg)) {
+                this[name] = _.isFunction (value) ? this.$ (value) : value } }, this)
+
 
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
         _.each (componentDefinition, function (def, name) {
-            if (def && def.$alias) {
-                this[name] = this[Tags.unwrap (def)] } }, this)
+            if (def && def.$alias && !def.$raw) {
+                this[name] = this[$untag (def)] } }, this)
 
 
         /*  Check $overrideThis
@@ -782,7 +956,8 @@ Component = $prototype ({
          */
         if (_.hasAsserts) {
             _.each (this.constructor.$requires, function (contract, name) {
-                $assertTypeMatches (this[name], contract) }, this) }
+                $assertTypeMatches (_.object ([[name, this[name]]]),
+                                    _.object ([[name, contract]])) }, this) }
 
 
         /*  Subscribe default listeners
@@ -828,12 +1003,6 @@ Component = $prototype ({
 
     _afterInit: function (then) { var cfg = this.cfg
 
-        if (cfg.attach && !_.isFunction (cfg.attach)) {
-            this.attach (cfg.attach) }
-
-        if (cfg.attachTo && !_.isFunction (cfg.attachTo)) {
-            this.attachTo (cfg.attachTo) }
-
         this.callTraitsMethod ('afterInit', then)
 
         this.initialized (true)
@@ -845,10 +1014,9 @@ Component = $prototype ({
             We do not do this for other streams, as their execution is up to component logic,
             and they're might get called at init, so their default values get bound before init.
          */
-        _.each (this.constructor.$definition, function (def, name) { name += 'Change'
-            if (def && def.$observableProperty) { var defaultListener = cfg[name]
-                if (_.isFunction (defaultListener)) {
-                    this[name] (defaultListener) } } }, this) },
+        _.each (this.constructor.$definition, function (def, name) {
+            if (def && def.$observableProperty) { name += 'Change'; var defaultListener = cfg[name]
+                if (defaultListener) { this[name] (defaultListener) } } }, this) },
     
     initialized: $barrier (),
 
@@ -917,4 +1085,3 @@ Component = $prototype ({
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
                             return this } })
-

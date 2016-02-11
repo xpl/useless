@@ -175,24 +175,25 @@ Lock = $prototype ({
  */
 _.interlocked = function (fn) { var lock = new Lock ()
     return _.extendWith ({ wait: lock.$ (lock.wait) },
-        _.prependsArguments (Tags.unwrap (fn), function (context) {
-                                                    lock.acquire (function () {
-                                                        context (lock.$ (lock.release)) }) })) }
+        _.argumentPrependingWrapper (Tags.unwrap (fn),
+                                        function (fn) {
+                                            lock.acquire (function () {
+                                                fn (lock.$ (lock.release)) }) })) }
 
 
 /*  EXPERIMENTAL (TBD)
  */
 _.defineKeyword ('scope', function (fn) { var releaseStack = undefined
                                                     
-    return _.prependsArguments (Tags.unwrap (fn),
+    return _.argumentPrependingWrapper (Tags.unwrap (fn),
 
-            function /* acquire */ (context) {
+            function /* acquire */ (fn) {
 
                             var released     = { when: undefined };
                                (releaseStack = (releaseStack || [])).push (released)
 
-                    context (function /* release */ (then) { if (released.when) throw new Error ('$scope: release called twice')
-                                                                 released.when = then
+                    fn (function /* release */ (then) { if (released.when) throw new Error ('$scope: release called twice')
+                                                            released.when = then
                         while (releaseStack &&
                                releaseStack.last &&
                                releaseStack.last.when) { var trigger =  releaseStack.last.when

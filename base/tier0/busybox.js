@@ -18,25 +18,22 @@ _.asString = function (what) { return what + '' }
 _.typeOf = function (what) {
                 return typeof what }
 
+_.instanceOf = function (what) {
+                    return function (x) { return (x instanceof what) } }
+
 _.count = function (what) { // cannot override _.length
                 return what.length }
 
 _.array = _.tuple = function () {
                         return _.asArray (arguments) }
 
-_.concat = function (a, b) {
-    if (_.isArray (a)) {
-        return a.concat ([b]) }
-    else {
-        return a + b } }
+_.cons = function (head, tail) { return [head].concat (tail || []) }
 
 _.atIndex = function (n) {
                 return function (arr) { return arr[n] } }
 
 _.takesFirst = _.higherOrder (_.first)
 _.takesLast  = _.higherOrder (_.last)
-
-_.call    = function (fn) { return fn () }
 
 _.applies = function (fn, this_, args) {
                 return function () { return fn.apply (this_, args) } }
@@ -52,6 +49,10 @@ _.appends = function (what) {
 _.join = function (arr, s) { return arr.join (s) }
 _.joinWith = _.flip2 (_.join)
 _.joinsWith = _.higherOrder (_.joinWith)
+
+_.split      = function (s, del) { return s.split (del) }
+_.splitWith  =                   _.flip2 (_.split)
+_.splitsWith =             _.higherOrder (_.splitWith)
 
 _.sum = function (a, b) {
             return (a || 0) + (b || 0) }
@@ -93,3 +94,5 @@ _.notZero = function (x) { return x !== 0 }
 _.propertyOf = function (obj) { return function (prop) {            // inverted version of _.property
                                             return obj[prop] }}
 
+_.oneOf = $restArg (function () {
+    return _.propertyOf (_.index (_.asArray (arguments))) })

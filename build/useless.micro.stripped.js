@@ -33,6 +33,7 @@ _ = function () {
     }
     return _;
 }();
+_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g };
 _.tests = {};
 _.deferTest = _.withTest = function (name, test, subj) {
     subj();
@@ -88,9 +89,12 @@ _.defineGlobalProperty('alert2', function (args) {
     alert(_.map(arguments, _.stringify).join(', '));
     return arguments[0];
 });
+_.global().log = function () {
+    console.log.call(console.log, arguments);
+};
 _.extend(_, {
-    asArray: function (arrayMimick) {
-        return [].slice.call(arrayMimick, 0);
+    asArray: function (x) {
+        return x.length !== undefined ? [].slice.call(x, 0) : [x];
     }
 });
 _.extend(_, {
@@ -153,6 +157,12 @@ $overrideUnderscore('bind', function (bind) {
         return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 2)), fn._ra, bind.apply(this, arguments));
     });
 });
+_.debugEcho = function () {
+    return [this].concat(_.asArray(arguments));
+};
+_.call = function (fn, this_, args) {
+    return fn.apply(this_, _.rest(arguments, 2));
+};
 _.arity = function (N, fn) {
     return function () {
         return fn.apply(this, _.first(arguments, N));
@@ -202,11 +212,72 @@ _.tails3 = $restArg(function (fn) {
         ].concat(tailArgs));
     };
 });
+_.callsTo = function (fn) {
+    return $restArg(function () {
+        return _.callsWith.apply(null, arguments)(fn);
+    });
+};
+_.tailsTo = function (fn, then) {
+    return $restArg(function () {
+        return _.tailsWith.apply(null, arguments)(fn);
+    });
+};
+_.callsWith = $restArg(function () {
+    var args = _.asArray(arguments);
+    return function (fn) {
+        return _.withSameArgs(fn, function () {
+            return fn.apply(this, args.concat(_.asArray(arguments)));
+        });
+    };
+});
+_.tailsWith = $restArg(function () {
+    var args = _.asArray(arguments);
+    return function (fn) {
+        return _.withSameArgs(fn, function () {
+            return fn.apply(this, _.asArray(arguments).concat(args));
+        });
+    };
+});
+_.argumentAppendingWrapper = function (fn, then) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this, args = _.asArray(arguments);
+        return then(function () {
+            return fn.apply(this_, args.concat(_.asArray(arguments)));
+        });
+    });
+};
+_.argumentPrependingWrapper = function (fn, then) {
+    return _.withSameArgs(fn, function () {
+        var this_ = this, args = _.asArray(arguments);
+        return then(function () {
+            return fn.apply(this_, _.asArray(arguments).concat(args));
+        });
+    });
+};
+_.new_ = $restArg(function (Constructor, a, b, c, d) {
+    switch (arguments.length) {
+    case 1:
+        return new Constructor();
+    case 2:
+        return new Constructor(a);
+    case 3:
+        return new Constructor(a, b);
+    case 4:
+        return new Constructor(a, b, c);
+    case 5:
+        return new Constructor(a, b, c, d);
+    default:
+        _.notImplemented();
+    }
+});
+_.flipN = function (fn) {
+    return $restArg(function () {
+        return fn.apply(this, _.asArray(arguments).reverse());
+    });
+};
 _.flip = function (fn) {
     if (_.restArg(fn)) {
-        return $restArg(function () {
-            return fn.apply(this, _.asArray(arguments).reverse());
-        });
+        return _.flipN(fn);
     } else {
         switch (_.numArgs(fn)) {
         case 0:
@@ -313,9 +384,7 @@ _.extend(_, {
     _.binary = 2;
     _.unary = 1;
 }());
-_.higherOrder = function (fn) {
-    return _.partial(_.partial, fn);
-};
+_.higherOrder = _.callsTo;
 _.eval = function (x) {
     return _.isFunction(x) ? x.call(this) : x;
 };
@@ -340,24 +409,6 @@ _.asMethod = function (fn) {
     return function () {
         return fn.apply(undefined, [this].concat(_.asArray(arguments)));
     };
-};
-_.appendsArguments = function (fn, wrapper) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this;
-        var args = _.asArray(arguments);
-        return wrapper(function () {
-            fn.apply(this_, args.concat(_.asArray(arguments)));
-        });
-    });
-};
-_.prependsArguments = function (fn, wrapper) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this;
-        var args = _.asArray(arguments);
-        return wrapper(function () {
-            fn.apply(this_, _.asArray(arguments).concat(args));
-        });
-    });
 };
 _.once = function (fn) {
     var called = false;
@@ -421,18 +472,19 @@ _.asString = function (what) {
 _.typeOf = function (what) {
     return typeof what;
 };
+_.instanceOf = function (what) {
+    return function (x) {
+        return x instanceof what;
+    };
+};
 _.count = function (what) {
     return what.length;
 };
 _.array = _.tuple = function () {
     return _.asArray(arguments);
 };
-_.concat = function (a, b) {
-    if (_.isArray(a)) {
-        return a.concat([b]);
-    } else {
-        return a + b;
-    }
+_.cons = function (head, tail) {
+    return [head].concat(tail || []);
 };
 _.atIndex = function (n) {
     return function (arr) {
@@ -441,9 +493,6 @@ _.atIndex = function (n) {
 };
 _.takesFirst = _.higherOrder(_.first);
 _.takesLast = _.higherOrder(_.last);
-_.call = function (fn) {
-    return fn();
-};
 _.applies = function (fn, this_, args) {
     return function () {
         return fn.apply(this_, args);
@@ -464,6 +513,11 @@ _.join = function (arr, s) {
 };
 _.joinWith = _.flip2(_.join);
 _.joinsWith = _.higherOrder(_.joinWith);
+_.split = function (s, del) {
+    return s.split(del);
+};
+_.splitWith = _.flip2(_.split);
+_.splitsWith = _.higherOrder(_.splitWith);
 _.sum = function (a, b) {
     return (a || 0) + (b || 0);
 };
@@ -514,6 +568,9 @@ _.propertyOf = function (obj) {
         return obj[prop];
     };
 };
+_.oneOf = $restArg(function () {
+    return _.propertyOf(_.index(_.asArray(arguments)));
+});
 _.isInstanceofSyntaxAvailable = function () {
     var e = new Error();
     try {
@@ -541,8 +598,14 @@ _.isPrototypeInstance = function (x) {
 _.isPrototypeConstructor = function (x) {
     return x && x.$definition !== undefined || false;
 };
+_.coerceToNaN = function (x) {
+    return _.isFinite(x) ? x : Number.NaN;
+};
 _.coerceToArray = function (x) {
     return x === undefined ? [] : _.isArray(x) ? x : [x];
+};
+_.coerceToFunction = function (x) {
+    return _.isFunction(x) ? x : _.constant(x);
 };
 $overrideUnderscore('isArray', function (isArray) {
     return function (x) {
@@ -623,121 +686,12 @@ _.extend(_, {
         return v === undefined || v === null || v === Math.NaN || v === '' || _.isPOD(v) && (_.isEmptyObject(v) || v.length === 0) ? undefined : v;
     }
 });
-_.json = function (arg) {
-    if (typeof arg === 'string') {
-        try {
-            return JSON.parse(arg);
-        } catch (e) {
-            return {};
-        }
-    } else {
-        return JSON.stringify(arg);
-    }
-};
-_.stringify = function (x, cfg) {
-    return _.stringifyImpl(x, [], [], 0, cfg || {}, -1);
-};
-_.stringifyImpl = function (x, parents, siblings, depth, cfg, prevIndent) {
-    var customFormat = cfg.formatter && cfg.formatter(x);
-    if (customFormat) {
-        return customFormat;
-    }
-    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
-        x = _.asArray(x);
-    }
-    if (x === $global) {
-        return '$global';
-    } else if (parents.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<cyclic>';
-    } else if (siblings.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
-    } else if (x === undefined) {
-        return 'undefined';
-    } else if (x === null) {
-        return 'null';
-    } else if (_.isFunction(x)) {
-        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) ? '<prototype>' : '<function>';
-    } else if (typeof x === 'string') {
-        return _.quoteWith('"', x);
-    } else if (_.isTypeOf(Tags, x)) {
-        return _.reduce(_.keys(Tags.get(x)), function (memo, tag) {
-            return tag + ' ' + memo.quote('()');
-        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg, indent));
-    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
-        return x.toString();
-    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
-        var isArray = _.isArray(x);
-        var pretty = cfg.pretty || false;
-        if (_.platform().engine === 'browser') {
-            if (_.isTypeOf(Element, x)) {
-                return '<' + x.tagName.lowercase + '>';
-            } else if (_.isTypeOf(Text, x)) {
-                return '@' + x.wholeText;
-            }
-        }
-        if (x.toJSON) {
-            return _.quoteWith('"', x.toJSON());
-        }
-        if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
-            return isArray ? '<array[' + x.length + ']>' : '<object>';
-        }
-        var parentsPlusX = parents.concat([x]);
-        siblings.push(x);
-        var values = _.pairs(x);
-        var oneLine = !pretty || values.length < 2;
-        var indent = prevIndent + 1;
-        var tabs = !oneLine ? '\t'.repeats(indent) : '';
-        if (pretty && !isArray) {
-            var max = _.reduce(_.map(_.keys(x), _.count), _.largest, 0);
-            values = _.map(values, function (v) {
-                return [
-                    v[0],
-                    v[1],
-                    ' '.repeats(max - v[0].length)
-                ];
-            });
-        }
-        var square = !oneLine ? '[\n  ]' : '[]';
-        var fig = !oneLine ? '{\n  }' : '{  }';
-        return _.quoteWith(isArray ? square : fig, _.joinWith(oneLine ? ', ' : ',\n', _.map(values, function (kv) {
-            return tabs + (isArray ? '' : kv[0] + ': ' + (kv[2] || '')) + _.stringifyImpl(kv[1], parentsPlusX, siblings, depth + 1, cfg, indent);
-        })));
-    } else if (_.isDecimal(x) && cfg.precision > 0) {
-        return _.toFixed(x, cfg.precision);
-    } else {
-        return x + '';
-    }
-};
-_.toFixed = function (x, precision) {
-    return x && x.toFixed && x.toFixed(precision) || undefined;
-};
-_.toFixed2 = function (x) {
-    return _.toFixed(x, 2);
-};
-_.toFixed3 = function (x) {
-    return _.toFixed(x, 3);
-};
 _.hasStdlib = true;
-_.extend(_, {
-    throwsError: function (msg) {
-        return function () {
-            throw new Error(msg);
-        };
-    }
+_.throwsError = _.higherOrder(_.throwError = function (msg) {
+    throw new Error(msg);
 });
 _.overrideThis = _.throwsError('override this');
 _.notImplemented = _.throwsError('not implemented');
-_.mixin({
-    tryEval: function (try_, catch_, then_) {
-        var result = undefined;
-        try {
-            result = try_();
-        } catch (e) {
-            result = catch_ && catch_(e);
-        }
-        return then_ ? then_(result) : result;
-    }
-});
 _.mixin({
     values2: function (x) {
         if (_.isArray(x)) {
@@ -753,15 +707,53 @@ _.mixin({
 });
 _.mixin({
     map2: function (value, fn, context) {
-        if (_.isArray(value)) {
-            return _.map(value, fn, context);
-        } else if (_.isStrictlyObject(value)) {
-            return _.mapObject(value, fn, context);
-        } else {
-            return fn.call(context, value);
-        }
+        return _.isArray(value) ? _.map(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
     }
 });
+_.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
+_.mixin({
+    scatter: function (obj, elem) {
+        var result = undefined;
+        _.map2(obj, function (x, i) {
+            elem(x, i, function (v, k) {
+                if (arguments.length < 2) {
+                    (result = result || []).push(v);
+                } else {
+                    (result = result || {})[k] = v;
+                }
+            });
+        });
+        return result;
+    }
+});
+_.obj = function (emitItems) {
+    var x = undefined;
+    emitItems(function (v, k) {
+        (x = x || {})[k] = v;
+    });
+    return x;
+};
+_.arr = function (emitItems) {
+    var x = undefined;
+    emitItems(function (v) {
+        (x = x || []).push(arguments.length < 2 ? v : _.asArray(arguments));
+    });
+    return x;
+};
+_.mapKeys = function (x, fn) {
+    if (_.isArray(x)) {
+        return _.map(x, _.tails2(_.mapKeys, fn));
+    } else if (_.isStrictlyObject(x)) {
+        return _.object(_.map(_.pairs(x), function (kv) {
+            return [
+                fn(kv[0]),
+                _.mapKeys(kv[1], fn)
+            ];
+        }));
+    } else {
+        return x;
+    }
+};
 _.mixin({ mapMap: _.hyperOperator(_.unary, _.map2) });
 _.mixin({
     reject2: function (value, op) {
@@ -803,28 +795,57 @@ _.mixin({
     }
 });
 _.mixin({ filterFilter: _.hyperOperator(_.unary, _.filter2) });
-_.reduce2 = function (value, memo, op_) {
-    var op = _.last(arguments);
-    var safeOp = function (value, memo) {
-        var hasMemo = memo !== undefined;
-        var result = hasMemo ? op(value, memo) : value;
-        return result === undefined ? hasMemo ? memo : value : result;
-    };
-    if (_.isArray(value)) {
-        for (var i = 0, n = value.length; i < n; i++) {
-            memo = safeOp(value[i], memo);
-        }
-    } else if (_.isStrictlyObject(value)) {
-        _.each(Object.keys(value), function (key) {
-            memo = safeOp(value[key], memo);
-        });
+_.each2 = function (x, f) {
+    if (_.isArray(x)) {
+        for (var i = 0, n = x.length; i < n; i++)
+            f(x[i], i, n);
+    } else if (_.isStrictlyObject(x)) {
+        var k = Object.keys(x);
+        for (var ki, i = 0, n = k.length; i < n; i++)
+            f(x[ki = k[i]], ki, n);
     } else {
-        memo = safeOp(value, memo);
+        f(x, undefined, 1);
     }
-    return memo;
 };
-_.reduceReduce = function (initial, value, op) {
-    return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(value, initial, op.flip2);
+_.reduce2 = function (_1, _2, _3) {
+    var no_left = arguments.length < 3;
+    var left = _1, rights = _2, op = _3;
+    if (no_left) {
+        left = undefined;
+        rights = _1;
+        op = _2;
+    }
+    _.each2(rights, function (right) {
+        left = no_left ? right : op(left, right);
+        no_left = false;
+    });
+    return left;
+};
+_.reduceReduce = function (_1, _2, _3) {
+    var initial = _1, value = _2, op = _3;
+    if (arguments.length < 3) {
+        initial = {};
+        value = _1;
+        op = _2;
+    }
+    return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(initial, value, op);
+};
+_.concat = function (a, b) {
+    var first, rest;
+    if (arguments.length === 1) {
+        first = a[0];
+        rest = _.rest(a);
+    } else {
+        first = a;
+        rest = _.rest(arguments);
+    }
+    return _.isArray(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
+        if (_.isObject(a) && _.isObject(b)) {
+            return _.extend({}, a, b);
+        } else {
+            return a + b;
+        }
+    });
 };
 _.mixin({
     zipObjectsWith: function (objects, fn) {
@@ -851,12 +872,54 @@ _.mixin({
             } else if (_.isStrictlyObject(rows[0])) {
                 return _.zipObjectsWith(rows, fn);
             } else {
-                return _.reduce(rows, fn);
+                return _.reduce2(rows, fn);
             }
         }
     }
 });
 _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
+_.extend = $restArg(_.extend);
+_.extended = $restArg(function () {
+    return _.extend.apply(this, [{}].concat(_.asArray(arguments)));
+});
+_.extendWith = _.flip(_.extend);
+_.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
+_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
+    return b === undefined ? a : b;
+});
+_.extend2 = $restArg(function (what) {
+    return _.extend(what, _.reduceRight(arguments, function (right, left) {
+        return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
+            var lvalue = left[key];
+            return [
+                key,
+                key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
+            ];
+        }));
+    }, {}));
+});
+_.find2 = function (value, pred) {
+    if (_.isArray(value)) {
+        for (var i = 0, n = value.length; i < n; i++) {
+            var x = pred(value[i], i, value);
+            if (typeof x !== 'boolean') {
+                return x;
+            } else if (x === true) {
+                return value[i];
+            }
+        }
+    } else if (_.isStrictlyObject(value)) {
+        for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
+            var k = ks[i];
+            var x = pred(value[k], k, value);
+            if (typeof x !== 'boolean') {
+                return x;
+            } else if (x === true) {
+                return value[k];
+            }
+        }
+    }
+};
 _.findFind = function (obj, pred_) {
     return _.hyperOperator(_.unary, function (value, pred) {
         if (_.isArray(value)) {
@@ -888,23 +951,6 @@ _.findFind = function (obj, pred_) {
         return false;
     })(obj, pred_);
 };
-_.extend = $restArg(_.extend);
-_.extendWith = _.flip(_.extend);
-_.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
-_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
-    return b || a;
-});
-_.extend2 = $restArg(function (what) {
-    return _.extend(what, _.reduceRight(arguments, function (right, left) {
-        return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
-            var lvalue = left[key];
-            return [
-                key,
-                key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
-            ];
-        }));
-    }, {}));
-});
 _.nonempty = function (obj) {
     return _.filter2(obj, _.isNonempty);
 };
@@ -944,23 +990,117 @@ _.quote = function (s, pattern_) {
 _.quoteWith = _.flip2(_.quote);
 _.quotesWith = _.higherOrder(_.quoteWith);
 _.partition2 = function (arr, pred) {
-    var prevColor = undefined;
-    var result = [];
-    var group = [];
-    _.each(arr, function (x) {
-        var color = pred(x);
-        if (prevColor != color && group.length) {
-            result.push(group);
-            group = [];
-        }
-        group.push(x);
-        prevColor = color;
-    });
-    if (group.length) {
-        result.push(group);
-    }
-    return result;
+    return _.pluck(_.partition3(arr, pred), 'items');
 };
+_.partition3 = function (arr, pred) {
+    var spans = [], span = {
+            label: undefined,
+            items: [arr.first]
+        };
+    _.each(arr, function (x) {
+        var label = pred(x);
+        if (span.label != label && span.items.length) {
+            spans.push(span = {
+                label: label,
+                items: [x]
+            });
+        } else {
+            span.items.push(x);
+        }
+    });
+    return span.length && spans.push(span), spans;
+};
+_.linearMerge = function (arrays, cfg) {
+    cfg = cfg || { key: _.identity };
+    var head = {
+        key: null,
+        next: {}
+    };
+    var nodes = {};
+    _.each(arrays, function (arr) {
+        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+            var item = arr[i];
+            var key = cfg.key(item);
+            node = nodes[key] || (nodes[key] = {
+                key: key,
+                item: item,
+                next: {}
+            });
+            if (prev) {
+                prev.next[key] = node;
+            }
+        }
+    });
+    var decyclize = function (visited, node) {
+        visited[node.key] = true;
+        node.next = _.chain(_.values(node.next)).filter(function (node) {
+            return !(node.key in visited);
+        }).map(_.partial(decyclize, visited)).value();
+        delete visited[node.key];
+        return node;
+    };
+    var ordered = function (a, b) {
+        return a === b || _.some(a.next, function (aa) {
+            return ordered(aa, b);
+        });
+    };
+    var flatten = function (node) {
+        if (!node)
+            return [];
+        var next = cfg.sort ? _.sortBy(node.next || [], cfg.sort) : node.next || [];
+        return [node].concat(flatten(_.reduce(next, function (a, b) {
+            if (a === b) {
+                return a;
+            } else if (ordered(b, a)) {
+                b.next.push(a);
+                return b;
+            } else {
+                a.next.push(b);
+                return a;
+            }
+        })));
+    };
+    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
+};
+(function () {
+    var indexMap = function (list) {
+        var map = {};
+        _.each(list, function (each, i) {
+            map[each] = map[each] || [];
+            map[each].push(i);
+        });
+        return map;
+    };
+    _.longestCommonSubstring = function (a, b) {
+        var where = _.indexOfLongestCommonSubstring(a, b);
+        return where.length ? a.substr(where.a, where.length) : undefined;
+    };
+    _.indexOfLongestCommonSubstring = function (a, b) {
+        var result = {
+            a: 0,
+            b: 0,
+            length: 0
+        };
+        var indexMapBefore = indexMap(a);
+        var previousOverlap = [];
+        _.each(b, function (eachAfter, indexAfter) {
+            var overlapLength;
+            var overlap = [];
+            var indexesBefore = indexMapBefore[eachAfter] || [];
+            _.each(indexesBefore, function (indexBefore) {
+                overlapLength = (indexBefore && previousOverlap[indexBefore - 1] || 0) + 1;
+                if (overlapLength > result.length) {
+                    result.length = overlapLength;
+                    result.a = indexBefore - overlapLength + 1;
+                    result.b = indexAfter - overlapLength + 1;
+                }
+                overlap[indexBefore] = overlapLength;
+            });
+            previousOverlap = overlap;
+        });
+        return result;
+    };
+}());
 _.key = function (fn) {
     return function (value, key) {
         return fn(key);
@@ -988,7 +1128,7 @@ _.omitKeys = function (obj, predicate) {
 };
 _.extend(_, {
     defineProperty: function (targetObject, name, def, defaultCfg) {
-        if (Object.hasOwnProperty(targetObject, name)) {
+        if (_.isObject(targetObject) && targetObject.hasOwnProperty(name)) {
             throw new Error('_.defineProperty: targetObject already has property ' + name);
         } else {
             Object.defineProperty(targetObject, name, _.extend({ enumerable: true }, defaultCfg, _.coerceToPropertyDefinition(def, name)));
@@ -1029,9 +1169,12 @@ _.extend(_, {
     }
 });
 _.hasTags = true;
-Tags = _.extend2(function (subject) {
+Tags = _.extend2(function (subject, keys) {
     if (subject !== undefined) {
         this.subject = subject;
+    }
+    if (keys !== undefined) {
+        _.extend(this, keys);
     }
 }, {
     $definition: {},
@@ -1042,20 +1185,46 @@ Tags = _.extend2(function (subject) {
         clone: function (newSubject) {
             return _.extend(new Tags(newSubject || this.subject), _.pick(this, _.keyIsKeyword));
         },
-        modifySubject: function (changesFn) {
+        modify: function (changesFn) {
             this.subject = changesFn(this.subject);
             if (_.isTypeOf(Tags, this.subject)) {
                 return _.extend(this.subject, _.pick(this, _.keyIsKeyword));
             } else {
                 return this;
             }
+        },
+        extend: function (other) {
+            return _.isTypeOf(Tags, other) ? _.extend(this, _.pick(other, _.keyIsKeyword)) : this;
         }
     },
+    omit: $restArg(function (what, ___) {
+        if (_.isTypeOf(Tags, what)) {
+            var keysToOmit = _.index(_.rest(arguments));
+            var keysLeft = _.pick(what, function (v, k) {
+                return _.isKeyword(k) && !(k in keysToOmit);
+            });
+            return !_.isEmptyObject(keysLeft) ? new Tags(what.subject, keysLeft) : what.subject;
+        } else {
+            return what;
+        }
+    }),
     clone: function (what, newSubject) {
         return _.isTypeOf(Tags, what) ? what.clone(newSubject) : newSubject || what;
     },
+    extend: function (what, other) {
+        return _.isTypeOf(Tags, what) ? what.clone().extend(other) : _.isTypeOf(Tags, other) ? Tags.wrap(what).extend(other) : what;
+    },
     get: function (def) {
         return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
+    },
+    each: function (def, accept) {
+        if (_.isTypeOf(Tags, def)) {
+            _.each(def, function (v, k) {
+                if (k[0] === '$') {
+                    accept(k.slice(1));
+                }
+            });
+        }
     },
     hasSubject: function (def) {
         return _.isTypeOf(Tags, def) && 'subject' in def;
@@ -1074,13 +1243,13 @@ Tags = _.extend2(function (subject) {
     wrap: function (what) {
         return _.isTypeOf(Tags, what) ? what : arguments.length === 0 ? new Tags() : new Tags(what);
     },
-    modifySubject: function (what, changesFn) {
-        return _.isTypeOf(Tags, what) ? what.clone().modifySubject(changesFn) : changesFn(what);
+    modify: function (what, changesFn) {
+        return _.isTypeOf(Tags, what) ? what.clone().modify(changesFn) : changesFn(what);
     },
     map: function (obj, op) {
-        return Tags.modifySubject(obj, function (obj) {
+        return Tags.modify(obj, function (obj) {
             return _.map2(obj, function (t, k) {
-                return Tags.modifySubject(t, function (v) {
+                return Tags.modify(t, function (v) {
                     return op(v, k, _.isTypeOf(Tags, t) ? t : undefined);
                 });
             });
@@ -1148,11 +1317,270 @@ _([
 ]).each(_.defineTagKeyword);
 _.defineModifierKeyword = function (name, fn) {
     _.defineKeyword(name, function (val) {
-        return Tags.modifySubject(val, fn);
+        return Tags.modify(val, fn);
     });
 };
 _.deleteKeyword = function (name) {
     delete $global[_.keyword(name)];
+};
+_.hasTypeMatch = true;
+_.defineTagKeyword('required');
+_.defineTagKeyword('atom');
+_.defineKeyword('any', _.identity);
+(function () {
+    _.isMeta = function (x) {
+        return x === $any || $atom.is(x) === true || $required.is(x) === true;
+    };
+    var zip = function (type, value, pred) {
+        var required = Tags.unwrapAll(_.filter2(type, $required.matches));
+        var match = _.nonempty(_.zip2(Tags.unwrapAll(type), value, pred));
+        if (_.isEmpty(required)) {
+            return match;
+        } else {
+            var requiredMatch = _.nonempty(_.zip2(required, value, pred));
+            var allSatisfied = _.values2(required).length === _.values2(requiredMatch).length;
+            return allSatisfied ? match : _.coerceToEmpty(value);
+        }
+    };
+    var hyperMatch = _.hyperOperator(_.binary, function (type_, value, pred) {
+        var type = Tags.unwrap(type_);
+        if (_.isArray(type)) {
+            if (_.isArray(value)) {
+                return zip(_.times(value.length, _.constant(type[0])), value, pred);
+            } else {
+                return undefined;
+            }
+        } else if (_.isStrictlyObject(type) && type['*']) {
+            if (_.isStrictlyObject(value)) {
+                return zip(_.extend(_.map2(value, _.constant(type['*'])), _.omit(type, '*')), value, pred);
+            } else {
+                return undefined;
+            }
+        } else {
+            return zip(type_, value, pred);
+        }
+    });
+    var typeMatchesValue = function (c, v) {
+        var contract = Tags.unwrap(c);
+        return contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
+    };
+    _.mismatches = function (op, contract, value) {
+        return hyperMatch(contract, value, function (contract, v) {
+            return op(contract, v) ? undefined : contract;
+        });
+    };
+    _.omitMismatches = function (op, contract, value) {
+        return hyperMatch(contract, value, function (contract, v) {
+            return op(contract, v) ? v : undefined;
+        });
+    };
+    _.typeMismatches = _.partial(_.mismatches, typeMatchesValue);
+    _.omitTypeMismatches = _.partial(_.omitMismatches, typeMatchesValue);
+    _.valueMismatches = _.partial(_.mismatches, function (a, b) {
+        return a === $any || b === $any || a === b;
+    });
+    var unifyType = function (value) {
+        if (_.isArray(value)) {
+            return _.nonempty([_.reduce(_.rest(value), function (a, b) {
+                    return _.undiff(a, b);
+                }, _.first(value) || undefined)]);
+        } else if (_.isStrictlyObject(value)) {
+            var pairs = _.pairs(value);
+            var unite = _.map(_.reduce(_.rest(pairs), function (a, b) {
+                return _.undiff(a, b);
+            }, _.first(pairs) || [
+                undefined,
+                undefined
+            ]), _.nonempty);
+            return _.isEmpty(unite) || _.isEmpty(unite[1]) ? value : _.object([[
+                    unite[0] || '*',
+                    unite[1]
+                ]]);
+        } else {
+            return value;
+        }
+    };
+    _.decideType = function (value) {
+        var operator = _.hyperOperator(_.unary, function (value, pred) {
+            if (value && value.constructor && value.constructor.$definition) {
+                return value.constructor;
+            }
+            return unifyType(_.map2(value, pred));
+        });
+        return operator(value, function (value) {
+            if (_.isPrototypeInstance(value)) {
+                return value.constructor;
+            } else {
+                return _.isEmptyArray(value) ? value : typeof value;
+            }
+        });
+    };
+}());
+_.json = function (arg) {
+    if (typeof arg === 'string') {
+        try {
+            return JSON.parse(arg);
+        } catch (e) {
+            return {};
+        }
+    } else {
+        return JSON.stringify(arg);
+    }
+};
+_.alignStringsRight = function (strings) {
+    var lengths = strings.map(_.count);
+    var max = _.max(lengths);
+    return [
+        lengths,
+        strings
+    ].zip(function (ln, str) {
+        return ' '.repeats(max - ln) + str;
+    });
+};
+_.bullet = function (bullet, str) {
+    var indent = ' '.repeats(bullet.length);
+    return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
+        return i === 0 ? bullet + line : indent + line;
+    }));
+};
+_.stringifyOneLine = function (x, cfg) {
+    return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
+};
+_.pretty = function (x, cfg) {
+    return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
+};
+_.stringify = function (x, cfg) {
+    cfg = cfg || {};
+    var measured = _.stringifyImpl(x, [], [], 0, cfg);
+    return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
+};
+_.stringifyPrototype = function (x) {
+    if (Platform.NodeJS && x.$meta) {
+        var name = '';
+        x.$meta(function (values) {
+            name = values.name;
+        });
+        return name && name + ' ()';
+    } else
+        return '<prototype>';
+};
+_.builtInTypes = {
+    'Event': { target: $any },
+    'MutationEvent': {
+        target: $any,
+        attrName: $any,
+        prevValue: $any
+    },
+    'Range': {
+        startContainer: $any,
+        startOffset: $any,
+        endContainer: $any,
+        endOffset: $any
+    },
+    'ClientRect': {
+        left: $any,
+        top: $any,
+        right: $any,
+        bottom: $any,
+        width: $any,
+        height: $any
+    }
+};
+_.stringifyImpl = function (x, parents, siblings, depth, cfg) {
+    var customFormat = cfg.formatter && cfg.formatter(x);
+    if (customFormat) {
+        return customFormat;
+    }
+    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
+        x = _.asArray(x);
+    }
+    if (x === $global) {
+        return '$global';
+    } else if (parents.indexOf(x) >= 0) {
+        return cfg.pure ? undefined : '<cyclic>';
+    } else if (siblings.indexOf(x) >= 0) {
+        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
+    } else if (x === undefined) {
+        return 'undefined';
+    } else if (x === null) {
+        return 'null';
+    } else if (_.isFunction(x)) {
+        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
+    } else if (typeof x === 'string') {
+        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 40));
+    } else if (_.isTypeOf(Tags, x)) {
+        return _.reduce(Tags.get(x), function (memo, value, tag) {
+            return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
+        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
+    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
+        return x.toString();
+    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
+        var builtInValue = _.find2(_.builtInTypes, function (schema, name) {
+            return $global[name] && x instanceof $global[name] && name + ' ' + _.stringifyOneLine(_.omitTypeMismatches(schema, x)) || false;
+        });
+        if (builtInValue) {
+            return builtInValue;
+        } else {
+            var isArray = _.isArray(x);
+            var pretty = cfg.pretty || false;
+            if (_.platform().engine === 'browser') {
+                if (_.isTypeOf(Element, x)) {
+                    return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
+                } else if (_.isTypeOf(Text, x)) {
+                    return '@' + x.wholeText.limitedTo(20);
+                }
+            }
+            if (x.toJSON) {
+                return _.quoteWith('"', x.toJSON());
+            }
+            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
+                return isArray ? '<array[' + x.length + ']>' : '<object>';
+            }
+            var parentsPlusX = parents.concat([x]);
+            siblings.push(x);
+            var values = _.pairs(x);
+            var oneLine = !pretty || values.length < 2;
+            var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
+            if (pretty) {
+                values = _.values(x);
+                var printedKeys = _.alignStringsRight(_.keys(x).map(_.appends(': ')));
+                var printedValues = values.map(impl);
+                var leftPaddings = printedValues.map(function (x, i) {
+                    return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
+                });
+                var maxLeftPadding = _.max(leftPaddings);
+                var indentedValues = [
+                    leftPaddings,
+                    printedValues
+                ].zip(function (padding, x) {
+                    return ' '.repeats(maxLeftPadding - padding) + x;
+                });
+                var internals = isArray ? indentedValues : [
+                    printedKeys,
+                    indentedValues
+                ].zip(_.bullet);
+                var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
+                var lines = printed.split('\n');
+                return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
+            }
+            return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
+                return (isArray ? '' : kv[0] + ': ') + impl(kv[1]);
+            })));
+        }
+    } else if (_.isDecimal(x) && cfg.precision > 0) {
+        return _.toFixed(x, cfg.precision);
+    } else {
+        return x + '';
+    }
+};
+_.toFixed = function (x, precision) {
+    return x && x.toFixed && x.toFixed(precision) || undefined;
+};
+_.toFixed2 = function (x) {
+    return _.toFixed(x, 2);
+};
+_.toFixed3 = function (x) {
+    return _.toFixed(x, 3);
 };
 _.cps = function () {
     return _.cps.sequence.apply(null, arguments);
@@ -1354,7 +1782,8 @@ _.cps.trySequence = function (functions, then, err) {
 _([
     'method',
     'property',
-    'flipped'
+    'flipped',
+    'forceOverride'
 ]).each(_.defineTagKeyword);
 $extensionMethods = function (Type, methods) {
     _.each(methods, function (tags, name) {
@@ -1363,13 +1792,13 @@ $extensionMethods = function (Type, methods) {
             _[name] = _[name] || fn;
         }
         if (!tags.$method && (tags.$property || _.oneArg(fn))) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 _.defineHiddenProperty(Type.prototype, name, function () {
                     return fn(this);
                 });
             }
         } else if (!tags.$property) {
-            if (!(name in Type.prototype)) {
+            if (!(name in Type.prototype) || tags.$forceOverride) {
                 Type.prototype[name] = _.asMethod(tags.$flipped ? _.flip(fn) : fn);
             }
         } else {
@@ -1378,6 +1807,7 @@ $extensionMethods = function (Type, methods) {
     });
 };
 $extensionMethods(Function, {
+    $: $method(_.partial),
     bind: _.bind,
     partial: _.partial,
     tails: _.tails,
@@ -1386,10 +1816,22 @@ $extensionMethods(Function, {
     compose: _.compose,
     then: _.then,
     flip: _.flip,
+    with_: _.flipN,
     flip2: _.flip2,
     flip3: _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod: _.asMethod,
+    callsWith: _.callsTo,
+    tailsWith: _.tailsTo,
+    returns: function (fn, returns) {
+        return function () {
+            fn.apply(this, arguments);
+            return returns;
+        };
+    },
+    asPromise: function (f) {
+        return new Promise(f);
+    },
     asContinuation: function (f) {
         return $restArg(function () {
             _.last(arguments)(f.apply(this, _.initial(arguments)));
@@ -1416,6 +1858,7 @@ $extensionMethods(Function, {
     and: _.and,
     not: _.not,
     applies: _.applies,
+    new_: _.new_,
     oneShot: function (fn) {
         var called = false;
         return function () {
@@ -1494,13 +1937,85 @@ $extensionMethods(Function, {
         };
     }
 });
+$extensionMethods(Function, {
+    catch_: function (fn, catch_, then, finally_) {
+        return fn.catches(catch_, then)();
+    },
+    catches: function (fn, catch_, then, finally_) {
+        var args = arguments.length;
+        catch_ = args > 1 ? _.coerceToFunction(catch_) : _.identity;
+        then = args > 2 ? _.coerceToFunction(then) : _.identity;
+        finally_ = args > 3 ? _.coerceToFunction(finally_) : _.identity;
+        return function () {
+            var result = undefined, catched = false;
+            try {
+                result = fn.apply(this, arguments);
+            } catch (e) {
+                result = catch_(e);
+                catched = true;
+            }
+            if (!catched) {
+                result = then(result);
+            }
+            return finally_(result);
+        };
+    }
+});
+if (typeof Promise !== 'undefined') {
+    Promise.prototype.done = function (resolve, reject) {
+        return this.then(resolve, reject).catch(_.globalUncaughtExceptionHandler || _.throws);
+    };
+}
+;
 $extensionMethods(Array, {
     each: _.each,
     map: _.map,
     reduce: _.reduce,
     reduceRight: _.reduceRight,
     zip: _.zipWith,
+    groupBy: _.groupBy,
+    indexBy: _.indexBy,
     filter: _.filter,
+    flat: _.flatten.tails2(true),
+    object: _.object,
+    join: function (strJoin) {
+        return $forceOverride(function (arr, delim) {
+            delim = arguments.length < 2 ? '' : delim;
+            if (_.isString(delim)) {
+                return strJoin.call(arr, delim);
+            } else {
+                return _.reduce2(arr, function (a, b) {
+                    return [a].concat([
+                        delim,
+                        b
+                    ]);
+                });
+            }
+        });
+    }(Array.prototype.join),
+    contains: function (arr, item) {
+        return arr.indexOf(item) >= 0;
+    },
+    top: function (arr) {
+        return arr[arr.length - 1];
+    },
+    first: function (arr) {
+        return arr[0];
+    },
+    last: function (arr) {
+        return arr[arr.length - 1];
+    },
+    take: function (arr, n) {
+        return arr.slice(0, n);
+    },
+    before: function (arr, x) {
+        var i = arr.indexOf(x);
+        return i < 0 ? arr : arr.slice(0, i - 1);
+    },
+    after: function (arr, x) {
+        var i = arr.indexOf(x);
+        return i < 0 ? arr : arr.slice(i + 1);
+    },
     isEmpty: function (arr) {
         return arr.length === 0;
     },
@@ -1509,9 +2024,6 @@ $extensionMethods(Array, {
     },
     lastIndex: function (arr) {
         return arr.length - 1;
-    },
-    last: function (arr) {
-        return _.last(arr);
     },
     random: function (arr) {
         return arr[_.random(0, arr.lastIndex)];
@@ -1543,9 +2055,6 @@ $extensionMethods(Array, {
     reversed: function (arr) {
         return arr.slice().reverse();
     },
-    flat: function (arr) {
-        return _.flatten(arr, true);
-    },
     swap: $method(function (arr, indexA, indexB) {
         var a = arr[indexA], b = arr[indexB];
         arr[indexA] = b;
@@ -1563,6 +2072,9 @@ _.zap = function (firstArg) {
 };
 $extensionMethods(String, {
     quote: _.quote,
+    contains: function (s, other) {
+        return s.indexOf(other) >= 0;
+    },
     cut: function (s, from) {
         return s.substring(0, from - 1) + s.substring(from, s.length);
     },
@@ -1577,6 +2089,9 @@ $extensionMethods(String, {
     },
     trimmed: function (s) {
         return s.trim();
+    },
+    limitedTo: function (s, n) {
+        return s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026');
     },
     escaped: function (s) {
         return _.escape(s);
@@ -1642,39 +2157,39 @@ $extensionMethods(String, {
     },
     transliterate: function () {
         var table = _.extend({
-            '\u0430': 'a',
-            '\u0431': 'b',
-            '\u0432': 'v',
-            '\u0433': 'g',
-            '\u0434': 'd',
-            '\u0435': 'e',
-            '\u0451': 'yo',
-            '\u0436': 'zh',
-            '\u0437': 'z',
-            '\u0438': 'i',
-            '\u0439': 'y',
-            '\u043A': 'k',
-            '\u043B': 'l',
-            '\u043C': 'm',
-            '\u043D': 'n',
-            '\u043E': 'o',
-            '\u043F': 'p',
-            '\u0440': 'r',
-            '\u0441': 's',
-            '\u0442': 't',
-            '\u0443': 'u',
-            '\u0444': 'ph',
-            '\u0445': 'h',
-            '\u0446': 'ts',
-            '\u0447': 'ch',
-            '\u0448': 'sh',
-            '\u0449': 'sch',
-            '\u044C': '',
-            '\u044A': '',
-            '\u044B': 'y',
-            '\u044D': 'e',
-            '\u044E': 'yu',
-            '\u044F': 'ya'
+            'а': 'a',
+            'б': 'b',
+            'в': 'v',
+            'г': 'g',
+            'д': 'd',
+            'е': 'e',
+            'ё': 'yo',
+            'ж': 'zh',
+            'з': 'z',
+            'и': 'i',
+            'й': 'y',
+            'к': 'k',
+            'л': 'l',
+            'м': 'm',
+            'н': 'n',
+            'о': 'o',
+            'п': 'p',
+            'р': 'r',
+            'с': 's',
+            'т': 't',
+            'у': 'u',
+            'ф': 'ph',
+            'х': 'h',
+            'ц': 'ts',
+            'ч': 'ch',
+            'ш': 'sh',
+            'щ': 'sch',
+            'ь': '',
+            'ъ': '',
+            'ы': 'y',
+            'э': 'e',
+            'ю': 'yu',
+            'я': 'ya'
         }, _.object(_.map('_-1234567890qwertyuiopasdfghjklzxcvbnm', function (x) {
             return [
                 x,
@@ -1711,7 +2226,7 @@ $extensionMethods(String, {
         'onceAfter',
         'before',
         'after',
-        ''
+        'intercept'
     ];
     var copyHooks = function (from, to) {
         _.extend(to, _.map2(_.pick(from, hooks), _.clone));
@@ -1726,14 +2241,15 @@ $extensionMethods(String, {
             return bindable[name].call(bindable, delegate);
         };
     };
-    var mixin = function (method) {
+    var mixin = function (method, context) {
         if (typeof method !== 'function') {
             throw new Error('method should be a function');
         }
         return _.extend({}, method, {
             _bindable: true,
             impl: method,
-            _wrapped: method
+            _wrapped: method,
+            context: context
         }, _.object(_.map(hooks, function (name) {
             var queueName = '_' + name;
             var once = name.indexOf('once') >= 0;
@@ -1773,7 +2289,7 @@ $extensionMethods(String, {
             hooks: hooks,
             hooksShort: hooksShort
         }, function (method, context) {
-            return _.withSameArgs(method, _.extendWith(mixin(method), function () {
+            return _.withSameArgs(method, _.extendWith(mixin(method, context), function () {
                 var wrapper = arguments.callee;
                 var onceBefore = wrapper._onceBefore;
                 var onceAfter = wrapper._onceAfter;
@@ -1798,10 +2314,11 @@ $extensionMethods(String, {
                         after[i].apply(this_, args);
                     }
                     if (onceAfter.length) {
-                        for (i = 0, ni = onceAfter.length; i < ni; i++) {
-                            onceAfter[i].apply(this_, args);
-                        }
+                        var arr = onceAfter.copy;
                         onceAfter.removeAll();
+                        for (i = 0, ni = arr.length; i < ni; i++) {
+                            arr[i].apply(this_, args);
+                        }
                     }
                 }
                 return result;
@@ -1884,7 +2401,7 @@ _.extend(_, {
                 stream(function (val) {
                     if (matchFn(val)) {
                         stream.off(arguments.callee);
-                        then(val);
+                        then.apply(this, arguments);
                     }
                 });
             }
@@ -2057,6 +2574,9 @@ $prototype = function (arg1, arg2) {
 $extends = function (base, def) {
     return $prototype(base, def || {});
 };
+$mixin = function (constructor, def) {
+    return $prototype.impl.compileMixin(_.extend(def, { constructor: constructor }));
+};
 _.extend($prototype, {
     isConstructor: function (what) {
         return _.isPrototypeConstructor(what);
@@ -2069,6 +2589,7 @@ _.extend($prototype, {
         }
     },
     macroTag: function (name, fn) {
+        _.defineTagKeyword(name);
         $prototype.impl.tagTriggeredMacros[_.keyword(name)] = fn;
     },
     each: function (visitor) {
@@ -2105,16 +2626,33 @@ _.extend($prototype, {
         memberNameTriggeredMacros: {},
         tagTriggeredMacros: {},
         compile: function (def, base) {
-            return (base && base.$impl || this)._compile(def, base);
+            var impl = base && base.$impl || this;
+            return $untag(impl.sequence(def, base).call(impl, def || {}).constructor);
         },
-        _compile: function (def, base) {
-            return Tags.unwrap(_.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits, this.generateBuiltInMembers(base), this.expandAliases, this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor);
+        sequence: function (def, base) {
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
+        },
+        compileMixin: function (def) {
+            return _.sequence(this.flatten, this.contributeTraits(), this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
+        },
+        flatten: function (def) {
+            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
+            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
+                return _.map(this.flatten(membersDef), function (member, memberName) {
+                    return [
+                        memberName,
+                        $global[keyword](member)
+                    ];
+                });
+            }, this), true));
+            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
+            return _.extend(memberDefinitions, mergedKeywordGroups);
         },
         evalAlwaysTriggeredMacros: function (base) {
             return function (def) {
                 var macros = $prototype.impl.alwaysTriggeredMacros;
                 for (var i = 0, n = macros.length; i < n; i++) {
-                    def = macros[i](def, base);
+                    def = macros[i](def, base) || def;
                 }
                 return def;
             };
@@ -2124,16 +2662,38 @@ _.extend($prototype, {
                 var names = $prototype.impl.memberNameTriggeredMacros, tags = $prototype.impl.tagTriggeredMacros;
                 _.each(def, function (value, name) {
                     if (names.hasOwnProperty(name)) {
-                        def = names[name](def, value, name, base);
+                        def = names[name](def, value, name, base) || def;
                     }
                     _.each(_.keys(value), function (tag) {
                         if (tags.hasOwnProperty(tag)) {
-                            def = tags[tag](def, value, name, base);
+                            def = tags[tag](def, value, name, base) || def;
                         }
                     });
                 });
                 return def;
             };
+        },
+        evalPrototypeSpecificMacros: function (base) {
+            return function (def) {
+                if (!def.isTraitOf) {
+                    var macroTags = $untag(def.$macroTags || base && base.$definition && base.$definition.$macroTags);
+                    if (macroTags) {
+                        this.applyMacroTags(macroTags, def);
+                    }
+                }
+                return def;
+            };
+        },
+        applyMacroTags: function (macroTags, def) {
+            _.each(def, function (memberDef, memberName) {
+                _.each(macroTags, function (macroFn, tagName) {
+                    memberDef = def[memberName];
+                    if (_.keyword(tagName) in memberDef) {
+                        def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
+                    }
+                }, this);
+            }, this);
+            return def;
         },
         generateCustomCompilerImpl: function (base) {
             return function (def) {
@@ -2155,29 +2715,44 @@ _.extend($prototype, {
                 };
             }) : def;
         },
-        contributeTraits: function (def) {
-            if (def.$traits) {
-                var traits = def.$traits;
-                this.mergeTraitsMembers(def, traits);
-                def.$traits = $static($builtin($property(traits)));
-                def.hasTrait = $static($builtin(function (Constructor) {
-                    return traits.indexOf(Constructor) >= 0;
-                }));
-            }
-            return def;
+        contributeTraits: function (base) {
+            return function (def) {
+                if (def.$traits) {
+                    var traits = def.$traits;
+                    this.mergeTraitsMembers(def, traits, base);
+                    def.$traits = $static($builtin($property(traits)));
+                    def.hasTrait = $static($builtin(function (Constructor) {
+                        return traits.indexOf(Constructor) >= 0;
+                    }));
+                }
+                return def;
+            };
         },
-        mergeTraitsMembers: function (def, traits) {
+        mergeTraitsMembers: function (def, traits, base) {
             _.each(traits, function (trait) {
                 _.defaults(def, _.omit(trait.$definition, _.or($builtin.matches, _.key(_.equals('constructor')))));
             });
         },
         extendWithTags: function (def) {
-            return _.extendWith(Tags.unwrap(def), _.mapObject(Tags.get(def), $static.arity1));
+            return _.extendWith($untag(def), _.mapObject(Tags.get(def), $static.arity1));
+        },
+        callStaticConstructor: function (def) {
+            if (!def.isTraitOf) {
+                _.each($untag(def.$traits), function (T) {
+                    if (T.$definition.$constructor) {
+                        $untag(T.$definition.$constructor).call(def);
+                    }
+                });
+                if (def.$constructor) {
+                    $untag(def.$constructor).call(def);
+                }
+            }
+            return def;
         },
         generateConstructor: function (base) {
             return function (def) {
                 return _.extend(def, {
-                    constructor: Tags.modifySubject(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
+                    constructor: Tags.modify(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
                         if (base) {
                             fn.prototype.__proto__ = base.prototype;
                         }
@@ -2188,18 +2763,22 @@ _.extend($prototype, {
         },
         generateBuiltInMembers: function (base) {
             return function (def) {
+                if (def.$constructor) {
+                    def.$constructor = $builtin($static(def.$constructor));
+                }
                 return _.defaults(def, {
                     $base: $builtin($static($property(_.constant(base && base.prototype)))),
                     $definition: $builtin($static($property(_.constant(_.extend({}, base && base.$definition, def))))),
-                    isTypeOf: $builtin($static(_.partial(_.isTypeOf, Tags.unwrap(def.constructor)))),
+                    isTypeOf: $builtin($static(_.partial(_.isTypeOf, $untag(def.constructor)))),
                     isInstanceOf: $builtin(function (constructor) {
                         return _.isTypeOf(constructor, this);
                     }),
-                    $: $builtin(function (fn) {
-                        return _.$.apply(null, [this].concat(_.asArray(arguments)));
-                    })
+                    $: $builtin($prototype.impl.$)
                 });
             };
+        },
+        $: function (fn) {
+            return _.$.apply(null, [this].concat(_.asArray(arguments)));
         },
         defaultConstructor: function (base) {
             return base ? function () {
@@ -2209,11 +2788,11 @@ _.extend($prototype, {
             };
         },
         defineStaticMembers: function (def) {
-            this.defineMembers(Tags.unwrap(def.constructor), _.pick(def, $static.matches));
+            this.defineMembers($untag(def.constructor), _.pick(def, $static.matches));
             return def;
         },
         defineInstanceMembers: function (def) {
-            this.defineMembers(Tags.unwrap(def.constructor).prototype, _.omit(def, $static.matches));
+            this.defineMembers($untag(def.constructor).prototype, _.omit(def, $static.matches));
             return def;
         },
         defineMembers: function (targetObject, def) {
@@ -2231,7 +2810,7 @@ _.extend($prototype, {
                     _.defineProperty(targetObject, key, def);
                 }
             } else {
-                var what = Tags.unwrap(def);
+                var what = $untag(def);
                 targetObject[key] = what;
             }
         },
@@ -2252,34 +2831,53 @@ _.extend($prototype, {
             };
         },
         expandAliases: function (def) {
-            return _.mapObject(def, function (v) {
-                var name = Tags.unwrap(v);
-                return $alias.is(v) ? $property.is(v) ? $property({
-                    get: function () {
-                        return this[name];
-                    },
-                    set: function (x) {
-                        this[name] = x;
-                    }
-                }) : def[name] : v;
-            });
+            _.each(def, function (v, k) {
+                def[k] = this.resolveMember(def, k, v)[1];
+            }, this);
+            return def;
         },
-        flatten: function (def) {
-            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
-            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
-                return _.map(membersDef, function (member, memberName) {
-                    return [
-                        memberName,
-                        $global[keyword](member)
-                    ];
+        resolveMember: function (def, name, member) {
+            member = member || def[name];
+            if ($alias.is(member)) {
+                var ref = this.resolveMember(def, $untag(member));
+                var refName = ref[0];
+                var refValue = ref[1];
+                return [
+                    refName,
+                    $property.is(member) ? $property({
+                        get: function () {
+                            return this[refName];
+                        },
+                        set: function (x) {
+                            this[refName] = x;
+                        }
+                    }) : Tags.extend(refValue, Tags.omit(member, '$alias'))
+                ];
+            } else {
+                return [
+                    name,
+                    member
+                ];
+            }
+        },
+        groupMembersByTagForFastEnumeration: function (def) {
+            var membersByTag = {};
+            _.each(def, function (m, name) {
+                Tags.each(m, function (tag) {
+                    (membersByTag[tag] = membersByTag[tag] || {})[name] = m;
                 });
-            }), true));
-            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
-            return _.extend(memberDefinitions, mergedKeywordGroups);
+            });
+            def.$membersByTag = $static($builtin($property(membersByTag)));
+            return def;
         },
         isTagKeywordGroup: function (value_, key) {
-            var value = Tags.unwrap(value_);
+            var value = $untag(value_);
             return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
+        },
+        modifyMember: function (member, newValue) {
+            return $property.is(member) && Tags.modify(member, function (value) {
+                return _.extend(value, _.map2(_.pick(value, 'get', 'set'), newValue));
+            }) || _.isFunction($untag(member)) && Tags.modify(member, newValue) || member;
         }
     }
 });
@@ -2298,21 +2896,41 @@ $trait = function (arg1, arg2) {
     });
     return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
 };
+$prototype.macro('$macroTags', function (def, value, name) {
+    _.each($untag(value), function (v, k) {
+        _.defineTagKeyword(k);
+    });
+});
 _.$ = function (this_, fn) {
-    return _.bind.apply(undefined, [
+    var arguments_ = _.rest(arguments, 2);
+    var result = arguments_.length ? _.bind.apply(undefined, [
         fn,
         this_
-    ].concat(_.rest(arguments, 2)));
+    ].concat(_.rest(arguments, 2))) : _.withSameArgs(fn, function () {
+        return fn.apply(this_, arguments);
+    });
+    return result;
 };
 if (typeof jQuery !== 'undefined') {
     jQuery.fn.extend({
-        $: function (f) {
-            return _.$(this, f);
+        $: function () {
+            return _.$.apply(null, [this].concat(_.asArray(arguments)));
         }
     });
 }
 _.defineKeyword('const', function (x) {
     return $static($property(x));
+});
+_.defineTagKeyword('callableAsFreeFunction');
+$prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
+    def.constructor[name] = $untag(value).asFreeFunction;
+    return def;
+});
+_.defineTagKeyword('callableAsMethod');
+$prototype.macroTag('callableAsMethod', function (def, value, name) {
+    def[name] = Tags.modify(value, _.asMethod);
+    def.constructor[name] = $untag(value);
+    return def;
 });
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))();
@@ -3037,6 +3655,26 @@ _.extend(Math, function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
 }));
+_.camelCaseToDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '-' + x[1].lowercase;
+    });
+};
+_.camelCaseToLoDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '_' + x[1].lowercase;
+    });
+};
+_.dashesToCamelCase = function (x) {
+    return x.replace(/(-.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
+_.loDashesToCamelCase = function (x) {
+    return x.replace(/(_.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
 Format = {
     javascript: function (obj) {
         return _.stringify(obj, {
@@ -3162,18 +3800,18 @@ Lock = $prototype({
 });
 _.interlocked = function (fn) {
     var lock = new Lock();
-    return _.extendWith({ wait: lock.$(lock.wait) }, _.prependsArguments(Tags.unwrap(fn), function (context) {
+    return _.extendWith({ wait: lock.$(lock.wait) }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         lock.acquire(function () {
-            context(lock.$(lock.release));
+            fn(lock.$(lock.release));
         });
     }));
 };
 _.defineKeyword('scope', function (fn) {
     var releaseStack = undefined;
-    return _.prependsArguments(Tags.unwrap(fn), function (context) {
+    return _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         var released = { when: undefined };
         (releaseStack = releaseStack || []).push(released);
-        context(function (then) {
+        fn(function (then) {
             if (released.when)
                 throw new Error('$scope: release called twice');
             released.when = then;
@@ -3195,6 +3833,7 @@ _.defineKeyword('component', function (definition) {
     return $extends(Component, definition);
 });
 _([
+    'extendable',
     'trigger',
     'triggerOnce',
     'barrier',
@@ -3208,116 +3847,190 @@ _([
     'overrideThis',
     'listener',
     'postpones',
-    'reference'
+    'reference',
+    'raw'
 ]).each(_.defineTagKeyword);
 _.defineTagKeyword('observableProperty', _.flip);
 _.defineKeyword('observableRef', function (x) {
     return $observableProperty($reference(x));
 });
-$prototype.inheritsBaseValues = function (keyword) {
-    $prototype.macro(keyword, function (def, value, name, Base) {
-        value = _.extendedDeep(Base && Base[keyword] || {}, value);
-        _.each(def.$traits, function (Trait) {
-            value = _.extendedDeep(Trait[keyword], value);
-        });
-        def[keyword] = $static($builtin($property(_.constant(value))));
-        return def;
-    });
-};
-$prototype.inheritsBaseValues('$defaults');
-$prototype.inheritsBaseValues('$requires');
+$prototype.macro('$depends', function (def, value, name) {
+    def.$depends = $builtin($const(_.coerceToArray(value)));
+    return def;
+});
+$prototype.macroTag('extendable', function (def, value, name) {
+    def[name] = $builtin($const(value));
+    return def;
+});
 Component = $prototype({
+    $defaults: $extendable({}),
+    $requires: $extendable({}),
+    $macroTags: $extendable({}),
     $impl: {
-        mergeTraitsMembers: function (def, traits) {
-            var pool = {};
-            var bindables = {};
-            _.each([def].concat(_.pluck(traits, '$definition')), function (def) {
-                _.each(_.omit(def, _.or($builtin.matches, _.key(_.equals('constructor')))), function (member, name) {
-                    if (member.$bindable) {
-                        bindables[name] = member;
+        sequence: function (def, base) {
+            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
+        },
+        expandTraitsDependencies: function (def) {
+            if (def.$depends) {
+                var edges = [];
+                var lastId = 0;
+                var drill = function (depends, T) {
+                    if (!T.__tempId) {
+                        T.__tempId = lastId++;
                     }
-                    (pool[name] || (pool[name] = [])).push(member);
+                    _.reduce2(depends, function (TBefore, TAfter) {
+                        edges.push([
+                            TAfter,
+                            TBefore
+                        ]);
+                        return TAfter;
+                    });
+                    _.each(depends, function (TSuper) {
+                        edges.push([
+                            T,
+                            TSuper
+                        ]);
+                        drill(TSuper.$depends || [], TSuper);
+                    });
+                };
+                drill($untag(def.$depends), {});
+                _.each(def.$traits = _.reversed(_.rest(_.linearMerge(edges, { key: _.property('__tempId') }))), function (obj) {
+                    delete obj.__tempId;
+                });
+            }
+            return def;
+        },
+        mergeExtendables: function (base) {
+            return function (def) {
+                _.each(base.$definition, function (value, name) {
+                    if (value && value.$extendable) {
+                        def[name] = Tags.modify(value, function (value) {
+                            value = _.extendedDeep(value, $untag(def[name] || {}));
+                            _.each($untag(def.$traits), function (trait) {
+                                if (!trait) {
+                                    log.e(def.$traits);
+                                    throw new Error('invalid $traits value');
+                                }
+                                var traitVal = trait.$definition[name];
+                                if (traitVal) {
+                                    value = _.extendedDeep($untag(traitVal), value);
+                                }
+                            });
+                            return value;
+                        });
+                    }
+                });
+                return def;
+            };
+        },
+        mergeTraitsMembers: function (def, traits) {
+            var pool = {}, bindables = {}, streams = {};
+            var macroTags = $untag(def.$macroTags);
+            var definitions = _.pluck(traits, '$definition').concat(_.clone(def));
+            _.each(definitions, function (traitDef) {
+                _.each(macroTags && this.applyMacroTags(macroTags, _.extend(_.clone(traitDef), { constructor: def.constructor })) || traitDef, function (member, name) {
+                    if ($builtin.isNot(member) && $builtin.isNot(def[name]) && name !== 'constructor') {
+                        if ($bindable.is(member)) {
+                            bindables[name] = member;
+                        }
+                        if (Component.isStreamDefinition(member)) {
+                            streams[name] = member;
+                        }
+                        (pool[name] || (pool[name] = [])).push(member);
+                        def[name] = member;
+                    }
+                });
+            }, this);
+            def.__bindables = bindables;
+            def.__streams = streams;
+            def.__membersByName = pool;
+        },
+        mergeStreams: function (def) {
+            var pool = def.__membersByName;
+            _.each(def.__streams, function (stream, name) {
+                var clonedStream = def[name] = Tags.clone(stream);
+                clonedStream.listeners = [];
+                _.each(pool[name], function (member) {
+                    if (member !== stream) {
+                        clonedStream.listeners.push($untag(member));
+                    }
                 });
             });
-            _.each(pool, function (members, name) {
-                var stream = _.find(members, Component.isStreamDefinition);
-                if (stream) {
-                    var clonedStream = def[name] = Tags.clone(stream);
-                    clonedStream.listeners = [];
-                    _.each(members, function (member) {
-                        if (member !== stream) {
-                            clonedStream.listeners.push(member);
-                        }
-                    });
-                } else {
-                    if (!def[name]) {
-                        def[name] = pool[name][0];
-                    }
-                }
-            });
-            _.each(bindables, function (member, name) {
-                var bound = _.nonempty(_.map(_.bindable.hooks, function (hook, i) {
+            return def;
+        },
+        mergeBindables: function (def) {
+            var pool = def.__membersByName;
+            _.each(def.__bindables, function (member, name) {
+                var bound = _.filter2(_.bindable.hooks, function (hook, i) {
                     var bound = pool[_.bindable.hooksShort[i] + name.capitalized];
-                    return bound && [
+                    return bound ? [
                         hook,
                         bound
-                    ];
-                }));
+                    ] : false;
+                });
                 if (bound.length) {
-                    var bindable = (def[name] = Tags.clone(member, _.bindable($untag(member)))).subject;
+                    var hooks = {};
                     _.each(bound, function (kv) {
                         _.each(kv[1], function (fn) {
                             fn = $untag(fn);
                             if (_.isFunction(fn)) {
-                                bindable[kv[0]](fn);
+                                var k = '_' + kv[0];
+                                (hooks[k] || (hooks[k] = [])).push(fn);
                             }
                         });
                     });
+                    def[name] = $bindable({ hooks: hooks }, Tags.clone(member));
                 }
-            });
+            }, this);
+            return def;
         }
     },
     isStreamDefinition: $static(function (def) {
         return _.isObject(def) && (def.$trigger || def.$triggerOnce || def.$barrier || def.$observable || def.$observableProperty);
     }),
-    enumMethods: function () {
+    mapMethods: function () {
         var iterator = _.last(arguments), predicate = arguments.length === 1 ? _.constant(true) : arguments[0];
         var methods = [];
         for (var k in this) {
             var def = this.constructor.$definition[k];
             if (!(def && def.$property)) {
                 var fn = this[k];
-                if (predicate(def) && _.isFunction(fn) && !_.isPrototypeConstructor(fn)) {
-                    iterator.call(this, fn, k);
+                if (_.isFunction(fn) && !_.isPrototypeConstructor(fn) && predicate(def)) {
+                    this[k] = iterator.call(this, fn, k, def) || fn;
                 }
             }
         }
     },
+    enumMethods: function (_1, _2) {
+        if (arguments.length === 2) {
+            this.mapMethods(_1, _2.returns(undefined));
+        } else {
+            this.mapMethods(_1.returns(undefined));
+        }
+    },
     constructor: $final(function (arg1, arg2) {
+        this.parent_ = undefined;
+        this.children_ = [];
         var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
         if (this.constructor.$defaults) {
-            _.extend(cfg, _.cloneDeep(this.constructor.$defaults));
+            cfg = this.cfg = _.extend(_.cloneDeep(this.constructor.$defaults), cfg);
         }
-        _.onBefore(this, 'destroy', this.beforeDestroy);
-        _.onAfter(this, 'destroy', this.afterDestroy);
-        _.extend(this, {
-            parent_: undefined,
-            children_: []
-        }, _.omit(_.omit(cfg, 'init', 'attachTo', 'attach'), function (v, k) {
-            return Component.isStreamDefinition(componentDefinition[k]);
-        }, this));
-        this.enumMethods(function (fn, name) {
-            if (name !== '$' && name !== 'init') {
-                this[name] = this.$(fn);
+        this.mapMethods(function (fn, name, def) {
+            if (name !== '$' && name !== 'init' && !(def && def.$raw)) {
+                return this.$(fn);
             }
         });
+        _.onBefore(this, 'destroy', this.beforeDestroy);
+        _.onAfter(this, 'destroy', this.afterDestroy);
         var initialStreamListeners = [];
+        var excludeFromCfg = { init: true };
         _.each(componentDefinition, function (def, name) {
             if (def !== undefined) {
                 if (def.$observableProperty) {
-                    var definitionValue = this[name];
-                    defaultValue = name in cfg ? cfg[name] : definitionValue;
-                    var observable = this[name + 'Change'] = _.observable();
+                    var definitionValue = def.subject;
+                    var defaultValue = name in cfg ? cfg[name] : definitionValue;
+                    var streamName = name + 'Change';
+                    var observable = excludeFromCfg[streamName] = this[streamName] = _.observable();
                     observable.context = this;
                     observable.postpones = def.$postpones;
                     if (_.isPrototypeInstance(definitionValue)) {
@@ -3352,11 +4065,10 @@ Component = $prototype({
                         ]);
                     }
                     if (defaultValue !== undefined) {
-                        observable(_.isFunction(defaultValue) ? this.$(defaultValue) : defaultValue);
+                        observable(defaultValue);
                     }
                 } else if (Component.isStreamDefinition(def)) {
-                    var stream = (def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(this[name]);
-                    this[name] = _.extend(stream, {
+                    var stream = excludeFromCfg[name] = this[name] = _.extend((def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(def.subject), {
                         context: this,
                         postpones: def.$postpones
                     });
@@ -3383,10 +4095,7 @@ Component = $prototype({
                     this[name] = _.interlocked(this[name]);
                 }
                 if (def.$bindable) {
-                    if (_.hasAsserts) {
-                        $assert(_.isFunction(this[name]));
-                    }
-                    this[name] = _.extendWith(def.defaultHooks || {}, _.bindable(this[name], this));
+                    this[name] = _.extend(_.bindable(this[name], this), _.map2(def.$bindable.hooks || {}, _.mapsWith(this.$.bind(this).arity1)));
                 }
                 if (def.$debounce) {
                     var fn = this[name], opts = _.coerceToObject(def.$debounce);
@@ -3411,14 +4120,25 @@ Component = $prototype({
                 this._afterInit
             ]).call(this);
         });
+        _.each(cfg, function (value, name) {
+            if (!(name in excludeFromCfg)) {
+                this[name] = _.isFunction(value) ? this.$(value) : value;
+            }
+        }, this);
         _.each(componentDefinition, function (def, name) {
-            if (def && def.$alias) {
-                this[name] = this[Tags.unwrap(def)];
+            if (def && def.$alias && !def.$raw) {
+                this[name] = this[$untag(def)];
             }
         }, this);
         if (_.hasAsserts) {
             _.each(this.constructor.$requires, function (contract, name) {
-                $assertTypeMatches(this[name], contract);
+                $assertTypeMatches(_.object([[
+                        name,
+                        this[name]
+                    ]]), _.object([[
+                        name,
+                        contract
+                    ]]));
             }, this);
         }
         _.each(initialStreamListeners, function (v) {
@@ -3451,19 +4171,13 @@ Component = $prototype({
     },
     _afterInit: function (then) {
         var cfg = this.cfg;
-        if (cfg.attach && !_.isFunction(cfg.attach)) {
-            this.attach(cfg.attach);
-        }
-        if (cfg.attachTo && !_.isFunction(cfg.attachTo)) {
-            this.attachTo(cfg.attachTo);
-        }
         this.callTraitsMethod('afterInit', then);
         this.initialized(true);
         _.each(this.constructor.$definition, function (def, name) {
-            name += 'Change';
             if (def && def.$observableProperty) {
+                name += 'Change';
                 var defaultListener = cfg[name];
-                if (_.isFunction(defaultListener)) {
+                if (defaultListener) {
                     this[name](defaultListener);
                 }
             }

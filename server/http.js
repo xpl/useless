@@ -2,15 +2,18 @@ var http    = require ('http'),
     util    = require ('./base/util')
     Context = require ('./base/context.js')
 
-module.exports = $trait ({
+ServerHttp = module.exports = $trait ({
+
+    $depends: [require ('./exceptions'),
+               require ('./api')],
 
     beforeInit: function (then) { var portNumber = this.port || 1333
 
-        log.info ('Starting HTTP @ localhost:' + portNumber)
+        log.ii ('Starting HTTP @ localhost:' + portNumber)
 
         this.httpServer = http
             .createServer (this.$ (function (request, response) {
-                console.log (request.method, ': ', request.url)
+                log (request.method === 'GET' ? log.color.green : log.color.pink, request.method, ': ', log.color.bright, request.url)
                 this.serveRequest (new Context ({ request: request, response: response })) }))
             .listen (this.port || 1333, then.arity0) },
 

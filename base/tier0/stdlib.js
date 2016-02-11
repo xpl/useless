@@ -7,50 +7,20 @@ _.withTest (['stdlib', 'throwsError'], function () {
 
         $assertThrows (
             _.throwsError ('неуловимый Джо'),
-            _.matches ({ message: 'неуловимый Джо' })) }, function () { _.extend (_, {
+            _.matches ({ message: 'неуловимый Джо' })) }, function () {
 
-    throwsError: function (msg) {
-                    return function () {
-                        throw new Error (msg) }} }) })
+    _.throwsError = _.higherOrder (
+        _.throwError = function (msg) {
+                         throw new Error (msg) }) })
 
 _.overrideThis   = _.throwsError ('override this')
 _.notImplemented = _.throwsError ('not implemented')
 
 
-/*  A functional try/catch
-    ======================================================================== */
-
-_.deferTest (['stdlib', 'tryEval'], function () {
-
-    /*  'return' interface
-     */
-    $assert ('ok',     _.tryEval (_.constant ('ok'),
-                                  $fails))
-
-    $assert ('failed', _.tryEval (_.throwsError ('yo'),
-                                  $assertMatches.partial ({ message: 'yo'}).then (_.constant ('failed'))))
-
-   /*   CPS interface
-    */
-    $assertCPS (_.tryEval.partial (_.constant ('ok'),
-                                   _.constant ('failed')), 'ok')
- 
-    $assertCPS (_.tryEval.partial (_.throwsError ('yo'),
-                                   _.constant ('failed')), 'failed')
-
-}, function () { _.mixin ({
-                    tryEval: function (try_, catch_, then_) { var result = undefined
-                        try       { result = try_ ()    }
-                        catch (e) { result = catch_ && catch_ (e) }
-                        return then_ ?
-                                    then_ (result) :
-                                    result } }) })
-
-
 /*  Abstract _.values
     ======================================================================== */
 
-_.deferTest (['stdlib', 'values2'], function () {
+_.withTest (['stdlib', 'values2'], function () {
 
     $assert (_.values2 (undefined), [])
     $assert (_.values2 (_.identity), [_.identity])
@@ -65,31 +35,90 @@ _.deferTest (['stdlib', 'values2'], function () {
                         else if (_.isEmpty (x))             { return [] }
                         else                                { return [x] } } }) })
 
+
 /*  Map 2.0
     ======================================================================== */
 
 /*  Semantically-correct abstract map (maps any type of value)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'map2'], function () { var plusBar = _.appends ('bar')
+_.withTest (['stdlib', 'map2'], function () {
 
-    $assert (_.map2 ('foo', plusBar), 'foobar')
-    $assert (_.map2 (['foo'], plusBar), ['foobar'])
-    $assert (_.map2 ({ foo: 'foo' }, plusBar), { foo: 'foobar' })
+                                 var plusBar =   _.appends ('bar')
+
+    $assert (_.map2 (       'foo',   plusBar),           'foobar'  )
+    $assert (_.map2 ([      'foo'],  plusBar),    [      'foobar' ])
+    $assert (_.map2 ({ foo: 'foo' }, plusBar),    { foo: 'foobar' })
+
+    /*  With flipped order of arguments (callback first)
+     */
+    $assert (_.mapWith (plusBar, { foo: 'foo' }), { foo: 'foobar' })
+
+}, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
+                                     _.isArray (value) ? _.map       (value, fn,      context) : (
+                            _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
+                                                                             fn.call (context, value))) } })
+                _.mapsWith = _.higherOrder (
+                    _.mapWith  = _.flip2 (_.map2)) })
+
+
+/*  Maps one-to-many
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'scatter/obj/arr'], function () {
+
+    $assert (undefined, _.scatter ([], _.noop))
+
+    $assert ([1,10, 2,20, 3,30],         _.scatter ([1,2,3], function (x, i, return_) { return_ (x); return_ (x * 10) }))
+    $assert ({ 'b': 0, 'a': 1, 'r': 2 }, _.scatter ('bar',   function (x, i, return_) { _.each (x.split (''), _.flip (return_)) }))
+
+    $assert (_.obj (_.noop),
+             _.arr (_.noop), undefined)
+
+    $assert (_.obj (function (emit) {
+                              emit (42, 'foo')
+                              emit (43, 'bar') }), { foo: 42, bar: 43 })
+
+    $assert (_.arr (function (emit) {
+                              emit (42)
+                              emit (43, 44) }), [42, [43, 44]])
 
 }, function () { _.mixin ({
-                    map2: function (value, fn, context) {
-                        if (_.isArray (value)) {
-                            return _.map (value, fn, context) }
-                        else if (_.isStrictlyObject (value)) {
-                            return _.mapObject (value, fn, context) }
+                    scatter: function (obj, elem) { var result = undefined
+                                _.map2 (obj, function (x, i) {
+                                                 elem (x, i, function (v, k) {
+                                                                if (arguments.length < 2) { (result = result || []).push (v) }  
+                                                                                     else { (result = result || {})[k] = v } }) }); return result } })
+                 _.obj = function (emitItems) {
+                            var x = undefined; emitItems (function (v, k)  { (x = x || {})[k] = v  })
+                         return x }
+
+                 _.arr = function (emitItems) {
+                            var x = undefined; emitItems (function (v    ) { (x = x || []).push ((arguments.length < 2) ? v : _.asArray (arguments)) })
+                         return x } })
+
+
+/*  Maps keys (instead of values)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'mapKeys'], function () {
+
+    $assert (_.mapKeys ({ 'foo':    [1, 2,{ 'gay':    3 }]}, _.appends ('bar')),
+                        { 'foobar': [1, 2,{ 'gaybar': 3 }]})
+
+}, function () { _.mapKeys = function (x, fn) {
+                        if (_.isArray (x)) {
+                            return _.map (x, _.tails2 (_.mapKeys, fn)) }
+                        else if (_.isStrictlyObject (x)) {
+                            return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
                         else {
-                            return fn.call (context, value) } } })})
+                            return x } } })              
+
 
 /*  Hyper map (deep) #1 — maps leafs
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'mapMap'], function () {
+_.withTest (['stdlib', 'mapMap'], function () {
 
     $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
     $assert (_.mapMap ([7], _.typeOf), ['number'])
@@ -110,7 +139,7 @@ _.deferTest (['stdlib', 'mapMap'], function () {
 /*  Filter 2.0
     ======================================================================== */
 
-_.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
+_.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
 
     // generic filter behavior for any container type
 
@@ -167,12 +196,32 @@ _.deferTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
         filterFilter: _.hyperOperator (_.unary, _.filter2) }) })
 
 
+_.withTest (['stdlib', 'each 2.0'], function () {
+
+    var test = function (input) {                                        var output = []
+                _.each2 (input, function ( x,     i,          n) {           output.push (
+                                         [ x,     i,          n]) }); return output }
+                            
+        $assert (test ( 'foo'),         [['foo',  undefined,  1]])        
+        $assert (test (['foo', 'bar']), [['foo',  0,          2],
+                                         ['bar',  1,          2]])
+        $assert (test ({ 'f': 'oo',
+                         'b': 'ar' }),  [[ 'oo', 'f',         2],
+                                         [ 'ar', 'b',         2]])
+}, function () { 
+
+    _.each2 =            function (x,                                                                           f) {
+           if (         _.isArray (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+      else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
+         else                          {                                                                        f (x,        undefined, 1) } } })
+
 /*  Reduce on steroids
     ======================================================================== */
 
-_.deferTest (['stdlib', 'reduce 2.0'], function () {
+_.withTest (['stdlib', 'reduce 2.0'], function () {
 
-    /*$assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
+    $assert (_.reduce2 (     3,   [7,    9 ], _.sum), 19)
+    $assert (_.reduce2 ([    3,    7,    9 ], _.sum), 19)
     $assert (_.reduce2 ({ a: 3, b: 7, c: 9 }, _.sum), 19)
     $assert (_.reduce2 (     3   + 7   + 9  , _.sum), 19)
 
@@ -180,7 +229,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
     $assert (_.reduce2 ([],  _.sum), undefined)
 
     $assert (              1 + 20 + 3 + 4 + 5,
-        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))*/
+        _.reduceReduce ([[[1], 20],[3,[ 4,  5]]], function (a, b) { return (_.isNumber (a) && _.isNumber (b)) ? (a + b) : b }))
 
 }, function () {
 
@@ -193,30 +242,46 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
             1. _.reduce (value, op, memo)
             2.       op (memo, value)
     */
-    _.reduce2 = function (value, memo, op_) {
 
-                    var op     = _.last (arguments)
+    _.reduce2 = function (        _1,                 _2,      _3) { var no_left = arguments.length < 3
+                       var left = _1,        rights = _2, op = _3
+         if (no_left) {    left = undefined; rights = _1; op = _2 }
 
-                    var safeOp = function (value, memo) { var hasMemo = (memo !== undefined)
-                                                          var result  = (hasMemo ? op (value, memo) : value)
-                        return (result === undefined) ?
-                                    (hasMemo ? memo : value) :
-                                    (result) }
+         _.each2 (rights, function (right) {
+                  left =  no_left ? right :
+                          op (left, right); no_left = false }); return left }
 
-                    if (_.isArray (value)) {                                
-                        for (var i = 0, n = value.length; i < n; i++) {
-                            memo = safeOp (value[i],   memo) } }
-
-                    else if (_.isStrictlyObject (value)) {                  
-                        _.each (Object.keys (value), function (key) {
-                            memo = safeOp (value[key], memo) }) }
-
-                    else {
-                            memo = safeOp (value,      memo) } return memo }
-
-    _.reduceReduce = function (initial, value, op) {
-                        return _.hyperOperator (_.binary, _.reduce2, _.goDeeperAlwaysIfPossible) (value, initial, op.flip2) }
+    _.reduceReduce = function (_1, _2, _3) {                             var initial = _1, value = _2, op = _3
+                        if (arguments.length < 3) {                          initial = {}; value = _1; op = _2 }
+                        return _.hyperOperator (_.binary,
+                                                _.reduce2,
+                                                _.goDeeperAlwaysIfPossible) (initial,      value,      op) }
  })
+
+
+/*  Abstract concat
+    ======================================================================== */
+
+_.withTest (['stdlib', 'concat2'], function () {
+
+    $assert (_.concat ([1,2], [3], [4,5]), [1,2,3,4,5])
+    $assert (_.concat ( { foo: 1 }, { bar: 2 }),  { foo: 1, bar: 2 })
+    $assert (_.concat ([{ foo: 1 }, { bar: 2 }]), { foo: 1, bar: 2 })
+    $assert (_.concat (1,2,3), 6)
+
+}, function () { 
+
+    _.concat = function (a, b) { var      first,          rest
+            if (arguments.length === 1) { first = a[0];   rest =  _.rest (a) }
+            else {                        first = a;      rest =  _.rest (arguments) }
+
+            return _.isArray (first)
+                          ? first.concat.apply (first, rest)
+                          :          _.reduce2 (first, rest, function (              a,  b) {
+                                                                if (_.isObject (     a) &&
+                                                                    _.isObject (         b)) {
+                                                                return _.extend ({}, a,  b)  }
+                                                        else {  return               a + b   } }) } })
 
 /*  Zip 2.0
     ======================================================================== */
@@ -224,7 +289,7 @@ _.deferTest (['stdlib', 'reduce 2.0'], function () {
 /*  Abstract zip that reduces any types of matrices.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'zip2'], function () {
+_.withTest (['stdlib', 'zip2'], function () {
 
     $assert (_.zip2 ([  'f',
                         'o',
@@ -277,12 +342,13 @@ _.deferTest (['stdlib', 'zip2'], function () {
             else if (_.isStrictlyObject (rows[0])) {
                 return _.zipObjectsWith (rows, fn) }
             else {
-                return _.reduce (rows, fn) } } } }) })
+                return _.reduce2 (rows, fn) } } } }) })
+
 
 /*  Hyperzip (deep one).
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.deferTest (['stdlib', 'zipZip'], function () {
+_.withTest (['stdlib', 'zipZip'], function () {
 
     $assert (_.zipZip (
             { phones: [{ number: 'number' }] },
@@ -303,38 +369,6 @@ _.deferTest (['stdlib', 'zipZip'], function () {
 function () {
 
     _.mixin ({ zipZip: _.hyperOperator (_.binary, _.zip2) }) })
-
-
-/*  Find 2.0 + Hyperfind
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-_.deferTest (['stdlib', 'findFind'], function () {
-
-    var obj = { x: 1, y: { z: 2 }}
-
-    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.constant (false)), false)
-    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),       2)
-    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)),     obj) },
-
-function () {
-
-    _.findFind = function (obj, pred_) {
-                    return _.hyperOperator (_.unary,
-                             function (value, pred) {
-                                    if (_.isArray (value)) {                                
-                                        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
-                                                          if (typeof x !== 'boolean') { return x }
-                                                                 else if (x === true) { return value[i] } } }
-
-                                    else if (_.isStrictlyObject (value)) {        
-                                        for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
-                                                                                 if (typeof x !== 'boolean') { return x }
-                                                                                        else if (x === true) { return value[k] } } }
-
-                                                                                          var x = pred_ (value)
-                                                            if (typeof x !== 'boolean') { return x }
-                                                                   else if (x === true) { return value }
-                                                                                          return false }) (obj, pred_) } })
 
 
 /*  Most useful _.extend derivatives
@@ -378,14 +412,24 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
             var plus    = { foo:42, bar: { baz:1 } }
             var gives   = { foo:42, bar: { baz:1, qux:1 }}
 
-            $assert (_.extendedDeep (input, plus), gives) }) ()]  }, function () {
+            $assert (_.extendedDeep (input, plus), gives) }),
+
+        /*  Referentially-transparent version (to be used in functional expressions)
+         */
+        (function () {
+            var x = { foo: 1 }
+
+            $assert (_.extended (x, { bar: 1 }), { foo: 1, bar: 1 })
+            $assert (            x,              { foo: 1 }) }) ]  }, function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
+
+    _.extended = $restArg (function () { return _.extend.apply (this, [{}].concat (_.asArray (arguments))) }) // referentially-transparent version
 
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
 
-    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b || a })
+    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b === undefined ? a : b })
 
     _.extend2 = $restArg (function (what) { 
                                 return _.extend (what, _.reduceRight (arguments, function (right, left) {
@@ -397,6 +441,47 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
                                                                                     _.extend (lvalue, right[key]) :
                                                                                     right[key]) :
                                                                                 lvalue] }))}, {})) }) })
+
+/*  Find 2.0 + Hyperfind
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'findFind'], function () {
+
+    var obj = { x: 1, y: { z: 2 }}
+
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.constant (false)), false)
+    $assert (_.findFind ({ foo: 1, bar: [1,2,3]  }, _.equals (2)),       2)
+    $assert (_.findFind ({ foo: { bar: obj     } }, _.equals (obj)),     obj) },
+
+function () {
+
+    _.find2 = function (value, pred) {
+        if (_.isArray (value)) {                                
+            for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
+                              if (typeof x !== 'boolean') { return x }
+                                     else if (x === true) { return value[i] } } }
+        else if (_.isStrictlyObject (value)) {        
+            for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k], k, value)
+                                                     if (typeof x !== 'boolean') { return x }
+                                                            else if (x === true) { return value[k] } } } }
+
+    _.findFind = function (obj, pred_) {
+                    return _.hyperOperator (_.unary,
+                             function (value, pred) {
+                                    if (_.isArray (value)) {                                
+                                        for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
+                                                          if (typeof x !== 'boolean') { return x }
+                                                                 else if (x === true) { return value[i] } } }
+
+                                    else if (_.isStrictlyObject (value)) {        
+                                        for (var i = 0, ks = Object.keys (value), n = ks.length; i < n; i++) { var k = ks[i]; var x = pred (value[k])
+                                                                                 if (typeof x !== 'boolean') { return x }
+                                                                                        else if (x === true) { return value[k] } } }
+
+                                                                                          var x = pred_ (value)
+                                                            if (typeof x !== 'boolean') { return x }
+                                                                   else if (x === true) { return value }
+                                                                                          return false }) (obj, pred_) } })
 
 
 /*  removes empty contents from any kinds of objects
@@ -437,7 +522,9 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
 }, function () { _.extend (_, {
 
-    cloneDeep: _.tails2 (_.mapMap, function (value) { return (_.isStrictlyObject (value) && !_.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
+    cloneDeep: _.tails2 (_.mapMap, function (value) {
+        return (_.isStrictlyObject (value) && !
+                _.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,
@@ -537,25 +624,123 @@ _.withTest (['stdlib', 'quote'], function () {
 _.withTest (['stdlib', 'partition2'], function () {
 
         $assert (_.partition2 (
-                    [ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty),
-                    [['a', 'b', 'c'], [undefined, undefined], ['d']]) }, function () {
+                    [ 'a', 'b', 'c',   undefined, undefined,   42], _.isNonempty),
+                    [['a', 'b', 'c'], [undefined, undefined], [42]])
 
-    _.partition2 = function (arr, pred) { var prevColor = undefined
+        $assert (_.partition3 ([ 'a', 'b', 'c', undefined, undefined, 42], _.typeOf),
+                [{ label: 'string',    items: ['a', 'b', 'c'] },
+                 { label: 'undefined', items: [undefined, undefined] },
+                 { label: 'number',    items: [42] }]) }, function () {
 
-            var result = []
-            var group = []
+    _.partition2 = function (arr, pred) { return _.pluck (_.partition3 (arr, pred), 'items') }
 
-            _.each (arr, function (x) { var color = pred (x)
-                if (prevColor != color && group.length) {
-                    result.push (group)
-                    group = [] }
-                group.push (x)
-                prevColor = color })
+    _.partition3 = function (arr, pred) { var spans = [],
+                                              span  = { label: undefined, items: [arr.first] }
 
-            if (group.length) {
-                result.push (group) }
+            _.each (arr, function (x) { var label = pred (x)
+                if ((span.label != label) &&
+                     span.items.length) { spans.push (span = { label: label, items: [x] }) }
+                                   else { span.items.push (x) } })
 
-            return result } })
+            return (span.length && spans.push (span)),
+                    spans } })
+
+/*  Merges arrays, keeping given element order.
+    TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
+    ======================================================================== */
+
+_.withTest (['stdlib', 'linearMerge'], function () {
+
+    $assert (_.linearMerge ([]), [])
+    $assert (_.linearMerge ([   ['all','your',                'to','us'],
+                                [      'your',       'belong',     'us'],
+                                [             'base','belong','to'     ],
+                                [      'your','base'                   ]]),
+                                ['all','your','base','belong','to','us'])
+
+/*  cfg accepts { key: fn, sort: fn } optional parameters for key extraction and sorting
+    ======================================================================== */
+
+}, function () {
+
+    _.linearMerge = function (arrays, cfg) {
+
+            cfg = cfg || { key: _.identity }
+
+        var head = { key: null, next: {} }
+        var nodes = {}
+
+        _.each (arrays, function (arr) {
+            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+                var item = arr[i]
+                var key  = cfg.key (item)
+                node = nodes[key] || (nodes[key] = { key: key, item: item, next: {} })
+                if (prev) {
+                    prev.next[key] = node } } })
+
+        var decyclize = function (visited, node) { visited[node.key] = true
+
+            node.next = _.chain (_.values (node.next))
+                            .filter (function (node) { return !(node.key in visited) })
+                            .map (_.partial (decyclize, visited)).value ()
+            
+            delete visited[node.key]; return node }
+
+        var ordered = function (a, b) {
+            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
+
+        var flatten = function (node) { if (!node) return []
+
+            var next = cfg.sort ? _.sortBy (node.next || [], cfg.sort) : (node.next || [])
+
+            return [node].concat (flatten (_.reduce (next, function (a, b) {
+
+                if (a === b)             { return a }
+                else if (ordered (b, a)) { b.next.push (a); return b }
+                else                     { a.next.push (b); return a } }))) }
+
+        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
+
+
+/*  Taken from  npmjs.com/package/longest-common-substring
+    Props to    npmjs.com/~mirkok
+    ======================================================================== */
+
+
+_.withTest (['stdlib', 'longestCommonSubstring'], function () {
+
+    $assert ('foo', _.longestCommonSubstring ('foo', 'ffooa'))
+
+}, function () {
+    
+    var indexMap = function(list) {
+        var map = {}
+        _.each (list, function(each, i) {
+            map[each] = map[each] || []
+            map[each].push(i) })
+        return map }
+
+    _.longestCommonSubstring = function (a, b) {
+        var where = _.indexOfLongestCommonSubstring (a, b)
+        return (where.length) ? a.substr (where.a, where.length) : undefined }
+
+    _.indexOfLongestCommonSubstring = function(a, b) {
+        var result = { a:0, b:0, length:0}
+        var indexMapBefore = indexMap(a)
+        var previousOverlap = []
+        _.each (b, function(eachAfter, indexAfter) {
+            var overlapLength
+            var overlap = []
+            var indexesBefore = indexMapBefore[eachAfter] || []
+            _.each (indexesBefore, function(indexBefore) {
+                overlapLength = ((indexBefore && previousOverlap[indexBefore-1]) || 0) + 1;
+                if (overlapLength > result.length) {
+                    result.length = overlapLength;
+                    result.a = indexBefore - overlapLength + 1;
+                    result.b = indexAfter - overlapLength + 1; }
+                overlap[indexBefore] = overlapLength })
+            previousOverlap = overlap })
+        return result } })
 
 
 /*  experimental shit (subject to removal)
