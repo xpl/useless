@@ -745,21 +745,45 @@ _.withTest ('OOP', {
 /*  Dual call interface
     ======================================================================== */
 
+    /*  method → free function
+     */
     _.withTest (['OOP', '$callableAsFreeFunction'], function () {
 
-            var x = undefined
             var X = $prototype ({
-                foo: $callableAsFreeFunction ($property (function () { $assert (this === x); return 42 })) })
+                foo: $callableAsFreeFunction ($property (function () { $assert (this._42, 42); return 42 })) })
 
-                x = new X ()
+                x = new X ({ _42: 42 })
 
-            $assert (x.foo, X.foo (x), 42) },                   function () {
+            $assert (x.foo, X.foo (x), 42) },       function () {
 
-        _.defineTagKeyword  ('callableAsFreeFunction')
-        $prototype.macroTag ('callableAsFreeFunction',
-            function (def, value, name) {
-                      def.constructor[name] = $untag (value).asFreeFunction
-               return def }) })
+                /*  Impl
+                 */
+                _.defineTagKeyword  ('callableAsFreeFunction')
+                $prototype.macroTag ('callableAsFreeFunction',
+                    function (def, value, name) {
+                              def.constructor[name] = $untag (value).asFreeFunction
+                       return def }) })
+
+    /*  free function → method
+     */
+    _.withTest (['OOP', '$callableAsMethod'],       function () {
+
+            var X = $prototype ({
+                foo: $callableAsMethod (function (this_, _42) { $assert (this_._42, _42, 42); return 42 }) })
+
+                x = new X ({ _42: 42 })
+
+            $assert (x.foo (42), X.foo (x, 42), 42) },  function () {
+
+                /*  Impl 
+                 */
+                _.defineTagKeyword  ('callableAsMethod')
+                $prototype.macroTag ('callableAsMethod',
+                    function (def, value, name) {
+                              def[name] = Tags.modify (value, _.asMethod)
+                              def.constructor[name] = $untag (value)
+                       return def }) })
+
 
 /*  $singleton (a humanized macro to new ($prototype (definition)))
     ======================================================================== */

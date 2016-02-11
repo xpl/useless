@@ -3312,6 +3312,12 @@ $prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
     def.constructor[name] = $untag(value).asFreeFunction;
     return def;
 });
+_.defineTagKeyword('callableAsMethod');
+$prototype.macroTag('callableAsMethod', function (def, value, name) {
+    def[name] = Tags.modify(value, _.asMethod);
+    def.constructor[name] = $untag(value);
+    return def;
+});
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))();
 };
