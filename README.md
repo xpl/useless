@@ -278,7 +278,7 @@ Using [$component](https://github.com/xpl/useless/wiki/$component):
 Compo = $component ({
 
     didLayout:     $trigger (),
-    layoutReady:   $barrier (),             // it's like document.ready
+    layoutReady:   $barrier (),             // it's like jQueryish $(document).ready
     value:         $observableProperty (),  // for property change notifications
     
     init: function () {
