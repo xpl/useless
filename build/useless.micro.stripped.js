@@ -3022,10 +3022,10 @@ Vec2 = $prototype({
         lt: $alias('fromLT'),
         wh: $alias('fromWH'),
         fromLT: function (lt) {
-            return new Vec2(lt.left, lt.top);
+            return lt && new Vec2(lt.left, lt.top);
         },
         fromWH: function (wh) {
-            return new Vec2(wh.width, wh.height);
+            return wh && new Vec2(wh.width, wh.height);
         },
         fromLeftTop: $alias('fromLT'),
         fromWidthHeight: $alias('fromWH'),
@@ -3208,14 +3208,14 @@ BBox = $prototype({
         },
         fromLTWH: function (l, t, w, h) {
             if (arguments.length === 1) {
-                return BBox.fromLTWH(l.left, l.top, l.width, l.height);
+                return l && BBox.fromLTWH(l.left, l.top, l.width, l.height);
             } else {
                 return new BBox(l + w / 2, t + h / 2, w, h);
             }
         },
         fromLTRB: function (l, t, r, b) {
             if (arguments.length === 1) {
-                return BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
+                return l && BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
             } else {
                 return new BBox(_.lerp(0.5, l, r), _.lerp(0.5, t, b), r - l, b - t);
             }
@@ -3373,6 +3373,7 @@ BBox = $prototype({
     center: $property(function () {
         return new Vec2(this.x, this.y);
     }),
+    extent: $alias('size'),
     size: $property(function () {
         return new Vec2(this.width, this.height);
     }),

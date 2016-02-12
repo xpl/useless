@@ -4796,6 +4796,10 @@ _.withTest ('OOP', {
 
         ;
 
+/*  TODO:   UNIT TEST DAT MUTHAFUCKA
+ */
+
+
 /*  Context-free math functions
     ======================================================================== */
 
@@ -4865,8 +4869,8 @@ Vec2 = $prototype ({
         one:         $alias ('unit'),
         lt:          $alias ('fromLT'),
         wh:          $alias ('fromWH'),
-        fromLT:      function (lt) { return new Vec2 (lt.left, lt.top) },
-        fromWH:      function (wh) { return new Vec2 (wh.width, wh.height) },
+        fromLT:      function (lt) { return lt && (new Vec2 (lt.left, lt.top)) },
+        fromWH:      function (wh) { return wh && (new Vec2 (wh.width, wh.height)) },
         fromLeftTop:     $alias ('fromLT'),
         fromWidthHeight: $alias ('fromWH'),
         lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
@@ -4947,11 +4951,11 @@ Vec2 = $prototype ({
         return this.x + sep + this.y },
 
     floor: $property (function () {
-        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
+                        return new Vec2 (Math.floor (this.x), Math.floor (this.y)) }),
 
     sum: $static (function (arr) {
-        return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
-            function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
+                    return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
+                        function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 
     toString: function () {
         return '{' + this.x + ',' + this.y + '}' },
@@ -5018,11 +5022,11 @@ BBox = $prototype ({
             return BBox.fromLTWH ({ left: pt.x, top: pt.y, width: size.x, height: size.y }) },
 
         fromLTWH: function (l,t,w,h) {
-            if (arguments.length === 1) { return BBox.fromLTWH (l.left, l.top, l.width, l.height) }
+            if (arguments.length === 1) { return l && (BBox.fromLTWH (l.left, l.top, l.width, l.height)) }
                                    else { return new BBox (l + w / 2.0, t + h / 2.0, w, h) } },
 
         fromLTRB: function (l,t,r,b) {
-            if (arguments.length === 1) { return BBox.fromLTRB (l.left, l.top, l.right, l.bottom) }
+            if (arguments.length === 1) { return l && (BBox.fromLTRB (l.left, l.top, l.right, l.bottom)) }
                                    else { return new BBox (_.lerp (0.5, l, r), _.lerp (0.5, t, b), r - l, b - t) } },
 
         fromSizeAndCenter: function (size, center) {
@@ -5186,6 +5190,8 @@ BBox = $prototype ({
 
     center: $property (function () {
         return new Vec2 (this.x, this.y) }),
+
+    extent: $alias ('size'),
 
     size: $property (function () {
         return new Vec2 (this.width, this.height) }),
