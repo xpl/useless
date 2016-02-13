@@ -67,10 +67,10 @@ Panic.widget = $singleton (Component, {
 
 		return el })),
 
-	layout: function () { var shouldExpandHorizontally = (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))) > this.modal.width ())
+	layout: function () { var maxContentWidth = _.coerceToUndefined (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))))
 
 		this.modal.css ({ 'max-height': $(window).height () - 100,
-						  'width':  shouldExpandHorizontally ? '90%' : '' })
+						  'width': maxContentWidth && (maxContentWidth + 80) })
 
 		this.modalBody.scroll () },
 
