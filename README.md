@@ -611,7 +611,7 @@ This version includes only the platform-independent part of the library, not inc
 Build command:
 
 ```bash
-node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress]
+node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress] [no-stripped]
 ```
 
 For generic build, run `node build.js ./useless.js ./build`, or simply
