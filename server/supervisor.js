@@ -69,9 +69,6 @@ module.exports = Supervisor = $trait ({
         if (this.supervised) { process.exit (0) }
                         else { this.supervisedProcess.restart () }  },
 
-    MonitorReady: $barrier (function () {
-                                Monitor.start () }),
-
     watchDirectory: function (path, changed, then) {
                         this.require ('chokidar', function () {
 
