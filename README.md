@@ -10,6 +10,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
+
 - `$raw` methods for disabling thiscall semantics for performance-critical methods in components. In other words, it disables auto binding of methods to `this`, which comes with performance penalty of one extra call.
 
 - `LogOverlay` now automatically clips its output (removing invisible lines) to reduce page freezes on a huge amount of log output. It is also gradients itself with `-webkit-mask-image`. Screenshot shows log output built automatically with **$log** and `Testosterone.LogsMethodCalls`:  ![showcase](http://img.leprosorium.com/2492460)
@@ -276,7 +278,7 @@ Using [$component](https://github.com/xpl/useless/wiki/$component):
 Compo = $component ({
 
     didLayout:     $trigger (),
-    layoutReady:   $barrier (),             // it's like document.ready
+    layoutReady:   $barrier (),             // it's like jQueryish $(document).ready
     value:         $observableProperty (),  // for property change notifications
     
     init: function () {
@@ -294,7 +296,7 @@ compo.didLayout (function () {
 
 compo.layoutReady (function () {
     /*  Postpones until DOM is ready.
-        If already, calls immediately (like document.ready) */ })
+        If already, calls immediately (like $(document).ready) */ })
 
 compo.valueChange (function (value, oldValue) {
     /*  Gets called whenether property has assigned distinct value */ })
@@ -523,19 +525,6 @@ log.e ('...and hasta la vista, baby')
 
 [![Reference](http://img.leprosorium.com/2460404)](https://github.com/xpl/useless/blob/master/client/LogOverlay.js)
 
-## API.js
-
-XHR requests to communicate with `./server` part.
-
-## RemoteCollection
-
-- `DataManager.js`
-- `Collection/Collection.js`
-- `Collection/RemoteCollection.js`
-- `Collection/FilterChain.js`
-
-Bits and pieces of real-time database synchronization engine, taken from some previous project. Needs documentation and examples. Rather unusable for now.
-
 # `./server` features
 
 Example:
@@ -609,7 +598,7 @@ This version includes only the platform-independent part of the library, not inc
 Build command:
 
 ```bash
-node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress]
+node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress] [no-stripped]
 ```
 
 For generic build, run `node build.js ./useless.js ./build`, or simply
