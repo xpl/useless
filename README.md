@@ -525,19 +525,6 @@ log.e ('...and hasta la vista, baby')
 
 [![Reference](http://img.leprosorium.com/2460404)](https://github.com/xpl/useless/blob/master/client/LogOverlay.js)
 
-## API.js
-
-XHR requests to communicate with `./server` part.
-
-## RemoteCollection
-
-- `DataManager.js`
-- `Collection/Collection.js`
-- `Collection/RemoteCollection.js`
-- `Collection/FilterChain.js`
-
-Bits and pieces of real-time database synchronization engine, taken from some previous project. Needs documentation and examples. Rather unusable for now.
-
 # `./server` features
 
 Example:
@@ -611,7 +598,7 @@ This version includes only the platform-independent part of the library, not inc
 Build command:
 
 ```bash
-node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress]
+node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress] [no-stripped]
 ```
 
 For generic build, run `node build.js ./useless.js ./build`, or simply
