@@ -1748,7 +1748,7 @@ _.defineKeyword('any', _.identity);
     });
     var typeMatchesValue = function (c, v) {
         var contract = Tags.unwrap(c);
-        return contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
+        return contract === $any || contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
     };
     _.mismatches = function (op, contract, value) {
         return hyperMatch(contract, value, function (contract, v) {
@@ -5824,7 +5824,7 @@ Testosterone = $singleton({
         _.deleteKeyword(name);
         _.defineKeyword(name, Tags.modify(def, function (fn) {
             return _.withSameArgs(fn, function () {
-                var loc = $callStack.safeLocation(1);
+                var loc = $callStack.safeLocation(Platform.Browser ? 0 : 1);
                 if (!self.currentAssertion) {
                     return fn.apply(self, arguments);
                 } else {

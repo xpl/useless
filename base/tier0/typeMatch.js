@@ -30,6 +30,8 @@ _.deferTest (['type', 'type matching'], function () {
 
     $assert (_.omitTypeMismatches ({ '*': 'number' }, { foo: 42, bar: 42 }), { foo: 42, bar: 42 })
 
+    $assert (_.omitTypeMismatches ({ foo: $any }, { foo: 0 }), { foo: 0 }) // there was a bug (any zero value was omitted)
+
     $assert (_.decideType ([]), [])
     $assert (_.decideType (42),         'number')
     $assert (_.decideType (_.identity), 'function')
@@ -86,8 +88,8 @@ _.deferTest (['type', 'type matching'], function () {
                 return zip (type_, value, pred) } })
 
     var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
-
-                                return  ((contract === undefined) && (v === undefined)) ||
+                                return  (contract === $any) ||
+                                        ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (
                                             _.isPrototypeConstructor (contract) ?
                                                 _.isTypeOf (contract, v) :  // constructor type

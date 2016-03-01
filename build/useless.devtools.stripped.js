@@ -1172,7 +1172,7 @@ Testosterone = $singleton({
         _.deleteKeyword(name);
         _.defineKeyword(name, Tags.modify(def, function (fn) {
             return _.withSameArgs(fn, function () {
-                var loc = $callStack.safeLocation(1);
+                var loc = $callStack.safeLocation(Platform.Browser ? 0 : 1);
                 if (!self.currentAssertion) {
                     return fn.apply(self, arguments);
                 } else {
@@ -1610,7 +1610,7 @@ _.perfTest = function (arg, then) {
             var maxContentWidth = _.coerceToUndefined(_.max(_.map(this.modal.find('pre'), _.property('scrollWidth'))));
             this.modal.css({
                 'max-height': $(window).height() - 100,
-                'width': maxContentWidth && maxContentWidth + 80
+                'width': maxContentWidth && maxContentWidth + 120
             });
             this.modalBody.scroll();
         },
@@ -1672,10 +1672,13 @@ _.perfTest = function (arg, then) {
         printUnknownStuff: function (what, raw) {
             return raw ? what : $('<span>').text(log.impl.stringify(what));
         },
+        cleanupFileName: function (s) {
+            return s && s.replace(/^\d\d\d\d\d+_/, '');
+        },
         printLocation: function (where) {
             return $('<span class="location">').append([
                 $('<span class="callee">').text(where.calleeShort),
-                $('<span class="file">').text(where.fileName),
+                $('<span class="file">').text(this.cleanupFileName(where.fileName)),
                 $('<span class="line">').text(where.line)
             ]);
         },
@@ -1721,7 +1724,7 @@ _.perfTest = function (arg, then) {
                 $('<ul class="callstack">').append(_.map(stackEntries, this.$(function (entry) {
                     var dom = $('<li class="callstack-entry">').toggleClass('third-party', entry.thirdParty).toggleClass('native', entry['native']).append([
                         $('<span class="file">').text(_.nonempty([
-                            entry.index ? '(index)' : entry.fileShort,
+                            entry.index ? '(index)' : this.cleanupFileName(entry.fileShort),
                             entry.line
                         ]).join(':')),
                         $('<span class="callee">').text(entry.calleeShort),

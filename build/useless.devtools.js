@@ -1311,8 +1311,7 @@ Testosterone is a cross-platform unit test shell. Features:
 _.defineTagKeyword ('shouldFail')
 
 
-/*  A contract for custom assertions, says that assertion is asynchronous. Such assertion
-    should call Testosterone.
+/*  A contract for custom assertions, says that assertion is asynchronous.
  */
 _.defineTagKeyword ('async')
 
@@ -1400,9 +1399,7 @@ Testosterone = $singleton ({
                                                             (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
 
                                                         return def }))
-
-        this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
-                                        //  but it's a chicken-egg class problem
+        this.run = this.$ (this.run) },
 
     /*  Entry point
      */
@@ -1518,7 +1515,7 @@ Testosterone = $singleton ({
         _.deleteKeyword (name)
         _.defineKeyword (name, Tags.modify (def,
                                     function (fn) {
-                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (1)
+                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (Platform.Browser ? 0 : 1)
                                             if (!self.currentAssertion) {
                                                 return fn.apply (self, arguments) }
                                             else {
@@ -1575,14 +1572,15 @@ Test = $prototype ({
             verbose: this.verbose,
             silent:  this.silent,
             routine: Tags.modify (def, function (fn) {
-                        return function (done) {
-                                if ($async.is (args[0])) {
-                                    _.cps.apply (fn, self.context, args, function (args, then) {
-                                                                            if (then) then ()
-                                                                                      done ()  }) }
-                                  else {
-                                    try       { fn.apply (self.context, args); done () }
-                                    catch (e) { assertion.onException (e) } } } }) })
+                                            return function (done) {
+                                                    if ($async.is (args[0])) {
+                                                        _.cps.apply (fn, self.context, args, function (args, then) {
+                                                                                                         if (then)
+                                                                                                             then ()
+                                                                                                         done ()             }) }
+                                                    else {
+                                                        try       { fn.apply (self.context, args); done () }
+                                                        catch (e) { assertion.onException (e) } } } }) })
 
         var doneWithAssertion = function () {
             if (assertion.failed && self.canFail) {
@@ -1630,7 +1628,7 @@ Test = $prototype ({
 
                             _.each (cases, function (what) {
 
-                                    if (common) {                  var where  = what.indexOf (common)
+                                    if (common) {                                  var where  = what.indexOf (common)
                                         log.write ( log.color.orange,  what.substr (0, where),
                                                     log.color.dark,    common,
                                                     log.color.orange,  what.substr (where + common.length)) }
@@ -1910,7 +1908,7 @@ Panic.widget = $singleton (Component, {
 	layout: function () { var maxContentWidth = _.coerceToUndefined (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))))
 
 		this.modal.css ({ 'max-height': $(window).height () - 100,
-						  'width': maxContentWidth && (maxContentWidth + 80) })
+						  'width': maxContentWidth && (maxContentWidth + 120) })
 
 		this.modalBody.scroll () },
 
@@ -1975,10 +1973,13 @@ Panic.widget = $singleton (Component, {
 	printUnknownStuff: function (what, raw) {
 		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 
+	cleanupFileName: function (s) {
+		return s && s.replace (/^\d\d\d\d\d+_/, '') }, // cut WebAssets-generated prefix
+
 	printLocation: function (where) {
 		return $('<span class="location">')
 					.append ([$('<span class="callee">').text (where.calleeShort),
-							  $('<span class="file">')  .text (where.fileName),
+							  $('<span class="file">')  .text (this.cleanupFileName (where.fileName)), 
 							  $('<span class="line">')  .text (where.line)]) },
 
 	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
@@ -2035,7 +2036,8 @@ Panic.widget = $singleton (Component, {
 						.toggleClass ('third-party', entry.thirdParty)
 						.toggleClass ('native', entry['native'])
 						.append ([
-							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort, entry.line]).join (':')),
+							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : this.cleanupFileName (entry.fileShort),
+																		entry.line]).join (':')),
 							$('<span class="callee">').text (entry.calleeShort),
 							$('<span class="src i-am-busy">').click (this.$ (function (e) { var el = $(e.delegateTarget)
 								el.waitUntil (_.readSource.partial ((entry.remote ? 'api/source/' : '') + entry.file), this.$ (function (text) {

@@ -2723,6 +2723,8 @@ _.deferTest (['type', 'type matching'], function () {
 
     $assert (_.omitTypeMismatches ({ '*': 'number' }, { foo: 42, bar: 42 }), { foo: 42, bar: 42 })
 
+    $assert (_.omitTypeMismatches ({ foo: $any }, { foo: 0 }), { foo: 0 }) // there was a bug (any zero value was omitted)
+
     $assert (_.decideType ([]), [])
     $assert (_.decideType (42),         'number')
     $assert (_.decideType (_.identity), 'function')
@@ -2779,8 +2781,8 @@ _.deferTest (['type', 'type matching'], function () {
                 return zip (type_, value, pred) } })
 
     var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
-
-                                return  ((contract === undefined) && (v === undefined)) ||
+                                return  (contract === $any) ||
+                                        ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (
                                             _.isPrototypeConstructor (contract) ?
                                                 _.isTypeOf (contract, v) :  // constructor type
@@ -8503,8 +8505,7 @@ Testosterone is a cross-platform unit test shell. Features:
 _.defineTagKeyword ('shouldFail')
 
 
-/*  A contract for custom assertions, says that assertion is asynchronous. Such assertion
-    should call Testosterone.
+/*  A contract for custom assertions, says that assertion is asynchronous.
  */
 _.defineTagKeyword ('async')
 
@@ -8592,9 +8593,7 @@ Testosterone = $singleton ({
                                                             (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
 
                                                         return def }))
-
-        this.run = this.$ (this.run) }, //  I wish I could simply derive from Component.js here for that purpose,
-                                        //  but it's a chicken-egg class problem
+        this.run = this.$ (this.run) },
 
     /*  Entry point
      */
@@ -8710,7 +8709,7 @@ Testosterone = $singleton ({
         _.deleteKeyword (name)
         _.defineKeyword (name, Tags.modify (def,
                                     function (fn) {
-                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (1)
+                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (Platform.Browser ? 0 : 1)
                                             if (!self.currentAssertion) {
                                                 return fn.apply (self, arguments) }
                                             else {
@@ -8767,14 +8766,15 @@ Test = $prototype ({
             verbose: this.verbose,
             silent:  this.silent,
             routine: Tags.modify (def, function (fn) {
-                        return function (done) {
-                                if ($async.is (args[0])) {
-                                    _.cps.apply (fn, self.context, args, function (args, then) {
-                                                                            if (then) then ()
-                                                                                      done ()  }) }
-                                  else {
-                                    try       { fn.apply (self.context, args); done () }
-                                    catch (e) { assertion.onException (e) } } } }) })
+                                            return function (done) {
+                                                    if ($async.is (args[0])) {
+                                                        _.cps.apply (fn, self.context, args, function (args, then) {
+                                                                                                         if (then)
+                                                                                                             then ()
+                                                                                                         done ()             }) }
+                                                    else {
+                                                        try       { fn.apply (self.context, args); done () }
+                                                        catch (e) { assertion.onException (e) } } } }) })
 
         var doneWithAssertion = function () {
             if (assertion.failed && self.canFail) {
@@ -8822,7 +8822,7 @@ Test = $prototype ({
 
                             _.each (cases, function (what) {
 
-                                    if (common) {                  var where  = what.indexOf (common)
+                                    if (common) {                                  var where  = what.indexOf (common)
                                         log.write ( log.color.orange,  what.substr (0, where),
                                                     log.color.dark,    common,
                                                     log.color.orange,  what.substr (where + common.length)) }
