@@ -43,7 +43,7 @@ _.platform = function () {
         if (typeof window !== 'undefined' && window._ && window._.platform === _.platform && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
             return _.extend({
                 engine: 'browser',
-                browser: navigator.userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : navigator.userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
+                browser: navigator.userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : navigator.userAgent.indexOf('Chrome') >= 0 ? 'Chrome' : navigator.userAgent.indexOf('Safari') >= 0 ? 'Safari' : navigator.userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
             }, navigator.platform.indexOf('Linux arm') >= 0 || navigator.platform.indexOf('Android') >= 0 || navigator.userAgent.indexOf('Android') >= 0 ? {
                 touch: true,
                 system: 'Android'
@@ -450,20 +450,6 @@ _.seq = _.sequence;
 _.then = function (fn1, fn2) {
     return function (args) {
         return fn2.call(this, fn1.apply(this, arguments));
-    };
-};
-_.makes = function (constructor) {
-    return function () {
-        switch (arguments.length) {
-        case 0:
-            return new constructor();
-        case 1:
-            return new constructor(arguments[0]);
-        case 2:
-            return new constructor(arguments[0], arguments[1]);
-        default:
-            throw new Error('not supported');
-        }
     };
 };
 _.asString = function (what) {
@@ -2698,7 +2684,7 @@ _.extend($prototype, {
         generateCustomCompilerImpl: function (base) {
             return function (def) {
                 if (def.$impl) {
-                    def.$impl.__proto__ = base && base.$impl || this;
+                    def.$impl = _.extend(Object.create(base && base.$impl || this), def.$impl);
                     def.$impl = $static($builtin($property(def.$impl)));
                 } else if (base && base.$impl) {
                     def.$impl = $static($builtin($property(base.$impl)));
@@ -2754,7 +2740,8 @@ _.extend($prototype, {
                 return _.extend(def, {
                     constructor: Tags.modify(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
                         if (base) {
-                            fn.prototype.__proto__ = base.prototype;
+                            fn.prototype = Object.create(base.prototype);
+                            fn.prototype.constructor = fn;
                         }
                         return fn;
                     })
@@ -2936,19 +2923,24 @@ $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))();
 };
 Platform = $singleton({
-    $property: {
-        engine: _.platform().engine,
-        system: _.platform().system,
-        device: _.platform().device,
-        touch: _.platform().touch || false,
-        IE: _.platform().browser === 'IE',
-        Firefox: _.platform().browser === 'Firefox',
-        Browser: _.platform().engine === 'browser',
-        NodeJS: _.platform().engine === 'node',
-        iPad: _.platform().device === 'iPad',
-        iPhone: _.platform().device === 'iPhone',
-        iOS: _.platform().system === 'iOS'
-    }
+    $property: function () {
+        var p = _.platform();
+        return {
+            engine: p.engine,
+            system: p.system,
+            device: p.device,
+            touch: p.touch || false,
+            IE: p.browser === 'IE',
+            Firefox: p.browser === 'Firefox',
+            Safari: p.browser === 'Safari',
+            Chrome: p.browser === 'Chrome',
+            Browser: p.engine === 'browser',
+            NodeJS: p.engine === 'node',
+            iPad: p.device === 'iPad',
+            iPhone: p.device === 'iPhone',
+            iOS: p.system === 'iOS'
+        };
+    }()
 });
 _.clamp = function (n, min, max) {
     return Math.max(min, Math.min(max, n));

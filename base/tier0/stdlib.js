@@ -59,7 +59,7 @@ _.withTest (['stdlib', 'map2'], function () {
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
-                    _.mapWith  = _.flip2 (_.map2)) })
+                _.mapWith  = _.flip2 (_.map2)) })
 
 
 /*  Maps one-to-many

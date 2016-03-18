@@ -272,7 +272,9 @@ _.platform = function () {
                                     engine: 'browser',
                                     browser: 
                                         ((navigator.userAgent.indexOf ('Firefox') >= 0) ? 'Firefox' :
-                                         (navigator.userAgent.indexOf ('Trident') >= 0) ? 'IE' : undefined) },
+                                        ((navigator.userAgent.indexOf ('Chrome')  >= 0) ? 'Chrome' :
+                                        ((navigator.userAgent.indexOf ('Safari')  >= 0) ? 'Safari' :
+                                        ((navigator.userAgent.indexOf ('Trident') >= 0) ? 'IE' : undefined)))) },
 
                                     ((navigator.platform .indexOf ("Linux arm") >= 0)
                                 ||   (navigator.platform .indexOf ("Android")   >= 0)
@@ -1075,7 +1077,7 @@ _.withTest (['function', 'Y combinator'], function () {
         else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) && canGoDeeper (args[1])  } }
         else              { return function (args) { return _.every (_.asArray (args), canGoDeeper)           } } }
 
-    _.isTrivial = function (x) { return _           .isEmpty (x) || _.isString (x) || _.isNumber (x) ||
+    _.isTrivial = function (x) { return            _.isEmpty (x) || _.isString (x) || _.isNumber (x) ||
                                         !(_.isStrictlyObject (x) || _.isArray (x)) || _.isPrototypeInstance (x) || _.isMeta (x) }
 
     _.isMeta = _.constant (false)
@@ -1233,18 +1235,6 @@ _.withTest (['function', 'sequence / then'], function () {
 ;
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
-
-_.makes = function (constructor) {
-    return function () {
-        switch (arguments.length) { /* cant use .apply or .call with 'new' syntax */
-            case 0:
-                return new constructor ()
-            case 1:
-                return new constructor (arguments[0])
-            case 2:
-                return new constructor (arguments[0], arguments[1])
-            default:
-                 throw new Error ('not supported') } } }
 
 _.asString = function (what) { return what + '' }
 
@@ -1657,7 +1647,7 @@ _.withTest (['stdlib', 'map2'], function () {
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
-                    _.mapWith  = _.flip2 (_.map2)) })
+                _.mapWith  = _.flip2 (_.map2)) })
 
 
 /*  Maps one-to-many
@@ -5083,7 +5073,7 @@ _.withTest ('OOP', {
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
                     if (def.$impl) {
-                        def.$impl.__proto__ = (base && base.$impl) || this
+                        def.$impl = _.extend (Object.create ((base && base.$impl) || this), def.$impl) // sets prototype to base.$impl || this
                         def.$impl = $static ($builtin ($property (def.$impl))) }
                     else if (base && base.$impl) {
                         def.$impl = $static ($builtin ($property (base.$impl))) }
@@ -5127,7 +5117,8 @@ _.withTest ('OOP', {
                 return _.extend (def, { constructor:
                     Tags.modify (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
                         function (fn) {
-                            if (base) { fn.prototype.__proto__ = base.prototype }
+                            if (base) { fn.prototype = Object.create (base.prototype);
+                                        fn.prototype.constructor = fn }
                             return fn }) }) } },
 
             generateBuiltInMembers: function (base) { return function (def) {
@@ -5424,21 +5415,23 @@ _.withTest ('OOP', {
 /*  Ports platform.js to OOP terms 
     ======================================================================== */
 
-    Platform = $singleton ({ $property: {
-        
-        engine: _.platform ().engine,
-        system: _.platform ().system,
-        device: _.platform ().device,
-        touch:  _.platform ().touch || false,
+    Platform = $singleton ({ $property: (function () { var p = _.platform ()
+                                            return {
+                                                engine:  p.engine,
+                                                system:  p.system,
+                                                device:  p.device,
+                                                touch:   p.touch || false,
 
-        IE:      _.platform ().browser === 'IE',
-        Firefox: _.platform ().browser === 'Firefox',
+                                                IE:      p.browser === 'IE',
+                                                Firefox: p.browser === 'Firefox',
+                                                Safari:  p.browser === 'Safari',
+                                                Chrome:  p.browser === 'Chrome',
 
-        Browser: _.platform ().engine === 'browser',
-        NodeJS:  _.platform ().engine === 'node',
-        iPad:    _.platform ().device === 'iPad',
-        iPhone:  _.platform ().device === 'iPhone',
-        iOS:     _.platform ().system === 'iOS' } })
+                                                Browser: p.engine === 'browser',
+                                                NodeJS:  p.engine === 'node',
+                                                iPad:    p.device === 'iPad',
+                                                iPhone:  p.device === 'iPhone',
+                                                iOS:     p.system === 'iOS' } }) () })
 
         ;
 
@@ -8709,7 +8702,7 @@ Testosterone = $singleton ({
         _.deleteKeyword (name)
         _.defineKeyword (name, Tags.modify (def,
                                     function (fn) {
-                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (Platform.Browser ? 0 : 1)
+                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation ((Platform.Browser && !Platform.Chrome) ? 0 : 1)
                                             if (!self.currentAssertion) {
                                                 return fn.apply (self, arguments) }
                                             else {

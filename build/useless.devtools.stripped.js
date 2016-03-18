@@ -1172,7 +1172,7 @@ Testosterone = $singleton({
         _.deleteKeyword(name);
         _.defineKeyword(name, Tags.modify(def, function (fn) {
             return _.withSameArgs(fn, function () {
-                var loc = $callStack.safeLocation(Platform.Browser ? 0 : 1);
+                var loc = $callStack.safeLocation(Platform.Browser && !Platform.Chrome ? 0 : 1);
                 if (!self.currentAssertion) {
                     return fn.apply(self, arguments);
                 } else {

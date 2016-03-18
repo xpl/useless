@@ -485,7 +485,7 @@ _.withTest ('OOP', {
             generateCustomCompilerImpl: function (base) {
                 return function (def) {
                     if (def.$impl) {
-                        def.$impl.__proto__ = (base && base.$impl) || this
+                        def.$impl = _.extend (Object.create ((base && base.$impl) || this), def.$impl) // sets prototype to base.$impl || this
                         def.$impl = $static ($builtin ($property (def.$impl))) }
                     else if (base && base.$impl) {
                         def.$impl = $static ($builtin ($property (base.$impl))) }
@@ -529,7 +529,8 @@ _.withTest ('OOP', {
                 return _.extend (def, { constructor:
                     Tags.modify (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
                         function (fn) {
-                            if (base) { fn.prototype.__proto__ = base.prototype }
+                            if (base) { fn.prototype = Object.create (base.prototype);
+                                        fn.prototype.constructor = fn }
                             return fn }) }) } },
 
             generateBuiltInMembers: function (base) { return function (def) {
@@ -826,20 +827,22 @@ _.withTest ('OOP', {
 /*  Ports platform.js to OOP terms 
     ======================================================================== */
 
-    Platform = $singleton ({ $property: {
-        
-        engine: _.platform ().engine,
-        system: _.platform ().system,
-        device: _.platform ().device,
-        touch:  _.platform ().touch || false,
+    Platform = $singleton ({ $property: (function () { var p = _.platform ()
+                                            return {
+                                                engine:  p.engine,
+                                                system:  p.system,
+                                                device:  p.device,
+                                                touch:   p.touch || false,
 
-        IE:      _.platform ().browser === 'IE',
-        Firefox: _.platform ().browser === 'Firefox',
+                                                IE:      p.browser === 'IE',
+                                                Firefox: p.browser === 'Firefox',
+                                                Safari:  p.browser === 'Safari',
+                                                Chrome:  p.browser === 'Chrome',
 
-        Browser: _.platform ().engine === 'browser',
-        NodeJS:  _.platform ().engine === 'node',
-        iPad:    _.platform ().device === 'iPad',
-        iPhone:  _.platform ().device === 'iPhone',
-        iOS:     _.platform ().system === 'iOS' } })
+                                                Browser: p.engine === 'browser',
+                                                NodeJS:  p.engine === 'node',
+                                                iPad:    p.device === 'iPad',
+                                                iPhone:  p.device === 'iPhone',
+                                                iOS:     p.system === 'iOS' } }) () })
 
         

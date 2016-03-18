@@ -1,18 +1,6 @@
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
 
-_.makes = function (constructor) {
-    return function () {
-        switch (arguments.length) { /* cant use .apply or .call with 'new' syntax */
-            case 0:
-                return new constructor ()
-            case 1:
-                return new constructor (arguments[0])
-            case 2:
-                return new constructor (arguments[0], arguments[1])
-            default:
-                 throw new Error ('not supported') } } }
-
 _.asString = function (what) { return what + '' }
 
 _.typeOf = function (what) {

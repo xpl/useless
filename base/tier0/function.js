@@ -213,7 +213,7 @@ _.withTest (['function', 'Y combinator'], function () {
         else if (N === 2) { return function (args) { return   canGoDeeper (args[0]) && canGoDeeper (args[1])  } }
         else              { return function (args) { return _.every (_.asArray (args), canGoDeeper)           } } }
 
-    _.isTrivial = function (x) { return _           .isEmpty (x) || _.isString (x) || _.isNumber (x) ||
+    _.isTrivial = function (x) { return            _.isEmpty (x) || _.isString (x) || _.isNumber (x) ||
                                         !(_.isStrictlyObject (x) || _.isArray (x)) || _.isPrototypeInstance (x) || _.isMeta (x) }
 
     _.isMeta = _.constant (false)

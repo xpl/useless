@@ -11,7 +11,9 @@ _.platform = function () {
                                     engine: 'browser',
                                     browser: 
                                         ((navigator.userAgent.indexOf ('Firefox') >= 0) ? 'Firefox' :
-                                         (navigator.userAgent.indexOf ('Trident') >= 0) ? 'IE' : undefined) },
+                                        ((navigator.userAgent.indexOf ('Chrome')  >= 0) ? 'Chrome' :
+                                        ((navigator.userAgent.indexOf ('Safari')  >= 0) ? 'Safari' :
+                                        ((navigator.userAgent.indexOf ('Trident') >= 0) ? 'IE' : undefined)))) },
 
                                     ((navigator.platform .indexOf ("Linux arm") >= 0)
                                 ||   (navigator.platform .indexOf ("Android")   >= 0)
