@@ -11,12 +11,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 ### Recent updates / changelog
 
 - Got rid of `__proto__` mutation, derived prototypes now utilize `Object.create` for faster code.
-
 - Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
-
 - `$raw` methods for disabling thiscall semantics for performance-critical methods in components. In other words, it disables auto binding of methods to `this`, which comes with performance penalty of one extra call.
-
-[Read more...](https://github.com/xpl/useless/wiki/Changelog)
+- [Read more...](https://github.com/xpl/useless/wiki/Changelog)
 
 ### Browser builds
 
