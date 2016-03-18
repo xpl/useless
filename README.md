@@ -10,64 +10,13 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Got rid of `__proto__` mutation, derived prototypes now utilize `Object.create` for faster code.
+
 - Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
 
 - `$raw` methods for disabling thiscall semantics for performance-critical methods in components. In other words, it disables auto binding of methods to `this`, which comes with performance penalty of one extra call.
 
-- `LogOverlay` now automatically clips its output (removing invisible lines) to reduce page freezes on a huge amount of log output. It is also gradients itself with `-webkit-mask-image`. Screenshot shows log output built automatically with **$log** and `Testosterone.LogsMethodCalls`:  ![showcase](http://img.leprosorium.com/2492460)
-
-- `_.scatter` for general-purpose many-to-many mapping. Can output arrays and objects. There also exists `_.arr` and `_.obj` as it's specialized derivatives. See [`stdlib.js`](https://github.com/xpl/useless/blob/master/base/tier0/stdlib.js) for details.
-
-- `String.limitedTo` for limiting long strings with ellipsis. Now `_.stringify` output is way more compact and readable.
-
-- `$macroTags` member for defining prototype/trait-specific macros. See `Testosterone.LogsMethodCalls` trait for the demo/how-to. It's super convenient when you want to bring some custom semantics to your prototype definitions, but don't want to make it a global macro - which can cause all kinds of performance/compatibility issuses. Imagine something like `DOMEvents` trait that defines `eventName: $on (function () { .. })` syntax that automatically binds component methods to DOM events, or `UndoRedoHistory` trait that proposes a `$silent` tag, which disables arbitrary methods from recording to history. It's a really powerful tool that brings DSL flavor to JavaScript.
-
-- `Prototype.$membersByTag` for fast/convenient enumeration of tagged members.
-
-- Improved **$alias** semantics (still somewhat buggy when used with $component/$traits).
-
-- **$constructor** for static constructor. Gets called by the prototype compiler. When defined by [**$trait**](https://github.com/xpl/useless/wiki/$trait), gets called at the host prototype assembling. This way [**$trait**](https://github.com/xpl/useless/wiki/$trait) can add something to the host [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) at the compilation stage.
-
-- Added **$mixin** for extending existing types with [**$prototype**](https://github.com/xpl/useless/wiki/$prototype)-style definitions. Example: `$mixin (Node, { ... })`
-
-- New member comprehension: `isLinebreak: $callableAsFreeFunction ($property (function () { ... }))` renders to `node.isLinebreak` (instance property accessor) and `Node.isLinebreak (node)` (static function). Latter is useful in functional expressions.
-
-- Added `_.longestCommonSubstring` which is used to highlight differences in `$assert` argument mismatches:
- 
- ![example](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert3.png)
-
-- Forget `nodemon`, it is now built-in. Just add `server/supervisor` trait to your app component, and get auto-restart on code changes. You can also track arbitrary files and folders with simple API.
-
-- **$depends** syntax for dependency resolving in component [**$traits**](https://github.com/xpl/useless/wiki/$trait). See `build.js` and `/server` traits for example use.
-
-- Smart merging of **$trait** methods for **$component**-based prototypes: methods are bound to streams (having same name), `afterXXX`/`beforeXXX`/`interceptXXX` are bound to bindables automagically™ (at prototype construction). Now component logic can be distributed across traits with unprecedented level of legibility.
-
-- **$defaults** and **$requires** defined in traits now deeply merged at [**$component**](https://github.com/xpl/useless/wiki/$component)-based prototypes. You can utilize this mechanics for custom members by tagging them with **$extendable** syntax.
-
-- [**$prototype**](https://github.com/xpl/useless/wiki/$prototype) now understands nested tag groups, e.g. `$static: { $property: { ... }`
-
-- `Panic (...)` UI now understands `Test` instances as input. Useful for printing out failed client-side tests. It also understands exception messages in log, printing them with its specialized UI (respecting indentation and stuff).
-
-- **Testosterone.ValidatesRecursion** trait, which prohibits recursion on all methods until explicitly marked with **$allowsRecursion**. Allows setting max recursion depth with `max` parameter. Useful for debugging heavy DOM-modifying code that hangs browser and its built-in debugging tools.
-
-- **Testosterone.LogsMethodCalls** trait, which adds **$log** syntax. Tag methods with it to enable printing of method calls, with its arguments and return value. It arranges nested calls to nice hierarchy, to give overview of whats going on. You can parametrize log calls with colors (e.g. `$log ($red (...))`) and with template which prints `this` contents, e.g. `$log ('Called with this.foo value: {{foo}}', ...)` 
-
-- More ANSI colors for log messages, e.g. `boldPink`. Supported with console renderer on WebKit, `LogOverlay` and `Panic`.
-
-- Multi colored log messages, ex. `log (log.color.red, 'multi', log.color.blue, 'color')`
-
-- New object formatter for `_.stringify`. It automatically decides between one-line and pretty-printed variants (based on output length). Added reading of prototype names (via `$meta`) and comprehensions of some built-in types (e.g. Node). Example output:
-
-```javascript
-args: {
-             someParam:    true,
-        someOtherParam:    true,
-                   arr: [ "pretty printed" ],
-              DOMNodes: [ <div>,
-                          <p>,
-                          @I am text node ]    },
-```
-
+[Read more...](https://github.com/xpl/useless/wiki/Changelog)
 
 ### Browser builds
 
