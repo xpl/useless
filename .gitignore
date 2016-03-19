@@ -1,15 +1,4 @@
 node_modules/
-build/es-test.js
-build/es-test.min.js
-build/es-test.stripped.js
-es-test.js
-example2.js
 npm-debug.log
-
-build.sh
-
 lepro-build.sh
-
 lepro-build-production.sh
-
-gop-build.sh
