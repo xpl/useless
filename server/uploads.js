@@ -1,18 +1,26 @@
 var imagemagick = require ('./base/imagemagick'),
-    path        = require ('path')
-    
+    util        = require ('./base/util'),
+    path        = require ('path'),
+
 ServerUploads = module.exports = $trait ({
 
+    uploadImageTo: function (path) {
+                    return this.uploadImageAsJPEG (this.saveImageTo (path)) },
 
-    uploadPhoto: function (getTargetPath) { return this.$ (function (context) {
+    saveImageTo: function (targetDir) {
+                    return function (context, then) {
+                        var targetPath = path.join (process.cwd (), targetDir)
+                        then (targetPath, util.uniqueFileName (targetPath, Format.randomHexString (8), 'jpg')) } },
+
+    uploadImageAsJPEG: function (getTargetPath) { return this.$ (function (context) {
 
         if ('image' !== _.first ((context.request.headers['x-file-type'] || 'unknown/unknown').split ('/'))) {
             context.jsonFailure ('Загруженный файл не является изображением') }
 
-        else { getTargetPath.call (this, context, this.$ (function (targetDir, photoId) {
+        else { getTargetPath.call (this, context, this.$ (function (targetDir, fileName) {
 
             context.handleFileUpload (this.$ (function (uploadedFilePath) {
-                var targetFilePath = path.join (targetDir, photoId + '.jpg')
+                var targetFilePath = path.join (targetDir, fileName + '.jpg')
 
                 imagemagick.toJPEG (uploadedFilePath, targetFilePath, this.$ (function (err, features) {
 
@@ -23,6 +31,6 @@ ServerUploads = module.exports = $trait ({
                     else {
                         log.success ('uploadPhoto: saved ', targetFilePath)
                         context.jsonSuccess ({
-                            id: photoId,
+                            id: fileName,
                             w: features.width,
                             h: features.height }) } })) })) })) } })} })

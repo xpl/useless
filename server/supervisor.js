@@ -29,7 +29,7 @@ module.exports = Supervisor = $trait ({
 
     sourceChanged: $trigger (function (stat, file) {
 
-        log.e ('\nRestarting because ', log.color.bloody, file, log.color.red, ' changed\n')
+        log.e ('\nRestarting because ', log.color.boldRed, file, log.color.red, ' changed\n')
 
         if (!this.supervisedProcess.args.contains ('respawned-because-code-change')) {
              this.supervisedProcess.args.push     ('respawned-because-code-change') }
