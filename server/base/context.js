@@ -9,9 +9,14 @@ var _               = require ('underscore'),
 Context = $prototype ({
 
     mimeTypes: $static ($property ({
-        'html':'text/html', 'jpeg':'image/jpeg', 'jpg':'image/jpeg',
-        'png':'image/png', 'js':'text/javascript', 'css':'text/css', 'svg':'image/svg+xml',
-        'appcache': 'text/cache-manifest' })),
+                            'html'     : 'text/html; charset=utf-8',
+                            'jpeg'     : 'image/jpeg',
+                            'jpg'      : 'image/jpeg',
+                            'png'      : 'image/png',
+                            'js'       : 'text/javascript; charset=utf-8',
+                            'css'      : 'text/css; charset=utf-8',
+                            'svg'      : 'image/svg+xml',
+                            'appcache' : 'text/cache-manifest' })),
 
     constructor: function (cfg) { _.extend2 (this, { // extend2 means you can extend context.env without losing env.when
         headers: {},

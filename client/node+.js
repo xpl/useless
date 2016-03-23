@@ -30,7 +30,8 @@
                             paragraph: make ('P'),
                             div:       make ('DIV'),
                             span:      make ('SPAN'),
-                            button:    make ('BUTTON') } },
+                            button:    make ('BUTTON'),
+                            iframe:    make ('IFRAME') } },
         
     /*  Various predicates
         ------------------
@@ -205,6 +206,12 @@
         ======================================================================== */
 
         on: function (e, fn) { this.addEventListener (e, fn); return this },
+
+
+    /*  Properties
+        ======================================================================== */
+
+        extend: function (props) { return _.extend (this, props) },
 
 
     /*  Attributes

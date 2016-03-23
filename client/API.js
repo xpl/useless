@@ -77,7 +77,7 @@ API = $singleton (Component, {
 
 		xhr.open ('POST', path, true)
 		xhr.setRequestHeader ('Content-Type',  'binary/octet-stream')
-		xhr.setRequestHeader ('X-File-Name',	Parse.fileName (file.name).transliterate || 'file')
+		xhr.setRequestHeader ('X-File-Name',	Parse.fileName (file.name || 'file').transliterate || 'file')
 		xhr.setRequestHeader ('X-File-Size',	file.size)
 		xhr.setRequestHeader ('X-File-Type',	file.type)
 		xhr.setRequestHeader ('Cache-Control', 'no-cache')

@@ -15,7 +15,7 @@ ServerUploads = module.exports = $trait ({
     uploadImageAsJPEG: function (getTargetPath) { return this.$ (function (context) {
 
         if ('image' !== _.first ((context.request.headers['x-file-type'] || 'unknown/unknown').split ('/'))) {
-            context.jsonFailure ('Загруженный файл не является изображением') }
+            context.jsonFailure ('Uploaded file is not an image') }
 
         else { getTargetPath.call (this, context, this.$ (function (targetDir, fileName) {
 
@@ -26,7 +26,7 @@ ServerUploads = module.exports = $trait ({
 
                     if (err) {
                         log.error (err)
-                        context.jsonFailure ('Формат изображения не поддерживается') }
+                        context.jsonFailure ('Image format is not supported') }
 
                     else {
                         log.success ('uploadPhoto: saved ', targetFilePath)
