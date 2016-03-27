@@ -27,6 +27,11 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
 
+You may want to look into these projects (built upon Useless.js):
+
+* [Skychat](https://github.com/xpl/skychat) — a simple WebRTC paint/chat app.
+* [Wyg](https://github.com/xpl/wyg) — a revolutionary WYSIWYG editor ([demo](https://www.youtube.com/watch?v=u1wNfSHwSQA)).
+
 ### Directory structure
 
 * `./base` platform-independent part
