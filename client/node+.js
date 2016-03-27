@@ -31,7 +31,8 @@
                             div:       make ('DIV'),
                             span:      make ('SPAN'),
                             button:    make ('BUTTON'),
-                            iframe:    make ('IFRAME') } },
+                            iframe:    make ('IFRAME'),
+                            pre:       make ('PRE') } },
         
     /*  Various predicates
         ------------------

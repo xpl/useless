@@ -5668,8 +5668,8 @@ _.tests.concurrency = {
                 testDone () }) },
 
     'scope': function (testDone) { var releases = [],
-                                            acquires = [],
-                                            count    = 10
+                                       acquires = [],
+                                       count    = 10
 
         var method = $scope (function (release, id, then) {           acquires.push (id)
                         _.delay (function () { release (function () { releases.push (id)
