@@ -26,6 +26,6 @@ Examples = $singleton (Component, {
         require ('./server/devtools'),
         require ('./server/uptime') ],
 
-    erroneousMethod: function (context) { 2 + 2 = 5 },
+    erroneousMethod: function (context) { unknownFunction () },
 
     init: function (then) { log.green ('Example app is running at http://localhost:1333'); then () } })

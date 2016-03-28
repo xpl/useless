@@ -194,9 +194,6 @@ module.exports = {
     },
     curl: function (url, complete) {
         exec ('curl  "' + url + '"', function (e, stdout, stderr) {
-            // if (!e) {
-            //  return stdout
-            // }
             complete.call (this, e, stdout, stderr)
         })
     },

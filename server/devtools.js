@@ -33,13 +33,13 @@ ServerDevtools = module.exports = $trait ({
 
     afterInit: function () { // remote logging
         if (this.messageToPeers) {
-            _.onAfter (log.impl, 'defaultWriteBackend', this.$ (function (params) {
+            _.onAfter (log.impl, 'defaultWriteBackend', this.$ (params => {
                 this.messageToPeers ({ what: 'log', params: params }, this.isDeveloper) })) } },
 
     /*  Prints raw incoming HTTP data (for debugging of client write methods)
      */
     echo: function (context) {
-        context.data (function (data) {
+        context.data (data => {
             console.log ('ECHO:', data)
             context.success (data) }) },
 
@@ -58,15 +58,15 @@ ServerDevtools = module.exports = $trait ({
     /*  Git tools
      */
     gitLastCommitStatus: function (complete) {
-        exec ('git log -1 --name-status', function (e, stdout, stderr) {
+        exec ('git log -1 --name-status', (e, stdout, stderr) => {
             if (e) {
                 complete (null) }
             else {
                 complete ({ hash: stdout.split ('\n')[0].split (' ')[1] }) } }) },
 
     gitCommits: function (context) { var items = []
-        git.Repo.open ('./', function (e, repo) { if (e) { throw e }
-            repo.getMaster (function (e, branch) { if (e) { throw e }
+        git.Repo.open ('./', (e, repo) => { if (e) { throw e }
+            repo.getMaster ((e, branch) => { if (e) { throw e }
                 var history = branch.history ()
                 history.on ('commit', function (commit) {
                     items.push ({
@@ -82,7 +82,7 @@ ServerDevtools = module.exports = $trait ({
                 history.start () }) }) },
 
     gitPull: function (context) {
-        exec ('git pull', this.$ (function (e, stdout, stderr) {
+        exec ('git pull', this.$ ((e, stdout, stderr) => {
             if (e) {
                 context.jsonFailure (e) }
             else {

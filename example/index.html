@@ -12,9 +12,6 @@
         <script src="/useless/Panic.js"></script>
         <link rel="stylesheet" href="/useless/Panic.css" type="text/css">
 
-        <!-- Data access -->
-        <script src="/useless/DataManager.js"></script>
-
     </head>
     <style>
         body { font-family: Helvetica, sans-serif; padding: 20px; }
@@ -64,14 +61,6 @@
         Panic.init ()
 
         function initErrorHandlingDemo () {
-
-            var Hui = $component ({
-                    init: function () { jQuery(document).click (this.clicked) },
-                    clicked: $listener (function () { alert ('foo') }) });
-
-                var hui = new Hui ()
-
-                hui.destroy ()
 
             /*  Define some function that throws error
              */
