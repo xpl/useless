@@ -363,7 +363,6 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 + [Configurable object printer](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js)
 + Table layout formatting
 + Hookable/interceptable
-+ [Displays server's log in browser console](https://github.com/xpl/useless/wiki/Cross-machine-logging)
 
 ## Platform Abstraction Layer
 
