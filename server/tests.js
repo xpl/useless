@@ -82,19 +82,24 @@ module.exports = $trait ({
 
                 /*  Adds custom assertions to help test application traits
                  */
-                Testosterone.defineAssertions (this.constructor.$membersByTag.$assertion || {})
+                Testosterone.defineAssertions (this.constructor.$membersByTag.assertion || {})
 
                 /*  Init test environment and run tests within that context.
                  */
                 this.withTestEnvironment (releaseEnvironment => {
 
-                    _.cps.map (this.constructor.$traits || [], (Trait, return_) => {
+                    _.cps.map (this.constructor.$traits || [], 
 
-                        Trait.$meta (meta => {
-                            var tests = (Trait.prototype.test || 
-                                         Trait.prototype.tests)
-                            return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
+                        /*  Extract test suite from $trait
+                         */
+                        (Trait, return_) => {
+                            Trait.$meta (meta => {
+                                var tests = (Trait.prototype.test || 
+                                             Trait.prototype.tests)
+                                return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
 
+                        /*  Run collected tests
+                         */
                         suites => {
                             Testosterone.run ({                             
                                  context: this,

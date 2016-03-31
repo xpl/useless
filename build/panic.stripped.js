@@ -5831,7 +5831,7 @@ Test = $prototype({
             silent: this.silent,
             routine: Tags.modify(def, function (fn) {
                 return function (done) {
-                    if ($async.is(args[0])) {
+                    if ($async.is(args[0]) || $async.is(def)) {
                         _.cps.apply(fn, self.context, args, function (args, then) {
                             if (then)
                                 then();

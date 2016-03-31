@@ -1,5 +1,8 @@
 ServerWebsocket = module.exports = $trait ({
 
+    $defaults: {
+        peers: [] },
+
     /*  Override this to specify who can connect via WebSocket
      */
     websocketAuth: function (msg, authorize, drop) {
