@@ -260,6 +260,15 @@
                                 this.splitSubtreeBefore (n) } })
 
 
+/*  New Safari (as seen in technology preview) defines its own Element.append
+    method, which gets into conflict with our previously-defined Node.append
+    So will explicitly overrride it.
+    ========================================================================= */
+
+    $mixin (Element, {
+        append: Node.prototype.append })
+
+
 /*  Image extensions (again found myself writing the same repetitive
     Image-loading snippet, so decided to finally make a reusable abstraction,
     utilizing the recent Promise concept just for fun)
