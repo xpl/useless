@@ -3099,7 +3099,7 @@ _.withTest (['cps', 'each'], function () {
         function (item, then) { data2.push (item); then () },
         function () { $assert (data, data2) })
 
-    /*  You can stop iteration by calling last argument
+    /*  You can stop iteration by calling fourth argument
      */
     var data3 = []
     _.cps.each (data,
@@ -5451,45 +5451,11 @@ _.tests.parse = {
 }
 
 Parse = {
-
     keyCodeAsString: function (key) {
         return String.fromCharCode ((96 <= key && key <= 105) ? key - 48 : key) },
 
     fileName: function (path) {
         return _.first (_.last (path.split (/\\|\//)).split ('.')) },
-
-    phoneNumber: function (input) {
-        var numeric = input.numericValue
-        if (numeric.length && numeric[0] === '8') {
-            return ('7' + numeric.slice (1)) }
-        else {
-            return numeric } },
-
-    sqlDate: function (date) {
-        if (!date) {
-            return undefined }
-        var dateTime = date.split (' ')
-        var date = dateTime[0].split ('-')
-        var time = dateTime.length > 1 ? dateTime[1].split (':') : ['0', '0', '0']
-        var seconds = parseFloat (time[2])
-        return new Date (
-            parseInt (date[0], 10), parseInt (date[1], 10) - 1, parseInt (date[2], 10),
-            parseInt (time[0], 10), parseInt (time[1], 10), Math.floor (seconds),
-            (seconds - Math.floor (seconds)) * 1000) },
-
-    timestampFromDateTimeString: function (date) {
-        if (!date)
-            return undefined
-
-        var dateTime = date.split (' ')
-        var date = dateTime[0].split ('.')
-        var time = dateTime.length > 1 ? dateTime[1].split (':') : ['0', '0', '0']
-        return (new Date (
-            (date[2].length > 2 ? 0 : 2000) + parseInt (date[2], 10),   // year
-            parseInt (date[1], 10) - 1,                                 // month
-            parseInt (date[0], 10),                                     // day
-            parseInt (time[0], 10),                                     // hour
-            parseInt (time[1], 10))).getTime () }                       // minute
 }
 ;
 
@@ -5508,6 +5474,10 @@ _.deferTest (['identifier naming style interpolation'], function () {
     _.loDashesToCamelCase =   function (x) { return x.replace (/(_.)/g,       function (x) { return x[1].uppercase }) }
 
 Format = {
+
+    urlencode: function (obj) {
+        return _.map (obj, function (v, k) { 
+            return k + '=' + _.fixedEncodeURIComponent (v) }).join ('&') },
 
     /*  Use this to print objects as JavaScript (supports functions and $-tags output)
      */
@@ -5530,6 +5500,7 @@ Format = {
 
     progressPercents: function (value, max) {
         return Math.floor ((value / max) * 100) + '%' },
+
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {
@@ -5538,14 +5509,6 @@ Format = {
 
     leadingZero: function (x) {
         return x < 10 ? '0' + x : x.toString () },
-
-    plural: function (n, a, b, c) /* ex.: plural (21, 'час', 'часа', 'часов') */ {
-        if (_.isArray (a)) {
-            c = a[2]
-            b = a[1]
-            a = a[0] }
-        var cases = [c, a, b, b, b, c]
-        return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) }
 }
 
 ;
@@ -7726,11 +7689,12 @@ _.tests.reflection = {
         $assert ($sourcePath .length > 0)
         $assert ($uselessPath.length > 0) },
 
-    'readSource': function () {
-        _.readSource ($uselessPath + $uselessFile, function (text) {
+    'readSource': function () { var uselessJS = $uselessPath + $uselessFile
+
+        _.readSource (uselessJS, function (text) {
             $assert (text.length > 0) })
 
-        _.readSourceLine ($uselessPath + $uselessFile, 0, function (line) {
+        _.readSourceLine (uselessJS, 0, function (line) {
             $assert (line.length > 0) }) },
 
     'CallStack from error': function () {
@@ -7824,10 +7788,16 @@ _.defineKeyword ('currentFile', function () {
     return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
 
 _.defineKeyword ('uselessPath', _.memoize (function () {
-    return _.initial ($currentFile.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
+    return _.initial (__filename.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
 
 _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
     return local ? (local + '/') : $uselessPath }))
+
+
+/*  Port __filename for browsers
+ */
+if (Platform.Browser) {
+    _.defineProperty (window, '__filename', function () { return $currentFile }) }
 
 
 /*  Source code access (cross-platform)

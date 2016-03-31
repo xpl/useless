@@ -539,11 +539,12 @@ _.tests.reflection = {
         $assert ($sourcePath .length > 0)
         $assert ($uselessPath.length > 0) },
 
-    'readSource': function () {
-        _.readSource ($uselessPath + $uselessFile, function (text) {
+    'readSource': function () { var uselessJS = $uselessPath + $uselessFile
+
+        _.readSource (uselessJS, function (text) {
             $assert (text.length > 0) })
 
-        _.readSourceLine ($uselessPath + $uselessFile, 0, function (line) {
+        _.readSourceLine (uselessJS, 0, function (line) {
             $assert (line.length > 0) }) },
 
     'CallStack from error': function () {
@@ -637,10 +638,16 @@ _.defineKeyword ('currentFile', function () {
     return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
 
 _.defineKeyword ('uselessPath', _.memoize (function () {
-    return _.initial ($currentFile.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
+    return _.initial (__filename.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
 
 _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
     return local ? (local + '/') : $uselessPath }))
+
+
+/*  Port __filename for browsers
+ */
+if (Platform.Browser) {
+    _.defineProperty (window, '__filename', function () { return $currentFile }) }
 
 
 /*  Source code access (cross-platform)

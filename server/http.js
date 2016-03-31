@@ -1,6 +1,7 @@
 var http    = require ('http'),
-    util    = require ('./base/util')
-    Context = require ('./base/context.js')
+    util    = require ('./base/util'),
+    Context = require ('./base/context')
+
 
 ServerHttp = module.exports = $trait ({
 

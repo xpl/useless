@@ -61,7 +61,7 @@ _.withTest (['cps', 'each'], function () {
         function (item, then) { data2.push (item); then () },
         function () { $assert (data, data2) })
 
-    /*  You can stop iteration by calling last argument
+    /*  You can stop iteration by calling fourth argument
      */
     var data3 = []
     _.cps.each (data,

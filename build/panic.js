@@ -2467,7 +2467,7 @@ _.withTest (['cps', 'each'], function () {
         function (item, then) { data2.push (item); then () },
         function () { $assert (data, data2) })
 
-    /*  You can stop iteration by calling last argument
+    /*  You can stop iteration by calling fourth argument
      */
     var data3 = []
     _.cps.each (data,
@@ -5431,6 +5431,10 @@ _.deferTest (['identifier naming style interpolation'], function () {
 
 Format = {
 
+    urlencode: function (obj) {
+        return _.map (obj, function (v, k) { 
+            return k + '=' + _.fixedEncodeURIComponent (v) }).join ('&') },
+
     /*  Use this to print objects as JavaScript (supports functions and $-tags output)
      */
     javascript: function (obj) {
@@ -5452,6 +5456,7 @@ Format = {
 
     progressPercents: function (value, max) {
         return Math.floor ((value / max) * 100) + '%' },
+
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {
@@ -5460,14 +5465,6 @@ Format = {
 
     leadingZero: function (x) {
         return x < 10 ? '0' + x : x.toString () },
-
-    plural: function (n, a, b, c) /* ex.: plural (21, 'час', 'часа', 'часов') */ {
-        if (_.isArray (a)) {
-            c = a[2]
-            b = a[1]
-            a = a[0] }
-        var cases = [c, a, b, b, b, c]
-        return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) }
 }
 
 ;
@@ -7736,11 +7733,12 @@ _.tests.reflection = {
         $assert ($sourcePath .length > 0)
         $assert ($uselessPath.length > 0) },
 
-    'readSource': function () {
-        _.readSource ($uselessPath + $uselessFile, function (text) {
+    'readSource': function () { var uselessJS = $uselessPath + $uselessFile
+
+        _.readSource (uselessJS, function (text) {
             $assert (text.length > 0) })
 
-        _.readSourceLine ($uselessPath + $uselessFile, 0, function (line) {
+        _.readSourceLine (uselessJS, 0, function (line) {
             $assert (line.length > 0) }) },
 
     'CallStack from error': function () {
@@ -7834,10 +7832,16 @@ _.defineKeyword ('currentFile', function () {
     return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
 
 _.defineKeyword ('uselessPath', _.memoize (function () {
-    return _.initial ($currentFile.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
+    return _.initial (__filename.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
 
 _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
     return local ? (local + '/') : $uselessPath }))
+
+
+/*  Port __filename for browsers
+ */
+if (Platform.Browser) {
+    _.defineProperty (window, '__filename', function () { return $currentFile }) }
 
 
 /*  Source code access (cross-platform)

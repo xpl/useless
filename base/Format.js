@@ -15,6 +15,10 @@ _.deferTest (['identifier naming style interpolation'], function () {
 
 Format = {
 
+    urlencode: function (obj) {
+        return _.map (obj, function (v, k) { 
+            return k + '=' + _.fixedEncodeURIComponent (v) }).join ('&') },
+
     /*  Use this to print objects as JavaScript (supports functions and $-tags output)
      */
     javascript: function (obj) {
@@ -36,6 +40,7 @@ Format = {
 
     progressPercents: function (value, max) {
         return Math.floor ((value / max) * 100) + '%' },
+
     randomHexString: function (length) {
         var string = '';
         for (var i = 0; i < length; i++) {
@@ -44,13 +49,5 @@ Format = {
 
     leadingZero: function (x) {
         return x < 10 ? '0' + x : x.toString () },
-
-    plural: function (n, a, b, c) /* ex.: plural (21, 'час', 'часа', 'часов') */ {
-        if (_.isArray (a)) {
-            c = a[2]
-            b = a[1]
-            a = a[0] }
-        var cases = [c, a, b, b, b, c]
-        return n + ' ' + ((n % 100 > 4) && (n % 100 < 20) ? c : cases[Math.min(n % 10, 5)]) }
 }
 

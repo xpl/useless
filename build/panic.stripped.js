@@ -3669,6 +3669,11 @@ _.loDashesToCamelCase = function (x) {
     });
 };
 Format = {
+    urlencode: function (obj) {
+        return _.map(obj, function (v, k) {
+            return k + '=' + _.fixedEncodeURIComponent(v);
+        }).join('&');
+    },
     javascript: function (obj) {
         return _.stringify(obj, {
             pretty: true,
@@ -3698,22 +3703,6 @@ Format = {
     },
     leadingZero: function (x) {
         return x < 10 ? '0' + x : x.toString();
-    },
-    plural: function (n, a, b, c) {
-        if (_.isArray(a)) {
-            c = a[2];
-            b = a[1];
-            a = a[0];
-        }
-        var cases = [
-            c,
-            a,
-            b,
-            b,
-            b,
-            c
-        ];
-        return n + ' ' + (n % 100 > 4 && n % 100 < 20 ? c : cases[Math.min(n % 10, 5)]);
     }
 };
 _.enumerate = _.cps.each;
@@ -4965,12 +4954,17 @@ _.defineKeyword('currentFile', function () {
     return (CallStack.rawStringToArray(CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file;
 });
 _.defineKeyword('uselessPath', _.memoize(function () {
-    return _.initial($currentFile.split('/'), Platform.NodeJS ? 2 : 1).join('/') + '/';
+    return _.initial(__filename.split('/'), Platform.NodeJS ? 2 : 1).join('/') + '/';
 }));
 _.defineKeyword('sourcePath', _.memoize(function () {
     var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
     return local ? local + '/' : $uselessPath;
 }));
+if (Platform.Browser) {
+    _.defineProperty(window, '__filename', function () {
+        return $currentFile;
+    });
+}
 SourceFiles = $singleton(Component, {
     line: function (file, line, then) {
         SourceFiles.read(file, function (data) {

@@ -33,8 +33,8 @@ ServerDevtools = module.exports = $trait ({
 
     afterInit: function () { // remote logging
         if (this.messageToPeers) {
-            _.onAfter (log.impl, 'defaultWriteBackend', this.$ (params => {
-                this.messageToPeers ({ what: 'log', params: params }, this.isDeveloper) })) } },
+            _.onAfter (log.impl, 'defaultWriteBackend', params => {
+                this.messageToPeers ({ what: 'log', params: params }, this.isDeveloper) }) } },
 
     /*  Prints raw incoming HTTP data (for debugging of client write methods)
      */
@@ -82,12 +82,12 @@ ServerDevtools = module.exports = $trait ({
                 history.start () }) }) },
 
     gitPull: function (context) {
-        exec ('git pull', this.$ ((e, stdout, stderr) => {
+        exec ('git pull', (e, stdout, stderr) => {
             if (e) {
                 context.jsonFailure (e) }
             else {
                 context.jsonSuccess () }
 
-            this.restart () })) },
+            this.restart () }) },
 
 })

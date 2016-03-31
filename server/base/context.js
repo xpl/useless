@@ -1,12 +1,15 @@
 var _               = require ('underscore'),
     fs              = require ('fs'),
-    sys             = require ('sys'),
     url             = require ('url'),
     path            = require ('path'),
-    util            = require ('./util'),
-    serverConfig    = {}//require ('../config')
+    util            = require ('./util')
 
-Context = $prototype ({
+module.exports = Context = $prototype ({
+
+    /*  TODO: Extract config management to a separate app trait.
+     */
+    serverConfig: $static ($memoized ($property (function () {
+        return require.$ (path.join (process.cwd (), 'config')).catches ({}) () }))), // You may want to re-define this
 
     mimeTypes: $static ($property ({
                             'html'     : 'text/html; charset=utf-8',
@@ -25,8 +28,7 @@ Context = $prototype ({
                 return _.map (cookie.split ('='), function (val) { return (val || '').trim () })})),
         env: {
             when: Date.now (),
-            who:  null,
-            serverConfig: serverConfig }}, cfg) 
+            who:  null }}, cfg) 
     
         this.uri    = this.request && this.request.url && url.parse (this.request.url)
         this.path   = this.uri && this.uri.path.split ('/') },
@@ -134,5 +136,3 @@ Context = $prototype ({
                     success: success,
                     failure: this.$ (function () {
                         this.jsonFailure ('Ошибка при загрузке файла') }) }) } } } })
-
-module.exports = Context

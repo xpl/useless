@@ -1,111 +1,105 @@
-module.exports = TestsItself = $trait ({
+/*  For marking custom assertions
+ */
+_.defineTagKeyword ('assertion')
+
+/*  The protocol:
+
+        1. Runs code base tests first (everything that Testosterone.js collected)
+        2. Runs app-specific tests, initializing test environment and passing `this` context to them.
+
+    It also accounts 'supervisor' trait mechanics, so that it does not run tests if they're already
+    executed at master process (and code didn't change since then). This is needed for faster start-up.
+ */
+module.exports = $trait ({
 
     $depends: [require ('./args'),
                require ('./exceptions')],
 
     $defaults: {
+
         argKeys: {
             noTests: 1 },
 
-        supressAllTests:          false,
         supressCodeBaseTests:     false,
         supressAppComponentTests: false },
 
-    argsReady: function (args) {
-        this.supressAllTests = (args.noTests === true) },
 
     /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
      */
     deferAppComponentTests: true,
 
-    /*  Example of a single test routine
-     */
-    test: function () { },
 
-    /*  Example of test suite
+    /*  That's how you define tests:
      */
-    tests: {
+    test: function () { },                          // single test
+    tests: {                                        // a suite
         syncTest: function () {},
         asyncTest: function (done) { done () } },
 
-    /*  Tests codebase
+
+    /*  You can add new assertions by tagging members with $assertion.
+     */
+    assertRequest: $async ($assertion (function (url, ctx, then) {
+                                            this.serveRequest (_.extend ({}, ctx, { url: url,
+                                                success: result => { then (this, result) },
+                                                failure: result => { log.error (result); $fail; then () } })) })),
+
+    /*  Overrideable
+     */
+    withTestEnvironment: function (what) {
+                                   what (() => { /* release environment here */ }) },
+
+
+    /*  Impl
      */
     beforeInit: function (then) {
 
+        /*  Skip tests if...
+         */
         if ((this.testsAlreadyExecutedAtMasterProcess = (this.args.spawnedBySupervisor && !this.args.respawnedBecauseCodeChange)) ||
-             this.supressAllTests || this.supressCodeBaseTests) { then () }
+             this.args.noTests || this.supressCodeBaseTests) { then () }
 
         else {  log.ii ('Running code base tests')
                 Testosterone.run ({
                     verbose: false,
-                    silent:  true }, this.$ (function (okay) {
-                                                if (okay) {
-                                                    if (this.deferAppComponentTests) {                            then () }
-                                                    else                             { this.runAppComponentTests (then) } } }))} },
+                    silent:  true }, okay => {
+                                        if (okay) {
+                                            if (this.deferAppComponentTests) {                            then () }
+                                                                       else  { this.runAppComponentTests (then) } } })} },
 
     afterInit: function (then) {
-        if (!this.testsAlreadyExecutedAtMasterProcess && !this.supressAllTests && this.deferAppComponentTests) {
-             this.runAppComponentTests (then) }
-        else {
-             then () } },
+        if ( this.args.noTests ||
+            !this.deferAppComponentTests) {                            then () }
+                                     else { this.runAppComponentTests (then) } },
 
-    /*  Tests $traits (app components)
-     */
     runAppComponentTests: function (then) {
 
-            log.info ('Running app components tests')
+            if (this.supervisorState === 'supervisor') { // don't run at master process
+                then () }
 
-            /*  Adds custom assertions to help test App framework
-             */
-            Testosterone.defineAssertions ({
+            else {
+                log.i ('Running app components tests')
 
-                assertFoundInDatabase: $async (function (kind, query, then) {
-                                                this.db[kind].find (query).toArray (this.$ (function (e, items) {
-                                                    $assert (e, null)
-                                                    $assert (items.length > 0)
-                                                    then (items.length === 1 ? items[0] : items) })) }),
+                /*  Adds custom assertions to help test application traits
+                 */
+                Testosterone.defineAssertions (this.constructor.$membersByTag.$assertion || {})
 
-                assertRequest: $async (function (url, ctx, then) { this.serveRequest (_.extend ({}, ctx, { url: url,
-                        
-                    success: function (result) { then (this, result) },
-                    failure: function (result) { log.error (result); $fail; then () } })) }) })
+                /*  Init test environment and run tests within that context.
+                 */
+                this.withTestEnvironment (releaseEnvironment => {
 
-            /*  Init test database and run tests within that context
-             */
-            this.withTestDb (this.$ (function (putBackProductionDb) {
+                    _.cps.map (this.constructor.$traits || [], (Trait, return_) => {
 
-                _.cps.map (this.constructor.$traits || [], function (Trait, return_) {
+                        Trait.$meta (meta => {
+                            var tests = (Trait.prototype.test || 
+                                         Trait.prototype.tests)
+                            return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
 
-                    Trait.$meta (function (meta) {
-                        var tests = (Trait.prototype.test || 
-                                     Trait.prototype.tests)
-                        return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
-
-                    this.$ (function (suites) {
-                        Testosterone.run ({                             
-                            context: this,
-                            codebase: false,
-                            verbose: false,
-                            silent: false,
-                            suites: _.nonempty (suites) }, function (okay) { putBackProductionDb (); then () }) })) })) },
-
-
-    withTestDb: function (what) {
-
-        if (!this.dbName) {
-            log.minor ('Skipping DB tests')
-            what (_.identity) }
-            
-        else {
-            log.warn ('Preparing Test DB')
-
-            require ('./base/db').init (
-                            this.dbName + '_test',
-                            this.entitySchema,
-                            this.$ (function (testDb) { var productionDb = this.db;
-                                                                           this.db = testDb
-                this.dropDb (this.newContext ({
-                    success: this.$ (function () { 
-                       what (this.$ (function () { this.db = productionDb })) }) })) })) } },
-    
+                        suites => {
+                            Testosterone.run ({                             
+                                 context: this,
+                                codebase: false,
+                                 verbose: false,
+                                  silent: false,
+                                  suites: _.nonempty (suites) }, okay => { releaseEnvironment (); then () }) }) }) } },    
 })

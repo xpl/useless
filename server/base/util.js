@@ -3,7 +3,6 @@ var path        = require ('path'),
     process     = require ('process'),
     http        = require ('http'),
     https       = require ('https'),
-    crypto      = require ('crypto'),
     exec        = require ('child_process').exec,
     Buffer      = require ('buffer').Buffer,
     Iconv       = require ('iconv').Iconv,
@@ -14,49 +13,21 @@ path.joins     = _.higherOrder (path.join)
 path.joinWith  = _.flipN       (path.join)
 path.joinsWith = _.higherOrder (path.joinWith)
 
-_.tests.util = {
-
-    'crypt': function () {
-        var options = { key: 'f00bAя' }
-        var message = 'Hello world'
-        var encrypted = module.exports.encrypt (options, message)
-        var decrypted = module.exports.decrypt (options, encrypted)
-
-        $assert (encrypted.length > 0)
-        $assert (encrypted !== message)
-        $assert (decrypted === message) } }
-
 module.exports = {
 
-    defaultCryptConfig: {
-        key: null,
-        algo: 'des-ede3-cbc',
-        encoding: 'hex' },
+    compileScript: function (cfg) { var util = module.exports
 
-    encrypt: function (cfg_, message) {
-        var cfg = _.extend (module.exports.defaultCryptConfig, cfg_)
-        var cipher = crypto.createCipher (cfg.algo, cfg.key)
-        return cipher.update (message, 'utf8', cfg.encoding) + cipher.final (cfg.encoding) },
+                        if (!cfg.source && !cfg.sourceFile) {
+                            util.fatalError ('no sourceFile specified') }
 
-    decrypt: function (cfg_, message) {
-        try {
-            var cfg = _.extend (module.exports.defaultCryptConfig, cfg_)
-            var cipher = crypto.createDecipher (cfg.algo, cfg.key)
-            return cipher.update (message, cfg.encoding, 'utf8') + cipher.final ('utf8') }
-        catch (e) {
-            log.error (e)
-            return undefined } },
+                        var source = cfg.source || util.readFile (cfg.sourceFile, cfg.includePaths)
+                        var includePaths = (cfg.sourceFile && [path.dirname (cfg.sourceFile)] || []).concat (cfg.includePaths || [])
 
-    compileScript: function (cfg) { if (!cfg.source) {
-                                    if (!cfg.sourceFile) { module.exports.fatalError ('no sourceFile specified') }
-                                         cfg.source      = module.exports.readFile (cfg.sourceFile, cfg.includePaths) }
+                        var read = (what => util.compileScript ({
+                                                    sourceFile: util.locateFile (what, includePaths),
+                                                    includePaths: includePaths }))
 
-                        var read = function (what) { var file = module.exports.locateFile (what, cfg.includePaths)
-                                                     return module.exports.compileScript ({
-                                                                includePaths: _.cons (path.dirname (file), cfg.includePaths), 
-                                                                source:       module.exports.readFile (file) }) }
-
-                        var result = _.map (cfg.source.split ('\n'), function (line) {
+                        var result = _.map (source.split ('\n'), line => {
 
                             var includeStrMatch = line.match (/^(.*)\$includeStr \(\'(.+)\'\)(.*)$/)
                             if (includeStrMatch) {
@@ -77,10 +48,6 @@ module.exports = {
     fatalError: function (explain) {
                     log.error.apply (null, _.cons (log.config ({ stackOffset: 1 }), _.asArray (arguments).concat ('\n')))
                     throw _.extend (new Error (_.asArray (arguments).join (' ')), { fatal: true, stackOffset: 1 }) },
-                    
-    lstatSync: function (dst) { // NOTE: replace with lstatSync.catches
-                    try       { return fs.lstatSync (dst) }
-                    catch (e) { return undefined } },
 
     locateFile: function (name, searchPaths) {
         return _.find (_.cons (name, (searchPaths || [process.cwd ()]).map (path.joinsWith (name).arity1)),
@@ -91,7 +58,8 @@ module.exports = {
                                         module.exports.locateFile (name, searchPaths), { encoding: 'utf-8' }) },
 
     writeFile: function (file, what) {
-        fs.writeFileSync.$ (file, what, { encoding: 'utf-8'}).catches (module.exports.fatalError.$ ('Cannot write', file)) ()  },
+        fs.writeFileSync.$ (file, what, { encoding: 'utf-8'})
+          .catches (module.exports.fatalError.$ ('Cannot write', file)) ()  },
 
     mkdir: function (dirPath, root_) {
         var dirs = dirPath.split ('/')
