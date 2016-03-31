@@ -1,6 +1,6 @@
 # Use Less. Do More.
 
-A cross-platform JavaScript toolbox for writing complex web applications. Currently in pre-release stage, missing some basic documentation and being under heavy development.
+A cross-platform JavaScript toolbox for writing complex web applications. Currently in pre-release stage, missing some basic documentation and being under heavy development. **In near future, it will be split into several loosely coupled NPM modules, for everyone's convenience. Stay tuned.**
 
 [Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
@@ -508,17 +508,14 @@ module.exports = { init: function () { return new UselessApp () } }
 Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
 - `api.js` URL mapping
-- `appcache.js` AppCache back-end
-- `auth.js` authorization management (boilerplate, for demo purposes)
 - `deploy.js` self-deployment protocol (automatic builds)
 - `devtools.js` APIs for Git / source code access (developer mode)
-- `entity.js` journaled CRUD for collections (high level DB access)
-- `exceptions.js` error handling for requests
+- `exceptions.js` custom exception printer + error handling for requests
 - `history.js` journal for DB operation
 - `http.js` request serving basics
 - `io.js` basic I/O for requests
 - `templating.js` basic templating (via underscore)
-- `tests.js` self-test on startup, adds **$test/$tests** syntax for server **$traits** + new asserts
+- `tests.js` self-tests on startup
 - `uploads.js` file uploads
 - `uptime.js` uptime tracking / restart()
 - `websocket.js` WebSocket utility (peer tracking / auth / multicast)
