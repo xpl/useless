@@ -98,7 +98,7 @@ _.templateSettings = { interpolate: /\{\{(.+?)\}\}/g }
 
     $include ('./base/concurrency')     // concurrency utility
     $include ('./base/math')            // math utility
-    $include ('./base/Component')       // component facility
+    $include ('./base/component')       // component facility
     $include ('./base/Rx')              // regular expressions helper
 
 
