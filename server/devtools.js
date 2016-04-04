@@ -12,7 +12,14 @@ ServerDevtools = module.exports = $trait ({
                require ('./request'),
                require ('./api')],
 
-    sourceRoot: process.cwd (),
+    $defaults: {
+
+        sourceRoot:
+            process.cwd (),
+
+        config: {
+            developer: true } },
+
     devHint: log.warn,
 
     api: function () {

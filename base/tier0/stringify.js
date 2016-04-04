@@ -40,7 +40,9 @@ _.deferTest (['type', 'stringify'], function () {
                                                     '  evenMore:    42       }'].join ('\n'))
 
         var obj = {}
-        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
+        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]')
+
+        $assert (_.stringify ({ foo: 1 }, { json: true, pretty: true }), '{ "foo": 1 }') }, function () {
 
     _.alignStringsRight = function (strings) {
                                                 var              lengths = strings.map (_.count)
@@ -158,9 +160,11 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
 
+                                    var quoteKeys = cfg.json ? '""' : ''
+
                                     if (pretty) {
                                             values        = _.values (x)
-                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
+                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.quotesWith (quoteKeys).then (_.appends (': '))))
                                         var printedValues =                            values.map (impl)
 
                                         var leftPaddings = printedValues.map (function (x, i) {
@@ -185,7 +189,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
                                                 _.map (values, function (kv) {
-                                                            return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) } }
+                                                            return (isArray ? '' : (kv[0].quote (quoteKeys) + ': ')) + impl (kv[1]) }))) } }
 
                             else if (_.isDecimal (x) && (cfg.precision > 0)) {
                                 return _.toFixed (x,     cfg.precision) }

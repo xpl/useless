@@ -1558,7 +1558,7 @@ _.withTest (['stdlib', 'index'], function () {
 
 _.withTest (['stdlib', 'quote'], function () {
 
-        $assert (_.quote      ('qux'),           '"qux"')
+        $assert (_.quote      ('qux'),            'qux')
         $assert (_.quote      ('qux', '[]'),     '[qux]')
         $assert (_.quote      ('qux', '/'),      '/qux/')
         $assert (_.quote      ('qux', '{  }'),   '{ qux }')
@@ -1566,7 +1566,7 @@ _.withTest (['stdlib', 'quote'], function () {
         $assert (_.quoteWith  ('[]', 'qux'), '[qux]') }, function () {
 
     _.quote = function (s, pattern_) {
-                    var pattern = pattern_ || '"'
+                    var pattern = pattern_ || ''
                     var splitAt = Math.floor (pattern.length / 2 + (pattern.length % 2))
                     var before  = pattern.slice (0, splitAt)
                     var after   = pattern.slice (splitAt) || before
@@ -2237,7 +2237,9 @@ _.deferTest (['type', 'stringify'], function () {
                                                     '  evenMore:    42       }'].join ('\n'))
 
         var obj = {}
-        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]') }, function () {
+        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]')
+
+        $assert (_.stringify ({ foo: 1 }, { json: true, pretty: true }), '{ "foo": 1 }') }, function () {
 
     _.alignStringsRight = function (strings) {
                                                 var              lengths = strings.map (_.count)
@@ -2355,9 +2357,11 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
 
+                                    var quoteKeys = cfg.json ? '""' : ''
+
                                     if (pretty) {
                                             values        = _.values (x)
-                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.appends (': ')))
+                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.quotesWith (quoteKeys).then (_.appends (': '))))
                                         var printedValues =                            values.map (impl)
 
                                         var leftPaddings = printedValues.map (function (x, i) {
@@ -2382,7 +2386,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
                                                 _.map (values, function (kv) {
-                                                            return (isArray ? '' : (kv[0] + ': ')) + impl (kv[1]) }))) } }
+                                                            return (isArray ? '' : (kv[0].quote (quoteKeys) + ': ')) + impl (kv[1]) }))) } }
 
                             else if (_.isDecimal (x) && (cfg.precision > 0)) {
                                 return _.toFixed (x,     cfg.precision) }
@@ -3246,6 +3250,7 @@ _.deferTest ('String extensions', function () {
 
     /*  This one is really convetient!
      */
+    $assert  ('qux'.quote (''),     'qux')
     $assert  ('qux'.quote ('"'),    '"qux"')
     $assert  ('qux'.quote ('[]'),   '[qux]')
     $assert  ('qux'.quote ('/'),    '/qux/')
@@ -3366,14 +3371,31 @@ _.deferTest ('String extensions', function () {
                 var x = table[c] || ''
                 result += x }
 
-            return result }}) (),
+            return result }}) () }) })
 
-    /*  a sub-routine for _.urlencode (not sure if we need this as stand-alone operation)
-     */
-    fixedEncodeURIComponent: function (s, constraint) {
-        return encodeURIComponent (s).replace (constraint ? constraint : /[!'().,*-]/g, function (c) {
-            return '%' + c.charCodeAt (0).toString (16) }) } }) })
+_.extend (String, {
 
+    randomHex: function (length) {
+                            var string = '';
+                            for (var i = 0; i < length; i++) { string += Math.floor (Math.random () * 16).toString (16) }
+                            return string },
+
+    leadingZero: function (n) {
+                    return (n < 10) ? '0' + n : n.toString () } })
+
+_.deferTest (['identifier naming style interpolation'], function () {
+
+    $assert (_.camelCaseToLoDashes        ('flyingBurritoOption'), 'flying_burrito_option')
+    $assert (_.camelCaseToDashes          ('flyingBurritoOption'), 'flying-burrito-option')
+    $assert (_.dashesToCamelCase          ('flying-burrito-option'), 'flyingBurritoOption')
+    $assert (_.loDashesToCamelCase        ('flying_burrito_option'), 'flyingBurritoOption')
+
+}, function () {
+
+    _.camelCaseToDashes   =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '-' + x[1].lowercase }) }
+    _.camelCaseToLoDashes =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '_' + x[1].lowercase }) }
+    _.dashesToCamelCase   =   function (x) { return x.replace (/(-.)/g,       function (x) { return x[1].uppercase }) } })
+    _.loDashesToCamelCase =   function (x) { return x.replace (/(_.)/g,       function (x) { return x[1].uppercase }) }
 
 
 
@@ -5415,58 +5437,6 @@ _.extend (Math, (function (decimalAdjust) {
 }));
 
 
-_.deferTest (['identifier naming style interpolation'], function () {
-
-    $assert (_.camelCaseToLoDashes        ('flyingBurritoOption'), 'flying_burrito_option')
-    $assert (_.camelCaseToDashes          ('flyingBurritoOption'), 'flying-burrito-option')
-    $assert (_.dashesToCamelCase          ('flying-burrito-option'), 'flyingBurritoOption')
-    $assert (_.loDashesToCamelCase        ('flying_burrito_option'), 'flyingBurritoOption')
-
-}, function () {
-
-    _.camelCaseToDashes   =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '-' + x[1].lowercase }) }
-    _.camelCaseToLoDashes =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '_' + x[1].lowercase }) }
-    _.dashesToCamelCase   =   function (x) { return x.replace (/(-.)/g,       function (x) { return x[1].uppercase }) } })
-    _.loDashesToCamelCase =   function (x) { return x.replace (/(_.)/g,       function (x) { return x[1].uppercase }) }
-
-Format = {
-
-    urlencode: function (obj) {
-        return _.map (obj, function (v, k) { 
-            return k + '=' + _.fixedEncodeURIComponent (v) }).join ('&') },
-
-    /*  Use this to print objects as JavaScript (supports functions and $-tags output)
-     */
-    javascript: function (obj) {
-        return _.stringify (obj, {
-                    pretty: true,
-                    pure: true,
-                    formatter: function (x) {
-                                    if (_.isTypeOf (Tags, x)) {
-                                        return _.reduce (
-                                                    _.keys (_.pick (x, _.keyIsKeyword)),
-                                                        function (memo, key) { return key + ' ' + _.quote (memo, '()') },
-                                                            _.stringify (Tags.unwrap (x))) }
-
-                                    else if (_.isFunction (x)) {
-                                        return x.toString () }
-
-                                    else {
-                                        return undefined } } }) },
-
-    progressPercents: function (value, max) {
-        return Math.floor ((value / max) * 100) + '%' },
-
-    randomHexString: function (length) {
-        var string = '';
-        for (var i = 0; i < length; i++) {
-            string += Math.floor (Math.random () * 16).toString (16) }
-        return string },
-
-    leadingZero: function (x) {
-        return x < 10 ? '0' + x : x.toString () },
-}
-
 ;
 
 
@@ -5492,7 +5462,7 @@ _.tests.concurrency = {
 
     'mapReduce': function (testDone) {
 
-        var data = _.times (42, Format.randomHexString)
+        var data = _.times (42, String.randomHex)
         var numItems = 0
 
         /*  Keep in mind that mapReduce is not linear! It does not guaranteee sequential order of execution,
@@ -5565,7 +5535,7 @@ _.tests.concurrency = {
         _.times (count, function () { method (_.random (1000)) }) },
 
     'interlocked': function (testDone) { var isNowRunning = false
-        _.mapReduce (_.times (30, Format.randomHexString), {
+        _.mapReduce (_.times (30, String.randomHex), {
                 complete: testDone,
                 maxConcurrency: 10,
                 next: _.interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)

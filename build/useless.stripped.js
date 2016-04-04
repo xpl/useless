@@ -1353,7 +1353,7 @@ _.extend(_, {
     }
 });
 _.quote = function (s, pattern_) {
-    var pattern = pattern_ || '"';
+    var pattern = pattern_ || '';
     var splitAt = Math.floor(pattern.length / 2 + pattern.length % 2);
     var before = pattern.slice(0, splitAt);
     var after = pattern.slice(splitAt) || before;
@@ -1913,9 +1913,10 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             var values = _.pairs(x);
             var oneLine = !pretty || values.length < 2;
             var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
+            var quoteKeys = cfg.json ? '""' : '';
             if (pretty) {
                 values = _.values(x);
-                var printedKeys = _.alignStringsRight(_.keys(x).map(_.appends(': ')));
+                var printedKeys = _.alignStringsRight(_.keys(x).map(_.quotesWith(quoteKeys).then(_.appends(': '))));
                 var printedValues = values.map(impl);
                 var leftPaddings = printedValues.map(function (x, i) {
                     return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
@@ -1936,7 +1937,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
                 return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
             }
             return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
-                return (isArray ? '' : kv[0] + ': ') + impl(kv[1]);
+                return (isArray ? '' : kv[0].quote(quoteKeys) + ': ') + impl(kv[1]);
             })));
         }
     } else if (_.isDecimal(x) && cfg.precision > 0) {
@@ -2578,13 +2579,40 @@ $extensionMethods(String, {
             }
             return result;
         };
-    }(),
-    fixedEncodeURIComponent: function (s, constraint) {
-        return encodeURIComponent(s).replace(constraint ? constraint : /[!'().,*-]/g, function (c) {
-            return '%' + c.charCodeAt(0).toString(16);
-        });
+    }()
+});
+_.extend(String, {
+    randomHex: function (length) {
+        var string = '';
+        for (var i = 0; i < length; i++) {
+            string += Math.floor(Math.random() * 16).toString(16);
+        }
+        return string;
+    },
+    leadingZero: function (n) {
+        return n < 10 ? '0' + n : n.toString();
     }
 });
+_.camelCaseToDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '-' + x[1].lowercase;
+    });
+};
+_.camelCaseToLoDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '_' + x[1].lowercase;
+    });
+};
+_.dashesToCamelCase = function (x) {
+    return x.replace(/(-.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
+_.loDashesToCamelCase = function (x) {
+    return x.replace(/(_.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
 (function () {
     var hooks = [
         'onceBefore',
@@ -3336,63 +3364,7 @@ Parse = {
         return _.first(_.last(path.split(/\\|\//)).split('.'));
     }
 };
-_.camelCaseToDashes = function (x) {
-    return x.replace(/[a-z][A-Z]/g, function (x) {
-        return x[0] + '-' + x[1].lowercase;
-    });
-};
-_.camelCaseToLoDashes = function (x) {
-    return x.replace(/[a-z][A-Z]/g, function (x) {
-        return x[0] + '_' + x[1].lowercase;
-    });
-};
-_.dashesToCamelCase = function (x) {
-    return x.replace(/(-.)/g, function (x) {
-        return x[1].uppercase;
-    });
-};
-_.loDashesToCamelCase = function (x) {
-    return x.replace(/(_.)/g, function (x) {
-        return x[1].uppercase;
-    });
-};
-Format = {
-    urlencode: function (obj) {
-        return _.map(obj, function (v, k) {
-            return k + '=' + _.fixedEncodeURIComponent(v);
-        }).join('&');
-    },
-    javascript: function (obj) {
-        return _.stringify(obj, {
-            pretty: true,
-            pure: true,
-            formatter: function (x) {
-                if (_.isTypeOf(Tags, x)) {
-                    return _.reduce(_.keys(_.pick(x, _.keyIsKeyword)), function (memo, key) {
-                        return key + ' ' + _.quote(memo, '()');
-                    }, _.stringify(Tags.unwrap(x)));
-                } else if (_.isFunction(x)) {
-                    return x.toString();
-                } else {
-                    return undefined;
-                }
-            }
-        });
-    },
-    progressPercents: function (value, max) {
-        return Math.floor(value / max * 100) + '%';
-    },
-    randomHexString: function (length) {
-        var string = '';
-        for (var i = 0; i < length; i++) {
-            string += Math.floor(Math.random() * 16).toString(16);
-        }
-        return string;
-    },
-    leadingZero: function (x) {
-        return x < 10 ? '0' + x : x.toString();
-    }
-};
+;
 Sort = {
     Ascending: 1,
     Descending: -1,
@@ -5354,6 +5326,7 @@ _.extend(log, {
     boldLine: '======================================',
     line: '--------------------------------------',
     thinLine: '......................................',
+    timestampEnabled: false,
     withWriteBackend: $scope(function (release, backend, contextFn, done) {
         var prev = log.writeBackend.value;
         log.writeBackend.value = backend;
@@ -5443,6 +5416,7 @@ _.extend(log, {
                 lines: lines,
                 config: config,
                 color: config.color,
+                when: Date.now(),
                 args: _.reject(args, _.isTypeOf.$(log.Config)),
                 indentation: indentation,
                 indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
@@ -5459,13 +5433,17 @@ _.extend(log, {
             }) || stack[0];
         },
         defaultWriteBackend: function (params) {
-            var codeLocation = params.codeLocation, trailNewlines = params.trailNewlines;
+            var codeLocation = params.codeLocation;
             if (Platform.NodeJS) {
-                console.log(_.map(params.lines, function (line) {
+                var lines = _.map(params.lines, function (line) {
                     return params.indentation + _.map(line, function (run) {
                         return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
                     }).join('');
-                }).join('\n'), log.color('dark').shell + codeLocation + '\x1B[0m', trailNewlines);
+                }).join('\n');
+                if (log.timestampEnabled) {
+                    lines = log.color('dark').shell + _.bullet(log.impl.timestamp(params.when) + ' ', log.color('none').shell + lines);
+                }
+                console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
             } else {
                 console.log.apply(console, _.reject.with_(_.equals(undefined), [].concat(_.map(params.lines, function (line, i) {
                     return params.indentation + _.reduce2('', line, function (s, run) {
@@ -5477,8 +5455,12 @@ _.extend(log, {
                             emit(run.config.color.css);
                         }
                     });
-                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), trailNewlines)));
+                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
             }
+        },
+        timestamp: function (x) {
+            var date = new Date(x);
+            return String.leadingZero(date.getDay()) + '/' + String.leadingZero(date.getMonth() + 1) + ' ' + String.leadingZero(date.getHours()) + ':' + String.leadingZero(date.getMonth());
         },
         location: function (where) {
             return _.quoteWith('()', _.nonempty([

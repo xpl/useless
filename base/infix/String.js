@@ -61,6 +61,7 @@ _.deferTest ('String extensions', function () {
 
     /*  This one is really convetient!
      */
+    $assert  ('qux'.quote (''),     'qux')
     $assert  ('qux'.quote ('"'),    '"qux"')
     $assert  ('qux'.quote ('[]'),   '[qux]')
     $assert  ('qux'.quote ('/'),    '/qux/')
@@ -181,14 +182,31 @@ _.deferTest ('String extensions', function () {
                 var x = table[c] || ''
                 result += x }
 
-            return result }}) (),
+            return result }}) () }) })
 
-    /*  a sub-routine for _.urlencode (not sure if we need this as stand-alone operation)
-     */
-    fixedEncodeURIComponent: function (s, constraint) {
-        return encodeURIComponent (s).replace (constraint ? constraint : /[!'().,*-]/g, function (c) {
-            return '%' + c.charCodeAt (0).toString (16) }) } }) })
+_.extend (String, {
 
+    randomHex: function (length) {
+                            var string = '';
+                            for (var i = 0; i < length; i++) { string += Math.floor (Math.random () * 16).toString (16) }
+                            return string },
+
+    leadingZero: function (n) {
+                    return (n < 10) ? '0' + n : n.toString () } })
+
+_.deferTest (['identifier naming style interpolation'], function () {
+
+    $assert (_.camelCaseToLoDashes        ('flyingBurritoOption'), 'flying_burrito_option')
+    $assert (_.camelCaseToDashes          ('flyingBurritoOption'), 'flying-burrito-option')
+    $assert (_.dashesToCamelCase          ('flying-burrito-option'), 'flyingBurritoOption')
+    $assert (_.loDashesToCamelCase        ('flying_burrito_option'), 'flyingBurritoOption')
+
+}, function () {
+
+    _.camelCaseToDashes   =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '-' + x[1].lowercase }) }
+    _.camelCaseToLoDashes =   function (x) { return x.replace (/[a-z][A-Z]/g, function (x) { return x[0] + '_' + x[1].lowercase }) }
+    _.dashesToCamelCase   =   function (x) { return x.replace (/(-.)/g,       function (x) { return x[1].uppercase }) } })
+    _.loDashesToCamelCase =   function (x) { return x.replace (/(_.)/g,       function (x) { return x[1].uppercase }) }
 
 
 

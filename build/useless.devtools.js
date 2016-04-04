@@ -1009,6 +1009,10 @@ _.extend (log, {
     line:       '--------------------------------------',
     thinLine:   '......................................',
 
+    /*  Set to true to precede each log message with date and time (useful for server side logs).
+     */
+    timestampEnabled: false,
+
     /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
      */
     withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
@@ -1020,7 +1024,7 @@ _.extend (log, {
 
     /*  For writing with forced default backend
      */
-    writeUsingDefaultBackend: function () { var args = arguments
+    writeUsingDefaultBackend: function (/* arguments */) { var args = arguments
         log.withWriteBackend (
             log.impl.defaultWriteBackend,
             function (done) {
@@ -1103,6 +1107,7 @@ _.extend (log, {
                 lines:         lines,
                 config:        config,
                 color:         config.color,
+                when:          Date.now (),
                 args:          _.reject (args, _.isTypeOf.$ (log.Config)),
                 indentation:   indentation,
                 indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
@@ -1120,18 +1125,23 @@ _.extend (log, {
 
         defaultWriteBackend: function (params) {
 
-            var codeLocation    = params.codeLocation,
-                trailNewlines   = params.trailNewlines
+            var codeLocation = params.codeLocation
 
             if (Platform.NodeJS) {
-                console.log (_.map (params.lines, function (line) {
-                    return params.indentation + _.map (line, function (run) {
-                        return (run.config.color
-                                    ? (run.config.color.shell + run.text + '\u001b[0m')
-                                    : (                         run.text)) }).join ('') }).join ('\n'),
 
-                                    log.color ('dark').shell + codeLocation + '\u001b[0m',
-                                    trailNewlines) }
+                var lines = _.map (params.lines, function (line) {
+                                                    return params.indentation + _.map (line, function (run) {
+                                                        return (run.config.color
+                                                                    ? (run.config.color.shell + run.text + '\u001b[0m')
+                                                                    : (                         run.text)) }).join ('') }).join ('\n')
+
+                if (log.timestampEnabled) {
+                    lines = log.color ('dark').shell + _.bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
+
+                console.log (lines,
+                             log.color ('dark').shell + codeLocation + '\u001b[0m',
+                             params.trailNewlines) }
+
             else {
                 console.log.apply (console, _.reject.with_ (_.equals (undefined), [].concat (
 
@@ -1144,7 +1154,16 @@ _.extend (log, {
                         _.each (line, function (run) {
                             if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
 
-                    trailNewlines))) } },
+                    params.trailNewlines))) } },
+
+        /*  Formats timestamp preceding log messages
+         */
+        timestamp: function (x) {
+            var date = new Date (x)
+            return (String.leadingZero (date.getDay ()) + '/' +
+                    String.leadingZero (date.getMonth () + 1) + ' ' +
+                    String.leadingZero (date.getHours ()) + ':' +
+                    String.leadingZero (date.getMonth ())) },
 
         /*  Formats that "function @ source.js:321" thing
          */

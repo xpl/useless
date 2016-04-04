@@ -755,6 +755,7 @@ _.extend(log, {
     boldLine: '======================================',
     line: '--------------------------------------',
     thinLine: '......................................',
+    timestampEnabled: false,
     withWriteBackend: $scope(function (release, backend, contextFn, done) {
         var prev = log.writeBackend.value;
         log.writeBackend.value = backend;
@@ -844,6 +845,7 @@ _.extend(log, {
                 lines: lines,
                 config: config,
                 color: config.color,
+                when: Date.now(),
                 args: _.reject(args, _.isTypeOf.$(log.Config)),
                 indentation: indentation,
                 indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
@@ -860,13 +862,17 @@ _.extend(log, {
             }) || stack[0];
         },
         defaultWriteBackend: function (params) {
-            var codeLocation = params.codeLocation, trailNewlines = params.trailNewlines;
+            var codeLocation = params.codeLocation;
             if (Platform.NodeJS) {
-                console.log(_.map(params.lines, function (line) {
+                var lines = _.map(params.lines, function (line) {
                     return params.indentation + _.map(line, function (run) {
                         return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
                     }).join('');
-                }).join('\n'), log.color('dark').shell + codeLocation + '\x1B[0m', trailNewlines);
+                }).join('\n');
+                if (log.timestampEnabled) {
+                    lines = log.color('dark').shell + _.bullet(log.impl.timestamp(params.when) + ' ', log.color('none').shell + lines);
+                }
+                console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
             } else {
                 console.log.apply(console, _.reject.with_(_.equals(undefined), [].concat(_.map(params.lines, function (line, i) {
                     return params.indentation + _.reduce2('', line, function (s, run) {
@@ -878,8 +884,12 @@ _.extend(log, {
                             emit(run.config.color.css);
                         }
                     });
-                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), trailNewlines)));
+                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
             }
+        },
+        timestamp: function (x) {
+            var date = new Date(x);
+            return String.leadingZero(date.getDay()) + '/' + String.leadingZero(date.getMonth() + 1) + ' ' + String.leadingZero(date.getHours()) + ':' + String.leadingZero(date.getMonth());
         },
         location: function (where) {
             return _.quoteWith('()', _.nonempty([

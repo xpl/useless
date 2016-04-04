@@ -967,7 +967,7 @@ _.extend(_, {
     }
 });
 _.quote = function (s, pattern_) {
-    var pattern = pattern_ || '"';
+    var pattern = pattern_ || '';
     var splitAt = Math.floor(pattern.length / 2 + pattern.length % 2);
     var before = pattern.slice(0, splitAt);
     var after = pattern.slice(splitAt) || before;
@@ -1527,9 +1527,10 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             var values = _.pairs(x);
             var oneLine = !pretty || values.length < 2;
             var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
+            var quoteKeys = cfg.json ? '""' : '';
             if (pretty) {
                 values = _.values(x);
-                var printedKeys = _.alignStringsRight(_.keys(x).map(_.appends(': ')));
+                var printedKeys = _.alignStringsRight(_.keys(x).map(_.quotesWith(quoteKeys).then(_.appends(': '))));
                 var printedValues = values.map(impl);
                 var leftPaddings = printedValues.map(function (x, i) {
                     return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
@@ -1550,7 +1551,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
                 return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
             }
             return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
-                return (isArray ? '' : kv[0] + ': ') + impl(kv[1]);
+                return (isArray ? '' : kv[0].quote(quoteKeys) + ': ') + impl(kv[1]);
             })));
         }
     } else if (_.isDecimal(x) && cfg.precision > 0) {
@@ -2192,13 +2193,40 @@ $extensionMethods(String, {
             }
             return result;
         };
-    }(),
-    fixedEncodeURIComponent: function (s, constraint) {
-        return encodeURIComponent(s).replace(constraint ? constraint : /[!'().,*-]/g, function (c) {
-            return '%' + c.charCodeAt(0).toString(16);
-        });
+    }()
+});
+_.extend(String, {
+    randomHex: function (length) {
+        var string = '';
+        for (var i = 0; i < length; i++) {
+            string += Math.floor(Math.random() * 16).toString(16);
+        }
+        return string;
+    },
+    leadingZero: function (n) {
+        return n < 10 ? '0' + n : n.toString();
     }
 });
+_.camelCaseToDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '-' + x[1].lowercase;
+    });
+};
+_.camelCaseToLoDashes = function (x) {
+    return x.replace(/[a-z][A-Z]/g, function (x) {
+        return x[0] + '_' + x[1].lowercase;
+    });
+};
+_.dashesToCamelCase = function (x) {
+    return x.replace(/(-.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
+_.loDashesToCamelCase = function (x) {
+    return x.replace(/(_.)/g, function (x) {
+        return x[1].uppercase;
+    });
+};
 (function () {
     var hooks = [
         'onceBefore',
@@ -3648,63 +3676,7 @@ _.extend(Math, function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
 }));
-_.camelCaseToDashes = function (x) {
-    return x.replace(/[a-z][A-Z]/g, function (x) {
-        return x[0] + '-' + x[1].lowercase;
-    });
-};
-_.camelCaseToLoDashes = function (x) {
-    return x.replace(/[a-z][A-Z]/g, function (x) {
-        return x[0] + '_' + x[1].lowercase;
-    });
-};
-_.dashesToCamelCase = function (x) {
-    return x.replace(/(-.)/g, function (x) {
-        return x[1].uppercase;
-    });
-};
-_.loDashesToCamelCase = function (x) {
-    return x.replace(/(_.)/g, function (x) {
-        return x[1].uppercase;
-    });
-};
-Format = {
-    urlencode: function (obj) {
-        return _.map(obj, function (v, k) {
-            return k + '=' + _.fixedEncodeURIComponent(v);
-        }).join('&');
-    },
-    javascript: function (obj) {
-        return _.stringify(obj, {
-            pretty: true,
-            pure: true,
-            formatter: function (x) {
-                if (_.isTypeOf(Tags, x)) {
-                    return _.reduce(_.keys(_.pick(x, _.keyIsKeyword)), function (memo, key) {
-                        return key + ' ' + _.quote(memo, '()');
-                    }, _.stringify(Tags.unwrap(x)));
-                } else if (_.isFunction(x)) {
-                    return x.toString();
-                } else {
-                    return undefined;
-                }
-            }
-        });
-    },
-    progressPercents: function (value, max) {
-        return Math.floor(value / max * 100) + '%';
-    },
-    randomHexString: function (length) {
-        var string = '';
-        for (var i = 0; i < length; i++) {
-            string += Math.floor(Math.random() * 16).toString(16);
-        }
-        return string;
-    },
-    leadingZero: function (x) {
-        return x < 10 ? '0' + x : x.toString();
-    }
-};
+;
 _.enumerate = _.cps.each;
 _.mapReduce = function (array, cfg) {
     var cursor = 0;

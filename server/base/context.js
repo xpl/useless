@@ -6,11 +6,6 @@ var _               = require ('underscore'),
 
 module.exports = Context = $prototype ({
 
-    /*  TODO: Extract config management to a separate app trait.
-     */
-    serverConfig: $static ($memoized ($property (function () {
-        return require.$ (path.join (process.cwd (), 'config')).catches ({}) () }))), // You may want to re-define this
-
     mimeTypes: $static ($property ({
                             'html'     : 'text/html; charset=utf-8',
                             'jpeg'     : 'image/jpeg',
@@ -132,7 +127,7 @@ module.exports = Context = $prototype ({
             else {
                 util.writeRequestDataToFile ({
                     request: this.request,
-                    filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), Format.randomHexString (32)),
+                    filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)),
                     success: success,
                     failure: this.$ (function () {
                         this.jsonFailure ('Ошибка при загрузке файла') }) }) } } } })

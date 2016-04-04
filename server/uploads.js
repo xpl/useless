@@ -10,7 +10,7 @@ ServerUploads = module.exports = $trait ({
     saveImageTo: function (targetDir) {
                     return (context, then) => {
                                 var targetPath = path.join (process.cwd (), targetDir)
-                                then (targetPath, util.uniqueFileName (targetPath, Format.randomHexString (8), 'jpg')) } },
+                                then (targetPath, util.uniqueFileName (targetPath, String.randomHex (8), 'jpg')) } },
 
     uploadImageAsJPEG: function (getTargetPath) { return context => {
 

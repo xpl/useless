@@ -8,7 +8,7 @@ _.tests.concurrency = {
 
     'mapReduce': function (testDone) {
 
-        var data = _.times (42, Format.randomHexString)
+        var data = _.times (42, String.randomHex)
         var numItems = 0
 
         /*  Keep in mind that mapReduce is not linear! It does not guaranteee sequential order of execution,
@@ -81,7 +81,7 @@ _.tests.concurrency = {
         _.times (count, function () { method (_.random (1000)) }) },
 
     'interlocked': function (testDone) { var isNowRunning = false
-        _.mapReduce (_.times (30, Format.randomHexString), {
+        _.mapReduce (_.times (30, String.randomHex), {
                 complete: testDone,
                 maxConcurrency: 10,
                 next: _.interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
