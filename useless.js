@@ -93,7 +93,6 @@ _.templateSettings = { interpolate: /\{\{(.+?)\}\}/g }
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $include ('./base/Parse')           // clumsy parsing utils
-    $include ('./base/Format')          // clumsy formatting utils
     $include ('./base/Sort')            // (this one is normal)
 
     $include ('./base/concurrency')     // concurrency utility

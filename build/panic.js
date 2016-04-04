@@ -5437,8 +5437,6 @@ _.extend (Math, (function (decimalAdjust) {
 }));
 
 
-;
-
 
 
 /*  Self-awareness utils

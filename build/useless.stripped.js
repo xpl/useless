@@ -3364,7 +3364,6 @@ Parse = {
         return _.first(_.last(path.split(/\\|\//)).split('.'));
     }
 };
-;
 Sort = {
     Ascending: 1,
     Descending: -1,

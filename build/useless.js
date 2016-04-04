@@ -5480,8 +5480,6 @@ Parse = {
         return _.first (_.last (path.split (/\\|\//)).split ('.')) },
 }
 ;
-
-;
 /*  Sorting utilities (TODO: REFACTOR)
     ======================================================================== */
 
