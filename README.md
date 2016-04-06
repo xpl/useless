@@ -10,6 +10,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Updated [`server/tests.js`](https://github.com/xpl/useless/blob/master/server/tests.js) with new semantics.
 - Got rid of `__proto__` mutation, derived prototypes now utilize `Object.create` for faster code.
 - Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
 - [Read more...](https://github.com/xpl/useless/wiki/Changelog)
