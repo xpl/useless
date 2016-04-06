@@ -18,7 +18,7 @@ module.exports = Context = $prototype ({
 
     constructor: function (cfg) { _.extend2 (this, { // extend2 means you can extend context.env without losing env.when
         headers: {},
-        cookies: _.object (_.map (
+        cookies: cfg.cookies || _.object (_.map (
             (cfg && cfg.request && cfg.request.headers && cfg.request.headers.cookie && cfg.request.headers.cookie.split (';')) || [], function (cookie) {
                 return _.map (cookie.split ('='), function (val) { return (val || '').trim () })})),
         env: {
@@ -37,7 +37,7 @@ module.exports = Context = $prototype ({
                                     return name + '=' + value + '; Expires=Wed, 13-Jan-2100 22:23:01 GMT; Path=/' }) } } ) },
 
     removeCookies: function (cookies) { return _.extend2 (this, {
-        cookies: cookies,
+        cookies: _.object (_.map (cookies, name => [name, null])),
         headers: { 'Set-Cookie': _.map (cookies, function (name) {
                                     return name + '=<<deleted>>; Expires=Wed, 13-Jan-1970 22:23:01 GMT; Path=/' }) } } ) },
 

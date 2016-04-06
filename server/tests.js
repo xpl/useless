@@ -1,6 +1,4 @@
-/*  For marking custom assertions
- */
-_.defineTagKeyword ('assertion')
+require ('./base/assertion_syntax.js')
 
 /*  The protocol:
 
@@ -10,7 +8,7 @@ _.defineTagKeyword ('assertion')
     It also accounts 'supervisor' trait mechanics, so that it does not run tests if they're already
     executed at master process (and code didn't change since then). This is needed for faster start-up.
  */
-module.exports = $trait ({
+ServerTests = module.exports = $trait ({
 
     $depends: [require ('./args'),
                require ('./exceptions')],
@@ -29,20 +27,60 @@ module.exports = $trait ({
     deferAppComponentTests: true,
 
 
-    /*  That's how you define tests:
+    /*  Example of a custom assertion
      */
-    test: function () { },                          // single test
-    tests: {                                        // a suite
-        syncTest: function () {},
-        asyncTest: function (done) { done () } },
+    assert101: $assertion (function (x) { $assert (x, 101) }),
 
 
-    /*  You can add new assertions by tagging members with $assertion.
+    /*  Example of a custom asynchronous assertion.
      */
-    assertRequest: $async ($assertion (function (url, ctx, then) {
-                                            this.serveRequest (_.extend ({}, ctx, { url: url,
-                                                success: result => { then (this, result) },
-                                                failure: result => { log.error (result); $fail; then () } })) })),
+    assert101AfterDelay: $assertion ($async (function (x, then) {
+                                                _.delay (function () {
+                                                    $assert101 (x); then ('you may pass arguments to callback') }) })),
+
+
+    /*  A single test (example).
+     */
+    test: function () {
+        $assert (ServerTests.isTraitOf (this)) // test routines are supplied with 'this'
+        $assert101 (101) },
+
+
+    /*  A test suite (example).
+     */
+    tests: {
+
+        /*  Simple synchronous test
+         */
+        'sync test': function () { $assert101 (101) },
+
+        /*  An asynchronous test with explicit termination callback.
+            Runs under timeout, so if you forget to call 'done', it won't hang.
+         */
+        'explicit async test': function (done) { done () },
+
+        /*  Fun part with $async-marked assertions is that Testosterone supervises their
+            execution, allowing to omit that tedious 'done' calling burden. The test
+            will automatically finish after the last asynchronous assertion completes.
+            Each asynchronous assertion creates its own execution context, waiting
+            until child tasks complete.
+         */
+        'implicit async test': function () {
+
+            $assert101AfterDelay (101)
+            $assert101AfterDelay (101, function (arg) { $assert (arg, 'you may pass arguments to callback')
+                $assert101AfterDelay (101)
+                $assert101AfterDelay (101) }) } },
+
+
+    /*  Sometimes it is more convenient to define tests along with methods.
+        This is good for documenting purposes (tests-as-documentation).
+     */
+    exampleOfMethodWithTest: $withTest (function () {
+                                $assert (this.exampleOfMethodWithTest (123), 124) },
+        function (x) {
+            return x + 1 }),
+
 
     /*  Overrideable
      */
@@ -74,7 +112,8 @@ module.exports = $trait ({
 
     runAppComponentTests: function (then) {
 
-            if (this.supervisorState === 'supervisor') { // don't run at master process
+            if ((this.supervisorState === 'supervisor') &&
+                (this.deferAppComponentTests !== false)) { // don't run at master process
                 then () }
 
             else {
@@ -94,9 +133,13 @@ module.exports = $trait ({
                          */
                         (Trait, return_) => {
                             Trait.$meta (meta => {
-                                var tests = (Trait.prototype.test || 
-                                             Trait.prototype.tests)
-                                return_ (tests && { name: (meta.name === 'exports' ? meta.file : meta.name), tests: tests }) }) },
+
+                                /*  Gather tests from 'test', 'tests' and $withTest-tagged methods.
+                                 */
+                                return_ ({ name: (meta.name === 'exports' ? meta.file : meta.name),
+                                           tests: _.nonempty (_.extended (Trait.prototype.tests || {},
+                                                                    Trait.prototype.test ? { '': Trait.prototype.test } : {},
+                                                            _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest')))) }) }) },
 
                         /*  Run collected tests
                          */

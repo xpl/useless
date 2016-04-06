@@ -8770,9 +8770,9 @@ Test = $prototype ({
                                             return function (done) {
                                                     if ($async.is (args[0]) || $async.is (def)) {
                                                         _.cps.apply (fn, self.context, args, function (args, then) {
-                                                                                                         if (then)
-                                                                                                             then ()
-                                                                                                         done ()             }) }
+                                                                                                         if (then) {
+                                                                                                             then.apply (this, args) }
+                                                                                                         done () }) }
                                                     else {
                                                         try       { fn.apply (self.context, args); done () }
                                                         catch (e) { assertion.onException (e) } } } }) })
