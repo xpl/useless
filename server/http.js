@@ -19,7 +19,7 @@ ServerHttp = module.exports = $trait ({
             assertRequestFails: function (url, ctx, desiredResult, then) {
                                     this.serveRequest (_.extend ({}, ctx, { url: url,
                                         success: function (result) { $fail; then () },
-                                        failure: function (result) { $assert (result, desiredResult); then () } })) },
+                                        failure: function (result) { $assert (result, desiredResult); then () } })) } } },
 
     beforeInit: function (then) { var portNumber = this.port || 1333
 
