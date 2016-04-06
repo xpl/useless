@@ -1781,7 +1781,7 @@ Testosterone.ValidatesRecursion = $trait ({
             log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
                                                 var meta          = {}
                                                 var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
-                                                var template      = param && _.template (param)
+                                                var template      = param && _.template (param, { interpolate: /\{\{(.+?)\}\}/g })
 
                 $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
 

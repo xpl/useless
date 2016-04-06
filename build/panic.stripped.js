@@ -33,7 +33,6 @@ _ = function () {
     }
     return _;
 }();
-_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g };
 _.tests = {};
 _.deferTest = _.withTest = function (name, test, subj) {
     subj();
@@ -674,7 +673,7 @@ _.extend(_, {
 });
 _.hasStdlib = true;
 _.throwsError = _.higherOrder(_.throwError = function (msg) {
-    throw new Error(msg);
+    throw msg instanceof Error ? msg : new Error(msg);
 });
 _.overrideThis = _.throwsError('override this');
 _.notImplemented = _.throwsError('not implemented');
@@ -6044,7 +6043,7 @@ Testosterone.ValidatesRecursion = $trait({
                 var color = _.find2(colors, function (color) {
                     return log.color(member['$' + color] && color) || false;
                 });
-                var template = param && _.template(param);
+                var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
                 $untag(def.$meta)(function (x) {
                     meta = x;
                 });

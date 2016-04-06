@@ -30,7 +30,6 @@ _ = (function () {
 
     return _ }) ()
 
-_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g }
 
 /*  Tests stub
  */

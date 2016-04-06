@@ -5,13 +5,21 @@ _.hasStdlib = true
 
 _.withTest (['stdlib', 'throwsError'], function () {
 
+        /*  Accepts either string...
+         */
         $assertThrows (
             _.throwsError ('неуловимый Джо'),
+            _.matches ({ message: 'неуловимый Джо' }))
+
+        /*  ..or Error instance
+         */
+        $assertThrows (
+            _.throwsError (new Error ('неуловимый Джо')),
             _.matches ({ message: 'неуловимый Джо' })) }, function () {
 
     _.throwsError = _.higherOrder (
         _.throwError = function (msg) {
-                         throw new Error (msg) }) })
+                         throw (msg instanceof Error) ? msg : new Error (msg) }) })
 
 _.overrideThis   = _.throwsError ('override this')
 _.notImplemented = _.throwsError ('not implemented')

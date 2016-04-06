@@ -1480,7 +1480,7 @@ Testosterone.ValidatesRecursion = $trait({
                 var color = _.find2(colors, function (color) {
                     return log.color(member['$' + color] && color) || false;
                 });
-                var template = param && _.template(param);
+                var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
                 $untag(def.$meta)(function (x) {
                     meta = x;
                 });

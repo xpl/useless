@@ -32,7 +32,6 @@ _ = (function () {
 
     return _ }) ()
 
-_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g }
 
 /*  Internal dependencies
     ======================================================================== */

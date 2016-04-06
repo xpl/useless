@@ -32,7 +32,6 @@ _ = (function () {
 
     return _ }) ()
 
-_.templateSettings = { interpolate: /\{\{(.+?)\}\}/g }
 
 /*  Internal dependencies
     ======================================================================== */
@@ -1593,13 +1592,21 @@ _.hasStdlib = true
 
 _.withTest (['stdlib', 'throwsError'], function () {
 
+        /*  Accepts either string...
+         */
         $assertThrows (
             _.throwsError ('неуловимый Джо'),
+            _.matches ({ message: 'неуловимый Джо' }))
+
+        /*  ..or Error instance
+         */
+        $assertThrows (
+            _.throwsError (new Error ('неуловимый Джо')),
             _.matches ({ message: 'неуловимый Джо' })) }, function () {
 
     _.throwsError = _.higherOrder (
         _.throwError = function (msg) {
-                         throw new Error (msg) }) })
+                         throw (msg instanceof Error) ? msg : new Error (msg) }) })
 
 _.overrideThis   = _.throwsError ('override this')
 _.notImplemented = _.throwsError ('not implemented')
@@ -8899,7 +8906,7 @@ Testosterone.ValidatesRecursion = $trait ({
             log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
                                                 var meta          = {}
                                                 var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
-                                                var template      = param && _.template (param)
+                                                var template      = param && _.template (param, { interpolate: /\{\{(.+?)\}\}/g })
 
                 $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
 
