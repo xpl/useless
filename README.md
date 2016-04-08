@@ -37,8 +37,6 @@ You may want to look into these projects (built upon Useless.js):
 * [Skychat](https://github.com/xpl/skychat) — a simple WebRTC paint/chat app.
 * [Wyg](https://github.com/xpl/wyg) — a revolutionary WYSIWYG editor ([demo](https://www.youtube.com/watch?v=u1wNfSHwSQA)).
 
-# `./base` features
-
 ## Macro processor for prototype definitions
 
 [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
