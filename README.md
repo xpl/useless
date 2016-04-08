@@ -391,12 +391,9 @@ Platform = $singleton ({ $property: {
 
 ## Panic.js
 
-An user interface component for displaying code failures (unhandled exceptions, failed tests). Click to see it in action:
+An user interface component for displaying code failures (unhandled exceptions, failed tests). See it in action: [youtube.com/watch?v=IWLE8omFnQw](https://www.youtube.com/watch?v=IWLE8omFnQw)
 
-[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://xpl.github.io/useless)
-
-![Panic.js demo](http://img.leprosorium.com/2512862)
-![Panic.js demo](http://img.leprosorium.com/2512859)
+[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://www.youtube.com/watch?v=IWLE8omFnQw)
 
 * Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
 * Can print log output of failed unit tests
