@@ -391,9 +391,7 @@ Platform = $singleton ({ $property: {
 
 ## Panic.js
 
-Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.
-
-Live demo _(clickable)_:
+An user interface component for displaying code failures (unhandled exceptions, failed tests). Click to see it in action:
 
 [![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://xpl.github.io/useless)
 
