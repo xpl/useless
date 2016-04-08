@@ -350,7 +350,8 @@ An user interface component for displaying code failures (unhandled exceptions, 
 
 [Reference / examples](https://github.com/xpl/useless/blob/master/base/log.js)
 
-[log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)
+![log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)
+![log demo](http://img.leprosorium.com/2512874)
 
 + Platform-independent
 + Color output
