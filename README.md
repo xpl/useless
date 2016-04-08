@@ -395,13 +395,17 @@ An user interface component for displaying code failures (unhandled exceptions, 
 
 [![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://xpl.github.io/useless)
 
+[Panic.js demo](http://img.leprosorium.com/2512862)
+[Panic.js demo](http://img.leprosorium.com/2512859)
+
 * Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
+* Can print log output of failed unit tests
 * Maintains callstack persistence across async call boundaries (addEventListener, setTimeout).
 * Loads and displays expandable source lines for fast identification.
 * Hides third party code by default (can be displayed by pressing 'more').
 * Grouping of message duplicates.
 * Grouping of same source line repeated consequently.
-* Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals (exception handling / callstack access) — _TBD_
+* Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals (exception handling / callstack access)
 
 ## LogOverlay.js
 
