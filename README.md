@@ -484,6 +484,8 @@ module.exports = { init: function () { return new UselessApp () } }
 Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
 - `api.js` URL routing
+- `args.js` command line arguments parsing
+- `config.js` handles `config.json` and default parameters
 - `deploy.js` self-deployment protocol (automatic builds)
 - `devtools.js` APIs for Git / source code access (developer mode)
 - `exceptions.js` custom exception printer + error handling for requests
