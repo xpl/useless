@@ -350,7 +350,7 @@ An user interface component for displaying code failures (unhandled exceptions, 
 
 [Reference / examples](https://github.com/xpl/useless/blob/master/base/log.js)
 
-[![log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)](https://github.com/xpl/useless/blob/master/base/log.js)
+[log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)
 
 + Platform-independent
 + Color output
@@ -395,18 +395,6 @@ Platform = $singleton ({ $property: {
     iPhone:  ... // true on iPhone,
     iOS:     ... // true on any iOS device } })
 ```
-
-## LogOverlay.js
-
-A nice `console.log` alternative for those who like log-driven debugging. Based on [log.js](https://github.com/xpl/useless/blob/master/base/log.js) (acts as a write backend for it) — which is ultimately based on [stringify.js](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js) and [reflection.js](https://github.com/xpl/useless/blob/master/base/reflection.js) superpowers (check it out).
-
-Renders incoming `log` calls into semi-transparent overlay at the bottom of the viewport. It is transparent for mouse input (so it doesnt mess with page interaction) and can be toggled by `~` key (hello Quake). Much nicier than default `console.log` in many cases.
-
-```javascript
-LogOverlay.init ()
-```
-
-![Reference](http://img.leprosorium.com/2512874)
 
 ## Server app framework
 
