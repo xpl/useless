@@ -8,6 +8,11 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
+### Upcoming features
+
+- Promises support (basic algorithms, request processing primitives, support in tests).
+- Splitting of distinct framework parts to separate projects.
+
 ### Recent updates / changelog
 
 - Updated [`server/tests.js`](https://github.com/xpl/useless/blob/master/server/tests.js) with new semantics.
@@ -32,23 +37,6 @@ You may want to look into these projects (built upon Useless.js):
 
 * [Skychat](https://github.com/xpl/skychat) — a simple WebRTC paint/chat app.
 * [Wyg](https://github.com/xpl/wyg) — a revolutionary WYSIWYG editor ([demo](https://www.youtube.com/watch?v=u1wNfSHwSQA)).
-
-### Directory structure
-
-* `./base` platform-independent part
-* `./client` browser-related utility
-* `./server` app framework for Node.js
-* `./build` built source (full/stripped/minified)
-* `./useless.js` header file for the build tool (contains include directives)
-* `./useless.micro.js` header file (an example of reduced build config)
-* `./example.js` example application
-* `./example` static content for `example.js` app
-
-### A notice to brave hackers
-
-It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain. Currently I'm focused to make the basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
-
-Stay tuned and thanks for your attention! Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
 
 # `./base` features
 
