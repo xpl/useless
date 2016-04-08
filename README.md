@@ -391,22 +391,10 @@ Platform = $singleton ({ $property: {
 
 ## And more..
 
-- Performance measurement
+- [jQuery+](https://github.com/xpl/useless/blob/master/client/jQueryPlus.js) — a pack of handy jQuery plugins
+- [Node+](https://github.com/xpl/useless/blob/master/client/node%2B.js) — a custom lightweight alternative to jQuery
+- [DOMReference](https://github.com/xpl/useless/blob/master/client/DOMReference.js) — traits for writing DOM-rendered components
 - [DSL for writing regexps in JS + named subexpressions](https://github.com/xpl/useless/blob/master/base/Rx.js)
-- Unicode regexp hack (3rd party)
-- Base64 encoding/decoding (3rd party)
-
-# `./client` features
-
-## jQueryPlus.js
-
-A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$.fn.drag`), which is utilized by countless number of widgets I made. It also compatible with mobile devices (iOS / Android).
-
-```javascript
-$(handle).drag ({
-	start: function ()             { return this.leftTop () },
-	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
-```
 
 ## Panic.js
 
@@ -495,13 +483,14 @@ module.exports = { init: function () { return new UselessApp () } }
 
 Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
-- `api.js` URL mapping
+- `api.js` URL routing
 - `deploy.js` self-deployment protocol (automatic builds)
 - `devtools.js` APIs for Git / source code access (developer mode)
 - `exceptions.js` custom exception printer + error handling for requests
 - `history.js` journal for DB operation
 - `http.js` request serving basics
 - `io.js` basic I/O for requests
+- `supervisor.js` auto-restart on source code change
 - `templating.js` basic templating (via underscore)
 - `tests.js` self-tests on startup
 - `uploads.js` file uploads
