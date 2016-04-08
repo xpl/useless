@@ -398,8 +398,6 @@ Platform = $singleton ({ $property: {
 
 ## Panic.js
 
-> Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
-
 Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.
 
 Live demo _(clickable)_:
@@ -434,8 +432,6 @@ __But in most cases, it should work out of the box.__ And supposing that you don
 **P.S.:** it does not display source lines if executed from local HTML file (as sources are read by XHR requests).
 
 ## LogOverlay.js
-
-> Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
 
 A nice `console.log` alternative for those who like log-driven debugging. Based on [log.js](https://github.com/xpl/useless/blob/master/base/log.js) (acts as a write backend for it) — which is ultimately based on [stringify.js](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js) and [reflection.js](https://github.com/xpl/useless/blob/master/base/reflection.js) superpowers (check it out).
 
