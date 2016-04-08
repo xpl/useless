@@ -327,7 +327,9 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 
 [**How-to & Examples**](https://github.com/xpl/useless/wiki/Test-framework)
 
-[![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)](https://github.com/xpl/useless/wiki/Test-framework)
+![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)
+
+![assertion demo](http://img.leprosorium.com/2512877)
 
 * Tests before code
 * Tests as documentantion
@@ -336,6 +338,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 * Intercepts global log, displaying it in running assertion context
 * Custom assertions
 * Humane error reporting
+* Browser-side support (with `Panic.js`)
 
 ## Logging
 
@@ -410,12 +413,9 @@ Renders incoming `log` calls into semi-transparent overlay at the bottom of the 
 
 ```javascript
 LogOverlay.init ()
-
-log.i ('Hello world...')
-log.e ('...and hasta la vista, baby')
 ```
 
-[![Reference](http://img.leprosorium.com/2460404)](https://github.com/xpl/useless/blob/master/client/LogOverlay.js)
+![Reference](http://img.leprosorium.com/2512874)
 
 ## Server app framework
 
