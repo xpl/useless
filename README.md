@@ -313,15 +313,15 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 
 [![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)](https://github.com/xpl/useless/blob/master/base/reflection.js)
 
-- Cross-platform handling of uncaught exceptions
+- Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
 - Uncaught exceptions pass through network API calls
 - Client displays server's exceptions as if it was single environment
-- Callstack API for access at arbitrary location (for reflection purposes)
+- Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals
 - Strips third party calls (clean mode)
 - Fetches source code (local/remote)
 - Nice output
     - Console mode (replaces default Node.js exception printer)
-    - GUI mode (a pop-up dialog with expandable source lines, `./client/Panic.js` feature)
+    - GUI mode (a pop-up dialog with expandable source lines)
 
 ## Test framework
 
@@ -339,6 +339,12 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 * Custom assertions
 * Humane error reporting
 * Browser-side support (with `Panic.js`)
+
+## Panic.js
+
+An user interface component for displaying code failures (unhandled exceptions, failed tests). See it in action: [youtube.com/watch?v=IWLE8omFnQw](https://www.youtube.com/watch?v=IWLE8omFnQw)
+
+[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://www.youtube.com/watch?v=IWLE8omFnQw)
 
 ## Logging
 
@@ -389,21 +395,6 @@ Platform = $singleton ({ $property: {
     iPhone:  ... // true on iPhone,
     iOS:     ... // true on any iOS device } })
 ```
-
-## Panic.js
-
-An user interface component for displaying code failures (unhandled exceptions, failed tests). See it in action: [youtube.com/watch?v=IWLE8omFnQw](https://www.youtube.com/watch?v=IWLE8omFnQw)
-
-[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://www.youtube.com/watch?v=IWLE8omFnQw)
-
-* Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
-* Can print log output of failed unit tests
-* Maintains callstack persistence across async call boundaries (addEventListener, setTimeout).
-* Loads and displays expandable source lines for fast identification.
-* Hides third party code by default (can be displayed by pressing 'more').
-* Grouping of message duplicates.
-* Grouping of same source line repeated consequently.
-* Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals (exception handling / callstack access)
 
 ## LogOverlay.js
 
