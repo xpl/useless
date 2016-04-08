@@ -350,7 +350,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 ![log demo](http://img.leprosorium.com/2512874)
 
 + Platform-independent
-+ Color output
++ Color output (even in WebInspector)
 + Shows code location
 + [Configurable object printer](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js)
 + Table layout formatting
