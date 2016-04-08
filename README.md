@@ -313,6 +313,8 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 
 [![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)](https://github.com/xpl/useless/blob/master/base/reflection.js)
 
+[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://www.youtube.com/watch?v=IWLE8omFnQw)
+
 - Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
 - Uncaught exceptions pass through network API calls
 - Client displays server's exceptions as if it was single environment
@@ -338,13 +340,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 * Intercepts global log, displaying it in running assertion context
 * Custom assertions
 * Humane error reporting
-* Browser-side support (with `Panic.js`)
-
-## Panic.js
-
-An user interface component for displaying code failures (unhandled exceptions, failed tests). See it in action: [youtube.com/watch?v=IWLE8omFnQw](https://www.youtube.com/watch?v=IWLE8omFnQw)
-
-[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://www.youtube.com/watch?v=IWLE8omFnQw)
+* Browser-side support (see demo: [youtube.com/watch?v=IWLE8omFnQw](https://www.youtube.com/watch?v=IWLE8omFnQw))
 
 ## Logging
 
