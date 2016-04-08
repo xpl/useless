@@ -309,6 +309,41 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
    domElement.css (BBox.fromPoints (pts).grow (20).offset (position.inverse).css)
 ```
 
+## Platform Abstraction Layer
+
+```javascript
+/*  A cross-platform alias for the object representing global namespace.
+    Use instead of `window` for cross-platform code.
+ */
+$global.foo = 5 
+
+/*  Implements `alert` for NodeJS platform.
+ */
+alert ('foo')
+
+/*  Working with uncaught exceptions
+ */
+_.withUncaughtExceptionHandler (function (e) { throw e /* re-throw */ }, // adds handler to chain
+                                function (done) {
+                                    ...
+                                    done () })                           // removes handler from chain
+                                    
+/*  Platform detection
+ */
+Platform = $singleton ({ $property: {
+    
+    engine: ... // 'browser' / 'node'
+    system: ... // 'iOS' / 'Android' / undefined for everything else
+    device: ... // 'iPad' / 'iPhone' / undefined for everything else
+    touch:  ... // true for touch-enabled devices
+
+    Browser: ... // true in browser
+    NodeJS:  ... // true in Node
+    iPad:    ... // true on iPad,
+    iPhone:  ... // true on iPhone,
+    iOS:     ... // true on any iOS device } })
+```
+
 ## Error handling
 
 [![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)](https://github.com/xpl/useless/blob/master/base/reflection.js)
@@ -355,43 +390,6 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 + [Configurable object printer](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js)
 + Table layout formatting
 + Hookable/interceptable
-
-## Platform Abstraction Layer
-
-```javascript
-/*  A cross-platform alias for the object representing global namespace.
-    Use instead of `window` for cross-platform code.
- */
-$global.foo = 5 
-
-/*  Implements `alert` for NodeJS platform.
- */
-alert ('foo')
-
-/*  Working with uncaught exceptions
- */
-_.withUncaughtExceptionHandler (function (e) { throw e /* re-throw */ }, // adds handler to chain
-                                function (done) {
-                                    ...
-                                    done () })                           // removes handler from chain
-```
-
-## Platform detection
-
-```javascript
-Platform = $singleton ({ $property: {
-    
-    engine: ... // 'browser' / 'node'
-    system: ... // 'iOS' / 'Android' / undefined for everything else
-    device: ... // 'iPad' / 'iPhone' / undefined for everything else
-    touch:  ... // true for touch-enabled devices
-
-    Browser: ... // true in browser
-    NodeJS:  ... // true in Node
-    iPad:    ... // true on iPad,
-    iPhone:  ... // true on iPhone,
-    iOS:     ... // true on any iOS device } })
-```
 
 ## Server app framework
 
