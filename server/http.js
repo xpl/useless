@@ -14,7 +14,7 @@ ServerHttp = module.exports = $trait ({
             assertRequest: function (url, ctx, then) {
                                 this.serveRequest (_.extend ({}, ctx, { url: url,
                                     success: function (result) { then (this, result) },
-                                    failure: function (result) { log.error (result); $fail; then () } })) },
+                                    failure: function (result) { log.ee (result); $fail; then () } })) },
 
             assertRequestFails: function (url, ctx, desiredResult, then) {
                                     this.serveRequest (_.extend ({}, ctx, { url: url,

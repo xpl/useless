@@ -1101,7 +1101,7 @@ _.extend (log, {
 
             var totalText       = _.pluck (runs, 'text').join ('')
             var where           = config.where || log.impl.walkStack ($callStack) || {}
-            var indentation     = _.times (config.indent, _.constant ('\t')).join ('')
+            var indentation     = '\t'.repeats (config.indent)
 
             writeBackend ({
                 lines:         lines,
@@ -1119,7 +1119,7 @@ _.extend (log, {
                 where:         (config.location && where) || undefined })
 
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
-        
+
         walkStack: function (stack) {
             return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 
@@ -1448,7 +1448,7 @@ Testosterone = $singleton ({
          */
         var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
         var suites = _.map (cfg.suites, this.$ (function (suite, name) {
-            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context) }))
+            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto) }))
 
         var collectPrototypeTests = (cfg.codebase === false ? _.cps.constant ([]) : this.$ (this.collectPrototypeTests))
 
@@ -1504,17 +1504,20 @@ Testosterone = $singleton ({
 
         log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
     
-        runConfig.testStarted (test)
-        
-        test.verbose = runConfig.verbose
-        test.timeout = runConfig.timeout
+        self.toCPS (runConfig.testStarted) (test, function (done) { done = done || _.noop
 
-        test.startTime = Date.now ()
-
-        test.run (function () { test.time = Date.now () - test.startTime;
-
-            if (_.numArgs (runConfig.testComplete) === 2) { runConfig.testComplete (test,  then)   }
-                                                    else  { runConfig.testComplete (test); then () } }) },
+                                                        test.verbose = runConfig.verbose
+                                                        test.timeout = runConfig.timeout
+                                                        test.startTime = Date.now ()
+                                                        test.run (function () {
+                                                            (self.toCPS (runConfig.testComplete)) (
+                                                                _.extend (test, {
+                                                                    time: Date.now () - test.startTime }),
+                                                            function () {
+                                                                done ()
+                                                                then () }); }) }); },
+    toCPS: function (fn) { // TODO: generalize
+        return (_.numArgs (fn) === 2) ? fn : function (test, then) { fn (test); then () } },
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {
@@ -1682,7 +1685,7 @@ Test = $prototype ({
 
         _.withTimeout ({
             maxTime: self.timeout,
-            expired: function () { if (self.canFail) { log.error ('TIMEOUT EXPIRED'); self.fail () } } },
+            expired: function () { if (self.canFail) { log.ee ('TIMEOUT EXPIRED'); self.fail () } } },
             self.complete)
 
         _.withUncaughtExceptionHandler (self.$ (self.onException), self.complete)
@@ -1693,8 +1696,21 @@ Test = $prototype ({
                               function (doneWithLogging)  { self.complete (doneWithLogging.arity0)
                                                 if (then) { self.complete (then) }
 
-                                    if (routine.length > 0) routine.call (self.context,  self.$ (self.finalize))
-                                    else                   (routine.call (self.context),         self.finalize ()) }) },
+                                    /*  Continuation-passing style flow control
+                                     */
+                                    if (routine.length > 0) {
+                                        routine.call (self.context, self.$ (self.finalize)) }
+
+                                    /*  Return-style flow control
+                                     */
+                                    else {
+                                        var result = routine.call (self.context)
+                                        if (result instanceof Promise) {
+                                            result.then (
+                                                self.$ (self.finalize),
+                                                function (e) { self.onException(e) }) }
+                                        else {
+                                            self.finalize () } } }) },
         
     printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
 

@@ -4,8 +4,11 @@
 _.tests.Function = {
 
     '$ for partial application': function () {
+
              var sum = function (a, b) { return a + b }
-        $assert (sum.$ (5) (42), 47) },
+
+        $assert (sum.$  ('foo') ('bar'), 'foobar')      // bind to head of argument list
+        $assert (sum.$$ ('foo') ('bar'), 'barfoo') },   // bind to tail of argument list
 
     'Fn.callsWith': function () {
         $assert (42, (function (a,b,c) {
@@ -56,7 +59,9 @@ _.tests.Function = {
  */
 $extensionMethods (Function, {
 
-    $:     $method (_.partial),
+    $:  $method (_.partial), // binding to head of argument list
+    $$: $method (_.tails),   // binding to tail of argument list
+
     bind:           _.bind,
     partial:        _.partial,
     tails:          _.tails,
@@ -100,6 +105,9 @@ $extensionMethods (Function, {
     applies: _.applies,
 
     new_: _.new_,
+
+    each: function (fn, obj) { return _.each2 (obj, fn) },
+    map:  function (fn, obj) { return _.map2  (obj, fn) },
 
     oneShot: function (fn) { var called = false
         return function () {   if (!called) {

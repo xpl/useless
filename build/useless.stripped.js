@@ -2180,6 +2180,7 @@ $extensionMethods = function (Type, methods) {
 };
 $extensionMethods(Function, {
     $: $method(_.partial),
+    $$: $method(_.tails),
     bind: _.bind,
     partial: _.partial,
     tails: _.tails,
@@ -2231,6 +2232,12 @@ $extensionMethods(Function, {
     not: _.not,
     applies: _.applies,
     new_: _.new_,
+    each: function (fn, obj) {
+        return _.each2(obj, fn);
+    },
+    map: function (fn, obj) {
+        return _.map2(obj, fn);
+    },
     oneShot: function (fn) {
         var called = false;
         return function () {
@@ -2373,6 +2380,9 @@ $extensionMethods(Array, {
     },
     first: function (arr) {
         return arr[0];
+    },
+    rest: function (arr) {
+        return _.rest(arr);
     },
     last: function (arr) {
         return arr[arr.length - 1];
@@ -3487,7 +3497,10 @@ Lock = $prototype({
 });
 _.interlocked = function (fn) {
     var lock = new Lock();
-    return _.extendWith({ wait: lock.$(lock.wait) }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
+    return _.extendWith({
+        lock: lock,
+        wait: lock.$(lock.wait)
+    }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         lock.acquire(function () {
             fn(lock.$(lock.release));
         });
@@ -5409,7 +5422,7 @@ _.extend(log, {
             }))));
             var totalText = _.pluck(runs, 'text').join('');
             var where = config.where || log.impl.walkStack($callStack) || {};
-            var indentation = _.times(config.indent, _.constant('\t')).join('');
+            var indentation = '\t'.repeats(config.indent);
             writeBackend({
                 lines: lines,
                 config: config,
@@ -5658,7 +5671,7 @@ Testosterone = $singleton({
         var cfg = this.runConfig = _.extend(defaults, cfg_);
         var suitesIsArray = _.isArray(cfg.suites);
         var suites = _.map(cfg.suites, this.$(function (suite, name) {
-            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context);
+            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto);
         }));
         var collectPrototypeTests = cfg.codebase === false ? _.cps.constant([]) : this.$(this.collectPrototypeTests);
         collectPrototypeTests(this.$(function (prototypeTests) {
@@ -5698,19 +5711,24 @@ Testosterone = $singleton({
     runTest: function (test, i, then) {
         var self = this, runConfig = this.runConfig;
         log.impl.configStack = [];
-        runConfig.testStarted(test);
-        test.verbose = runConfig.verbose;
-        test.timeout = runConfig.timeout;
-        test.startTime = Date.now();
-        test.run(function () {
-            test.time = Date.now() - test.startTime;
-            if (_.numArgs(runConfig.testComplete) === 2) {
-                runConfig.testComplete(test, then);
-            } else {
-                runConfig.testComplete(test);
-                then();
-            }
+        self.toCPS(runConfig.testStarted)(test, function (done) {
+            done = done || _.noop;
+            test.verbose = runConfig.verbose;
+            test.timeout = runConfig.timeout;
+            test.startTime = Date.now();
+            test.run(function () {
+                self.toCPS(runConfig.testComplete)(_.extend(test, { time: Date.now() - test.startTime }), function () {
+                    done();
+                    then();
+                });
+            });
         });
+    },
+    toCPS: function (fn) {
+        return _.numArgs(fn) === 2 ? fn : function (test, then) {
+            fn(test);
+            then();
+        };
     },
     collectTests: function () {
         return _.map(_.tests, this.$(function (suite, name) {
@@ -5925,7 +5943,7 @@ Test = $prototype({
             maxTime: self.timeout,
             expired: function () {
                 if (self.canFail) {
-                    log.error('TIMEOUT EXPIRED');
+                    log.ee('TIMEOUT EXPIRED');
                     self.fail();
                 }
             }
@@ -5938,10 +5956,18 @@ Test = $prototype({
             if (then) {
                 self.complete(then);
             }
-            if (routine.length > 0)
+            if (routine.length > 0) {
                 routine.call(self.context, self.$(self.finalize));
-            else
-                routine.call(self.context), self.finalize();
+            } else {
+                var result = routine.call(self.context);
+                if (result instanceof Promise) {
+                    result.then(self.$(self.finalize), function (e) {
+                        self.onException(e);
+                    });
+                } else {
+                    self.finalize();
+                }
+            }
         });
     },
     printLog: function () {

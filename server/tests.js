@@ -87,6 +87,9 @@ ServerTests = module.exports = $trait ({
     withTestEnvironment: function (what) {
                                    what (() => { /* release environment here */ }) },
 
+    withTestRoutineEnvironment: function (test, what) {
+                                                what (() => { /* release environment here */ }) },
+
 
     /*  Impl
      */
@@ -110,11 +113,11 @@ ServerTests = module.exports = $trait ({
             !this.deferAppComponentTests) {                            then () }
                                      else { this.runAppComponentTests (then) } },
 
-    runAppComponentTests: function (then) {
+    runAppComponentTests: function (doneWithTests) {
 
             if ((this.supervisorState === 'supervisor') &&
                 (this.deferAppComponentTests !== false)) { // don't run at master process
-                then () }
+                doneWithTests () }
 
             else {
                 log.i ('Running app components tests')
@@ -137,9 +140,10 @@ ServerTests = module.exports = $trait ({
                                 /*  Gather tests from 'test', 'tests' and $withTest-tagged methods.
                                  */
                                 return_ ({ name: (meta.name === 'exports' ? meta.file : meta.name),
+                                           proto: Trait,
                                            tests: _.nonempty (_.extended (Trait.prototype.tests || {},
-                                                                    Trait.prototype.test ? { '': Trait.prototype.test } : {},
-                                                            _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest')))) }) }) },
+                                                                          Trait.prototype.test ? { '': Trait.prototype.test } : {},
+                                                                  _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest')))) }) }) },
 
                         /*  Run collected tests
                          */
@@ -149,5 +153,9 @@ ServerTests = module.exports = $trait ({
                                 codebase: false,
                                  verbose: false,
                                   silent: false,
-                                  suites: _.nonempty (suites) }, okay => { releaseEnvironment (); then () }) }) }) } },    
+                                  suites: _.nonempty (suites),
+                             testStarted: this.withTestRoutineEnvironment }, okay => { releaseEnvironment (); doneWithTests () }) }) }) } },    
 })
+
+
+
