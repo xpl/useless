@@ -10,7 +10,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Upcoming features
 
-- [Promises](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise) support (basic algorithms, request processing primitives, support in tests).
+- Brand new test system based on [Promises](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+- Nonlinear/asynchronous logging and stack traces (for Promise-based code)
 - Splitting of distinct framework parts to separate projects (finally, _useful_ ones).
 
 ### Recent updates / changelog
