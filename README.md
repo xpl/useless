@@ -8,9 +8,14 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
+### Upcoming features
+
+- Brand new test system based on [Promises](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+- Nonlinear/asynchronous logging and stack traces (for Promise-based code)
+- Splitting of distinct framework parts to separate projects (finally, _useful_ ones).
+
 ### Recent updates / changelog
 
-- Updated [`server/tests.js`](https://github.com/xpl/useless/blob/master/server/tests.js) with new semantics.
 - Got rid of `__proto__` mutation, derived prototypes now utilize `Object.create` for faster code.
 - Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
 - [Read more...](https://github.com/xpl/useless/wiki/Changelog)
@@ -32,25 +37,6 @@ You may want to look into these projects (built upon Useless.js):
 
 * [Skychat](https://github.com/xpl/skychat) — a simple WebRTC paint/chat app.
 * [Wyg](https://github.com/xpl/wyg) — a revolutionary WYSIWYG editor ([demo](https://www.youtube.com/watch?v=u1wNfSHwSQA)).
-
-### Directory structure
-
-* `./base` platform-independent part
-* `./client` browser-related utility
-* `./server` app framework for Node.js
-* `./build` built source (full/stripped/minified)
-* `./useless.js` header file for the build tool (contains include directives)
-* `./useless.micro.js` header file (an example of reduced build config)
-* `./example.js` example application
-* `./example` static content for `example.js` app
-
-### A notice to brave hackers
-
-It started a year ago as a pet library for my freelance projects, but recently it has kinda grown out of control, so I decided to make it public domain. Currently I'm focused to make the basic bootstrap code work well, as this thing is now used as a front-end library in a couple of large scale projects run by a company I'm employed. So at least the base part should be production quality soon.
-
-Stay tuned and thanks for your attention! Feel free to leave feedback / submit pull requests if you find any of these things helpful. Documentation is pending, check [Wiki](https://github.com/xpl/useless/wiki) for updates.
-
-# `./base` features
 
 ## Macro processor for prototype definitions
 
@@ -324,47 +310,6 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
    domElement.css (BBox.fromPoints (pts).grow (20).offset (position.inverse).css)
 ```
 
-## Error handling
-
-[![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)](https://github.com/xpl/useless/blob/master/base/reflection.js)
-
-- Cross-platform handling of uncaught exceptions
-- Uncaught exceptions pass through network API calls
-- Client displays server's exceptions as if it was single environment
-- Callstack API for access at arbitrary location (for reflection purposes)
-- Strips third party calls (clean mode)
-- Fetches source code (local/remote)
-- Nice output
-    - Console mode (replaces default Node.js exception printer)
-    - GUI mode (a pop-up dialog with expandable source lines, `./client/Panic.js` feature)
-
-## Test framework
-
-[**How-to & Examples**](https://github.com/xpl/useless/wiki/Test-framework)
-
-[![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)](https://github.com/xpl/useless/wiki/Test-framework)
-
-* Tests before code
-* Tests as documentantion
-* Rich library of assertions
-* Asynchronous / nested assertions
-* Intercepts global log, displaying it in running assertion context
-* Custom assertions
-* Humane error reporting
-
-## Logging
-
-[Reference / examples](https://github.com/xpl/useless/blob/master/base/log.js)
-
-[![log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)](https://github.com/xpl/useless/blob/master/base/log.js)
-
-+ Platform-independent
-+ Color output
-+ Shows code location
-+ [Configurable object printer](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js)
-+ Table layout formatting
-+ Hookable/interceptable
-
 ## Platform Abstraction Layer
 
 ```javascript
@@ -383,11 +328,9 @@ _.withUncaughtExceptionHandler (function (e) { throw e /* re-throw */ }, // adds
                                 function (done) {
                                     ...
                                     done () })                           // removes handler from chain
-```
-
-### Platform detection
-
-```javascript
+                                    
+/*  Platform detection
+ */
 Platform = $singleton ({ $property: {
     
     engine: ... // 'browser' / 'node'
@@ -402,80 +345,54 @@ Platform = $singleton ({ $property: {
     iOS:     ... // true on any iOS device } })
 ```
 
-## And more..
+## Error handling
 
-- Performance measurement
-- [DSL for writing regexps in JS + named subexpressions](https://github.com/xpl/useless/blob/master/base/Rx.js)
-- Unicode regexp hack (3rd party)
-- Base64 encoding/decoding (3rd party)
+[![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)](https://github.com/xpl/useless/blob/master/base/reflection.js)
 
-# `./client` features
+[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://www.youtube.com/watch?v=IWLE8omFnQw)
 
-## jQueryPlus.js
+- Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
+- Uncaught exceptions pass through network API calls
+- Client displays server's exceptions as if it was single environment
+- Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals
+- Strips third party calls (clean mode)
+- Fetches source code (local/remote)
+- Nice output
+    - Console mode (replaces default Node.js exception printer)
+    - GUI mode (a pop-up dialog with expandable source lines)
 
-A pack of handy jQuery extensions. Biggest thing here is drag & drop utility (`$.fn.drag`), which is utilized by countless number of widgets I made. It also compatible with mobile devices (iOS / Android).
+## Test framework
 
-```javascript
-$(handle).drag ({
-	start: function ()             { return this.leftTop () },
-	move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } })
-```
+[**How-to & Examples**](https://github.com/xpl/useless/wiki/Test-framework)
 
-## Panic.js
+![assertion demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/assert.jpg)
 
-> Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
+![assertion demo](http://img.leprosorium.com/2512877)
 
-Ever struggled with bugs in JavaScript? Then <strong>Panic.js</strong> is your instant best friend. Delivers better error diagnostics to Chrome, Safari and Firefox.
+* Tests before code
+* Tests as documentantion
+* Rich library of assertions
+* Asynchronous / nested assertions
+* Intercepts global log, displaying it in running assertion context
+* Custom assertions
+* Humane error reporting
+* Browser-side support (see demo: [youtube.com/watch?v=IWLE8omFnQw](https://www.youtube.com/watch?v=IWLE8omFnQw))
 
-Live demo _(clickable)_:
+## Logging
 
-[![Panic.js demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/nowpanic.png)](https://xpl.github.io/useless)
+[Reference / examples](https://github.com/xpl/useless/blob/master/base/log.js)
 
-* Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
-* Maintains callstack persistence across async call boundaries (addEventListener, setTimeout).
-* Loads and displays expandable source lines for fast identification.
-* Hides third party code by default (can be displayed by pressing 'more').
-* Grouping of message duplicates.
-* Grouping of same source line repeated consequently.
-* Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals (exception handling / callstack access) — _TBD_
+![log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)
+![log demo](http://img.leprosorium.com/2512874)
 
-### Err... isn't this what debug tools are for?
++ Platform-independent
++ Color output (even in WebInspector)
++ Shows code location
++ [Configurable object printer](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js)
++ Table layout formatting
++ Hookable/interceptable
 
-Yes, and this is "debug tools" too, but more specific. It is not a replacement to **WebInspector**, but a power-up. WebInspector is just not good enough for the quick identification of typical errors that occur often during development process. In most cases, they require no detailed inspection of the full source code — you can identify problem cause just by briefly looking at the source line. Displaying full info, as WebInspector does, would slow down things: you need to scroll through tons of text, expand cryptic traces by clicking, and then clicking and waiting again to load sources in separate window.
-
-And because WebInspector is a separate tool, you might not even know that something's broken, until its opened. You can imagine **Panic.js** as a small and fast subset of WebInspector, inlined into your page until it goes to the production, like a scaffolding.
-
-### Configuring (stand-alone distribution)
-
-Simply link the script to a page, and it will configure itself automagically™. Requires <a href="http://underscorejs.org">underscore</a> and <a href="http://jquery.com">jQuery</a>.
-
-* <a href="build/panic.min.js">Panic.min.js</a> (minified)
-* <a href="build/panic.js">Panic.js</a> (readable source)
-
-<b>Before use,</b> consider that the distribution contains full **Useless** toolkit, where the diagnostics-related utility _[responsible for all the magic behind Panic.js]_ appear a small fraction of entire codebase. In other words, it brings a holy shitload of code, which can possibly cause all sort of compatibility-related issues.
-
-__But in most cases, it should work out of the box.__ And supposing that you don't ever plan using **Panic.js** on production server (why would you), size of the script doesn't matter that much.
-
-**P.S.:** it does not display source lines if executed from local HTML file (as sources are read by XHR requests).
-
-## LogOverlay.js
-
-> Included in **[useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.devtools.js)** distribution
-
-A nice `console.log` alternative for those who like log-driven debugging. Based on [log.js](https://github.com/xpl/useless/blob/master/base/log.js) (acts as a write backend for it) — which is ultimately based on [stringify.js](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js) and [reflection.js](https://github.com/xpl/useless/blob/master/base/reflection.js) superpowers (check it out).
-
-Renders incoming `log` calls into semi-transparent overlay at the bottom of the viewport. It is transparent for mouse input (so it doesnt mess with page interaction) and can be toggled by `~` key (hello Quake). Much nicier than default `console.log` in many cases.
-
-```javascript
-LogOverlay.init ()
-
-log.i ('Hello world...')
-log.e ('...and hasta la vista, baby')
-```
-
-[![Reference](http://img.leprosorium.com/2460404)](https://github.com/xpl/useless/blob/master/client/LogOverlay.js)
-
-# `./server` features
+## Server app framework
 
 Example:
 
@@ -508,18 +425,28 @@ module.exports = { init: function () { return new UselessApp () } }
 
 Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
-- `api.js` URL mapping
+- `api.js` URL routing
+- `args.js` command line arguments parsing
+- `config.js` handles `config.json` and default parameters
 - `deploy.js` self-deployment protocol (automatic builds)
 - `devtools.js` APIs for Git / source code access (developer mode)
 - `exceptions.js` custom exception printer + error handling for requests
 - `history.js` journal for DB operation
 - `http.js` request serving basics
 - `io.js` basic I/O for requests
+- `supervisor.js` auto-restart on source code change
 - `templating.js` basic templating (via underscore)
 - `tests.js` self-tests on startup
 - `uploads.js` file uploads
 - `uptime.js` uptime tracking / restart()
 - `websocket.js` WebSocket utility (peer tracking / auth / multicast)
+
+## And more..
+
+- [jQuery+](https://github.com/xpl/useless/blob/master/client/jQueryPlus.js) — a pack of handy jQuery plugins
+- [Node+](https://github.com/xpl/useless/blob/master/client/node%2B.js) — a custom lightweight alternative to jQuery
+- [DOMReference](https://github.com/xpl/useless/blob/master/client/DOMReference.js) — traits for writing DOM-rendered components
+- [DSL for writing regexps in JS + named subexpressions](https://github.com/xpl/useless/blob/master/base/Rx.js)
 
 # Installing
 
