@@ -282,6 +282,13 @@
                                              onload: function ()  { resolve (this) },
                                             onerror: function (e) { reject (e) } }) }) }) })
 
+
+/*  document.ready
+    ======================================================================== */
+
+    document.on ('DOMContentLoaded', document.ready = _.barrier ())
+
+
 /*  ======================================================================== */
 
 _.tests.NodePlus = {

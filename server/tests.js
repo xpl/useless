@@ -42,7 +42,12 @@ module.exports = $trait ({
     assertRequest: $async ($assertion (function (url, ctx, then) {
                                             this.serveRequest (_.extend ({}, ctx, { url: url,
                                                 success: result => { then (this, result) },
-                                                failure: result => { log.error (result); $fail; then () } })) })),
+                                                failure: result => { log.ee (result); $fail; } })) })),
+
+    assertRequestFails: $async ($assertion (function (url, ctx, why, then) {
+                                            this.serveRequest (_.extend ({}, ctx, { url: url,
+                                                                                    success: result => { log.ee (result); $fail },
+                                                                                    failure: result => { $assert (result, why); then () } })) })),
 
     /*  Overrideable
      */
