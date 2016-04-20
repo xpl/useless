@@ -1,12 +1,25 @@
 var http    = require ('http'),
     util    = require ('./base/util'),
     Context = require ('./base/context')
-
+              require ('./base/assertion_syntax')
 
 ServerHttp = module.exports = $trait ({
 
     $depends: [require ('./exceptions'),
                require ('./api')],
+
+    $assertion: {
+        $async: {
+
+            assertRequest: function (url, ctx, then) {
+                                this.serveRequest (_.extend ({}, ctx, { url: url,
+                                    success: function (result) { then (this, result) },
+                                    failure: function (result) { log.ee (result); $fail; then () } })) },
+
+            assertRequestFails: function (url, ctx, desiredResult, then) {
+                                    this.serveRequest (_.extend ({}, ctx, { url: url,
+                                        success: function (result) { $fail; then () },
+                                        failure: function (result) { $assert (result, desiredResult); then () } })) } } },
 
     beforeInit: function (then) { var portNumber = this.port || 1333
 
@@ -41,8 +54,9 @@ ServerHttp = module.exports = $trait ({
         var end     = cfg.end || _.identity
 
         return new Context ({
-            request: _.extend ({ method: 'POST', pause: _.identity }, cfg.request, _.pick (cfg, 'url', 'method', 'headers')),
+            request: _.extend ({ method: 'POST', pause: _.identity }, cfg.request, _.pick (cfg, 'url', 'method', 'headers', 'cookies')),
             response: cfg.response,
+            cookies: cfg.cookies,
 
             stub: true,
 
@@ -56,6 +70,6 @@ ServerHttp = module.exports = $trait ({
             json:           function (done)     { done (cfg.json || {}) },
 
             // gather 'env' variables
-            env: _.omit (cfg, 'json', 'end', 'success', 'failure', 'method', 'url', 'headers') }) }
+            env: _.omit (cfg, 'json', 'end', 'success', 'failure', 'method', 'url', 'headers', 'cookies') }) }
 
 })

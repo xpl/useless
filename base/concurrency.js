@@ -174,7 +174,7 @@ Lock = $prototype ({
     'Release' trigger passed as last argument to your target function.
  */
 _.interlocked = function (fn) { var lock = new Lock ()
-    return _.extendWith ({ wait: lock.$ (lock.wait) },
+    return _.extendWith ({ lock: lock, wait: lock.$ (lock.wait) },
         _.argumentPrependingWrapper (Tags.unwrap (fn),
                                         function (fn) {
                                             lock.acquire (function () {

@@ -6,6 +6,7 @@ _.withTest ('Array extensions', function () {
     var arr = [1,3,2,3,3,4,3]
 
     $assert ([arr.first, arr.top, arr.last], [1, 3, 3])
+    $assert (arr.rest, [3,2,3,3,4,3])
 
     $assert (arr.take (4), [1,3,2,3])
 
@@ -74,6 +75,7 @@ _.withTest ('Array extensions', function () {
 
         top:   function (arr) { return arr[arr.length - 1] },        
         first: function (arr) { return arr[0] },
+        rest:  function (arr) { return _.rest (arr) },
         last:  function (arr) { return arr[arr.length - 1] },
         
         take: function (arr, n) { return arr.slice (0, n) },

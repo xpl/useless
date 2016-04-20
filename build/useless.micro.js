@@ -2858,8 +2858,11 @@ $extensionMethods = function (Type, methods) {
 _.tests.Function = {
 
     '$ for partial application': function () {
+
              var sum = function (a, b) { return a + b }
-        $assert (sum.$ (5) (42), 47) },
+
+        $assert (sum.$  ('foo') ('bar'), 'foobar')      // bind to head of argument list
+        $assert (sum.$$ ('foo') ('bar'), 'barfoo') },   // bind to tail of argument list
 
     'Fn.callsWith': function () {
         $assert (42, (function (a,b,c) {
@@ -2910,7 +2913,9 @@ _.tests.Function = {
  */
 $extensionMethods (Function, {
 
-    $:     $method (_.partial),
+    $:  $method (_.partial), // binding to head of argument list
+    $$: $method (_.tails),   // binding to tail of argument list
+
     bind:           _.bind,
     partial:        _.partial,
     tails:          _.tails,
@@ -2954,6 +2959,9 @@ $extensionMethods (Function, {
     applies: _.applies,
 
     new_: _.new_,
+
+    each: function (fn, obj) { return _.each2 (obj, fn) },
+    map:  function (fn, obj) { return _.map2  (obj, fn) },
 
     oneShot: function (fn) { var called = false
         return function () {   if (!called) {
@@ -3077,6 +3085,7 @@ _.withTest ('Array extensions', function () {
     var arr = [1,3,2,3,3,4,3]
 
     $assert ([arr.first, arr.top, arr.last], [1, 3, 3])
+    $assert (arr.rest, [3,2,3,3,4,3])
 
     $assert (arr.take (4), [1,3,2,3])
 
@@ -3145,6 +3154,7 @@ _.withTest ('Array extensions', function () {
 
         top:   function (arr) { return arr[arr.length - 1] },        
         first: function (arr) { return arr[0] },
+        rest:  function (arr) { return _.rest (arr) },
         last:  function (arr) { return arr[arr.length - 1] },
         
         take: function (arr, n) { return arr.slice (0, n) },
@@ -4820,6 +4830,7 @@ _.withTest ('OOP', {
 
         ;
 
+
 /*  TODO:   UNIT TEST DAT MUTHAFUCKA
  */
 
@@ -5633,7 +5644,7 @@ Lock = $prototype ({
     'Release' trigger passed as last argument to your target function.
  */
 _.interlocked = function (fn) { var lock = new Lock ()
-    return _.extendWith ({ wait: lock.$ (lock.wait) },
+    return _.extendWith ({ lock: lock, wait: lock.$ (lock.wait) },
         _.argumentPrependingWrapper (Tags.unwrap (fn),
                                         function (fn) {
                                             lock.acquire (function () {

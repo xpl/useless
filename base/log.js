@@ -211,7 +211,7 @@ _.extend (log, {
 
             var totalText       = _.pluck (runs, 'text').join ('')
             var where           = config.where || log.impl.walkStack ($callStack) || {}
-            var indentation     = _.times (config.indent, _.constant ('\t')).join ('')
+            var indentation     = '\t'.repeats (config.indent)
 
             writeBackend ({
                 lines:         lines,
@@ -229,7 +229,7 @@ _.extend (log, {
                 where:         (config.location && where) || undefined })
 
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
-        
+
         walkStack: function (stack) {
             return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 

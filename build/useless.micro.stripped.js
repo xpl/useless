@@ -1794,6 +1794,7 @@ $extensionMethods = function (Type, methods) {
 };
 $extensionMethods(Function, {
     $: $method(_.partial),
+    $$: $method(_.tails),
     bind: _.bind,
     partial: _.partial,
     tails: _.tails,
@@ -1845,6 +1846,12 @@ $extensionMethods(Function, {
     not: _.not,
     applies: _.applies,
     new_: _.new_,
+    each: function (fn, obj) {
+        return _.each2(obj, fn);
+    },
+    map: function (fn, obj) {
+        return _.map2(obj, fn);
+    },
     oneShot: function (fn) {
         var called = false;
         return function () {
@@ -1987,6 +1994,9 @@ $extensionMethods(Array, {
     },
     first: function (arr) {
         return arr[0];
+    },
+    rest: function (arr) {
+        return _.rest(arr);
     },
     last: function (arr) {
         return arr[arr.length - 1];
@@ -3752,7 +3762,10 @@ Lock = $prototype({
 });
 _.interlocked = function (fn) {
     var lock = new Lock();
-    return _.extendWith({ wait: lock.$(lock.wait) }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
+    return _.extendWith({
+        lock: lock,
+        wait: lock.$(lock.wait)
+    }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
         lock.acquire(function () {
             fn(lock.$(lock.release));
         });
