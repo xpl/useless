@@ -12,7 +12,7 @@ ServerTemplating = module.exports = $trait ({
     template: function (fileName, args, headers) {
         return this.htmlErrors (context => {
             this.compiledTemplate (fileName, template =>
-                                                context.success (template (_.extend ({ env: context.env }, args)), headers)) }) },
+                                                context.success (template.call (this, _.extend ({ env: context.env }, args)), headers)) }) },
 
     htmlTemplate: function (fileName, args) {
         return this.template (fileName, args, { 'Content-Type': 'text/html' }) },
@@ -21,7 +21,7 @@ ServerTemplating = module.exports = $trait ({
     /*  Back-end
      */
     evalTemplate: function (fileName, args, then) {
-        this.compiledTemplate (fileName, template => then (template (args))) },
+        this.compiledTemplate (fileName, template => then (template.call (this, args))) },
 
     compiledTemplate: function (fileName, then) {
 

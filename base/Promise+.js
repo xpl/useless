@@ -77,6 +77,10 @@ $mixin (Promise, {
     timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
     now: $property (function () { return this.timeout (0) }),
     log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
+    alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
+
+    done: function (fn) { return this.then (function (x) { fn (null, x) },
+                                            function (e) { fn (e, null); throw e }) },
 
     finally: function (fn) { return this.then (function (x) { fn (null, x) },
                                                function (e) { fn (e, null) }) },

@@ -54,6 +54,7 @@ _.platform = function () {
                         (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
                             return _.extend ({
                                     engine: 'browser',
+                                    browserEngine: ((navigator.userAgent.indexOf('AppleWebKit') >= 0) ? 'WebKit' : undefined),
                                     browser: 
                                         ((navigator.userAgent.indexOf ('Firefox') >= 0) ? 'Firefox' :
                                         ((navigator.userAgent.indexOf ('Chrome')  >= 0) ? 'Chrome' :
@@ -2898,7 +2899,9 @@ _.tests.Function = {
 
     'postponed': function (testDone) {
         $assertEveryCalledOnce ($async (function (mkay) {
-            (function (_42) { $assert (42, _42); mkay (); }).postponed (42) }), testDone) },
+            (function (_42) {
+                $assert (this, 'foo')
+                $assert (42, _42); mkay (); }).postponed.call ('foo', 42) }), testDone) },
 
     /*  Returns function that executed after _.delay
      */
@@ -3013,7 +3016,7 @@ $extensionMethods (Function, {
         return function () {               var args  = arguments, this_ = this
             if (!fn._postponed) {      fn._postponed = true
                 _.delay (function () { fn._postponed = false
-                    fn.apply (this, args) }) } } },
+                    fn.apply (this_, args) }) } } },
 
     delay: _.delay,
     delayed: function (fn, time) {
@@ -3063,14 +3066,6 @@ $extensionMethods (Function, { catch_:  function (fn, catch_, then, finally_) { 
                                                       catch (e)    {   result = catch_ (e); catched = true }
                                                      if (!catched) {   result = then (result) }
                                                   return finally_  (   result) } } })
-
-
-if (typeof Promise !== 'undefined') {
-    Promise.prototype.done = function (resolve, reject) {
-        return this.then (resolve, reject)
-                   .catch (_.globalUncaughtExceptionHandler || _.throws) } }
-
-
 
 
 
@@ -3760,6 +3755,21 @@ _.tests.stream = {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
+    'call order consistency': function (done) {
+
+        var abc = ''
+        var put = function (x) { return _.barrier (function () { abc += x }) }
+        var a = put ('a'),
+            b = put ('b'),
+            c = put ('c')
+
+        var barr = _.barrier ()
+            barr (a) (function () { barr.postpones = true; barr (c); barr.postpones = false }) (b) // C is bound after B, so it should be executed after B
+            barr (true)
+
+        _.allTriggered ([a,b,c], function () { $assert (abc, 'abc'); done () })
+    },
+
     '_.barrier reset': function () {
         var b = _.barrier ()
 
@@ -3877,7 +3887,9 @@ _.extend (_, {
                     read: function (schedule) {
                                 return function (returnResult) {
                                     if (barrier.already) {
-                                        returnResult.call (this, barrier.value) }
+                                        ((barrier.postpones || barrier.commitingReads) ? // solves problem outlined in 'call order consistency' test
+                                            returnResult.postponed :
+                                            returnResult).call (this, barrier.value) }
                                     else {
                                         schedule.call (this, returnResult) } } } })
 
@@ -3935,17 +3947,18 @@ _.extend (_, {
 
                 var commitPendingReads = function (flush, __args__) {
                     var args        = _.rest (arguments),
-                        schedule    = queue.copy,
-                        context     = self.context
+                        context     = self.context || this,
+                        schedule    = queue.copy
 
                     if (flush) {
-                        queue.off () }  // resets queue
+                        queue.off () }
 
-                    _.each (schedule, function (fn) {
-                        if (self.postpones) {
-                            fn.postponed.apply (this, args) }
-                        else {
-                            fn.apply (this, args) } }, context || this) }
+                    self.commitingReads = true
+
+                    for (var i = 0, n = schedule.length; i < n; i++) {
+                        (self.postpones ? schedule[i].postponed : schedule[i]).apply (context, args) }
+
+                    delete self.commitingReads }
 
                 var write = cfg.write (commitPendingReads)
                 var read  = cfg.read (scheduleRead)
@@ -4821,6 +4834,7 @@ _.withTest ('OOP', {
                                                 Firefox: p.browser === 'Firefox',
                                                 Safari:  p.browser === 'Safari',
                                                 Chrome:  p.browser === 'Chrome',
+                                                WebKit:  p.browserEngine === 'WebKit',
 
                                                 Browser: p.engine === 'browser',
                                                 NodeJS:  p.engine === 'node',
@@ -4939,6 +4953,8 @@ Vec2 = $prototype ({
                 new Vec2 (this.x + a.x, this.y + a.y) }
         else {
             return new Vec2 (this.x + a, this.y + b) } },
+
+    aspect: $property (function () { return this.w / this.h }),
 
     dot: function (other) {
         return this.x * other.x + this.y * other.y },
@@ -6768,6 +6784,196 @@ Component = $prototype ({
 /*  Experimental stuff
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+
+/*  Promise-centric extensions (SKETCH)
+    ======================================================================== */
+
+Promise.prototype.seq = function (seq) {
+                            return _.reduce2 (this, seq, function (a, b) { return a.then (b) }) }
+
+Promise.prototype.assert = function (desired) {
+                                return this.then (function (x) { $assert (x, desired); return x }) }
+
+Promise.prototype.assertRejected = function (desired) { var check = (arguments.length > 0)
+                                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) }
+
+TimeoutError = $extends (Error, { message: 'timeout expired' })
+
+__ = function (x) {
+        return (x instanceof Function) ? (new Promise (x)) : Promise.resolve (x) }
+
+__.noop = function () {
+            return Promise.resolve () }
+
+__.identity = function (x) {
+                return Promise.resolve (x) }
+
+__.constant = function (x) {
+                return function () {
+                    return Promise.resolve (x) } }
+
+__.reject = function (e) { return Promise.reject (e) }
+__.rejects = function (e) { return function () { return Promise.reject (e) } }
+
+__.safe = function (fn) {
+            return function () {
+                        try     { return Promise.resolve (fn.apply (this, arguments)) }
+                      catch (e) { return Promise.reject (e) } } }
+
+__.map = __.safe (function (x, fn) {
+
+                    if (_.isStrictlyObject (x)) {
+
+                        var result = _.coerceToEmpty (x),
+                            tasks = []
+
+                        _.each2 (x, function (v, k) {
+                            tasks.push (__.identity (fn (v, k)).then (function (v) { result[k] = v })) })
+
+                        return __.all (tasks).then (_.constant (result)) }
+
+                    else {
+                        return fn (x) } })
+
+__.then = function (a, b) { return __.identity (a).then (_.coerceToFunction (b)) }
+
+__.seq = function (seq) {
+            return __.identity (_.reduce2 (seq, __.then)) }
+
+__.all = function (x) {
+            return Promise.all (x) }
+
+__.delay = function (ms) { return __.delays (ms) () }
+
+__.delays = function (ms) {
+                return function (x) {
+                    return new Promise (function (return_) {
+                                            setTimeout (function () { return_ (x) }, ms || 0) }) } }
+
+$mixin (Array, {
+
+    race: $property (function () { return Promise.race (this) })
+})
+
+$mixin (Promise, {
+
+    $: Promise.prototype.then,
+    race: function (other) { return [this, other].race },
+    reject: function (e) { return this.then (__.rejects (e)) },
+    delay: function (ms) { return this.then (__.delays (ms)) },
+    timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
+    now: $property (function () { return this.timeout (0) }),
+    log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
+    alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
+
+    done: function (fn) { return this.then (function (x) { fn (null, x) },
+                                            function (e) { fn (e, null); throw e }) },
+
+    finally: function (fn) { return this.then (function (x) { fn (null, x) },
+                                               function (e) { fn (e, null) }) },
+
+    state: $property (function () {
+                        return this.then (
+                            function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
+                            function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
+                                           return { state: 'pending', pending: true } }) })
+})
+
+_.tests['Promise'] = function () {
+                        return __.all ([
+                                    __.seq (123).assert (123),
+                                    __.seq ([123, 333]).assert (333),
+                                    __.seq ([123, _.constant (333)]).assert (333),
+                                    __.seq ([123, __.constant (333)]).assert (333),
+                                    __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
+                                    __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar'),
+                                    __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
+                                    __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
+                                    __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
+                                    __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ]) }
+
+;
+
+
+/*  Networking
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/*  Promise-based HTTP protocol API (cross-platform)
+    ======================================================================== */
+
+Http = $singleton (Component, {
+
+    /*  You can re-use the HttpMethods trait to build API-specific layers over Http
+     */
+
+    $traits: [HttpMethods = $trait ({
+
+                                get: function (path, cfg) {
+                                            return this.request ('GET',  path, cfg) },
+
+                                post: function (path, cfg) {
+                                            return this.request ('POST', path, cfg) },
+
+                                loadFile: function (path, cfg) {
+                                            return this.request ('GET', path, { responseType: 'arraybuffer' }) },
+
+                                uploadFile: function (path, file, cfg) {
+                                                return this.post (path, _.extend2 ({
+                                                    data: file,
+                                                    headers: {
+                                                        'Content-Type': 'binary/octet-stream',
+                                                        'X-File-Name': Parse.fileName (file.name || 'file').transliterate || 'file',
+                                                        'X-File-Size': file.size,
+                                                        'X-File-Type': file.type } }, cfg)) } }) ],
+
+    /*  Impl
+     */
+
+    request: function (type, path, cfg_) { var cfg = _.extend2 ({ headers: { 'Cache-Control': 'no-cache' } }, cfg_)
+
+                return new Promise (function (resolve, reject) {
+
+                    if (Platform.Browser) {
+
+                        /*  Init XMLHttpRequest
+                         */
+                        var xhr = new XMLHttpRequest ()
+                            xhr.open (type, path, true)
+
+                        /*  Set to 'arraybuffer' to receive binary data
+                         */
+                        if (cfg.responseType)
+                            xhr.responseType = cfg.responseType
+
+                        /*  Set headers
+                         */
+                        _.each (cfg.headers, function (value, key) {
+                            xhr.setRequestHeader (key, value) })
+
+                        /*  Bind events
+                         */
+                        if (cfg.progress) {
+                            xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
+
+                            xhr.onreadystatechange = function () {
+                                                        if (xhr.readyState === 4) {
+                                                            if (cfg.progress) {
+                                                                cfg.progress (1) }
+                                                            if (xhr.status === 200) { resolve ((xhr.responseType === 'arraybuffer') ? xhr.response : xhr.responseText) }
+                                                                               else { reject  (xhr.statusText) } } }
+                        /*  Send
+                         */
+                        if (cfg.data) { xhr.send (cfg.data) }
+                                 else { xhr.send () } }
+
+                    else {
+                        reject ('not implemented') } }) },
+
+    progressCallbackWithSimulation: function (progress) { var simulated = 0
+                                                        progress (0)
+        return function (e) { if (e.lengthComputable) { progress (e.loaded / e.total) }
+                                                 else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
+});
 
 
 /*  Browser-related code
@@ -9073,6 +9279,10 @@ Error reporting UI
 if (typeof UI === 'undefined') {
 	UI = {} }
 
+$mixin (Promise, {
+    panic: $property (function () {
+        return this.catch (function (e) { Panic (e); throw e }) }) })
+
 Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
 
 	if (what === null) {
@@ -9394,5 +9604,5 @@ Modal overlay that renders log.js output for debugging purposes
 	           (file.indexOf ('mootools') >= 0) })
 
     $('head').append ([
-    	$('<style type="text/css">').text ("@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal { font-family: Helvetica, sans-serif; min-width: 640px; max-width: 90%; transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { font-family: Helvetica, sans-serif; color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' → \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after  { content: \', \'; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: \':\'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: \' \'; }\n.panic-alert-error .test-log .log-entry        .line:after { content: \' \'; }\n.panic-alert-error           .callstack-entry  .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { max-width: 640px; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n.panic-alert-error.inline-exception:not(:first-child) { margin-top: 10px; border-top: 1px solid #904C34; }\n\n"),
+    	$('<style type="text/css">').text ("@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0;\n          font-family: Helvetica, sans-serif; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal * { letter-spacing: 0; }\n.panic-modal { font-family: Helvetica, sans-serif; min-width: 640px; max-width: 90%; transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { font-family: Helvetica, sans-serif; color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; font-family: Menlo, monospace; padding: 0; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' → \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after  { content: \', \'; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: \':\'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: \' \'; }\n.panic-alert-error .test-log .log-entry        .line:after { content: \' \'; }\n.panic-alert-error           .callstack-entry  .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { max-width: 640px; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n.panic-alert-error.inline-exception:not(:first-child) { margin-top: 10px; border-top: 1px solid #904C34; }\n\n"),
     	$('<style type="text/css">').text (".useless-log-overlay {	position: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;\n						overflow: hidden;\n						pointer-events: none;\n						-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,\n							color-stop(0.00, rgba(0,0,0,0)),\n							color-stop(0.50, rgba(0,0,0,0)),\n							color-stop(0.60, rgba(0,0,0,0.8)),\n							color-stop(1.00, rgba(0,0,0,1))); }\n\n.useless-log-overlay-body {\n\n	font-family: Menlo, monospace;\n	font-size: 11px;\n	white-space: pre;\n	background: rgba(255,255,255,1);\n	text-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }\n\n.ulo-line 		{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }") ]) }) (jQuery);;

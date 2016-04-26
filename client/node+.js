@@ -32,7 +32,11 @@
                             span:      make ('SPAN'),
                             button:    make ('BUTTON'),
                             iframe:    make ('IFRAME'),
-                            pre:       make ('PRE') } },
+                            pre:       make ('PRE'),
+                            img:       make ('IMG'),
+                            h1:        make ('H1'),
+                            h2:        make ('H2'),
+                            h3:        make ('H3') } },
         
     /*  Various predicates
         ------------------
@@ -79,6 +83,14 @@
                 forbidsEditing: function () {
                     return (this.nodeType === Node.ELEMENT_NODE) &&
                            (this.getAttribute ('contenteditable') === 'false') } } },
+
+
+    /*  Selectors
+        ======================================================================== */
+
+        query:    Element.prototype.querySelectorAll,
+        queryOne: Element.prototype.querySelector,
+
 
     /*  Up/outside means
         ======================================================================== */
@@ -140,6 +152,7 @@
         /*  Useful for clutterless DOM trees construction. Can append text nodes via .append ('text')
          */
         append: function (what) { return this.appendChildren (_.isString (what) ? Node.text (what) : what) },
+        add: $alias ('append'),
 
         walkTree: function (cfg, accept) { accept = (arguments.length === 1) ? cfg : accept
 
@@ -206,8 +219,11 @@
     /*  Events
         ======================================================================== */
 
-        on: function (e, fn) { this.addEventListener (e, fn); return this },
-
+        on:   function (e, fn) { this.addEventListener (e, fn); return this },
+        once: function (e) {
+                    var node = this, fn = undefined
+                    return new Promise (function (resolve) {
+                        node.addEventListener (e, fn = function (e) { node.removeEventListener (e, fn); resolve (e) }) }) },
 
     /*  Properties
         ======================================================================== */
@@ -218,8 +234,13 @@
     /*  Attributes
         ======================================================================== */
 
+        cls: function (x) { this.className = x; return this },
+        css: function (x) { _.extend (this.style, x); return this; },
+
+        hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
+
         toggleAttribute: function (name, value) {
-                                     if (value) { this.setAttribute    (name, true) }
+                                     if (value) { this.setAttribute    (name, value) }
                                            else { this.removeAttribute (name) }
                                     return this },
 
@@ -237,6 +258,10 @@
 
         clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
 
+        setWidthHeight: function (v) {
+                            this.style.width = v.x + 'px'
+                            this.style.height = v.y + 'px'
+                            return this },
 
     /*  Splitting
         ======================================================================== */
@@ -257,8 +282,24 @@
             return (i > 0) ? (location.node.isText ?
                                 this.splitSubtreeBefore (Node.text (n.nodeValue.substr (i)).insertMeAfter (_.extend (n, { nodeValue: n.nodeValue.substr (0, i) }))) :
                                 this.splitSubtreeBefore (n.childNodes[i])) :
-                                this.splitSubtreeBefore (n) } })
+                                this.splitSubtreeBefore (n) },
 
+    /*  Extra stuff
+        ======================================================================== */
+
+        html: function (x) { this.innerHTML = x; return this },
+        text: function (x) { this.innerText = x; return this },
+
+        busyUntil: function (promise) {                              this.   setAttribute ('busy', true)
+                      return promise.done (this.$ (function (e, x) { this.removeAttribute ('busy'); if (e) { throw e; }; return x })) },
+
+        onceAnimationEnd: $property (function () {
+            return this.once (Platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
+
+        animateWithAttribute: function (attr) { this.setAttribute (attr, true)
+             return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) },
+
+    })
 
 /*  New Safari (as seen in technology preview) defines its own Element.append
     method, which gets into conflict with our previously-defined Node.append

@@ -269,6 +269,7 @@ _.platform = function () {
                         (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
                             return _.extend ({
                                     engine: 'browser',
+                                    browserEngine: ((navigator.userAgent.indexOf('AppleWebKit') >= 0) ? 'WebKit' : undefined),
                                     browser: 
                                         ((navigator.userAgent.indexOf ('Firefox') >= 0) ? 'Firefox' :
                                         ((navigator.userAgent.indexOf ('Chrome')  >= 0) ? 'Chrome' :
@@ -3534,7 +3535,9 @@ _.tests.Function = {
 
     'postponed': function (testDone) {
         $assertEveryCalledOnce ($async (function (mkay) {
-            (function (_42) { $assert (42, _42); mkay (); }).postponed (42) }), testDone) },
+            (function (_42) {
+                $assert (this, 'foo')
+                $assert (42, _42); mkay (); }).postponed.call ('foo', 42) }), testDone) },
 
     /*  Returns function that executed after _.delay
      */
@@ -3649,7 +3652,7 @@ $extensionMethods (Function, {
         return function () {               var args  = arguments, this_ = this
             if (!fn._postponed) {      fn._postponed = true
                 _.delay (function () { fn._postponed = false
-                    fn.apply (this, args) }) } } },
+                    fn.apply (this_, args) }) } } },
 
     delay: _.delay,
     delayed: function (fn, time) {
@@ -3699,14 +3702,6 @@ $extensionMethods (Function, { catch_:  function (fn, catch_, then, finally_) { 
                                                       catch (e)    {   result = catch_ (e); catched = true }
                                                      if (!catched) {   result = then (result) }
                                                   return finally_  (   result) } } })
-
-
-if (typeof Promise !== 'undefined') {
-    Promise.prototype.done = function (resolve, reject) {
-        return this.then (resolve, reject)
-                   .catch (_.globalUncaughtExceptionHandler || _.throws) } }
-
-
 
 
 
@@ -4400,6 +4395,21 @@ _.tests.stream = {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
+    'call order consistency': function (done) {
+
+        var abc = ''
+        var put = function (x) { return _.barrier (function () { abc += x }) }
+        var a = put ('a'),
+            b = put ('b'),
+            c = put ('c')
+
+        var barr = _.barrier ()
+            barr (a) (function () { barr.postpones = true; barr (c); barr.postpones = false }) (b) // C is bound after B, so it should be executed after B
+            barr (true)
+
+        _.allTriggered ([a,b,c], function () { $assert (abc, 'abc'); done () })
+    },
+
     '_.barrier reset': function () {
         var b = _.barrier ()
 
@@ -4517,7 +4527,9 @@ _.extend (_, {
                     read: function (schedule) {
                                 return function (returnResult) {
                                     if (barrier.already) {
-                                        returnResult.call (this, barrier.value) }
+                                        ((barrier.postpones || barrier.commitingReads) ? // solves problem outlined in 'call order consistency' test
+                                            returnResult.postponed :
+                                            returnResult).call (this, barrier.value) }
                                     else {
                                         schedule.call (this, returnResult) } } } })
 
@@ -4575,17 +4587,18 @@ _.extend (_, {
 
                 var commitPendingReads = function (flush, __args__) {
                     var args        = _.rest (arguments),
-                        schedule    = queue.copy,
-                        context     = self.context
+                        context     = self.context || this,
+                        schedule    = queue.copy
 
                     if (flush) {
-                        queue.off () }  // resets queue
+                        queue.off () }
 
-                    _.each (schedule, function (fn) {
-                        if (self.postpones) {
-                            fn.postponed.apply (this, args) }
-                        else {
-                            fn.apply (this, args) } }, context || this) }
+                    self.commitingReads = true
+
+                    for (var i = 0, n = schedule.length; i < n; i++) {
+                        (self.postpones ? schedule[i].postponed : schedule[i]).apply (context, args) }
+
+                    delete self.commitingReads }
 
                 var write = cfg.write (commitPendingReads)
                 var read  = cfg.read (scheduleRead)
@@ -5465,6 +5478,7 @@ _.withTest ('OOP', {
                                                 Firefox: p.browser === 'Firefox',
                                                 Safari:  p.browser === 'Safari',
                                                 Chrome:  p.browser === 'Chrome',
+                                                WebKit:  p.browserEngine === 'WebKit',
 
                                                 Browser: p.engine === 'browser',
                                                 NodeJS:  p.engine === 'node',
@@ -5862,6 +5876,8 @@ Vec2 = $prototype ({
                 new Vec2 (this.x + a.x, this.y + a.y) }
         else {
             return new Vec2 (this.x + a, this.y + b) } },
+
+    aspect: $property (function () { return this.w / this.h }),
 
     dot: function (other) {
         return this.x * other.x + this.y * other.y },
@@ -9130,6 +9146,195 @@ _.tests.AOP = {
         return aspectDef })
 
 }) ();
+/*  Promise-centric extensions (SKETCH)
+    ======================================================================== */
+
+Promise.prototype.seq = function (seq) {
+                            return _.reduce2 (this, seq, function (a, b) { return a.then (b) }) }
+
+Promise.prototype.assert = function (desired) {
+                                return this.then (function (x) { $assert (x, desired); return x }) }
+
+Promise.prototype.assertRejected = function (desired) { var check = (arguments.length > 0)
+                                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) }
+
+TimeoutError = $extends (Error, { message: 'timeout expired' })
+
+__ = function (x) {
+        return (x instanceof Function) ? (new Promise (x)) : Promise.resolve (x) }
+
+__.noop = function () {
+            return Promise.resolve () }
+
+__.identity = function (x) {
+                return Promise.resolve (x) }
+
+__.constant = function (x) {
+                return function () {
+                    return Promise.resolve (x) } }
+
+__.reject = function (e) { return Promise.reject (e) }
+__.rejects = function (e) { return function () { return Promise.reject (e) } }
+
+__.safe = function (fn) {
+            return function () {
+                        try     { return Promise.resolve (fn.apply (this, arguments)) }
+                      catch (e) { return Promise.reject (e) } } }
+
+__.map = __.safe (function (x, fn) {
+
+                    if (_.isStrictlyObject (x)) {
+
+                        var result = _.coerceToEmpty (x),
+                            tasks = []
+
+                        _.each2 (x, function (v, k) {
+                            tasks.push (__.identity (fn (v, k)).then (function (v) { result[k] = v })) })
+
+                        return __.all (tasks).then (_.constant (result)) }
+
+                    else {
+                        return fn (x) } })
+
+__.then = function (a, b) { return __.identity (a).then (_.coerceToFunction (b)) }
+
+__.seq = function (seq) {
+            return __.identity (_.reduce2 (seq, __.then)) }
+
+__.all = function (x) {
+            return Promise.all (x) }
+
+__.delay = function (ms) { return __.delays (ms) () }
+
+__.delays = function (ms) {
+                return function (x) {
+                    return new Promise (function (return_) {
+                                            setTimeout (function () { return_ (x) }, ms || 0) }) } }
+
+$mixin (Array, {
+
+    race: $property (function () { return Promise.race (this) })
+})
+
+$mixin (Promise, {
+
+    $: Promise.prototype.then,
+    race: function (other) { return [this, other].race },
+    reject: function (e) { return this.then (__.rejects (e)) },
+    delay: function (ms) { return this.then (__.delays (ms)) },
+    timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
+    now: $property (function () { return this.timeout (0) }),
+    log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
+    alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
+
+    done: function (fn) { return this.then (function (x) { fn (null, x) },
+                                            function (e) { fn (e, null); throw e }) },
+
+    finally: function (fn) { return this.then (function (x) { fn (null, x) },
+                                               function (e) { fn (e, null) }) },
+
+    state: $property (function () {
+                        return this.then (
+                            function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
+                            function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
+                                           return { state: 'pending', pending: true } }) })
+})
+
+_.tests['Promise'] = function () {
+                        return __.all ([
+                                    __.seq (123).assert (123),
+                                    __.seq ([123, 333]).assert (333),
+                                    __.seq ([123, _.constant (333)]).assert (333),
+                                    __.seq ([123, __.constant (333)]).assert (333),
+                                    __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
+                                    __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar'),
+                                    __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
+                                    __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
+                                    __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
+                                    __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ]) }
+
+;
+
+
+/*  Networking
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/*  Promise-based HTTP protocol API (cross-platform)
+    ======================================================================== */
+
+Http = $singleton (Component, {
+
+    /*  You can re-use the HttpMethods trait to build API-specific layers over Http
+     */
+
+    $traits: [HttpMethods = $trait ({
+
+                                get: function (path, cfg) {
+                                            return this.request ('GET',  path, cfg) },
+
+                                post: function (path, cfg) {
+                                            return this.request ('POST', path, cfg) },
+
+                                loadFile: function (path, cfg) {
+                                            return this.request ('GET', path, { responseType: 'arraybuffer' }) },
+
+                                uploadFile: function (path, file, cfg) {
+                                                return this.post (path, _.extend2 ({
+                                                    data: file,
+                                                    headers: {
+                                                        'Content-Type': 'binary/octet-stream',
+                                                        'X-File-Name': Parse.fileName (file.name || 'file').transliterate || 'file',
+                                                        'X-File-Size': file.size,
+                                                        'X-File-Type': file.type } }, cfg)) } }) ],
+
+    /*  Impl
+     */
+
+    request: function (type, path, cfg_) { var cfg = _.extend2 ({ headers: { 'Cache-Control': 'no-cache' } }, cfg_)
+
+                return new Promise (function (resolve, reject) {
+
+                    if (Platform.Browser) {
+
+                        /*  Init XMLHttpRequest
+                         */
+                        var xhr = new XMLHttpRequest ()
+                            xhr.open (type, path, true)
+
+                        /*  Set to 'arraybuffer' to receive binary data
+                         */
+                        if (cfg.responseType)
+                            xhr.responseType = cfg.responseType
+
+                        /*  Set headers
+                         */
+                        _.each (cfg.headers, function (value, key) {
+                            xhr.setRequestHeader (key, value) })
+
+                        /*  Bind events
+                         */
+                        if (cfg.progress) {
+                            xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
+
+                            xhr.onreadystatechange = function () {
+                                                        if (xhr.readyState === 4) {
+                                                            if (cfg.progress) {
+                                                                cfg.progress (1) }
+                                                            if (xhr.status === 200) { resolve ((xhr.responseType === 'arraybuffer') ? xhr.response : xhr.responseText) }
+                                                                               else { reject  (xhr.statusText) } } }
+                        /*  Send
+                         */
+                        if (cfg.data) { xhr.send (cfg.data) }
+                                 else { xhr.send () } }
+
+                    else {
+                        reject ('not implemented') } }) },
+
+    progressCallbackWithSimulation: function (progress) { var simulated = 0
+                                                        progress (0)
+        return function (e) { if (e.lengthComputable) { progress (e.loaded / e.total) }
+                                                 else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
+});
 
 
 /*  Browser-related code

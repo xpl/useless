@@ -183,6 +183,7 @@ _.platform = function () {
         if (typeof window !== 'undefined' && window._ && window._.platform === _.platform && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
             return _.extend({
                 engine: 'browser',
+                browserEngine: navigator.userAgent.indexOf('AppleWebKit') >= 0 ? 'WebKit' : undefined,
                 browser: navigator.userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : navigator.userAgent.indexOf('Chrome') >= 0 ? 'Chrome' : navigator.userAgent.indexOf('Safari') >= 0 ? 'Safari' : navigator.userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
             }, navigator.platform.indexOf('Linux arm') >= 0 || navigator.platform.indexOf('Android') >= 0 || navigator.userAgent.indexOf('Android') >= 0 ? {
                 touch: true,
@@ -2301,7 +2302,7 @@ $extensionMethods(Function, {
                 fn._postponed = true;
                 _.delay(function () {
                     fn._postponed = false;
-                    fn.apply(this, args);
+                    fn.apply(this_, args);
                 });
             }
         };
@@ -2340,12 +2341,6 @@ $extensionMethods(Function, {
         };
     }
 });
-if (typeof Promise !== 'undefined') {
-    Promise.prototype.done = function (resolve, reject) {
-        return this.then(resolve, reject).catch(_.globalUncaughtExceptionHandler || _.throws);
-    };
-}
-;
 $extensionMethods(Array, {
     each: _.each,
     map: _.map,
@@ -2841,7 +2836,7 @@ _.extend(_, {
             read: function (schedule) {
                 return function (returnResult) {
                     if (barrier.already) {
-                        returnResult.call(this, barrier.value);
+                        (barrier.postpones || barrier.commitingReads ? returnResult.postponed : returnResult).call(this, barrier.value);
                     } else {
                         schedule.call(this, returnResult);
                     }
@@ -2922,17 +2917,15 @@ _.extend(_, {
             }
         };
         var commitPendingReads = function (flush, __args__) {
-            var args = _.rest(arguments), schedule = queue.copy, context = self.context;
+            var args = _.rest(arguments), context = self.context || this, schedule = queue.copy;
             if (flush) {
                 queue.off();
             }
-            _.each(schedule, function (fn) {
-                if (self.postpones) {
-                    fn.postponed.apply(this, args);
-                } else {
-                    fn.apply(this, args);
-                }
-            }, context || this);
+            self.commitingReads = true;
+            for (var i = 0, n = schedule.length; i < n; i++) {
+                (self.postpones ? schedule[i].postponed : schedule[i]).apply(context, args);
+            }
+            delete self.commitingReads;
         };
         var write = cfg.write(commitPendingReads);
         var read = cfg.read(scheduleRead);
@@ -3357,6 +3350,7 @@ Platform = $singleton({
             Firefox: p.browser === 'Firefox',
             Safari: p.browser === 'Safari',
             Chrome: p.browser === 'Chrome',
+            WebKit: p.browserEngine === 'WebKit',
             Browser: p.engine === 'browser',
             NodeJS: p.engine === 'node',
             iPad: p.device === 'iPad',
@@ -3649,6 +3643,9 @@ Vec2 = $prototype({
             return new Vec2(this.x + a, this.y + b);
         }
     },
+    aspect: $property(function () {
+        return this.w / this.h;
+    }),
     dot: function (other) {
         return this.x * other.x + this.y * other.y;
     },
@@ -6183,6 +6180,230 @@ _.perfTest = function (arg, then) {
         return aspectDef;
     });
 }());
+Promise.prototype.seq = function (seq) {
+    return _.reduce2(this, seq, function (a, b) {
+        return a.then(b);
+    });
+};
+Promise.prototype.assert = function (desired) {
+    return this.then(function (x) {
+        $assert(x, desired);
+        return x;
+    });
+};
+Promise.prototype.assertRejected = function (desired) {
+    var check = arguments.length > 0;
+    return this.catch(function (x) {
+        if (check) {
+            $assert(x, desired);
+        }
+        return x;
+    });
+};
+TimeoutError = $extends(Error, { message: 'timeout expired' });
+__ = function (x) {
+    return x instanceof Function ? new Promise(x) : Promise.resolve(x);
+};
+__.noop = function () {
+    return Promise.resolve();
+};
+__.identity = function (x) {
+    return Promise.resolve(x);
+};
+__.constant = function (x) {
+    return function () {
+        return Promise.resolve(x);
+    };
+};
+__.reject = function (e) {
+    return Promise.reject(e);
+};
+__.rejects = function (e) {
+    return function () {
+        return Promise.reject(e);
+    };
+};
+__.safe = function (fn) {
+    return function () {
+        try {
+            return Promise.resolve(fn.apply(this, arguments));
+        } catch (e) {
+            return Promise.reject(e);
+        }
+    };
+};
+__.map = __.safe(function (x, fn) {
+    if (_.isStrictlyObject(x)) {
+        var result = _.coerceToEmpty(x), tasks = [];
+        _.each2(x, function (v, k) {
+            tasks.push(__.identity(fn(v, k)).then(function (v) {
+                result[k] = v;
+            }));
+        });
+        return __.all(tasks).then(_.constant(result));
+    } else {
+        return fn(x);
+    }
+});
+__.then = function (a, b) {
+    return __.identity(a).then(_.coerceToFunction(b));
+};
+__.seq = function (seq) {
+    return __.identity(_.reduce2(seq, __.then));
+};
+__.all = function (x) {
+    return Promise.all(x);
+};
+__.delay = function (ms) {
+    return __.delays(ms)();
+};
+__.delays = function (ms) {
+    return function (x) {
+        return new Promise(function (return_) {
+            setTimeout(function () {
+                return_(x);
+            }, ms || 0);
+        });
+    };
+};
+$mixin(Array, {
+    race: $property(function () {
+        return Promise.race(this);
+    })
+});
+$mixin(Promise, {
+    $: Promise.prototype.then,
+    race: function (other) {
+        return [
+            this,
+            other
+        ].race;
+    },
+    reject: function (e) {
+        return this.then(__.rejects(e));
+    },
+    delay: function (ms) {
+        return this.then(__.delays(ms));
+    },
+    timeout: function (ms) {
+        return this.race(__.delay(ms).reject(new TimeoutError()));
+    },
+    now: $property(function () {
+        return this.timeout(0);
+    }),
+    log: $property(function () {
+        return this.then(log, log.e.then(_.throwError));
+    }),
+    alert: $property(function () {
+        return this.then(alert2, alert2.then(_.throwError));
+    }),
+    done: function (fn) {
+        return this.then(function (x) {
+            fn(null, x);
+        }, function (e) {
+            fn(e, null);
+            throw e;
+        });
+    },
+    finally: function (fn) {
+        return this.then(function (x) {
+            fn(null, x);
+        }, function (e) {
+            fn(e, null);
+        });
+    },
+    state: $property(function () {
+        return this.then(function (x) {
+            return {
+                state: 'fulfilled',
+                fulfilled: true,
+                value: x
+            };
+        }, function (e) {
+            return {
+                state: 'rejected',
+                rejected: true,
+                value: x
+            };
+        }).now.catch(function () {
+            return {
+                state: 'pending',
+                pending: true
+            };
+        });
+    })
+});
+Http = $singleton(Component, {
+    $traits: [HttpMethods = $trait({
+            get: function (path, cfg) {
+                return this.request('GET', path, cfg);
+            },
+            post: function (path, cfg) {
+                return this.request('POST', path, cfg);
+            },
+            loadFile: function (path, cfg) {
+                return this.request('GET', path, { responseType: 'arraybuffer' });
+            },
+            uploadFile: function (path, file, cfg) {
+                return this.post(path, _.extend2({
+                    data: file,
+                    headers: {
+                        'Content-Type': 'binary/octet-stream',
+                        'X-File-Name': Parse.fileName(file.name || 'file').transliterate || 'file',
+                        'X-File-Size': file.size,
+                        'X-File-Type': file.type
+                    }
+                }, cfg));
+            }
+        })],
+    request: function (type, path, cfg_) {
+        var cfg = _.extend2({ headers: { 'Cache-Control': 'no-cache' } }, cfg_);
+        return new Promise(function (resolve, reject) {
+            if (Platform.Browser) {
+                var xhr = new XMLHttpRequest();
+                xhr.open(type, path, true);
+                if (cfg.responseType)
+                    xhr.responseType = cfg.responseType;
+                _.each(cfg.headers, function (value, key) {
+                    xhr.setRequestHeader(key, value);
+                });
+                if (cfg.progress) {
+                    xhr.onprogress = Http.progressCallbackWithSimulation(cfg.progress);
+                }
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (cfg.progress) {
+                            cfg.progress(1);
+                        }
+                        if (xhr.status === 200) {
+                            resolve(xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText);
+                        } else {
+                            reject(xhr.statusText);
+                        }
+                    }
+                };
+                if (cfg.data) {
+                    xhr.send(cfg.data);
+                } else {
+                    xhr.send();
+                }
+            } else {
+                reject('not implemented');
+            }
+        });
+    },
+    progressCallbackWithSimulation: function (progress) {
+        var simulated = 0;
+        progress(0);
+        return function (e) {
+            if (e.lengthComputable) {
+                progress(e.loaded / e.total);
+            } else {
+                progress(simulated = (simulated += 0.1) > 1 ? 0 : simulated);
+            }
+        };
+    }
+});
 if (Platform.Browser) {
     if (jQuery) {
         (function ($) {

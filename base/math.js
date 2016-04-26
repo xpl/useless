@@ -107,6 +107,8 @@ Vec2 = $prototype ({
         else {
             return new Vec2 (this.x + a, this.y + b) } },
 
+    aspect: $property (function () { return this.w / this.h }),
+
     dot: function (other) {
         return this.x * other.x + this.y * other.y },
 

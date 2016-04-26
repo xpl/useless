@@ -44,7 +44,9 @@ _.tests.Function = {
 
     'postponed': function (testDone) {
         $assertEveryCalledOnce ($async (function (mkay) {
-            (function (_42) { $assert (42, _42); mkay (); }).postponed (42) }), testDone) },
+            (function (_42) {
+                $assert (this, 'foo')
+                $assert (42, _42); mkay (); }).postponed.call ('foo', 42) }), testDone) },
 
     /*  Returns function that executed after _.delay
      */
@@ -159,7 +161,7 @@ $extensionMethods (Function, {
         return function () {               var args  = arguments, this_ = this
             if (!fn._postponed) {      fn._postponed = true
                 _.delay (function () { fn._postponed = false
-                    fn.apply (this, args) }) } } },
+                    fn.apply (this_, args) }) } } },
 
     delay: _.delay,
     delayed: function (fn, time) {
@@ -209,14 +211,6 @@ $extensionMethods (Function, { catch_:  function (fn, catch_, then, finally_) { 
                                                       catch (e)    {   result = catch_ (e); catched = true }
                                                      if (!catched) {   result = then (result) }
                                                   return finally_  (   result) } } })
-
-
-if (typeof Promise !== 'undefined') {
-    Promise.prototype.done = function (resolve, reject) {
-        return this.then (resolve, reject)
-                   .catch (_.globalUncaughtExceptionHandler || _.throws) } }
-
-
 
 
 

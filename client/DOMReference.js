@@ -139,9 +139,10 @@ DOMReference = $trait ({
                                  this.dom = dom
                                  this.el = jQuery (this.dom) }),
 
-    afterDestroy: function () {  this.dom.removeFromParent ()
-                                 this.dom = undefined
-                                 this.el  = undefined
+    afterDestroy: function () {  if (this.dom) {
+                                     this.dom.removeFromParent ()
+                                     this.dom = undefined
+                                     this.el  = undefined }
                                  this.domReady.reset () } })
 
 /*  ======================================================================== */

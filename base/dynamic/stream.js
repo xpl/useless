@@ -175,6 +175,21 @@ _.tests.stream = {
             _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
+    'call order consistency': function (done) {
+
+        var abc = ''
+        var put = function (x) { return _.barrier (function () { abc += x }) }
+        var a = put ('a'),
+            b = put ('b'),
+            c = put ('c')
+
+        var barr = _.barrier ()
+            barr (a) (function () { barr.postpones = true; barr (c); barr.postpones = false }) (b) // C is bound after B, so it should be executed after B
+            barr (true)
+
+        _.allTriggered ([a,b,c], function () { $assert (abc, 'abc'); done () })
+    },
+
     '_.barrier reset': function () {
         var b = _.barrier ()
 
@@ -292,7 +307,9 @@ _.extend (_, {
                     read: function (schedule) {
                                 return function (returnResult) {
                                     if (barrier.already) {
-                                        returnResult.call (this, barrier.value) }
+                                        ((barrier.postpones || barrier.commitingReads) ? // solves problem outlined in 'call order consistency' test
+                                            returnResult.postponed :
+                                            returnResult).call (this, barrier.value) }
                                     else {
                                         schedule.call (this, returnResult) } } } })
 
@@ -350,17 +367,18 @@ _.extend (_, {
 
                 var commitPendingReads = function (flush, __args__) {
                     var args        = _.rest (arguments),
-                        schedule    = queue.copy,
-                        context     = self.context
+                        context     = self.context || this,
+                        schedule    = queue.copy
 
                     if (flush) {
-                        queue.off () }  // resets queue
+                        queue.off () }
 
-                    _.each (schedule, function (fn) {
-                        if (self.postpones) {
-                            fn.postponed.apply (this, args) }
-                        else {
-                            fn.apply (this, args) } }, context || this) }
+                    self.commitingReads = true
+
+                    for (var i = 0, n = schedule.length; i < n; i++) {
+                        (self.postpones ? schedule[i].postponed : schedule[i]).apply (context, args) }
+
+                    delete self.commitingReads }
 
                 var write = cfg.write (commitPendingReads)
                 var read  = cfg.read (scheduleRead)

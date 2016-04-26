@@ -838,6 +838,7 @@ _.withTest ('OOP', {
                                                 Firefox: p.browser === 'Firefox',
                                                 Safari:  p.browser === 'Safari',
                                                 Chrome:  p.browser === 'Chrome',
+                                                WebKit:  p.browserEngine === 'WebKit',
 
                                                 Browser: p.engine === 'browser',
                                                 NodeJS:  p.engine === 'node',

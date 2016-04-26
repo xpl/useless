@@ -9,6 +9,7 @@ _.platform = function () {
                         (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
                             return _.extend ({
                                     engine: 'browser',
+                                    browserEngine: ((navigator.userAgent.indexOf('AppleWebKit') >= 0) ? 'WebKit' : undefined),
                                     browser: 
                                         ((navigator.userAgent.indexOf ('Firefox') >= 0) ? 'Firefox' :
                                         ((navigator.userAgent.indexOf ('Chrome')  >= 0) ? 'Chrome' :

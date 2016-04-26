@@ -3,7 +3,7 @@
 
 Thats how u talk to server
 
-TODO: refactor, l10n for messages
+DEPRECATED
 
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -29,7 +29,7 @@ API = $singleton (Component, {
 		var progress = cfg.progress  || _.identity
 		var failure  = cfg.failure   || _.identity
 		
-		var retry = Http.request (type, prePath + '/api/' + path, _.extend ({}, cfg, {
+		var retry = _Http.request (type, prePath + '/api/' + path, _.extend ({}, cfg, {
 			data: cfg.data || (cfg.what && JSON.stringify (cfg.what)),
 			dataType: cfg.what ? 'json' : (cfg.data || undefined),
 			success: function (response) {
@@ -139,7 +139,7 @@ API = $singleton (Component, {
 /*	low-level http protocol utilities
 	======================================================================== */
 
-Http = $singleton (Component, {
+_Http = $singleton (Component, {
 
 	loadFile: function (path, cfg) {
 		var request = new XMLHttpRequest();
@@ -174,7 +174,7 @@ Http = $singleton (Component, {
 
 	request: function (type, url, cfg) {
 		var retry = function () {
-			Http.request (cfg) }
+			_Http.request (cfg) }
 		jQuery.ajax (_.extend ({
 			type: type,
 			url: url,
