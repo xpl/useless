@@ -4861,6 +4861,8 @@ _.lerp = function (t, min, max) {
 _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
     return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
 
+_.rescaleClamped = function (v, from, to) { return _.rescale (v, from, to, { clamp: true }) }
+
 _.sqr = function (x) { return x * x }
 
 
