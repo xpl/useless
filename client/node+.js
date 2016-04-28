@@ -263,6 +263,27 @@
                             this.style.height = v.y + 'px'
                             return this },
 
+        setTransform: function (x) { this.transform = x; return this },
+
+        transform: $property ({
+
+            get: function () {
+                    var components = (this.css ('transform') || '').match (/^matrix\((.+\))$/)
+                    if (components) {
+                        var m = components[1].split (',').map (parseFloat)
+                        return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }
+                    else {
+                        return Transform.identity } },
+
+            /*  Example value: { translate: new Vec2 (a, b),  scale: new Vec2 (x, y), rotate: 180 }
+             */
+            set: function (cfg) {
+                this.style.transform = (_.isStrictlyObject (cfg) && (
+                                            (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
+                                            (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
+                                            (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
+
+
     /*  Splitting
         ======================================================================== */
 
@@ -298,6 +319,7 @@
 
         animateWithAttribute: function (attr) { this.setAttribute (attr, true)
              return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) },
+
 
     })
 

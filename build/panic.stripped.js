@@ -2377,7 +2377,7 @@ _.extend(_, {
     observable: function (value) {
         var stream = _.stream({
             hasValue: arguments.length > 0,
-            value: value,
+            value: _.isFunction(value) ? undefined : value,
             read: _.identity,
             read: function (schedule) {
                 return function (returnResult) {
