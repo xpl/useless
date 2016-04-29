@@ -315,7 +315,7 @@
                       return promise.done (this.$ (function (e, x) { this.removeAttribute ('busy'); if (e) { throw e; }; return x })) },
 
         onceAnimationEnd: $property (function () {
-            return this.once (Platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
+            return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
 
         animateWithAttribute: function (attr) { this.setAttribute (attr, true)
              return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) },

@@ -201,5 +201,5 @@ _.defineKeyword ('scope', function (fn) { var releaseStack = undefined
                                                                         releaseStack = undefined }
                                                              trigger () } }) }) })
 
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = _ }

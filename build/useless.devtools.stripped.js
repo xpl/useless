@@ -242,7 +242,7 @@ _.extend(_, {
         }
     });
     _.each(_.keys(_.assertions), function (name) {
-        _.defineGlobalProperty('$' + name, _[name], { configurable: true });
+        $global.define('$' + name, _[name], { configurable: true });
     });
 }());
 (function () {
@@ -285,7 +285,7 @@ _.extend(_, {
         });
     };
     globalUncaughtExceptionHandler.chain = [];
-    switch (Platform.engine) {
+    switch ($platform.engine) {
     case 'node':
         require('process').on('uncaughtException', globalUncaughtExceptionHandler);
         break;
@@ -305,7 +305,7 @@ _.extend(_, {
     }
 }());
 (function () {
-    if (Platform.Browser) {
+    if ($platform.Browser) {
         _.hasUncaughtAsync = true;
         var globalAsyncContext = undefined;
         var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
@@ -355,19 +355,19 @@ _.extend(_, {
 }());
 _.hasReflection = true;
 _.defineKeyword('callStack', function () {
-    return CallStack.fromRawString(CallStack.currentAsRawString).offset(Platform.NodeJS ? 1 : 0);
+    return CallStack.fromRawString(CallStack.currentAsRawString).offset($platform.NodeJS ? 1 : 0);
 });
 _.defineKeyword('currentFile', function () {
-    return (CallStack.rawStringToArray(CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file;
+    return (CallStack.rawStringToArray(CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file;
 });
 _.defineKeyword('uselessPath', _.memoize(function () {
-    return _.initial(__filename.split('/'), Platform.NodeJS ? 2 : 1).join('/') + '/';
+    return _.initial(__filename.split('/'), $platform.NodeJS ? 2 : 1).join('/') + '/';
 }));
 _.defineKeyword('sourcePath', _.memoize(function () {
     var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
     return local ? local + '/' : $uselessPath;
 }));
-if (Platform.Browser) {
+if ($platform.Browser) {
     _.defineProperty(window, '__filename', function () {
         return $currentFile;
     });
@@ -381,7 +381,7 @@ SourceFiles = $singleton(Component, {
     read: $memoizeCPS(function (file, then) {
         if (file.indexOf('<') < 0) {
             try {
-                if (Platform.NodeJS) {
+                if ($platform.NodeJS) {
                     then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '');
                 } else {
                     var xhr = new XMLHttpRequest();
@@ -401,7 +401,7 @@ SourceFiles = $singleton(Component, {
         }
     }),
     write: function (file, text, then) {
-        if (Platform.NodeJS) {
+        if ($platform.NodeJS) {
             this.read(file, function (prevText) {
                 var fs = require('fs'), opts = { encoding: 'utf8' };
                 try {
@@ -519,7 +519,7 @@ CallStack = $extends(Array, {
         return new CallStack(arr);
     }),
     currentAsRawString: $static($property(function () {
-        var cut = Platform.Browser ? 3 : 2;
+        var cut = $platform.Browser ? 3 : 2;
         return _.rest((new Error().stack || '').split('\n'), cut).join('\n');
     })),
     shortenPath: $static(function (path) {
@@ -528,7 +528,7 @@ CallStack = $extends(Array, {
     }),
     isThirdParty: $static(_.bindable(function (file) {
         var local = file.replace($sourcePath, '');
-        return Platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
+        return $platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
     })),
     fromRawString: $static(_.sequence(function (rawString) {
         return CallStack.rawStringToArray(rawString);
@@ -565,7 +565,7 @@ CallStack = $extends(Array, {
             return {
                 beforeParse: line,
                 callee: callee || '',
-                index: Platform.Browser && fileLineColumn[0] === window.location.href,
+                index: $platform.Browser && fileLineColumn[0] === window.location.href,
                 'native': native_,
                 file: fileLineColumn[0] || '',
                 line: (fileLineColumn[1] || '').integerValue,
@@ -810,7 +810,7 @@ _.extend(log, {
             log.impl.numWrites++;
             var args = _.asArray(arguments);
             var config = log.impl.configure([{
-                    stackOffset: Platform.NodeJS ? 1 : 3,
+                    stackOffset: $platform.NodeJS ? 1 : 3,
                     indent: writeBackend.indent || 0
                 }].concat(log.impl.configStack));
             var runs = _.reduce2([], _.partition3(args, _.isTypeOf.$(log.Config)), function (runs, span) {
@@ -863,7 +863,7 @@ _.extend(log, {
         },
         defaultWriteBackend: function (params) {
             var codeLocation = params.codeLocation;
-            if (Platform.NodeJS) {
+            if ($platform.NodeJS) {
                 var lines = _.map(params.lines, function (line) {
                     return params.indentation + _.map(line, function (run) {
                         return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
@@ -1039,7 +1039,7 @@ _.extend(log, {
         }
     }
 });
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = log;
 }
 ;
@@ -1192,7 +1192,7 @@ Testosterone = $singleton({
         _.deleteKeyword(name);
         _.defineKeyword(name, Tags.modify(def, function (fn) {
             return _.withSameArgs(fn, function () {
-                var loc = $callStack.safeLocation(Platform.Browser && !Platform.Chrome ? 0 : 1);
+                var loc = $callStack.safeLocation($platform.Browser && !$platform.Chrome ? 0 : 1);
                 if (!self.currentAssertion) {
                     return fn.apply(self, arguments);
                 } else {
@@ -1465,7 +1465,7 @@ Testosterone.ValidatesRecursion = $trait({
     colors.each(_.defineTagKeyword);
     _.defineTagKeyword('verbose');
     Testosterone.LogsMethodCalls = $trait({
-        $test: Platform.Browser ? function () {
+        $test: $platform.Browser ? function () {
         } : function (testDone) {
             var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
             var Compo = $extends(Proto, {
@@ -1533,7 +1533,7 @@ Testosterone.ValidatesRecursion = $trait({
         }
     });
 }());
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = Testosterone;
 }
 ;

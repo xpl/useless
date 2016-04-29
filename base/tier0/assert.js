@@ -404,7 +404,7 @@ if (_.hasStdlib) {
         ======================================================================== */
 
     _.each (_.keys (_.assertions), function (name) {
-        _.defineGlobalProperty ('$' + name, _[name], { configurable: true }) })
+        $global.define ('$' + name, _[name], { configurable: true }) })
 
 })
 

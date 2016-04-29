@@ -15,7 +15,7 @@ _.extend ($, {
      */
     svg: function (tag) {
             var node = document.createElementNS ('http://www.w3.org/2000/svg', tag)
-            if ((tag === 'svg') && !Platform.IE) {
+            if ((tag === 'svg') && !$platform.IE) {
                 node.setAttribute ('xmlns', 'http://www.w3.org/2000/svg') }
             return $(node) } })
 
@@ -176,7 +176,7 @@ _.extend ($, {
          */
         return function (cfg) {
 
-            if (!Platform.touch && !window.__globalDragOverlay) {
+            if (!$platform.touch && !window.__globalDragOverlay) {
                  window.__globalDragOverlay =
                      $('<div>').css ({
                         display: 'none',
@@ -191,7 +191,7 @@ _.extend ($, {
 
                 this.addClass (cfg.cls || '')
                 
-                if (Platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
+                if ($platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
                     
                     if (!cfg.start || ((memo = cfg.start.call (cfg.context || this, new Vec2 (
                             // position (relative to delegate target)
@@ -203,7 +203,7 @@ _.extend ($, {
                         memo = _.clone (memo)
 
                         var move = this.$ (function (e) {
-                            if (Platform.touch || e.which === button) {
+                            if ($platform.touch || e.which === button) {
                                 e.preventDefault ()
                                 var translatedEvent = translateTouchEvent (e, this[0])
                                 var offset = relativeTo.offset ()
@@ -252,7 +252,7 @@ _.extend ($, {
 
             var touchstartListener = _.$ (this, function (e) {
                 var where = _.extend ({}, translateTouchEvent (e, this[0])) /* copy event, cuz on iPad it's re-used by browser */
-                if (Platform.touch && cfg.longPress) {
+                if ($platform.touch && cfg.longPress) {
                     var cancel = undefined
                     var timeout = window.setTimeout (_.$ (this, function () {
                         this.off ('touchmove touchend', cancel)
@@ -266,11 +266,11 @@ _.extend ($, {
                     e.preventDefault ()
                     e.stopPropagation () } })
 
-            this.on (Platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
+            this.on ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
 
             return _.extend (this, {
                         cancel: this.$ (function () {
-                            this.off (Platform.touch ? 'touchstart' : 'mousedown', touchstartListener) }) }) } }) (),
+                            this.off ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener) }) }) } }) (),
 
     /*  $(el).transform ({
                 translate: new Vec2 (a, b),
@@ -344,7 +344,7 @@ _.extend ($, {
     touchClick: function (fn, cfg) {
         var self = this
         cfg = cfg || {}
-        if (!cfg.disableTouch && Platform.touch) { // touch experience
+        if (!cfg.disableTouch && $platform.touch) { // touch experience
             var touchstartHandler = function (e) {
                 fn.apply (this, arguments)
                 e.preventDefault () // prevents nasty delayed click-focus effect on iOS
@@ -372,7 +372,7 @@ _.extend ($, {
         Reverts to .dblclick on desktop
      */
     touchDoubleclick: function (fn) {
-        if (Platform.touch) {
+        if ($platform.touch) {
             var lastTime = Date.now ()
             return this.on ('touchend', function () {
                 var now = Date.now ()

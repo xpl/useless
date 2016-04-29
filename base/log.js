@@ -171,7 +171,7 @@ _.extend (log, {
             log.impl.numWrites++
 
             var args   = _.asArray (arguments)
-            var config = log.impl.configure ([{ stackOffset: Platform.NodeJS ? 1 : 3,
+            var config = log.impl.configure ([{ stackOffset: $platform.NodeJS ? 1 : 3,
                                                 indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
 
             var runs = _.reduce2 (
@@ -237,7 +237,7 @@ _.extend (log, {
 
             var codeLocation = params.codeLocation
 
-            if (Platform.NodeJS) {
+            if ($platform.NodeJS) {
 
                 var lines = _.map (params.lines, function (line) {
                                                     return params.indentation + _.map (line, function (run) {
@@ -424,7 +424,7 @@ _.extend (log, {
                  .then (_.joinsWith ('  ')) ) } }
 })
 
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = log }
 
 

@@ -78,10 +78,9 @@ _.withTest ('argcount tracking', function () {
 
     /*  Setting
      */
-    withRestArg: _.defineGlobalProperty ('$restArg',
-                        function (fn) {
-                            Object.defineProperty (fn, '_ra', { enumerable: false, writable: true, value: true })
-                            return fn }),
+    withRestArg: $restArg = function (fn) {
+                                Object.defineProperty (fn, '_ra', { enumerable: false, writable: true, value: true })
+                                return fn },
 
     withArgs: function (numArgs, restArg, fn) {
                         if (numArgs !== undefined) {

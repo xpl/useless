@@ -823,27 +823,3 @@ _.withTest ('OOP', {
             $singleton = function (arg1, arg2) {
                     return new ($prototype.apply (null, arguments)) () } })
 
-
-/*  Ports platform.js to OOP terms 
-    ======================================================================== */
-
-    Platform = $singleton ({ $property: (function () { var p = _.platform ()
-                                            return {
-                                                engine:  p.engine,
-                                                system:  p.system,
-                                                device:  p.device,
-                                                touch:   p.touch || false,
-
-                                                IE:      p.browser === 'IE',
-                                                Firefox: p.browser === 'Firefox',
-                                                Safari:  p.browser === 'Safari',
-                                                Chrome:  p.browser === 'Chrome',
-                                                WebKit:  p.browserEngine === 'WebKit',
-
-                                                Browser: p.engine === 'browser',
-                                                NodeJS:  p.engine === 'node',
-                                                iPad:    p.device === 'iPad',
-                                                iPhone:  p.device === 'iPhone',
-                                                iOS:     p.system === 'iOS' } }) () })
-
-        

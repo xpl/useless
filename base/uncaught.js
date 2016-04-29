@@ -39,7 +39,7 @@
 
     globalUncaughtExceptionHandler.chain = []
 
-    switch (Platform.engine) {
+    switch ($platform.engine) {
         case 'node':
             require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
 

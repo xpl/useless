@@ -126,12 +126,12 @@ _ = (function () {
 /*  Browser-related code
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (Platform.Browser) {
+    if ($platform.Browser) {
         $include ('./client/jQueryPlus')
     }
 
 /*  ==================================================================== */
 
-    if (Platform.NodeJS) { // Should strip it from client with conditional macro in future...
+    if ($platform.NodeJS) { // Should strip it from client with conditional macro in future...
         module.exports = _ }
 

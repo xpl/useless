@@ -223,7 +223,7 @@ Testosterone = $singleton ({
         _.deleteKeyword (name)
         _.defineKeyword (name, Tags.modify (def,
                                     function (fn) {
-                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation ((Platform.Browser && !Platform.Chrome) ? 0 : 1)
+                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
                                             if (!self.currentAssertion) {
                                                 return fn.apply (self, arguments) }
                                             else {
@@ -456,7 +456,7 @@ Testosterone.ValidatesRecursion = $trait ({
 
     Testosterone.LogsMethodCalls = $trait ({
 
-        $test: Platform.Browser ? (function () {}) : function (testDone) {
+        $test: $platform.Browser ? (function () {}) : function (testDone) {
 
                     var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
                     var Compo = $extends (Proto, {
@@ -507,5 +507,5 @@ Testosterone.ValidatesRecursion = $trait ({
                                                                         return result }) } }) } } }) }) ();
 
 
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = Testosterone }

@@ -1,12 +1,10 @@
-/*  Platform abstraction layer
- */
+/*  $platform and $global
+    ======================================================================== */
 
-_.platform = function () {
+;(function () {
 
-                return arguments.callee.__value || (arguments.callee.__value = (function () {
-
-                    if ((typeof window !== 'undefined') && window._ && (window._.platform === _.platform) &&
-                        (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
+    var p = (function () {
+                    if ((typeof window !== 'undefined') && (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
                             return _.extend ({
                                     engine: 'browser',
                                     browserEngine: ((navigator.userAgent.indexOf('AppleWebKit') >= 0) ? 'WebKit' : undefined),
@@ -24,25 +22,43 @@ _.platform = function () {
                                         ((navigator.platform .indexOf ("iPhone")    >= 0)
                                     ||   (navigator.platform .indexOf ("iPod")      >= 0) ? { touch: true, system: 'iOS', device: 'iPhone' } : {} )))) }
 
-                    else if ((typeof global !== 'undefined') && global._ && (global._.platform === _.platform)) {
+                    else if ((typeof global !== 'undefined') && global._) {
                         return { engine: 'node' } }
 
                     else {
-                        return {} } }) ()) }
+                        return {} } }) ()
 
-_.global = function () {
-                return ((_.platform ().engine === 'browser') ? window :
-                        (_.platform ().engine === 'node')    ? global : undefined) }
+    var $global = (p.engine === 'browser') ? window :
+                  (p.engine === 'node')    ? global : undefined
 
-_.defineGlobalProperty = function (name, value, cfg) {
-                            if (_.global ()[name] !== undefined) {
-                                throw new Error ('cannot defineGlobalProperty: ' + name + ' is already there') }
+    $global.define = function (name, v, cfg) { if (name in $global) {
+                                                    throw new Error ('cannot define global ' + name + ': already there') }
 
-                            Object.defineProperty (_.global (), name, _.extend ({
-                                        enumerable: true,
-                                        get: (_.isFunction (value) && value.length === 0) ? value : _.constant (value) }, cfg))
+         Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
 
-                            return value }
+
+    $global.define ('$global', $global)
+    $global.define ('$platform', Object.defineProperties ({}, _.mapObject ({
+
+                                            engine:  p.engine,
+                                            system:  p.system,
+                                            device:  p.device,
+                                            touch:   p.touch || false,
+
+                                            IE:      p.browser       === 'IE',
+                                            Firefox: p.browser       === 'Firefox',
+                                            Safari:  p.browser       === 'Safari',
+                                            Chrome:  p.browser       === 'Chrome',
+                                            WebKit:  p.browserEngine === 'WebKit',
+
+                                            Browser: p.engine === 'browser',
+                                            NodeJS:  p.engine === 'node',
+                                            iPad:    p.device === 'iPad',
+                                            iPhone:  p.device === 'iPhone',
+                                            iOS:     p.system === 'iOS'
+
+                                        }, function (v, k) { return { enumerable: true, value: v } })))
+}) ();
 
 /*  Use this helper to override underscore's functions
     ======================================================================== */
@@ -53,16 +69,14 @@ $overrideUnderscore = function (name, genImpl) {
 /*  alert2 for ghetto debugging in browser
     ======================================================================== */
 
-if (_.platform ().engine !== 'browser') {
-    _.defineGlobalProperty ('alert', function (args) {
-        var print = ((_.global ()['log'] &&
-            _.partial (log.warn, log.config ({ stackOffset: 2 }))) ||
-            console.log)
-        print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) }) }
+if ($platform.Browser) {
+    $global.alert = function (args) {
+        var print = ($global.log && _.partial (log.warn, log.config ({ stackOffset: 2 }))) || console.log
+        print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) } }
  
-_.defineGlobalProperty ('alert2', function (args) {
-    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })
+$global.alert2 = function (args) {
+    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] }
 
-_.global ().log = function () { console.log.call (console.log, arguments) } // placeholder for log.js
+$global.log = function () { console.log.call (console.log, arguments) } // placeholder for log.js
 
 

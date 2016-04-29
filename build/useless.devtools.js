@@ -404,7 +404,7 @@ if (_.hasStdlib) {
         ======================================================================== */
 
     _.each (_.keys (_.assertions), function (name) {
-        _.defineGlobalProperty ('$' + name, _[name], { configurable: true }) })
+        $global.define ('$' + name, _[name], { configurable: true }) })
 
 })
 
@@ -453,7 +453,7 @@ if (_.hasStdlib) {
 
     globalUncaughtExceptionHandler.chain = []
 
-    switch (Platform.engine) {
+    switch ($platform.engine) {
         case 'node':
             require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
 
@@ -475,7 +475,7 @@ if (_.hasStdlib) {
 
 (function () {
 
-    if (Platform.Browser) {
+    if ($platform.Browser) {
 
         _.hasUncaughtAsync = true
 
@@ -632,13 +632,13 @@ _.tests.reflection = {
 /*  Custom syntax (defined in a way that avoids cross-dependency loops)
  */
 _.defineKeyword ('callStack',   function () {
-    return CallStack.fromRawString (CallStack.currentAsRawString).offset (Platform.NodeJS ? 1 : 0) })
+    return CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0) })
 
 _.defineKeyword ('currentFile', function () {
-    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file })
+    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file })
 
 _.defineKeyword ('uselessPath', _.memoize (function () {
-    return _.initial (__filename.split ('/'), Platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
+    return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
 
 _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
     return local ? (local + '/') : $uselessPath }))
@@ -646,7 +646,7 @@ _.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPat
 
 /*  Port __filename for browsers
  */
-if (Platform.Browser) {
+if ($platform.Browser) {
     _.defineProperty (window, '__filename', function () { return $currentFile }) }
 
 
@@ -666,7 +666,7 @@ SourceFiles = $singleton (Component, {
     read: $memoizeCPS (function (file, then) {
         if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
             try {
-                if (Platform.NodeJS) {
+                if ($platform.NodeJS) {
                     then (require ('fs').readFileSync (file, { encoding: 'utf8' }) || '') }
                 else {
                     /*  Return response body regardless of status code
@@ -682,7 +682,7 @@ SourceFiles = $singleton (Component, {
 
     write: function (file, text, then) {
 
-        if (Platform.NodeJS) {
+        if ($platform.NodeJS) {
 
             this.read (file, function (prevText) { // save previous version at <file>.backups/<date>
 
@@ -795,7 +795,7 @@ CallStack = $extends (Array, {
         return new CallStack (arr) }),
 
     currentAsRawString: $static ($property (function () {
-        var cut = Platform.Browser ? 3 : 2
+        var cut = $platform.Browser ? 3 : 2
         return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
 
     shortenPath: $static (function (path) {
@@ -806,7 +806,7 @@ CallStack = $extends (Array, {
                         : path.split ('/').last }), // extract last part of /-separated sequence
 
     isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
-                    return (Platform.NodeJS && (file[0] !== '/')) || // from Node source
+                    return ($platform.NodeJS && (file[0] !== '/')) || // from Node source
                            (local.indexOf ('/node_modules/') >= 0) ||
                            (file.indexOf  ('/node_modules/') >= 0 && !local) ||
                            (local.indexOf ('underscore') >= 0) ||
@@ -852,7 +852,7 @@ CallStack = $extends (Array, {
             return {
                 beforeParse: line,
                 callee:      callee || '',
-                index:       Platform.Browser && (fileLineColumn[0] === window.location.href),
+                index:       $platform.Browser && (fileLineColumn[0] === window.location.href),
                'native':     native_,
                 file:        fileLineColumn[0] || '',
                 line:       (fileLineColumn[1] || '').integerValue,
@@ -1061,7 +1061,7 @@ _.extend (log, {
             log.impl.numWrites++
 
             var args   = _.asArray (arguments)
-            var config = log.impl.configure ([{ stackOffset: Platform.NodeJS ? 1 : 3,
+            var config = log.impl.configure ([{ stackOffset: $platform.NodeJS ? 1 : 3,
                                                 indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
 
             var runs = _.reduce2 (
@@ -1127,7 +1127,7 @@ _.extend (log, {
 
             var codeLocation = params.codeLocation
 
-            if (Platform.NodeJS) {
+            if ($platform.NodeJS) {
 
                 var lines = _.map (params.lines, function (line) {
                                                     return params.indentation + _.map (line, function (run) {
@@ -1314,7 +1314,7 @@ _.extend (log, {
                  .then (_.joinsWith ('  ')) ) } }
 })
 
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = log }
 
 
@@ -1544,7 +1544,7 @@ Testosterone = $singleton ({
         _.deleteKeyword (name)
         _.defineKeyword (name, Tags.modify (def,
                                     function (fn) {
-                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation ((Platform.Browser && !Platform.Chrome) ? 0 : 1)
+                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
                                             if (!self.currentAssertion) {
                                                 return fn.apply (self, arguments) }
                                             else {
@@ -1777,7 +1777,7 @@ Testosterone.ValidatesRecursion = $trait ({
 
     Testosterone.LogsMethodCalls = $trait ({
 
-        $test: Platform.Browser ? (function () {}) : function (testDone) {
+        $test: $platform.Browser ? (function () {}) : function (testDone) {
 
                     var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
                     var Compo = $extends (Proto, {
@@ -1828,7 +1828,7 @@ Testosterone.ValidatesRecursion = $trait ({
                                                                         return result }) } }) } } }) }) ();
 
 
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = Testosterone };
 /*  Measures run time of a routine (either sync or async)
     ======================================================================== */

@@ -33,7 +33,7 @@ Http = $singleton (Component, {
 
                 return new Promise (function (resolve, reject) {
 
-                    if (Platform.Browser) {
+                    if ($platform.Browser) {
 
                         /*  Init XMLHttpRequest
                          */

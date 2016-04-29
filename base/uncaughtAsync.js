@@ -3,7 +3,7 @@
 
 (function () {
 
-    if (Platform.Browser) {
+    if ($platform.Browser) {
 
         _.hasUncaughtAsync = true
 

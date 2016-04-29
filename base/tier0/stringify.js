@@ -23,7 +23,7 @@ _.deferTest (['type', 'stringify'], function () {
 
             var Proto = $prototype ({})
 
-            $assert (_.stringify (Proto),   Platform.NodeJS ? 'Proto ()' : '<prototype>')
+            $assert (_.stringify (Proto),   $platform.NodeJS ? 'Proto ()' : '<prototype>')
 
             $assert (_.stringify (undefined),'undefined')
             $assert (_.stringify (123),     '123')
@@ -67,7 +67,7 @@ _.deferTest (['type', 'stringify'], function () {
                     return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
 
     _.stringifyPrototype = function (x) {
-            if (Platform.NodeJS && x.$meta) { var name = ''
+            if ($platform.NodeJS && x.$meta) { var name = ''
                 x.$meta (function (values) { name = values.name })
                 return name && (name + ' ()') }
             else return '<prototype>' }
@@ -134,7 +134,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     var pretty = cfg.pretty || false
 
-                                    if ((_.platform ().engine === 'browser')) {
+                                    if ($platform.Browser) {
                                         if (_.isTypeOf (Element, x)) {
                                             return (x.tagName.lowercase +
                                                         ((x.id && ('#' + x.id)) || '') +

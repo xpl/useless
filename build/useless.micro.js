@@ -43,15 +43,13 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 
 
 
-/*  Platform abstraction layer
- */
+/*  $platform and $global
+    ======================================================================== */
 
-_.platform = function () {
+;(function () {
 
-                return arguments.callee.__value || (arguments.callee.__value = (function () {
-
-                    if ((typeof window !== 'undefined') && window._ && (window._.platform === _.platform) &&
-                        (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
+    var p = (function () {
+                    if ((typeof window !== 'undefined') && (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
                             return _.extend ({
                                     engine: 'browser',
                                     browserEngine: ((navigator.userAgent.indexOf('AppleWebKit') >= 0) ? 'WebKit' : undefined),
@@ -69,25 +67,43 @@ _.platform = function () {
                                         ((navigator.platform .indexOf ("iPhone")    >= 0)
                                     ||   (navigator.platform .indexOf ("iPod")      >= 0) ? { touch: true, system: 'iOS', device: 'iPhone' } : {} )))) }
 
-                    else if ((typeof global !== 'undefined') && global._ && (global._.platform === _.platform)) {
+                    else if ((typeof global !== 'undefined') && global._) {
                         return { engine: 'node' } }
 
                     else {
-                        return {} } }) ()) }
+                        return {} } }) ()
 
-_.global = function () {
-                return ((_.platform ().engine === 'browser') ? window :
-                        (_.platform ().engine === 'node')    ? global : undefined) }
+    var $global = (p.engine === 'browser') ? window :
+                  (p.engine === 'node')    ? global : undefined
 
-_.defineGlobalProperty = function (name, value, cfg) {
-                            if (_.global ()[name] !== undefined) {
-                                throw new Error ('cannot defineGlobalProperty: ' + name + ' is already there') }
+    $global.define = function (name, v, cfg) { if (name in $global) {
+                                                    throw new Error ('cannot define global ' + name + ': already there') }
 
-                            Object.defineProperty (_.global (), name, _.extend ({
-                                        enumerable: true,
-                                        get: (_.isFunction (value) && value.length === 0) ? value : _.constant (value) }, cfg))
+         Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
 
-                            return value }
+
+    $global.define ('$global', $global)
+    $global.define ('$platform', Object.defineProperties ({}, _.mapObject ({
+
+                                            engine:  p.engine,
+                                            system:  p.system,
+                                            device:  p.device,
+                                            touch:   p.touch || false,
+
+                                            IE:      p.browser       === 'IE',
+                                            Firefox: p.browser       === 'Firefox',
+                                            Safari:  p.browser       === 'Safari',
+                                            Chrome:  p.browser       === 'Chrome',
+                                            WebKit:  p.browserEngine === 'WebKit',
+
+                                            Browser: p.engine === 'browser',
+                                            NodeJS:  p.engine === 'node',
+                                            iPad:    p.device === 'iPad',
+                                            iPhone:  p.device === 'iPhone',
+                                            iOS:     p.system === 'iOS'
+
+                                        }, function (v, k) { return { enumerable: true, value: v } })))
+}) ();
 
 /*  Use this helper to override underscore's functions
     ======================================================================== */
@@ -98,17 +114,15 @@ $overrideUnderscore = function (name, genImpl) {
 /*  alert2 for ghetto debugging in browser
     ======================================================================== */
 
-if (_.platform ().engine !== 'browser') {
-    _.defineGlobalProperty ('alert', function (args) {
-        var print = ((_.global ()['log'] &&
-            _.partial (log.warn, log.config ({ stackOffset: 2 }))) ||
-            console.log)
-        print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) }) }
+if ($platform.Browser) {
+    $global.alert = function (args) {
+        var print = ($global.log && _.partial (log.warn, log.config ({ stackOffset: 2 }))) || console.log
+        print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) } }
  
-_.defineGlobalProperty ('alert2', function (args) {
-    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] })
+$global.alert2 = function (args) {
+    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] }
 
-_.global ().log = function () { console.log.call (console.log, arguments) } // placeholder for log.js
+$global.log = function () { console.log.call (console.log, arguments) } // placeholder for log.js
 
 
 ;
@@ -193,10 +207,9 @@ _.withTest ('argcount tracking', function () {
 
     /*  Setting
      */
-    withRestArg: _.defineGlobalProperty ('$restArg',
-                        function (fn) {
-                            Object.defineProperty (fn, '_ra', { enumerable: false, writable: true, value: true })
-                            return fn }),
+    withRestArg: $restArg = function (fn) {
+                                Object.defineProperty (fn, '_ra', { enumerable: false, writable: true, value: true })
+                                return fn },
 
     withArgs: function (numArgs, restArg, fn) {
                         if (numArgs !== undefined) {
@@ -741,6 +754,15 @@ _.coerceToFunction = function (x) {
           return _.isFunction (x) ?             x
                                   : _.constant (x) }
 
+
+/*  Use to determine whether an object could be enumerated like an Array
+    TODO: it may be more reasonable to check for 'length' property presence
+    ======================================================================== */
+
+_.isArrayLike = function (x) {
+    return (x instanceof Array) || ($platform.Browser && (x instanceof NodeList)) }
+
+
 /*  Fixes _.isArray to account objects that derive from Array prototype
     ======================================================================== */
 
@@ -751,9 +773,9 @@ _.deferTest (['type', 'isArray'], function () {
 
         $assert (_.isArray (new CustomArray ())) }, function () {
 
-    $overrideUnderscore ('isArray', function (isArray) {
-        return function (x) {
-            return _.isTypeOf (Array, x) || isArray (x) } }) })
+    _.isArray = function (x) {
+        return x instanceof Array } })
+
 
 /*  Better _.matches / $assertMatches: +regexp feature, +deep matching
     ======================================================================== */
@@ -998,7 +1020,7 @@ _.withTest (['stdlib', 'values2'], function () {
 
 }, function () { _.mixin ({
                     values2: function (x) {
-                        if (_.isArray (x))                  { return x }
+                             if (_.isArrayLike (x))         { return x }
                         else if (_.isStrictlyObject (x))    { return _.values (x) }
                         else if (_.isEmpty (x))             { return [] }
                         else                                { return [x] } } }) })
@@ -1023,7 +1045,7 @@ _.withTest (['stdlib', 'map2'], function () {
     $assert (_.mapWith (plusBar, { foo: 'foo' }), { foo: 'foobar' })
 
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
-                                     _.isArray (value) ? _.map       (value, fn,      context) : (
+                                 _.isArrayLike (value) ? _.map       (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
@@ -1075,7 +1097,7 @@ _.withTest (['stdlib', 'mapKeys'], function () {
                         { 'foobar': [1, 2,{ 'gaybar': 3 }]})
 
 }, function () { _.mapKeys = function (x, fn) {
-                        if (_.isArray (x)) {
+                        if (_.isArrayLike (x)) {
                             return _.map (x, _.tails2 (_.mapKeys, fn)) }
                         else if (_.isStrictlyObject (x)) {
                             return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
@@ -1137,7 +1159,7 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
         return _.filter2 (value, _.not (op)) },
 
     filter2: function (value, op) {
-        if (_.isArray (value)) {                                var result = []
+        if (_.isArrayLike (value)) {                            var result = []
             for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v, i)
                 if (opSays === true) {
                     result.push (v) }
@@ -1179,7 +1201,7 @@ _.withTest (['stdlib', 'each 2.0'], function () {
 }, function () { 
 
     _.each2 =            function (x,                                                                           f) {
-           if (         _.isArray (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
       else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
          else                          {                                                                        f (x,        undefined, 1) } } })
 
@@ -1243,7 +1265,7 @@ _.withTest (['stdlib', 'concat2'], function () {
             if (arguments.length === 1) { first = a[0];   rest =  _.rest (a) }
             else {                        first = a;      rest =  _.rest (arguments) }
 
-            return _.isArray (first)
+            return _.isArrayLike (first)
                           ? first.concat.apply (first, rest)
                           :          _.reduce2 (first, rest, function (              a,  b) {
                                                                 if (_.isObject (     a) &&
@@ -1302,10 +1324,10 @@ _.withTest (['stdlib', 'zip2'], function () {
 
     zip2: function (rows_, fn_) {   var rows = arguments.length === 2 ? rows_ : _.initial (arguments)
                                     var fn   = arguments.length === 2 ? fn_   : _.last (arguments)
-        if (!_.isArray (rows) || rows.length === 0) {
+        if (!_.isArrayLike (rows) || rows.length === 0) {
             return rows }
         else {
-            if (_.isArray (rows[0])) {
+            if (_.isArrayLike (rows[0])) {
                 return _.zipWith (rows, fn) }
             else if (_.isStrictlyObject (rows[0])) {
                 return _.zipObjectsWith (rows, fn) }
@@ -1424,7 +1446,7 @@ _.withTest (['stdlib', 'findFind'], function () {
 function () {
 
     _.find2 = function (value, pred) {
-        if (_.isArray (value)) {                                
+        if (_.isArrayLike (value)) {                                
             for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
                               if (typeof x !== 'boolean') { return x }
                                      else if (x === true) { return value[i] } } }
@@ -1436,7 +1458,7 @@ function () {
     _.findFind = function (obj, pred_) {
                     return _.hyperOperator (_.unary,
                              function (value, pred) {
-                                    if (_.isArray (value)) {                                
+                                    if (_.isArrayLike (value)) {                                
                                         for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
                                                           if (typeof x !== 'boolean') { return x }
                                                                  else if (x === true) { return value[i] } } }
@@ -2025,11 +2047,9 @@ _.withTest ('keywords', function () {
                         return _.isKeyword (key[0]) }
 
     _.defineKeyword = function (name, value) {
-                        _.defineProperty (_.global (), _.keyword (name), value) }
+                        _.defineProperty ($global, _.keyword (name), value) }
 
-    _.defineKeyword ('global',   _.global)
-    _.defineKeyword ('platform', _.platform)
-    _.defineKeyword ('untag',   Tags.unwrap)
+    _.defineKeyword ('untag', Tags.unwrap)
 
     _.defineTagKeyword = function (k, fn) { // fn for additional processing of constructed function
 
@@ -2228,7 +2248,7 @@ _.deferTest (['type', 'stringify'], function () {
 
             var Proto = $prototype ({})
 
-            $assert (_.stringify (Proto),   Platform.NodeJS ? 'Proto ()' : '<prototype>')
+            $assert (_.stringify (Proto),   $platform.NodeJS ? 'Proto ()' : '<prototype>')
 
             $assert (_.stringify (undefined),'undefined')
             $assert (_.stringify (123),     '123')
@@ -2272,7 +2292,7 @@ _.deferTest (['type', 'stringify'], function () {
                     return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
 
     _.stringifyPrototype = function (x) {
-            if (Platform.NodeJS && x.$meta) { var name = ''
+            if ($platform.NodeJS && x.$meta) { var name = ''
                 x.$meta (function (values) { name = values.name })
                 return name && (name + ' ()') }
             else return '<prototype>' }
@@ -2339,7 +2359,7 @@ _.deferTest (['type', 'stringify'], function () {
 
                                     var pretty = cfg.pretty || false
 
-                                    if ((_.platform ().engine === 'browser')) {
+                                    if ($platform.Browser) {
                                         if (_.isTypeOf (Element, x)) {
                                             return (x.tagName.lowercase +
                                                         ((x.id && ('#' + x.id)) || '') +
@@ -4819,30 +4839,7 @@ _.withTest ('OOP', {
             $singleton = function (arg1, arg2) {
                     return new ($prototype.apply (null, arguments)) () } })
 
-
-/*  Ports platform.js to OOP terms 
-    ======================================================================== */
-
-    Platform = $singleton ({ $property: (function () { var p = _.platform ()
-                                            return {
-                                                engine:  p.engine,
-                                                system:  p.system,
-                                                device:  p.device,
-                                                touch:   p.touch || false,
-
-                                                IE:      p.browser === 'IE',
-                                                Firefox: p.browser === 'Firefox',
-                                                Safari:  p.browser === 'Safari',
-                                                Chrome:  p.browser === 'Chrome',
-                                                WebKit:  p.browserEngine === 'WebKit',
-
-                                                Browser: p.engine === 'browser',
-                                                NodeJS:  p.engine === 'node',
-                                                iPad:    p.device === 'iPad',
-                                                iPhone:  p.device === 'iPhone',
-                                                iOS:     p.system === 'iOS' } }) () })
-
-        ;
+;
 
 
 /*  TODO:   UNIT TEST DAT MUTHAFUCKA
@@ -5689,7 +5686,7 @@ _.defineKeyword ('scope', function (fn) { var releaseStack = undefined
                                                                         releaseStack = undefined }
                                                              trigger () } }) }) })
 
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = _ };
 /*  What for:
 
@@ -6935,7 +6932,7 @@ Http = $singleton (Component, {
 
                 return new Promise (function (resolve, reject) {
 
-                    if (Platform.Browser) {
+                    if ($platform.Browser) {
 
                         /*  Init XMLHttpRequest
                          */
@@ -6998,7 +6995,7 @@ _.extend ($, {
      */
     svg: function (tag) {
             var node = document.createElementNS ('http://www.w3.org/2000/svg', tag)
-            if ((tag === 'svg') && !Platform.IE) {
+            if ((tag === 'svg') && !$platform.IE) {
                 node.setAttribute ('xmlns', 'http://www.w3.org/2000/svg') }
             return $(node) } })
 
@@ -7159,7 +7156,7 @@ _.extend ($, {
          */
         return function (cfg) {
 
-            if (!Platform.touch && !window.__globalDragOverlay) {
+            if (!$platform.touch && !window.__globalDragOverlay) {
                  window.__globalDragOverlay =
                      $('<div>').css ({
                         display: 'none',
@@ -7174,7 +7171,7 @@ _.extend ($, {
 
                 this.addClass (cfg.cls || '')
                 
-                if (Platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
+                if ($platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
                     
                     if (!cfg.start || ((memo = cfg.start.call (cfg.context || this, new Vec2 (
                             // position (relative to delegate target)
@@ -7186,7 +7183,7 @@ _.extend ($, {
                         memo = _.clone (memo)
 
                         var move = this.$ (function (e) {
-                            if (Platform.touch || e.which === button) {
+                            if ($platform.touch || e.which === button) {
                                 e.preventDefault ()
                                 var translatedEvent = translateTouchEvent (e, this[0])
                                 var offset = relativeTo.offset ()
@@ -7235,7 +7232,7 @@ _.extend ($, {
 
             var touchstartListener = _.$ (this, function (e) {
                 var where = _.extend ({}, translateTouchEvent (e, this[0])) /* copy event, cuz on iPad it's re-used by browser */
-                if (Platform.touch && cfg.longPress) {
+                if ($platform.touch && cfg.longPress) {
                     var cancel = undefined
                     var timeout = window.setTimeout (_.$ (this, function () {
                         this.off ('touchmove touchend', cancel)
@@ -7249,11 +7246,11 @@ _.extend ($, {
                     e.preventDefault ()
                     e.stopPropagation () } })
 
-            this.on (Platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
+            this.on ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
 
             return _.extend (this, {
                         cancel: this.$ (function () {
-                            this.off (Platform.touch ? 'touchstart' : 'mousedown', touchstartListener) }) }) } }) (),
+                            this.off ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener) }) }) } }) (),
 
     /*  $(el).transform ({
                 translate: new Vec2 (a, b),
@@ -7327,7 +7324,7 @@ _.extend ($, {
     touchClick: function (fn, cfg) {
         var self = this
         cfg = cfg || {}
-        if (!cfg.disableTouch && Platform.touch) { // touch experience
+        if (!cfg.disableTouch && $platform.touch) { // touch experience
             var touchstartHandler = function (e) {
                 fn.apply (this, arguments)
                 e.preventDefault () // prevents nasty delayed click-focus effect on iOS
@@ -7355,7 +7352,7 @@ _.extend ($, {
         Reverts to .dblclick on desktop
      */
     touchDoubleclick: function (fn) {
-        if (Platform.touch) {
+        if ($platform.touch) {
             var lastTime = Date.now ()
             return this.on ('touchend', function () {
                 var now = Date.now ()

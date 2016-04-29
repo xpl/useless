@@ -47,6 +47,15 @@ _.coerceToFunction = function (x) {
           return _.isFunction (x) ?             x
                                   : _.constant (x) }
 
+
+/*  Use to determine whether an object could be enumerated like an Array
+    TODO: it may be more reasonable to check for 'length' property presence
+    ======================================================================== */
+
+_.isArrayLike = function (x) {
+    return (x instanceof Array) || ($platform.Browser && (x instanceof NodeList)) }
+
+
 /*  Fixes _.isArray to account objects that derive from Array prototype
     ======================================================================== */
 
@@ -57,9 +66,9 @@ _.deferTest (['type', 'isArray'], function () {
 
         $assert (_.isArray (new CustomArray ())) }, function () {
 
-    $overrideUnderscore ('isArray', function (isArray) {
-        return function (x) {
-            return _.isTypeOf (Array, x) || isArray (x) } }) })
+    _.isArray = function (x) {
+        return x instanceof Array } })
+
 
 /*  Better _.matches / $assertMatches: +regexp feature, +deep matching
     ======================================================================== */

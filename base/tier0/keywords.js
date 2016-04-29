@@ -205,11 +205,9 @@ _.withTest ('keywords', function () {
                         return _.isKeyword (key[0]) }
 
     _.defineKeyword = function (name, value) {
-                        _.defineProperty (_.global (), _.keyword (name), value) }
+                        _.defineProperty ($global, _.keyword (name), value) }
 
-    _.defineKeyword ('global',   _.global)
-    _.defineKeyword ('platform', _.platform)
-    _.defineKeyword ('untag',   Tags.unwrap)
+    _.defineKeyword ('untag', Tags.unwrap)
 
     _.defineTagKeyword = function (k, fn) { // fn for additional processing of constructed function
 

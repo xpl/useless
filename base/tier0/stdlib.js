@@ -38,7 +38,7 @@ _.withTest (['stdlib', 'values2'], function () {
 
 }, function () { _.mixin ({
                     values2: function (x) {
-                        if (_.isArray (x))                  { return x }
+                             if (_.isArrayLike (x))         { return x }
                         else if (_.isStrictlyObject (x))    { return _.values (x) }
                         else if (_.isEmpty (x))             { return [] }
                         else                                { return [x] } } }) })
@@ -63,7 +63,7 @@ _.withTest (['stdlib', 'map2'], function () {
     $assert (_.mapWith (plusBar, { foo: 'foo' }), { foo: 'foobar' })
 
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
-                                     _.isArray (value) ? _.map       (value, fn,      context) : (
+                                 _.isArrayLike (value) ? _.map       (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
                                                                              fn.call (context, value))) } })
                 _.mapsWith = _.higherOrder (
@@ -115,7 +115,7 @@ _.withTest (['stdlib', 'mapKeys'], function () {
                         { 'foobar': [1, 2,{ 'gaybar': 3 }]})
 
 }, function () { _.mapKeys = function (x, fn) {
-                        if (_.isArray (x)) {
+                        if (_.isArrayLike (x)) {
                             return _.map (x, _.tails2 (_.mapKeys, fn)) }
                         else if (_.isStrictlyObject (x)) {
                             return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
@@ -177,7 +177,7 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
         return _.filter2 (value, _.not (op)) },
 
     filter2: function (value, op) {
-        if (_.isArray (value)) {                                var result = []
+        if (_.isArrayLike (value)) {                            var result = []
             for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v, i)
                 if (opSays === true) {
                     result.push (v) }
@@ -219,7 +219,7 @@ _.withTest (['stdlib', 'each 2.0'], function () {
 }, function () { 
 
     _.each2 =            function (x,                                                                           f) {
-           if (         _.isArray (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
       else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
          else                          {                                                                        f (x,        undefined, 1) } } })
 
@@ -283,7 +283,7 @@ _.withTest (['stdlib', 'concat2'], function () {
             if (arguments.length === 1) { first = a[0];   rest =  _.rest (a) }
             else {                        first = a;      rest =  _.rest (arguments) }
 
-            return _.isArray (first)
+            return _.isArrayLike (first)
                           ? first.concat.apply (first, rest)
                           :          _.reduce2 (first, rest, function (              a,  b) {
                                                                 if (_.isObject (     a) &&
@@ -342,10 +342,10 @@ _.withTest (['stdlib', 'zip2'], function () {
 
     zip2: function (rows_, fn_) {   var rows = arguments.length === 2 ? rows_ : _.initial (arguments)
                                     var fn   = arguments.length === 2 ? fn_   : _.last (arguments)
-        if (!_.isArray (rows) || rows.length === 0) {
+        if (!_.isArrayLike (rows) || rows.length === 0) {
             return rows }
         else {
-            if (_.isArray (rows[0])) {
+            if (_.isArrayLike (rows[0])) {
                 return _.zipWith (rows, fn) }
             else if (_.isStrictlyObject (rows[0])) {
                 return _.zipObjectsWith (rows, fn) }
@@ -464,7 +464,7 @@ _.withTest (['stdlib', 'findFind'], function () {
 function () {
 
     _.find2 = function (value, pred) {
-        if (_.isArray (value)) {                                
+        if (_.isArrayLike (value)) {                                
             for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i], i, value)
                               if (typeof x !== 'boolean') { return x }
                                      else if (x === true) { return value[i] } } }
@@ -476,7 +476,7 @@ function () {
     _.findFind = function (obj, pred_) {
                     return _.hyperOperator (_.unary,
                              function (value, pred) {
-                                    if (_.isArray (value)) {                                
+                                    if (_.isArrayLike (value)) {                                
                                         for (var i = 0, n = value.length; i < n; i++) { var x = pred (value[i])
                                                           if (typeof x !== 'boolean') { return x }
                                                                  else if (x === true) { return value[i] } } }

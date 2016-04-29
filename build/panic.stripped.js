@@ -37,9 +37,9 @@ _.tests = {};
 _.deferTest = _.withTest = function (name, test, subj) {
     subj();
 };
-_.platform = function () {
-    return arguments.callee.__value || (arguments.callee.__value = function () {
-        if (typeof window !== 'undefined' && window._ && window._.platform === _.platform && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
+(function () {
+    var p = function () {
+        if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
             return _.extend({
                 engine: 'browser',
                 browserEngine: navigator.userAgent.indexOf('AppleWebKit') >= 0 ? 'WebKit' : undefined,
@@ -56,40 +56,56 @@ _.platform = function () {
                 system: 'iOS',
                 device: 'iPhone'
             } : {});
-        } else if (typeof global !== 'undefined' && global._ && global._.platform === _.platform) {
+        } else if (typeof global !== 'undefined' && global._) {
             return { engine: 'node' };
         } else {
             return {};
         }
-    }());
-};
-_.global = function () {
-    return _.platform().engine === 'browser' ? window : _.platform().engine === 'node' ? global : undefined;
-};
-_.defineGlobalProperty = function (name, value, cfg) {
-    if (_.global()[name] !== undefined) {
-        throw new Error('cannot defineGlobalProperty: ' + name + ' is already there');
-    }
-    Object.defineProperty(_.global(), name, _.extend({
-        enumerable: true,
-        get: _.isFunction(value) && value.length === 0 ? value : _.constant(value)
-    }, cfg));
-    return value;
-};
+    }();
+    var $global = p.engine === 'browser' ? window : p.engine === 'node' ? global : undefined;
+    $global.define = function (name, v, cfg) {
+        if (name in $global) {
+            throw new Error('cannot define global ' + name + ': already there');
+        }
+        Object.defineProperty($global, name, _.extend(typeof v === 'function' && v.length === 0 ? { get: v } : { value: v }, { enumerable: true }, cfg));
+    };
+    $global.define('$global', $global);
+    $global.define('$platform', Object.defineProperties({}, _.mapObject({
+        engine: p.engine,
+        system: p.system,
+        device: p.device,
+        touch: p.touch || false,
+        IE: p.browser === 'IE',
+        Firefox: p.browser === 'Firefox',
+        Safari: p.browser === 'Safari',
+        Chrome: p.browser === 'Chrome',
+        WebKit: p.browserEngine === 'WebKit',
+        Browser: p.engine === 'browser',
+        NodeJS: p.engine === 'node',
+        iPad: p.device === 'iPad',
+        iPhone: p.device === 'iPhone',
+        iOS: p.system === 'iOS'
+    }, function (v, k) {
+        return {
+            enumerable: true,
+            value: v
+        };
+    })));
+}());
 $overrideUnderscore = function (name, genImpl) {
     return _[name] = genImpl(_[name]);
 };
-if (_.platform().engine !== 'browser') {
-    _.defineGlobalProperty('alert', function (args) {
-        var print = _.global()['log'] && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
+if ($platform.Browser) {
+    $global.alert = function (args) {
+        var print = $global.log && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
         print.apply(print, ['ALERT:'].concat(_.asArray(arguments)));
-    });
+    };
 }
-_.defineGlobalProperty('alert2', function (args) {
+$global.alert2 = function (args) {
     alert(_.map(arguments, _.stringify).join(', '));
     return arguments[0];
-});
-_.global().log = function () {
+};
+$global.log = function () {
     console.log.call(console.log, arguments);
 };
 _.extend(_, {
@@ -113,14 +129,14 @@ _.extend(_, {
     oneArg: function (fn) {
         return _.numArgs(fn) === 1 && !fn._ra;
     },
-    withRestArg: _.defineGlobalProperty('$restArg', function (fn) {
+    withRestArg: $restArg = function (fn) {
         Object.defineProperty(fn, '_ra', {
             enumerable: false,
             writable: true,
             value: true
         });
         return fn;
-    }),
+    },
     withArgs: function (numArgs, restArg, fn) {
         if (numArgs !== undefined) {
             Object.defineProperty(fn, '_ac', {
@@ -593,11 +609,12 @@ _.coerceToArray = function (x) {
 _.coerceToFunction = function (x) {
     return _.isFunction(x) ? x : _.constant(x);
 };
-$overrideUnderscore('isArray', function (isArray) {
-    return function (x) {
-        return _.isTypeOf(Array, x) || isArray(x);
-    };
-});
+_.isArrayLike = function (x) {
+    return x instanceof Array || $platform.Browser && x instanceof NodeList;
+};
+_.isArray = function (x) {
+    return x instanceof Array;
+};
 _.mixin({
     matches: function (pattern) {
         return arguments.length === 0 && _.constant(true) || _.tails2(_.match, pattern);
@@ -680,7 +697,7 @@ _.overrideThis = _.throwsError('override this');
 _.notImplemented = _.throwsError('not implemented');
 _.mixin({
     values2: function (x) {
-        if (_.isArray(x)) {
+        if (_.isArrayLike(x)) {
             return x;
         } else if (_.isStrictlyObject(x)) {
             return _.values(x);
@@ -693,7 +710,7 @@ _.mixin({
 });
 _.mixin({
     map2: function (value, fn, context) {
-        return _.isArray(value) ? _.map(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
+        return _.isArrayLike(value) ? _.map(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
     }
 });
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
@@ -727,7 +744,7 @@ _.arr = function (emitItems) {
     return x;
 };
 _.mapKeys = function (x, fn) {
-    if (_.isArray(x)) {
+    if (_.isArrayLike(x)) {
         return _.map(x, _.tails2(_.mapKeys, fn));
     } else if (_.isStrictlyObject(x)) {
         return _.object(_.map(_.pairs(x), function (kv) {
@@ -746,7 +763,7 @@ _.mixin({
         return _.filter2(value, _.not(op));
     },
     filter2: function (value, op) {
-        if (_.isArray(value)) {
+        if (_.isArrayLike(value)) {
             var result = [];
             for (var i = 0, n = value.length; i < n; i++) {
                 var v = value[i], opSays = op(v, i);
@@ -782,7 +799,7 @@ _.mixin({
 });
 _.mixin({ filterFilter: _.hyperOperator(_.unary, _.filter2) });
 _.each2 = function (x, f) {
-    if (_.isArray(x)) {
+    if (_.isArrayLike(x)) {
         for (var i = 0, n = x.length; i < n; i++)
             f(x[i], i, n);
     } else if (_.isStrictlyObject(x)) {
@@ -825,7 +842,7 @@ _.concat = function (a, b) {
         first = a;
         rest = _.rest(arguments);
     }
-    return _.isArray(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
+    return _.isArrayLike(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
         if (_.isObject(a) && _.isObject(b)) {
             return _.extend({}, a, b);
         } else {
@@ -850,10 +867,10 @@ _.mixin({
     zip2: function (rows_, fn_) {
         var rows = arguments.length === 2 ? rows_ : _.initial(arguments);
         var fn = arguments.length === 2 ? fn_ : _.last(arguments);
-        if (!_.isArray(rows) || rows.length === 0) {
+        if (!_.isArrayLike(rows) || rows.length === 0) {
             return rows;
         } else {
-            if (_.isArray(rows[0])) {
+            if (_.isArrayLike(rows[0])) {
                 return _.zipWith(rows, fn);
             } else if (_.isStrictlyObject(rows[0])) {
                 return _.zipObjectsWith(rows, fn);
@@ -885,7 +902,7 @@ _.extend2 = $restArg(function (what) {
     }, {}));
 });
 _.find2 = function (value, pred) {
-    if (_.isArray(value)) {
+    if (_.isArrayLike(value)) {
         for (var i = 0, n = value.length; i < n; i++) {
             var x = pred(value[i], i, value);
             if (typeof x !== 'boolean') {
@@ -908,7 +925,7 @@ _.find2 = function (value, pred) {
 };
 _.findFind = function (obj, pred_) {
     return _.hyperOperator(_.unary, function (value, pred) {
-        if (_.isArray(value)) {
+        if (_.isArrayLike(value)) {
             for (var i = 0, n = value.length; i < n; i++) {
                 var x = pred(value[i]);
                 if (typeof x !== 'boolean') {
@@ -1265,10 +1282,8 @@ _.keyIsKeyword = function (value, key) {
     return _.isKeyword(key[0]);
 };
 _.defineKeyword = function (name, value) {
-    _.defineProperty(_.global(), _.keyword(name), value);
+    _.defineProperty($global, _.keyword(name), value);
 };
-_.defineKeyword('global', _.global);
-_.defineKeyword('platform', _.platform);
 _.defineKeyword('untag', Tags.unwrap);
 _.defineTagKeyword = function (k, fn) {
     fn = _.isFunction(fn) && fn || _.identity;
@@ -1441,7 +1456,7 @@ _.stringify = function (x, cfg) {
     return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
 };
 _.stringifyPrototype = function (x) {
-    if (Platform.NodeJS && x.$meta) {
+    if ($platform.NodeJS && x.$meta) {
         var name = '';
         x.$meta(function (values) {
             name = values.name;
@@ -1509,7 +1524,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
         } else {
             var isArray = _.isArray(x);
             var pretty = cfg.pretty || false;
-            if (_.platform().engine === 'browser') {
+            if ($platform.Browser) {
                 if (_.isTypeOf(Element, x)) {
                     return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
                 } else if (_.isTypeOf(Text, x)) {
@@ -2952,27 +2967,6 @@ $prototype.macroTag('callableAsMethod', function (def, value, name) {
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))();
 };
-Platform = $singleton({
-    $property: function () {
-        var p = _.platform();
-        return {
-            engine: p.engine,
-            system: p.system,
-            device: p.device,
-            touch: p.touch || false,
-            IE: p.browser === 'IE',
-            Firefox: p.browser === 'Firefox',
-            Safari: p.browser === 'Safari',
-            Chrome: p.browser === 'Chrome',
-            WebKit: p.browserEngine === 'WebKit',
-            Browser: p.engine === 'browser',
-            NodeJS: p.engine === 'node',
-            iPad: p.device === 'iPad',
-            iPhone: p.device === 'iPhone',
-            iOS: p.system === 'iOS'
-        };
-    }()
-});
 _.clamp = function (n, min, max) {
     return Math.max(min, Math.min(max, n));
 };
@@ -2982,6 +2976,9 @@ _.lerp = function (t, min, max) {
 _.rescale = function (v, from, to, opts) {
     var unit = (v - from[0]) / (from[1] - from[0]);
     return _.lerp(opts && opts.clamp ? _.clamp(unit, 0, 1) : unit, to[0], to[1]);
+};
+_.rescaleClamped = function (v, from, to) {
+    return _.rescale(v, from, to, { clamp: true });
 };
 _.sqr = function (x) {
     return x * x;
@@ -3787,7 +3784,7 @@ _.defineKeyword('scope', function (fn) {
         });
     });
 });
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = _;
 }
 ;
@@ -4392,7 +4389,7 @@ Http = $singleton(Component, {
     request: function (type, path, cfg_) {
         var cfg = _.extend2({ headers: { 'Cache-Control': 'no-cache' } }, cfg_);
         return new Promise(function (resolve, reject) {
-            if (Platform.Browser) {
+            if ($platform.Browser) {
                 var xhr = new XMLHttpRequest();
                 xhr.open(type, path, true);
                 if (cfg.responseType)
@@ -4443,7 +4440,7 @@ if (jQuery) {
         _.extend($, {
             svg: function (tag) {
                 var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
-                if (tag === 'svg' && !Platform.IE) {
+                if (tag === 'svg' && !$platform.IE) {
                     node.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
                 }
                 return $(node);
@@ -4580,7 +4577,7 @@ if (jQuery) {
                     }) || e;
                 };
                 return function (cfg) {
-                    if (!Platform.touch && !window.__globalDragOverlay) {
+                    if (!$platform.touch && !window.__globalDragOverlay) {
                         window.__globalDragOverlay = $('<div>').css({
                             display: 'none',
                             position: 'fixed',
@@ -4596,13 +4593,13 @@ if (jQuery) {
                     var begin = this.$(function (initialEvent) {
                         var relativeTo = cfg.relativeTo || this;
                         this.addClass(cfg.cls || '');
-                        if (Platform.touch || initialEvent.which === button) {
+                        if ($platform.touch || initialEvent.which === button) {
                             var offset = relativeTo.offset(), memo = undefined;
                             if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) {
                                 var abort = undefined, unbind = undefined, end = undefined;
                                 memo = _.clone(memo);
                                 var move = this.$(function (e) {
-                                    if (Platform.touch || e.which === button) {
+                                    if ($platform.touch || e.which === button) {
                                         e.preventDefault();
                                         var translatedEvent = translateTouchEvent(e, this[0]);
                                         var offset = relativeTo.offset();
@@ -4638,7 +4635,7 @@ if (jQuery) {
                     });
                     var touchstartListener = _.$(this, function (e) {
                         var where = _.extend({}, translateTouchEvent(e, this[0]));
-                        if (Platform.touch && cfg.longPress) {
+                        if ($platform.touch && cfg.longPress) {
                             var cancel = undefined;
                             var timeout = window.setTimeout(_.$(this, function () {
                                 this.off('touchmove touchend', cancel);
@@ -4655,10 +4652,10 @@ if (jQuery) {
                             e.stopPropagation();
                         }
                     });
-                    this.on(Platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+                    this.on($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
                     return _.extend(this, {
                         cancel: this.$(function () {
-                            this.off(Platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+                            this.off($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
                         })
                     });
                 };
@@ -4734,7 +4731,7 @@ if (jQuery) {
             touchClick: function (fn, cfg) {
                 var self = this;
                 cfg = cfg || {};
-                if (!cfg.disableTouch && Platform.touch) {
+                if (!cfg.disableTouch && $platform.touch) {
                     var touchstartHandler = function (e) {
                         fn.apply(this, arguments);
                         e.preventDefault();
@@ -4764,7 +4761,7 @@ if (jQuery) {
                 }
             },
             touchDoubleclick: function (fn) {
-                if (Platform.touch) {
+                if ($platform.touch) {
                     var lastTime = Date.now();
                     return this.on('touchend', function () {
                         var now = Date.now();
@@ -5039,7 +5036,7 @@ _.extend(_, {
         }
     });
     _.each(_.keys(_.assertions), function (name) {
-        _.defineGlobalProperty('$' + name, _[name], { configurable: true });
+        $global.define('$' + name, _[name], { configurable: true });
     });
 }());
 (function () {
@@ -5082,7 +5079,7 @@ _.extend(_, {
         });
     };
     globalUncaughtExceptionHandler.chain = [];
-    switch (Platform.engine) {
+    switch ($platform.engine) {
     case 'node':
         require('process').on('uncaughtException', globalUncaughtExceptionHandler);
         break;
@@ -5102,7 +5099,7 @@ _.extend(_, {
     }
 }());
 (function () {
-    if (Platform.Browser) {
+    if ($platform.Browser) {
         _.hasUncaughtAsync = true;
         var globalAsyncContext = undefined;
         var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
@@ -5152,19 +5149,19 @@ _.extend(_, {
 }());
 _.hasReflection = true;
 _.defineKeyword('callStack', function () {
-    return CallStack.fromRawString(CallStack.currentAsRawString).offset(Platform.NodeJS ? 1 : 0);
+    return CallStack.fromRawString(CallStack.currentAsRawString).offset($platform.NodeJS ? 1 : 0);
 });
 _.defineKeyword('currentFile', function () {
-    return (CallStack.rawStringToArray(CallStack.currentAsRawString)[Platform.NodeJS ? 3 : 1] || { file: '' }).file;
+    return (CallStack.rawStringToArray(CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file;
 });
 _.defineKeyword('uselessPath', _.memoize(function () {
-    return _.initial(__filename.split('/'), Platform.NodeJS ? 2 : 1).join('/') + '/';
+    return _.initial(__filename.split('/'), $platform.NodeJS ? 2 : 1).join('/') + '/';
 }));
 _.defineKeyword('sourcePath', _.memoize(function () {
     var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
     return local ? local + '/' : $uselessPath;
 }));
-if (Platform.Browser) {
+if ($platform.Browser) {
     _.defineProperty(window, '__filename', function () {
         return $currentFile;
     });
@@ -5178,7 +5175,7 @@ SourceFiles = $singleton(Component, {
     read: $memoizeCPS(function (file, then) {
         if (file.indexOf('<') < 0) {
             try {
-                if (Platform.NodeJS) {
+                if ($platform.NodeJS) {
                     then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '');
                 } else {
                     var xhr = new XMLHttpRequest();
@@ -5198,7 +5195,7 @@ SourceFiles = $singleton(Component, {
         }
     }),
     write: function (file, text, then) {
-        if (Platform.NodeJS) {
+        if ($platform.NodeJS) {
             this.read(file, function (prevText) {
                 var fs = require('fs'), opts = { encoding: 'utf8' };
                 try {
@@ -5316,7 +5313,7 @@ CallStack = $extends(Array, {
         return new CallStack(arr);
     }),
     currentAsRawString: $static($property(function () {
-        var cut = Platform.Browser ? 3 : 2;
+        var cut = $platform.Browser ? 3 : 2;
         return _.rest((new Error().stack || '').split('\n'), cut).join('\n');
     })),
     shortenPath: $static(function (path) {
@@ -5325,7 +5322,7 @@ CallStack = $extends(Array, {
     }),
     isThirdParty: $static(_.bindable(function (file) {
         var local = file.replace($sourcePath, '');
-        return Platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
+        return $platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
     })),
     fromRawString: $static(_.sequence(function (rawString) {
         return CallStack.rawStringToArray(rawString);
@@ -5362,7 +5359,7 @@ CallStack = $extends(Array, {
             return {
                 beforeParse: line,
                 callee: callee || '',
-                index: Platform.Browser && fileLineColumn[0] === window.location.href,
+                index: $platform.Browser && fileLineColumn[0] === window.location.href,
                 'native': native_,
                 file: fileLineColumn[0] || '',
                 line: (fileLineColumn[1] || '').integerValue,
@@ -5607,7 +5604,7 @@ _.extend(log, {
             log.impl.numWrites++;
             var args = _.asArray(arguments);
             var config = log.impl.configure([{
-                    stackOffset: Platform.NodeJS ? 1 : 3,
+                    stackOffset: $platform.NodeJS ? 1 : 3,
                     indent: writeBackend.indent || 0
                 }].concat(log.impl.configStack));
             var runs = _.reduce2([], _.partition3(args, _.isTypeOf.$(log.Config)), function (runs, span) {
@@ -5660,7 +5657,7 @@ _.extend(log, {
         },
         defaultWriteBackend: function (params) {
             var codeLocation = params.codeLocation;
-            if (Platform.NodeJS) {
+            if ($platform.NodeJS) {
                 var lines = _.map(params.lines, function (line) {
                     return params.indentation + _.map(line, function (run) {
                         return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
@@ -5836,7 +5833,7 @@ _.extend(log, {
         }
     }
 });
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = log;
 }
 ;
@@ -5989,7 +5986,7 @@ Testosterone = $singleton({
         _.deleteKeyword(name);
         _.defineKeyword(name, Tags.modify(def, function (fn) {
             return _.withSameArgs(fn, function () {
-                var loc = $callStack.safeLocation(Platform.Browser && !Platform.Chrome ? 0 : 1);
+                var loc = $callStack.safeLocation($platform.Browser && !$platform.Chrome ? 0 : 1);
                 if (!self.currentAssertion) {
                     return fn.apply(self, arguments);
                 } else {
@@ -6262,7 +6259,7 @@ Testosterone.ValidatesRecursion = $trait({
     colors.each(_.defineTagKeyword);
     _.defineTagKeyword('verbose');
     Testosterone.LogsMethodCalls = $trait({
-        $test: Platform.Browser ? function () {
+        $test: $platform.Browser ? function () {
         } : function (testDone) {
             var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
             var Compo = $extends(Proto, {
@@ -6330,7 +6327,7 @@ Testosterone.ValidatesRecursion = $trait({
         }
     });
 }());
-if (Platform.NodeJS) {
+if ($platform.NodeJS) {
     module.exports = Testosterone;
 }
 ;
