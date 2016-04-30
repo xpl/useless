@@ -237,7 +237,7 @@ Base64 = {
 $overrideUnderscore = function (name, genImpl) {
     return _[name] = genImpl(_[name]);
 };
-if ($platform.Browser) {
+if ($platform.NodeJS) {
     $global.alert = function (args) {
         var print = $global.log && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
         print.apply(print, ['ALERT:'].concat(_.asArray(arguments)));

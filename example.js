@@ -8,7 +8,7 @@ require ('./useless')
 Examples = $singleton (Component, {
 
     api: function () { return {
-        '/':               this.file ('./example/index.html'),
+        '/':               this.file ('./example/index.html')
         'useless.js':      this.file ('./build/useless.js'),
         'useless/:file':   this.file ('./client/'),
         'example/:file':   this.file ('./example/'),

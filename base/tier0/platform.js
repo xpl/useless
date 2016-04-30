@@ -69,7 +69,7 @@ $overrideUnderscore = function (name, genImpl) {
 /*  alert2 for ghetto debugging in browser
     ======================================================================== */
 
-if ($platform.Browser) {
+if ($platform.NodeJS) {
     $global.alert = function (args) {
         var print = ($global.log && _.partial (log.warn, log.config ({ stackOffset: 2 }))) || console.log
         print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) } }
