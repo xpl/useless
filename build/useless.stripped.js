@@ -2645,7 +2645,6 @@ _.loDashesToCamelCase = function (x) {
         return x[1].uppercase;
     });
 };
-_.defineHiddenProperty(Object.prototype, 'extend', { get: _.constant(_.extend.asMethod) });
 (function () {
     var hooks = [
         'onceBefore',
@@ -6349,6 +6348,24 @@ $mixin(Promise, {
             throw e;
         });
     })
+});
+$mixin(Set, {
+    copy: $property(function () {
+        return new Set(this);
+    }),
+    items: $property(function () {
+        return Array.from(this.values());
+    }),
+    extend: function (b) {
+        for (var x of b) {
+            this.add(x);
+        }
+        ;
+        return this;
+    },
+    extended: function (b) {
+        return this.copy.extend(b);
+    }
 });
 Http = $singleton(Component, {
     $traits: [HttpMethods = $trait({
