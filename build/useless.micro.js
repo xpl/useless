@@ -6027,18 +6027,25 @@ _.tests.component = {
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener, fromDefinition) {
+    '$observableProperty': function () { $assertEveryCalled (function (
+                                            fromConstructor,
+                                            fromConfig,
+                                            fromLateBoundListener,
+                                            fromDefinition,
+                                            fromListenerOnlyVariant) {
 
         var Compo = $component ({
                         color: $observableProperty (),
                         smell: $observableProperty (),
                         shape: $observableProperty ('round', function (now) { $assert (now, 'round'); fromDefinition () }),
+                        size:  $observableProperty (function (x) { $assert (x, 42); fromListenerOnlyVariant () }),
                         init: function () {
                             this.colorChange (function (now, was) { if (was) { fromConstructor ()
                                 $assert ([now, was], ['green', 'blue']) } }) } })
 
         var compo = new Compo ({
             color: 'blue',
+            size: 42,
             colorChange: function (now, was) { if (was) {   fromConfig ()
                                                             $assert ([now, was], ['green', 'blue']) } } })
 
@@ -6340,7 +6347,11 @@ _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw'])
     .each (_.defineTagKeyword)
 
-_.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
+_.defineTagKeyword ('observableProperty', function (impl) {
+                                                return function (x, fn) {
+                                                    return ((_.isFunction (x) && (arguments.length === 1)) ?
+                                                                impl (x, fn) :     // $observableProperty (listener)
+                                                                impl (fn, x)) } }) // $observableProperty (value[, listener])
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 

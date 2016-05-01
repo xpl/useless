@@ -4263,7 +4263,11 @@ _([
     'reference',
     'raw'
 ]).each(_.defineTagKeyword);
-_.defineTagKeyword('observableProperty', _.flip);
+_.defineTagKeyword('observableProperty', function (impl) {
+    return function (x, fn) {
+        return _.isFunction(x) && arguments.length === 1 ? impl(x, fn) : impl(fn, x);
+    };
+});
 _.defineKeyword('observableRef', function (x) {
     return $observableProperty($reference(x));
 });
