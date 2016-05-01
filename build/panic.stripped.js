@@ -1530,6 +1530,9 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
         if (builtInValue) {
             return builtInValue;
         } else {
+            if (x instanceof Set) {
+                x = x.items;
+            }
             var isArray = _.isArray(x);
             var pretty = cfg.pretty || false;
             if ($platform.Browser) {

@@ -2993,6 +2993,9 @@ _.deferTest (['type', 'stringify'], function () {
                                     return builtInValue }
                                     
                                 else {
+                                    if (x instanceof Set) {
+                                        x = x.items }
+
                                     var isArray = _.isArray (x)
 
                                     var pretty = cfg.pretty || false
