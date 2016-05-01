@@ -181,6 +181,20 @@ _.tests.component = {
         $assertMatches (new Derived ({ pff: 'overriden from cfg' }), { pff: 'overriden from cfg', foo: 12, bar: 34, qux: 'overriden', inner: { fromTrait: 1, fromBase: 1, fromDerived: 1 } }) },
 
 
+    '$defaults cloning semantics': function () { var set = new Set ([1,2,3])
+
+        var S = $component ({ $defaults: { foo: set,
+                                           bar: new Set () } })
+
+        var s = new S ()
+
+        $assert (s.foo instanceof Set,
+                 s.bar instanceof Set,
+                 true)
+
+        $assert (s.foo !== set)
+    },
+
     /*  Use $requires to specify required config params along with their type signatures
      */
     '$requires': function () {

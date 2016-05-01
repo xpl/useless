@@ -248,7 +248,7 @@ $global.alert2 = function (args) {
     return arguments[0];
 };
 $global.log = function () {
-    console.log.call(console.log, arguments);
+    console.log.apply(console.log, arguments);
 };
 _.hasAsserts = true;
 _.extend(_, {
@@ -1097,9 +1097,16 @@ _.mixin({
 });
 _.mixin({
     map2: function (value, fn, context) {
-        return _.isArrayLike(value) ? _.map(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
+        return _.isArrayLike(value) ? _.map(value, fn, context) : value instanceof Set ? _.mapSet(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
     }
 });
+_.mapSet = function (set, fn, ctx) {
+    var out = new Set();
+    for (var x of set) {
+        out.add(fn.call(ctx, x));
+    }
+    return out;
+};
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
 _.mixin({
     scatter: function (obj, elem) {
@@ -1238,6 +1245,19 @@ _.concat = function (a, b) {
     });
 };
 _.mixin({
+    zipSetsWith: function (sets, fn) {
+        return _.reduce(_.rest(sets), function (memo, obj) {
+            _.each(_.union(obj && Array.from(obj.values()) || [], memo && Array.from(memo.values()) || []), function (k) {
+                var zipped = fn(memo && memo.has(k) ? k : undefined, obj && obj.has(k) ? k : undefined);
+                if (zipped === undefined) {
+                    memo.delete(k);
+                } else {
+                    memo.add(zipped);
+                }
+            });
+            return memo;
+        }, new Set(sets[0]));
+    },
     zipObjectsWith: function (objects, fn) {
         return _.reduce(_.rest(objects), function (memo, obj) {
             _.each(_.union(_.keys(obj), _.keys(memo)), function (k) {
@@ -1259,6 +1279,8 @@ _.mixin({
         } else {
             if (_.isArrayLike(rows[0])) {
                 return _.zipWith(rows, fn);
+            } else if (rows[0] instanceof Set) {
+                return _.zipSetsWith(rows, fn);
             } else if (_.isStrictlyObject(rows[0])) {
                 return _.zipObjectsWith(rows, fn);
             } else {
@@ -1346,7 +1368,7 @@ _.nonempty = function (obj) {
 };
 _.extend(_, {
     clone: function (x) {
-        return !_.isObject(x) ? x : _.isArray(x) ? x.slice() : x instanceof Set ? new Set(x) : _.extend({}, x);
+        return x instanceof Set ? new Set(x) : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
     },
     cloneDeep: _.tails2(_.mapMap, function (value) {
         return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
