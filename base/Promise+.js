@@ -89,7 +89,10 @@ $mixin (Promise, {
                         return this.then (
                             function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
-                                           return { state: 'pending', pending: true } }) })
+                                           return { state: 'pending', pending: true } }) }),
+
+    panic: $property (function () {
+                return this.catch (function (e) { log (e); throw e }) })
 })
 
 _.tests['Promise'] = function () {

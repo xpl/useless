@@ -1819,13 +1819,14 @@ $extensionMethods(Function, {
     compose: _.compose,
     then: _.then,
     flip: _.flip,
-    with_: _.flipN,
+    with: _.flipN,
     flip2: _.flip2,
     flip3: _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod: _.asMethod,
     callsWith: _.callsTo,
     tailsWith: _.tailsTo,
+    higherOrder: _.higherOrder,
     returns: function (fn, returns) {
         return function () {
             fn.apply(this, arguments);
@@ -4360,6 +4361,12 @@ $mixin(Promise, {
                 state: 'pending',
                 pending: true
             };
+        });
+    }),
+    panic: $property(function () {
+        return this.catch(function (e) {
+            log(e);
+            throw e;
         });
     })
 });

@@ -3583,7 +3583,7 @@ $extensionMethods (Function, {
     compose:        _.compose,
     then:           _.then,
     flip:           _.flip,
-    with_:          _.flipN,
+    with:           _.flipN,
     flip2:          _.flip2,
     flip3:          _.flip3,
     asFreeFunction: _.asFreeFunction,
@@ -3591,6 +3591,8 @@ $extensionMethods (Function, {
 
     callsWith: _.callsTo,
     tailsWith: _.tailsTo,
+
+    higherOrder: _.higherOrder,
 
     returns: function (              fn,                                returns) {
                 return function () { fn.apply (this, arguments); return returns } },
@@ -8241,9 +8243,9 @@ _.extend (log, {
             /*  Split by linebreaks
              */
             var newline = {}
-            var lines = _.pluck.with_ ('items',
-                            _.reject.with_ (_.property ('label'),
-                                _.partition3.with_ (_.equals (newline),
+            var lines = _.pluck.with ('items',
+                            _.reject.with (_.property ('label'),
+                                _.partition3.with (_.equals (newline),
                                     _.scatter (runs, function (run, i, emit) {
                                                         _.each (run.text.split ('\n'), function (line, i, arr) {
                                                                                             emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
@@ -8293,7 +8295,7 @@ _.extend (log, {
                              params.trailNewlines) }
 
             else {
-                console.log.apply (console, _.reject.with_ (_.equals (undefined), [].concat (
+                console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
                     _.map (params.lines, function (line, i) {
                                             return params.indentation + _.reduce2 ('', line, function (s, run) {
@@ -9236,7 +9238,10 @@ $mixin (Promise, {
                         return this.then (
                             function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
-                                           return { state: 'pending', pending: true } }) })
+                                           return { state: 'pending', pending: true } }) }),
+
+    panic: $property (function () {
+                return this.catch (function (e) { log (e); throw e }) })
 })
 
 _.tests['Promise'] = function () {

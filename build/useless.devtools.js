@@ -1091,9 +1091,9 @@ _.extend (log, {
             /*  Split by linebreaks
              */
             var newline = {}
-            var lines = _.pluck.with_ ('items',
-                            _.reject.with_ (_.property ('label'),
-                                _.partition3.with_ (_.equals (newline),
+            var lines = _.pluck.with ('items',
+                            _.reject.with (_.property ('label'),
+                                _.partition3.with (_.equals (newline),
                                     _.scatter (runs, function (run, i, emit) {
                                                         _.each (run.text.split ('\n'), function (line, i, arr) {
                                                                                             emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
@@ -1143,7 +1143,7 @@ _.extend (log, {
                              params.trailNewlines) }
 
             else {
-                console.log.apply (console, _.reject.with_ (_.equals (undefined), [].concat (
+                console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
                     _.map (params.lines, function (line, i) {
                                             return params.indentation + _.reduce2 ('', line, function (s, run) {

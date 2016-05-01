@@ -72,7 +72,7 @@ $extensionMethods (Function, {
     compose:        _.compose,
     then:           _.then,
     flip:           _.flip,
-    with_:          _.flipN,
+    with:           _.flipN,
     flip2:          _.flip2,
     flip3:          _.flip3,
     asFreeFunction: _.asFreeFunction,
@@ -80,6 +80,8 @@ $extensionMethods (Function, {
 
     callsWith: _.callsTo,
     tailsWith: _.tailsTo,
+
+    higherOrder: _.higherOrder,
 
     returns: function (              fn,                                returns) {
                 return function () { fn.apply (this, arguments); return returns } },
