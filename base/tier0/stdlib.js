@@ -528,7 +528,7 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
     $assert (obj, copy)     // structure should not change
 
-    $assert (_.clone (new Set ([1,2,3])).values, [1,2,3])
+    $assert (Array.from (_.clone (new Set ([1,2,3])).values ()), [1,2,3])
 
 }, function () { _.extend (_, {
 

@@ -2138,7 +2138,14 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
     $assert (obj, copy)     // structure should not change
 
+    $assert (Array.from (_.clone (new Set ([1,2,3])).values ()), [1,2,3])
+
 }, function () { _.extend (_, {
+
+    clone: function (x) {
+                return  (!_.isObject (x)    ? x :
+                        (_.isArray   (x)    ? x.slice ()  :
+                        ((x instanceof Set) ? new Set (x) : _.extend ({}, x)))) },
 
     cloneDeep: _.tails2 (_.mapMap, function (value) {
         return (_.isStrictlyObject (value) && !
@@ -2436,6 +2443,9 @@ _.withTest ('properties', function () { var obj = {}
 
     defineProperties: function (targetObject, properties) {
         _.each (properties, _.defineProperty.partial (targetObject).flip2) },
+
+    memoizedState: function (obj) {
+                        return _.pickKeys (this, function (k) { return k[0] === '_' }) },
 
     memoizeToThis: function (name, fn) {
         return function () {
@@ -4079,7 +4089,7 @@ _.deferTest (['identifier naming style interpolation'], function () {
 ;
 _.withTest ('Object extensions', function () {
 
-    $assert ({ foo: 3 }.extend ({ bar: 4 }), { foo: 3, bar: 4 })
+    $assert ({ foo: 3 }.extend ({ bar: 4 }, { baz: 5 }), { foo: 3, bar: 4, baz: 5 })
 
 }, function () {
 
