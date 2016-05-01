@@ -61,6 +61,7 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     $include ('./base/infix/Function')            // extends Function
     $include ('./base/infix/Array')               // extends Array
     $include ('./base/infix/String')              // extends String
+    $include ('./base/infix/Object')              // extends Object
 
     $include ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
     $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)

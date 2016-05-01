@@ -2250,6 +2250,7 @@ _.loDashesToCamelCase = function (x) {
         return x[1].uppercase;
     });
 };
+_.defineHiddenProperty(Object.prototype, 'extend', { get: _.constant(_.extend.asMethod) });
 (function () {
     var hooks = [
         'onceBefore',

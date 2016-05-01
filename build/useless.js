@@ -4077,6 +4077,13 @@ _.deferTest (['identifier naming style interpolation'], function () {
 
 
 ;
+_.withTest ('Object extensions', function () {
+
+    $assert ({ foo: 3 }.extend ({ bar: 4 }), { foo: 3, bar: 4 })
+
+}, function () {
+
+    _.defineHiddenProperty (Object.prototype, 'extend', { get: _.constant (_.extend.asMethod) }) });
 
 
 /*  Dynamic code binding toolbox
