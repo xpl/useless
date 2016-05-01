@@ -2082,6 +2082,9 @@ $extensionMethods(String, {
     contains: function (s, other) {
         return s.indexOf(other) >= 0;
     },
+    startsWith: function (s, x) {
+        return s[0] === x;
+    },
     cut: function (s, from) {
         return s.substring(0, from - 1) + s.substring(from, s.length);
     },
