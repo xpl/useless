@@ -528,7 +528,14 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
     $assert (obj, copy)     // structure should not change
 
+    $assert (_.clone (new Set ([1,2,3])).values, [1,2,3])
+
 }, function () { _.extend (_, {
+
+    clone: function (x) {
+                return  (!_.isObject (x)    ? x :
+                        (_.isArray   (x)    ? x.slice ()  :
+                        ((x instanceof Set) ? new Set (x) : _.extend ({}, x)))) },
 
     cloneDeep: _.tails2 (_.mapMap, function (value) {
         return (_.isStrictlyObject (value) && !
