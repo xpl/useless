@@ -74,6 +74,7 @@ _ = (function () {
     $include ('./base/infix/Array')               // extends Array
     $include ('./base/infix/String')              // extends String
     $include ('./base/infix/Object')              // extends Object
+    $include ('./base/infix/Set')                 // extends Set
 
 
 /*  Dynamic code binding toolbox
