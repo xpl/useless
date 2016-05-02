@@ -56,6 +56,7 @@ _.withTest ('Array extensions', function () {
 
         each:        _.each,
         map:         _.map,
+        fold:        _.reduce2,
         reduce:      _.reduce,
         reduceRight: _.reduceRight,
         zip:         _.zipWith,

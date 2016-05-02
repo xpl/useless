@@ -82,6 +82,12 @@ _ = (function () {
     $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
 
 
+/*  A couple of custom algorithms for directed graph linearization
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $include ('./base/tier0/DAG')
+
+
 /*  OOP paradigm
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 

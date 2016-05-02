@@ -54,7 +54,7 @@ _.withTest ('properties', function () { var obj = {}
         _.each (properties, _.defineProperty.partial (targetObject).flip2) },
 
     memoizedState: function (obj) {
-                        return _.pickKeys (this, function (k) { return k[0] === '_' }) },
+                        return _.filter2 (obj, function (v, k) { return (k[0] === '_') && !_.isFunction (v) }) },
 
     memoizeToThis: function (name, fn) {
         return function () {

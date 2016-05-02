@@ -31,10 +31,10 @@
     var $global = (p.engine === 'browser') ? window :
                   (p.engine === 'node')    ? global : undefined
 
-    $global.define = function (name, v, cfg) { if (name in $global) {
+    $global.define = function (name, v, cfg) {  if (name in $global) {
                                                     throw new Error ('cannot define global ' + name + ': already there') }
 
-         Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
+        return Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
 
 
     $global.define ('$global', $global)

@@ -291,10 +291,10 @@ Base64 = {
     var $global = (p.engine === 'browser') ? window :
                   (p.engine === 'node')    ? global : undefined
 
-    $global.define = function (name, v, cfg) { if (name in $global) {
+    $global.define = function (name, v, cfg) {  if (name in $global) {
                                                     throw new Error ('cannot define global ' + name + ': already there') }
 
-         Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
+        return Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
 
 
     $global.define ('$global', $global)
@@ -1746,21 +1746,44 @@ _.withTest (['stdlib', 'mapKeys'], function () {
 
 _.withTest (['stdlib', 'mapMap'], function () {
 
-    $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
-    $assert (_.mapMap ([7], _.typeOf), ['number'])
+        $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
+        $assert (_.mapMap ([7], _.typeOf), ['number'])
 
-    $assert (_.mapMap ( {   foo: 7,
-                            bar: ['foo', {
-                                bar: undefined } ] }, _.typeOf),
-                        
-                        {   foo: 'number',
-                            bar: ['string', {
-                                bar: 'undefined' } ] }) },
+        $assert (_.mapMap ( {   foo: 7,
+                                bar: ['foo', {
+                                    bar: undefined } ] }, _.typeOf),
+                            
+                            {   foo: 'number',
+                                bar: ['string', {
+                                    bar: 'undefined' } ] }) },
+    function () {
+
+        _.mapMap = _.hyperOperator (_.unary, _.map2) })
+
+
+/*  Hyper map (deep) #2 — maps branches & leafs 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'hyperMap'], function () {
+
+        var complexObject = {  garply:         { bar: { baz: 5 } },
+                               frobni: { foo: [{ bar: { baz: 5 } }] } }
+    /*                                         -----------------             */
+
+        var barBazSubstructure =    _.matches ({ bar: { baz: 5 } })
+
+        var transformedObject = _.hyperMap (complexObject, function (x) {
+                                                                if (barBazSubstructure (x)) { return 'pwned!' } })
+
+        $assert (transformedObject, { garply:         'pwned!',
+                                      frobni: { foo: ['pwned!'] } })         },
 
     function () {
 
-        _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
-
+        _.hyperMap = (data, op) =>
+                        _.hyperOperator (_.unary,
+                            (expr, f) =>
+                                op (expr) || _.map2 (expr, f)) (data, _.identity) })
 
 /*  Filter 2.0
     ======================================================================== */
@@ -2298,62 +2321,6 @@ _.withTest (['stdlib', 'partition2'], function () {
             return (span.length && spans.push (span)),
                     spans } })
 
-/*  Merges arrays, keeping given element order.
-    TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
-    ======================================================================== */
-
-_.withTest (['stdlib', 'linearMerge'], function () {
-
-    $assert (_.linearMerge ([]), [])
-    $assert (_.linearMerge ([   ['all','your',                'to','us'],
-                                [      'your',       'belong',     'us'],
-                                [             'base','belong','to'     ],
-                                [      'your','base'                   ]]),
-                                ['all','your','base','belong','to','us'])
-
-/*  cfg accepts { key: fn, sort: fn } optional parameters for key extraction and sorting
-    ======================================================================== */
-
-}, function () {
-
-    _.linearMerge = function (arrays, cfg) {
-
-            cfg = cfg || { key: _.identity }
-
-        var head = { key: null, next: {} }
-        var nodes = {}
-
-        _.each (arrays, function (arr) {
-            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-                var item = arr[i]
-                var key  = cfg.key (item)
-                node = nodes[key] || (nodes[key] = { key: key, item: item, next: {} })
-                if (prev) {
-                    prev.next[key] = node } } })
-
-        var decyclize = function (visited, node) { visited[node.key] = true
-
-            node.next = _.chain (_.values (node.next))
-                            .filter (function (node) { return !(node.key in visited) })
-                            .map (_.partial (decyclize, visited)).value ()
-            
-            delete visited[node.key]; return node }
-
-        var ordered = function (a, b) {
-            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
-
-        var flatten = function (node) { if (!node) return []
-
-            var next = cfg.sort ? _.sortBy (node.next || [], cfg.sort) : (node.next || [])
-
-            return [node].concat (flatten (_.reduce (next, function (a, b) {
-
-                if (a === b)             { return a }
-                else if (ordered (b, a)) { b.next.push (a); return b }
-                else                     { a.next.push (b); return a } }))) }
-
-        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
-
 
 /*  Taken from  npmjs.com/package/longest-common-substring
     Props to    npmjs.com/~mirkok
@@ -2473,7 +2440,7 @@ _.withTest ('properties', function () { var obj = {}
         _.each (properties, _.defineProperty.partial (targetObject).flip2) },
 
     memoizedState: function (obj) {
-                        return _.pickKeys (this, function (k) { return k[0] === '_' }) },
+                        return _.filter2 (obj, function (v, k) { return (k[0] === '_') && !_.isFunction (v) }) },
 
     memoizeToThis: function (name, fn) {
         return function () {
@@ -3829,6 +3796,7 @@ _.withTest ('Array extensions', function () {
 
         each:        _.each,
         map:         _.map,
+        fold:        _.reduce2,
         reduce:      _.reduce,
         reduceRight: _.reduceRight,
         zip:         _.zipWith,
@@ -4701,6 +4669,168 @@ _.extend (_, {
 
 
 
+;
+
+
+/*  A couple of custom algorithms for directed graph linearization
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/*  ======================================================================== */
+
+$global.define ('DAG', {})
+
+/*  ======================================================================== */
+
+_.withTest (['DAG', 'sparseZip'], function () {
+
+/*  
+    Zips 'sparse' arrays, trying to reconstruct the consistent element order
+    from separate weakly-ordered fragments of incomplete data. It has many applications:
+
+    1.  Run-time module dependencies in ES3000 and Marv build system are
+        resolved via this algorithm, achieving the predictable and controllable
+        initialization order.
+
+    2.  SkyChat app implements serverless P2P chat history that is dynamically
+        merged across connected users, requiring no central authority to operate.
+        This new technology imposes new challenges: for example, you cannot
+        rely on client-generated timestamps when merging chat history fragments
+        from different sources. Following algorithm greatly improves merge
+        consistency, not distrupting given message order.
+
+        -------------------------------------------------------------------  */
+
+        $assert (DAG.sparseZip ([]), []) // degenerate case
+
+                              /* ----------------------------------------- input  */
+        $assert (DAG.sparseZip ([['all','your',                'to','us'],
+                                 [      'your',       'belong',     'us'],
+                                 [             'base','belong','to'     ],
+                                 [      'your','base'                   ]]),
+                              /* ----------------------------------------- result */
+                                 ['all','your','base','belong','to','us'])
+
+}, function () {
+
+    /*  TODO:   Seems like the algoritm is O(N²) in the worst case, but it can be
+                optimized to O(N log N).
+                ------------------------------------------------------------ */
+
+    DAG.sparseZip = function (arrays, cfg) {
+                                      cfg = cfg || {}
+
+        var key  = cfg.key  || _.identity,  //  for element key extraction
+            sort = cfg.sort || undefined    //  should be fn(a,b) -> {-1,0,1}
+
+        var head = { key: null, next: {} }
+        var nodes = {}
+
+        _.each (arrays, function (arr) {
+            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+                var item = arr[i]
+                var k    = key (item)
+                node = nodes[k] || (nodes[k] = { key: k, item: item, next: {} })
+                if (prev) {
+                    prev.next[k] = node } } })
+
+        var decyclize = function (visited, node) { visited[node.key] = true
+
+            node.next = _.chain (_.values (node.next))
+                            .filter (function (node) { return !(node.key in visited) })
+                            .map (_.partial (decyclize, visited)).value ()
+            
+            delete visited[node.key]; return node }
+
+        var ordered = function (a, b) {
+            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
+
+        var flatten = function (node) { if (!node) return []
+
+            var next = sort ? _.sortBy (node.next || [], sort) : (node.next || [])
+
+            return [node].concat (flatten (_.reduce (next, function (a, b) {
+
+                if (a === b)             { return a }
+                else if (ordered (b, a)) { b.next.push (a); return b }
+                else                     { a.next.push (b); return a } }))) }
+
+        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) }
+
+})
+
+/*  ======================================================================== */
+
+_.withTest (['DAG', 'linearize'], function () {
+
+/*
+    A more specific task for the `sparseZip`: linearizing a dependency tree.
+
+        This is rather a common task when you are into building extensible modular
+        architectures. Everyone's got modules. And if you got modules, you've got
+        dependencies. And while dependencies are typically seen as the flat
+        list by a programmer, they're really a deeply nested tree. And deriving
+        that flat list from the tree is not a trivial task, considering that the
+        order matters: you probably want to initialize/include the most urgent
+        stuff first. The following algorithm solves that for you.
+
+        -------------------------------------------------------------------- */
+
+
+        var modules = {
+            
+            'tier1':   { requires: [] },
+            'tier11':  { requires: ['tier1'] },
+            'tier2':   { requires: ['tier0'] },
+            'tier111': { requires: ['tier12', 'tier100'] },
+            'tier12':  { requires: ['tier0', 'tier11', 'tier2'] },
+            'tier100': { requires: ['tier10'] },
+            'tier0':   { requires: [] },
+            'tier10':  { requires: ['tier0', 'tier2'] },
+            'root':    { requires: ['tier2', 'tier111'] } }
+
+        $assert (['tier1',
+                  'tier0',
+                  'tier11',
+                  'tier2',
+                  'tier10',
+                  'tier12',
+                  'tier100',
+                  'tier111'], DAG.linearize ('root', { items: _.propertyOf ( modules ).then (
+                                                              _.property   ('requires')) }))
+
+/*  ======================================================================== */
+
+}, function () {
+
+    DAG.linearize = function (root, cfg) {
+
+            var cfg        = cfg || { /* key: fn, items: fn */ },
+
+                items      = cfg.items || _.noop,
+
+                asGraph    = function (X, edges) {
+                                          edges = edges || []
+
+                                if ((upper = items (X)) &&
+                                     upper.length) {
+
+                                     upper.fold (function (B, A) {                          // horizontal edges (order constraints)
+                                                   return (edges.push ([A, B]), A) })       // first mentioned should go first
+
+                                     upper.forEach (function (U) {                          // vertical edges
+                                                           edges.push ([X, U])              // upper items should go first
+                                                              asGraph (    U, edges) }) }
+                                return edges }
+
+                return DAG.sparseZip (asGraph (root), cfg)
+                          .reverse ()
+                          .remove (root) }
+
+/*  ======================================================================== */
+
+})
+
+/*  ======================================================================== */
 ;
 
 
@@ -6970,6 +7100,8 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
+    'random $nonce generation': function () { var X = $prototype (); $assert (_.isString (X.$nonce)) },
+
     '$macroTags for component-specific macros': function () {
 
         var Trait =    $trait ({   $macroTags: {
@@ -7112,6 +7244,9 @@ $prototype.macroTag ('extendable',
                       def[name] = $builtin ($const (value))
                return def })
 
+$prototype.macro (function (def) {
+                            def.$nonce = $static ($builtin ($property (String.randomHex (32)))); return def })
+
 Component = $prototype ({
 
     $defaults:  $extendable ({}),
@@ -7144,29 +7279,12 @@ Component = $prototype ({
             this.defineInstanceMembers) },
 
         expandTraitsDependencies: function (def) {
-            if (def.$depends) {
-                            var edges = []
-                            var lastId = 0
-                            var drill =  function (depends, T) { if (!T.__tempId) { T.__tempId = lastId++ }
-                                            
-                                            /*  Horizontal dependency edges (first mentioned should init first)
-                                             */
-                                            _.reduce2 (depends, function (TBefore, TAfter) {
-                                                edges.push ([TAfter, TBefore]); return TAfter })
 
-                                            /*  Vertical dependency edges (parents should init first)
-                                             */
-                                            _.each (depends, function (    TSuper) {
-                                                          edges.push ([T,  TSuper])
-                                                                    drill (TSuper.$depends || [], TSuper) }) }
-                                                                    drill ($untag (def.$depends), {})
-
-                    _.each (def.$traits =               _.reversed (
-                                                            _.rest (
-                                                     _.linearMerge (edges, { key: _.property ('__tempId') }))),
-                            function (obj) {
-                                delete obj.__tempId }) }
-            return def },
+                if (_.isNonempty ($untag (def.$depends)) &&
+                    _.isEmpty    ($untag (def.$traits))) {
+                                          def.$traits = DAG.linearize (def, {
+                                                                items: function (def) { return $untag (def.$depends) },
+                                                                  key: function (def) { return $untag (def.$nonce) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
 
@@ -7977,7 +8095,8 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        return this.mergeDuplicateLines.reject (_.property ('thirdParty')) }),
+        var clean = this.mergeDuplicateLines.reject (_.property ('thirdParty'))
+        return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
         return _.asArray (this) }),
@@ -8429,7 +8548,7 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
+                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') +

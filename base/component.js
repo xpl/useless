@@ -528,6 +528,8 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
+    'random $nonce generation': function () { var X = $prototype (); $assert (_.isString (X.$nonce)) },
+
     '$macroTags for component-specific macros': function () {
 
         var Trait =    $trait ({   $macroTags: {
@@ -670,6 +672,9 @@ $prototype.macroTag ('extendable',
                       def[name] = $builtin ($const (value))
                return def })
 
+$prototype.macro (function (def) {
+                            def.$nonce = $static ($builtin ($property (String.randomHex (32)))); return def })
+
 Component = $prototype ({
 
     $defaults:  $extendable ({}),
@@ -702,29 +707,12 @@ Component = $prototype ({
             this.defineInstanceMembers) },
 
         expandTraitsDependencies: function (def) {
-            if (def.$depends) {
-                            var edges = []
-                            var lastId = 0
-                            var drill =  function (depends, T) { if (!T.__tempId) { T.__tempId = lastId++ }
-                                            
-                                            /*  Horizontal dependency edges (first mentioned should init first)
-                                             */
-                                            _.reduce2 (depends, function (TBefore, TAfter) {
-                                                edges.push ([TAfter, TBefore]); return TAfter })
 
-                                            /*  Vertical dependency edges (parents should init first)
-                                             */
-                                            _.each (depends, function (    TSuper) {
-                                                          edges.push ([T,  TSuper])
-                                                                    drill (TSuper.$depends || [], TSuper) }) }
-                                                                    drill ($untag (def.$depends), {})
-
-                    _.each (def.$traits =               _.reversed (
-                                                            _.rest (
-                                                     _.linearMerge (edges, { key: _.property ('__tempId') }))),
-                            function (obj) {
-                                delete obj.__tempId }) }
-            return def },
+                if (_.isNonempty ($untag (def.$depends)) &&
+                    _.isEmpty    ($untag (def.$traits))) {
+                                          def.$traits = DAG.linearize (def, {
+                                                                items: function (def) { return $untag (def.$depends) },
+                                                                  key: function (def) { return $untag (def.$nonce) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
 
