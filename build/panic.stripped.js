@@ -1571,7 +1571,8 @@ Array.prototype.squash = function (cfg) {
     var key = cfg.key || _.identity, sort = cfg.sort || undefined;
     var head = {
         key: null,
-        next: {}
+        next: {},
+        depth: {}
     };
     var nodes = {};
     _.each(this, function (arr) {
@@ -1581,18 +1582,30 @@ Array.prototype.squash = function (cfg) {
             node = nodes[k] || (nodes[k] = {
                 key: k,
                 item: item,
-                next: {}
+                next: {},
+                depth: {}
             });
             if (prev) {
                 prev.next[k] = node;
+                prev.depth[k] = 0;
             }
         }
     });
-    var decyclize = function (visited, node) {
+    var decyclize = function (visited, node, prev, depth) {
+        depth = depth || 0;
         visited[node.key] = true;
-        node.next = _.chain(_.values(node.next)).filter(function (node) {
-            return !(node.key in visited);
-        }).map(_.partial(decyclize, visited)).value();
+        node.next = _.filter2(_.values(node.next), function (next) {
+            if (next.key in visited) {
+                return false;
+            } else {
+                next = decyclize(visited, next, node);
+                depth = Math.max(depth, node.depth[next.key]);
+                return next;
+            }
+        });
+        if (prev) {
+            prev.depth[node.key] = Math.max(prev.depth[node.key] || 0, depth + 1);
+        }
         delete visited[node.key];
         return node;
     };
@@ -1604,7 +1617,15 @@ Array.prototype.squash = function (cfg) {
     var flatten = function (node) {
         if (!node)
             return [];
-        var next = sort ? _.sortBy(node.next || [], sort) : node.next || [];
+        var next = (node.next || []).sort(function (a, b) {
+            return (node.depth[a.key] || 0) < (node.depth[b.key] || 0);
+        });
+        if (false) {
+            log.gg(node.key);
+            log.pp(next.map(function (next) {
+                return next.key + ' ' + node.depth[next.key];
+            }));
+        }
         return [node].concat(flatten(_.reduce(next, function (a, b) {
             if (a === b) {
                 return a;
@@ -1619,31 +1640,43 @@ Array.prototype.squash = function (cfg) {
     };
     return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
 };
-$global.define('DAG', {
-    squash: function (node0, cfg) {
-        var cfg = cfg || {}, items = cfg.items || _.noop, run = function (X, edges) {
-                edges = edges || [];
-                if ((ix = items(X)) && ix.length) {
-                    ix.reduce(function (B, A) {
-                        edges.push([
-                            A,
-                            B
-                        ]);
-                        return A;
-                    });
-                    ix.forEach(function (U) {
-                        edges.push([
-                            X,
-                            U
-                        ]);
-                        run(U, edges);
-                    });
-                }
-                return edges;
-            };
-        return run(node0).squash(cfg).remove(node0).reverse();
+DAG = function (cfg) {
+    this.cfg = cfg || {}, this.nodes = cfg.nodes || _.noop;
+}, DAG.prototype.each = function (N, fn, prev, visited) {
+    visited = visited || new Set();
+    if (!visited.has(N)) {
+        visited.add(N);
+        var self = this, nodes = this.nodes(N) || [], stop = fn.call(this, N, {
+                nodes: nodes,
+                prev: prev,
+                visited: visited
+            });
+        if (stop !== true) {
+            nodes.forEach(function (NN) {
+                self.each(NN, fn, N, visited);
+            });
+        }
     }
-});
+    ;
+    return visited;
+}, DAG.prototype.edges = function (N) {
+    var edges = [];
+    this.each(N, function (N, context) {
+        context.nodes.concat(N).reduce(function (A, B) {
+            edges.push([
+                A,
+                B
+            ]);
+            return B;
+        });
+    });
+    return edges;
+}, DAG.prototype.squash = function (node0) {
+    return this.edges(node0).squash(this.cfg).remove(node0);
+};
+DAG.squash = function (node0, cfg) {
+    return new DAG(cfg).squash(node0);
+};
 _.cps = function () {
     return _.cps.sequence.apply(null, arguments);
 };
@@ -3910,7 +3943,7 @@ Component = $prototype({
         expandTraitsDependencies: function (def) {
             if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
                 def.$traits = DAG.squash(def, {
-                    items: function (def) {
+                    nodes: function (def) {
                         return $untag(def.$depends);
                     },
                     key: function (def) {
