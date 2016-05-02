@@ -1,6 +1,6 @@
 /*  ======================================================================== */
 
-_.withTest (['Array', 'squash'], function () {
+_.deferTest (['Array', 'squash'], function () {
 
       $assert ( [['all','your',                'to','us'],
                  [      'your',       'belong',     'us'],
@@ -50,7 +50,7 @@ _.withTest (['Array', 'squash'], function () {
                                 if (ka === kb) { return          0 }
                                          else  { var upvotes   = 0, // democracy model works surprisingly well here
                                                      downvotes = 0,
-                                                       neutral = 0
+                                                       unknown = 0
                                                     for (var i = 0,     n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
                                                          var successByKey = itemsSuccessInArrays[i]                                    
 
@@ -59,17 +59,21 @@ _.withTest (['Array', 'squash'], function () {
 
                                                             ((ia < ib) ? upvotes  ++ :
                                                              (ia > ib) ? downvotes++ :
-                                                                         neutral  ++) } }
+                                                                         unknown  ++) }
 
+                                                        else {
+                                                            unknown++ } }
                                                     return ((upvotes > downvotes) ?  1 :
                                                             (upvotes < downvotes) ? -1 : 0) } }
 
-            var orderedKeys = _.keys (itemsByKey).mergeSort (compare).reverse ()
+                                      var orderedKeys = _.keys (itemsByKey)
+            for (var i = 0; i < 4; i++) { orderedKeys = orderedKeys.mergeSort (compare) }
 
             for (var i = 0,
                      n = orderedKeys.length; i < n; i++) { var key = orderedKeys[i]
                                                                      orderedKeys[i] = itemsByKey[key] }
-            return orderedKeys }
+
+            return orderedKeys.reverse () }
 })
 
 /*  ======================================================================== */
