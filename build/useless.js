@@ -2965,7 +2965,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 40)) }
+                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 60)) }
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (Tags.get (x), function (memo, value, tag) {
@@ -3073,7 +3073,7 @@ _.toFixed3 = function (x) {
 ;
 /*  ======================================================================== */
 
-_.withTest (['Array', 'squash'], function () {
+_.deferTest (['Array', 'squash'], function () {
 
       $assert ( [['all','your',                'to','us'],
                  [      'your',       'belong',     'us'],
@@ -3123,7 +3123,7 @@ _.withTest (['Array', 'squash'], function () {
                                 if (ka === kb) { return          0 }
                                          else  { var upvotes   = 0, // democracy model works surprisingly well here
                                                      downvotes = 0,
-                                                       neutral = 0
+                                                       unknown = 0
                                                     for (var i = 0,     n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
                                                          var successByKey = itemsSuccessInArrays[i]                                    
 
@@ -3132,17 +3132,21 @@ _.withTest (['Array', 'squash'], function () {
 
                                                             ((ia < ib) ? upvotes  ++ :
                                                              (ia > ib) ? downvotes++ :
-                                                                         neutral  ++) } }
+                                                                         unknown  ++) }
 
+                                                        else {
+                                                            unknown++ } }
                                                     return ((upvotes > downvotes) ?  1 :
                                                             (upvotes < downvotes) ? -1 : 0) } }
 
-            var orderedKeys = _.keys (itemsByKey).mergeSort (compare).reverse ()
+                                      var orderedKeys = _.keys (itemsByKey)
+            for (var i = 0; i < 4; i++) { orderedKeys = orderedKeys.mergeSort (compare) }
 
             for (var i = 0,
                      n = orderedKeys.length; i < n; i++) { var key = orderedKeys[i]
                                                                      orderedKeys[i] = itemsByKey[key] }
-            return orderedKeys }
+
+            return orderedKeys.reverse () }
 })
 
 /*  ======================================================================== */

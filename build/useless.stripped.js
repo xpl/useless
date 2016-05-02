@@ -1874,7 +1874,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     } else if (_.isFunction(x)) {
         return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
     } else if (typeof x === 'string') {
-        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 40));
+        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 60));
     } else if (_.isTypeOf(Tags, x)) {
         return _.reduce(Tags.get(x), function (memo, value, tag) {
             return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
@@ -1980,22 +1980,27 @@ _.toFixed3 = function (x) {
             if (ka === kb) {
                 return 0;
             } else {
-                var upvotes = 0, downvotes = 0, neutral = 0;
+                var upvotes = 0, downvotes = 0, unknown = 0;
                 for (var i = 0, n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
                     var successByKey = itemsSuccessInArrays[i];
                     if ((ia = successByKey[ka]) !== undefined && (ib = successByKey[kb]) !== undefined) {
-                        ia < ib ? upvotes++ : ia > ib ? downvotes++ : neutral++;
+                        ia < ib ? upvotes++ : ia > ib ? downvotes++ : unknown++;
+                    } else {
+                        unknown++;
                     }
                 }
                 return upvotes > downvotes ? 1 : upvotes < downvotes ? -1 : 0;
             }
         };
-        var orderedKeys = _.keys(itemsByKey).mergeSort(compare).reverse();
+        var orderedKeys = _.keys(itemsByKey);
+        for (var i = 0; i < 4; i++) {
+            orderedKeys = orderedKeys.mergeSort(compare);
+        }
         for (var i = 0, n = orderedKeys.length; i < n; i++) {
             var key = orderedKeys[i];
             orderedKeys[i] = itemsByKey[key];
         }
-        return orderedKeys;
+        return orderedKeys.reverse();
     };
 }());
 $global.define('DAG', {
