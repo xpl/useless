@@ -3782,6 +3782,9 @@ _.withTest ('Array extensions', function () {
     $assert ([1].random === 1) // returns random item from array
     $assert ([].random === undefined)
 
+    $assert ([{ foo: 'bar'}, { foo: 'qux' }].pluck ('foo'),
+                    ['bar',         'qux'])
+
     $assert ([['foo', 'bar'].join (),
               ['foo', 'bar'].join ('.'),
               ['foo', 'bar'].join (777),
@@ -3805,6 +3808,7 @@ _.withTest ('Array extensions', function () {
         filter:      _.filter,
         flat:        _.flatten.tails2 (true),
         object:      _.object,
+        pluck:       $method (_.pluck),
 
         join: (function (strJoin) {
                     return $forceOverride (function (arr, delim) { delim = (arguments.length < 2) ? '' : delim

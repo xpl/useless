@@ -2352,6 +2352,7 @@ $extensionMethods(Array, {
     filter: _.filter,
     flat: _.flatten.tails2(true),
     object: _.object,
+    pluck: $method(_.pluck),
     join: function (strJoin) {
         return $forceOverride(function (arr, delim) {
             delim = arguments.length < 2 ? '' : delim;
