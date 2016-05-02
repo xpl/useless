@@ -711,7 +711,7 @@ Component = $prototype ({
                 if (_.isNonempty ($untag (def.$depends)) &&
                     _.isEmpty    ($untag (def.$traits))) {
                                           def.$traits = DAG.squash (def, {
-                                                                  items: function (def) { return $untag (def.$depends) },
+                                                                  nodes: function (def) { return $untag (def.$depends) },
                                                                     key: function (def) { return $untag (def.$nonce) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
