@@ -81,7 +81,7 @@ _.deferTest (['DAG', 'squash'], function () {
 
     $assert (
         DAG.squash ('root', { items: function (x) { return modules[x].requires } }),
-        ["tier0", "tier1", "tier11", "tier2", "tier10", "tier12", "tier100", "tier111"])
+        ["tier1", "tier0", "tier11", "tier2", "tier10", "tier12", "tier100", "tier111"])
 
 /*  ======================================================================== */
 

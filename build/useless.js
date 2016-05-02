@@ -3085,68 +3085,55 @@ _.deferTest (['Array', 'squash'], function () {
 
 /*  ======================================================================== */
 
-}, function () { /* Mergesort algorithm is essential to `squash` impl.
-                    Doesn't work with the built-in Array.sort function.      */
+}, function () {    /*  Seems like the algoritm is O(N²) in the worst case,
+                        but it can be optimized to O(N log N).
+                        ---------------------------------------------------- */
 
-
-    var merge = function (a, b, compare) {  for (var out   = []           ; a.length  && b.length ; )   {
-                                                     out.  push ( compare ( a      [0] , b      [0] ) < 0
-                                                                          ? a.shift( ) : b.shift( ) )   }
-                                              return out.concat (a.length ? a          : b        ) }
-
-
-    Array.prototype.mergeSort = function (compare) {    var  mid   = Math.floor (this .length / 2)
-                                                     return (mid   <          1 ) ?  this : 
-                                                            (merge ( this.slice ( 0, mid ).mergeSort (compare)    ,
-                                                                   ( this.slice (    mid ).mergeSort (compare))   ,
-                                                                                                      compare)) }  
     Array.prototype.squash = function (cfg) {
+                                       cfg = cfg || {}
 
-            var cfg  = cfg      || {},
-                key  = cfg.key  || _.identity  // for element key extraction
+        var key  = cfg.key  || _.identity,  //  for element key extraction
+            sort = cfg.sort || undefined    //  should be fn(a,b) -> {-1,0,1}
 
-            var itemsSuccessInArrays = [],
-                itemsByKey           = {}
+        var head  = { key: null, next: {} }
+        var nodes = {}
 
-            for (var i = 0,     n = this.length; i < n; i++) {
-                 var array        = this[i],
-                     successByKey = {}
+        _.each (this, function (arr) {
+                        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+                            var item = arr[i]
+                            var k    = key (item)
+                            node = nodes[k] || (nodes[k] = { key: k, item: item, next: {} })
+                            if (prev) {
+                                prev.next[k] = node } } })
 
-                for (var ii = 0, nn = array.length; ii < nn; ii++) { var item = array [ii],
-                                                                         k    = key (item)
-                    itemsByKey  [k] = item
-                    successByKey[k] = ii }
+        var decyclize = function (  visited, node) {
+                                    visited[ node.key] = true
 
-                itemsSuccessInArrays.push (successByKey) }
+                                    node.next = _.chain (_.values (node.next))
+                                                    .filter (function (node) { return !(node.key in visited) })
+                                                    .map (_.partial (decyclize, visited)).value ()
+                                    
+                                    delete visited[node.key]; return node }
 
-            var compare = function (ka,    kb) {                     
-                                if (ka === kb) { return          0 }
-                                         else  { var upvotes   = 0, // democracy model works surprisingly well here
-                                                     downvotes = 0,
-                                                       unknown = 0
-                                                    for (var i = 0,     n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
-                                                         var successByKey = itemsSuccessInArrays[i]                                    
+        var ordered = function (    a,    b) {
+                            return (a === b) || _.some (a.next, function (aa) {
+                                                          return ordered (aa, b) }) }
 
-                                                        if (((ia = successByKey[ka]) !== undefined) &&
-                                                            ((ib = successByKey[kb]) !== undefined)) {
+        var flatten = function (node) { if (!node) return []
 
-                                                            ((ia < ib) ? upvotes  ++ :
-                                                             (ia > ib) ? downvotes++ :
-                                                                         unknown  ++) }
+                            var next = sort ? _.sortBy (node.next || [], sort) : (node.next || [])
 
-                                                        else {
-                                                            unknown++ } }
-                                                    return ((upvotes > downvotes) ?  1 :
-                                                            (upvotes < downvotes) ? -1 : 0) } }
+                            return [node].concat (flatten (_.reduce (next, function (a, b) {
 
-                                      var orderedKeys = _.keys (itemsByKey)
-            for (var i = 0; i < 4; i++) { orderedKeys = orderedKeys.mergeSort (compare) }
+                                if (a === b)             { return a }
+                                else if (ordered (b, a)) { b.next.push (a); return b }
+                                else                     { a.next.push (b); return a } }))) }
 
-            for (var i = 0,
-                     n = orderedKeys.length; i < n; i++) { var key = orderedKeys[i]
-                                                                     orderedKeys[i] = itemsByKey[key] }
+        return _.rest (
+               _.pluck (flatten (decyclize ({}, head)),
+                       'item'))
+    }
 
-            return orderedKeys.reverse () }
 })
 
 /*  ======================================================================== */
@@ -3165,20 +3152,13 @@ _.deferTest (['DAG', 'squash'], function () {
         'tier10':  { requires: ['tier0', 'tier2'] },
         'root':    { requires: ['tier2', 'tier111'] } }
 
-    $assert (['tier0',
-              'tier2',
-              'tier10',
-              'tier1',
-              'tier11',
-              'tier12',
-              'tier100',
-              'tier111'], DAG.squash ('root', { items: function (x) { return modules[x].requires } }) )
+    $assert (
+        DAG.squash ('root', { items: function (x) { return modules[x].requires } }),
+        ["tier1", "tier0", "tier11", "tier2", "tier10", "tier12", "tier100", "tier111"])
 
 /*  ======================================================================== */
 
 }, function () {
-
-/*  ======================================================================== */
 
     $global.define ('DAG', {
 

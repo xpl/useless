@@ -1487,7 +1487,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     } else if (_.isFunction(x)) {
         return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
     } else if (typeof x === 'string') {
-        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 40));
+        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 60));
     } else if (_.isTypeOf(Tags, x)) {
         return _.reduce(Tags.get(x), function (memo, value, tag) {
             return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
@@ -1566,51 +1566,59 @@ _.toFixed2 = function (x) {
 _.toFixed3 = function (x) {
     return _.toFixed(x, 3);
 };
-(function () {
-    var merge = function (a, b, compare) {
-        for (var out = []; a.length && b.length;) {
-            out.push(compare(a[0], b[0]) < 0 ? a.shift() : b.shift());
-        }
-        return out.concat(a.length ? a : b);
+Array.prototype.squash = function (cfg) {
+    cfg = cfg || {};
+    var key = cfg.key || _.identity, sort = cfg.sort || undefined;
+    var head = {
+        key: null,
+        next: {}
     };
-    Array.prototype.mergeSort = function (compare) {
-        var mid = Math.floor(this.length / 2);
-        return mid < 1 ? this : merge(this.slice(0, mid).mergeSort(compare), this.slice(mid).mergeSort(compare), compare);
-    };
-    Array.prototype.squash = function (cfg) {
-        var cfg = cfg || {}, key = cfg.key || _.identity;
-        var itemsSuccessInArrays = [], itemsByKey = {};
-        for (var i = 0, n = this.length; i < n; i++) {
-            var array = this[i], successByKey = {};
-            for (var ii = 0, nn = array.length; ii < nn; ii++) {
-                var item = array[ii], k = key(item);
-                itemsByKey[k] = item;
-                successByKey[k] = ii;
+    var nodes = {};
+    _.each(this, function (arr) {
+        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+            var item = arr[i];
+            var k = key(item);
+            node = nodes[k] || (nodes[k] = {
+                key: k,
+                item: item,
+                next: {}
+            });
+            if (prev) {
+                prev.next[k] = node;
             }
-            itemsSuccessInArrays.push(successByKey);
         }
-        var compare = function (ka, kb) {
-            if (ka === kb) {
-                return 0;
+    });
+    var decyclize = function (visited, node) {
+        visited[node.key] = true;
+        node.next = _.chain(_.values(node.next)).filter(function (node) {
+            return !(node.key in visited);
+        }).map(_.partial(decyclize, visited)).value();
+        delete visited[node.key];
+        return node;
+    };
+    var ordered = function (a, b) {
+        return a === b || _.some(a.next, function (aa) {
+            return ordered(aa, b);
+        });
+    };
+    var flatten = function (node) {
+        if (!node)
+            return [];
+        var next = sort ? _.sortBy(node.next || [], sort) : node.next || [];
+        return [node].concat(flatten(_.reduce(next, function (a, b) {
+            if (a === b) {
+                return a;
+            } else if (ordered(b, a)) {
+                b.next.push(a);
+                return b;
             } else {
-                var upvotes = 0, downvotes = 0, neutral = 0;
-                for (var i = 0, n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
-                    var successByKey = itemsSuccessInArrays[i];
-                    if ((ia = successByKey[ka]) !== undefined && (ib = successByKey[kb]) !== undefined) {
-                        ia < ib ? upvotes++ : ia > ib ? downvotes++ : neutral++;
-                    }
-                }
-                return upvotes > downvotes ? 1 : upvotes < downvotes ? -1 : 0;
+                a.next.push(b);
+                return a;
             }
-        };
-        var orderedKeys = _.keys(itemsByKey).mergeSort(compare).reverse();
-        for (var i = 0, n = orderedKeys.length; i < n; i++) {
-            var key = orderedKeys[i];
-            orderedKeys[i] = itemsByKey[key];
-        }
-        return orderedKeys;
+        })));
     };
-}());
+    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
+};
 $global.define('DAG', {
     squash: function (node0, cfg) {
         var cfg = cfg || {}, items = cfg.items || _.noop, run = function (X, edges) {
