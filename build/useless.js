@@ -3071,6 +3071,134 @@ _.toFixed3 = function (x) {
     return _.toFixed (x, 3) }
 
 ;
+/*  ======================================================================== */
+
+_.withTest (['Array', 'squash'], function () {
+
+      $assert ( [['all','your',                'to','us'],
+                 [      'your',       'belong',     'us'],
+                 [             'base','belong','to'     ],
+                 [      'your','base'                   ]].squash (),
+               /* -------------------------------------- */
+                 ['all','your','base','belong','to','us'])
+
+
+/*  ======================================================================== */
+
+}, function () { /* Mergesort algorithm is essential to `squash` impl.
+                    Doesn't work with the built-in Array.sort function.      */
+
+
+    var merge = function (a, b, compare) {  for (var out   = []           ; a.length  && b.length ; )   {
+                                                     out.  push ( compare ( a      [0] , b      [0] ) < 0
+                                                                          ? a.shift( ) : b.shift( ) )   }
+                                              return out.concat (a.length ? a          : b        ) }
+
+
+    Array.prototype.mergeSort = function (compare) {    var  mid   = Math.floor (this .length / 2)
+                                                     return (mid   <          1 ) ?  this : 
+                                                            (merge ( this.slice ( 0, mid ).mergeSort (compare)    ,
+                                                                   ( this.slice (    mid ).mergeSort (compare))   ,
+                                                                                                      compare)) }  
+    Array.prototype.squash = function (cfg) {
+
+            var cfg  = cfg      || {},
+                key  = cfg.key  || _.identity  // for element key extraction
+
+            var itemsSuccessInArrays = [],
+                itemsByKey           = {}
+
+            for (var i = 0,     n = this.length; i < n; i++) {
+                 var array        = this[i],
+                     successByKey = {}
+
+                for (var ii = 0, nn = array.length; ii < nn; ii++) { var item = array [ii],
+                                                                         k    = key (item)
+                    itemsByKey  [k] = item
+                    successByKey[k] = ii }
+
+                itemsSuccessInArrays.push (successByKey) }
+
+            var compare = function (ka,    kb) {                     
+                                if (ka === kb) { return          0 }
+                                         else  { var upvotes   = 0, // democracy model works surprisingly well here
+                                                     downvotes = 0,
+                                                       neutral = 0
+                                                    for (var i = 0,     n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
+                                                         var successByKey = itemsSuccessInArrays[i]                                    
+
+                                                        if (((ia = successByKey[ka]) !== undefined) &&
+                                                            ((ib = successByKey[kb]) !== undefined)) {
+
+                                                            ((ia < ib) ? upvotes  ++ :
+                                                             (ia > ib) ? downvotes++ :
+                                                                         neutral  ++) } }
+
+                                                    return ((upvotes > downvotes) ?  1 :
+                                                            (upvotes < downvotes) ? -1 : 0) } }
+
+            var orderedKeys = _.keys (itemsByKey).mergeSort (compare).reverse ()
+
+            for (var i = 0,
+                     n = orderedKeys.length; i < n; i++) { var key = orderedKeys[i]
+                                                                     orderedKeys[i] = itemsByKey[key] }
+            return orderedKeys }
+})
+
+/*  ======================================================================== */
+
+_.deferTest (['DAG', 'squash'], function () {
+
+    var modules = {
+        
+        'tier1':   { requires: [] },
+        'tier11':  { requires: ['tier1'] },
+        'tier2':   { requires: ['tier0'] },
+        'tier111': { requires: ['tier12', 'tier100'] },
+        'tier12':  { requires: ['tier0',  'tier11', 'tier2'] },
+        'tier100': { requires: ['tier10'] },
+        'tier0':   { requires: [] },
+        'tier10':  { requires: ['tier0', 'tier2'] },
+        'root':    { requires: ['tier2', 'tier111'] } }
+
+    $assert (['tier0',
+              'tier2',
+              'tier10',
+              'tier1',
+              'tier11',
+              'tier12',
+              'tier100',
+              'tier111'], DAG.squash ('root', { items: function (x) { return modules[x].requires } }) )
+
+/*  ======================================================================== */
+
+}, function () {
+
+/*  ======================================================================== */
+
+    $global.define ('DAG', {
+
+            squash: function (node0,    cfg) {
+                                    var cfg = cfg       || {},
+                                      items = cfg.items || _.noop,
+                                        run = function (X, edges) {
+                                                           edges = edges || []
+                                                    
+                                                    if ((ix = items (X)) &&
+                                                         ix.length) {
+                                                         ix.reduce  (function (B, A) { edges.push ([A, B]); return A       })
+                                                         ix.forEach (function (   U) { edges.push ([X, U]); run (U, edges) }) }
+
+                                                    return edges  }
+                            return  run  (node0)
+                                .squash  (cfg)
+                                .remove  (node0)
+                                .reverse () } })
+})
+
+/*  ======================================================================== */
+
+;
 
 
 /*  Delivers continuation-passing style notation to various common things
@@ -3808,6 +3936,7 @@ _.withTest ('Array extensions', function () {
         filter:      _.filter,
         flat:        _.flatten.tails2 (true),
         object:      _.object,
+        shuffle:     _.shuffle,
         pluck:       $method (_.pluck),
 
         join: (function (strJoin) {
@@ -3818,12 +3947,16 @@ _.withTest ('Array extensions', function () {
 
         contains: function (arr, item) { return arr.indexOf (item) >= 0 },
 
+
         top:   function (arr) { return arr[arr.length - 1] },        
         first: function (arr) { return arr[0] },
         rest:  function (arr) { return _.rest (arr) },
         last:  function (arr) { return arr[arr.length - 1] },
         
-        take: function (arr, n) { return arr.slice (0, n) },
+        /*  TODO: refactor
+         */
+        take:   function (arr, n) { return arr.slice (0, n) },
+        lastN:  $method (_.last),
 
         before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
         after: function (arr, x)  { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (i + 1) },
@@ -4675,167 +4808,6 @@ _.extend (_, {
 
 ;
 
-
-/*  A couple of custom algorithms for directed graph linearization
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-/*  ======================================================================== */
-
-$global.define ('DAG', {})
-
-/*  ======================================================================== */
-
-_.withTest (['DAG', 'sparseZip'], function () {
-
-/*  
-    Zips 'sparse' arrays, trying to reconstruct the consistent element order
-    from separate weakly-ordered fragments of incomplete data. It has many applications:
-
-    1.  Run-time module dependencies in ES3000 and Marv build system are
-        resolved via this algorithm, achieving the predictable and controllable
-        initialization order.
-
-    2.  SkyChat app implements serverless P2P chat history that is dynamically
-        merged across connected users, requiring no central authority to operate.
-        This new technology imposes new challenges: for example, you cannot
-        rely on client-generated timestamps when merging chat history fragments
-        from different sources. Following algorithm greatly improves merge
-        consistency, not distrupting given message order.
-
-        -------------------------------------------------------------------  */
-
-        $assert (DAG.sparseZip ([]), []) // degenerate case
-
-                              /* ----------------------------------------- input  */
-        $assert (DAG.sparseZip ([['all','your',                'to','us'],
-                                 [      'your',       'belong',     'us'],
-                                 [             'base','belong','to'     ],
-                                 [      'your','base'                   ]]),
-                              /* ----------------------------------------- result */
-                                 ['all','your','base','belong','to','us'])
-
-}, function () {
-
-    /*  TODO:   Seems like the algoritm is O(N²) in the worst case, but it can be
-                optimized to O(N log N).
-                ------------------------------------------------------------ */
-
-    DAG.sparseZip = function (arrays, cfg) {
-                                      cfg = cfg || {}
-
-        var key  = cfg.key  || _.identity,  //  for element key extraction
-            sort = cfg.sort || undefined    //  should be fn(a,b) -> {-1,0,1}
-
-        var head = { key: null, next: {} }
-        var nodes = {}
-
-        _.each (arrays, function (arr) {
-            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-                var item = arr[i]
-                var k    = key (item)
-                node = nodes[k] || (nodes[k] = { key: k, item: item, next: {} })
-                if (prev) {
-                    prev.next[k] = node } } })
-
-        var decyclize = function (visited, node) { visited[node.key] = true
-
-            node.next = _.chain (_.values (node.next))
-                            .filter (function (node) { return !(node.key in visited) })
-                            .map (_.partial (decyclize, visited)).value ()
-            
-            delete visited[node.key]; return node }
-
-        var ordered = function (a, b) {
-            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
-
-        var flatten = function (node) { if (!node) return []
-
-            var next = sort ? _.sortBy (node.next || [], sort) : (node.next || [])
-
-            return [node].concat (flatten (_.reduce (next, function (a, b) {
-
-                if (a === b)             { return a }
-                else if (ordered (b, a)) { b.next.push (a); return b }
-                else                     { a.next.push (b); return a } }))) }
-
-        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) }
-
-})
-
-/*  ======================================================================== */
-
-_.withTest (['DAG', 'linearize'], function () {
-
-/*
-    A more specific task for the `sparseZip`: linearizing a dependency tree.
-
-        This is rather a common task when you are into building extensible modular
-        architectures. Everyone's got modules. And if you got modules, you've got
-        dependencies. And while dependencies are typically seen as the flat
-        list by a programmer, they're really a deeply nested tree. And deriving
-        that flat list from the tree is not a trivial task, considering that the
-        order matters: you probably want to initialize/include the most urgent
-        stuff first. The following algorithm solves that for you.
-
-        -------------------------------------------------------------------- */
-
-
-        var modules = {
-            
-            'tier1':   { requires: [] },
-            'tier11':  { requires: ['tier1'] },
-            'tier2':   { requires: ['tier0'] },
-            'tier111': { requires: ['tier12', 'tier100'] },
-            'tier12':  { requires: ['tier0', 'tier11', 'tier2'] },
-            'tier100': { requires: ['tier10'] },
-            'tier0':   { requires: [] },
-            'tier10':  { requires: ['tier0', 'tier2'] },
-            'root':    { requires: ['tier2', 'tier111'] } }
-
-        $assert (['tier1',
-                  'tier0',
-                  'tier11',
-                  'tier2',
-                  'tier10',
-                  'tier12',
-                  'tier100',
-                  'tier111'], DAG.linearize ('root', { items: _.propertyOf ( modules ).then (
-                                                              _.property   ('requires')) }))
-
-/*  ======================================================================== */
-
-}, function () {
-
-    DAG.linearize = function (root, cfg) {
-
-            var cfg        = cfg || { /* key: fn, items: fn */ },
-
-                items      = cfg.items || _.noop,
-
-                asGraph    = function (X, edges) {
-                                          edges = edges || []
-
-                                if ((upper = items (X)) &&
-                                     upper.length) {
-
-                                     upper.fold (function (B, A) {                          // horizontal edges (order constraints)
-                                                   return (edges.push ([A, B]), A) })       // first mentioned should go first
-
-                                     upper.forEach (function (U) {                          // vertical edges
-                                                           edges.push ([X, U])              // upper items should go first
-                                                              asGraph (    U, edges) }) }
-                                return edges }
-
-                return DAG.sparseZip (asGraph (root), cfg)
-                          .reverse ()
-                          .remove (root) }
-
-/*  ======================================================================== */
-
-})
-
-/*  ======================================================================== */
-;
 
 
 /*  OOP paradigm
@@ -5742,7 +5714,6 @@ Sort = {
     }
 }
 ;
-
 /*  Concurrency primitives
  */
 
@@ -7228,7 +7199,7 @@ _.defineKeyword ('component', function (definition) {
                                 return $extends (Component, definition) })
 
 _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
-    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw'])
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw', 'binds', 'observes'])
     .each (_.defineTagKeyword)
 
 _.defineTagKeyword ('observableProperty', function (impl) {
@@ -7286,9 +7257,9 @@ Component = $prototype ({
 
                 if (_.isNonempty ($untag (def.$depends)) &&
                     _.isEmpty    ($untag (def.$traits))) {
-                                          def.$traits = DAG.linearize (def, {
-                                                                items: function (def) { return $untag (def.$depends) },
-                                                                  key: function (def) { return $untag (def.$nonce) } }) }; return def },
+                                          def.$traits = DAG.squash (def, {
+                                                                  items: function (def) { return $untag (def.$depends) },
+                                                                    key: function (def) { return $untag (def.$nonce) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
 

@@ -1566,6 +1566,76 @@ _.toFixed2 = function (x) {
 _.toFixed3 = function (x) {
     return _.toFixed(x, 3);
 };
+(function () {
+    var merge = function (a, b, compare) {
+        for (var out = []; a.length && b.length;) {
+            out.push(compare(a[0], b[0]) < 0 ? a.shift() : b.shift());
+        }
+        return out.concat(a.length ? a : b);
+    };
+    Array.prototype.mergeSort = function (compare) {
+        var mid = Math.floor(this.length / 2);
+        return mid < 1 ? this : merge(this.slice(0, mid).mergeSort(compare), this.slice(mid).mergeSort(compare), compare);
+    };
+    Array.prototype.squash = function (cfg) {
+        var cfg = cfg || {}, key = cfg.key || _.identity;
+        var itemsSuccessInArrays = [], itemsByKey = {};
+        for (var i = 0, n = this.length; i < n; i++) {
+            var array = this[i], successByKey = {};
+            for (var ii = 0, nn = array.length; ii < nn; ii++) {
+                var item = array[ii], k = key(item);
+                itemsByKey[k] = item;
+                successByKey[k] = ii;
+            }
+            itemsSuccessInArrays.push(successByKey);
+        }
+        var compare = function (ka, kb) {
+            if (ka === kb) {
+                return 0;
+            } else {
+                var upvotes = 0, downvotes = 0, neutral = 0;
+                for (var i = 0, n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
+                    var successByKey = itemsSuccessInArrays[i];
+                    if ((ia = successByKey[ka]) !== undefined && (ib = successByKey[kb]) !== undefined) {
+                        ia < ib ? upvotes++ : ia > ib ? downvotes++ : neutral++;
+                    }
+                }
+                return upvotes > downvotes ? 1 : upvotes < downvotes ? -1 : 0;
+            }
+        };
+        var orderedKeys = _.keys(itemsByKey).mergeSort(compare).reverse();
+        for (var i = 0, n = orderedKeys.length; i < n; i++) {
+            var key = orderedKeys[i];
+            orderedKeys[i] = itemsByKey[key];
+        }
+        return orderedKeys;
+    };
+}());
+$global.define('DAG', {
+    squash: function (node0, cfg) {
+        var cfg = cfg || {}, items = cfg.items || _.noop, run = function (X, edges) {
+                edges = edges || [];
+                if ((ix = items(X)) && ix.length) {
+                    ix.reduce(function (B, A) {
+                        edges.push([
+                            A,
+                            B
+                        ]);
+                        return A;
+                    });
+                    ix.forEach(function (U) {
+                        edges.push([
+                            X,
+                            U
+                        ]);
+                        run(U, edges);
+                    });
+                }
+                return edges;
+            };
+        return run(node0).squash(cfg).remove(node0).reverse();
+    }
+});
 _.cps = function () {
     return _.cps.sequence.apply(null, arguments);
 };
@@ -1965,6 +2035,7 @@ $extensionMethods(Array, {
     filter: _.filter,
     flat: _.flatten.tails2(true),
     object: _.object,
+    shuffle: _.shuffle,
     pluck: $method(_.pluck),
     join: function (strJoin) {
         return $forceOverride(function (arr, delim) {
@@ -1999,6 +2070,7 @@ $extensionMethods(Array, {
     take: function (arr, n) {
         return arr.slice(0, n);
     },
+    lastN: $method(_.last),
     before: function (arr, x) {
         var i = arr.indexOf(x);
         return i < 0 ? arr : arr.slice(0, i - 1);
@@ -3795,7 +3867,9 @@ _([
     'listener',
     'postpones',
     'reference',
-    'raw'
+    'raw',
+    'binds',
+    'observes'
 ]).each(_.defineTagKeyword);
 _.defineTagKeyword('observableProperty', function (impl) {
     return function (x, fn) {
@@ -3827,7 +3901,7 @@ Component = $prototype({
         },
         expandTraitsDependencies: function (def) {
             if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
-                def.$traits = DAG.linearize(def, {
+                def.$traits = DAG.squash(def, {
                     items: function (def) {
                         return $untag(def.$depends);
                     },

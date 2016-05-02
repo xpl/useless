@@ -1953,6 +1953,76 @@ _.toFixed2 = function (x) {
 _.toFixed3 = function (x) {
     return _.toFixed(x, 3);
 };
+(function () {
+    var merge = function (a, b, compare) {
+        for (var out = []; a.length && b.length;) {
+            out.push(compare(a[0], b[0]) < 0 ? a.shift() : b.shift());
+        }
+        return out.concat(a.length ? a : b);
+    };
+    Array.prototype.mergeSort = function (compare) {
+        var mid = Math.floor(this.length / 2);
+        return mid < 1 ? this : merge(this.slice(0, mid).mergeSort(compare), this.slice(mid).mergeSort(compare), compare);
+    };
+    Array.prototype.squash = function (cfg) {
+        var cfg = cfg || {}, key = cfg.key || _.identity;
+        var itemsSuccessInArrays = [], itemsByKey = {};
+        for (var i = 0, n = this.length; i < n; i++) {
+            var array = this[i], successByKey = {};
+            for (var ii = 0, nn = array.length; ii < nn; ii++) {
+                var item = array[ii], k = key(item);
+                itemsByKey[k] = item;
+                successByKey[k] = ii;
+            }
+            itemsSuccessInArrays.push(successByKey);
+        }
+        var compare = function (ka, kb) {
+            if (ka === kb) {
+                return 0;
+            } else {
+                var upvotes = 0, downvotes = 0, neutral = 0;
+                for (var i = 0, n = itemsSuccessInArrays.length, ia, ib; i < n; i++) {
+                    var successByKey = itemsSuccessInArrays[i];
+                    if ((ia = successByKey[ka]) !== undefined && (ib = successByKey[kb]) !== undefined) {
+                        ia < ib ? upvotes++ : ia > ib ? downvotes++ : neutral++;
+                    }
+                }
+                return upvotes > downvotes ? 1 : upvotes < downvotes ? -1 : 0;
+            }
+        };
+        var orderedKeys = _.keys(itemsByKey).mergeSort(compare).reverse();
+        for (var i = 0, n = orderedKeys.length; i < n; i++) {
+            var key = orderedKeys[i];
+            orderedKeys[i] = itemsByKey[key];
+        }
+        return orderedKeys;
+    };
+}());
+$global.define('DAG', {
+    squash: function (node0, cfg) {
+        var cfg = cfg || {}, items = cfg.items || _.noop, run = function (X, edges) {
+                edges = edges || [];
+                if ((ix = items(X)) && ix.length) {
+                    ix.reduce(function (B, A) {
+                        edges.push([
+                            A,
+                            B
+                        ]);
+                        return A;
+                    });
+                    ix.forEach(function (U) {
+                        edges.push([
+                            X,
+                            U
+                        ]);
+                        run(U, edges);
+                    });
+                }
+                return edges;
+            };
+        return run(node0).squash(cfg).remove(node0).reverse();
+    }
+});
 _.cps = function () {
     return _.cps.sequence.apply(null, arguments);
 };
@@ -2352,6 +2422,7 @@ $extensionMethods(Array, {
     filter: _.filter,
     flat: _.flatten.tails2(true),
     object: _.object,
+    shuffle: _.shuffle,
     pluck: $method(_.pluck),
     join: function (strJoin) {
         return $forceOverride(function (arr, delim) {
@@ -2386,6 +2457,7 @@ $extensionMethods(Array, {
     take: function (arr, n) {
         return arr.slice(0, n);
     },
+    lastN: $method(_.last),
     before: function (arr, x) {
         var i = arr.indexOf(x);
         return i < 0 ? arr : arr.slice(0, i - 1);
@@ -2963,82 +3035,6 @@ _.extend(_, {
         });
     }
 });
-$global.define('DAG', {});
-DAG.sparseZip = function (arrays, cfg) {
-    cfg = cfg || {};
-    var key = cfg.key || _.identity, sort = cfg.sort || undefined;
-    var head = {
-        key: null,
-        next: {}
-    };
-    var nodes = {};
-    _.each(arrays, function (arr) {
-        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-            var item = arr[i];
-            var k = key(item);
-            node = nodes[k] || (nodes[k] = {
-                key: k,
-                item: item,
-                next: {}
-            });
-            if (prev) {
-                prev.next[k] = node;
-            }
-        }
-    });
-    var decyclize = function (visited, node) {
-        visited[node.key] = true;
-        node.next = _.chain(_.values(node.next)).filter(function (node) {
-            return !(node.key in visited);
-        }).map(_.partial(decyclize, visited)).value();
-        delete visited[node.key];
-        return node;
-    };
-    var ordered = function (a, b) {
-        return a === b || _.some(a.next, function (aa) {
-            return ordered(aa, b);
-        });
-    };
-    var flatten = function (node) {
-        if (!node)
-            return [];
-        var next = sort ? _.sortBy(node.next || [], sort) : node.next || [];
-        return [node].concat(flatten(_.reduce(next, function (a, b) {
-            if (a === b) {
-                return a;
-            } else if (ordered(b, a)) {
-                b.next.push(a);
-                return b;
-            } else {
-                a.next.push(b);
-                return a;
-            }
-        })));
-    };
-    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
-};
-DAG.linearize = function (root, cfg) {
-    var cfg = cfg || {}, items = cfg.items || _.noop, asGraph = function (X, edges) {
-            edges = edges || [];
-            if ((upper = items(X)) && upper.length) {
-                upper.fold(function (B, A) {
-                    return edges.push([
-                        A,
-                        B
-                    ]), A;
-                });
-                upper.forEach(function (U) {
-                    edges.push([
-                        X,
-                        U
-                    ]);
-                    asGraph(U, edges);
-                });
-            }
-            return edges;
-        };
-    return DAG.sparseZip(asGraph(root), cfg).reverse().remove(root);
-};
 _.hasOOP = true;
 _([
     'property',
@@ -4313,7 +4309,9 @@ _([
     'listener',
     'postpones',
     'reference',
-    'raw'
+    'raw',
+    'binds',
+    'observes'
 ]).each(_.defineTagKeyword);
 _.defineTagKeyword('observableProperty', function (impl) {
     return function (x, fn) {
@@ -4345,7 +4343,7 @@ Component = $prototype({
         },
         expandTraitsDependencies: function (def) {
             if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
-                def.$traits = DAG.linearize(def, {
+                def.$traits = DAG.squash(def, {
                     items: function (def) {
                         return $untag(def.$depends);
                     },

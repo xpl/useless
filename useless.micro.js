@@ -54,6 +54,7 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     $include ('./base/tier0/keywords')    // metaprogramming utility
     $include ('./base/tier0/typeMatch')   // advanced type system extensions
     $include ('./base/tier0/stringify')   // configurable object printer
+    $include ('./base/tier0/squash')      // dependency list / tree squashing algorithms
 
     $include ('./base/CPS')
 

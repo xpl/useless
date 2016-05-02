@@ -652,7 +652,7 @@ _.defineKeyword ('component', function (definition) {
                                 return $extends (Component, definition) })
 
 _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
-    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw'])
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw', 'binds', 'observes'])
     .each (_.defineTagKeyword)
 
 _.defineTagKeyword ('observableProperty', function (impl) {
@@ -710,9 +710,9 @@ Component = $prototype ({
 
                 if (_.isNonempty ($untag (def.$depends)) &&
                     _.isEmpty    ($untag (def.$traits))) {
-                                          def.$traits = DAG.linearize (def, {
-                                                                items: function (def) { return $untag (def.$depends) },
-                                                                  key: function (def) { return $untag (def.$nonce) } }) }; return def },
+                                          def.$traits = DAG.squash (def, {
+                                                                  items: function (def) { return $untag (def.$depends) },
+                                                                    key: function (def) { return $untag (def.$nonce) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
 
