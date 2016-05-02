@@ -76,10 +76,10 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     var $global = (p.engine === 'browser') ? window :
                   (p.engine === 'node')    ? global : undefined
 
-    $global.define = function (name, v, cfg) { if (name in $global) {
+    $global.define = function (name, v, cfg) {  if (name in $global) {
                                                     throw new Error ('cannot define global ' + name + ': already there') }
 
-         Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
+        return Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
 
 
     $global.define ('$global', $global)
@@ -1118,21 +1118,44 @@ _.withTest (['stdlib', 'mapKeys'], function () {
 
 _.withTest (['stdlib', 'mapMap'], function () {
 
-    $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
-    $assert (_.mapMap ([7], _.typeOf), ['number'])
+        $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
+        $assert (_.mapMap ([7], _.typeOf), ['number'])
 
-    $assert (_.mapMap ( {   foo: 7,
-                            bar: ['foo', {
-                                bar: undefined } ] }, _.typeOf),
-                        
-                        {   foo: 'number',
-                            bar: ['string', {
-                                bar: 'undefined' } ] }) },
+        $assert (_.mapMap ( {   foo: 7,
+                                bar: ['foo', {
+                                    bar: undefined } ] }, _.typeOf),
+                            
+                            {   foo: 'number',
+                                bar: ['string', {
+                                    bar: 'undefined' } ] }) },
+    function () {
+
+        _.mapMap = _.hyperOperator (_.unary, _.map2) })
+
+
+/*  Hyper map (deep) #2 — maps branches & leafs 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'hyperMap'], function () {
+
+        var complexObject = {  garply:         { bar: { baz: 5 } },
+                               frobni: { foo: [{ bar: { baz: 5 } }] } }
+    /*                                         -----------------             */
+
+        var barBazSubstructure =    _.matches ({ bar: { baz: 5 } })
+
+        var transformedObject = _.hyperMap (complexObject, function (x) {
+                                                                if (barBazSubstructure (x)) { return 'pwned!' } })
+
+        $assert (transformedObject, { garply:         'pwned!',
+                                      frobni: { foo: ['pwned!'] } })         },
 
     function () {
 
-        _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
-
+        _.hyperMap = (data, op) =>
+                        _.hyperOperator (_.unary,
+                            (expr, f) =>
+                                op (expr) || _.map2 (expr, f)) (data, _.identity) })
 
 /*  Filter 2.0
     ======================================================================== */
@@ -1670,62 +1693,6 @@ _.withTest (['stdlib', 'partition2'], function () {
             return (span.length && spans.push (span)),
                     spans } })
 
-/*  Merges arrays, keeping given element order.
-    TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
-    ======================================================================== */
-
-_.withTest (['stdlib', 'linearMerge'], function () {
-
-    $assert (_.linearMerge ([]), [])
-    $assert (_.linearMerge ([   ['all','your',                'to','us'],
-                                [      'your',       'belong',     'us'],
-                                [             'base','belong','to'     ],
-                                [      'your','base'                   ]]),
-                                ['all','your','base','belong','to','us'])
-
-/*  cfg accepts { key: fn, sort: fn } optional parameters for key extraction and sorting
-    ======================================================================== */
-
-}, function () {
-
-    _.linearMerge = function (arrays, cfg) {
-
-            cfg = cfg || { key: _.identity }
-
-        var head = { key: null, next: {} }
-        var nodes = {}
-
-        _.each (arrays, function (arr) {
-            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-                var item = arr[i]
-                var key  = cfg.key (item)
-                node = nodes[key] || (nodes[key] = { key: key, item: item, next: {} })
-                if (prev) {
-                    prev.next[key] = node } } })
-
-        var decyclize = function (visited, node) { visited[node.key] = true
-
-            node.next = _.chain (_.values (node.next))
-                            .filter (function (node) { return !(node.key in visited) })
-                            .map (_.partial (decyclize, visited)).value ()
-            
-            delete visited[node.key]; return node }
-
-        var ordered = function (a, b) {
-            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
-
-        var flatten = function (node) { if (!node) return []
-
-            var next = cfg.sort ? _.sortBy (node.next || [], cfg.sort) : (node.next || [])
-
-            return [node].concat (flatten (_.reduce (next, function (a, b) {
-
-                if (a === b)             { return a }
-                else if (ordered (b, a)) { b.next.push (a); return b }
-                else                     { a.next.push (b); return a } }))) }
-
-        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
-
 
 /*  Taken from  npmjs.com/package/longest-common-substring
     Props to    npmjs.com/~mirkok
@@ -1845,7 +1812,7 @@ _.withTest ('properties', function () { var obj = {}
         _.each (properties, _.defineProperty.partial (targetObject).flip2) },
 
     memoizedState: function (obj) {
-                        return _.pickKeys (this, function (k) { return k[0] === '_' }) },
+                        return _.filter2 (obj, function (v, k) { return (k[0] === '_') && !_.isFunction (v) }) },
 
     memoizeToThis: function (name, fn) {
         return function () {
@@ -3193,6 +3160,7 @@ _.withTest ('Array extensions', function () {
 
         each:        _.each,
         map:         _.map,
+        fold:        _.reduce2,
         reduce:      _.reduce,
         reduceRight: _.reduceRight,
         zip:         _.zipWith,
@@ -6267,6 +6235,8 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
+    'random $nonce generation': function () { var X = $prototype (); $assert (_.isString (X.$nonce)) },
+
     '$macroTags for component-specific macros': function () {
 
         var Trait =    $trait ({   $macroTags: {
@@ -6409,6 +6379,9 @@ $prototype.macroTag ('extendable',
                       def[name] = $builtin ($const (value))
                return def })
 
+$prototype.macro (function (def) {
+                            def.$nonce = $static ($builtin ($property (String.randomHex (32)))); return def })
+
 Component = $prototype ({
 
     $defaults:  $extendable ({}),
@@ -6441,29 +6414,12 @@ Component = $prototype ({
             this.defineInstanceMembers) },
 
         expandTraitsDependencies: function (def) {
-            if (def.$depends) {
-                            var edges = []
-                            var lastId = 0
-                            var drill =  function (depends, T) { if (!T.__tempId) { T.__tempId = lastId++ }
-                                            
-                                            /*  Horizontal dependency edges (first mentioned should init first)
-                                             */
-                                            _.reduce2 (depends, function (TBefore, TAfter) {
-                                                edges.push ([TAfter, TBefore]); return TAfter })
 
-                                            /*  Vertical dependency edges (parents should init first)
-                                             */
-                                            _.each (depends, function (    TSuper) {
-                                                          edges.push ([T,  TSuper])
-                                                                    drill (TSuper.$depends || [], TSuper) }) }
-                                                                    drill ($untag (def.$depends), {})
-
-                    _.each (def.$traits =               _.reversed (
-                                                            _.rest (
-                                                     _.linearMerge (edges, { key: _.property ('__tempId') }))),
-                            function (obj) {
-                                delete obj.__tempId }) }
-            return def },
+                if (_.isNonempty ($untag (def.$depends)) &&
+                    _.isEmpty    ($untag (def.$traits))) {
+                                          def.$traits = DAG.linearize (def, {
+                                                                items: function (def) { return $untag (def.$depends) },
+                                                                  key: function (def) { return $untag (def.$nonce) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
 
@@ -8215,7 +8171,8 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        return this.mergeDuplicateLines.reject (_.property ('thirdParty')) }),
+        var clean = this.mergeDuplicateLines.reject (_.property ('thirdParty'))
+        return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
         return _.asArray (this) }),
@@ -8667,7 +8624,7 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
+                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') +

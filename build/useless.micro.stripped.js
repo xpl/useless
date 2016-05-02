@@ -67,7 +67,7 @@ _.deferTest = _.withTest = function (name, test, subj) {
         if (name in $global) {
             throw new Error('cannot define global ' + name + ': already there');
         }
-        Object.defineProperty($global, name, _.extend(typeof v === 'function' && v.length === 0 ? { get: v } : { value: v }, { enumerable: true }, cfg));
+        return Object.defineProperty($global, name, _.extend(typeof v === 'function' && v.length === 0 ? { get: v } : { value: v }, { enumerable: true }, cfg));
     };
     $global.define('$global', $global);
     $global.define('$platform', Object.defineProperties({}, _.mapObject({
@@ -764,7 +764,8 @@ _.mapKeys = function (x, fn) {
         return x;
     }
 };
-_.mixin({ mapMap: _.hyperOperator(_.unary, _.map2) });
+_.mapMap = _.hyperOperator(_.unary, _.map2);
+_.hyperMap = (data, op) => _.hyperOperator(_.unary, (expr, f) => op(expr) || _.map2(expr, f))(data, _.identity);
 _.mixin({
     reject2: function (value, op) {
         return _.filter2(value, _.not(op));
@@ -1038,58 +1039,6 @@ _.partition3 = function (arr, pred) {
     });
     return span.length && spans.push(span), spans;
 };
-_.linearMerge = function (arrays, cfg) {
-    cfg = cfg || { key: _.identity };
-    var head = {
-        key: null,
-        next: {}
-    };
-    var nodes = {};
-    _.each(arrays, function (arr) {
-        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-            var item = arr[i];
-            var key = cfg.key(item);
-            node = nodes[key] || (nodes[key] = {
-                key: key,
-                item: item,
-                next: {}
-            });
-            if (prev) {
-                prev.next[key] = node;
-            }
-        }
-    });
-    var decyclize = function (visited, node) {
-        visited[node.key] = true;
-        node.next = _.chain(_.values(node.next)).filter(function (node) {
-            return !(node.key in visited);
-        }).map(_.partial(decyclize, visited)).value();
-        delete visited[node.key];
-        return node;
-    };
-    var ordered = function (a, b) {
-        return a === b || _.some(a.next, function (aa) {
-            return ordered(aa, b);
-        });
-    };
-    var flatten = function (node) {
-        if (!node)
-            return [];
-        var next = cfg.sort ? _.sortBy(node.next || [], cfg.sort) : node.next || [];
-        return [node].concat(flatten(_.reduce(next, function (a, b) {
-            if (a === b) {
-                return a;
-            } else if (ordered(b, a)) {
-                b.next.push(a);
-                return b;
-            } else {
-                a.next.push(b);
-                return a;
-            }
-        })));
-    };
-    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
-};
 (function () {
     var indexMap = function (list) {
         var map = {};
@@ -1173,8 +1122,8 @@ _.extend(_, {
         _.each(properties, _.defineProperty.partial(targetObject).flip2);
     },
     memoizedState: function (obj) {
-        return _.pickKeys(this, function (k) {
-            return k[0] === '_';
+        return _.filter2(obj, function (v, k) {
+            return k[0] === '_' && !_.isFunction(v);
         });
     },
     memoizeToThis: function (name, fn) {
@@ -2007,6 +1956,7 @@ $extensionMethods(Function, {
 $extensionMethods(Array, {
     each: _.each,
     map: _.map,
+    fold: _.reduce2,
     reduce: _.reduce,
     reduceRight: _.reduceRight,
     zip: _.zipWith,
@@ -3862,6 +3812,10 @@ $prototype.macroTag('extendable', function (def, value, name) {
     def[name] = $builtin($const(value));
     return def;
 });
+$prototype.macro(function (def) {
+    def.$nonce = $static($builtin($property(String.randomHex(32))));
+    return def;
+});
 Component = $prototype({
     $defaults: $extendable({}),
     $requires: $extendable({}),
@@ -3871,33 +3825,17 @@ Component = $prototype({
             return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
         },
         expandTraitsDependencies: function (def) {
-            if (def.$depends) {
-                var edges = [];
-                var lastId = 0;
-                var drill = function (depends, T) {
-                    if (!T.__tempId) {
-                        T.__tempId = lastId++;
+            if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
+                def.$traits = DAG.linearize(def, {
+                    items: function (def) {
+                        return $untag(def.$depends);
+                    },
+                    key: function (def) {
+                        return $untag(def.$nonce);
                     }
-                    _.reduce2(depends, function (TBefore, TAfter) {
-                        edges.push([
-                            TAfter,
-                            TBefore
-                        ]);
-                        return TAfter;
-                    });
-                    _.each(depends, function (TSuper) {
-                        edges.push([
-                            T,
-                            TSuper
-                        ]);
-                        drill(TSuper.$depends || [], TSuper);
-                    });
-                };
-                drill($untag(def.$depends), {});
-                _.each(def.$traits = _.reversed(_.rest(_.linearMerge(edges, { key: _.property('__tempId') }))), function (obj) {
-                    delete obj.__tempId;
                 });
             }
+            ;
             return def;
         },
         mergeExtendables: function (base) {

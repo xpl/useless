@@ -753,7 +753,8 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        return this.mergeDuplicateLines.reject (_.property ('thirdParty')) }),
+        var clean = this.mergeDuplicateLines.reject (_.property ('thirdParty'))
+        return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
         return _.asArray (this) }),
@@ -1205,7 +1206,7 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
+                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') +
