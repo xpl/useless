@@ -1152,10 +1152,10 @@ _.withTest (['stdlib', 'hyperMap'], function () {
 
     function () {
 
-        _.hyperMap = (data, op) =>
-                        _.hyperOperator (_.unary,
-                            (expr, f) =>
-                                op (expr) || _.map2 (expr, f)) (data, _.identity) })
+        _.hyperMap =  function (data, op) {
+                        return _.hyperOperator (_.unary, function    (expr, f) {
+                                                           return op (expr) ||
+                                                              _.map2 (expr, f) }) (data, _.identity) } })
 
 /*  Filter 2.0
     ======================================================================== */
@@ -1178,18 +1178,18 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
     $assert (_.filter2 ([    'foo' ],   _.constant ('bar')),    [    'bar' ])
     $assert (_.filter2 ({ f: 'foo' },   _.constant ('bar')),    { f: 'bar' })
 
-    // hyper-filter
+    // hyper-filter #1 (works on leafs)
 
     $assert (_.filterFilter (
                     { foo: 'foo',   bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals ('foo'))),
-                    {               bar: [7,        {            }] })
+                    {               bar: [7,        {            }] })  
 
-}, function () { _.mixin ({
+}, function () {
 
-    reject2: function (value, op) {
-        return _.filter2 (value, _.not (op)) },
+    _.reject2 = function (value, op) {
+        return _.filter2 (value, _.not (op)) }
 
-    filter2: function (value, op) {
+    _.filter2 = function (value, op) {
         if (_.isArrayLike (value)) {                            var result = []
             for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v, i)
                 if (opSays === true) {
@@ -1210,12 +1210,23 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
             else if (opSays !== false) {
                 return opSays }
             else {
-                return undefined } } } })
+                return undefined } } }
 
-    _.mixin ({
+        _.filterFilter = _.hyperOperator (_.unary, _.filter2)
 
-        filterFilter: _.hyperOperator (_.unary, _.filter2) }) })
+        _.hyperFilter =  function (data, op) {
+                           return _.hyperOperator (_.unary, function (                   expr, f) {
+                                                           var x =                   op (expr)
+                                                      return ((x === true) && _.filter2 (expr, f)) || x }) (data, _.identity) }
 
+        _.hyperReject = function (data, op) {
+            return _.hyperFilter (data, function (x) { var  opa = op (x)
+                                        return _.isBoolean (opa) ?
+                                                           !opa  :
+                                                            opa }) }
+})
+
+/*  ======================================================================== */
 
 _.withTest (['stdlib', 'each 2.0'], function () {
 
@@ -1235,6 +1246,7 @@ _.withTest (['stdlib', 'each 2.0'], function () {
            if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
       else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
          else                          {                                                                        f (x,        undefined, 1) } } })
+
 
 /*  Reduce on steroids
     ======================================================================== */
@@ -2380,7 +2392,7 @@ _.deferTest (['type', 'stringify'], function () {
                                     if (x.toJSON) {
                                         return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
-                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
+                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 80)))) {
                                         return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
                                     var parentsPlusX = parents.concat ([x])

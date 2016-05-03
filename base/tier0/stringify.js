@@ -150,7 +150,7 @@ _.deferTest (['type', 'stringify'], function () {
                                     if (x.toJSON) {
                                         return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
-                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
+                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 80)))) {
                                         return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
                                     var parentsPlusX = parents.concat ([x])

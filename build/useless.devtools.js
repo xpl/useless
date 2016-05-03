@@ -979,6 +979,9 @@ _.extend (log, {
     stackOffset: function (n) {
         return log.config ({ stackOffset: n }) },
 
+    where: function (wat) {
+        return log.config ({ location: true, where: wat || undefined }) },
+
     color: _.extend (function (x) { return (log.color[x] || {}).color },
 
         _.object (
@@ -990,6 +993,7 @@ _.extend (log, {
                  ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
                  ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
                  ['boldOrange', ['33m', '1m'],   'color:saddlebrown;font-weight:bold;'],
+                 ['darkOrange', ['33m', '2m'],   'color:saddlebrown'],
                  ['orange',      '33m',          'color:saddlebrown'],
                  ['brown',      ['33m', '2m'],   'color:saddlebrown'],
                  ['green',       '32m',          'color:forestgreen'],
@@ -1246,6 +1250,7 @@ _.extend (log, {
                                           'boldRed bloody bad ee',
                                                       'purple dp',
                                                        'brown br',
+                                                 'darkOrange wtf',
                                                   'boldOrange ww',
                                                      'darkRed er',
                                                     'boldBlue ii' ],

@@ -765,47 +765,61 @@ _.mapKeys = function (x, fn) {
     }
 };
 _.mapMap = _.hyperOperator(_.unary, _.map2);
-_.hyperMap = (data, op) => _.hyperOperator(_.unary, (expr, f) => op(expr) || _.map2(expr, f))(data, _.identity);
-_.mixin({
-    reject2: function (value, op) {
-        return _.filter2(value, _.not(op));
-    },
-    filter2: function (value, op) {
-        if (_.isArrayLike(value)) {
-            var result = [];
-            for (var i = 0, n = value.length; i < n; i++) {
-                var v = value[i], opSays = op(v, i);
-                if (opSays === true) {
-                    result.push(v);
-                } else if (opSays !== false) {
-                    result.push(opSays);
-                }
-            }
-            return result;
-        } else if (_.isStrictlyObject(value)) {
-            var result = {};
-            _.each(Object.keys(value), function (key) {
-                var v = value[key], opSays = op(v, key);
-                if (opSays === true) {
-                    result[key] = v;
-                } else if (opSays !== false) {
-                    result[key] = opSays;
-                }
-            });
-            return result;
-        } else {
-            var opSays = op(value);
+_.hyperMap = function (data, op) {
+    return _.hyperOperator(_.unary, function (expr, f) {
+        return op(expr) || _.map2(expr, f);
+    })(data, _.identity);
+};
+_.reject2 = function (value, op) {
+    return _.filter2(value, _.not(op));
+};
+_.filter2 = function (value, op) {
+    if (_.isArrayLike(value)) {
+        var result = [];
+        for (var i = 0, n = value.length; i < n; i++) {
+            var v = value[i], opSays = op(v, i);
             if (opSays === true) {
-                return value;
+                result.push(v);
             } else if (opSays !== false) {
-                return opSays;
-            } else {
-                return undefined;
+                result.push(opSays);
             }
         }
+        return result;
+    } else if (_.isStrictlyObject(value)) {
+        var result = {};
+        _.each(Object.keys(value), function (key) {
+            var v = value[key], opSays = op(v, key);
+            if (opSays === true) {
+                result[key] = v;
+            } else if (opSays !== false) {
+                result[key] = opSays;
+            }
+        });
+        return result;
+    } else {
+        var opSays = op(value);
+        if (opSays === true) {
+            return value;
+        } else if (opSays !== false) {
+            return opSays;
+        } else {
+            return undefined;
+        }
     }
-});
-_.mixin({ filterFilter: _.hyperOperator(_.unary, _.filter2) });
+};
+_.filterFilter = _.hyperOperator(_.unary, _.filter2);
+_.hyperFilter = function (data, op) {
+    return _.hyperOperator(_.unary, function (expr, f) {
+        var x = op(expr);
+        return x === true && _.filter2(expr, f) || x;
+    })(data, _.identity);
+};
+_.hyperReject = function (data, op) {
+    return _.hyperFilter(data, function (x) {
+        var opa = op(x);
+        return _.isBoolean(opa) ? !opa : opa;
+    });
+};
 _.each2 = function (x, f) {
     if (_.isArrayLike(x)) {
         for (var i = 0, n = x.length; i < n; i++)
@@ -1516,7 +1530,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             if (x.toJSON) {
                 return _.quoteWith('"', x.toJSON());
             }
-            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
+            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 80))) {
                 return isArray ? '<array[' + x.length + ']>' : '<object>';
             }
             var parentsPlusX = parents.concat([x]);

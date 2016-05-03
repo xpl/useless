@@ -616,6 +616,12 @@ _.extend(log, {
     stackOffset: function (n) {
         return log.config({ stackOffset: n });
     },
+    where: function (wat) {
+        return log.config({
+            location: true,
+            where: wat || undefined
+        });
+    },
     color: _.extend(function (x) {
         return (log.color[x] || {}).color;
     }, _.object(_.map([
@@ -673,6 +679,14 @@ _.extend(log, {
                 '1m'
             ],
             'color:saddlebrown;font-weight:bold;'
+        ],
+        [
+            'darkOrange',
+            [
+                '33m',
+                '2m'
+            ],
+            'color:saddlebrown'
         ],
         [
             'orange',
@@ -976,6 +990,7 @@ _.extend(log, {
         'boldRed bloody bad ee',
         'purple dp',
         'brown br',
+        'darkOrange wtf',
         'boldOrange ww',
         'darkRed er',
         'boldBlue ii'
