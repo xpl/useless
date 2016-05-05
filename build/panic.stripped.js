@@ -6508,14 +6508,6 @@ _.perfTest = function (arg, then) {
     if (typeof UI === 'undefined') {
         UI = {};
     }
-    $mixin(Promise, {
-        panic: $property(function () {
-            return this.catch(function (e) {
-                Panic(e);
-                throw e;
-            });
-        })
-    });
     Panic = function (what, cfg) {
         cfg = _.defaults(_.clone(cfg || {}), {
             dismiss: _.identity,
