@@ -31,10 +31,10 @@
     var $global = (p.engine === 'browser') ? window :
                   (p.engine === 'node')    ? global : undefined
 
-    $global.define = function (name, v, cfg) { if (name in $global) {
+    $global.define = function (name, v, cfg) {  if (name in $global) {
                                                     throw new Error ('cannot define global ' + name + ': already there') }
 
-         Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
+        return Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
 
 
     $global.define ('$global', $global)
@@ -69,7 +69,7 @@ $overrideUnderscore = function (name, genImpl) {
 /*  alert2 for ghetto debugging in browser
     ======================================================================== */
 
-if ($platform.Browser) {
+if ($platform.NodeJS) {
     $global.alert = function (args) {
         var print = ($global.log && _.partial (log.warn, log.config ({ stackOffset: 2 }))) || console.log
         print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) } }
@@ -77,6 +77,6 @@ if ($platform.Browser) {
 $global.alert2 = function (args) {
     alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] }
 
-$global.log = function () { console.log.call (console.log, arguments) } // placeholder for log.js
+$global.log = function () { console.log.apply (console.log, arguments) } // placeholder for log.js
 
 

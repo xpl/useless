@@ -477,7 +477,8 @@ CallStack = $extends(Array, {
         }));
     }),
     clean: $property(function () {
-        return this.mergeDuplicateLines.reject(_.property('thirdParty'));
+        var clean = this.mergeDuplicateLines.reject(_.property('thirdParty'));
+        return clean.length === 0 ? this : clean;
     }),
     asArray: $property(function () {
         return _.asArray(this);
@@ -615,6 +616,12 @@ _.extend(log, {
     stackOffset: function (n) {
         return log.config({ stackOffset: n });
     },
+    where: function (wat) {
+        return log.config({
+            location: true,
+            where: wat || undefined
+        });
+    },
     color: _.extend(function (x) {
         return (log.color[x] || {}).color;
     }, _.object(_.map([
@@ -672,6 +679,14 @@ _.extend(log, {
                 '1m'
             ],
             'color:saddlebrown;font-weight:bold;'
+        ],
+        [
+            'darkOrange',
+            [
+                '33m',
+                '2m'
+            ],
+            'color:saddlebrown'
         ],
         [
             'orange',
@@ -830,7 +845,7 @@ _.extend(log, {
                 runs.last.text = trailNewlinesMatch[2].reversed;
             }
             var newline = {};
-            var lines = _.pluck.with_('items', _.reject.with_(_.property('label'), _.partition3.with_(_.equals(newline), _.scatter(runs, function (run, i, emit) {
+            var lines = _.pluck.with('items', _.reject.with(_.property('label'), _.partition3.with(_.equals(newline), _.scatter(runs, function (run, i, emit) {
                 _.each(run.text.split('\n'), function (line, i, arr) {
                     emit(_.extended(run, { text: line }));
                     if (i !== arr.lastIndex) {
@@ -874,7 +889,7 @@ _.extend(log, {
                 }
                 console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
             } else {
-                console.log.apply(console, _.reject.with_(_.equals(undefined), [].concat(_.map(params.lines, function (line, i) {
+                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(_.map(params.lines, function (line, i) {
                     return params.indentation + _.reduce2('', line, function (s, run) {
                         return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
                     });
@@ -928,7 +943,7 @@ _.extend(log, {
         },
         stringifyError: function (e) {
             try {
-                var stack = CallStack.fromErrorWithAsync(e).clean.offset(e.stackOffset || 0);
+                var stack = CallStack.fromErrorWithAsync(e).offset(e.stackOffset || 0).clean;
                 var why = (e.message || '').replace(/\r|\n/g, '').trimmed.limitedTo(120);
                 return '[EXCEPTION] ' + why + '\n\n' + (e.notMatching && _.map(_.coerceToArray(e.notMatching || []), log.impl.stringify.then(_.prepends('\t'))).join('\n') + '\n\n' || '') + log.impl.stringifyCallStack(stack) + '\n';
             } catch (sub) {
@@ -975,6 +990,7 @@ _.extend(log, {
         'boldRed bloody bad ee',
         'purple dp',
         'brown br',
+        'darkOrange wtf',
         'boldOrange ww',
         'darkRed er',
         'boldBlue ii'

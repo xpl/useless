@@ -58,6 +58,7 @@ _ = (function () {
     $include ('./base/tier0/keywords')    // metaprogramming utility
     $include ('./base/tier0/typeMatch')   // advanced type system extensions
     $include ('./base/tier0/stringify')   // configurable object printer
+    $include ('./base/tier0/squash')      // dependency list / tree squashing algorithms
 
 
 /*  Delivers continuation-passing style notation to various common things
@@ -82,6 +83,7 @@ _ = (function () {
     $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
 
 
+
 /*  OOP paradigm
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -93,7 +95,6 @@ _ = (function () {
 
     $include ('./base/Parse')           // clumsy parsing utils
     $include ('./base/Sort')            // (this one is normal)
-
     $include ('./base/concurrency')     // concurrency utility
     $include ('./base/math')            // math utility
     $include ('./base/component')       // component facility
@@ -115,6 +116,7 @@ _ = (function () {
 
     $include ('./base/AOP')
     $include ('./base/Promise+')
+    $include ('./base/infix/Set')
 
 
 /*  Networking

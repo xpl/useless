@@ -86,8 +86,10 @@ $mixin (Promise, {
                 return this.then (function (x) { $assert (x, desired); return x }) },
 
     assertRejected: function (desired) { var check = (arguments.length > 0)
-                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) }
+                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) },
 
+    panic: $property (function () {
+                return this.catch (function (e) { ($global.Panic || $global.log) (e); throw e }) })
 })
 
 $mixin (Function, {

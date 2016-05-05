@@ -753,7 +753,8 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        return this.mergeDuplicateLines.reject (_.property ('thirdParty')) }),
+        var clean = this.mergeDuplicateLines.reject (_.property ('thirdParty'))
+        return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
         return _.asArray (this) }),
@@ -978,6 +979,9 @@ _.extend (log, {
     stackOffset: function (n) {
         return log.config ({ stackOffset: n }) },
 
+    where: function (wat) {
+        return log.config ({ location: true, where: wat || undefined }) },
+
     color: _.extend (function (x) { return (log.color[x] || {}).color },
 
         _.object (
@@ -989,6 +993,7 @@ _.extend (log, {
                  ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
                  ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
                  ['boldOrange', ['33m', '1m'],   'color:saddlebrown;font-weight:bold;'],
+                 ['darkOrange', ['33m', '2m'],   'color:saddlebrown'],
                  ['orange',      '33m',          'color:saddlebrown'],
                  ['brown',      ['33m', '2m'],   'color:saddlebrown'],
                  ['green',       '32m',          'color:forestgreen'],
@@ -1091,9 +1096,9 @@ _.extend (log, {
             /*  Split by linebreaks
              */
             var newline = {}
-            var lines = _.pluck.with_ ('items',
-                            _.reject.with_ (_.property ('label'),
-                                _.partition3.with_ (_.equals (newline),
+            var lines = _.pluck.with ('items',
+                            _.reject.with (_.property ('label'),
+                                _.partition3.with (_.equals (newline),
                                     _.scatter (runs, function (run, i, emit) {
                                                         _.each (run.text.split ('\n'), function (line, i, arr) {
                                                                                             emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
@@ -1143,7 +1148,7 @@ _.extend (log, {
                              params.trailNewlines) }
 
             else {
-                console.log.apply (console, _.reject.with_ (_.equals (undefined), [].concat (
+                console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
                     _.map (params.lines, function (line, i) {
                                             return params.indentation + _.reduce2 ('', line, function (s, run) {
@@ -1205,7 +1210,7 @@ _.extend (log, {
         
         stringifyError: function (e) {
             try {       
-                var stack   = CallStack.fromErrorWithAsync (e).clean.offset (e.stackOffset || 0)
+                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
                 var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
 
                 return ('[EXCEPTION] ' + why + '\n\n') +
@@ -1245,6 +1250,7 @@ _.extend (log, {
                                           'boldRed bloody bad ee',
                                                       'purple dp',
                                                        'brown br',
+                                                 'darkOrange wtf',
                                                   'boldOrange ww',
                                                      'darkRed er',
                                                     'boldBlue ii' ],

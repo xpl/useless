@@ -181,6 +181,20 @@ _.tests.component = {
         $assertMatches (new Derived ({ pff: 'overriden from cfg' }), { pff: 'overriden from cfg', foo: 12, bar: 34, qux: 'overriden', inner: { fromTrait: 1, fromBase: 1, fromDerived: 1 } }) },
 
 
+    '$defaults cloning semantics': function () { var set = new Set ([1,2,3])
+
+        var S = $component ({ $defaults: { foo: set,
+                                           bar: new Set () } })
+
+        var s = new S ()
+
+        $assert (s.foo instanceof Set,
+                 s.bar instanceof Set,
+                 true)
+
+        $assert (s.foo !== set)
+    },
+
     /*  Use $requires to specify required config params along with their type signatures
      */
     '$requires': function () {
@@ -319,18 +333,25 @@ _.tests.component = {
     /*  $observableProperty is a powerful compound mechanism for data-driven dynamic
         code binding, built around streams described previously.
      */
-    '$observableProperty': function () { $assertEveryCalled (function (fromConstructor, fromConfig, fromLateBoundListener, fromDefinition) {
+    '$observableProperty': function () { $assertEveryCalled (function (
+                                            fromConstructor,
+                                            fromConfig,
+                                            fromLateBoundListener,
+                                            fromDefinition,
+                                            fromListenerOnlyVariant) {
 
         var Compo = $component ({
                         color: $observableProperty (),
                         smell: $observableProperty (),
                         shape: $observableProperty ('round', function (now) { $assert (now, 'round'); fromDefinition () }),
+                        size:  $observableProperty (function (x) { $assert (x, 42); fromListenerOnlyVariant () }),
                         init: function () {
                             this.colorChange (function (now, was) { if (was) { fromConstructor ()
                                 $assert ([now, was], ['green', 'blue']) } }) } })
 
         var compo = new Compo ({
             color: 'blue',
+            size: 42,
             colorChange: function (now, was) { if (was) {   fromConfig ()
                                                             $assert ([now, was], ['green', 'blue']) } } })
 
@@ -507,6 +528,8 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
+    'random $nonce generation': function () { var X = $prototype (); $assert (_.isString (X.$nonce)) },
+
     '$macroTags for component-specific macros': function () {
 
         var Trait =    $trait ({   $macroTags: {
@@ -629,10 +652,14 @@ _.defineKeyword ('component', function (definition) {
                                 return $extends (Component, definition) })
 
 _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
-    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw'])
+    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw', 'binds', 'observes'])
     .each (_.defineTagKeyword)
 
-_.defineTagKeyword ('observableProperty', _.flip) // flips args, so it's $observableProperty (value, listenerParam)
+_.defineTagKeyword ('observableProperty', function (impl) {
+                                                return function (x, fn) {
+                                                    return ((_.isFunction (x) && (arguments.length === 1)) ?
+                                                                impl (x, fn) :     // $observableProperty (listener)
+                                                                impl (fn, x)) } }) // $observableProperty (value[, listener])
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
@@ -644,6 +671,9 @@ $prototype.macroTag ('extendable',
             function (def, value, name) {
                       def[name] = $builtin ($const (value))
                return def })
+
+$prototype.macro (function (def) {
+                            def.$nonce = $static ($builtin ($property (String.randomHex (32)))); return def })
 
 Component = $prototype ({
 
@@ -677,29 +707,12 @@ Component = $prototype ({
             this.defineInstanceMembers) },
 
         expandTraitsDependencies: function (def) {
-            if (def.$depends) {
-                            var edges = []
-                            var lastId = 0
-                            var drill =  function (depends, T) { if (!T.__tempId) { T.__tempId = lastId++ }
-                                            
-                                            /*  Horizontal dependency edges (first mentioned should init first)
-                                             */
-                                            _.reduce2 (depends, function (TBefore, TAfter) {
-                                                edges.push ([TAfter, TBefore]); return TAfter })
 
-                                            /*  Vertical dependency edges (parents should init first)
-                                             */
-                                            _.each (depends, function (    TSuper) {
-                                                          edges.push ([T,  TSuper])
-                                                                    drill (TSuper.$depends || [], TSuper) }) }
-                                                                    drill ($untag (def.$depends), {})
-
-                    _.each (def.$traits =               _.reversed (
-                                                            _.rest (
-                                                     _.linearMerge (edges, { key: _.property ('__tempId') }))),
-                            function (obj) {
-                                delete obj.__tempId }) }
-            return def },
+                if (_.isNonempty ($untag (def.$depends)) &&
+                    _.isEmpty    ($untag (def.$traits))) {
+                                          def.$traits = DAG.squash (def, {
+                                                                  nodes: function (def) { return $untag (def.$depends) },
+                                                                    key: function (def) { return $untag (def.$nonce) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
 

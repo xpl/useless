@@ -58,14 +58,22 @@ _.withTest (['stdlib', 'map2'], function () {
     $assert (_.map2 ([      'foo'],  plusBar),    [      'foobar' ])
     $assert (_.map2 ({ foo: 'foo' }, plusBar),    { foo: 'foobar' })
 
+    $assert (Array.from (_.map2 (new Set (['foo',    'bar']), plusBar).values ()),
+                                          ['foobar', 'barbar'])
+
     /*  With flipped order of arguments (callback first)
      */
     $assert (_.mapWith (plusBar, { foo: 'foo' }), { foo: 'foobar' })
 
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
                                  _.isArrayLike (value) ? _.map       (value, fn,      context) : (
+                                (value instanceof Set) ? _.mapSet    (value, fn,      context) : (
                             _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
-                                                                             fn.call (context, value))) } })
+                                                                             fn.call (context, value)))) } })
+
+                _.mapSet = function (set, fn, ctx) { var out = new Set ()
+                                                     for (var x of set) { out.add (fn.call (ctx, x)) }
+                                                     return out }
                 _.mapsWith = _.higherOrder (
                 _.mapWith  = _.flip2 (_.map2)) })
 
@@ -128,21 +136,44 @@ _.withTest (['stdlib', 'mapKeys'], function () {
 
 _.withTest (['stdlib', 'mapMap'], function () {
 
-    $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
-    $assert (_.mapMap ([7], _.typeOf), ['number'])
+        $assert (_.mapMap ( 7,  _.typeOf),  'number')   // degenerate cases
+        $assert (_.mapMap ([7], _.typeOf), ['number'])
 
-    $assert (_.mapMap ( {   foo: 7,
-                            bar: ['foo', {
-                                bar: undefined } ] }, _.typeOf),
-                        
-                        {   foo: 'number',
-                            bar: ['string', {
-                                bar: 'undefined' } ] }) },
+        $assert (_.mapMap ( {   foo: 7,
+                                bar: ['foo', {
+                                    bar: undefined } ] }, _.typeOf),
+                            
+                            {   foo: 'number',
+                                bar: ['string', {
+                                    bar: 'undefined' } ] }) },
+    function () {
+
+        _.mapMap = _.hyperOperator (_.unary, _.map2) })
+
+
+/*  Hyper map (deep) #2 — maps branches & leafs 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+_.withTest (['stdlib', 'hyperMap'], function () {
+
+        var complexObject = {  garply:         { bar: { baz: 5 } },
+                               frobni: { foo: [{ bar: { baz: 5 } }] } }
+    /*                                         -----------------             */
+
+        var barBazSubstructure =    _.matches ({ bar: { baz: 5 } })
+
+        var transformedObject = _.hyperMap (complexObject, function (x) {
+                                                                if (barBazSubstructure (x)) { return 'pwned!' } })
+
+        $assert (transformedObject, { garply:         'pwned!',
+                                      frobni: { foo: ['pwned!'] } })         },
 
     function () {
 
-        _.mixin ({ mapMap: _.hyperOperator (_.unary, _.map2) }) })
-
+        _.hyperMap =  function (data, op) {
+                        return _.hyperOperator (_.unary, function    (expr, f) {
+                                                           return op (expr) ||
+                                                              _.map2 (expr, f) }) (data, _.identity) } })
 
 /*  Filter 2.0
     ======================================================================== */
@@ -165,18 +196,18 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
     $assert (_.filter2 ([    'foo' ],   _.constant ('bar')),    [    'bar' ])
     $assert (_.filter2 ({ f: 'foo' },   _.constant ('bar')),    { f: 'bar' })
 
-    // hyper-filter
+    // hyper-filter #1 (works on leafs)
 
     $assert (_.filterFilter (
                     { foo: 'foo',   bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals ('foo'))),
-                    {               bar: [7,        {            }] })
+                    {               bar: [7,        {            }] })  
 
-}, function () { _.mixin ({
+}, function () {
 
-    reject2: function (value, op) {
-        return _.filter2 (value, _.not (op)) },
+    _.reject2 = function (value, op) {
+        return _.filter2 (value, _.not (op)) }
 
-    filter2: function (value, op) {
+    _.filter2 = function (value, op) {
         if (_.isArrayLike (value)) {                            var result = []
             for (var i = 0, n = value.length; i < n; i++) {     var v = value[i], opSays = op (v, i)
                 if (opSays === true) {
@@ -197,12 +228,23 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
             else if (opSays !== false) {
                 return opSays }
             else {
-                return undefined } } } })
+                return undefined } } }
 
-    _.mixin ({
+        _.filterFilter = _.hyperOperator (_.unary, _.filter2)
 
-        filterFilter: _.hyperOperator (_.unary, _.filter2) }) })
+        _.hyperFilter =  function (data, op) {
+                           return _.hyperOperator (_.unary, function (                   expr, f) {
+                                                           var x =                   op (expr)
+                                                      return ((x === true) && _.filter2 (expr, f)) || x }) (data, _.identity) }
 
+        _.hyperReject = function (data, op) {
+            return _.hyperFilter (data, function (x) { var  opa = op (x)
+                                        return _.isBoolean (opa) ?
+                                                           !opa  :
+                                                            opa }) }
+})
+
+/*  ======================================================================== */
 
 _.withTest (['stdlib', 'each 2.0'], function () {
 
@@ -222,6 +264,7 @@ _.withTest (['stdlib', 'each 2.0'], function () {
            if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
       else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
          else                          {                                                                        f (x,        undefined, 1) } } })
+
 
 /*  Reduce on steroids
     ======================================================================== */
@@ -297,7 +340,7 @@ _.withTest (['stdlib', 'concat2'], function () {
 /*  Abstract zip that reduces any types of matrices.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-_.withTest (['stdlib', 'zip2'], function () {
+_.deferTest (['stdlib', 'zip2'], function () {
 
     $assert (_.zip2 ([  'f',
                         'o',
@@ -320,8 +363,6 @@ _.withTest (['stdlib', 'zip2'], function () {
     $assert (_.zip2 ([],        _.concat), [])
     $assert (_.zip2 (['foo'],   _.concat), 'foo')
 
-    // internals (regression tests)
-
     $assert (_.zipObjectsWith ([
                 { name: 'string' },
                 { born: 123 }], _.array),
@@ -329,7 +370,23 @@ _.withTest (['stdlib', 'zip2'], function () {
                 { name: ['string',  undefined],
                   born: [undefined, 123] })
 
+    $assert ([3], _.zipSetsWith ([
+                    new Set ([2,3]),
+                    new Set ([3,4])], function (a, b) { return a && b }).items)
+
 }, function () { _.mixin ({
+
+    zipSetsWith: function (sets, fn) {
+                    return _.reduce (_.rest (sets), function (memo, obj) {
+                        _.each (_.union (( obj && Array.from ( obj.values ())) || [],
+                                         (memo && Array.from (memo.values ())) || []), function (k) {
+
+                            var zipped = fn ((memo && memo.has (k)) ? k : undefined,
+                                              (obj &&  obj.has (k))  ? k : undefined)
+                            if (zipped === undefined) {
+                                memo.delete (k) }
+                            else {
+                                memo.add (zipped) } }); return memo }, new Set (sets[0])) },
 
     zipObjectsWith: function (objects, fn) {
         return _.reduce (_.rest (objects), function (memo, obj) {
@@ -345,12 +402,10 @@ _.withTest (['stdlib', 'zip2'], function () {
         if (!_.isArrayLike (rows) || rows.length === 0) {
             return rows }
         else {
-            if (_.isArrayLike (rows[0])) {
-                return _.zipWith (rows, fn) }
-            else if (_.isStrictlyObject (rows[0])) {
-                return _.zipObjectsWith (rows, fn) }
-            else {
-                return _.reduce2 (rows, fn) } } } }) })
+                 if (_.isArrayLike (rows[0]))      { return _.zipWith        (rows, fn) }
+            else if (rows[0] instanceof Set)       { return _.zipSetsWith    (rows, fn) }
+            else if (_.isStrictlyObject (rows[0])) { return _.zipObjectsWith (rows, fn) }
+                                              else { return _.reduce2        (rows, fn) } } } }) })
 
 
 /*  Hyperzip (deep one).
@@ -388,6 +443,7 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
             but see AOP impl for example of such one)
          */
         [(function () {
+
             var input   = { foo:1,  bar:1 }
             var plus    = { foo:42, qux:1 }
             var gives   = { foo:42, qux:1, bar: 1 }
@@ -416,11 +472,17 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
         /*  Deep version of _.extend, allowing to extend arbitrary levels deep (referentially transparent, so _.extendedDeep instead of _.extendDeep)
          */
         (function () {
+
             var input   = { foo:1,  bar: { qux:1 } }
             var plus    = { foo:42, bar: { baz:1 } }
             var gives   = { foo:42, bar: { baz:1, qux:1 }}
 
-            $assert (_.extendedDeep (input, plus), gives) }),
+            $assert (_.extendedDeep (input, plus), gives)
+
+            $assert (_.extendedDeep ({ foo: new Set ([7]) }, {}).foo instanceof Set)
+
+            $assert (Array.from (_.extendedDeep ({ foo: new Set ([1,2]) },
+                                                 { foo: new Set ([2,3]) }).foo.values ()), [1,2,3]) }) (),
 
         /*  Referentially-transparent version (to be used in functional expressions)
          */
@@ -428,7 +490,7 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
             var x = { foo: 1 }
 
             $assert (_.extended (x, { bar: 1 }), { foo: 1, bar: 1 })
-            $assert (            x,              { foo: 1 }) }) ]  }, function () {
+            $assert (            x,              { foo: 1 }) }) () ]  }, function () {
 
     _.extend = $restArg (_.extend) // Mark as having rest argument (to make _.flip work on that shit)
 
@@ -528,11 +590,19 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
     $assert (obj, copy)     // structure should not change
 
+    $assert (            _.cloneDeep ({ foo: new Set ()        }).foo instanceof Set)
+    $assert (Array.from (_.cloneDeep ({ foo: new Set ([1,2,3]) }).foo.values ()), [1,2,3])
+
 }, function () { _.extend (_, {
 
+    clone: function (x) {
+                return  (x instanceof Set) ? new Set (x) :
+                        (!_.isObject (x)   ? x :
+                        (_.isArray   (x)   ? x.slice () : _.extend ({}, x))) },
+
     cloneDeep: _.tails2 (_.mapMap, function (value) {
-        return (_.isStrictlyObject (value) && !
-                _.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
+                                        return ( _.isStrictlyObject    (value) &&
+                                                !_.isPrototypeInstance (value)) ? _.clone (value) : value }) }) })
 
 
 /*  given objects A and B, _.diff subtracts A's structure from B,
@@ -652,62 +722,6 @@ _.withTest (['stdlib', 'partition2'], function () {
 
             return (span.length && spans.push (span)),
                     spans } })
-
-/*  Merges arrays, keeping given element order.
-    TODO: algoritm is O(N²) in worst case, can be optimized to O(N log N).
-    ======================================================================== */
-
-_.withTest (['stdlib', 'linearMerge'], function () {
-
-    $assert (_.linearMerge ([]), [])
-    $assert (_.linearMerge ([   ['all','your',                'to','us'],
-                                [      'your',       'belong',     'us'],
-                                [             'base','belong','to'     ],
-                                [      'your','base'                   ]]),
-                                ['all','your','base','belong','to','us'])
-
-/*  cfg accepts { key: fn, sort: fn } optional parameters for key extraction and sorting
-    ======================================================================== */
-
-}, function () {
-
-    _.linearMerge = function (arrays, cfg) {
-
-            cfg = cfg || { key: _.identity }
-
-        var head = { key: null, next: {} }
-        var nodes = {}
-
-        _.each (arrays, function (arr) {
-            for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-                var item = arr[i]
-                var key  = cfg.key (item)
-                node = nodes[key] || (nodes[key] = { key: key, item: item, next: {} })
-                if (prev) {
-                    prev.next[key] = node } } })
-
-        var decyclize = function (visited, node) { visited[node.key] = true
-
-            node.next = _.chain (_.values (node.next))
-                            .filter (function (node) { return !(node.key in visited) })
-                            .map (_.partial (decyclize, visited)).value ()
-            
-            delete visited[node.key]; return node }
-
-        var ordered = function (a, b) {
-            return (a === b) || _.some (a.next, function (aa) { return ordered (aa, b) }) }
-
-        var flatten = function (node) { if (!node) return []
-
-            var next = cfg.sort ? _.sortBy (node.next || [], cfg.sort) : (node.next || [])
-
-            return [node].concat (flatten (_.reduce (next, function (a, b) {
-
-                if (a === b)             { return a }
-                else if (ordered (b, a)) { b.next.push (a); return b }
-                else                     { a.next.push (b); return a } }))) }
-
-        return _.rest (_.pluck (flatten (decyclize ({}, head)), 'item')) } })
 
 
 /*  Taken from  npmjs.com/package/longest-common-substring

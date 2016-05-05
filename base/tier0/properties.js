@@ -53,6 +53,9 @@ _.withTest ('properties', function () { var obj = {}
     defineProperties: function (targetObject, properties) {
         _.each (properties, _.defineProperty.partial (targetObject).flip2) },
 
+    memoizedState: function (obj) {
+                        return _.filter2 (obj, function (v, k) { return (k[0] === '_') && !_.isFunction (v) }) },
+
     memoizeToThis: function (name, fn) {
         return function () {
             var memo = this[name]

@@ -107,7 +107,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
 
                             else if (typeof x === 'string') {
-                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 40)) }
+                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 60)) }
 
                             else if (_.isTypeOf (Tags, x)) {
                                 return _.reduce (Tags.get (x), function (memo, value, tag) {
@@ -130,6 +130,9 @@ _.deferTest (['type', 'stringify'], function () {
                                     return builtInValue }
                                     
                                 else {
+                                    if (x instanceof Set) {
+                                        x = x.items }
+
                                     var isArray = _.isArray (x)
 
                                     var pretty = cfg.pretty || false

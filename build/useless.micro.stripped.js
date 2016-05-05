@@ -67,7 +67,7 @@ _.deferTest = _.withTest = function (name, test, subj) {
         if (name in $global) {
             throw new Error('cannot define global ' + name + ': already there');
         }
-        Object.defineProperty($global, name, _.extend(typeof v === 'function' && v.length === 0 ? { get: v } : { value: v }, { enumerable: true }, cfg));
+        return Object.defineProperty($global, name, _.extend(typeof v === 'function' && v.length === 0 ? { get: v } : { value: v }, { enumerable: true }, cfg));
     };
     $global.define('$global', $global);
     $global.define('$platform', Object.defineProperties({}, _.mapObject({
@@ -95,7 +95,7 @@ _.deferTest = _.withTest = function (name, test, subj) {
 $overrideUnderscore = function (name, genImpl) {
     return _[name] = genImpl(_[name]);
 };
-if ($platform.Browser) {
+if ($platform.NodeJS) {
     $global.alert = function (args) {
         var print = $global.log && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
         print.apply(print, ['ALERT:'].concat(_.asArray(arguments)));
@@ -106,7 +106,7 @@ $global.alert2 = function (args) {
     return arguments[0];
 };
 $global.log = function () {
-    console.log.call(console.log, arguments);
+    console.log.apply(console.log, arguments);
 };
 _.extend(_, {
     asArray: function (x) {
@@ -710,9 +710,16 @@ _.mixin({
 });
 _.mixin({
     map2: function (value, fn, context) {
-        return _.isArrayLike(value) ? _.map(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
+        return _.isArrayLike(value) ? _.map(value, fn, context) : value instanceof Set ? _.mapSet(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
     }
 });
+_.mapSet = function (set, fn, ctx) {
+    var out = new Set();
+    for (var x of set) {
+        out.add(fn.call(ctx, x));
+    }
+    return out;
+};
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
 _.mixin({
     scatter: function (obj, elem) {
@@ -757,47 +764,62 @@ _.mapKeys = function (x, fn) {
         return x;
     }
 };
-_.mixin({ mapMap: _.hyperOperator(_.unary, _.map2) });
-_.mixin({
-    reject2: function (value, op) {
-        return _.filter2(value, _.not(op));
-    },
-    filter2: function (value, op) {
-        if (_.isArrayLike(value)) {
-            var result = [];
-            for (var i = 0, n = value.length; i < n; i++) {
-                var v = value[i], opSays = op(v, i);
-                if (opSays === true) {
-                    result.push(v);
-                } else if (opSays !== false) {
-                    result.push(opSays);
-                }
-            }
-            return result;
-        } else if (_.isStrictlyObject(value)) {
-            var result = {};
-            _.each(Object.keys(value), function (key) {
-                var v = value[key], opSays = op(v, key);
-                if (opSays === true) {
-                    result[key] = v;
-                } else if (opSays !== false) {
-                    result[key] = opSays;
-                }
-            });
-            return result;
-        } else {
-            var opSays = op(value);
+_.mapMap = _.hyperOperator(_.unary, _.map2);
+_.hyperMap = function (data, op) {
+    return _.hyperOperator(_.unary, function (expr, f) {
+        return op(expr) || _.map2(expr, f);
+    })(data, _.identity);
+};
+_.reject2 = function (value, op) {
+    return _.filter2(value, _.not(op));
+};
+_.filter2 = function (value, op) {
+    if (_.isArrayLike(value)) {
+        var result = [];
+        for (var i = 0, n = value.length; i < n; i++) {
+            var v = value[i], opSays = op(v, i);
             if (opSays === true) {
-                return value;
+                result.push(v);
             } else if (opSays !== false) {
-                return opSays;
-            } else {
-                return undefined;
+                result.push(opSays);
             }
         }
+        return result;
+    } else if (_.isStrictlyObject(value)) {
+        var result = {};
+        _.each(Object.keys(value), function (key) {
+            var v = value[key], opSays = op(v, key);
+            if (opSays === true) {
+                result[key] = v;
+            } else if (opSays !== false) {
+                result[key] = opSays;
+            }
+        });
+        return result;
+    } else {
+        var opSays = op(value);
+        if (opSays === true) {
+            return value;
+        } else if (opSays !== false) {
+            return opSays;
+        } else {
+            return undefined;
+        }
     }
-});
-_.mixin({ filterFilter: _.hyperOperator(_.unary, _.filter2) });
+};
+_.filterFilter = _.hyperOperator(_.unary, _.filter2);
+_.hyperFilter = function (data, op) {
+    return _.hyperOperator(_.unary, function (expr, f) {
+        var x = op(expr);
+        return x === true && _.filter2(expr, f) || x;
+    })(data, _.identity);
+};
+_.hyperReject = function (data, op) {
+    return _.hyperFilter(data, function (x) {
+        var opa = op(x);
+        return _.isBoolean(opa) ? !opa : opa;
+    });
+};
 _.each2 = function (x, f) {
     if (_.isArrayLike(x)) {
         for (var i = 0, n = x.length; i < n; i++)
@@ -851,6 +873,19 @@ _.concat = function (a, b) {
     });
 };
 _.mixin({
+    zipSetsWith: function (sets, fn) {
+        return _.reduce(_.rest(sets), function (memo, obj) {
+            _.each(_.union(obj && Array.from(obj.values()) || [], memo && Array.from(memo.values()) || []), function (k) {
+                var zipped = fn(memo && memo.has(k) ? k : undefined, obj && obj.has(k) ? k : undefined);
+                if (zipped === undefined) {
+                    memo.delete(k);
+                } else {
+                    memo.add(zipped);
+                }
+            });
+            return memo;
+        }, new Set(sets[0]));
+    },
     zipObjectsWith: function (objects, fn) {
         return _.reduce(_.rest(objects), function (memo, obj) {
             _.each(_.union(_.keys(obj), _.keys(memo)), function (k) {
@@ -872,6 +907,8 @@ _.mixin({
         } else {
             if (_.isArrayLike(rows[0])) {
                 return _.zipWith(rows, fn);
+            } else if (rows[0] instanceof Set) {
+                return _.zipSetsWith(rows, fn);
             } else if (_.isStrictlyObject(rows[0])) {
                 return _.zipObjectsWith(rows, fn);
             } else {
@@ -958,6 +995,9 @@ _.nonempty = function (obj) {
     return _.filter2(obj, _.isNonempty);
 };
 _.extend(_, {
+    clone: function (x) {
+        return x instanceof Set ? new Set(x) : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
+    },
     cloneDeep: _.tails2(_.mapMap, function (value) {
         return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
     })
@@ -1012,58 +1052,6 @@ _.partition3 = function (arr, pred) {
         }
     });
     return span.length && spans.push(span), spans;
-};
-_.linearMerge = function (arrays, cfg) {
-    cfg = cfg || { key: _.identity };
-    var head = {
-        key: null,
-        next: {}
-    };
-    var nodes = {};
-    _.each(arrays, function (arr) {
-        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-            var item = arr[i];
-            var key = cfg.key(item);
-            node = nodes[key] || (nodes[key] = {
-                key: key,
-                item: item,
-                next: {}
-            });
-            if (prev) {
-                prev.next[key] = node;
-            }
-        }
-    });
-    var decyclize = function (visited, node) {
-        visited[node.key] = true;
-        node.next = _.chain(_.values(node.next)).filter(function (node) {
-            return !(node.key in visited);
-        }).map(_.partial(decyclize, visited)).value();
-        delete visited[node.key];
-        return node;
-    };
-    var ordered = function (a, b) {
-        return a === b || _.some(a.next, function (aa) {
-            return ordered(aa, b);
-        });
-    };
-    var flatten = function (node) {
-        if (!node)
-            return [];
-        var next = cfg.sort ? _.sortBy(node.next || [], cfg.sort) : node.next || [];
-        return [node].concat(flatten(_.reduce(next, function (a, b) {
-            if (a === b) {
-                return a;
-            } else if (ordered(b, a)) {
-                b.next.push(a);
-                return b;
-            } else {
-                a.next.push(b);
-                return a;
-            }
-        })));
-    };
-    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
 };
 (function () {
     var indexMap = function (list) {
@@ -1146,6 +1134,11 @@ _.extend(_, {
     },
     defineProperties: function (targetObject, properties) {
         _.each(properties, _.defineProperty.partial(targetObject).flip2);
+    },
+    memoizedState: function (obj) {
+        return _.filter2(obj, function (v, k) {
+            return k[0] === '_' && !_.isFunction(v);
+        });
     },
     memoizeToThis: function (name, fn) {
         return function () {
@@ -1508,7 +1501,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
     } else if (_.isFunction(x)) {
         return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
     } else if (typeof x === 'string') {
-        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 40));
+        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 60));
     } else if (_.isTypeOf(Tags, x)) {
         return _.reduce(Tags.get(x), function (memo, value, tag) {
             return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
@@ -1522,6 +1515,9 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
         if (builtInValue) {
             return builtInValue;
         } else {
+            if (x instanceof Set) {
+                x = x.items;
+            }
             var isArray = _.isArray(x);
             var pretty = cfg.pretty || false;
             if ($platform.Browser) {
@@ -1534,7 +1530,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             if (x.toJSON) {
                 return _.quoteWith('"', x.toJSON());
             }
-            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 30))) {
+            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 60))) {
                 return isArray ? '<array[' + x.length + ']>' : '<object>';
             }
             var parentsPlusX = parents.concat([x]);
@@ -1583,6 +1579,117 @@ _.toFixed2 = function (x) {
 };
 _.toFixed3 = function (x) {
     return _.toFixed(x, 3);
+};
+Array.prototype.squash = function (cfg) {
+    cfg = cfg || {};
+    var key = cfg.key || _.identity, sort = cfg.sort || undefined;
+    var head = {
+        key: null,
+        next: {},
+        depth: {}
+    };
+    var nodes = {};
+    _.each(this, function (arr) {
+        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+            var item = arr[i];
+            var k = key(item);
+            node = nodes[k] || (nodes[k] = {
+                key: k,
+                item: item,
+                next: {},
+                depth: {}
+            });
+            if (prev) {
+                prev.next[k] = node;
+                prev.depth[k] = 0;
+            }
+        }
+    });
+    var decyclize = function (visited, node, prev, depth) {
+        depth = depth || 0;
+        visited[node.key] = true;
+        node.next = _.filter2(_.values(node.next), function (next) {
+            if (next.key in visited) {
+                return false;
+            } else {
+                next = decyclize(visited, next, node);
+                depth = Math.max(depth, node.depth[next.key]);
+                return next;
+            }
+        });
+        if (prev) {
+            prev.depth[node.key] = Math.max(prev.depth[node.key] || 0, depth + 1);
+        }
+        delete visited[node.key];
+        return node;
+    };
+    var ordered = function (a, b) {
+        return a === b || _.some(a.next, function (aa) {
+            return ordered(aa, b);
+        });
+    };
+    var flatten = function (node) {
+        if (!node)
+            return [];
+        var next = (node.next || []).sort(function (a, b) {
+            return (node.depth[a.key] || 0) < (node.depth[b.key] || 0);
+        });
+        if (false) {
+            log.gg(node.key);
+            log.pp(next.map(function (next) {
+                return next.key + ' ' + node.depth[next.key];
+            }));
+        }
+        return [node].concat(flatten(_.reduce(next, function (a, b) {
+            if (a === b) {
+                return a;
+            } else if (ordered(b, a)) {
+                b.next.push(a);
+                return b;
+            } else {
+                a.next.push(b);
+                return a;
+            }
+        })));
+    };
+    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
+};
+DAG = function (cfg) {
+    this.cfg = cfg || {}, this.nodes = cfg.nodes || _.noop;
+}, DAG.prototype.each = function (N, fn, prev, visited) {
+    visited = visited || new Set();
+    if (!visited.has(N)) {
+        visited.add(N);
+        var self = this, nodes = this.nodes(N) || [], stop = fn.call(this, N, {
+                nodes: nodes,
+                prev: prev,
+                visited: visited
+            });
+        if (stop !== true) {
+            nodes.forEach(function (NN) {
+                self.each(NN, fn, N, visited);
+            });
+        }
+    }
+    ;
+    return visited;
+}, DAG.prototype.edges = function (N) {
+    var edges = [];
+    this.each(N, function (N, context) {
+        context.nodes.concat(N).reduce(function (A, B) {
+            edges.push([
+                A,
+                B
+            ]);
+            return B;
+        });
+    });
+    return edges;
+}, DAG.prototype.squash = function (node0) {
+    return this.edges(node0).squash(this.cfg).remove(node0);
+};
+DAG.squash = function (node0, cfg) {
+    return new DAG(cfg).squash(node0);
 };
 _.cps = function () {
     return _.cps.sequence.apply(null, arguments);
@@ -1819,21 +1926,19 @@ $extensionMethods(Function, {
     compose: _.compose,
     then: _.then,
     flip: _.flip,
-    with_: _.flipN,
+    with: _.flipN,
     flip2: _.flip2,
     flip3: _.flip3,
     asFreeFunction: _.asFreeFunction,
     asMethod: _.asMethod,
     callsWith: _.callsTo,
     tailsWith: _.tailsTo,
+    higherOrder: _.higherOrder,
     returns: function (fn, returns) {
         return function () {
             fn.apply(this, arguments);
             return returns;
         };
-    },
-    asPromise: function (f) {
-        return new Promise(f);
     },
     asContinuation: function (f) {
         return $restArg(function () {
@@ -1973,6 +2078,7 @@ $extensionMethods(Function, {
 $extensionMethods(Array, {
     each: _.each,
     map: _.map,
+    fold: _.reduce2,
     reduce: _.reduce,
     reduceRight: _.reduceRight,
     zip: _.zipWith,
@@ -1981,6 +2087,8 @@ $extensionMethods(Array, {
     filter: _.filter,
     flat: _.flatten.tails2(true),
     object: _.object,
+    shuffle: _.shuffle,
+    pluck: $method(_.pluck),
     join: function (strJoin) {
         return $forceOverride(function (arr, delim) {
             delim = arguments.length < 2 ? '' : delim;
@@ -2014,6 +2122,7 @@ $extensionMethods(Array, {
     take: function (arr, n) {
         return arr.slice(0, n);
     },
+    lastN: $method(_.last),
     before: function (arr, x) {
         var i = arr.indexOf(x);
         return i < 0 ? arr : arr.slice(0, i - 1);
@@ -2080,6 +2189,9 @@ $extensionMethods(String, {
     quote: _.quote,
     contains: function (s, other) {
         return s.indexOf(other) >= 0;
+    },
+    startsWith: function (s, x) {
+        return s[0] === x;
     },
     cut: function (s, from) {
         return s.substring(0, from - 1) + s.substring(from, s.length);
@@ -2597,6 +2709,7 @@ _([
     'memoized',
     'private',
     'builtin',
+    'hidden',
     'testArguments'
 ]).each(_.defineTagKeyword);
 $prototype = function (arg1, arg2) {
@@ -2839,7 +2952,7 @@ _.extend($prototype, {
                 if (def.$memoized) {
                     _.defineMemoizedProperty(targetObject, key, def);
                 } else {
-                    _.defineProperty(targetObject, key, def);
+                    _.defineProperty(targetObject, key, def, def.$hidden ? { enumerable: false } : {});
                 }
             } else {
                 var what = $untag(def);
@@ -3807,9 +3920,15 @@ _([
     'listener',
     'postpones',
     'reference',
-    'raw'
+    'raw',
+    'binds',
+    'observes'
 ]).each(_.defineTagKeyword);
-_.defineTagKeyword('observableProperty', _.flip);
+_.defineTagKeyword('observableProperty', function (impl) {
+    return function (x, fn) {
+        return _.isFunction(x) && arguments.length === 1 ? impl(x, fn) : impl(fn, x);
+    };
+});
 _.defineKeyword('observableRef', function (x) {
     return $observableProperty($reference(x));
 });
@@ -3821,6 +3940,10 @@ $prototype.macroTag('extendable', function (def, value, name) {
     def[name] = $builtin($const(value));
     return def;
 });
+$prototype.macro(function (def) {
+    def.$nonce = $static($builtin($property(String.randomHex(32))));
+    return def;
+});
 Component = $prototype({
     $defaults: $extendable({}),
     $requires: $extendable({}),
@@ -3830,33 +3953,17 @@ Component = $prototype({
             return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
         },
         expandTraitsDependencies: function (def) {
-            if (def.$depends) {
-                var edges = [];
-                var lastId = 0;
-                var drill = function (depends, T) {
-                    if (!T.__tempId) {
-                        T.__tempId = lastId++;
+            if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
+                def.$traits = DAG.squash(def, {
+                    nodes: function (def) {
+                        return $untag(def.$depends);
+                    },
+                    key: function (def) {
+                        return $untag(def.$nonce);
                     }
-                    _.reduce2(depends, function (TBefore, TAfter) {
-                        edges.push([
-                            TAfter,
-                            TBefore
-                        ]);
-                        return TAfter;
-                    });
-                    _.each(depends, function (TSuper) {
-                        edges.push([
-                            T,
-                            TSuper
-                        ]);
-                        drill(TSuper.$depends || [], TSuper);
-                    });
-                };
-                drill($untag(def.$depends), {});
-                _.each(def.$traits = _.reversed(_.rest(_.linearMerge(edges, { key: _.property('__tempId') }))), function (obj) {
-                    delete obj.__tempId;
                 });
             }
+            ;
             return def;
         },
         mergeExtendables: function (base) {
@@ -4210,26 +4317,6 @@ Component = $prototype({
         return this;
     }
 });
-Promise.prototype.seq = function (seq) {
-    return _.reduce2(this, seq, function (a, b) {
-        return a.then(b);
-    });
-};
-Promise.prototype.assert = function (desired) {
-    return this.then(function (x) {
-        $assert(x, desired);
-        return x;
-    });
-};
-Promise.prototype.assertRejected = function (desired) {
-    var check = arguments.length > 0;
-    return this.catch(function (x) {
-        if (check) {
-            $assert(x, desired);
-        }
-        return x;
-    });
-};
 TimeoutError = $extends(Error, { message: 'timeout expired' });
 __ = function (x) {
     return x instanceof Function ? new Promise(x) : Promise.resolve(x);
@@ -4361,7 +4448,44 @@ $mixin(Promise, {
                 pending: true
             };
         });
+    }),
+    assert: function (desired) {
+        return this.then(function (x) {
+            $assert(x, desired);
+            return x;
+        });
+    },
+    assertRejected: function (desired) {
+        var check = arguments.length > 0;
+        return this.catch(function (x) {
+            if (check) {
+                $assert(x, desired);
+            }
+            return x;
+        });
+    },
+    panic: $property(function () {
+        return this.catch(function (e) {
+            ($global.Panic || $global.log)(e);
+            throw e;
+        });
     })
+});
+$mixin(Function, {
+    promisify: $hidden($property(function () {
+        var f = this;
+        return function () {
+            var self = this, args = arguments;
+            return new Promise(function (resolve, reject) {
+                f.apply(self, _.asArray(args).concat(function (err, what) {
+                    if (err) {
+                        reject(err);
+                    }
+                    resolve(what);
+                }));
+            });
+        };
+    }))
 });
 Http = $singleton(Component, {
     $traits: [HttpMethods = $trait({

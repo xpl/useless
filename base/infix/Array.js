@@ -42,6 +42,9 @@ _.withTest ('Array extensions', function () {
     $assert ([1].random === 1) // returns random item from array
     $assert ([].random === undefined)
 
+    $assert ([{ foo: 'bar'}, { foo: 'qux' }].pluck ('foo'),
+                    ['bar',         'qux'])
+
     $assert ([['foo', 'bar'].join (),
               ['foo', 'bar'].join ('.'),
               ['foo', 'bar'].join (777),
@@ -56,6 +59,7 @@ _.withTest ('Array extensions', function () {
 
         each:        _.each,
         map:         _.map,
+        fold:        _.reduce2,
         reduce:      _.reduce,
         reduceRight: _.reduceRight,
         zip:         _.zipWith,
@@ -64,6 +68,8 @@ _.withTest ('Array extensions', function () {
         filter:      _.filter,
         flat:        _.flatten.tails2 (true),
         object:      _.object,
+        shuffle:     _.shuffle,
+        pluck:       $method (_.pluck),
 
         join: (function (strJoin) {
                     return $forceOverride (function (arr, delim) { delim = (arguments.length < 2) ? '' : delim
@@ -73,12 +79,16 @@ _.withTest ('Array extensions', function () {
 
         contains: function (arr, item) { return arr.indexOf (item) >= 0 },
 
+
         top:   function (arr) { return arr[arr.length - 1] },        
         first: function (arr) { return arr[0] },
         rest:  function (arr) { return _.rest (arr) },
         last:  function (arr) { return arr[arr.length - 1] },
         
-        take: function (arr, n) { return arr.slice (0, n) },
+        /*  TODO: refactor
+         */
+        take:   function (arr, n) { return arr.slice (0, n) },
+        lastN:  $method (_.last),
 
         before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
         after: function (arr, x)  { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (i + 1) },
