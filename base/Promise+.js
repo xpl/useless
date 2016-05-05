@@ -1,15 +1,6 @@
 /*  Promise-centric extensions (SKETCH)
     ======================================================================== */
 
-Promise.prototype.seq = function (seq) {
-                            return _.reduce2 (this, seq, function (a, b) { return a.then (b) }) }
-
-Promise.prototype.assert = function (desired) {
-                                return this.then (function (x) { $assert (x, desired); return x }) }
-
-Promise.prototype.assertRejected = function (desired) { var check = (arguments.length > 0)
-                                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) }
-
 TimeoutError = $extends (Error, { message: 'timeout expired' })
 
 __ = function (x) {
@@ -89,10 +80,40 @@ $mixin (Promise, {
                         return this.then (
                             function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
-                                           return { state: 'pending', pending: true } }) })
+                                           return { state: 'pending', pending: true } }) }),
+
+    assert: function (desired) {
+                return this.then (function (x) { $assert (x, desired); return x }) },
+
+    assertRejected: function (desired) { var check = (arguments.length > 0)
+                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) }
+
 })
 
-_.tests['Promise'] = function () {
+$mixin (Function, {
+    promisify: $hidden ($property (
+                            function () {            var f    = this
+                                return function () { var self = this, args = arguments
+                                    return new Promise (function (resolve, reject) {
+                                        f.apply (self, _.asArray (args).concat (function (err, what) {
+                                                                                      if (err) { reject (err) }
+                                                                                                 resolve (what) })) }) } })) })
+
+_.tests['Promise'] = {
+
+    'promisify': function () {
+
+        var fs = {
+            readFile: function (path,   callback) { $assert (this === fs)
+                            if (path) { callback (null, 'contents of ' + path) }
+                                 else { callback ('path empty') } } }
+
+        fs.readFileAsync = fs.readFile.promisify
+
+        return __.all ([    fs.readFileAsync (null) .assertRejected ('path empty'),
+                            fs.readFileAsync ('foo').assert         ('contents of foo') ]) },
+
+    'seq/map': function () {
                         return __.all ([
                                     __.seq (123).assert (123),
                                     __.seq ([123, 333]).assert (333),
@@ -104,4 +125,5 @@ _.tests['Promise'] = function () {
                                     __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
                                     __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
                                     __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ]) }
+}
 

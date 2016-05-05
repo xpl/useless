@@ -349,7 +349,7 @@ _.withTest ('OOP', {
 /*  PUBLIC API
     ======================================================================== */
 
-    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'testArguments'])
+    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'hidden', 'testArguments'])
         .each (_.defineTagKeyword)
 
     $prototype = function (arg1, arg2) {
@@ -570,7 +570,7 @@ _.withTest ('OOP', {
                     if (def.$memoized) {
                         _.defineMemoizedProperty (targetObject, key, def) }
                     else {
-                        _.defineProperty (targetObject, key, def) } }
+                        _.defineProperty (targetObject, key, def, def.$hidden ? { enumerable: false } : {}) } }
                 else {
                     var what = $untag (def)
                     targetObject[key] = what } },

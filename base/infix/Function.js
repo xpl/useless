@@ -84,9 +84,6 @@ $extensionMethods (Function, {
     returns: function (              fn,                                returns) {
                 return function () { fn.apply (this, arguments); return returns } },
                                                 
-    asPromise: function (       f) {
-            return new Promise (f) },
-
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
 

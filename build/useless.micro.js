@@ -2372,7 +2372,7 @@ _.deferTest (['type', 'stringify'], function () {
                                     if (x.toJSON) {
                                         return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
 
-                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 30)))) {
+                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 60)))) {
                                         return isArray ? '<array[' + x.length + ']>' : '<object>' }
 
                                     var parentsPlusX = parents.concat ([x])
@@ -2959,9 +2959,6 @@ $extensionMethods (Function, {
     returns: function (              fn,                                returns) {
                 return function () { fn.apply (this, arguments); return returns } },
                                                 
-    asPromise: function (       f) {
-            return new Promise (f) },
-
     asContinuation: function (f) {
         return $restArg (function () { _.last (arguments) (f.apply (this, _.initial (arguments))) }) },
 
@@ -4365,7 +4362,7 @@ _.withTest ('OOP', {
 /*  PUBLIC API
     ======================================================================== */
 
-    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'testArguments'])
+    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'hidden', 'testArguments'])
         .each (_.defineTagKeyword)
 
     $prototype = function (arg1, arg2) {
@@ -4586,7 +4583,7 @@ _.withTest ('OOP', {
                     if (def.$memoized) {
                         _.defineMemoizedProperty (targetObject, key, def) }
                     else {
-                        _.defineProperty (targetObject, key, def) } }
+                        _.defineProperty (targetObject, key, def, def.$hidden ? { enumerable: false } : {}) } }
                 else {
                     var what = $untag (def)
                     targetObject[key] = what } },
@@ -6787,15 +6784,6 @@ Component = $prototype ({
 /*  Promise-centric extensions (SKETCH)
     ======================================================================== */
 
-Promise.prototype.seq = function (seq) {
-                            return _.reduce2 (this, seq, function (a, b) { return a.then (b) }) }
-
-Promise.prototype.assert = function (desired) {
-                                return this.then (function (x) { $assert (x, desired); return x }) }
-
-Promise.prototype.assertRejected = function (desired) { var check = (arguments.length > 0)
-                                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) }
-
 TimeoutError = $extends (Error, { message: 'timeout expired' })
 
 __ = function (x) {
@@ -6875,10 +6863,40 @@ $mixin (Promise, {
                         return this.then (
                             function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
-                                           return { state: 'pending', pending: true } }) })
+                                           return { state: 'pending', pending: true } }) }),
+
+    assert: function (desired) {
+                return this.then (function (x) { $assert (x, desired); return x }) },
+
+    assertRejected: function (desired) { var check = (arguments.length > 0)
+                        return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) }
+
 })
 
-_.tests['Promise'] = function () {
+$mixin (Function, {
+    promisify: $hidden ($property (
+                            function () {            var f    = this
+                                return function () { var self = this, args = arguments
+                                    return new Promise (function (resolve, reject) {
+                                        f.apply (self, _.asArray (args).concat (function (err, what) {
+                                                                                      if (err) { reject (err) }
+                                                                                                 resolve (what) })) }) } })) })
+
+_.tests['Promise'] = {
+
+    'promisify': function () {
+
+        var fs = {
+            readFile: function (path,   callback) { $assert (this === fs)
+                            if (path) { callback (null, 'contents of ' + path) }
+                                 else { callback ('path empty') } } }
+
+        fs.readFileAsync = fs.readFile.promisify
+
+        return __.all ([    fs.readFileAsync (null) .assertRejected ('path empty'),
+                            fs.readFileAsync ('foo').assert         ('contents of foo') ]) },
+
+    'seq/map': function () {
                         return __.all ([
                                     __.seq (123).assert (123),
                                     __.seq ([123, 333]).assert (333),
@@ -6890,6 +6908,7 @@ _.tests['Promise'] = function () {
                                     __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
                                     __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
                                     __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ]) }
+}
 
 ;
 
