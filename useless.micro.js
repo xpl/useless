@@ -101,7 +101,7 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 /*  Networking
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/Http')
+    $include ('./base/http')
 
 
 /*  Browser-related code

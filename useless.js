@@ -122,7 +122,7 @@ _ = (function () {
 /*  Networking
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/Http')
+    $include ('./base/http')
 
 
 /*  Browser-related code
