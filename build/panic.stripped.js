@@ -3792,6 +3792,14 @@ _.extend(Math, function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
 }));
+Parse = {
+    keyCodeAsString: function (key) {
+        return String.fromCharCode(96 <= key && key <= 105 ? key - 48 : key);
+    },
+    fileName: function (path) {
+        return _.first(_.last(path.split(/\\|\//)).split('.'));
+    }
+};
 _.enumerate = _.cps.each;
 _.mapReduce = function (array, cfg) {
     var cursor = 0;

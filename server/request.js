@@ -80,7 +80,7 @@ ServerRequest = module.exports = $trait ({
     jsVariable: function (varName, what) {
         return function (context) {
             var value = _.isFunction (what) ? what (context) : what
-            var jsValue = Format.javascript (value)
+            var jsValue = _.stringify (value, { pure: true, pretty: true })
             context.success ('var ' + varName + ' = ' + jsValue, { 'Content-Type': 'text/javascript' }) } },
 
 
