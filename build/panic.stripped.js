@@ -4522,8 +4522,9 @@ Http = $singleton(Component, {
         var cfg = _.extend2({ headers: { 'Cache-Control': 'no-cache' } }, cfg_);
         return new Promise(function (resolve, reject) {
             if ($platform.Browser) {
+                var prePath = cfg.protocol || cfg.hostname || cfg.port ? (cfg.protocol || window.location.protocol) + '//' + (cfg.hostname || window.location.hostname) + ':' + (cfg.port || window.location.port) : '';
                 var xhr = new XMLHttpRequest();
-                xhr.open(type, path, true);
+                xhr.open(type, prePath + path, true);
                 if (cfg.responseType)
                     xhr.responseType = cfg.responseType;
                 _.each(cfg.headers, function (value, key) {
@@ -4564,6 +4565,31 @@ Http = $singleton(Component, {
                 progress(simulated = (simulated += 0.1) > 1 ? 0 : simulated);
             }
         };
+    }
+});
+JSONAPI = $singleton(Component, {
+    $traits: [HttpMethods],
+    request: function (type, path, cfg) {
+        cfg = cfg || {};
+        var stackBeforeCall = _.hasReflection && $callStack.offset((cfg.stackOffset || 0) + 1).asArray;
+        var cfg = _.extend2({ headers: { 'Content-Type': 'application/json; charset=utf-8' } }, cfg);
+        if (cfg.what) {
+            cfg.data = JSON.stringify(cfg.what);
+        }
+        return Http.request(type, '/api/' + path, cfg).then(JSON.parse).then(function (response) {
+            if (response.success) {
+                return response.value;
+            } else {
+                if (response.parsedStack) {
+                    throw _.extend(new Error('SERVER: ' + response.error), {
+                        remote: true,
+                        parsedStack: response.parsedStack.concat(stackBeforeCall || [])
+                    });
+                } else {
+                    throw new Error(response.error);
+                }
+            }
+        });
     }
 });
 if (jQuery) {
@@ -5339,16 +5365,12 @@ SourceFiles = $singleton(Component, {
                 then();
             });
         } else {
-            API.post('source/' + file, _.extend2({}, this.apiConfig, {
-                what: { text: text },
-                failure: Panic,
-                success: function () {
-                    log.ok(file, '\u2014 successfully saved');
-                    if (then) {
-                        then();
-                    }
+            JSONAPI.post('source/' + file, _.extend2({}, this.apiConfig, { what: { text: text } })).then(function () {
+                log.ok(file, '\u2014 successfully saved');
+                if (then) {
+                    then();
                 }
-            }));
+            });
         }
     }
 });

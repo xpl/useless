@@ -7163,10 +7163,15 @@ Http = $singleton (Component, {
 
                     if ($platform.Browser) {
 
+                        var prePath = (cfg.protocol || cfg.hostname || cfg.port) ?
+                                     ((cfg.protocol || window.location.protocol) + '//' +
+                                      (cfg.hostname || window.location.hostname) + ':' +
+                                      (cfg.port     || window.location.port)) : ''
+
                         /*  Init XMLHttpRequest
                          */
                         var xhr = new XMLHttpRequest ()
-                            xhr.open (type, path, true)
+                            xhr.open (type, prePath + path, true)
 
                         /*  Set to 'arraybuffer' to receive binary data
                          */
@@ -7201,7 +7206,39 @@ Http = $singleton (Component, {
                                                         progress (0)
         return function (e) { if (e.lengthComputable) { progress (e.loaded / e.total) }
                                                  else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
-});
+})
+
+/*  An example of custom API layer over Http:
+
+    1.  Converts request I/O to JSON
+    2.  Interprets { success: true/false, value: ... } semantics
+    3.  Adds cross-machine exception throwing
+    
+    ------------------------------------------------------------------------ */
+
+JSONAPI = $singleton (Component, {
+
+    $traits: [HttpMethods],
+
+    request: function (type, path, cfg) { cfg = cfg || {}; var stackBeforeCall = _.hasReflection && $callStack.offset ((cfg.stackOffset || 0) + 1).asArray
+
+                var cfg = _.extend2 ({ headers: { 'Content-Type': 'application/json; charset=utf-8' } }, cfg)
+                if (cfg.what) {
+                    cfg.data = JSON.stringify (cfg.what) }
+
+                return Http
+                        .request (type, '/api/' + path, cfg)
+                        .then (JSON.parse)
+                        .then (function (response) {
+                            if (response.success) {
+                                return response.value }
+                            else {
+                                if (response.parsedStack) {
+                                    throw _.extend (new Error ('SERVER: ' + response.error), {
+                                                        remote: true,
+                                                        parsedStack: response.parsedStack.concat (stackBeforeCall || []) }) }
+                                else {
+                                    throw new Error (response.error) } } }) } });
 
 
 /*  Browser-related code
@@ -8310,10 +8347,12 @@ SourceFiles = $singleton (Component, {
                 then () }) }
             
         else {
-            API.post ('source/' + file, _.extend2 ({}, this.apiConfig, {
-                what:    { text: text },
-                failure: Panic,
-                success: function () { log.ok (file, '— successfully saved'); if (then) { then () } } })) }} })
+            JSONAPI
+                .post ('source/' + file, _.extend2 ({}, this.apiConfig, { what: { text: text } }))
+                .then (function () {
+                    log.ok (file, '— successfully saved')
+                    if (then) {
+                        then () } }) }} })
 
 /*  Old API
  */

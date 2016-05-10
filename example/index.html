@@ -6,7 +6,6 @@
         <script src="/example/lib/underscore-min.js"></script>
         <script src="/example/lib/jquery-2.1.4.js"></script>
         <script src="/useless.js"></script>
-        <script src="/useless/API.js"></script>
 
         <!-- Panic -->
         <script src="/useless/Panic.js"></script>
@@ -78,7 +77,7 @@
 
             /*  Bind to button to trigger server's method
              */
-            $('#panic-demo-2').click (function () { API.post ('erroneous-method') }) }
+            $('#panic-demo-2').click (function () { JSONAPI.post ('erroneous-method').panic }) }
 
         function initComponentDemo () {
 

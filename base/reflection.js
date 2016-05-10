@@ -166,10 +166,12 @@ SourceFiles = $singleton (Component, {
                 then () }) }
             
         else {
-            API.post ('source/' + file, _.extend2 ({}, this.apiConfig, {
-                what:    { text: text },
-                failure: Panic,
-                success: function () { log.ok (file, '— successfully saved'); if (then) { then () } } })) }} })
+            JSONAPI
+                .post ('source/' + file, _.extend2 ({}, this.apiConfig, { what: { text: text } }))
+                .then (function () {
+                    log.ok (file, '— successfully saved')
+                    if (then) {
+                        then () } }) }} })
 
 /*  Old API
  */
