@@ -34,16 +34,29 @@ ServerHttp = module.exports = $trait ({
 
     /*  entry point for all requests, now accepting either actual Context or it's config for ad-hoc evaluation
      */
-    serveRequest: function (context_) { var context = (_.isTypeOf (Context, context_) && context_) || this.newContext (context_)
+    serveRequest: function (context) { context = (_.isTypeOf (Context, context) && context) || this.newContext (context)
         if (!APISchema.match (
-            context,
-            this.apiSchema,
-            this.$ (function (context, handler) {
+                        context,
+                        this.apiSchema, (context, handler) => {
 
-                if (!context.stub) {
-                    this.addExceptionHandlingToContext (context) }
+                            var result = AndrogenePromise.guard (handler.calls (this, context))
 
-                handler.call (this, context) }), this.apiDebug)) { context.notFound () } },
+                            result  .disarm ()
+                                    .finally ((e, x) => { // TODO: exceptions thrown from here wont display
+                                                
+                                                result.processContext.root.printLog ()
+
+                                                if (e) {
+                                                    if (context.htmlErrors) {
+                                                        context.html ('<html><body><pre>' + _.escape (log.impl.stringifyError (e)) + '</pre></body></html>') }
+                                                    else {
+                                                        context.json ({
+                                                            success: false,
+                                                            error: e.message,
+                                                            parsedStack: CallStack.fromError (e).asArray.map (e => _.extend (e, { remote: true })) }) } } })
+                                    .catch (log.ee)
+                            
+            }, this.apiDebug)) { context.notFound () } },
 
     /*  a stub context constructor
      */

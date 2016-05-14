@@ -1920,9 +1920,11 @@ $extensionMethods(Function, {
     $$: $method(_.tails),
     bind: _.bind,
     partial: _.partial,
+    calls: _.bind,
     tails: _.tails,
     tails2: _.tails2,
     tails3: _.tails3,
+    applies: _.applies,
     compose: _.compose,
     then: _.then,
     flip: _.flip,
@@ -1965,7 +1967,6 @@ $extensionMethods(Function, {
     or: _.or,
     and: _.and,
     not: _.not,
-    applies: _.applies,
     new_: _.new_,
     each: function (fn, obj) {
         return _.each2(obj, fn);
@@ -2394,7 +2395,17 @@ _.loDashesToCamelCase = function (x) {
             _bindable: true,
             impl: method,
             _wrapped: method,
-            context: context
+            context: context,
+            off: function (delegate) {
+                _.each(hooks, function (hook) {
+                    if (delegate) {
+                        this['_' + hook].remove(delegate);
+                    } else {
+                        this['_' + hook].removeAll();
+                    }
+                }, this);
+                return this;
+            }
         }, _.object(_.map(hooks, function (name) {
             var queueName = '_' + name;
             var once = name.indexOf('once') >= 0;
@@ -2421,10 +2432,8 @@ _.loDashesToCamelCase = function (x) {
     _.extend(_, _.mapObject(_.invert(hooks), hookProc.flip2), {
         unbind: function (obj, targetMethod, delegate) {
             var method = obj[targetMethod];
-            if (_.isBindable(method)) {
-                _.each(hooks, function (hook) {
-                    method['_' + hook] = _.without(method['_' + hook], delegate);
-                });
+            if (method && method.off) {
+                method.off(delegate);
             }
         },
         isBindable: function (fn) {
@@ -4397,7 +4406,6 @@ $mixin(Array, {
     })
 });
 $mixin(Promise, {
-    $: Promise.prototype.then,
     race: function (other) {
         return [
             this,
@@ -4437,26 +4445,6 @@ $mixin(Promise, {
             fn(e, null);
         });
     },
-    state: $property(function () {
-        return this.then(function (x) {
-            return {
-                state: 'fulfilled',
-                fulfilled: true,
-                value: x
-            };
-        }, function (e) {
-            return {
-                state: 'rejected',
-                rejected: true,
-                value: x
-            };
-        }).now.catch(function () {
-            return {
-                state: 'pending',
-                pending: true
-            };
-        });
-    }),
     assert: function (desired) {
         return this.then(function (x) {
             $assert(x, desired);

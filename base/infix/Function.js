@@ -66,9 +66,11 @@ $extensionMethods (Function, {
 
     bind:           _.bind,
     partial:        _.partial,
+    calls:          _.bind,
     tails:          _.tails,
     tails2:         _.tails2,
     tails3:         _.tails3,
+    applies:        _.applies,
     compose:        _.compose,
     then:           _.then,
     flip:           _.flip,
@@ -102,8 +104,6 @@ $extensionMethods (Function, {
     or:     _.or,
     and:    _.and,
     not:    _.not,
-
-    applies: _.applies,
 
     new_: _.new_,
 

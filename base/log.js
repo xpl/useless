@@ -170,7 +170,7 @@ _.extend (log, {
 
         /*  Nuts & guts
          */
-        write: $restArg (function () { var writeBackend = log.writeBackend ()
+        write: $restArg (_.bindable (function () { var writeBackend = log.writeBackend ()
 
             log.impl.numWrites++
 
@@ -232,7 +232,7 @@ _.extend (log, {
                 trailNewlines: trailNewlines || '',
                 where:         (config.location && where) || undefined })
 
-            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
+            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
 
         walkStack: function (stack) {
             return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },

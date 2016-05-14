@@ -30,7 +30,7 @@ ServerDevtools = module.exports = $trait ({
              this.devHint ("Add 'auth' trait to restrict access to devtools API") }
 
         return {
-            'echo':             { post: this.echo },
+            'echo':             { post: this.echo, get: ctx => __('foo').delay (1000).log.then (x => { dasdas (); ctx.success (x) }) },
             'api': {
                 'source/:file': { get:  this.developerAccess (this.allowOrigin ('*', this.readSource)),
                                   post: this.developerAccess (this.allowOrigin ('*', this.jsonInput (this.writeSource))) },

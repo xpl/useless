@@ -341,8 +341,9 @@ _.extend(_, {
             once = _.hasTags ? $once.is(fn_) : fn_.once;
             var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
             var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
-                var parts = arg.trim().match(/^(.+)__(.+)$/);
-                return parts && parseInt(parts[2], 10) || true;
+                var parts = arg.trim().match(/^(.+)__(\d+)$/);
+                var num = parts && parseInt(parts[2], 10);
+                return _.isFinite(num) ? num || false : true;
             });
             var status = _.times(fn.length, _.constant(false));
             var callbacks = _.times(fn.length, function (i) {
@@ -2307,9 +2308,11 @@ $extensionMethods(Function, {
     $$: $method(_.tails),
     bind: _.bind,
     partial: _.partial,
+    calls: _.bind,
     tails: _.tails,
     tails2: _.tails2,
     tails3: _.tails3,
+    applies: _.applies,
     compose: _.compose,
     then: _.then,
     flip: _.flip,
@@ -2352,7 +2355,6 @@ $extensionMethods(Function, {
     or: _.or,
     and: _.and,
     not: _.not,
-    applies: _.applies,
     new_: _.new_,
     each: function (fn, obj) {
         return _.each2(obj, fn);
@@ -2781,7 +2783,17 @@ _.loDashesToCamelCase = function (x) {
             _bindable: true,
             impl: method,
             _wrapped: method,
-            context: context
+            context: context,
+            off: function (delegate) {
+                _.each(hooks, function (hook) {
+                    if (delegate) {
+                        this['_' + hook].remove(delegate);
+                    } else {
+                        this['_' + hook].removeAll();
+                    }
+                }, this);
+                return this;
+            }
         }, _.object(_.map(hooks, function (name) {
             var queueName = '_' + name;
             var once = name.indexOf('once') >= 0;
@@ -2808,10 +2820,8 @@ _.loDashesToCamelCase = function (x) {
     _.extend(_, _.mapObject(_.invert(hooks), hookProc.flip2), {
         unbind: function (obj, targetMethod, delegate) {
             var method = obj[targetMethod];
-            if (_.isBindable(method)) {
-                _.each(hooks, function (hook) {
-                    method['_' + hook] = _.without(method['_' + hook], delegate);
-                });
+            if (method && method.off) {
+                method.off(delegate);
             }
         },
         isBindable: function (fn) {
@@ -5500,7 +5510,7 @@ _.extend(log, {
                 });
             });
         },
-        write: $restArg(function () {
+        write: $restArg(_.bindable(function () {
             var writeBackend = log.writeBackend();
             log.impl.numWrites++;
             var args = _.asArray(arguments);
@@ -5550,7 +5560,7 @@ _.extend(log, {
                 where: config.location && where || undefined
             });
             return _.find(args, _.not(_.isTypeOf.$(log.Config)));
-        }),
+        })),
         walkStack: function (stack) {
             return _.find(stack.clean, function (entry) {
                 return entry.fileShort.indexOf('base/log.js') < 0;
@@ -6233,39 +6243,207 @@ if ($platform.NodeJS) {
     module.exports = Testosterone;
 }
 ;
-_.measure = function (routine, then) {
-    if (then) {
-        var now = _.now();
-        routine(function () {
-            then(_.now() - now);
-        });
-    } else {
-        var now = _.now();
-        routine();
-        return _.now() - now;
-    }
-};
-_.perfTest = function (arg, then) {
-    var rounds = 500;
-    var routines = _.isFunction(arg) ? { test: arg } : arg;
-    var timings = {};
-    _.cps.each(routines, function (fn, name, then) {
-        var result = [];
-        var run = function () {
-            for (var i = 0; i < rounds; i++) {
-                result.push(fn());
-            }
-            console.log(name, result);
-        };
-        run();
-        _.delay(function () {
-            timings[name] = _.measure(run) / rounds;
-            then();
-        }, 100);
-    }, function () {
-        then(timings);
+'use strict';
+(function () {
+    $mixin(Promise, {
+        guard: $static(function (fn) {
+            return Promise.resolve().then(fn);
+        }),
+        shouldBe: function (x) {
+            return this.then(function (y) {
+                if (x !== y) {
+                    throw new AndrogeneError();
+                }
+            });
+        },
+        shouldFail: $property(function () {
+            return this.then(function () {
+                throw new AndrogeneError();
+            }, function () {
+            });
+        })
     });
-};
+    var AndrogeneError = class extends Error {
+        constructor(msg) {
+            super(msg || 'assertion failed');
+        }
+    };
+    var OriginalPromise = Promise;
+    var AndrogeneProcessContext = $prototype({
+        current: undefined,
+        constructor: function () {
+            this.eventLog = [];
+            this.callStack = $callStack;
+            this.stackOffset = AndrogeneProcessContext.stackOffset || 0;
+            this.state = 'pending';
+            if ((this.parent = AndrogeneProcessContext.current) !== undefined) {
+                this.parent.eventLog.push(this);
+            }
+        },
+        root: $property(function () {
+            return this.parent && this.parent.root || this;
+        }),
+        push: $static(function (context, stackOffset) {
+            AndrogeneProcessContext.stackOffset = stackOffset;
+            var prev = AndrogeneProcessContext.current;
+            AndrogeneProcessContext.current = context;
+            var PrevPromise = Promise;
+            Promise = AndrogenePromise;
+            var logHook = function () {
+                context.eventLog.push([log.config({ where: $callStack.safeLocation(5) })].concat(_.initial(arguments)));
+            };
+            log.impl.write.intercept(logHook);
+            return function () {
+                AndrogeneProcessContext.current = prev;
+                Promise = PrevPromise;
+                log.impl.write.off(logHook);
+            };
+        }),
+        within: function (fn, stackOffset) {
+            var self = this;
+            return function () {
+                var pop = AndrogeneProcessContext.push(self, stackOffset || 0);
+                try {
+                    var x = fn.apply(this, arguments);
+                    pop();
+                    return x;
+                } catch (e) {
+                    log.newline();
+                    log.ee(e);
+                    pop();
+                    throw e;
+                }
+            };
+        },
+        printLog: function (indent) {
+            indent = indent || 0;
+            var where = this.callStack[5 + this.stackOffset];
+            var src = where.source || 'Promise';
+            var color = log.color[{
+                'fulfilled': 'green',
+                'pending': 'orange',
+                'rejected': 'red',
+                '': 'purple'
+            }[this.state || '']];
+            log.write(color, log.config({
+                indent: indent,
+                location: true,
+                where: where
+            }), src);
+            log.write(color, log.config({ indent: indent }), '-'.repeats(src.length));
+            var eventLog = this.eventLog.length === 1 && this.eventLog[0] instanceof AndrogeneProcessContext ? this.eventLog[0].eventLog : this.eventLog;
+            for (var event of eventLog) {
+                if (event instanceof AndrogeneProcessContext) {
+                    if (event.eventLog.length) {
+                        log.newline();
+                        event.printLog(indent + 1);
+                    }
+                } else {
+                    log.write.apply(null, [log.indent(indent + 1)].concat(event));
+                }
+            }
+        }
+    });
+    $global.AndrogenePromise = class extends Promise {
+        constructor(fn) {
+            if (AndrogenePromise.initializing === true) {
+                super(fn);
+            } else {
+                var processContext = new AndrogeneProcessContext();
+                super(processContext.within(fn));
+                this.processContext = processContext;
+                AndrogenePromise.initializing = true;
+                super.then(_.$(this, function () {
+                    this.processContext.state = 'fulfilled';
+                }), _.$(this, function () {
+                    this.processContext.state = 'rejected';
+                }));
+                delete AndrogenePromise.initializing;
+            }
+        }
+        then(resolve, reject) {
+            var next = this.processContext.within(OriginalPromise.prototype.then, 2).apply(this, _.map(arguments, function (fn) {
+                return function (x) {
+                    return next.processContext.within(fn, -3)(x);
+                };
+            }));
+            return next;
+        }
+        disarm() {
+            return new OriginalPromise(OriginalPromise.prototype.then.bind(this));
+        }
+        static guard(fn) {
+            return AndrogenePromise.resolve().then(fn);
+        }
+    };
+    var assertion = function (assert) {
+        return function () {
+            return AndrogenePromise.guard(assert.applies(null, arguments));
+        };
+    };
+    var assert = assertion(function (a, b) {
+        if (a !== b) {
+            throw new AndrogeneError();
+        }
+    });
+    var assertEveryCalled = assertion(function (acceptCallbacks) {
+        var promises = [], callbacks = [];
+        for (var i = 0, n = acceptCallbacks.length; i < n; i++) {
+            promises.push(new Promise(function (resolve) {
+                callbacks.push(resolve.$(true));
+            }));
+        }
+        acceptCallbacks.apply(this, callbacks);
+        return Promise.all(promises);
+    });
+    var test = assertion(function () {
+        return __('foo').then(_.appends('bar')).shouldBe('foobr');
+    });
+    var chainTest = assertion(function () {
+        return new Promise(function (resolve) {
+            log.i('A');
+            new Promise(function (resolve) {
+                log.i('AA');
+                resolve();
+            }).then(function () {
+                log.i('B');
+                resolve();
+            });
+        }).then(function () {
+            log.i('C');
+        });
+    });
+    var treeLogTest = assertion(function () {
+        var b = new Promise(function (resolve) {
+            log.i('A');
+            resolve('A');
+        }).then(function (_A) {
+            log.i('B');
+            return 'B';
+        });
+        return new Promise(function (resolve) {
+            log.i('C');
+            resolve('C');
+        }).then(function (_С) {
+            log.i('D');
+            return b.then(function (_D) {
+                log.i('E');
+                return 'E';
+            });
+        }).then(function (_E) {
+            log.i('F');
+            return 'F';
+        });
+    });
+    _.tests['Androgene'] = function () {
+        var result = chainTest();
+        return result.disarm().finally(function (e, x) {
+            result.processContext.root.printLog();
+            log.newline();
+        }).catch(log.ee);
+    };
+}());
+;
 (function () {
     var fnNameExpr = $r.expr('how', $r.text('before').or.text('after')).expr('name', $r.anything).$;
     var tryBind = function (target, methodName, bind, boundMethod) {
@@ -6369,7 +6547,6 @@ $mixin(Array, {
     })
 });
 $mixin(Promise, {
-    $: Promise.prototype.then,
     race: function (other) {
         return [
             this,
@@ -6409,26 +6586,6 @@ $mixin(Promise, {
             fn(e, null);
         });
     },
-    state: $property(function () {
-        return this.then(function (x) {
-            return {
-                state: 'fulfilled',
-                fulfilled: true,
-                value: x
-            };
-        }, function (e) {
-            return {
-                state: 'rejected',
-                rejected: true,
-                value: x
-            };
-        }).now.catch(function () {
-            return {
-                state: 'pending',
-                pending: true
-            };
-        });
-    }),
     assert: function (desired) {
         return this.then(function (x) {
             $assert(x, desired);

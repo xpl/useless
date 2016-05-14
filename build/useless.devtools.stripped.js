@@ -91,8 +91,9 @@ _.extend(_, {
             once = _.hasTags ? $once.is(fn_) : fn_.once;
             var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
             var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
-                var parts = arg.trim().match(/^(.+)__(.+)$/);
-                return parts && parseInt(parts[2], 10) || true;
+                var parts = arg.trim().match(/^(.+)__(\d+)$/);
+                var num = parts && parseInt(parts[2], 10);
+                return _.isFinite(num) ? num || false : true;
             });
             var status = _.times(fn.length, _.constant(false));
             var callbacks = _.times(fn.length, function (i) {
@@ -816,7 +817,7 @@ _.extend(log, {
                 });
             });
         },
-        write: $restArg(function () {
+        write: $restArg(_.bindable(function () {
             var writeBackend = log.writeBackend();
             log.impl.numWrites++;
             var args = _.asArray(arguments);
@@ -866,7 +867,7 @@ _.extend(log, {
                 where: config.location && where || undefined
             });
             return _.find(args, _.not(_.isTypeOf.$(log.Config)));
-        }),
+        })),
         walkStack: function (stack) {
             return _.find(stack.clean, function (entry) {
                 return entry.fileShort.indexOf('base/log.js') < 0;

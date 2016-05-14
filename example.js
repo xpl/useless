@@ -9,8 +9,8 @@ Examples = $singleton (Component, {
 
     api: function () { return {
         '/':               this.file ('./example/index.html'),
-        'useless.js':      this.file ('./build/useless.js'),
-        'useless/:file':   this.file ('./client/'),
+        'build/:file':     this.file ('./build/'),
+        'client/:file':    this.file ('./client/'),
         'example/:file':   this.file ('./example/'),
 
         'api/erroneous-method': { post: this.erroneousMethod } } },

@@ -108,7 +108,7 @@ _ = (function () {
     $include ('./base/reflection')      // callstack access + source code access
     $include ('./base/log')             // logging facility
     $include ('./base/Testosterone')    // unit test shell
-    $include ('./base/profiling')       // performance measurement utility
+    $include ('./base/Androgene')       // a "promising" evolution of Testosterone.js (SKETCH)
 
 
 /*  Experimental stuff

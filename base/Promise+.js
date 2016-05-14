@@ -61,7 +61,6 @@ $mixin (Array, {
 
 $mixin (Promise, {
 
-    $: Promise.prototype.then,
     race: function (other) { return [this, other].race },
     reject: function (e) { return this.then (__.rejects (e)) },
     delay: function (ms) { return this.then (__.delays (ms)) },
@@ -76,11 +75,11 @@ $mixin (Promise, {
     finally: function (fn) { return this.then (function (x) { fn (null, x) },
                                                function (e) { fn (e, null) }) },
 
-    state: $property (function () {
+    /*state: $property (function () {
                         return this.then (
                             function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
-                                           return { state: 'pending', pending: true } }) }),
+                                           return { state: 'pending', pending: true } }) }),*/
 
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },

@@ -63,6 +63,25 @@ _.deferTest ('bindable', function () {
         $assert (obj.plusOne (7), 8)
         $assert (obj.plusOne (7), 8) })
 
+    /*  Test unbinding
+     */
+    $assertEveryCalled (function (afterCalled__1, shouldNotCall__0) {
+                                var method = _.bindable (function () {})
+
+                                    /*  Unbind specific delegate
+                                     */
+                                    method.onBefore (shouldNotCall__0)
+                                    method.onAfter (afterCalled__1)
+                                    method.off (shouldNotCall__0)
+                                    method ()
+
+                                    /*  Unbind everything
+                                     */
+                                    method.onBefore (shouldNotCall__0)
+                                    method.onAfter (shouldNotCall__0)
+                                    method.off ()
+                                    method () })
+
 }, function () {
 
     /*  Internal impl
@@ -83,7 +102,16 @@ _.deferTest ('bindable', function () {
 
     var mixin = function (method, context) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
 
-                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method, context: context },
+                    return _.extend ({}, method, {
+
+                                    _bindable: true,
+                                         impl: method,
+                                     _wrapped: method,
+                                      context: context,
+                                          off: function (delegate) {
+                                                    _.each (hooks, function (hook) {
+                                                        if (delegate) { this['_' + hook].remove (delegate) }
+                                                                 else { this['_' + hook].removeAll () } }, this); return this } },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */
@@ -111,9 +139,9 @@ _.deferTest ('bindable', function () {
 
         unbind: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]
-                if (_.isBindable (method)) {
-                    _.each (hooks, function (hook) {
-                        method['_' + hook] = _.without (method['_' + hook], delegate) }) } },
+                if (method &&
+                    method.off) {
+                    method.off (delegate) } },
 
         isBindable: function (fn) {
             return (fn && fn._bindable) ? true : false },

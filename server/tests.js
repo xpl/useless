@@ -105,11 +105,13 @@ ServerTests = module.exports = $trait ({
                     verbose: false,
                     silent:  true }, okay => {
                                         if (okay) {
-                                            if (this.deferAppComponentTests) {                            then () }
-                                                                       else  { this.runAppComponentTests (then) } } })} },
+                                            if (this.deferAppComponentTests ||
+                                                this.supressAppComponentTests) {                            then () }
+                                                                         else  { this.runAppComponentTests (then) } } })} },
 
     afterInit: function (then) {
         if ( this.args.noTests ||
+             this.supressAppComponentTests ||
             !this.deferAppComponentTests) {                            then () }
                                      else { this.runAppComponentTests (then) } },
 

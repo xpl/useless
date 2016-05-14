@@ -3100,9 +3100,11 @@ $extensionMethods (Function, {
 
     bind:           _.bind,
     partial:        _.partial,
+    calls:          _.bind,
     tails:          _.tails,
     tails2:         _.tails2,
     tails3:         _.tails3,
+    applies:        _.applies,
     compose:        _.compose,
     then:           _.then,
     flip:           _.flip,
@@ -3136,8 +3138,6 @@ $extensionMethods (Function, {
     or:     _.or,
     and:    _.and,
     not:    _.not,
-
-    applies: _.applies,
 
     new_: _.new_,
 
@@ -3673,6 +3673,25 @@ _.deferTest ('bindable', function () {
         $assert (obj.plusOne (7), 8)
         $assert (obj.plusOne (7), 8) })
 
+    /*  Test unbinding
+     */
+    $assertEveryCalled (function (afterCalled__1, shouldNotCall__0) {
+                                var method = _.bindable (function () {})
+
+                                    /*  Unbind specific delegate
+                                     */
+                                    method.onBefore (shouldNotCall__0)
+                                    method.onAfter (afterCalled__1)
+                                    method.off (shouldNotCall__0)
+                                    method ()
+
+                                    /*  Unbind everything
+                                     */
+                                    method.onBefore (shouldNotCall__0)
+                                    method.onAfter (shouldNotCall__0)
+                                    method.off ()
+                                    method () })
+
 }, function () {
 
     /*  Internal impl
@@ -3693,7 +3712,16 @@ _.deferTest ('bindable', function () {
 
     var mixin = function (method, context) { if (typeof method !== 'function') { throw new Error ('method should be a function') }
 
-                    return _.extend ({}, method, { _bindable: true, impl: method, _wrapped: method, context: context },
+                    return _.extend ({}, method, {
+
+                                    _bindable: true,
+                                         impl: method,
+                                     _wrapped: method,
+                                      context: context,
+                                          off: function (delegate) {
+                                                    _.each (hooks, function (hook) {
+                                                        if (delegate) { this['_' + hook].remove (delegate) }
+                                                                 else { this['_' + hook].removeAll () } }, this); return this } },
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */
@@ -3721,9 +3749,9 @@ _.deferTest ('bindable', function () {
 
         unbind: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]
-                if (_.isBindable (method)) {
-                    _.each (hooks, function (hook) {
-                        method['_' + hook] = _.without (method['_' + hook], delegate) }) } },
+                if (method &&
+                    method.off) {
+                    method.off (delegate) } },
 
         isBindable: function (fn) {
             return (fn && fn._bindable) ? true : false },
@@ -7052,7 +7080,6 @@ $mixin (Array, {
 
 $mixin (Promise, {
 
-    $: Promise.prototype.then,
     race: function (other) { return [this, other].race },
     reject: function (e) { return this.then (__.rejects (e)) },
     delay: function (ms) { return this.then (__.delays (ms)) },
@@ -7067,11 +7094,11 @@ $mixin (Promise, {
     finally: function (fn) { return this.then (function (x) { fn (null, x) },
                                                function (e) { fn (e, null) }) },
 
-    state: $property (function () {
+    /*state: $property (function () {
                         return this.then (
                             function (x) { return { state: 'fulfilled', fulfilled: true, value: x } },
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
-                                           return { state: 'pending', pending: true } }) }),
+                                           return { state: 'pending', pending: true } }) }),*/
 
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },
@@ -7931,8 +7958,9 @@ if (_.hasStdlib) {
             var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
             var contracts = once ? _.times (fn.length, _.constant (1)) :
                                    _.map (match[1].split (','), function (arg) {
-                                                                    var parts = (arg.trim ().match (/^(.+)__(.+)$/))
-                                                                    return (parts && parseInt (parts[2], 10)) || true })
+                                                                    var parts = (arg.trim ().match (/^(.+)__(\d+)$/))
+                                                                    var num = (parts && parseInt (parts[2], 10))
+                                                                    return _.isFinite (num) ? (num || false) : true })
             var status    = _.times (fn.length, _.constant (false))
             var callbacks = _.times (fn.length, function (i) {
                                                     return function () {
@@ -8714,7 +8742,7 @@ _.extend (log, {
 
         /*  Nuts & guts
          */
-        write: $restArg (function () { var writeBackend = log.writeBackend ()
+        write: $restArg (_.bindable (function () { var writeBackend = log.writeBackend ()
 
             log.impl.numWrites++
 
@@ -8776,7 +8804,7 @@ _.extend (log, {
                 trailNewlines: trailNewlines || '',
                 where:         (config.location && where) || undefined })
 
-            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) }),
+            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
 
         walkStack: function (stack) {
             return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },

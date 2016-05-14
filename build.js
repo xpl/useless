@@ -56,6 +56,7 @@ BuildApp = $singleton (Component, {
                 'compilation_level' : 'SIMPLE_OPTIMIZATIONS',
                 'output_format': 'text',
                 'output_info': 'compiled_code',
+                'language_out': 'ecmascript5',
                 'warning_level' : 'QUIET',
                 'js_code' : src })
 
@@ -73,7 +74,7 @@ BuildApp = $singleton (Component, {
                                                                 if (response.trimmed.length) {
                                                                     then (response) }
                                                                 else {
-                                                                    throw new Error ('compilation')  } }))
+                                                                    throw new Error ('Google Closure Compiler replied with empty response')  } }))
 
             post_req.write (post_data)
             post_req.end () },
