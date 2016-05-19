@@ -10,6 +10,7 @@ _.deferTest ('Set extensions', function () {
     $assert (set.extend   (new Set ([4,5])).items, [1,2,3,4,5])
     $assert (set.extended (new Set ([6,7])).items, [1,2,3,4,5,6,7])
     $assert (set.items, [1,2,3,4,5])
+    $assert (_.reject ([7,2,3,8], set.contains), [7,8])
 
 }, function () {
 
@@ -17,6 +18,8 @@ _.deferTest ('Set extensions', function () {
 
         copy:     $property (function () { return new Set (this) }),
         items:    $property (function () { return Array.from (this.values ()) }),
+
+        contains: $property (function () { var self = this; return function (x) { return self.has (x) } }),
 
         extend:   function (b) { for (var x of b) { this.add (x) }; return this },
         extended: function (b) { return this.copy.extend (b) } })

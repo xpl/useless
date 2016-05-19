@@ -1,10 +1,12 @@
 /*  Promise-centric extensions (SKETCH)
     ======================================================================== */
 
-TimeoutError = $extends (Error, { message: 'timeout expired' })
+TimeoutError = $extends (Error, { message: 'timeout expired' })                                
 
-__ = function (x) {
-        return (x instanceof Function) ? (new Promise (x)) : Promise.resolve (x) }
+__ = Promise.coerce = function (x) {
+                        return ((x instanceof Promise)   ?  x :
+                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) :
+                                                            Promise.resolve (x))) }
 
 __.noop = function () {
             return Promise.resolve () }
@@ -39,10 +41,10 @@ __.map = __.safe (function (x, fn) {
                     else {
                         return fn (x) } })
 
-__.then = function (a, b) { return __.identity (a).then (_.coerceToFunction (b)) }
+__.then = function (a, b) { return __(a).then (_.coerceToFunction (b)) }
 
 __.seq = function (seq) {
-            return __.identity (_.reduce2 (seq, __.then)) }
+            return __(_.reduce2 (seq, __.then)) }
 
 __.all = function (x) {
             return Promise.all (x) }
@@ -51,8 +53,7 @@ __.delay = function (ms) { return __.delays (ms) () }
 
 __.delays = function (ms) {
                 return function (x) {
-                    return new Promise (function (return_) {
-                                            setTimeout (function () { return_ (x) }, ms || 0) }) } }
+                    return new Promise (function (return_) { setTimeout (function () { return_ (x) }, ms || 0) }) } }
 
 $mixin (Array, {
 
@@ -62,7 +63,7 @@ $mixin (Array, {
 $mixin (Promise, {
 
     race: function (other) { return [this, other].race },
-    reject: function (e) { return this.then (__.rejects (e)) },
+    reject: function (e) { return this.then (_.throwsError (e)) },
     delay: function (ms) { return this.then (__.delays (ms)) },
     timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
     now: $property (function () { return this.timeout (0) }),
@@ -92,6 +93,15 @@ $mixin (Promise, {
 })
 
 $mixin (Function, {
+    
+    promisifyAll: $static (function (obj, cfg) { var except = new Set ((cfg || {}).except || [])
+                                return _.map2 (obj, function (x, k) {
+                                    if (x instanceof Function) {
+                                        var fn = x.bind (obj)
+                                        return except.has (k) ? fn : fn.promisify }
+                                    else {
+                                        return x } }) }),
+
     promisify: $hidden ($property (
                             function () {            var f    = this
                                 return function () { var self = this, args = arguments
@@ -100,23 +110,32 @@ $mixin (Function, {
                                                                                       if (err) { reject (err) }
                                                                                                  resolve (what) })) }) } })) })
 
+if ($platform.NodeJS) {
+    $global.requirePromisified = function (module, cfg) {
+                                    return Function.promisifyAll (require (module), cfg) } }
+
 _.tests['Promise'] = {
 
     'promisify': function () {
 
         var fs = {
+            42: 42,
+            dontTouchMe: function () { return 42 },
             readFile: function (path,   callback) { $assert (this === fs)
                             if (path) { callback (null, 'contents of ' + path) }
                                  else { callback ('path empty') } } }
 
-        fs.readFileAsync = fs.readFile.promisify
+        fsAsync = Function.promisifyAll (fs, { except: ['dontTouchMe'] })
 
-        return __.all ([    fs.readFileAsync (null) .assertRejected ('path empty'),
-                            fs.readFileAsync ('foo').assert         ('contents of foo') ]) },
+        $assert (fsAsync.dontTouchMe (), 42)
+
+        return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
+                            fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
 
     'seq/map': function () {
                         return __.all ([
                                     __.seq (123).assert (123),
+                                    __.seq (_.constant (123)).assert (123),
                                     __.seq ([123, 333]).assert (333),
                                     __.seq ([123, _.constant (333)]).assert (333),
                                     __.seq ([123, __.constant (333)]).assert (333),

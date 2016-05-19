@@ -102,7 +102,7 @@ _.withTest (['function', 'calls / tails'], function () {
     _.argumentPrependingWrapper = function (fn, then) {
         return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
                                         return then (function () {
-                                            return fn.apply (this_, _.asArray (arguments).concat (args)) }) }) } })
+                                            return fn.apply (this_, _.asArray (arguments).concat (args)) }) }) } }) // @hide
 
 
 /*  binding to constructor arguments (cannot do this with bind/partial)

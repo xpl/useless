@@ -67,7 +67,8 @@ _.deferTest = _.withTest = function (name, test, subj) {
         if (name in $global) {
             throw new Error('cannot define global ' + name + ': already there');
         }
-        return Object.defineProperty($global, name, _.extend(typeof v === 'function' && v.length === 0 ? { get: v } : { value: v }, { enumerable: true }, cfg));
+        var def = v && v.get instanceof Function && v.set instanceof Function && v || v instanceof Function && v.length === 0 && { get: v } || { value: v };
+        return Object.defineProperty($global, name, _.extend(def, { enumerable: true }, cfg));
     };
     $global.define('$global', $global);
     $global.define('$platform', Object.defineProperties({}, _.mapObject({
@@ -4335,8 +4336,10 @@ Component = $prototype({
     }
 });
 TimeoutError = $extends(Error, { message: 'timeout expired' });
-__ = function (x) {
-    return x instanceof Function ? new Promise(x) : Promise.resolve(x);
+__ = Promise.coerce = function (x) {
+    return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
+        resolve(x());
+    }) : Promise.resolve(x);
 };
 __.noop = function () {
     return Promise.resolve();
@@ -4380,10 +4383,10 @@ __.map = __.safe(function (x, fn) {
     }
 });
 __.then = function (a, b) {
-    return __.identity(a).then(_.coerceToFunction(b));
+    return __(a).then(_.coerceToFunction(b));
 };
 __.seq = function (seq) {
-    return __.identity(_.reduce2(seq, __.then));
+    return __(_.reduce2(seq, __.then));
 };
 __.all = function (x) {
     return Promise.all(x);
@@ -4413,7 +4416,7 @@ $mixin(Promise, {
         ].race;
     },
     reject: function (e) {
-        return this.then(__.rejects(e));
+        return this.then(_.throwsError(e));
     },
     delay: function (ms) {
         return this.then(__.delays(ms));
@@ -4468,6 +4471,17 @@ $mixin(Promise, {
     })
 });
 $mixin(Function, {
+    promisifyAll: $static(function (obj, cfg) {
+        var except = new Set((cfg || {}).except || []);
+        return _.map2(obj, function (x, k) {
+            if (x instanceof Function) {
+                var fn = x.bind(obj);
+                return except.has(k) ? fn : fn.promisify;
+            } else {
+                return x;
+            }
+        });
+    }),
     promisify: $hidden($property(function () {
         var f = this;
         return function () {
@@ -4483,6 +4497,11 @@ $mixin(Function, {
         };
     }))
 });
+if ($platform.NodeJS) {
+    $global.requirePromisified = function (module, cfg) {
+        return Function.promisifyAll(require(module), cfg);
+    };
+}
 Http = $singleton(Component, {
     $traits: [HttpMethods = $trait({
             get: function (path, cfg) {
@@ -5414,7 +5433,9 @@ CallStack = $extends(Array, {
         }));
     }),
     clean: $property(function () {
-        var clean = this.mergeDuplicateLines.reject(_.property('thirdParty'));
+        var clean = this.mergeDuplicateLines.reject(function (e) {
+            return e.thirdParty || (e.source || '').contains('// @hide');
+        });
         return clean.length === 0 ? this : clean;
     }),
     asArray: $property(function () {
@@ -5743,6 +5764,14 @@ _.extend(log, {
     currentConfig: function () {
         return log.impl.configure(log.impl.configStack);
     },
+    margin: function () {
+        var lastWrite = undefined;
+        return function () {
+            if (lastWrite !== log.impl.numWrites)
+                log.newline();
+            lastWrite = log.impl.numWrites;
+        };
+    }(),
     impl: {
         configStack: [],
         numWrites: 0,
@@ -5809,7 +5838,7 @@ _.extend(log, {
             return _.find(args, _.not(_.isTypeOf.$(log.Config)));
         })),
         walkStack: function (stack) {
-            return _.find(stack.clean, function (entry) {
+            return _.find(stack.clean.offset(2), function (entry) {
                 return entry.fileShort.indexOf('base/log.js') < 0;
             }) || stack[0];
         },
@@ -5853,7 +5882,10 @@ _.extend(log, {
             ]).join(' @ '));
         },
         stringifyArguments: function (args, cfg) {
-            return _.map(args, log.impl.stringify.tails2(cfg)).join(' ');
+            return _.map(args, function (arg) {
+                var x = log.impl.stringify(arg, cfg);
+                return cfg.maxArgLength ? x.limitedTo(cfg.maxArgLength) : x;
+            }).join(' ');
         },
         stringify: function (what, cfg) {
             cfg = cfg || {};

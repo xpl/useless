@@ -474,7 +474,9 @@ CallStack = $extends(Array, {
         }));
     }),
     clean: $property(function () {
-        var clean = this.mergeDuplicateLines.reject(_.property('thirdParty'));
+        var clean = this.mergeDuplicateLines.reject(function (e) {
+            return e.thirdParty || (e.source || '').contains('// @hide');
+        });
         return clean.length === 0 ? this : clean;
     }),
     asArray: $property(function () {
@@ -803,6 +805,14 @@ _.extend(log, {
     currentConfig: function () {
         return log.impl.configure(log.impl.configStack);
     },
+    margin: function () {
+        var lastWrite = undefined;
+        return function () {
+            if (lastWrite !== log.impl.numWrites)
+                log.newline();
+            lastWrite = log.impl.numWrites;
+        };
+    }(),
     impl: {
         configStack: [],
         numWrites: 0,
@@ -869,7 +879,7 @@ _.extend(log, {
             return _.find(args, _.not(_.isTypeOf.$(log.Config)));
         })),
         walkStack: function (stack) {
-            return _.find(stack.clean, function (entry) {
+            return _.find(stack.clean.offset(2), function (entry) {
                 return entry.fileShort.indexOf('base/log.js') < 0;
             }) || stack[0];
         },
@@ -913,7 +923,10 @@ _.extend(log, {
             ]).join(' @ '));
         },
         stringifyArguments: function (args, cfg) {
-            return _.map(args, log.impl.stringify.tails2(cfg)).join(' ');
+            return _.map(args, function (arg) {
+                var x = log.impl.stringify(arg, cfg);
+                return cfg.maxArgLength ? x.limitedTo(cfg.maxArgLength) : x;
+            }).join(' ');
         },
         stringify: function (what, cfg) {
             cfg = cfg || {};

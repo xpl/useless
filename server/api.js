@@ -66,10 +66,6 @@ ServerAPI = module.exports = $trait ({
 
             $assert (APISchema.collapse (input), result) } },
 
-
-    /*  Public API
-     */
-
     beforeInit: function (then) { log.minor ('Reading API schema')
 
         this.apiSchema = APISchema.collapse (
@@ -82,7 +78,7 @@ ServerAPI = module.exports = $trait ({
         if (_.isFunction (this.api)) {
             this.defineAPIs (this.api ()) }
 
-        if (this.apiDebug) {
+        if (this.config.apiDebug) {
             log.write ('\nCurrent API schema:', '\n' + log.thinLine, '\n')
             APISchema.prettyPrint (this.apiSchema)
             log.write (log.thinLine, '\n') }
@@ -111,7 +107,11 @@ APISchema = {
                 log.write ('') } }) },
 
     isHandler: function (obj) {
-        return  obj && ((typeof obj.get === 'function') || (typeof obj.post === 'function')) },
+        return obj && (APISchema.isFunctionOrChain (obj.get) ||
+                       APISchema.isFunctionOrChain (obj.post)) },
+
+    isFunctionOrChain: function (obj) {
+        return (obj instanceof Function) || (_.isArray (obj) && (obj[0] instanceof Function)) },
 
     isCanonicalRoute: function (obj) {
         return _.isArray (obj) && (typeof obj[0] === 'string') },
@@ -125,7 +125,7 @@ APISchema = {
     canonicalize: function (obj) {
         if (!obj) {
             return [] }
-        else if (typeof obj === 'function') {
+        else if (APISchema.isFunctionOrChain (obj)) {
             return { get: obj } }
         else if (APISchema.isHandler (obj)) {
             return obj }
@@ -156,10 +156,14 @@ APISchema = {
                 return [name, APISchema.collapse (merged)] }
             return false })) },
 
-    match: function (context, routes, then, debug, depth, virtualTrailSlashCase) {
+    debugTrace: function (context, routes) {
+                    return this.match (context, routes, true) },
+
+    match: function (context, routes, debug, depth, virtualTrailSlashCase) {
 
         var trace = (debug === true)
-                        ? (function (msg) { log.blue (_.times (depth, _.constant (' → ')).join (''), msg) })
+                        ? (function () { log.write.apply (log, [log.color.dark, _.times (depth, _.constant ('→   ')).join (''), log.color.black]
+                                                            .concat (_.asArray (arguments))) })
                         : _.identity
 
         var depth = depth || 1
@@ -179,7 +183,7 @@ APISchema = {
                 var isJsonBinding   = (match[0] === '@')
                 var isBinding       = (match[0] === ':') || isJsonBinding
                 
-                trace (match + ' ← ' + element)
+                trace (match, '← ', log.color.bright, element)
 
                 if (isBinding || element == match) {
                     if (isBinding) {
@@ -189,40 +193,35 @@ APISchema = {
 
                         trace (match + ' = ' + context.env[key]) }
                     else {
-                        trace ('matched!') }
+                        trace (log.color.green, '    matched ', log.color.boldGreen, element) }
 
                     if (subroutes) {
-                        trace ('going deeper') // here's pic of "we need to go deeper" DiCaprio from Inception
+                        trace (log.color.darkBlue, '    going deeper') // here's pic of "we need to go deeper" DiCaprio from Inception
                         
-                        if (depth < context.path.length - 1) {
-                            return APISchema.match (context, subroutes, then, debug, depth + 1) }
+                        if (depth < (context.path.length - 1)) {
+                            return APISchema.match (context, subroutes, debug, depth + 1) }
 
                         else if (!virtualTrailSlashCase) { // makes "/foo" respond to "/foo/" handler
                             
-                            trace ('trying to find trail-slash handler')
-                            return APISchema.match (context, subroutes, then, debug, depth + 1, true) }
+                            trace (log.color.blue, '    trying to find trail-slash handler')
+                            return APISchema.match (context, subroutes, debug, depth + 1, true) }
 
                         else {
-                            trace ('nowhere to go deeper') } }
+                            trace (log.color.orange, '    nowhere to go deeper') } }
 
                     else if (virtualTrailSlashCase || (depth == context.path.length - 1) || isBinding) {
-                        if (context.request.method == 'GET' && handler.get) {
-                            then (context, handler.get)
-                            return true }
 
-                        else if (context.request.method == 'POST' && handler.post) {
-                            context.request.pause ()
-                            then (context, handler.post)
-                            return true }
+                             if (context.method == 'GET'  && handler.get)  { return handler.get }
+                        else if (context.method == 'POST' && handler.post) { return handler.post }
 
-                        else {
-                            trace ('no appropriate handler found for ' + context.request.method) } }
+                        else { trace (log.color.red, '    no appropriate handler found for ' + context.method + '... ',
+                                      log.color.boldRed, handler) } }
 
                     else {
-                        trace ('maxed at depth ' + (depth + 1) + ' but path has ' + context.path.length + ' subroutes') } } }
+                        trace (log.color.red, '    maxed at depth ' + (depth + 1) + ' but path has ' + context.path.length + ' subroutes') } } }
 
-            trace ('match not found')
-            return false } } }
+            trace (log.color.boldRed, 'match not found\n')
+            return undefined } } }
 
 
 

@@ -294,7 +294,11 @@ Base64 = {
     $global.define = function (name, v, cfg) {  if (name in $global) {
                                                     throw new Error ('cannot define global ' + name + ': already there') }
 
-        return Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
+        var def = (v && (v.get instanceof Function) && (v.set instanceof Function) && v) || // { get: .., set: .. }
+                       ((v instanceof Function) && (v.length === 0) && { get: v }) ||     // getter function () { }
+                       { value: v }                                                       // constant value
+
+        return Object.defineProperty ($global, name, _.extend (def, { enumerable: true }, cfg)) }
 
 
     $global.define ('$global', $global)
@@ -980,7 +984,7 @@ _.withTest (['function', 'calls / tails'], function () {
     _.argumentPrependingWrapper = function (fn, then) {
         return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
                                         return then (function () {
-                                            return fn.apply (this_, _.asArray (arguments).concat (args)) }) }) } })
+                                            return fn.apply (this_, _.asArray (arguments).concat (args)) }) }) } }) // @hide
 
 
 /*  binding to constructor arguments (cannot do this with bind/partial)
@@ -8121,7 +8125,7 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        var clean = this.mergeDuplicateLines.reject (_.property ('thirdParty'))
+        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || (e.source || '').contains ('// @hide') })
         return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
@@ -8390,7 +8394,7 @@ _.extend (log, {
      */
     withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
                                                                                         log.writeBackend.value = backend
-        contextFn (function /* release */ (then) {
+        contextFn (function /* release */ (then) { // @hide
                      release (function () {                                             log.writeBackend.value = prev
                         if (then) then ()
                         if (done) done () }) }) }),  
@@ -8411,6 +8415,15 @@ _.extend (log, {
                   return result },
 
     currentConfig: function () { return log.impl.configure (log.impl.configStack) },
+
+    /*  Use instead of 'log.newline ()' for collapsing newlines
+     */
+    margin: (function () {
+                var lastWrite = undefined
+                return function () {
+                    if (lastWrite !== log.impl.numWrites)
+                        log.newline ()
+                        lastWrite   = log.impl.numWrites } }) (),
 
     /*  Internals
      */
@@ -8494,7 +8507,7 @@ _.extend (log, {
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
 
         walkStack: function (stack) {
-            return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
+            return _.find (stack.clean.offset (2), function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 
         defaultWriteBackend: function (params) {
 
@@ -8549,7 +8562,9 @@ _.extend (log, {
         /*  This could be re-used by outer code for turning arbitrary argument lists into string
          */
         stringifyArguments: function (args, cfg) {
-            return _.map (args, log.impl.stringify.tails2 (cfg)).join (' ') },
+            return _.map (args, function (arg) {
+                var x = log.impl.stringify (arg, cfg)
+                return (cfg.maxArgLength ? x.limitedTo (cfg.maxArgLength) : x) }).join (' ') },
 
         /*  Smart object stringifier
          */
@@ -9213,9 +9228,6 @@ if ($platform.NodeJS) {
 
     $mixin (Promise, {
 
-        guard: $static (function (fn) {
-                            return Promise.resolve ().then (fn) }),
-
         shouldBe: function (x) {
                     return this.then (function (y) { if (x !== y) { throw new AndrogeneError () } }) },
 
@@ -9228,25 +9240,25 @@ if ($platform.NodeJS) {
     var AndrogeneError = class extends Error { constructor (msg) { super (msg || 'assertion failed') } }
     var OriginalPromise = Promise
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-    var AndrogeneProcessContext = $prototype ({
+    $global.AndrogeneProcessContext = $prototype ({
 
         current: undefined,
 
         constructor: function () {
             this.eventLog = []
-            this.callStack = $callStack
-            this.stackOffset = AndrogeneProcessContext.stackOffset || 0
+            this.callStack = $callStack // @hide
             this.state = 'pending'
-            
+
             if ((this.parent = AndrogeneProcessContext.current) !== undefined) {
-                 this.parent.eventLog.push (this) } },
+                 this.parent.eventLog.push (this)
+                 this.env = this.parent.env } },
 
         root: $property (function () {
                             return (this.parent && this.parent.root) || this }),
 
-        push: $static (function (context, stackOffset) { AndrogeneProcessContext.stackOffset = stackOffset
+        push: $static (function (context) {
 
             var prev           = AndrogeneProcessContext.current
                                  AndrogeneProcessContext.current = context
@@ -9259,82 +9271,141 @@ if ($platform.NodeJS) {
             
             log.impl.write.intercept (logHook)
 
-            return function /* pop */ () {  AndrogeneProcessContext.current = prev
+            return function /* pop */ () {  AndrogeneProcessContext.current     = prev
                                             Promise = PrevPromise
                                             log.impl.write.off (logHook) } }),
 
-        within: function (fn, stackOffset) { var self = this
+        within: function (fn) { var self = this
                     return function () {
-                                                                    var pop = AndrogeneProcessContext.push (self, stackOffset || 0)
-                        try       { var x = fn.apply (this, arguments); pop (); return x }
-                        catch (e) {         log.newline (); log.ee (e); pop (); throw e } } },
+                                                                    var pop = AndrogeneProcessContext.push (self)
+                        try       { var x = fn.apply (this, arguments); pop (); return x } // @hide
+                        catch (e) {                                     pop (); throw  e } } },
 
-        printLog: function (indent) { indent = indent || 0
+        where: $property (function () {
 
-            var where = this.callStack[5 + this.stackOffset]
-            var src = where.source || 'Promise'
+                            var stack = this.callStack.reject (function (x) { return x.source.contains ('@hide') })
+
+                            return this.parent
+                                        ? stack.last
+                                        : stack.first }),
+
+        printWhere: function (indent, printedErrors) { indent = indent || 0
+
+            //var where = this.where
+            //var src = where.source || 'Promise'
             var color = log.color[{ 'fulfilled': 'green', 'pending': 'orange', 'rejected': 'red', '': 'purple' }[this.state || '']]
 
-            log.write (color, log.config ({ indent: indent, location: true, where: where }), src)
-            log.write (color, log.config ({ indent: indent }), '-'.repeats (src.length))
+            log.margin ()
+
+            for (var loc of this.callStack.clean.reversed) {
+                log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
+
+            //log.write (color, log.config ({ indent: indent, location: true, where: where }), src)
+            //log.write (color, log.config ({ indent: indent }), '-'.repeats (src.length))
+            
+            log.margin () },
+
+        printEvents: function (indent, printedErrors) { indent = indent || 0
+                                                        printedErrors = printedErrors || new Set ()
 
             /*  Collapses redundant "Promise → then" case
              */
-            var eventLog = (this.eventLog.length === 1 && (this.eventLog[0] instanceof AndrogeneProcessContext))
+            var eventLog = false && (this.eventLog.length === 1 && (this.eventLog[0] instanceof AndrogeneProcessContext))
                                 ? this.eventLog[0].eventLog
                                 : this.eventLog
 
             for (var event of eventLog) {
                 if (event instanceof AndrogeneProcessContext) {
                     if (event.eventLog.length) {
-                        log.newline ()
-                        event.printLog (indent + 1) } }
+                        event.printLog (indent + 1, printedErrors) } }
+                else if (event instanceof Error) {
+                    if (!printedErrors.has (event)) {
+                         printedErrors.add (event)
+                         log.boldRed (log.indent (indent + 1), event) }
+                }
                 else {
-                    log.write.apply (null, [log.indent (indent + 1)].concat (event)) } } }
-    })
+                    log.write.apply (null, [log.indent (indent + 1)].concat (event)) } }
 
-/*  ======================================================================== */
+            log.margin () },
+
+        printLog: function (indent, printedErrors) {
+
+            this.printWhere (indent, printedErrors)
+            this.printEvents (indent, printedErrors) } })
+
+/*  ------------------------------------------------------------------------ */
+
+    AndrogeneProcessContext.within = function () {
+        return (AndrogeneProcessContext.current && AndrogeneProcessContext.current.within (fn)) || fn }
+
+/*  ------------------------------------------------------------------------ */
 
     $global.AndrogenePromise = class extends Promise {
 
         constructor (fn) {
 
-            if (AndrogenePromise.initializing === true) {
+            if (AndrogenePromise.constructing === true) {
                 super (fn) }
 
             else {
 
-                var    processContext = new AndrogeneProcessContext ()
-                super (processContext.within (fn))
-                this  .processContext = processContext
-                
-                AndrogenePromise.initializing = true
+                var processContext = new AndrogeneProcessContext () // @hide
 
-                    super.then (                                                               // it creates an instance of AndrogenePromise,
-                        _.$ (this, function () { this.processContext.state = 'fulfilled' }),   // so 'initializing' flag needed to prevent infinite init loop
-                        _.$ (this, function () { this.processContext.state = 'rejected' }))
+                    /*  Run super constuctor to acquire resolve/reject triggers,
+                        wrapping 'reject' so that it reports errors to the current log.
+                     */
+                    var resolve, reject
+                        super (function (resolve_, reject_) {
+                            resolve = resolve_
+                            reject  = function (e) { processContext.eventLog.push (e); reject_ (e) } })
 
-                delete AndrogenePromise.initializing } }
+                    this.processContext = processContext
+
+                    /*  Run 'fn' within created process context
+                     */
+                    try {
+                        processContext.within (fn) (resolve, reject) } // @hide
+                    catch (e) {
+                        reject (e) }
+
+                    /*  Bind to self to introduce the synchronous state flag. And hence 'then' method creates
+                        an instance of AndrogenePromise internally, the 'constructing' flag needed to prevent
+                        an infinite init loop.
+                     */
+                    AndrogenePromise.constructing = true
+
+                        super.then (                                                               
+                            function (x) { processContext.state = 'fulfilled' },
+                            function (x) { processContext.state = 'rejected' })
+
+                    delete AndrogenePromise.constructing } }
 
         then (resolve, reject) {
 
-            var next = this.processContext.within (OriginalPromise.prototype.then, 2).apply (this,
+            var next = this.processContext.within (OriginalPromise.prototype.then, 2).apply (this, // @hide
                                                         _.map (arguments, function (fn) {
-                                                                            return function (x) {
-                                                                                return next.processContext.within (fn, -3) (x) }}))
+                                                                            return fn && (function (x) {
+                                                                                return next.processContext.within (fn, -3) (x) }) })) // @hide
             return next }
 
-        disarm () {
+        disarmAndrogene () {
             return new OriginalPromise (OriginalPromise.prototype.then.bind (this)) }
 
-        static guard (fn) {
-                return AndrogenePromise.resolve ().then (fn) } }
+        static race (promises) {
+            return OriginalPromise.race (promises) }
 
-    var assertion = function (assert) {
-                        return function () {
-                            return AndrogenePromise.guard (assert.applies (null, arguments)) } }
+        static coerce (x) {
+                return ((x instanceof AndrogenePromise) ? x :
+                       ((x instanceof Function)         ? new AndrogenePromise (function (resolve) { resolve (x ()) }) : // @hide
+                                                          AndrogenePromise.resolve (x))) } }
 
 /*  ======================================================================== */
+
+    var assertion = function (fn) {
+                        return function () {
+                            return AndrogenePromise.coerce (fn) } } // @hide
+
+/*  ------------------------------------------------------------------------ */
 
     var assert = assertion (function (a, b) {
                                 if (a !== b) {
@@ -9353,7 +9424,7 @@ if ($platform.NodeJS) {
 
         return Promise.all (promises) })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
     var test = assertion (function () {
 
@@ -9371,26 +9442,24 @@ if ($platform.NodeJS) {
 
         return new Promise (function (resolve) {
 
-            log.i ('A');
+            log.i ('example log message #1');
 
             new Promise (function (resolve) {
-                log.i ('AA')
+                log.i ('example log message #2')
                 resolve ()
 
             }).then (function () {
-                log.i ('B')
+                log.i ('example log message #3')
                 resolve ()
             })
 
         }).then (function () {
-            log.i ('C')
-            //dasdasd ()
+            log.i ('example log message #4')
+            some_undefined_function ()
         })
     })
 
     var treeLogTest = assertion (function () {
-
-                                //dsdsd ()
 
         var b = new Promise (function (resolve) {
                                 log.i ('A')
@@ -9419,19 +9488,31 @@ if ($platform.NodeJS) {
         })
     })
 
-    // run "node test.js Androgene" to see output
+    var raceTest = assertion (function () {
+        return __('foo')
+                    .then (_.appends ('bar'))
+                    .delay (500)
+                    .log
+                    .then (function () { dasdsad () })
+                    .timeout (600)
+    })
 
-    _.tests['Androgene'] = function () {
+    var throwTest = assertion (function () {
+                                    throw new Error ('yo') })
 
-        var result = chainTest ()
+    // uncomment, then run "node test.js Androgene" to see output
 
-        return result.disarm ().finally (function (e, x) {
+    /*_.tests['Androgene'] = function () {
 
-            result.processContext.root.printLog ()
-            log.newline ()
+        var result = raceTest ()
 
-        }).catch (log.ee)
-    }
+        return result.disarmAndrogene ().finally (function (e, x) {
+
+                                            result.processContext.root.printLog ()
+                                            log.margin ()
+
+                                            if (e) { throw e } })
+    }*/
 
 /*  ======================================================================== */
 
@@ -9556,10 +9637,12 @@ _.tests.AOP = {
 /*  Promise-centric extensions (SKETCH)
     ======================================================================== */
 
-TimeoutError = $extends (Error, { message: 'timeout expired' })
+TimeoutError = $extends (Error, { message: 'timeout expired' })                                
 
-__ = function (x) {
-        return (x instanceof Function) ? (new Promise (x)) : Promise.resolve (x) }
+__ = Promise.coerce = function (x) {
+                        return ((x instanceof Promise)   ?  x :
+                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) :
+                                                            Promise.resolve (x))) }
 
 __.noop = function () {
             return Promise.resolve () }
@@ -9594,10 +9677,10 @@ __.map = __.safe (function (x, fn) {
                     else {
                         return fn (x) } })
 
-__.then = function (a, b) { return __.identity (a).then (_.coerceToFunction (b)) }
+__.then = function (a, b) { return __(a).then (_.coerceToFunction (b)) }
 
 __.seq = function (seq) {
-            return __.identity (_.reduce2 (seq, __.then)) }
+            return __(_.reduce2 (seq, __.then)) }
 
 __.all = function (x) {
             return Promise.all (x) }
@@ -9606,8 +9689,7 @@ __.delay = function (ms) { return __.delays (ms) () }
 
 __.delays = function (ms) {
                 return function (x) {
-                    return new Promise (function (return_) {
-                                            setTimeout (function () { return_ (x) }, ms || 0) }) } }
+                    return new Promise (function (return_) { setTimeout (function () { return_ (x) }, ms || 0) }) } }
 
 $mixin (Array, {
 
@@ -9617,7 +9699,7 @@ $mixin (Array, {
 $mixin (Promise, {
 
     race: function (other) { return [this, other].race },
-    reject: function (e) { return this.then (__.rejects (e)) },
+    reject: function (e) { return this.then (_.throwsError (e)) },
     delay: function (ms) { return this.then (__.delays (ms)) },
     timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
     now: $property (function () { return this.timeout (0) }),
@@ -9647,6 +9729,15 @@ $mixin (Promise, {
 })
 
 $mixin (Function, {
+    
+    promisifyAll: $static (function (obj, cfg) { var except = new Set ((cfg || {}).except || [])
+                                return _.map2 (obj, function (x, k) {
+                                    if (x instanceof Function) {
+                                        var fn = x.bind (obj)
+                                        return except.has (k) ? fn : fn.promisify }
+                                    else {
+                                        return x } }) }),
+
     promisify: $hidden ($property (
                             function () {            var f    = this
                                 return function () { var self = this, args = arguments
@@ -9655,23 +9746,32 @@ $mixin (Function, {
                                                                                       if (err) { reject (err) }
                                                                                                  resolve (what) })) }) } })) })
 
+if ($platform.NodeJS) {
+    $global.requirePromisified = function (module, cfg) {
+                                    return Function.promisifyAll (require (module), cfg) } }
+
 _.tests['Promise'] = {
 
     'promisify': function () {
 
         var fs = {
+            42: 42,
+            dontTouchMe: function () { return 42 },
             readFile: function (path,   callback) { $assert (this === fs)
                             if (path) { callback (null, 'contents of ' + path) }
                                  else { callback ('path empty') } } }
 
-        fs.readFileAsync = fs.readFile.promisify
+        fsAsync = Function.promisifyAll (fs, { except: ['dontTouchMe'] })
 
-        return __.all ([    fs.readFileAsync (null) .assertRejected ('path empty'),
-                            fs.readFileAsync ('foo').assert         ('contents of foo') ]) },
+        $assert (fsAsync.dontTouchMe (), 42)
+
+        return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
+                            fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
 
     'seq/map': function () {
                         return __.all ([
                                     __.seq (123).assert (123),
+                                    __.seq (_.constant (123)).assert (123),
                                     __.seq ([123, 333]).assert (333),
                                     __.seq ([123, _.constant (333)]).assert (333),
                                     __.seq ([123, __.constant (333)]).assert (333),
@@ -9696,6 +9796,7 @@ _.deferTest ('Set extensions', function () {
     $assert (set.extend   (new Set ([4,5])).items, [1,2,3,4,5])
     $assert (set.extended (new Set ([6,7])).items, [1,2,3,4,5,6,7])
     $assert (set.items, [1,2,3,4,5])
+    $assert (_.reject ([7,2,3,8], set.contains), [7,8])
 
 }, function () {
 
@@ -9703,6 +9804,8 @@ _.deferTest ('Set extensions', function () {
 
         copy:     $property (function () { return new Set (this) }),
         items:    $property (function () { return Array.from (this.values ()) }),
+
+        contains: $property (function () { var self = this; return function (x) { return self.has (x) } }),
 
         extend:   function (b) { for (var x of b) { this.add (x) }; return this },
         extended: function (b) { return this.copy.extend (b) } })

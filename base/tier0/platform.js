@@ -34,7 +34,11 @@
     $global.define = function (name, v, cfg) {  if (name in $global) {
                                                     throw new Error ('cannot define global ' + name + ': already there') }
 
-        return Object.defineProperty ($global, name, _.extend (((typeof v === 'function') && (v.length === 0)) ? { get: v } : { value: v }, { enumerable: true }, cfg)) }
+        var def = (v && (v.get instanceof Function) && (v.set instanceof Function) && v) || // { get: .., set: .. }
+                       ((v instanceof Function) && (v.length === 0) && { get: v }) ||     // getter function () { }
+                       { value: v }                                                       // constant value
+
+        return Object.defineProperty ($global, name, _.extend (def, { enumerable: true }, cfg)) }
 
 
     $global.define ('$global', $global)

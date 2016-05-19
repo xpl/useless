@@ -8,6 +8,7 @@ require ('./useless')
 Examples = $singleton (Component, {
 
     api: function () { return {
+
         '/':               this.file ('./example/index.html'),
         'build/:file':     this.file ('./build/'),
         'client/:file':    this.file ('./client/'),
@@ -26,6 +27,8 @@ Examples = $singleton (Component, {
         require ('./server/devtools'),
         require ('./server/uptime') ],
 
-    erroneousMethod: function (context) { unknownFunction () },
+    erroneousMethod: function () {
+                        unknownFunction () },
 
-    init: function (then) { log.green ('Example app is running at http://localhost:1333'); then () } })
+    init: function (then) {
+                log.green ('Example app is running at http://localhost:1333'); then () } })

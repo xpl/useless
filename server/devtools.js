@@ -6,11 +6,9 @@ var fs      = require ('fs'),
     path    = require ('path'),
     process = require ('process')
 
-ServerDevtools = module.exports = $trait ({
+module.exports = $trait ({
 
-    $depends: [require ('./io'),
-               require ('./request'),
-               require ('./api')],
+    $depends: [require ('./http')],
 
     $defaults: {
 
@@ -24,47 +22,43 @@ ServerDevtools = module.exports = $trait ({
 
     api: function () {
 
-        if (!this.developerAccess || !this.isDeveloper) {
-             this.developerAccess = _.identity
-             this.isDeveloper     = _.constant (true)
+        if (!this.requireDeveloper) {
+             this.requireDeveloper = _.identity
              this.devHint ("Add 'auth' trait to restrict access to devtools API") }
 
         return {
-            'echo':             { post: this.echo, get: ctx => __('foo').delay (1000).log.then (x => { dasdas (); ctx.success (x) }) },
+            'echo':             { post: () => $http.data.log },
             'api': {
-                'source/:file': { get:  this.developerAccess (this.allowOrigin ('*', this.readSource)),
-                                  post: this.developerAccess (this.allowOrigin ('*', this.jsonInput (this.writeSource))) },
-                'git-commits':  { get:  this.developerAccess (this.gitCommits) },
-                'git-pull':     { post: this.developerAccess (this.gitPull) } } } },
+                'source/:file': { get:  [this.requireDeveloper, this.allowOrigin.$ ('*'), this.readSource],
+                                  post: [this.requireDeveloper, this.allowOrigin.$ ('*'), this.receivesJSON, this.writeSource] },
+            /*  'git-commits':  { get:  [this.requireDeveloper, this.gitCommits] },
+                'git-pull':     { post: [this.requireDeveloper, this.gitPull] }*/ } } },
 
 
     afterInit: function () { // remote logging
         if (this.messageToPeers) {
             _.onAfter (log.impl, 'defaultWriteBackend', params => {
-                this.messageToPeers ({ what: 'log', params: params }, this.isDeveloper) }) } },
+                this.messageToPeers ({ what: 'log', params: params }, who => who.isAdmin && who.isDeveloper) }) } },
 
-    /*  Prints raw incoming HTTP data (for debugging of client write methods)
+    /*  Access to the source code of server (requires developer privileges)
      */
-    echo: function (context) {
-        context.data (data => {
-            console.log ('ECHO:', data)
-            context.success (data) }) },
+    readSource: function () {
+                    return new Promise (then =>
+                            _.readSource ((context.env.file[0] === '/')
+                                            ? $http.env.file
+                                            : path.join (this.sourceRoot, $http.env.file), then)) },
 
-    /*  Access to source code of server (requires developer privileges)
-     */
-    readSource: function (context) { log.info ('Reading', context.env.file)
-
-        _.readSource (context.env.file[0] === '/'
-            ? context.env.file
-            : path.join (this.sourceRoot, context.env.file), function (text) { context.success (text) }) },
-        
-    writeSource: function (context) { log.warn ('Writing', context.env.file)
-
-        _.writeSource (path.join (this.sourceRoot, context.env.file), context.env.text, context.$ (context.jsonSuccess)) },
+    writeSource: function (context) {
+                    return new Promise (then => {
+                        log.w ('Writing source:', $http.env.file)
+                        _.writeSource (
+                                path.join (this.sourceRoot, $http.env.file),
+                                $http.env.text,
+                                then.arity0) }) },
 
     /*  Git tools
      */
-    gitLastCommitStatus: function (complete) {
+    /*gitLastCommitStatus: function (complete) {
         exec ('git log -1 --name-status', (e, stdout, stderr) => {
             if (e) {
                 complete (null) }
@@ -95,6 +89,6 @@ ServerDevtools = module.exports = $trait ({
             else {
                 context.jsonSuccess () }
 
-            this.restart () }) },
+            this.restart () }) },*/
 
 })

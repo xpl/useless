@@ -131,7 +131,7 @@ _.extend (log, {
      */
     withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
                                                                                         log.writeBackend.value = backend
-        contextFn (function /* release */ (then) {
+        contextFn (function /* release */ (then) { // @hide
                      release (function () {                                             log.writeBackend.value = prev
                         if (then) then ()
                         if (done) done () }) }) }),  
@@ -152,6 +152,15 @@ _.extend (log, {
                   return result },
 
     currentConfig: function () { return log.impl.configure (log.impl.configStack) },
+
+    /*  Use instead of 'log.newline ()' for collapsing newlines
+     */
+    margin: (function () {
+                var lastWrite = undefined
+                return function () {
+                    if (lastWrite !== log.impl.numWrites)
+                        log.newline ()
+                        lastWrite   = log.impl.numWrites } }) (),
 
     /*  Internals
      */
@@ -235,7 +244,7 @@ _.extend (log, {
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
 
         walkStack: function (stack) {
-            return _.find (stack.clean, function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
+            return _.find (stack.clean.offset (2), function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 
         defaultWriteBackend: function (params) {
 
@@ -290,7 +299,9 @@ _.extend (log, {
         /*  This could be re-used by outer code for turning arbitrary argument lists into string
          */
         stringifyArguments: function (args, cfg) {
-            return _.map (args, log.impl.stringify.tails2 (cfg)).join (' ') },
+            return _.map (args, function (arg) {
+                var x = log.impl.stringify (arg, cfg)
+                return (cfg.maxArgLength ? x.limitedTo (cfg.maxArgLength) : x) }).join (' ') },
 
         /*  Smart object stringifier
          */

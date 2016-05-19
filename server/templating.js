@@ -1,34 +1,26 @@
-var fs = require ('fs')
+var fs   = requirePromisified ('fs'),
+    path = require ('path')
 
 ServerTemplating = module.exports = $trait ({
-
-    $defaults: {
-        compiledTemplates: {} },
 
     $depends: [require ('./io')],
 
     /*  Front-end (as request processing chain primitive)
      */
-    template: function (fileName, args, headers) {
-        return this.htmlErrors (context => {
-            this.compiledTemplate (fileName, template =>
-                                                context.success (template.call (this, _.extend ({ env: context.env }, args)), headers)) }) },
+    template: function (fileName, args) {
 
-    htmlTemplate: function (fileName, args) {
-        return this.template (fileName, args, { 'Content-Type': 'text/html' }) },
+        return () => {
 
+            if (!$http.hasContentType) {
+                 $http.setContentType (path.extname (fileName).split ('.')[1]) }
+
+            this.compiledTemplate (fileName)
+                .then (fn => fn.call (this, _.extend ({ env: $http.env }, $http.globalTemplateArgs, args))) } },
 
     /*  Back-end
      */
-    evalTemplate: function (fileName, args, then) {
-        this.compiledTemplate (fileName, template => then (template.call (this, args))) },
+    evalTemplate: function (fileName, args) {
+                    return this.compiledTemplate (fileName).then (fn => fn.call (this, args)) },
 
-    compiledTemplate: function (fileName, then) {
-
-        if (      this.compiledTemplates[fileName]) {
-            then (this.compiledTemplates[fileName]) }
-
-        else {
-            fs.readFile ('templates/' + fileName, { encoding: 'utf-8' }, (err, data) => {
-                if (err) { log.error (err) }
-                    else { then (this.compiledTemplates[fileName] = _.template (data)) } }) } } })
+    compiledTemplate: $memoize (function (fileName) {
+                                    return fs.readFile ('templates/' + fileName, { encoding: 'utf-8' }).then (_.template) }) })

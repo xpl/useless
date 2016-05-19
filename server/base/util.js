@@ -166,49 +166,50 @@ module.exports = {
         })
     },
     writeRequestDataToFile: function (cfg) {
-        /* configure writer */
-        log.info ('Writing file ' + cfg.filePath)
 
-        var bytesReceived = 0
-        var allDataReceived = false
-        var allDataWritten = true
-        var fileStream = fs.createWriteStream (cfg.filePath, { encoding: 'binary' })
-        var finalize = function () {
-            fileStream.end ()
-            cfg.success (cfg.filePath)
-        }
-        fileStream.addListener ('error', function (err) {
-            log.error ('writeRequestDataToFile: error writing', cfg.filePath, ':', err)
-            cfg.failure (err)
-        })
-        fileStream.addListener ('drain', function () {
-            allDataWritten = true
-            if (allDataReceived) {
-                finalize ()
-            } else {
-                cfg.request.resume ()
+        return new Promise (function (success, failure) {
+
+            /* configure writer */
+            log.info ('Writing file ' + cfg.filePath)
+
+            var bytesReceived = 0
+            var allDataReceived = false
+            var allDataWritten = true
+            var fileStream = fs.createWriteStream (cfg.filePath, { encoding: 'binary' })
+            var finalize = function () {
+                fileStream.end ()
+                success (cfg.filePath)
             }
-        })
-        /* configure reader */
-        cfg.request.on ('data', function (data) {
-            var chunk = new Buffer (data, 'binary')
-            console.log ('writing chunk of size ' + chunk.length)
-            bytesReceived += chunk.length
-            if (cfg.maxSize && (bytesReceived > cfg.maxSize)) {
-                log.error ('writeRequestDataToFile: exceeded max file size, terminating')
-                cfg.request.end ()
-            } else {
-                if (!(allDataWritten = fileStream.write (chunk, 'binary'))) {
-                    cfg.request.pause ()
+            fileStream.addListener ('error', failure)
+            fileStream.addListener ('drain', function () {
+                allDataWritten = true
+                if (allDataReceived) {
+                    finalize ()
+                } else {
+                    cfg.request.resume ()
                 }
-            }
+            })
+            /* configure reader */
+            cfg.request.on ('data', AndrogeneProcessContext.within (data => {
+                var chunk = new Buffer (data, 'binary')
+                log.i ('writing chunk of size ' + chunk.length)
+                bytesReceived += chunk.length
+                if (cfg.maxSize && (bytesReceived > cfg.maxSize)) {
+                    log.error ('writeRequestDataToFile: exceeded max file size, terminating')
+                    cfg.request.end ()
+                } else {
+                    if (!(allDataWritten = fileStream.write (chunk, 'binary'))) {
+                        cfg.request.pause ()
+                    }
+                }
+            }))
+            cfg.request.on ('end', function() {
+                allDataReceived = true
+                if (allDataWritten) {
+                    finalize ()
+                }
+            })
+            cfg.request.resume ()
         })
-        cfg.request.on ('end', function() {
-            allDataReceived = true
-            if (allDataWritten) {
-                finalize ()
-            }
-        })
-        cfg.request.resume ()
     }
 }

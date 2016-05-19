@@ -225,7 +225,7 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        var clean = this.mergeDuplicateLines.reject (_.property ('thirdParty'))
+        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || (e.source || '').contains ('// @hide') })
         return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {

@@ -7,9 +7,6 @@
 
     $mixin (Promise, {
 
-        guard: $static (function (fn) {
-                            return Promise.resolve ().then (fn) }),
-
         shouldBe: function (x) {
                     return this.then (function (y) { if (x !== y) { throw new AndrogeneError () } }) },
 
@@ -22,25 +19,25 @@
     var AndrogeneError = class extends Error { constructor (msg) { super (msg || 'assertion failed') } }
     var OriginalPromise = Promise
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-    var AndrogeneProcessContext = $prototype ({
+    $global.AndrogeneProcessContext = $prototype ({
 
         current: undefined,
 
         constructor: function () {
             this.eventLog = []
-            this.callStack = $callStack
-            this.stackOffset = AndrogeneProcessContext.stackOffset || 0
+            this.callStack = $callStack // @hide
             this.state = 'pending'
-            
+
             if ((this.parent = AndrogeneProcessContext.current) !== undefined) {
-                 this.parent.eventLog.push (this) } },
+                 this.parent.eventLog.push (this)
+                 this.env = this.parent.env } },
 
         root: $property (function () {
                             return (this.parent && this.parent.root) || this }),
 
-        push: $static (function (context, stackOffset) { AndrogeneProcessContext.stackOffset = stackOffset
+        push: $static (function (context) {
 
             var prev           = AndrogeneProcessContext.current
                                  AndrogeneProcessContext.current = context
@@ -53,82 +50,141 @@
             
             log.impl.write.intercept (logHook)
 
-            return function /* pop */ () {  AndrogeneProcessContext.current = prev
+            return function /* pop */ () {  AndrogeneProcessContext.current     = prev
                                             Promise = PrevPromise
                                             log.impl.write.off (logHook) } }),
 
-        within: function (fn, stackOffset) { var self = this
+        within: function (fn) { var self = this
                     return function () {
-                                                                    var pop = AndrogeneProcessContext.push (self, stackOffset || 0)
-                        try       { var x = fn.apply (this, arguments); pop (); return x }
-                        catch (e) {         log.newline (); log.ee (e); pop (); throw e } } },
+                                                                    var pop = AndrogeneProcessContext.push (self)
+                        try       { var x = fn.apply (this, arguments); pop (); return x } // @hide
+                        catch (e) {                                     pop (); throw  e } } },
 
-        printLog: function (indent) { indent = indent || 0
+        where: $property (function () {
 
-            var where = this.callStack[5 + this.stackOffset]
-            var src = where.source || 'Promise'
+                            var stack = this.callStack.reject (function (x) { return x.source.contains ('@hide') })
+
+                            return this.parent
+                                        ? stack.last
+                                        : stack.first }),
+
+        printWhere: function (indent, printedErrors) { indent = indent || 0
+
+            //var where = this.where
+            //var src = where.source || 'Promise'
             var color = log.color[{ 'fulfilled': 'green', 'pending': 'orange', 'rejected': 'red', '': 'purple' }[this.state || '']]
 
-            log.write (color, log.config ({ indent: indent, location: true, where: where }), src)
-            log.write (color, log.config ({ indent: indent }), '-'.repeats (src.length))
+            log.margin ()
+
+            for (var loc of this.callStack.clean.reversed) {
+                log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
+
+            //log.write (color, log.config ({ indent: indent, location: true, where: where }), src)
+            //log.write (color, log.config ({ indent: indent }), '-'.repeats (src.length))
+            
+            log.margin () },
+
+        printEvents: function (indent, printedErrors) { indent = indent || 0
+                                                        printedErrors = printedErrors || new Set ()
 
             /*  Collapses redundant "Promise → then" case
              */
-            var eventLog = (this.eventLog.length === 1 && (this.eventLog[0] instanceof AndrogeneProcessContext))
+            var eventLog = false && (this.eventLog.length === 1 && (this.eventLog[0] instanceof AndrogeneProcessContext))
                                 ? this.eventLog[0].eventLog
                                 : this.eventLog
 
             for (var event of eventLog) {
                 if (event instanceof AndrogeneProcessContext) {
                     if (event.eventLog.length) {
-                        log.newline ()
-                        event.printLog (indent + 1) } }
+                        event.printLog (indent + 1, printedErrors) } }
+                else if (event instanceof Error) {
+                    if (!printedErrors.has (event)) {
+                         printedErrors.add (event)
+                         log.boldRed (log.indent (indent + 1), event) }
+                }
                 else {
-                    log.write.apply (null, [log.indent (indent + 1)].concat (event)) } } }
-    })
+                    log.write.apply (null, [log.indent (indent + 1)].concat (event)) } }
 
-/*  ======================================================================== */
+            log.margin () },
+
+        printLog: function (indent, printedErrors) {
+
+            this.printWhere (indent, printedErrors)
+            this.printEvents (indent, printedErrors) } })
+
+/*  ------------------------------------------------------------------------ */
+
+    AndrogeneProcessContext.within = function () {
+        return (AndrogeneProcessContext.current && AndrogeneProcessContext.current.within (fn)) || fn }
+
+/*  ------------------------------------------------------------------------ */
 
     $global.AndrogenePromise = class extends Promise {
 
         constructor (fn) {
 
-            if (AndrogenePromise.initializing === true) {
+            if (AndrogenePromise.constructing === true) {
                 super (fn) }
 
             else {
 
-                var    processContext = new AndrogeneProcessContext ()
-                super (processContext.within (fn))
-                this  .processContext = processContext
-                
-                AndrogenePromise.initializing = true
+                var processContext = new AndrogeneProcessContext () // @hide
 
-                    super.then (                                                               // it creates an instance of AndrogenePromise,
-                        _.$ (this, function () { this.processContext.state = 'fulfilled' }),   // so 'initializing' flag needed to prevent infinite init loop
-                        _.$ (this, function () { this.processContext.state = 'rejected' }))
+                    /*  Run super constuctor to acquire resolve/reject triggers,
+                        wrapping 'reject' so that it reports errors to the current log.
+                     */
+                    var resolve, reject
+                        super (function (resolve_, reject_) {
+                            resolve = resolve_
+                            reject  = function (e) { processContext.eventLog.push (e); reject_ (e) } })
 
-                delete AndrogenePromise.initializing } }
+                    this.processContext = processContext
+
+                    /*  Run 'fn' within created process context
+                     */
+                    try {
+                        processContext.within (fn) (resolve, reject) } // @hide
+                    catch (e) {
+                        reject (e) }
+
+                    /*  Bind to self to introduce the synchronous state flag. And hence 'then' method creates
+                        an instance of AndrogenePromise internally, the 'constructing' flag needed to prevent
+                        an infinite init loop.
+                     */
+                    AndrogenePromise.constructing = true
+
+                        super.then (                                                               
+                            function (x) { processContext.state = 'fulfilled' },
+                            function (x) { processContext.state = 'rejected' })
+
+                    delete AndrogenePromise.constructing } }
 
         then (resolve, reject) {
 
-            var next = this.processContext.within (OriginalPromise.prototype.then, 2).apply (this,
+            var next = this.processContext.within (OriginalPromise.prototype.then, 2).apply (this, // @hide
                                                         _.map (arguments, function (fn) {
-                                                                            return function (x) {
-                                                                                return next.processContext.within (fn, -3) (x) }}))
+                                                                            return fn && (function (x) {
+                                                                                return next.processContext.within (fn, -3) (x) }) })) // @hide
             return next }
 
-        disarm () {
+        disarmAndrogene () {
             return new OriginalPromise (OriginalPromise.prototype.then.bind (this)) }
 
-        static guard (fn) {
-                return AndrogenePromise.resolve ().then (fn) } }
+        static race (promises) {
+            return OriginalPromise.race (promises) }
 
-    var assertion = function (assert) {
-                        return function () {
-                            return AndrogenePromise.guard (assert.applies (null, arguments)) } }
+        static coerce (x) {
+                return ((x instanceof AndrogenePromise) ? x :
+                       ((x instanceof Function)         ? new AndrogenePromise (function (resolve) { resolve (x ()) }) : // @hide
+                                                          AndrogenePromise.resolve (x))) } }
 
 /*  ======================================================================== */
+
+    var assertion = function (fn) {
+                        return function () {
+                            return AndrogenePromise.coerce (fn) } } // @hide
+
+/*  ------------------------------------------------------------------------ */
 
     var assert = assertion (function (a, b) {
                                 if (a !== b) {
@@ -147,7 +203,7 @@
 
         return Promise.all (promises) })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
     var test = assertion (function () {
 
@@ -165,26 +221,24 @@
 
         return new Promise (function (resolve) {
 
-            log.i ('A');
+            log.i ('example log message #1');
 
             new Promise (function (resolve) {
-                log.i ('AA')
+                log.i ('example log message #2')
                 resolve ()
 
             }).then (function () {
-                log.i ('B')
+                log.i ('example log message #3')
                 resolve ()
             })
 
         }).then (function () {
-            log.i ('C')
-            //dasdasd ()
+            log.i ('example log message #4')
+            some_undefined_function ()
         })
     })
 
     var treeLogTest = assertion (function () {
-
-                                //dsdsd ()
 
         var b = new Promise (function (resolve) {
                                 log.i ('A')
@@ -213,19 +267,31 @@
         })
     })
 
-    // run "node test.js Androgene" to see output
+    var raceTest = assertion (function () {
+        return __('foo')
+                    .then (_.appends ('bar'))
+                    .delay (500)
+                    .log
+                    .then (function () { dasdsad () })
+                    .timeout (600)
+    })
 
-    _.tests['Androgene'] = function () {
+    var throwTest = assertion (function () {
+                                    throw new Error ('yo') })
 
-        var result = chainTest ()
+    // uncomment, then run "node test.js Androgene" to see output
 
-        return result.disarm ().finally (function (e, x) {
+    /*_.tests['Androgene'] = function () {
 
-            result.processContext.root.printLog ()
-            log.newline ()
+        var result = raceTest ()
 
-        }).catch (log.ee)
-    }
+        return result.disarmAndrogene ().finally (function (e, x) {
+
+                                            result.processContext.root.printLog ()
+                                            log.margin ()
+
+                                            if (e) { throw e } })
+    }*/
 
 /*  ======================================================================== */
 
