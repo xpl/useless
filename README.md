@@ -10,6 +10,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Upcoming features
 
+- Lightweight HTTP server framework with Promise-based flow control
 - Brand new test system based on [Promises](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise)
 - [Nonlinear/asynchronous logging and stack traces](http://img.leprosorium.com/2523074) (for Promise-based code)
 - Splitting of distinct framework parts to separate projects (finally, _useful_ ones).
