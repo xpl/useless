@@ -386,32 +386,34 @@ UselessApp = $component ({
 		 */
 		'api': {
 			'login': { post: [this.receiveJSON, this.doLogin] },
-			'logout': { post: () => $http.removeCookies (['email', 'password']) } },
+			'logout': { post: () => $http.removeCookies (['email', 'password']) } } } },
 
-		/*	All execution is wrapped into so-called "supervised Promise chain",
-			so you don't need to pass request context explicitly, it is always
-			available as $http object in any promise callback related to request
-			represented by that object.
-			
-			All thrown errors and all log messages are handled by the engine
-			automagically. It builds a process/event hierarchy that reflects the
-			actual execution flow, so you don't need to run a debugger to see what's
-			going on, it's all in the log. Request is automatically ended when an
-			unhandled exception occurs, no need to trigger it explicitly.
-		 */
-		doLogin: function () {
-			var login = _.pick ($http.env, 'email', 'password') // 'receiveJSON' writes to $http.env
-			if (login.email && login.password) {
-				return this.db.users
-						.find (login)
-						.count ()
-						.then (count => {
-	                        			if (count > 0) {
-	                        				$http.setCookies (login) }
-	                        			else {
-	                        				throw new Error ('Wrong credentials') } }) }
-			else {
-		    		throw new Error ('Empty email or password') } },
+	/*	A complex request handler example, demonstrating some core features.
+	
+		All execution is wrapped into so-called "supervised Promise chain",
+		so you don't need to pass request context explicitly, it is always
+		available as $http object in any promise callback related to request
+		represented by that object.
+		
+		All thrown errors and all log messages are handled by the engine
+		automagically. It builds a process/event hierarchy that reflects the
+		actual execution flow, so you don't need to run a debugger to see what's
+		going on, it's all in the log. Request is automatically ended when an
+		unhandled exception occurs, no need to trigger it explicitly.
+	 */
+	doLogin: function () {
+		var login = _.pick ($http.env, 'email', 'password') // 'receiveJSON' writes to $http.env
+		if (login.email && login.password) {
+			return this.db.users
+					.find (login)
+					.count ()
+					.then (count => {
+                        			if (count > 0) {
+                        				$http.setCookies (login) }
+                        			else {
+                        				throw new Error ('Wrong credentials') } }) }
+		else {
+	    		throw new Error ('Empty email or password') } },
 
 	init: function (then) {
 	    then ()
