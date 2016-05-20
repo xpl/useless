@@ -395,17 +395,16 @@ Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined 
 - `args.js` command line arguments parsing
 - `config.js` handles `config.json` and default parameters
 - `deploy.js` self-deployment protocol (automatic builds)
-- `devtools.js` APIs for Git / source code access (developer mode)
-- `exceptions.js` custom exception printer + error handling for requests
+- `devtools.js` developer-mode APIs for Git / source code access
+- `exceptions.js` custom unhandled exception printer
 - `history.js` journal for DB operation
 - `http.js` request serving basics
-- `io.js` basic I/O for requests
 - `supervisor.js` auto-restart on source code change
 - `templating.js` basic templating (via underscore)
-- `tests.js` self-tests on startup
-- `uploads.js` file uploads
-- `uptime.js` uptime tracking / restart()
-- `websocket.js` WebSocket utility (peer tracking / auth / multicast)
+- `tests.js` self-tests on startup for TDD
+- `uploads.js` file/image uploads
+- `uptime.js` uptime tracking
+- `websocket.js` WebSocket utility
 
 ## And more..
 
