@@ -391,7 +391,7 @@ UselessApp = $component ({
 	/*	A complex request handler example, demonstrating some core features.
 	
 		All execution is wrapped into so-called "supervised Promise chain",
-		so you don't need to pass request context explicitly, it is always
+		so you don't need to pass the request context explicitly, it is always
 		available as $http object in any promise callback related to request
 		represented by that object.
 		
