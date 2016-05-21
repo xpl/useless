@@ -6343,10 +6343,8 @@ if ($platform.NodeJS) {
         printLog: function (state) {
             state = state || {};
             if (state.verbose || this.numEvents.all > 0) {
-                log.withConfig(log.config({ indentPattern: '    ' }), () => {
-                    this.printWhere(state);
-                    this.printEvents(state);
-                });
+                this.printWhere(state);
+                this.printEvents(state);
             }
         },
         printWhere: function (state) {
@@ -6390,6 +6388,7 @@ if ($platform.NodeJS) {
                 }
                 log.margin();
             }
+            return this.numEvents;
         }
     });
     AndrogeneProcessContext.within = function () {

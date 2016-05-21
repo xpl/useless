@@ -224,7 +224,13 @@ module.exports = $trait ({
                                : log.color.pink), context.method.pad (4), ': ', e ? log.color.boldRed
                                                                                   : log.color.bright, context.request.url)
 
-                        result.processContext.root.printEvents ({ verbose: e ? true : false }) })
+                        log.withConfig (log.config ({ indentPattern: '    ' }), () => {
+                            if ((result.processContext.root.printEvents ({ verbose: e ? true : false }).all > 0) &&
+                                (x !== undefined)) {
+                                    log.margin ()
+                                    log.green (log.indent (1), log.thinLine)
+                                    log.margin ()
+                                    log.gg (log.indent (1), _.isString (x) ? x.limitedTo (120) : x, '\n') } }) })
 
                 .catch (log.ee.$ (log.config ({ indent: 1, location: false }), '\n')) },
 
@@ -251,7 +257,9 @@ module.exports = $trait ({
                          $http.headers['Content-Type'] = $http.mime.guess (
                                                             x = ($http.isJSONAPI ? { success: true, value : x } : x)) }
                     $http.writeHead ()
-                         .write (x) } },
+                         .write (x) }
+
+                return x },
 
     writeError: function (e) { // TODO: construct asynchronous error stack from AndrogeneProcessContext
 

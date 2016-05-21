@@ -77,9 +77,8 @@
 
         printLog: function (state) { state = state || {}
                         if (state.verbose || (this.numEvents.all > 0)) {
-                            log.withConfig (log.config ({ indentPattern: '    ' }), () => {
-                                                                                    this.printWhere (state)
-                                                                                    this.printEvents (state) }) } },
+                            this.printWhere (state)
+                            this.printEvents (state) } },
 
         printWhere: function (state) { var indent = (state && state.indent) || 0
 
@@ -114,7 +113,9 @@
                     else {
                         log.write.apply (null, [log.indent (indent + 1)].concat (e)) } }
 
-                log.margin () } } })
+                log.margin () }
+
+            return this.numEvents } })
 
 /*  ------------------------------------------------------------------------ */
 

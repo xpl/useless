@@ -49,14 +49,14 @@ module.exports = $trait ({
 
     /*  Access to the source code of server (requires developer privileges)
      */
-    readSource: function (file) {
+    readSource: function () {
                     return new Promise (then => {
                                             $http.headers['Content-Type'] =
-                                                $http.mime.guessFromFileName (file)
+                                                $http.mime.guessFromFileName ($http.env.file)
 
-                                            return SourceFiles.read ((file[0] === '/')
+                                            return SourceFiles.read (($http.env.file[0] === '/')
                                                                         ? $http.env.file
-                                                                        : path.join (this.sourceRoot, file), then) }) },
+                                                                        : path.join (this.sourceRoot, $http.env.file), then) }) },
 
     writeSource: function (input) {
                     return new Promise (then => {
