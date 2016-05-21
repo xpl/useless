@@ -8711,7 +8711,7 @@ _.tests.log = {
             log.pink ('Config stack + scopes + higher order API test:')
             _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
 
-        $assert (log (log.config ({}), 42), 42) } }
+        $assert (log (42), 42) } }
 
 _.extend (
 

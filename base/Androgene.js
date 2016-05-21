@@ -46,7 +46,9 @@
                                  Promise = AndrogenePromise
             
             var logHook = function () { context.eventLog.push (
-                                            [log.config ({ where: $callStack.safeLocation (5) })].concat (_.initial (arguments))) }
+                                            [log.config ({ where: $callStack.safeLocation (5) })].concat (_.initial (arguments)))
+
+                                        return _.find (arguments, _.not (_.instanceOf (log.Config))) }
             
             log.impl.write.intercept (logHook)
 

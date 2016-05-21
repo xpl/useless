@@ -119,7 +119,7 @@ module.exports = $trait ({
                 return new Promise ((then, err) => {
                                         var data = ''
                                         this.request.on ('data', chunk => { data += chunk })
-                                        this.request.on ('end', then)
+                                        this.request.on ('end', () => { then (data) })
                                         this.request.on ('error', err)
                                         this.request.resume () }) }),
 
@@ -297,7 +297,8 @@ module.exports = $trait ({
                             ' = ' + _.stringify (lvalue, { pure: true, pretty: true }) },
 
     receiveJSON: function () {
-                    return $http.data.log.then (JSON.parse) },
+                    return $http.data.then (log.ii)
+                                     .then (JSON.parse) },
 
     receiveForm: function () {
                     return $http.data
