@@ -422,6 +422,10 @@ UselessApp = $component ({
 module.exports = { init: function () { return new UselessApp () } }
 ```
 
+Example report generated from failed Promise chain:
+
+![Promise stack demo](http://img.leprosorium.com/2523961)
+
 Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
 - `api.js` URL routing
