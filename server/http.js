@@ -79,10 +79,10 @@ module.exports = $trait ({
                 timeout: undefined,
                 headers: {},
                 nonce: String.randomHex (6),
-                cookies: _.object (_.map (this.request.headers &&
-                                          this.request.headers.cookie &&
-                                          this.request.headers.cookie.split (';')) || [], cookie => cookie.split ('=').map (
-                                                                                                        val => (val || '').trimmed)),
+                cookies: _.object (_.map ((this.request.headers &&
+                                           this.request.headers.cookie &&
+                                           this.request.headers.cookie.split (';')) || [], cookie => cookie.split ('=').map (
+                                                                                                        val => (val || '').trimmed))),
                 env: {
                     when: Date.now (),
                     who:  null } })
@@ -109,7 +109,7 @@ module.exports = $trait ({
                         return _.extend2 (this, {
                                             cookies: cookies,
                                             headers: {
-                                                'Set-Cookie': cookies.map ((value, name) =>
+                                                'Set-Cookie': _.map (cookies, (value, name) =>
                                                     name + '=' + (value || '<<deleted>>') + '; Expires=Wed, 13-Jan-2100 22:23:01 GMT; Path=/') } } ) },
 
         removeCookies: function (cookies) {
