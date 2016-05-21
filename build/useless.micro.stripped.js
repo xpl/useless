@@ -2193,7 +2193,10 @@ $extensionMethods(String, {
         return s.indexOf(other) >= 0;
     },
     startsWith: function (s, x) {
-        return s[0] === x;
+        return x.length === 1 ? s[0] === x : s.substring(0, x.length) === x;
+    },
+    endsWith: function (s, x) {
+        return x.length === 1 ? s[s.length - 1] === x : s.substring(s.length - x.length) === x;
     },
     pad: function (s, len, filler) {
         return s += (filler || ' ').repeats(Math.max(0, len - s.length));
@@ -4436,6 +4439,12 @@ $mixin(Promise, {
     alert: $property(function () {
         return this.then(alert2, alert2.then(_.throwError));
     }),
+    chain: function (fn) {
+        return this.then(function (x) {
+            fn(x);
+            return x;
+        });
+    },
     done: function (fn) {
         return this.then(function (x) {
             return fn(null, x);
@@ -4475,15 +4484,21 @@ $mixin(Promise, {
 });
 $mixin(Function, {
     promisifyAll: $static(function (obj, cfg) {
-        var except = new Set((cfg || {}).except || []);
-        return _.map2(obj, function (x, k) {
+        var cfg = cfg || {}, except = cfg.except || _.noop;
+        if (except instanceof Array) {
+            except = except.asSet.matches;
+        }
+        var result = {};
+        for (var k in obj) {
+            var x = obj[k];
             if (x instanceof Function) {
                 var fn = x.bind(obj);
-                return except.has(k) ? fn : fn.promisify;
+                result[k] = except(k) ? fn : fn.promisify;
             } else {
-                return x;
+                result[k] = x;
             }
-        });
+        }
+        return result;
     }),
     promisify: $hidden($property(function () {
         var f = this;
@@ -4500,11 +4515,6 @@ $mixin(Function, {
         };
     }))
 });
-if ($platform.NodeJS) {
-    $global.requirePromisified = function (module, cfg) {
-        return Function.promisifyAll(require(module), cfg);
-    };
-}
 Http = $singleton(Component, {
     $traits: [HttpMethods = $trait({
             get: function (path, cfg) {

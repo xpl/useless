@@ -27,10 +27,17 @@ module.exports = $trait ({
              this.devHint ("Add 'auth' trait to restrict access to devtools API") }
 
         return {
-            'echo':             { post: () => $http.data.log },
+
+            /*  TODO: investigate why this doesn't work:
+
+                    'echo':     { ... }
+                    'echo/foo': { ... }
+             */
+            'echo/:foo': { get: _.identity, post: () => $http.data.log },
+ 
             'api': {
-                'source/:file': { get:  [this.requireDeveloper, this.allowOrigin.$ ('*'), this.readSource],
-                                  post: [this.requireDeveloper, this.allowOrigin.$ ('*'), this.receivesJSON, this.writeSource] },
+                'source/:file': { get:  [this.requireDeveloper, this.allowOrigin ('*'), this.readSource],
+                                  post: [this.requireDeveloper, this.allowOrigin ('*'), this.receiveJSON, this.writeSource] },
             /*  'git-commits':  { get:  [this.requireDeveloper, this.gitCommits] },
                 'git-pull':     { post: [this.requireDeveloper, this.gitPull] }*/ } } },
 
@@ -42,23 +49,22 @@ module.exports = $trait ({
 
     /*  Access to the source code of server (requires developer privileges)
      */
-    readSource: function () {
+    readSource: function (file) {
                     return new Promise (then => {
+                                            $http.headers['Content-Type'] =
+                                                $http.mime.guessFromFileName (file)
 
-                            $http.headers['Content-Type'] =
-                                $http.mime.guessFromFileName ($http.env.file)
+                                            return SourceFiles.read ((file[0] === '/')
+                                                                        ? $http.env.file
+                                                                        : path.join (this.sourceRoot, file), then) }) },
 
-                            return SourceFiles.read (($http.env.file[0] === '/')
-                                                        ? $http.env.file
-                                                        : path.join (this.sourceRoot, $http.env.file), then) }) },
-
-    writeSource: function (context) {
+    writeSource: function (input) {
                     return new Promise (then => {
-                        log.w ('Writing source:', $http.env.file)
-                        SourceFiles.write (
-                                path.join (this.sourceRoot, $http.env.file),
-                                $http.env.text,
-                                then.arity0) }) },
+                                            log.w ('Writing source:', $http.env.file)
+                                            SourceFiles.write (
+                                                    path.join (this.sourceRoot, $http.env.file),
+                                                    input.text,
+                                                    then.arity0) }) },
 
     /*  Git tools
      */

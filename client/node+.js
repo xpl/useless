@@ -312,7 +312,7 @@
         text: function (x) { this.innerText = x; return this },
 
         busyUntil: function (promise) {                              this.   setAttribute ('busy', true)
-                      return promise.done (this.$ (function (e, x) { this.removeAttribute ('busy'); if (e) { throw e; }; return x })) },
+                      return promise.done (this.$ (function (e, x) { this.removeAttribute ('busy'); return x })) },
 
         onceAnimationEnd: $property (function () {
             return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),

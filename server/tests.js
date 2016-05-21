@@ -59,7 +59,10 @@ ServerTests = module.exports = $trait ({
          */
         'explicit async test': function (done) { done () },
 
-        /*  Fun part with $async-marked assertions is that Testosterone supervises their
+        /*  DEPRECATED (will be replaced by Androgene.js superpowers)
+            ----------
+
+            Fun part with $async-marked assertions is that Testosterone supervises their
             execution, allowing to omit that tedious 'done' calling burden. The test
             will automatically finish after the last asynchronous assertion completes.
             Each asynchronous assertion creates its own execution context, waiting

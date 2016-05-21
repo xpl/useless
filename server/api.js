@@ -2,10 +2,13 @@ ServerAPI = module.exports = $trait ({
 
     tests: {
 
+        /*  Supports two way of defining URLs:
 
-        /*  1. This is new humanized URL schema syntax.
-            2. We translate it to old one (thus not changing underlying impl).
-            3. But the old one sometimes more convenient.. so both ways are allowed, intermixed freely
+                1. { key: value, .. } (object notation)
+                2. [[key, value], ..] (list notation)
+
+            These notations can be intermixed freely. While former is more comfortable to humans,
+            the latter is more usable for programmatic generation.
          */
         canonicalize: function () {
 
@@ -68,9 +71,11 @@ ServerAPI = module.exports = $trait ({
 
     beforeInit: function (then) { log.minor ('Reading API schema')
 
-        this.apiSchema = APISchema.collapse (
-            _.flat (_.filter2 ((this.constructor.$traits || []).reversed, this.$ (function (Trait) {
-                return (Trait.prototype.api ? APISchema.canonicalize (Trait.prototype.api.call (this)) : false) }))))
+        this.apiSchema = APISchema.validate (
+                         APISchema.collapse (
+                            _.flat (_.filter2 ((this.constructor.$traits || []).reversed, this.$ (function (Trait) {
+                                return (Trait.prototype.api ? APISchema.canonicalize (Trait.prototype.api.call (this)) : false) })))))
+
         then () },
 
     afterInit: function (then) {
@@ -78,21 +83,18 @@ ServerAPI = module.exports = $trait ({
         if (_.isFunction (this.api)) {
             this.defineAPIs (this.api ()) }
 
-        if (this.config.apiDebug) {
-            log.write ('\nCurrent API schema:', '\n' + log.thinLine, '\n')
-            APISchema.prettyPrint (this.apiSchema)
-            log.write (log.thinLine, '\n') }
-
         then () },
 
     defineAPIs: function (schemaPart) {
         return (this.apiSchema = APISchema.collapse (this.apiSchema.concat (this.normalizeAPIs (schemaPart)))) },
 
     normalizeAPIs: function (routes) {
-        return APISchema.collapse (APISchema.canonicalize (routes)) } })
+        return APISchema.validate (APISchema.collapse (APISchema.canonicalize (routes))) } })
 
 
-/*  Implementation */
+/* 
+
+Implementation */
 
 APISchema = {
 
@@ -106,12 +108,112 @@ APISchema = {
                 APISchema.prettyPrint (route[1], depth + 1)
                 log.write ('') } }) },
 
+    debugTrace: function (routes, method, path) {
+                    return this.match (routes, method, path, true) },
+
+
+/*  Requires all elements in handler chains to be functions. This is needed to prevent 'swallowing' of
+    errors when evaluating something like [this.nonexistentFunction, ...], because __.seq allows
+    constants as chain elements.                                                                        */
+
+    validate: function (routes, /* optional */ path) {
+
+                    _.each (routes, route => { var subpath = (path || '') + '/' + route[0],
+                                                   subj    = route[1]
+                        if (!_.isArray (subj)) {
+                            _.each (subj, handler => {
+                                if (!_.every (_.coerceToArray (handler), _.isFunction)) {
+                                    log.ee ('\nFound non-function in ',
+                                            log.color.bright, subpath || "''",
+                                            log.color.boldRed, ' handler chain: ', subj); throw new Error ('wrong handler chain') } }) }
+                        else {
+                            APISchema.validate (subj, subpath) } })
+
+                    return routes },
+
+    match: function (routes, method, path, /* optional */ debug, depth, vars, virtualTrailSlashCase) {
+
+        var trace = (debug === true)
+                        ? (function () { log.write.apply (log,
+                                            [log.color.dark, _.times (depth, _.constant ('→   ')).join (''),
+                                             log.color.black].concat (_.asArray (arguments))) })
+                        : _.identity
+
+        depth = depth || 1
+        vars  = vars  || {}
+        
+        if ((virtualTrailSlashCase === undefined) && path.length <= depth) {
+            return false }
+
+        else {
+            var element = virtualTrailSlashCase ? '' : path[depth]
+
+            for (var i = 0, n = routes.length; i < n; i++) {
+
+                var route       = routes[i]
+                var match       = route[0]
+                var handler     = route[1]
+                var subroutes   = _.isArray (handler) ? handler : undefined
+
+                var isJsonBinding   = (match[0] === '@')
+                var isBinding       = (match[0] === ':') || isJsonBinding
+                
+                trace (match, '← ', log.color.bright, element)
+
+                if (isBinding || element == match) {
+                    if (isBinding) {
+                        var key    = match.slice (1)
+                        var value  = decodeURIComponent (subroutes ? element : path.slice (depth).join ('/'))
+                        vars[key]  = isJsonBinding ? _.json (value) : value
+
+                        trace (match + ' = ' + vars[key]) }
+                    else {
+                        trace (log.color.green, '    matched ', log.color.boldGreen, element) }
+
+                    if (subroutes) {
+                        trace (log.color.darkBlue, '    going deeper') // here's pic of "we need to go deeper" DiCaprio from Inception
+                        
+                        if (depth < (path.length - 1)) {
+                            return APISchema.match (subroutes, method, path, debug, depth + 1, vars) }
+
+                        else if (!virtualTrailSlashCase) { // makes "/foo" respond to "/foo/" handler
+                            
+                            trace (log.color.blue, '    trying to find trail-slash handler')
+                            return APISchema.match (subroutes, method, path, debug, depth + 1, vars, true) }
+
+                        else {
+                            trace (log.color.orange, '    nowhere to go deeper') } }
+
+                    else if (virtualTrailSlashCase || (depth == (path.length - 1)) || isBinding) {
+
+                        var handler = handler[method.lowercase]
+                        if (!handler) {
+                            trace (log.color.red, '    no appropriate handler found') }
+                        else {
+
+                        /*  Prepend Promise chain with argument(s)  */
+
+                            var args  = _.values (vars)
+                            var chain =  (args.length > 1 ? [match.vars] :
+                                          args.length > 0 ? args : []).concat (_.coerceToArray (handler))
+
+                            return { fn: __.seq.$ (chain), vars: vars } } }
+
+                    else {
+                        trace (route)
+                        trace (log.color.red, '    maxed at depth ' + (depth + 1) + ' but path has ' + path.length + ' subroutes') } } }
+
+            trace (log.color.boldRed, 'match not found\n')
+            return undefined } },
+
+/*  PRIVATE */
+
     isHandler: function (obj) {
         return obj && (APISchema.isFunctionOrChain (obj.get) ||
                        APISchema.isFunctionOrChain (obj.post)) },
 
     isFunctionOrChain: function (obj) {
-        return (obj instanceof Function) || (_.isArray (obj) && (obj[0] instanceof Function)) },
+        return (obj instanceof Function) || (_.isArray (obj) && !(obj.isEmpty || _.isString (obj[0]) || _.isArray (obj[0]))) },
 
     isCanonicalRoute: function (obj) {
         return _.isArray (obj) && (typeof obj[0] === 'string') },
@@ -154,74 +256,7 @@ APISchema = {
                 delete groups[name]
                 var merged = _.flatten (_.map (group, function (route) { return route[1] }), true)
                 return [name, APISchema.collapse (merged)] }
-            return false })) },
-
-    debugTrace: function (context, routes) {
-                    return this.match (context, routes, true) },
-
-    match: function (context, routes, debug, depth, virtualTrailSlashCase) {
-
-        var trace = (debug === true)
-                        ? (function () { log.write.apply (log, [log.color.dark, _.times (depth, _.constant ('→   ')).join (''), log.color.black]
-                                                            .concat (_.asArray (arguments))) })
-                        : _.identity
-
-        var depth = depth || 1
-        
-        if ((virtualTrailSlashCase == undefined) && context.path.length <= depth) {
-            return false }
-
-        else {
-            var element = virtualTrailSlashCase ? '' : context.path[depth]
-
-            for (var i = 0, n = routes.length; i < n; i++) {
-                var route       = routes[i]
-                var match       = route[0]
-                var handler     = route[1]
-                var subroutes   = _.isArray (handler) ? handler : undefined
-
-                var isJsonBinding   = (match[0] === '@')
-                var isBinding       = (match[0] === ':') || isJsonBinding
-                
-                trace (match, '← ', log.color.bright, element)
-
-                if (isBinding || element == match) {
-                    if (isBinding) {
-                        var key             = match.slice (1)
-                        var value           = decodeURIComponent (subroutes ? element : context.path.slice (depth).join ('/'))
-                        context.env[key]    = isJsonBinding ? _.json (value) : value
-
-                        trace (match + ' = ' + context.env[key]) }
-                    else {
-                        trace (log.color.green, '    matched ', log.color.boldGreen, element) }
-
-                    if (subroutes) {
-                        trace (log.color.darkBlue, '    going deeper') // here's pic of "we need to go deeper" DiCaprio from Inception
-                        
-                        if (depth < (context.path.length - 1)) {
-                            return APISchema.match (context, subroutes, debug, depth + 1) }
-
-                        else if (!virtualTrailSlashCase) { // makes "/foo" respond to "/foo/" handler
-                            
-                            trace (log.color.blue, '    trying to find trail-slash handler')
-                            return APISchema.match (context, subroutes, debug, depth + 1, true) }
-
-                        else {
-                            trace (log.color.orange, '    nowhere to go deeper') } }
-
-                    else if (virtualTrailSlashCase || (depth == context.path.length - 1) || isBinding) {
-
-                             if (context.method == 'GET'  && handler.get)  { return handler.get }
-                        else if (context.method == 'POST' && handler.post) { return handler.post }
-
-                        else { trace (log.color.red, '    no appropriate handler found for ' + context.method + '... ',
-                                      log.color.boldRed, handler) } }
-
-                    else {
-                        trace (log.color.red, '    maxed at depth ' + (depth + 1) + ' but path has ' + context.path.length + ' subroutes') } } }
-
-            trace (log.color.boldRed, 'match not found\n')
-            return undefined } } }
+            return false })) } }
 
 
 

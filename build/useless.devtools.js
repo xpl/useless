@@ -423,7 +423,7 @@ if (_.hasStdlib) {
     var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
 
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
-        
+
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
 
@@ -801,7 +801,7 @@ CallStack = $extends (Array, {
                     var relative = path.replace ($uselessPath, '')
                                        .replace ($sourcePath,  '')
                     return (relative !== path)
-                        ? relative
+                        ? relative.replace (/^node_modules\//, '')
                         : path.split ('/').last }), // extract last part of /-separated sequence
 
     isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
@@ -1719,11 +1719,15 @@ Test = $prototype ({
                                     /*  Return-style flow control
                                      */
                                     else {
+
+                                    /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
+                                                leads to broken unhandled exception handling after the Testosterone run completes  */
+
                                         var result = routine.call (self.context)
                                         if (result instanceof Promise) {
                                             result.then (
-                                                self.$ (self.finalize),
-                                                function (e) { self.onException(e) }) }
+                                                function (x) { self.finalize () }.postponed,
+                                                function (e) { self.onException (e) }) }
                                         else {
                                             self.finalize () } } }) },
         

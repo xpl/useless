@@ -11,6 +11,7 @@ BuildApp = $singleton (Component, {
 
     $depends: [
         require ('./server/args'),
+        require ('./server/exceptions'),
         require ('./server/supervisor') ],
 
 /*  ======================================================================== */

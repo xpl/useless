@@ -1,9 +1,9 @@
-var fs   = requirePromisified ('fs'),
+var fs   = require ('./base/fs'),
     path = require ('path')
 
 ServerTemplating = module.exports = $trait ({
 
-    $depends: [require ('./io')],
+    $depends: [require ('./http')],
 
     /*  Front-end (as request processing chain primitive)
      */
@@ -11,8 +11,8 @@ ServerTemplating = module.exports = $trait ({
 
         return () => {
 
-            if (!$http.headers['Content-Type']) {
-                 $http.headers['Content-Type'] = path.extname (fileName).split ('.')[1] }
+            $http.headers['Content-Type'] =
+                $http.mime.guessFromFileName (fileName)
 
             this.compiledTemplate (fileName)
                 .then (fn => fn.call (this, _.extend ({ env: $http.env }, $http.globalTemplateArgs, args))) } },

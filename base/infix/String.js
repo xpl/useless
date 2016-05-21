@@ -23,8 +23,15 @@ _.deferTest ('String extensions', function () {
               'жопа'.contains ('апож')], [true, false])
 
     $assert  (['жопа'.startsWith ('ж'),
+               'жопа'.startsWith ('жо'),
                'жопа'.startsWith ('о')], [true,
-                                         false])
+                                          true,
+                                          false])
+    $assert  (['жопа'.endsWith ('а'),
+               'жопа'.endsWith ('па'),
+               'жопа'.endsWith ('ж')], [true,
+                                        true,
+                                        false])
 
     /*  Higher order version of former utility
      */
@@ -89,7 +96,11 @@ _.deferTest ('String extensions', function () {
 
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
-    startsWith: function (s, x) { return s[0] === x },
+    startsWith: function (s, x) {
+                    return (x.length === 1) ? (s[0] === x) : (s.substring (0, x.length) === x) },
+
+    endsWith: function (s, x) {
+                    return (x.length === 1) ? (s[s.length - 1] === x) : (s.substring (s.length - x.length) === x) },
 
     pad: function (s, len, filler) {
         return s += (filler || ' ').repeats (Math.max (0, len - s.length)) },

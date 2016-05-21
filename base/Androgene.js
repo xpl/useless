@@ -27,7 +27,7 @@
 
         constructor: function () {
             this.eventLog = []
-            this.callStack = $callStack // @hide
+            this.where = new Error () // @hide
             this.state = 'pending'
 
             if ((this.parent = AndrogeneProcessContext.current) !== undefined) {
@@ -60,6 +60,8 @@
                         try       { var x = fn.apply (this, arguments); pop (); return x } // @hide
                         catch (e) {                                     pop (); throw  e } } },
 
+        /*  TODO: current impl does not account error doubling (solved by state.visited in printEvents)
+         */ 
         numEvents: $memoized ($property (function () {
                                                 return _.reduce2 ({ log: 0, errors: 0 }, this.eventLog, function (sum, e) {
 
@@ -82,7 +84,7 @@
 
             log.margin ()
 
-            for (var loc of this.callStack.clean.reversed) {
+            for (var loc of CallStack.fromError (this.where).clean.reversed) {
                 log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
 
             log.margin () },

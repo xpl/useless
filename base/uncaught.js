@@ -8,7 +8,7 @@
     var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
 
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
-        
+
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
 

@@ -5,8 +5,6 @@ var fs              = require ('fs'),
 
  module.exports = ServerDeploy = $trait ({
 
-    $depends: [require ('./io')],
-
     buildScriptPaths: [process.cwd (), $uselessPath],
     buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
     buildPath: $uselessPath + 'build/',

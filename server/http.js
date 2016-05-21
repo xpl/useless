@@ -3,17 +3,15 @@
 var http    = require ('http'),
     util    = require ('./base/util'),
     ass     = require ('./base/assertion_syntax'),
+    fs      = require ('./base/fs'),
     url     = require ('url'),
-    path    = require ('path'),
-    fs      = requirePromisified ('fs', { except: ['createReadStream', 'lstatSync'] }) // a feature of Promise+.js
+    path    = require ('path')
 
 /*  ======================================================================== */
 
 module.exports = $trait ({
 
-    $depends: [require ('./exceptions'),
-               require ('./api'),
-               require ('./io')],
+    $depends: [require ('./api')],
 
 
 /*  ======================================================================== */
@@ -205,31 +203,34 @@ module.exports = $trait ({
 
                         result.processContext.within (() => context.writeHead ().end ()) () // finalizes request
 
-                        log (context.method === 'GET'
-                                ? log.color.green
-                                : log.color.pink, context.method.pad (4), ': ', log.color.bright, context.request.url)
+                        log (e ? log.color.red : (context.method === 'GET'
+                               ? log.color.green
+                               : log.color.pink), context.method.pad (4), ': ', e ? log.color.boldRed
+                                                                                  : log.color.bright, context.request.url)
 
-                        result.processContext.root.printEvents () })
+                        result.processContext.root.printEvents ({ verbose: e ? true : false }) })
 
                 .catch (log.ee.$ (log.config ({ indent: 1, location: false }), '\n')) },
 
     callAPIHandler: function () {
-                        return __.seq (_.coerceToArray (APISchema.match (
-                                                            $http,
-                                                            this.apiSchema) || this.noAPIMatch)) },
 
-    noAPIMatch: function () {
-                    APISchema.debugTrace ($http, this.apiSchema)
-                    throw $http.NotFoundError },
+                        var match = APISchema.match (this.apiSchema, $http.method, $http.path)
+
+                        if (!match) {   log.newline ()
+                                        APISchema.debugTrace (this.apiSchema, $http.method, $http.path)
+                                        throw $http.NotFoundError }
+
+                        else {
+                            _.extend ($http.env, match.vars); return match.fn () } },
 
     writeResult: function (x) {
 
                 if ((x !== undefined) && (x !== $http)) {
 
-                    /*  Make /api/ URLS respond with { success: true, value: .. } pattern by default, but only if
-                        no Content-Type was explicitly specified. So that a handler can override that behavior by
-                        specifying a Content-Type.
-                     */
+                /*  Make /api/ URLS respond with { success: true, value: .. } pattern by default, but only if
+                    no Content-Type was explicitly specified. So that a handler can override that behavior by
+                    specifying a Content-Type.                                                                  */
+
                     if (!$http.headers['Content-Type']) {
                          $http.headers['Content-Type'] = $http.mime.guess (
                                                             x = ($http.isJSONAPI ? { success: true, value : x } : x)) }
@@ -252,7 +253,9 @@ module.exports = $trait ({
                 $http.writeHead ()
                      .write ({
                         success: false,
-                        error: e }) } }
+                        error: e }) }
+
+            throw e }
 
         else { var x = log.impl.stringify (e)
 
@@ -268,51 +271,46 @@ module.exports = $trait ({
     interlocked: function (then) {
                     return _.interlocked (releaseLock => { _.onAfter ($http, 'end', releaseLock); then () }) },
 
-    allowOrigin: function (value) { $http.headers['Access-Control-Allow-Origin'] = value },
+    allowOrigin: function (value) {
+                    return function (x) {
+                        $http.headers['Access-Control-Allow-Origin'] = value; return x } },
 
     jsVariable: function (rvalue, lvalue) {
-            $http.contentType ($http.mime.javascript)
-            return 'var ' + rvalue +
-                    ' = ' + _.stringify (lvalue, { pure: true, pretty: true }) },
+                    $http.contentType ($http.mime.javascript)
+                    return 'var ' + rvalue +
+                            ' = ' + _.stringify (lvalue, { pure: true, pretty: true }) },
 
     receiveJSON: function () {
-                    return $http.data
-                                .log
-                                .then (JSON.parse)
-                                .then (obj => {
-                                    $http.jsonInput = obj                            // temporary (some handlers still need jsonInput isolated)
-                                    $http.env = _.extendWith ($http.env, obj) }) },  // prevents overriding of previous context.env variables
+                    return $http.data.log.then (JSON.parse) },
 
     receiveForm: function () {
                     return $http.data
                                 .then (data => {
-                                    $http.env = _.extendWith ($http.env,
-                                                    log.i ('POST vars:',
-                                                        _.object (
-                                                        _.map (data.split ('&'), kv => kv.split ('=').map (decodeURIComponent))))) }) },
+                                    return log.i ('POST vars:',
+                                                    _.object (
+                                                    _.map (data.split ('&'), kv => kv.split ('=').map (decodeURIComponent)))) }) },
 
     receiveFile: function () {
 
-        if (!$http.request.headers['Content-Type'] !== $http.mime.binary) {
-            throw new Error ('Content-Type should be' + $http.mime.binary) }
+                    if (!$http.request.headers['Content-Type'] !== $http.mime.binary) {
+                        throw new Error ('Content-Type should be' + $http.mime.binary) }
 
-        var maxFileSize = 16 * 1024 * 1024
-        var fileSize = parseInt ($http.request.headers['x-file-size'], 10)
-        
-        if (fileSize <= 0) {
-            throw new Error ('file is empty') }
-        
-        else if (fileSize > maxFileSize) {
-            throw new Error ('file is too big') }
+                    var maxFileSize = 16 * 1024 * 1024
+                    var fileSize = parseInt ($http.request.headers['x-file-size'], 10)
+                    
+                    if (fileSize <= 0) {
+                        throw new Error ('file is empty') }
+                    
+                    else if (fileSize > maxFileSize) {
+                        throw new Error ('file is too big') }
 
-        else {
-            return util.writeRequestDataToFile ({
-                request: this.request,
-                filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
+                    else {
+                        return util.writeRequestDataToFile ({
+                            request: this.request,
+                            filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
-    file: function (location) { var isDirectory = fs.lstatSync (location).isDirectory ()
-            return () => {      var file        = isDirectory ? path.join (location, $http.env.file) : location
-
+    file: function (location) { var    isDirectory = fs.lstatSync (location).isDirectory ()
+            return (file) => {  file = isDirectory ? path.join (location, file) : location
                 return fs.stat (file)
                          .then (stat => {
 

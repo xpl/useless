@@ -79,12 +79,12 @@ module.exports = Supervisor = $trait ({
 
     watchDirectory: function (path, changed, then) {
 
-                        this.require ('chokidar', function () {
+                        this.require ('chokidar', () => {
 
                             log.pink ('Watching:', path)
 
                             chokidar.watch (path, { ignoreInitial: true }).on ('all',
-                                function (stat, f) { changed (stat, fs.realpathSync.catches (f) (f)) })
+                                (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) })
                             
                             if (then)
                                 then () }) }

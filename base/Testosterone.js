@@ -383,11 +383,15 @@ Test = $prototype ({
                                     /*  Return-style flow control
                                      */
                                     else {
+
+                                    /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
+                                                leads to broken unhandled exception handling after the Testosterone run completes  */
+
                                         var result = routine.call (self.context)
                                         if (result instanceof Promise) {
                                             result.then (
-                                                self.$ (self.finalize),
-                                                function (e) { self.onException(e) }) }
+                                                function (x) { self.finalize () }.postponed,
+                                                function (e) { self.onException (e) }) }
                                         else {
                                             self.finalize () } } }) },
         

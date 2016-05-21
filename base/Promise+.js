@@ -70,6 +70,8 @@ $mixin (Promise, {
     log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
+    chain: function (fn) { return this.then (function (x) { fn (x); return x; }) },
+
     done: function (fn) { return this.then (function (x) { return fn (null, x) },
                                             function (e) {        fn (e, null); throw e }) },
 
@@ -94,13 +96,23 @@ $mixin (Promise, {
 
 $mixin (Function, {
     
-    promisifyAll: $static (function (obj, cfg) { var except = new Set ((cfg || {}).except || [])
-                                return _.map2 (obj, function (x, k) {
+    promisifyAll: $static (function (obj, cfg) { var cfg    = cfg || {},
+                                                     except = cfg.except || _.noop
+
+                                if (except instanceof Array) {
+                                    except = except.asSet.matches }
+
+                                var result = {}
+
+                                for (var k in obj) {
+                                    var x = obj[k]
                                     if (x instanceof Function) {
                                         var fn = x.bind (obj)
-                                        return except.has (k) ? fn : fn.promisify }
+                                        result[k] = except (k) ? fn : fn.promisify }
                                     else {
-                                        return x } }) }),
+                                        result[k] = x } }
+
+                                return result }),
 
     promisify: $hidden ($property (
                             function () {            var f    = this
@@ -109,30 +121,44 @@ $mixin (Function, {
                                         f.apply (self, _.asArray (args).concat (function (err, what) {
                                                                                       if (err) { reject (err) }
                                                                                                  resolve (what) })) }) } })) })
+_.tests['Promise+'] = {
 
-if ($platform.NodeJS) {
-    $global.requirePromisified = function (module, cfg) {
-                                    return Function.promisifyAll (require (module), cfg) } }
+    promisify: function () {
 
-_.tests['Promise'] = {
-
-    'promisify': function () {
+    /*  Example object  */
 
         var fs = {
+
+        /*  Shouldn't be converted  */
+
             42: 42,
-            dontTouchMe: function () { return 42 },
+            dontTouchMe:  function () { $assert (arguments.length === 0); return 42 },
+            dontTouchMe2: function () { $assert (arguments.length === 0); return 42 },
+            readFileSync: function () { $assert (arguments.length === 0); return 42 },
+
+        /*  Will be promisified */
+
             readFile: function (path,   callback) { $assert (this === fs)
                             if (path) { callback (null, 'contents of ' + path) }
                                  else { callback ('path empty') } } }
 
-        fsAsync = Function.promisifyAll (fs, { except: ['dontTouchMe'] })
+    /*  Run     */
 
-        $assert (fsAsync.dontTouchMe (), fsAsync['42'], 42)
+        fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
+
+    /*  Check if 'except' worked successfully */
+
+        $assert (fsAsync.dontTouchMe (),
+                 fsAsync.dontTouchMe2 (),
+                 fsAsync.readFileSync (), fsAsync['42'], 42)
+
+    /*  Check if 'readFile' converted successfully */
 
         return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
                             fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
 
     'seq/map': function () {
+                        return
                         return __.all ([
                                     __.seq (123).assert (123),
                                     __.seq (_.constant (123)).assert (123),

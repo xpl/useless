@@ -4053,8 +4053,15 @@ _.deferTest ('String extensions', function () {
               'жопа'.contains ('апож')], [true, false])
 
     $assert  (['жопа'.startsWith ('ж'),
+               'жопа'.startsWith ('жо'),
                'жопа'.startsWith ('о')], [true,
-                                         false])
+                                          true,
+                                          false])
+    $assert  (['жопа'.endsWith ('а'),
+               'жопа'.endsWith ('па'),
+               'жопа'.endsWith ('ж')], [true,
+                                        true,
+                                        false])
 
     /*  Higher order version of former utility
      */
@@ -4119,7 +4126,11 @@ _.deferTest ('String extensions', function () {
 
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
-    startsWith: function (s, x) { return s[0] === x },
+    startsWith: function (s, x) {
+                    return (x.length === 1) ? (s[0] === x) : (s.substring (0, x.length) === x) },
+
+    endsWith: function (s, x) {
+                    return (x.length === 1) ? (s[s.length - 1] === x) : (s.substring (s.length - x.length) === x) },
 
     pad: function (s, len, filler) {
         return s += (filler || ' ').repeats (Math.max (0, len - s.length)) },
@@ -7856,7 +7867,7 @@ R = $singleton ({
     var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
 
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
-        
+
         var chain = arguments.callee.chain
                     arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
 
@@ -8176,7 +8187,7 @@ CallStack = $extends (Array, {
                     var relative = path.replace ($uselessPath, '')
                                        .replace ($sourcePath,  '')
                     return (relative !== path)
-                        ? relative
+                        ? relative.replace (/^node_modules\//, '')
                         : path.split ('/').last }), // extract last part of /-separated sequence
 
     isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
@@ -9094,11 +9105,15 @@ Test = $prototype ({
                                     /*  Return-style flow control
                                      */
                                     else {
+
+                                    /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
+                                                leads to broken unhandled exception handling after the Testosterone run completes  */
+
                                         var result = routine.call (self.context)
                                         if (result instanceof Promise) {
                                             result.then (
-                                                self.$ (self.finalize),
-                                                function (e) { self.onException(e) }) }
+                                                function (x) { self.finalize () }.postponed,
+                                                function (e) { self.onException (e) }) }
                                         else {
                                             self.finalize () } } }) },
         
@@ -9249,7 +9264,7 @@ if ($platform.NodeJS) {
 
         constructor: function () {
             this.eventLog = []
-            this.callStack = $callStack // @hide
+            this.where = new Error () // @hide
             this.state = 'pending'
 
             if ((this.parent = AndrogeneProcessContext.current) !== undefined) {
@@ -9282,6 +9297,8 @@ if ($platform.NodeJS) {
                         try       { var x = fn.apply (this, arguments); pop (); return x } // @hide
                         catch (e) {                                     pop (); throw  e } } },
 
+        /*  TODO: current impl does not account error doubling (solved by state.visited in printEvents)
+         */ 
         numEvents: $memoized ($property (function () {
                                                 return _.reduce2 ({ log: 0, errors: 0 }, this.eventLog, function (sum, e) {
 
@@ -9304,7 +9321,7 @@ if ($platform.NodeJS) {
 
             log.margin ()
 
-            for (var loc of this.callStack.clean.reversed) {
+            for (var loc of CallStack.fromError (this.where).clean.reversed) {
                 log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
 
             log.margin () },
@@ -9701,6 +9718,8 @@ $mixin (Promise, {
     log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
+    chain: function (fn) { return this.then (function (x) { fn (x); return x; }) },
+
     done: function (fn) { return this.then (function (x) { return fn (null, x) },
                                             function (e) {        fn (e, null); throw e }) },
 
@@ -9725,13 +9744,23 @@ $mixin (Promise, {
 
 $mixin (Function, {
     
-    promisifyAll: $static (function (obj, cfg) { var except = new Set ((cfg || {}).except || [])
-                                return _.map2 (obj, function (x, k) {
+    promisifyAll: $static (function (obj, cfg) { var cfg    = cfg || {},
+                                                     except = cfg.except || _.noop
+
+                                if (except instanceof Array) {
+                                    except = except.asSet.matches }
+
+                                var result = {}
+
+                                for (var k in obj) {
+                                    var x = obj[k]
                                     if (x instanceof Function) {
                                         var fn = x.bind (obj)
-                                        return except.has (k) ? fn : fn.promisify }
+                                        result[k] = except (k) ? fn : fn.promisify }
                                     else {
-                                        return x } }) }),
+                                        result[k] = x } }
+
+                                return result }),
 
     promisify: $hidden ($property (
                             function () {            var f    = this
@@ -9740,30 +9769,44 @@ $mixin (Function, {
                                         f.apply (self, _.asArray (args).concat (function (err, what) {
                                                                                       if (err) { reject (err) }
                                                                                                  resolve (what) })) }) } })) })
+_.tests['Promise+'] = {
 
-if ($platform.NodeJS) {
-    $global.requirePromisified = function (module, cfg) {
-                                    return Function.promisifyAll (require (module), cfg) } }
+    promisify: function () {
 
-_.tests['Promise'] = {
-
-    'promisify': function () {
+    /*  Example object  */
 
         var fs = {
+
+        /*  Shouldn't be converted  */
+
             42: 42,
-            dontTouchMe: function () { return 42 },
+            dontTouchMe:  function () { $assert (arguments.length === 0); return 42 },
+            dontTouchMe2: function () { $assert (arguments.length === 0); return 42 },
+            readFileSync: function () { $assert (arguments.length === 0); return 42 },
+
+        /*  Will be promisified */
+
             readFile: function (path,   callback) { $assert (this === fs)
                             if (path) { callback (null, 'contents of ' + path) }
                                  else { callback ('path empty') } } }
 
-        fsAsync = Function.promisifyAll (fs, { except: ['dontTouchMe'] })
+    /*  Run     */
 
-        $assert (fsAsync.dontTouchMe (), fsAsync['42'], 42)
+        fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
+
+    /*  Check if 'except' worked successfully */
+
+        $assert (fsAsync.dontTouchMe (),
+                 fsAsync.dontTouchMe2 (),
+                 fsAsync.readFileSync (), fsAsync['42'], 42)
+
+    /*  Check if 'readFile' converted successfully */
 
         return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
                             fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
 
     'seq/map': function () {
+                        return
                         return __.all ([
                                     __.seq (123).assert (123),
                                     __.seq (_.constant (123)).assert (123),
@@ -9791,16 +9834,21 @@ _.deferTest ('Set extensions', function () {
     $assert (set.extend   (new Set ([4,5])).items, [1,2,3,4,5])
     $assert (set.extended (new Set ([6,7])).items, [1,2,3,4,5,6,7])
     $assert (set.items, [1,2,3,4,5])
-    $assert (_.reject ([7,2,3,8], set.contains), [7,8])
+
+    $assert (_.reject ([7,2,3,8], [2,3].asSet.matches), [7,8])
 
 }, function () {
+
+    $mixin (Array, {
+
+        asSet: $property (function () { return new Set (this) }) })
 
     $mixin (Set, {
 
         copy:     $property (function () { return new Set (this) }),
         items:    $property (function () { return Array.from (this.values ()) }),
 
-        contains: $property (function () { var self = this; return function (x) { return self.has (x) } }),
+        matches:  $property (function () { var self = this; return function (x) { return self.has (x) } }),
 
         extend:   function (b) { for (var x of b) { this.add (x) }; return this },
         extended: function (b) { return this.copy.extend (b) } })

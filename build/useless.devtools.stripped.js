@@ -522,7 +522,7 @@ CallStack = $extends(Array, {
     })),
     shortenPath: $static(function (path) {
         var relative = path.replace($uselessPath, '').replace($sourcePath, '');
-        return relative !== path ? relative : path.split('/').last;
+        return relative !== path ? relative.replace(/^node_modules\//, '') : path.split('/').last;
     }),
     isThirdParty: $static(_.bindable(function (file) {
         var local = file.replace($sourcePath, '');
@@ -1403,7 +1403,9 @@ Test = $prototype({
             } else {
                 var result = routine.call(self.context);
                 if (result instanceof Promise) {
-                    result.then(self.$(self.finalize), function (e) {
+                    result.then(function (x) {
+                        self.finalize();
+                    }.postponed, function (e) {
                         self.onException(e);
                     });
                 } else {

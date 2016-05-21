@@ -270,7 +270,7 @@ CallStack = $extends (Array, {
                     var relative = path.replace ($uselessPath, '')
                                        .replace ($sourcePath,  '')
                     return (relative !== path)
-                        ? relative
+                        ? relative.replace (/^node_modules\//, '')
                         : path.split ('/').last }), // extract last part of /-separated sequence
 
     isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
