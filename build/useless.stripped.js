@@ -5171,8 +5171,8 @@ CallStack = $extends(Array, {
         }));
     }),
     clean: $property(function () {
-        var clean = this.mergeDuplicateLines.reject(function (e) {
-            return e.thirdParty || e.hide;
+        var clean = this.mergeDuplicateLines.reject(function (e, i) {
+            return (e.thirdParty || e.hide) && i !== 0;
         });
         return clean.length === 0 ? this : clean;
     }),
@@ -5560,7 +5560,7 @@ _.extend(log, {
             }))));
             var totalText = _.pluck(runs, 'text').join('');
             var where = config.where || log.impl.walkStack($callStack) || {};
-            var indentation = '\t'.repeats(config.indent);
+            var indentation = (config.indentPattern || '\t').repeats(config.indent);
             writeBackend({
                 lines: lines,
                 config: config,
@@ -6341,9 +6341,11 @@ if ($platform.NodeJS) {
         })),
         printLog: function (state) {
             state = state || {};
-            if (state && state.verbose || this.numEvents.all > 0) {
-                this.printWhere(state);
-                this.printEvents(state);
+            if (state.verbose || this.numEvents.all > 0) {
+                log.withConfig(log.config({ indentPattern: '    ' }), () => {
+                    this.printWhere(state);
+                    this.printEvents(state);
+                });
             }
         },
         printWhere: function (state) {
@@ -6355,7 +6357,7 @@ if ($platform.NodeJS) {
                 '': 'purple'
             }[this.state || '']];
             log.margin();
-            for (var loc of CallStack.fromError(this.where).clean.reversed) {
+            for (var loc of CallStack.fromError(this.where).offset(3).clean.reject(x => x.native).reversed) {
                 log.write(color, log.config({
                     indent: indent,
                     location: true,
@@ -6366,13 +6368,14 @@ if ($platform.NodeJS) {
         },
         printEvents: function (state) {
             var state = state || {}, indent = state.indent || 0, visited = state.visited || new Set();
-            if (state && state.verbose || this.numEvents.all > 0) {
+            if (state.verbose || this.numEvents.all > 0) {
                 for (var e of this.eventLog) {
                     if (e instanceof AndrogeneProcessContext) {
                         if (e.eventLog.length) {
                             e.printLog({
                                 indent: indent + 1,
-                                visited: visited
+                                visited: visited,
+                                verbose: state.verbose
                             });
                         }
                     } else if (e instanceof Error) {
@@ -6508,6 +6511,14 @@ if ($platform.NodeJS) {
     var throwTest = assertion(function () {
         throw new Error('yo');
     });
+    var thenFunctionTest = assertion(function () {
+        return Promise.resolve().then(function () {
+            return function () {
+            };
+        }).then(function (x) {
+            console.log(x);
+        });
+    });
 }());
 ;
 (function () {
@@ -6634,7 +6645,10 @@ $mixin(Promise, {
         return this.timeout(0);
     }),
     log: $property(function () {
-        return this.then(log, log.e.then(_.throwError));
+        return this.then(function (x) {
+            log(x);
+            return x;
+        }, log.e.then(_.throwError));
     }),
     alert: $property(function () {
         return this.then(alert2, alert2.then(_.throwError));

@@ -471,8 +471,8 @@ CallStack = $extends(Array, {
         }));
     }),
     clean: $property(function () {
-        var clean = this.mergeDuplicateLines.reject(function (e) {
-            return e.thirdParty || e.hide;
+        var clean = this.mergeDuplicateLines.reject(function (e, i) {
+            return (e.thirdParty || e.hide) && i !== 0;
         });
         return clean.length === 0 ? this : clean;
     }),
@@ -860,7 +860,7 @@ _.extend(log, {
             }))));
             var totalText = _.pluck(runs, 'text').join('');
             var where = config.where || log.impl.walkStack($callStack) || {};
-            var indentation = '\t'.repeats(config.indent);
+            var indentation = (config.indentPattern || '\t').repeats(config.indent);
             writeBackend({
                 lines: lines,
                 config: config,

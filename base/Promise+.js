@@ -67,7 +67,7 @@ $mixin (Promise, {
     delay: function (ms) { return this.then (__.delays (ms)) },
     timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
     now: $property (function () { return this.timeout (0) }),
-    log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
+    log: $property (function () { return this.then (function (x) { log (x); return x }, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
     chain: function (fn) { return this.then (function (x) { fn (x); return x; }) },
@@ -163,6 +163,7 @@ _.tests['Promise+'] = {
                                     __.seq (123).assert (123),
                                     __.seq (_.constant (123)).assert (123),
                                     __.seq ([123, 333]).assert (333),
+                                    __.seq (Promise.resolve (123), Promise.resolve (333)).assert (333),
                                     __.seq ([123, _.constant (333)]).assert (333),
                                     __.seq ([123, __.constant (333)]).assert (333),
                                     __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),

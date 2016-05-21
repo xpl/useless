@@ -4434,7 +4434,10 @@ $mixin(Promise, {
         return this.timeout(0);
     }),
     log: $property(function () {
-        return this.then(log, log.e.then(_.throwError));
+        return this.then(function (x) {
+            log(x);
+            return x;
+        }, log.e.then(_.throwError));
     }),
     alert: $property(function () {
         return this.then(alert2, alert2.then(_.throwError));

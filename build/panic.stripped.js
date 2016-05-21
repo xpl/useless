@@ -4434,7 +4434,10 @@ $mixin(Promise, {
         return this.timeout(0);
     }),
     log: $property(function () {
-        return this.then(log, log.e.then(_.throwError));
+        return this.then(function (x) {
+            log(x);
+            return x;
+        }, log.e.then(_.throwError));
     }),
     alert: $property(function () {
         return this.then(alert2, alert2.then(_.throwError));
@@ -5453,8 +5456,8 @@ CallStack = $extends(Array, {
         }));
     }),
     clean: $property(function () {
-        var clean = this.mergeDuplicateLines.reject(function (e) {
-            return e.thirdParty || e.hide;
+        var clean = this.mergeDuplicateLines.reject(function (e, i) {
+            return (e.thirdParty || e.hide) && i !== 0;
         });
         return clean.length === 0 ? this : clean;
     }),
@@ -5842,7 +5845,7 @@ _.extend(log, {
             }))));
             var totalText = _.pluck(runs, 'text').join('');
             var where = config.where || log.impl.walkStack($callStack) || {};
-            var indentation = '\t'.repeats(config.indent);
+            var indentation = (config.indentPattern || '\t').repeats(config.indent);
             writeBackend({
                 lines: lines,
                 config: config,

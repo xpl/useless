@@ -61,7 +61,9 @@ _.tests.log = {
 
         log.withConfig (log.indent (1), function () {
             log.pink ('Config stack + scopes + higher order API test:')
-            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) }) } }
+            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
+
+        $assert (log (log.config ({}), 42), 42) } }
 
 _.extend (
 
@@ -224,7 +226,7 @@ _.extend (log, {
 
             var totalText       = _.pluck (runs, 'text').join ('')
             var where           = config.where || log.impl.walkStack ($callStack) || {}
-            var indentation     = '\t'.repeats (config.indent)
+            var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 
             writeBackend ({
                 lines:         lines,

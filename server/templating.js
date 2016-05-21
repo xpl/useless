@@ -5,22 +5,13 @@ ServerTemplating = module.exports = $trait ({
 
     $depends: [require ('./http')],
 
-    /*  Front-end (as request processing chain primitive)
-     */
-    template: function (fileName, args) {
+    template: function (file, args) {
 
-        return () => {
+                    $http.headers['Content-Type'] =
+                        $http.mime.guessFromFileName (file)
 
-            $http.headers['Content-Type'] =
-                $http.mime.guessFromFileName (fileName)
+                    return this.compiledTemplate (file).call (this, _.extend ({ env: $http.env }, args)) },
 
-            this.compiledTemplate (fileName)
-                .then (fn => fn.call (this, _.extend ({ env: $http.env }, $http.globalTemplateArgs, args))) } },
-
-    /*  Back-end
-     */
-    evalTemplate: function (fileName, args) {
-                    return this.compiledTemplate (fileName).then (fn => fn.call (this, args)) },
-
-    compiledTemplate: $memoize (function (fileName) {
-                                    return fs.readFile ('templates/' + fileName, { encoding: 'utf-8' }).then (_.template) }) })
+    compiledTemplate: $memoize (function (file) {
+                                    return  _.template (fs.readFileSync (path.join (process.cwd (), 'templates', file), { encoding: 'utf-8' })) })
+})

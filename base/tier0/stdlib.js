@@ -261,7 +261,7 @@ _.withTest (['stdlib', 'each 2.0'], function () {
 }, function () { 
 
     _.each2 =            function (x,                                                                           f) {
-           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) } // @hide
       else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
          else                          {                                                                        f (x,        undefined, 1) } } })
 
@@ -300,7 +300,7 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
 
          _.each2 (rights, function (right) {
                   left =  no_left ? right :
-                          op (left, right); no_left = false }); return left }
+                          op (left, right); no_left = false }); return left } // @hide
 
     _.reduceReduce = function (_1, _2, _3) {                             var initial = _1, value = _2, op = _3
                         if (arguments.length < 3) {                          initial = {}; value = _1; op = _2 }

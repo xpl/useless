@@ -1876,7 +1876,7 @@ _.withTest (['stdlib', 'each 2.0'], function () {
 }, function () { 
 
     _.each2 =            function (x,                                                                           f) {
-           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) } // @hide
       else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
          else                          {                                                                        f (x,        undefined, 1) } } })
 
@@ -1915,7 +1915,7 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
 
          _.each2 (rights, function (right) {
                   left =  no_left ? right :
-                          op (left, right); no_left = false }); return left }
+                          op (left, right); no_left = false }); return left } // @hide
 
     _.reduceReduce = function (_1, _2, _3) {                             var initial = _1, value = _2, op = _3
                         if (arguments.length < 3) {                          initial = {}; value = _1; op = _2 }
@@ -8136,7 +8136,7 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || e.hide })
+        var clean = this.mergeDuplicateLines.reject (function (e, i) { return (e.thirdParty || e.hide) && (i !== 0) })
         return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
@@ -8336,7 +8336,9 @@ _.tests.log = {
 
         log.withConfig (log.indent (1), function () {
             log.pink ('Config stack + scopes + higher order API test:')
-            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) }) } }
+            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
+
+        $assert (log (log.config ({}), 42), 42) } }
 
 _.extend (
 
@@ -8499,7 +8501,7 @@ _.extend (log, {
 
             var totalText       = _.pluck (runs, 'text').join ('')
             var where           = config.where || log.impl.walkStack ($callStack) || {}
-            var indentation     = '\t'.repeats (config.indent)
+            var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 
             writeBackend ({
                 lines:         lines,
@@ -9311,9 +9313,10 @@ if ($platform.NodeJS) {
                                                     return sum }) })),
 
         printLog: function (state) { state = state || {}
-                        if ((state && state.verbose) || (this.numEvents.all > 0)) {
-                            this.printWhere (state)
-                            this.printEvents (state) } },
+                        if (state.verbose || (this.numEvents.all > 0)) {
+                            log.withConfig (log.config ({ indentPattern: '    ' }), () => {
+                                                                                    this.printWhere (state)
+                                                                                    this.printEvents (state) }) } },
 
         printWhere: function (state) { var indent = (state && state.indent) || 0
 
@@ -9321,7 +9324,12 @@ if ($platform.NodeJS) {
 
             log.margin ()
 
-            for (var loc of CallStack.fromError (this.where).clean.reversed) {
+            for (var loc of CallStack.fromError (this.where)
+                                        .offset (3)
+                                        .clean
+                                        .reject (x => x.native)
+                                        .reversed) {
+                
                 log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
 
             log.margin () },
@@ -9330,12 +9338,12 @@ if ($platform.NodeJS) {
                                             indent  = state.indent || 0,
                                             visited = state.visited || new Set () // contains errors already printed, to reduce clutter
             
-            if ((state && state.verbose) || (this.numEvents.all > 0)) {
+            if (state.verbose || (this.numEvents.all > 0)) {
 
                 for (var e of this.eventLog) {
                     if (e instanceof AndrogeneProcessContext) {
                         if (e.eventLog.length) {
-                            e.printLog ({ indent: indent + 1, visited: visited }) } }
+                            e.printLog ({ indent: indent + 1, visited: visited, verbose: state.verbose }) } }
                     else if (e instanceof Error) {
                         if (!visited.has (e)) {
                              visited.add (e)
@@ -9393,7 +9401,6 @@ if ($platform.NodeJS) {
                     delete AndrogenePromise.constructing } }
 
         then (resolve, reject) {
-
             var next = this.processContext.within (OriginalPromise.prototype.then, 2).apply (this, // @hide
                                                         _.map (arguments, function (fn) {
                                                                             return fn && (function (x) {
@@ -9512,15 +9519,21 @@ if ($platform.NodeJS) {
     var throwTest = assertion (function () {
                                     throw new Error ('yo') })
 
+    /*  TODO: investigate why fails
+     */
+    var thenFunctionTest = assertion (function () {
+                                            return Promise.resolve ().then (function () { return function () { } })
+                                                .then (function (x) { console.log (x) }) })
+
     // uncomment, then run "node test.js Androgene" to see output
 
     /*_.tests['Androgene'] = function () {
 
-        var result = raceTest ()
+        var result = thenFunctionTest ()
 
         return result.disarmAndrogene ().finally (function (e, x) {
 
-                                            result.processContext.root.printLog ()
+                                            result.processContext.root.printLog ({ verbose: true })
                                             log.margin ()
 
                                             if (e) { throw e } })
@@ -9715,7 +9728,7 @@ $mixin (Promise, {
     delay: function (ms) { return this.then (__.delays (ms)) },
     timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
     now: $property (function () { return this.timeout (0) }),
-    log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
+    log: $property (function () { return this.then (function (x) { log (x); return x }, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
     chain: function (fn) { return this.then (function (x) { fn (x); return x; }) },
@@ -9811,6 +9824,7 @@ _.tests['Promise+'] = {
                                     __.seq (123).assert (123),
                                     __.seq (_.constant (123)).assert (123),
                                     __.seq ([123, 333]).assert (333),
+                                    __.seq (Promise.resolve (123), Promise.resolve (333)).assert (333),
                                     __.seq ([123, _.constant (333)]).assert (333),
                                     __.seq ([123, __.constant (333)]).assert (333),
                                     __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),

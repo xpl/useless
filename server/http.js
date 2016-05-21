@@ -25,7 +25,7 @@ module.exports = $trait ({
 /*  The $http thing prototype
     ======================================================================== */
 
-    HttpContext: $prototype ({
+    HttpContext: $component ({
 
         Error: class extends Error {}, // @hide
 
@@ -71,24 +71,21 @@ module.exports = $trait ({
                                         stub: true,
                                         env: _.omit (cfg, 'json', 'method', 'url', 'code', 'nonce', 'headers', 'cookies') }) }),
 
-        constructor: function (cfg) {
+        init: function () {
 
-            _.extend2 (this, {
+            _.defaults (this, {
 
                 code: undefined,
                 timeout: undefined,
                 headers: {},
                 nonce: String.randomHex (6),
-                cookies: cfg.cookies || _.object (_.map (
-                                                        (cfg && cfg.request &&
-                                                                cfg.request.headers &&
-                                                                cfg.request.headers.cookie &&
-                                                                cfg.request.headers.cookie.split (';')) || [],
-
-                                                         cookie => cookie.split ('=').map (val => (val || '').trimmed))),
+                cookies: _.object (_.map (this.request.headers &&
+                                          this.request.headers.cookie &&
+                                          this.request.headers.cookie.split (';')) || [], cookie => cookie.split ('=').map (
+                                                                                                        val => (val || '').trimmed)),
                 env: {
                     when: Date.now (),
-                    who:  null } }, cfg)
+                    who:  null } })
 
             this.uri       = this.request && this.request.url && url.parse (this.request.url)
             this.path      = this.uri && this.uri.path.split ('/')
@@ -146,7 +143,26 @@ module.exports = $trait ({
         end: function () {
                 if (!this.ended) {
                      this.ended = true
-                     this.response.end () }; return this } }),
+                     this.response.end () }; return this },
+
+        file: function (file) {
+
+                return fs.stat (file)
+                         .then (stat => {   if (!stat.isFile ()) {
+                                                throw this.NotFoundError }
+
+                                            this.setHeaders ({
+                                                    'Content-Type': $http.mime.guessFromFileName (file) || this.mime.binary,
+                                                    'Content-Length': stat.size })
+                                                 .writeHead ()
+
+                                            return new Promise ((then, err) =>
+                                                                    fs.createReadStream (file, { 'bufferSize': 4 * 1024 })
+                                                                        .on ('error', err)
+                                                                        .on ('close', then.arity0)
+                                                                        .pipe (this.response)) })
+
+                    .catch (e => { throw this.NotFoundError }) } }),
 
 /*  ======================================================================== */
 
@@ -253,16 +269,16 @@ module.exports = $trait ({
                 $http.writeHead ()
                      .write ({
                         success: false,
-                        error: e }) }
-
-            throw e }
+                        error: e }) } }
 
         else { var x = log.impl.stringify (e)
 
             $http.setCode ($http.code || 500)
                  .writeHead ()
                  .write (($http.headers['Content-Type'] === $http.mime.html) ?
-                            ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x) } },
+                            ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x) }
+
+        throw e },
 
 
 /*  REQUEST PROCESSING PRIMITIVES
@@ -309,24 +325,9 @@ module.exports = $trait ({
                             request: this.request,
                             filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
-    file: function (location) { var    isDirectory = fs.lstatSync (location).isDirectory ()
-            return (file) => {  file = isDirectory ? path.join (location, file) : location
-                return fs.stat (file)
-                         .then (stat => {
-
-                            if (!stat.isFile ()) {
-                                throw $http.NotFoundError }
-
-                            $http.setHeaders ({
-                                    'Content-Type': $http.mime.guessFromFileName (file) || $http.mime.binary,
-                                    'Content-Length': stat.size })
-                                 .writeHead ()
-
-                            return new Promise ((then, err) =>
-                                                    fs.createReadStream (file, { 'bufferSize': 4 * 1024 })
-                                                        .on ('error', err)
-                                                        .on ('close', then.arity0)
-                                                        .pipe ($http.response)) }) } },
+    file: function (location) { var isDirectory = fs.lstatSync (location).isDirectory ()
+            return () => {
+                return $http.file (isDirectory ? path.join (location, $http.env.file) : location) } },
 
 /*  ======================================================================== */
 

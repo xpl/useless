@@ -1247,7 +1247,7 @@ _.withTest (['stdlib', 'each 2.0'], function () {
 }, function () { 
 
     _.each2 =            function (x,                                                                           f) {
-           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) }
+           if (     _.isArrayLike (x)) {                          for (var     i = 0, n = x.length; i < n; i++) f (x[       i ],     i, n) } // @hide
       else if (_.isStrictlyObject (x)) { var k = Object.keys (x); for (var ki, i = 0, n = k.length; i < n; i++) f (x[ki = k[i]],    ki, n) }
          else                          {                                                                        f (x,        undefined, 1) } } })
 
@@ -1286,7 +1286,7 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
 
          _.each2 (rights, function (right) {
                   left =  no_left ? right :
-                          op (left, right); no_left = false }); return left }
+                          op (left, right); no_left = false }); return left } // @hide
 
     _.reduceReduce = function (_1, _2, _3) {                             var initial = _1, value = _2, op = _3
                         if (arguments.length < 3) {                          initial = {}; value = _1; op = _2 }
@@ -7107,7 +7107,7 @@ $mixin (Promise, {
     delay: function (ms) { return this.then (__.delays (ms)) },
     timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
     now: $property (function () { return this.timeout (0) }),
-    log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
+    log: $property (function () { return this.then (function (x) { log (x); return x }, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
     chain: function (fn) { return this.then (function (x) { fn (x); return x; }) },
@@ -7203,6 +7203,7 @@ _.tests['Promise+'] = {
                                     __.seq (123).assert (123),
                                     __.seq (_.constant (123)).assert (123),
                                     __.seq ([123, 333]).assert (333),
+                                    __.seq (Promise.resolve (123), Promise.resolve (333)).assert (333),
                                     __.seq ([123, _.constant (333)]).assert (333),
                                     __.seq ([123, __.constant (333)]).assert (333),
                                     __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
@@ -8508,7 +8509,7 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || e.hide })
+        var clean = this.mergeDuplicateLines.reject (function (e, i) { return (e.thirdParty || e.hide) && (i !== 0) })
         return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
@@ -8708,7 +8709,9 @@ _.tests.log = {
 
         log.withConfig (log.indent (1), function () {
             log.pink ('Config stack + scopes + higher order API test:')
-            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) }) } }
+            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
+
+        $assert (log (log.config ({}), 42), 42) } }
 
 _.extend (
 
@@ -8871,7 +8874,7 @@ _.extend (log, {
 
             var totalText       = _.pluck (runs, 'text').join ('')
             var where           = config.where || log.impl.walkStack ($callStack) || {}
-            var indentation     = '\t'.repeats (config.indent)
+            var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 
             writeBackend ({
                 lines:         lines,

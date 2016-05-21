@@ -74,9 +74,10 @@
                                                     return sum }) })),
 
         printLog: function (state) { state = state || {}
-                        if ((state && state.verbose) || (this.numEvents.all > 0)) {
-                            this.printWhere (state)
-                            this.printEvents (state) } },
+                        if (state.verbose || (this.numEvents.all > 0)) {
+                            log.withConfig (log.config ({ indentPattern: '    ' }), () => {
+                                                                                    this.printWhere (state)
+                                                                                    this.printEvents (state) }) } },
 
         printWhere: function (state) { var indent = (state && state.indent) || 0
 
@@ -84,7 +85,12 @@
 
             log.margin ()
 
-            for (var loc of CallStack.fromError (this.where).clean.reversed) {
+            for (var loc of CallStack.fromError (this.where)
+                                        .offset (3)
+                                        .clean
+                                        .reject (x => x.native)
+                                        .reversed) {
+                
                 log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
 
             log.margin () },
@@ -93,12 +99,12 @@
                                             indent  = state.indent || 0,
                                             visited = state.visited || new Set () // contains errors already printed, to reduce clutter
             
-            if ((state && state.verbose) || (this.numEvents.all > 0)) {
+            if (state.verbose || (this.numEvents.all > 0)) {
 
                 for (var e of this.eventLog) {
                     if (e instanceof AndrogeneProcessContext) {
                         if (e.eventLog.length) {
-                            e.printLog ({ indent: indent + 1, visited: visited }) } }
+                            e.printLog ({ indent: indent + 1, visited: visited, verbose: state.verbose }) } }
                     else if (e instanceof Error) {
                         if (!visited.has (e)) {
                              visited.add (e)
@@ -156,7 +162,6 @@
                     delete AndrogenePromise.constructing } }
 
         then (resolve, reject) {
-
             var next = this.processContext.within (OriginalPromise.prototype.then, 2).apply (this, // @hide
                                                         _.map (arguments, function (fn) {
                                                                             return fn && (function (x) {
@@ -275,15 +280,21 @@
     var throwTest = assertion (function () {
                                     throw new Error ('yo') })
 
+    /*  TODO: investigate why fails
+     */
+    var thenFunctionTest = assertion (function () {
+                                            return Promise.resolve ().then (function () { return function () { } })
+                                                .then (function (x) { console.log (x) }) })
+
     // uncomment, then run "node test.js Androgene" to see output
 
     /*_.tests['Androgene'] = function () {
 
-        var result = raceTest ()
+        var result = thenFunctionTest ()
 
         return result.disarmAndrogene ().finally (function (e, x) {
 
-                                            result.processContext.root.printLog ()
+                                            result.processContext.root.printLog ({ verbose: true })
                                             log.margin ()
 
                                             if (e) { throw e } })

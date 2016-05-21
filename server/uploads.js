@@ -5,28 +5,26 @@ var imagemagick = require ('./base/imagemagick'),
 ServerUploads = module.exports = $trait ({
 
     uploadImageTo: function (path) {
-                    return this.uploadImageAsJPEG (this.saveImageTo (path)) },
+                        return this.uploadImageAsJPEG (this.genFileName (path)) },
 
-    saveImageTo: function (targetDir) {
-                    return (context, then) => {
-                                var targetPath = path.join (process.cwd (), targetDir)
-                                then (targetPath, util.uniqueFileName (targetPath, String.randomHex (8), 'jpg')) } },
+    genFileName: function (dir, ext) { dir = path.join (process.cwd (), dir)
+                    return () => {
+                        return { dir: dir,
+                                name: util.uniqueFileName (dir, String.randomHex (8), ext),
+                                 ext: ext } } },
 
-    uploadImageAsJPEG: function (getTargetPath) { return context => {
+    uploadImageAsJPEG: function (getTargetPath) { return () => {
 
-        if ('image' !== _.first ((context.request.headers['x-file-type'] || 'unknown/unknown').split ('/'))) {
-            context.jsonFailure ('Uploaded file is not an image') }
+        var fileType = ($http.request.headers['x-file-type'] || 'unknown/unknown')
+        if (fileType.split ('/').first !== 'image') {
+            throw new Error ('Uploaded file is not an image') }
 
-        else { getTargetPath.call (this, context, (targetDir, fileName) => {
-                                                        context.handleFileUpload (uploadedFilePath => {
-                                                            var targetFilePath = path.join (targetDir, fileName + '.jpg')
-                                                                imagemagick.toJPEG (uploadedFilePath, targetFilePath, (err, features) => {
-                                                                                        if (err) {
-                                                                                            log.error (err)
-                                                                                            context.jsonFailure ('Image format is not supported') }
-                                                                                        else {
-                                                                                            log.success ('uploadPhoto: saved ', targetFilePath)
-                                                                                            context.jsonSuccess ({
-                                                                                                id: fileName,
+        else { __(getTargetPath ()).then (target => {   target = path.join (target.dir, target.name + '.' + (target.ext || 'jpg'))
+                                                        return this.receiveFile ()
+                                                                   .then (file =>
+                                                                        imagemagick.toJPEG (file, target)
+                                                                                   .then (features => { log.g ('saved', target)
+                                                                                            return {
+                                                                                                id: target.name,
                                                                                                  w: features.width,
-                                                                                                 h: features.height }) } }) }) }) } } } })
+                                                                                                 h: features.height } })) }) } } } })
