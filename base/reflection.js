@@ -11,10 +11,10 @@ _.tests.reflection = {
 
     'readSource': function () { var uselessJS = $uselessPath + $uselessFile
 
-        _.readSource (uselessJS, function (text) {
+        SourceFiles.read (uselessJS, function (text) {
             $assert (text.length > 0) })
 
-        _.readSourceLine (uselessJS, 0, function (line) {
+        SourceFiles.line (uselessJS, 0, function (line) {
             $assert (line.length > 0) }) },
 
     'CallStack from error': function () {
@@ -173,12 +173,6 @@ SourceFiles = $singleton (Component, {
                     if (then) {
                         then () } }) }} })
 
-/*  Old API
- */
-_.readSourceLine = SourceFiles.line
-_.readSource     = SourceFiles.read
-_.writeSource    = SourceFiles.write
-
 
 /*  Callstack API
  */
@@ -225,7 +219,7 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || (e.source || '').contains ('// @hide') })
+        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || e.hide })
         return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
@@ -260,7 +254,8 @@ CallStack = $extends (Array, {
             if (!entry.sourceReady) {
                  entry.sourceReady = _.barrier ()
                  SourceFiles.line ((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
-                    entry.sourceReady (entry.source = src) }) }
+                    entry.hide = src.contains ('// @hide')
+                    entry.sourceReady (entry.source = src.replace ('// @hide', '')) }) }
 
             this.push (entry) }, this) },
 

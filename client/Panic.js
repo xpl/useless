@@ -180,7 +180,7 @@ Panic.widget = $singleton (Component, {
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
 				.text (e.message)
-				.append (_.any (stackEntries, function (e, i) { return (e.thirdParty || e['native']) && (i !== 0) })
+				.append (_.any (stackEntries, function (e, i) { return (e.thirdParty || e['native'] || e.hide) && (i !== 0) })
 							? '<a class="clean-toggle" href="javascript:{}"></a>'
 							: '')
 				.click (this.$ (function (e) {
@@ -196,13 +196,14 @@ Panic.widget = $singleton (Component, {
 
 				var dom = $('<li class="callstack-entry">')
 						.toggleClass ('third-party', entry.thirdParty)
-						.toggleClass ('native', entry['native'])
+                        .toggleClass ('hide',        entry.hide)
+						.toggleClass ('native',      entry['native'])
 						.append ([
 							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : this.cleanupFileName (entry.fileShort),
 																		entry.line]).join (':')),
 							$('<span class="callee">').text (entry.calleeShort),
 							$('<span class="src i-am-busy">').click (this.$ (function (e) { var el = $(e.delegateTarget)
-								el.waitUntil (_.readSource.partial ((entry.remote ? 'api/source/' : '') + entry.file), this.$ (function (text) {
+								el.waitUntil (SourceFiles.read.partial ((entry.remote ? 'api/source/' : '') + entry.file), this.$ (function (text) {
 									if (dom.is ('.full')) {
 										dom.removeClass ('full')
 										dom.transitionend (function () {

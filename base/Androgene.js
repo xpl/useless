@@ -60,18 +60,24 @@
                         try       { var x = fn.apply (this, arguments); pop (); return x } // @hide
                         catch (e) {                                     pop (); throw  e } } },
 
-        where: $property (function () {
+        numEvents: $memoized ($property (function () {
+                                                return _.reduce2 ({ log: 0, errors: 0 }, this.eventLog, function (sum, e) {
 
-                            var stack = this.callStack.reject (function (x) { return x.source.contains ('@hide') })
+                                                    var n = ((e instanceof AndrogeneProcessContext) ? e.numEvents :
+                                                            ((e instanceof Error)                   ? { errors: 1 } :
+                                                                                                      { log: 1 }))
+                                                    sum.all = (sum.errors += (n.errors || 0)) +
+                                                              (sum.log    += (n.log    || 0))
 
-                            return this.parent
-                                        ? stack.last
-                                        : stack.first }),
+                                                    return sum }) })),
 
-        printWhere: function (indent, printedErrors) { indent = indent || 0
+        printLog: function (state) { state = state || {}
+                        if ((state && state.verbose) || (this.numEvents.all > 0)) {
+                            this.printWhere (state)
+                            this.printEvents (state) } },
 
-            //var where = this.where
-            //var src = where.source || 'Promise'
+        printWhere: function (state) { var indent = (state && state.indent) || 0
+
             var color = log.color[{ 'fulfilled': 'green', 'pending': 'orange', 'rejected': 'red', '': 'purple' }[this.state || '']]
 
             log.margin ()
@@ -79,38 +85,26 @@
             for (var loc of this.callStack.clean.reversed) {
                 log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
 
-            //log.write (color, log.config ({ indent: indent, location: true, where: where }), src)
-            //log.write (color, log.config ({ indent: indent }), '-'.repeats (src.length))
+            log.margin () },
+
+        printEvents: function (state) { var state = state || {},
+                                            indent  = state.indent || 0,
+                                            visited = state.visited || new Set () // contains errors already printed, to reduce clutter
             
-            log.margin () },
+            if ((state && state.verbose) || (this.numEvents.all > 0)) {
 
-        printEvents: function (indent, printedErrors) { indent = indent || 0
-                                                        printedErrors = printedErrors || new Set ()
+                for (var e of this.eventLog) {
+                    if (e instanceof AndrogeneProcessContext) {
+                        if (e.eventLog.length) {
+                            e.printLog ({ indent: indent + 1, visited: visited }) } }
+                    else if (e instanceof Error) {
+                        if (!visited.has (e)) {
+                             visited.add (e)
+                             log.boldRed (log.indent (indent + 1), e) } }
+                    else {
+                        log.write.apply (null, [log.indent (indent + 1)].concat (e)) } }
 
-            /*  Collapses redundant "Promise → then" case
-             */
-            var eventLog = false && (this.eventLog.length === 1 && (this.eventLog[0] instanceof AndrogeneProcessContext))
-                                ? this.eventLog[0].eventLog
-                                : this.eventLog
-
-            for (var event of eventLog) {
-                if (event instanceof AndrogeneProcessContext) {
-                    if (event.eventLog.length) {
-                        event.printLog (indent + 1, printedErrors) } }
-                else if (event instanceof Error) {
-                    if (!printedErrors.has (event)) {
-                         printedErrors.add (event)
-                         log.boldRed (log.indent (indent + 1), event) }
-                }
-                else {
-                    log.write.apply (null, [log.indent (indent + 1)].concat (event)) } }
-
-            log.margin () },
-
-        printLog: function (indent, printedErrors) {
-
-            this.printWhere (indent, printedErrors)
-            this.printEvents (indent, printedErrors) } })
+                log.margin () } } })
 
 /*  ------------------------------------------------------------------------ */
 

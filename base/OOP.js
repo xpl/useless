@@ -710,7 +710,7 @@ _.withTest ('OOP', {
 
         var result = (arguments_.length) ?
                         _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) :
-                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) })
+                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) }) // @hide
         
         //result.context = this_
 

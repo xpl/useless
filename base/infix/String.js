@@ -80,6 +80,9 @@ _.deferTest ('String extensions', function () {
                ''        .limitedTo (0)], ['foobar',
                                            'toolo…', ''])
 
+    $assert  ('жоп'.pad (5),      'жоп  ')
+    $assert  ('жоп'.pad (5, '→'), 'жоп→→')
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -87,6 +90,9 @@ _.deferTest ('String extensions', function () {
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
     startsWith: function (s, x) { return s[0] === x },
+
+    pad: function (s, len, filler) {
+        return s += (filler || ' ').repeats (Math.max (0, len - s.length)) },
 
     cut: function (s, from) {
         return s.substring (0, from - 1) + s.substring (from, s.length) },

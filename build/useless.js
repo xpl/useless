@@ -4110,6 +4110,9 @@ _.deferTest ('String extensions', function () {
                ''        .limitedTo (0)], ['foobar',
                                            'toolo…', ''])
 
+    $assert  ('жоп'.pad (5),      'жоп  ')
+    $assert  ('жоп'.pad (5, '→'), 'жоп→→')
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -4117,6 +4120,9 @@ _.deferTest ('String extensions', function () {
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
     startsWith: function (s, x) { return s[0] === x },
+
+    pad: function (s, len, filler) {
+        return s += (filler || ' ').repeats (Math.max (0, len - s.length)) },
 
     cut: function (s, from) {
         return s.substring (0, from - 1) + s.substring (from, s.length) },
@@ -5578,7 +5584,7 @@ _.withTest ('OOP', {
 
         var result = (arguments_.length) ?
                         _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) :
-                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) })
+                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) }) // @hide
         
         //result.context = this_
 
@@ -7911,10 +7917,10 @@ _.tests.reflection = {
 
     'readSource': function () { var uselessJS = $uselessPath + $uselessFile
 
-        _.readSource (uselessJS, function (text) {
+        SourceFiles.read (uselessJS, function (text) {
             $assert (text.length > 0) })
 
-        _.readSourceLine (uselessJS, 0, function (line) {
+        SourceFiles.line (uselessJS, 0, function (line) {
             $assert (line.length > 0) }) },
 
     'CallStack from error': function () {
@@ -8073,12 +8079,6 @@ SourceFiles = $singleton (Component, {
                     if (then) {
                         then () } }) }} })
 
-/*  Old API
- */
-_.readSourceLine = SourceFiles.line
-_.readSource     = SourceFiles.read
-_.writeSource    = SourceFiles.write
-
 
 /*  Callstack API
  */
@@ -8125,7 +8125,7 @@ CallStack = $extends (Array, {
                             return memo }, _.clone (group[0])) })) }),
 
     clean: $property (function () {
-        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || (e.source || '').contains ('// @hide') })
+        var clean = this.mergeDuplicateLines.reject (function (e) { return e.thirdParty || e.hide })
         return (clean.length === 0) ? this : clean }),
 
     asArray: $property (function () {
@@ -8160,7 +8160,8 @@ CallStack = $extends (Array, {
             if (!entry.sourceReady) {
                  entry.sourceReady = _.barrier ()
                  SourceFiles.line ((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
-                    entry.sourceReady (entry.source = src) }) }
+                    entry.hide = src.contains ('// @hide')
+                    entry.sourceReady (entry.source = src.replace ('// @hide', '')) }) }
 
             this.push (entry) }, this) },
 
@@ -9281,18 +9282,24 @@ if ($platform.NodeJS) {
                         try       { var x = fn.apply (this, arguments); pop (); return x } // @hide
                         catch (e) {                                     pop (); throw  e } } },
 
-        where: $property (function () {
+        numEvents: $memoized ($property (function () {
+                                                return _.reduce2 ({ log: 0, errors: 0 }, this.eventLog, function (sum, e) {
 
-                            var stack = this.callStack.reject (function (x) { return x.source.contains ('@hide') })
+                                                    var n = ((e instanceof AndrogeneProcessContext) ? e.numEvents :
+                                                            ((e instanceof Error)                   ? { errors: 1 } :
+                                                                                                      { log: 1 }))
+                                                    sum.all = (sum.errors += (n.errors || 0)) +
+                                                              (sum.log    += (n.log    || 0))
 
-                            return this.parent
-                                        ? stack.last
-                                        : stack.first }),
+                                                    return sum }) })),
 
-        printWhere: function (indent, printedErrors) { indent = indent || 0
+        printLog: function (state) { state = state || {}
+                        if ((state && state.verbose) || (this.numEvents.all > 0)) {
+                            this.printWhere (state)
+                            this.printEvents (state) } },
 
-            //var where = this.where
-            //var src = where.source || 'Promise'
+        printWhere: function (state) { var indent = (state && state.indent) || 0
+
             var color = log.color[{ 'fulfilled': 'green', 'pending': 'orange', 'rejected': 'red', '': 'purple' }[this.state || '']]
 
             log.margin ()
@@ -9300,38 +9307,26 @@ if ($platform.NodeJS) {
             for (var loc of this.callStack.clean.reversed) {
                 log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
 
-            //log.write (color, log.config ({ indent: indent, location: true, where: where }), src)
-            //log.write (color, log.config ({ indent: indent }), '-'.repeats (src.length))
+            log.margin () },
+
+        printEvents: function (state) { var state = state || {},
+                                            indent  = state.indent || 0,
+                                            visited = state.visited || new Set () // contains errors already printed, to reduce clutter
             
-            log.margin () },
+            if ((state && state.verbose) || (this.numEvents.all > 0)) {
 
-        printEvents: function (indent, printedErrors) { indent = indent || 0
-                                                        printedErrors = printedErrors || new Set ()
+                for (var e of this.eventLog) {
+                    if (e instanceof AndrogeneProcessContext) {
+                        if (e.eventLog.length) {
+                            e.printLog ({ indent: indent + 1, visited: visited }) } }
+                    else if (e instanceof Error) {
+                        if (!visited.has (e)) {
+                             visited.add (e)
+                             log.boldRed (log.indent (indent + 1), e) } }
+                    else {
+                        log.write.apply (null, [log.indent (indent + 1)].concat (e)) } }
 
-            /*  Collapses redundant "Promise → then" case
-             */
-            var eventLog = false && (this.eventLog.length === 1 && (this.eventLog[0] instanceof AndrogeneProcessContext))
-                                ? this.eventLog[0].eventLog
-                                : this.eventLog
-
-            for (var event of eventLog) {
-                if (event instanceof AndrogeneProcessContext) {
-                    if (event.eventLog.length) {
-                        event.printLog (indent + 1, printedErrors) } }
-                else if (event instanceof Error) {
-                    if (!printedErrors.has (event)) {
-                         printedErrors.add (event)
-                         log.boldRed (log.indent (indent + 1), event) }
-                }
-                else {
-                    log.write.apply (null, [log.indent (indent + 1)].concat (event)) } }
-
-            log.margin () },
-
-        printLog: function (indent, printedErrors) {
-
-            this.printWhere (indent, printedErrors)
-            this.printEvents (indent, printedErrors) } })
+                log.margin () } } })
 
 /*  ------------------------------------------------------------------------ */
 
@@ -9641,7 +9636,7 @@ TimeoutError = $extends (Error, { message: 'timeout expired' })
 
 __ = Promise.coerce = function (x) {
                         return ((x instanceof Promise)   ?  x :
-                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) :
+                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) : // @hide
                                                             Promise.resolve (x))) }
 
 __.noop = function () {
@@ -9706,11 +9701,11 @@ $mixin (Promise, {
     log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
-    done: function (fn) { return this.then (function (x) { fn (null, x) },
-                                            function (e) { fn (e, null); throw e }) },
+    done: function (fn) { return this.then (function (x) { return fn (null, x) },
+                                            function (e) {        fn (e, null); throw e }) },
 
-    finally: function (fn) { return this.then (function (x) { fn (null, x) },
-                                               function (e) { fn (e, null) }) },
+    finally: function (fn) { return this.then (function (x) { return fn (null, x) },
+                                               function (e) { return fn (e, null) }) },
 
     /*state: $property (function () {
                         return this.then (
@@ -9763,7 +9758,7 @@ _.tests['Promise'] = {
 
         fsAsync = Function.promisifyAll (fs, { except: ['dontTouchMe'] })
 
-        $assert (fsAsync.dontTouchMe (), 42)
+        $assert (fsAsync.dontTouchMe (), fsAsync['42'], 42)
 
         return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
                             fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
@@ -9879,11 +9874,19 @@ Http = $singleton (Component, {
                             xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
 
                             xhr.onreadystatechange = function () {
-                                                        if (xhr.readyState === 4) {
-                                                            if (cfg.progress) {
-                                                                cfg.progress (1) }
-                                                            if (xhr.status === 200) { resolve ((xhr.responseType === 'arraybuffer') ? xhr.response : xhr.responseText) }
-                                                                               else { reject  (xhr.statusText) } } }
+
+                                if (xhr.readyState === 4) {
+                                    if (cfg.progress) {
+                                        cfg.progress (1) }
+
+                                    var response = (xhr.responseType === 'arraybuffer')
+                                                        ? xhr.response
+                                                        : xhr.responseText
+
+                                    if (xhr.status === 200) { resolve (response) }
+                                                       else { reject  (_.extend (new Error (xhr.statusText), {
+                                                                                        httpResponse: response,
+                                                                                        httpStatus: xhr.status })) } } }
                         /*  Send
                          */
                         if (cfg.data) { xhr.send (cfg.data) }
@@ -9918,7 +9921,13 @@ JSONAPI = $singleton (Component, {
 
                 return Http
                         .request (type, '/api/' + path, cfg)
-                        .then (JSON.parse)
+                        .finally (function (e, response) {
+                            if ((response && (response = JSON.parse (response))) ||                                  // from HTTP 200
+                                (e && e.httpResponse && ((response = _.json (e.httpResponse)).success === false))) { // from HTTP errors
+                                return response }
+                            else {
+                                throw e } })
+
                         .then (function (response) {
                             if (response.success) {
                                 return response.value }

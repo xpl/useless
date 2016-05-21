@@ -3473,6 +3473,9 @@ _.deferTest ('String extensions', function () {
                ''        .limitedTo (0)], ['foobar',
                                            'toolo…', ''])
 
+    $assert  ('жоп'.pad (5),      'жоп  ')
+    $assert  ('жоп'.pad (5, '→'), 'жоп→→')
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -3480,6 +3483,9 @@ _.deferTest ('String extensions', function () {
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
     startsWith: function (s, x) { return s[0] === x },
+
+    pad: function (s, len, filler) {
+        return s += (filler || ' ').repeats (Math.max (0, len - s.length)) },
 
     cut: function (s, from) {
         return s.substring (0, from - 1) + s.substring (from, s.length) },
@@ -4932,7 +4938,7 @@ _.withTest ('OOP', {
 
         var result = (arguments_.length) ?
                         _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) :
-                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) })
+                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) }) // @hide
         
         //result.context = this_
 
@@ -7028,7 +7034,7 @@ TimeoutError = $extends (Error, { message: 'timeout expired' })
 
 __ = Promise.coerce = function (x) {
                         return ((x instanceof Promise)   ?  x :
-                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) :
+                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) : // @hide
                                                             Promise.resolve (x))) }
 
 __.noop = function () {
@@ -7093,11 +7099,11 @@ $mixin (Promise, {
     log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
-    done: function (fn) { return this.then (function (x) { fn (null, x) },
-                                            function (e) { fn (e, null); throw e }) },
+    done: function (fn) { return this.then (function (x) { return fn (null, x) },
+                                            function (e) {        fn (e, null); throw e }) },
 
-    finally: function (fn) { return this.then (function (x) { fn (null, x) },
-                                               function (e) { fn (e, null) }) },
+    finally: function (fn) { return this.then (function (x) { return fn (null, x) },
+                                               function (e) { return fn (e, null) }) },
 
     /*state: $property (function () {
                         return this.then (
@@ -7150,7 +7156,7 @@ _.tests['Promise'] = {
 
         fsAsync = Function.promisifyAll (fs, { except: ['dontTouchMe'] })
 
-        $assert (fsAsync.dontTouchMe (), 42)
+        $assert (fsAsync.dontTouchMe (), fsAsync['42'], 42)
 
         return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
                             fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
@@ -7239,11 +7245,19 @@ Http = $singleton (Component, {
                             xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
 
                             xhr.onreadystatechange = function () {
-                                                        if (xhr.readyState === 4) {
-                                                            if (cfg.progress) {
-                                                                cfg.progress (1) }
-                                                            if (xhr.status === 200) { resolve ((xhr.responseType === 'arraybuffer') ? xhr.response : xhr.responseText) }
-                                                                               else { reject  (xhr.statusText) } } }
+
+                                if (xhr.readyState === 4) {
+                                    if (cfg.progress) {
+                                        cfg.progress (1) }
+
+                                    var response = (xhr.responseType === 'arraybuffer')
+                                                        ? xhr.response
+                                                        : xhr.responseText
+
+                                    if (xhr.status === 200) { resolve (response) }
+                                                       else { reject  (_.extend (new Error (xhr.statusText), {
+                                                                                        httpResponse: response,
+                                                                                        httpStatus: xhr.status })) } } }
                         /*  Send
                          */
                         if (cfg.data) { xhr.send (cfg.data) }
@@ -7278,7 +7292,13 @@ JSONAPI = $singleton (Component, {
 
                 return Http
                         .request (type, '/api/' + path, cfg)
-                        .then (JSON.parse)
+                        .finally (function (e, response) {
+                            if ((response && (response = JSON.parse (response))) ||                                  // from HTTP 200
+                                (e && e.httpResponse && ((response = _.json (e.httpResponse)).success === false))) { // from HTTP errors
+                                return response }
+                            else {
+                                throw e } })
+
                         .then (function (response) {
                             if (response.success) {
                                 return response.value }

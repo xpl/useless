@@ -5,7 +5,7 @@ TimeoutError = $extends (Error, { message: 'timeout expired' })
 
 __ = Promise.coerce = function (x) {
                         return ((x instanceof Promise)   ?  x :
-                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) :
+                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) : // @hide
                                                             Promise.resolve (x))) }
 
 __.noop = function () {
@@ -70,11 +70,11 @@ $mixin (Promise, {
     log: $property (function () { return this.then (log, log.e.then (_.throwError)) }),
     alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
-    done: function (fn) { return this.then (function (x) { fn (null, x) },
-                                            function (e) { fn (e, null); throw e }) },
+    done: function (fn) { return this.then (function (x) { return fn (null, x) },
+                                            function (e) {        fn (e, null); throw e }) },
 
-    finally: function (fn) { return this.then (function (x) { fn (null, x) },
-                                               function (e) { fn (e, null) }) },
+    finally: function (fn) { return this.then (function (x) { return fn (null, x) },
+                                               function (e) { return fn (e, null) }) },
 
     /*state: $property (function () {
                         return this.then (
@@ -127,7 +127,7 @@ _.tests['Promise'] = {
 
         fsAsync = Function.promisifyAll (fs, { except: ['dontTouchMe'] })
 
-        $assert (fsAsync.dontTouchMe (), 42)
+        $assert (fsAsync.dontTouchMe (), fsAsync['42'], 42)
 
         return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
                             fsAsync.readFile ('foo').assert         ('contents of foo') ]) },

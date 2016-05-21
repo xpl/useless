@@ -11,8 +11,8 @@ ServerTemplating = module.exports = $trait ({
 
         return () => {
 
-            if (!$http.hasContentType) {
-                 $http.setContentType (path.extname (fileName).split ('.')[1]) }
+            if (!$http.headers['Content-Type']) {
+                 $http.headers['Content-Type'] = path.extname (fileName).split ('.')[1] }
 
             this.compiledTemplate (fileName)
                 .then (fn => fn.call (this, _.extend ({ env: $http.env }, $http.globalTemplateArgs, args))) } },

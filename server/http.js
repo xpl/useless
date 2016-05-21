@@ -35,21 +35,30 @@ module.exports = $trait ({
                                         return _.extend (new this.Error ('Not Found (404)'), { code: 404 }) }),
 
         mime: {
-            'html'       : 'text/html; charset=utf-8',
-            'text'       : 'text/plain; charset=utf-8',
-            'json'       : 'application/json; charset=utf-8',
+            'html'       : 'text/html',
+            'text'       : 'text/plain',
+            'json'       : 'application/json',
             'binary'     : 'binary/octet-stream',
             'jpeg'       : 'image/jpeg',
             'jpg'        : 'image/jpeg',
             'png'        : 'image/png',
-            'js'         : 'text/javascript; charset=utf-8',
-            'javascript' : 'text/javascript; charset=utf-8',
-            'css'        : 'text/css; charset=utf-8',
-            'svg'        : 'image/svg+xml; charset=utf-8',
-            'appcache'   : 'text/cache-manifest; charset=utf-8',
+            'js'         : 'text/javascript',
+            'javascript' : 'text/javascript',
+            'css'        : 'text/css',
+            'svg'        : 'image/svg+xml',
+            'appcache'   : 'text/cache-manifest',
 
             guess: function (x) {
-                        return _.isString (x) ? this.text : this.json } },
+                        return _.isString (x) ? this.text : this.json },
+
+            guessFromFileName: function (x) {
+                                    return this[path.extname (x).split ('.')[1]] },
+
+            addUTF8: function (x) {
+                    return x && (x + (((x.split ('/')[0] === 'text') ||
+                                             (x === 'application/json'))
+                                                    ? '; charset=utf-8'
+                                                    : '')) } },
 
         coerce: $static (function (what) {
                             return (what instanceof this) ? what : this.stub (what) }),
@@ -58,11 +67,11 @@ module.exports = $trait ({
                             return new this ({
                                         request: _.extend ({ method: 'POST', pause: _.identity },
                                                                 cfg.request,
-                                                                    _.pick (cfg, 'url', 'method', 'headers', 'cookies')),
+                                                                    _.pick (cfg, 'url', 'method', 'code', 'nonce', 'headers', 'cookies')),
                                         response: cfg.response,
                                         cookies: cfg.cookies,
                                         stub: true,
-                                        env: _.omit (cfg, 'json', 'method', 'url', 'headers', 'cookies') }) }),
+                                        env: _.omit (cfg, 'json', 'method', 'url', 'code', 'nonce', 'headers', 'cookies') }) }),
 
         constructor: function (cfg) {
 
@@ -86,10 +95,7 @@ module.exports = $trait ({
             this.uri       = this.request && this.request.url && url.parse (this.request.url)
             this.path      = this.uri && this.uri.path.split ('/')
             this.method    = this.request.method
-            this.isJSONAPI = (this.path && this.path[0]) === 'api'
-
-            if (this.isJSONAPI && !this.hasContentType) {
-                this.setContentType (this.mime.json) }
+            this.isJSONAPI = (this.path && this.path[1]) === 'api'
 
             if (this.method === 'POST') {
                 this.request.pause () } }, // pauses incoming data receiving, until explicitly resumed
@@ -98,10 +104,11 @@ module.exports = $trait ({
                 this.code = code; return this },
 
         setHeaders: function (headers) {
-                    _.extend (this.headers, headers) },
+                        _.extend (this.headers, headers); return this },
 
         redirect: function (to) {
-                        return this.code (302).headers ({ 'Location': to }) },
+                        return this.setCode (302)
+                                   .setHeaders ({ 'Location': to }) },
 
         setCookies: function (cookies) {
                         return _.extend2 (this, {
@@ -113,29 +120,13 @@ module.exports = $trait ({
         removeCookies: function (cookies) {
                             return this.cookies (_.object (cookies.map (x => [x, undefined]))) },
 
-        is: function (x) {
-                return this.headers['Content-Type'] === x },
-
-        setContentType: function (x) {
-                            return (this.headers['Content-Type'] = x), this },
-
-        setContentLength: function (x) {
-                            return (this.headers['Content-Length'] = x), this },
-
-        $property: {
-
-            isHTML: function () { return this.is (this.mime.html) },
-            isJSON: function () { return this.is (this.mime.json) },
-
-            hasContentType: function () { return this.headers['Content-Type'] ? true : false },
-
-            data: function () {
-                    return new Promise ((then, err) => {
-                                            var data = ''
-                                            this.request.on ('data', chunk => { data += chunk })
-                                            this.request.on ('end', then)
-                                            this.request.on ('error', err)
-                                            this.request.resume () }) } },
+        data: $property (function () {
+                return new Promise ((then, err) => {
+                                        var data = ''
+                                        this.request.on ('data', chunk => { data += chunk })
+                                        this.request.on ('end', then)
+                                        this.request.on ('error', err)
+                                        this.request.resume () }) }),
 
         nocache: function () { // iOS aggressively caches even POST requests, so this is needed to prevent that
                     return this.setHeaders ({
@@ -145,13 +136,14 @@ module.exports = $trait ({
         writeHead: function () {
                     if (!this.headWritten) {
                          this.headWritten = true
-                         this.response.writeHead (this.code || 200, _.nonempty (this.headers)) }; return this },
+                         this.response.writeHead (this.code || 200,
+                                                    _.nonempty (_.extended (
+                                                                this.headers, {
+                                                                    'Content-Type': this.mime.addUTF8 (this.headers['Content-Type']) }))) }; return this },
 
         write: function (x) {
                     if (!this.ended) {
-                         this.response.write (
-                                    (_.isString (x) ? x :
-                                    (this.isJSONAPI ? { success: true, value: JSON.stringify (x) } : JSON.stringify (x)))) }; return this },
+                         this.response.write (_.isString (x) ? x : JSON.stringify (x)) }; return this },
 
         end: function () {
                 if (!this.ended) {
@@ -202,7 +194,8 @@ module.exports = $trait ({
     serveRequest: function (context) { context = this.HttpContext.coerce (context)
         
         var result = new AndrogenePromise (resolve => { $global.$http = context
-                                                        resolve (this.callAPIHandler ().timeout (this.config.requestTimeout)) })
+                                                        resolve (this.callAPIHandler ()
+                                                                     .timeout (this.config.requestTimeout)) })
                         .then (this.writeResult,
                                this.writeError)
 
@@ -214,11 +207,11 @@ module.exports = $trait ({
 
                         log (context.method === 'GET'
                                 ? log.color.green
-                                : log.color.pink, context.method, ': ', log.color.bright, context.request.url)
+                                : log.color.pink, context.method.pad (4), ': ', log.color.bright, context.request.url)
 
                         result.processContext.root.printEvents () })
 
-                .catch (log.ee) },
+                .catch (log.ee.$ (log.config ({ indent: 1, location: false }), '\n')) },
 
     callAPIHandler: function () {
                         return __.seq (_.coerceToArray (APISchema.match (
@@ -230,34 +223,43 @@ module.exports = $trait ({
                     throw $http.NotFoundError },
 
     writeResult: function (x) {
-                if (x && (x !== $http)) {
-                    $http.setContentType ($http.headers['Content-Type'] || $http.mime.guess (x))
-                         .writeHead ()
+
+                if ((x !== undefined) && (x !== $http)) {
+
+                    /*  Make /api/ URLS respond with { success: true, value: .. } pattern by default, but only if
+                        no Content-Type was explicitly specified. So that a handler can override that behavior by
+                        specifying a Content-Type.
+                     */
+                    if (!$http.headers['Content-Type']) {
+                         $http.headers['Content-Type'] = $http.mime.guess (
+                                                            x = ($http.isJSONAPI ? { success: true, value : x } : x)) }
+                    $http.writeHead ()
                          .write (x) } },
 
     writeError: function (e) { // TODO: construct asynchronous error stack from AndrogeneProcessContext
 
-        if ($http.isJSON) { // JSONAPI errors get passed with HTTP 200 by default, so no other codes here, until explicitly set
+        if ( ($http.headers['Content-Type'] === $http.mime.json) || // if JSON
+            (!$http.headers['Content-Type']  && $http.isJSONAPI)) { // or if /api/ and no Content-Type explicitly specified
             
-            if (error instanceof Error) {
-                $http.setCode (((error instanceof $http.Error) && error.code) || $http.code)
+            if (e instanceof Error) {
+                $http.setCode (((e instanceof $http.Error) && e.code) || $http.code || 500)
                      .writeHead ()
                      .write ({
                         success: false,
-                        error: error.message,
-                        parsedStack: CallStack.fromError (error).asArray.map (e => _.extend (e, { remote: true })) }) }
-
+                        error: e.message,
+                        parsedStack: CallStack.fromError (e).asArray.map (e => _.extend (e, { remote: true })) }) }
             else {
                 $http.writeHead ()
                      .write ({
                         success: false,
-                        error: error }) } }
+                        error: e }) } }
 
         else { var x = log.impl.stringify (e)
 
             $http.setCode ($http.code || 500)
                  .writeHead ()
-                 .write (http.isHTML ? ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x) } },
+                 .write (($http.headers['Content-Type'] === $http.mime.html) ?
+                            ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x) } },
 
 
 /*  REQUEST PROCESSING PRIMITIVES
@@ -266,7 +268,7 @@ module.exports = $trait ({
     interlocked: function (then) {
                     return _.interlocked (releaseLock => { _.onAfter ($http, 'end', releaseLock); then () }) },
 
-    allowOrigin: function (value) { $http.headers ({ 'Access-Control-Allow-Origin': value }) },
+    allowOrigin: function (value) { $http.headers['Access-Control-Allow-Origin'] = value },
 
     jsVariable: function (rvalue, lvalue) {
             $http.contentType ($http.mime.javascript)
@@ -291,11 +293,11 @@ module.exports = $trait ({
 
     receiveFile: function () {
 
-        if (!$http.is ($http.mime.binary)) {
+        if (!$http.request.headers['Content-Type'] !== $http.mime.binary) {
             throw new Error ('Content-Type should be' + $http.mime.binary) }
 
         var maxFileSize = 16 * 1024 * 1024
-        var fileSize = parseInt (this.request.headers['x-file-size'], 10)
+        var fileSize = parseInt ($http.request.headers['x-file-size'], 10)
         
         if (fileSize <= 0) {
             throw new Error ('file is empty') }
@@ -317,8 +319,9 @@ module.exports = $trait ({
                             if (!stat.isFile ()) {
                                 throw $http.NotFoundError }
 
-                            $http.setContentType ($http.mime[path.extname (file).split ('.')[1]] || $http.mime.binary)
-                                 .setContentLength (stat.size)
+                            $http.setHeaders ({
+                                    'Content-Type': $http.mime.guessFromFileName (file) || $http.mime.binary,
+                                    'Content-Length': stat.size })
                                  .writeHead ()
 
                             return new Promise ((then, err) =>

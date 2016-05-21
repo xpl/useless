@@ -43,15 +43,19 @@ module.exports = $trait ({
     /*  Access to the source code of server (requires developer privileges)
      */
     readSource: function () {
-                    return new Promise (then =>
-                            _.readSource ((context.env.file[0] === '/')
-                                            ? $http.env.file
-                                            : path.join (this.sourceRoot, $http.env.file), then)) },
+                    return new Promise (then => {
+
+                            $http.headers['Content-Type'] =
+                                $http.mime.guessFromFileName ($http.env.file)
+
+                            return SourceFiles.read (($http.env.file[0] === '/')
+                                                        ? $http.env.file
+                                                        : path.join (this.sourceRoot, $http.env.file), then) }) },
 
     writeSource: function (context) {
                     return new Promise (then => {
                         log.w ('Writing source:', $http.env.file)
-                        _.writeSource (
+                        SourceFiles.write (
                                 path.join (this.sourceRoot, $http.env.file),
                                 $http.env.text,
                                 then.arity0) }) },

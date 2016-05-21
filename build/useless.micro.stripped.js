@@ -2195,6 +2195,9 @@ $extensionMethods(String, {
     startsWith: function (s, x) {
         return s[0] === x;
     },
+    pad: function (s, len, filler) {
+        return s += (filler || ' ').repeats(Math.max(0, len - s.length));
+    },
     cut: function (s, from) {
         return s.substring(0, from - 1) + s.substring(from, s.length);
     },
@@ -4435,7 +4438,7 @@ $mixin(Promise, {
     }),
     done: function (fn) {
         return this.then(function (x) {
-            fn(null, x);
+            return fn(null, x);
         }, function (e) {
             fn(e, null);
             throw e;
@@ -4443,9 +4446,9 @@ $mixin(Promise, {
     },
     finally: function (fn) {
         return this.then(function (x) {
-            fn(null, x);
+            return fn(null, x);
         }, function (e) {
-            fn(e, null);
+            return fn(e, null);
         });
     },
     assert: function (desired) {
@@ -4545,10 +4548,14 @@ Http = $singleton(Component, {
                         if (cfg.progress) {
                             cfg.progress(1);
                         }
+                        var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
                         if (xhr.status === 200) {
-                            resolve(xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText);
+                            resolve(response);
                         } else {
-                            reject(xhr.statusText);
+                            reject(_.extend(new Error(xhr.statusText), {
+                                httpResponse: response,
+                                httpStatus: xhr.status
+                            }));
                         }
                     }
                 };
@@ -4583,7 +4590,13 @@ JSONAPI = $singleton(Component, {
         if (cfg.what) {
             cfg.data = JSON.stringify(cfg.what);
         }
-        return Http.request(type, '/api/' + path, cfg).then(JSON.parse).then(function (response) {
+        return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
+            if (response && (response = JSON.parse(response)) || e && e.httpResponse && (response = _.json(e.httpResponse)).success === false) {
+                return response;
+            } else {
+                throw e;
+            }
+        }).then(function (response) {
             if (response.success) {
                 return response.value;
             } else {

@@ -2583,6 +2583,9 @@ $extensionMethods(String, {
     startsWith: function (s, x) {
         return s[0] === x;
     },
+    pad: function (s, len, filler) {
+        return s += (filler || ' ').repeats(Math.max(0, len - s.length));
+    },
     cut: function (s, from) {
         return s.substring(0, from - 1) + s.substring(from, s.length);
     },
@@ -5117,9 +5120,6 @@ SourceFiles = $singleton(Component, {
         }
     }
 });
-_.readSourceLine = SourceFiles.line;
-_.readSource = SourceFiles.read;
-_.writeSource = SourceFiles.write;
 CallStack = $extends(Array, {
     current: $static($property(function () {
         return CallStack.fromRawString(CallStack.currentAsRawString).offset(1);
@@ -5169,7 +5169,7 @@ CallStack = $extends(Array, {
     }),
     clean: $property(function () {
         var clean = this.mergeDuplicateLines.reject(function (e) {
-            return e.thirdParty || (e.source || '').contains('// @hide');
+            return e.thirdParty || e.hide;
         });
         return clean.length === 0 ? this : clean;
     }),
@@ -5203,7 +5203,8 @@ CallStack = $extends(Array, {
             if (!entry.sourceReady) {
                 entry.sourceReady = _.barrier();
                 SourceFiles.line((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
-                    entry.sourceReady(entry.source = src);
+                    entry.hide = src.contains('// @hide');
+                    entry.sourceReady(entry.source = src.replace('// @hide', ''));
                 });
             }
             this.push(entry);
@@ -6323,14 +6324,25 @@ if ($platform.NodeJS) {
                 }
             };
         },
-        where: $property(function () {
-            var stack = this.callStack.reject(function (x) {
-                return x.source.contains('@hide');
+        numEvents: $memoized($property(function () {
+            return _.reduce2({
+                log: 0,
+                errors: 0
+            }, this.eventLog, function (sum, e) {
+                var n = e instanceof AndrogeneProcessContext ? e.numEvents : e instanceof Error ? { errors: 1 } : { log: 1 };
+                sum.all = (sum.errors += n.errors || 0) + (sum.log += n.log || 0);
+                return sum;
             });
-            return this.parent ? stack.last : stack.first;
-        }),
-        printWhere: function (indent, printedErrors) {
-            indent = indent || 0;
+        })),
+        printLog: function (state) {
+            state = state || {};
+            if (state && state.verbose || this.numEvents.all > 0) {
+                this.printWhere(state);
+                this.printEvents(state);
+            }
+        },
+        printWhere: function (state) {
+            var indent = state && state.indent || 0;
             var color = log.color[{
                 'fulfilled': 'green',
                 'pending': 'orange',
@@ -6347,29 +6359,28 @@ if ($platform.NodeJS) {
             }
             log.margin();
         },
-        printEvents: function (indent, printedErrors) {
-            indent = indent || 0;
-            printedErrors = printedErrors || new Set();
-            var eventLog = false && (this.eventLog.length === 1 && this.eventLog[0] instanceof AndrogeneProcessContext) ? this.eventLog[0].eventLog : this.eventLog;
-            for (var event of eventLog) {
-                if (event instanceof AndrogeneProcessContext) {
-                    if (event.eventLog.length) {
-                        event.printLog(indent + 1, printedErrors);
+        printEvents: function (state) {
+            var state = state || {}, indent = state.indent || 0, visited = state.visited || new Set();
+            if (state && state.verbose || this.numEvents.all > 0) {
+                for (var e of this.eventLog) {
+                    if (e instanceof AndrogeneProcessContext) {
+                        if (e.eventLog.length) {
+                            e.printLog({
+                                indent: indent + 1,
+                                visited: visited
+                            });
+                        }
+                    } else if (e instanceof Error) {
+                        if (!visited.has(e)) {
+                            visited.add(e);
+                            log.boldRed(log.indent(indent + 1), e);
+                        }
+                    } else {
+                        log.write.apply(null, [log.indent(indent + 1)].concat(e));
                     }
-                } else if (event instanceof Error) {
-                    if (!printedErrors.has(event)) {
-                        printedErrors.add(event);
-                        log.boldRed(log.indent(indent + 1), event);
-                    }
-                } else {
-                    log.write.apply(null, [log.indent(indent + 1)].concat(event));
                 }
+                log.margin();
             }
-            log.margin();
-        },
-        printLog: function (indent, printedErrors) {
-            this.printWhere(indent, printedErrors);
-            this.printEvents(indent, printedErrors);
         }
     });
     AndrogeneProcessContext.within = function () {
@@ -6625,7 +6636,7 @@ $mixin(Promise, {
     }),
     done: function (fn) {
         return this.then(function (x) {
-            fn(null, x);
+            return fn(null, x);
         }, function (e) {
             fn(e, null);
             throw e;
@@ -6633,9 +6644,9 @@ $mixin(Promise, {
     },
     finally: function (fn) {
         return this.then(function (x) {
-            fn(null, x);
+            return fn(null, x);
         }, function (e) {
-            fn(e, null);
+            return fn(e, null);
         });
     },
     assert: function (desired) {
@@ -6759,10 +6770,14 @@ Http = $singleton(Component, {
                         if (cfg.progress) {
                             cfg.progress(1);
                         }
+                        var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
                         if (xhr.status === 200) {
-                            resolve(xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText);
+                            resolve(response);
                         } else {
-                            reject(xhr.statusText);
+                            reject(_.extend(new Error(xhr.statusText), {
+                                httpResponse: response,
+                                httpStatus: xhr.status
+                            }));
                         }
                     }
                 };
@@ -6797,7 +6812,13 @@ JSONAPI = $singleton(Component, {
         if (cfg.what) {
             cfg.data = JSON.stringify(cfg.what);
         }
-        return Http.request(type, '/api/' + path, cfg).then(JSON.parse).then(function (response) {
+        return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
+            if (response && (response = JSON.parse(response)) || e && e.httpResponse && (response = _.json(e.httpResponse)).success === false) {
+                return response;
+            } else {
+                throw e;
+            }
+        }).then(function (response) {
             if (response.success) {
                 return response.value;
             } else {

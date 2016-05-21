@@ -61,11 +61,19 @@ Http = $singleton (Component, {
                             xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
 
                             xhr.onreadystatechange = function () {
-                                                        if (xhr.readyState === 4) {
-                                                            if (cfg.progress) {
-                                                                cfg.progress (1) }
-                                                            if (xhr.status === 200) { resolve ((xhr.responseType === 'arraybuffer') ? xhr.response : xhr.responseText) }
-                                                                               else { reject  (xhr.statusText) } } }
+
+                                if (xhr.readyState === 4) {
+                                    if (cfg.progress) {
+                                        cfg.progress (1) }
+
+                                    var response = (xhr.responseType === 'arraybuffer')
+                                                        ? xhr.response
+                                                        : xhr.responseText
+
+                                    if (xhr.status === 200) { resolve (response) }
+                                                       else { reject  (_.extend (new Error (xhr.statusText), {
+                                                                                        httpResponse: response,
+                                                                                        httpStatus: xhr.status })) } } }
                         /*  Send
                          */
                         if (cfg.data) { xhr.send (cfg.data) }
@@ -100,7 +108,13 @@ JSONAPI = $singleton (Component, {
 
                 return Http
                         .request (type, '/api/' + path, cfg)
-                        .then (JSON.parse)
+                        .finally (function (e, response) {
+                            if ((response && (response = JSON.parse (response))) ||                                  // from HTTP 200
+                                (e && e.httpResponse && ((response = _.json (e.httpResponse)).success === false))) { // from HTTP errors
+                                return response }
+                            else {
+                                throw e } })
+
                         .then (function (response) {
                             if (response.success) {
                                 return response.value }
