@@ -3321,6 +3321,7 @@ _.withTest ('Array extensions', function () {
         zip:         _.zipWith,
         groupBy:     _.groupBy,
         indexBy:     _.indexBy,
+        find:        _.find,
         filter:      _.filter,
         flat:        _.flatten.tails2 (true),
         object:      _.object,

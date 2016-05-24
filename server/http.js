@@ -28,6 +28,9 @@ module.exports = $trait ({
 
     HttpContext: $component ({
 
+        ForbiddenError: $property (function () {
+                                        return _.extend (new Error ('Forbidden (403)'), { code: 403 }) }),
+
         NotFoundError: $property (function () {
                                         return _.extend (new Error ('Not Found (404)'), { code: 404 }) }),
 
@@ -43,6 +46,7 @@ module.exports = $trait ({
             'javascript' : 'text/javascript',
             'css'        : 'text/css',
             'svg'        : 'image/svg+xml',
+            'ico'        : 'image/x-icon',
             'appcache'   : 'text/cache-manifest',
 
             guess: function (x) {
@@ -333,9 +337,14 @@ module.exports = $trait ({
                             request: $http.request,
                             filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
-    file: function (location) { var isDirectory = fs.lstatSync (location).isDirectory ()
+    file: function (location) { var location    = path.join (process.cwd (), location),
+                                    isDirectory = fs.lstatSync (location).isDirectory ()
             return () => {
-                return $http.file (isDirectory ? path.join (location, $http.env.file) : location) } },
+                var file = isDirectory ? $http.env.file : ''
+                if (file.split ('/').find (x => (x === '.') || (x === '..'))) {
+                    throw $http.ForbiddenError }
+                else {
+                    return $http.file (path.join (location, file)) } } },
 
 /*  ======================================================================== */
 
