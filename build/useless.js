@@ -1987,7 +1987,7 @@ _.deferTest (['stdlib', 'zip2'], function () {
 
     $assert ([3], _.zipSetsWith ([
                     new Set ([2,3]),
-                    new Set ([3,4])], function (a, b) { return a && b }).items)
+                    new Set ([3,4])], function (a, b) { return a && b }).asArray)
 
 }, function () { _.mixin ({
 
@@ -3006,7 +3006,7 @@ _.deferTest (['type', 'stringify'], function () {
                                     
                                 else {
                                     if (x instanceof Set) {
-                                        x = x.items }
+                                        x = x.asArray }
 
                                     var isArray = _.isArray (x)
 
@@ -9358,7 +9358,7 @@ if ($platform.NodeJS) {
 
 /*  ------------------------------------------------------------------------ */
 
-    AndrogeneProcessContext.within = function () {
+    AndrogeneProcessContext.within = function (fn) {
         return (AndrogeneProcessContext.current && AndrogeneProcessContext.current.within (fn)) || fn }
 
 /*  ------------------------------------------------------------------------ */
@@ -9847,10 +9847,10 @@ _.deferTest ('Set extensions', function () {
     var set = new Set ([1,2,3])
 
     $assert (set.copy !== set)
-    $assert (set.items, set.copy.items, [1,2,3])
-    $assert (set.extend   (new Set ([4,5])).items, [1,2,3,4,5])
-    $assert (set.extended (new Set ([6,7])).items, [1,2,3,4,5,6,7])
-    $assert (set.items, [1,2,3,4,5])
+    $assert (set.asArray, set.copy.asArray, [1,2,3])
+    $assert (set.extend   (new Set ([4,5])).asArray, [1,2,3,4,5])
+    $assert (set.extended (new Set ([6,7])).asArray, [1,2,3,4,5,6,7])
+    $assert (set.asArray, [1,2,3,4,5])
 
     $assert (_.reject ([7,2,3,8], [2,3].asSet.matches), [7,8])
 
@@ -9863,7 +9863,7 @@ _.deferTest ('Set extensions', function () {
     $mixin (Set, {
 
         copy:     $property (function () { return new Set (this) }),
-        items:    $property (function () { return Array.from (this.values ()) }),
+        asArray:  $property (function () { return Array.from (this.values ()) }),
 
         matches:  $property (function () { var self = this; return function (x) { return self.has (x) } }),
 

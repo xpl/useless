@@ -1517,7 +1517,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             return builtInValue;
         } else {
             if (x instanceof Set) {
-                x = x.items;
+                x = x.asArray;
             }
             var isArray = _.isArray(x);
             var pretty = cfg.pretty || false;

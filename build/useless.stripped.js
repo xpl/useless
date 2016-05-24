@@ -1905,7 +1905,7 @@ _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
             return builtInValue;
         } else {
             if (x instanceof Set) {
-                x = x.items;
+                x = x.asArray;
             }
             var isArray = _.isArray(x);
             var pretty = cfg.pretty || false;
@@ -6391,7 +6391,7 @@ if ($platform.NodeJS) {
             return this.numEvents;
         }
     });
-    AndrogeneProcessContext.within = function () {
+    AndrogeneProcessContext.within = function (fn) {
         return AndrogeneProcessContext.current && AndrogeneProcessContext.current.within(fn) || fn;
     };
     $global.AndrogenePromise = class extends Promise {
@@ -6738,7 +6738,7 @@ $mixin(Set, {
     copy: $property(function () {
         return new Set(this);
     }),
-    items: $property(function () {
+    asArray: $property(function () {
         return Array.from(this.values());
     }),
     matches: $property(function () {
