@@ -1,3 +1,9 @@
+/*  DEPRECATED. Don't add new utility here. Will be refactored:
+
+    1.  Http utils will go to /base/http.js (cross-platform)
+    2.  Script compiler will go to github.com/xpl/ECMASquasher (separate project)
+ */
+
 var path        = require ('path'),
     fs          = require ('fs'),
     process     = require ('process'),
@@ -176,19 +182,19 @@ module.exports = {
             var allDataReceived = false
             var allDataWritten = true
             var fileStream = fs.createWriteStream (cfg.filePath, { encoding: 'binary' })
-            var finalize = function () {
+            var finalize = AndrogeneProcessContext.within (function () {
                 fileStream.end ()
                 success (cfg.filePath)
-            }
+            })
             fileStream.addListener ('error', failure)
-            fileStream.addListener ('drain', function () {
+            fileStream.addListener ('drain', AndrogeneProcessContext.within (function () {
                 allDataWritten = true
                 if (allDataReceived) {
                     finalize ()
                 } else {
                     cfg.request.resume ()
                 }
-            })
+            }))
             /* configure reader */
             cfg.request.on ('data', AndrogeneProcessContext.within (data => {
                 var chunk = new Buffer (data, 'binary')
@@ -203,12 +209,12 @@ module.exports = {
                     }
                 }
             }))
-            cfg.request.on ('end', function() {
+            cfg.request.on ('end', AndrogeneProcessContext.within (function() {
                 allDataReceived = true
                 if (allDataWritten) {
                     finalize ()
                 }
-            })
+            }))
             cfg.request.resume ()
         })
     }

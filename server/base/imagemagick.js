@@ -6,7 +6,7 @@ var path        = require ('path'),
 var imagemagick = module.exports = {
 
     identify: function (path) {
-                    return exec ('identify -format "%[width]@%[height]@%m" ' + _.quote (path)).then (function (stdout, stderr) {
+                    return exec ('identify -format "%[width]@%[height]@%m" ' + _.quote (path)).then ((stdout, stderr) => {
                         var features = stdout.split ('@')
                         return {  width: parseInt (features[0], 10),
                                  height: parseInt (features[1], 10),

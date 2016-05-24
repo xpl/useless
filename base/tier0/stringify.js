@@ -131,7 +131,7 @@ _.deferTest (['type', 'stringify'], function () {
                                     
                                 else {
                                     if (x instanceof Set) {
-                                        x = x.items }
+                                        x = x.asArray }
 
                                     var isArray = _.isArray (x)
 

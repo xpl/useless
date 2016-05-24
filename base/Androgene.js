@@ -119,7 +119,7 @@
 
 /*  ------------------------------------------------------------------------ */
 
-    AndrogeneProcessContext.within = function () {
+    AndrogeneProcessContext.within = function (fn) {
         return (AndrogeneProcessContext.current && AndrogeneProcessContext.current.within (fn)) || fn }
 
 /*  ------------------------------------------------------------------------ */

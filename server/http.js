@@ -19,6 +19,7 @@ module.exports = $trait ({
     $defaults: {
         config: {
             port: 1333,
+            maxFileSize: 16 * 1024 * 1024,
             requestTimeout: 2000 } },
 
 
@@ -27,10 +28,8 @@ module.exports = $trait ({
 
     HttpContext: $component ({
 
-        Error: class extends Error {}, // @hide
-
         NotFoundError: $property (function () {
-                                        return _.extend (new this.Error ('Not Found (404)'), { code: 404 }) }),
+                                        return _.extend (new Error ('Not Found (404)'), { code: 404 }) }),
 
         mime: {
             'html'       : 'text/html',
@@ -267,7 +266,7 @@ module.exports = $trait ({
             (!$http.headers['Content-Type']  && $http.isJSONAPI)) { // or if /api/ and no Content-Type explicitly specified
             
             if (e instanceof Error) {
-                $http.setCode (((e instanceof $http.Error) && e.code) || $http.code || 500)
+                $http.setCode (e.httpCode || $http.code || 500)
                      .writeHead ()
                      .write ({
                         success: false,
@@ -317,10 +316,10 @@ module.exports = $trait ({
 
     receiveFile: function () {
 
-                    if (!$http.request.headers['Content-Type'] !== $http.mime.binary) {
-                        throw new Error ('Content-Type should be' + $http.mime.binary) }
+                    if ($http.request.headers['content-type'] !== $http.mime.binary) {
+                        throw new Error ('Content-Type should be ' + $http.mime.binary + ' (found ' + $http.request.headers['content-type'] + ')') }
 
-                    var maxFileSize = 16 * 1024 * 1024
+                    var maxFileSize = this.config.maxFileSize
                     var fileSize = parseInt ($http.request.headers['x-file-size'], 10)
                     
                     if (fileSize <= 0) {
@@ -331,7 +330,7 @@ module.exports = $trait ({
 
                     else {
                         return util.writeRequestDataToFile ({
-                            request: this.request,
+                            request: $http.request,
                             filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
     file: function (location) { var isDirectory = fs.lstatSync (location).isDirectory ()

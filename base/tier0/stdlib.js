@@ -372,7 +372,7 @@ _.deferTest (['stdlib', 'zip2'], function () {
 
     $assert ([3], _.zipSetsWith ([
                     new Set ([2,3]),
-                    new Set ([3,4])], function (a, b) { return a && b }).items)
+                    new Set ([3,4])], function (a, b) { return a && b }).asArray)
 
 }, function () { _.mixin ({
 
