@@ -13,7 +13,9 @@ module.exports = Supervisor = $trait ({
                                                   noSupervisor: 1,
                                                     supervisor: 1 } }),
 
-    currentProcessFileName: $property (process.argv[1]),
+    currentProcessFileName: $memoized ($property (function () {
+                                                        var file = process.argv[1]
+                                                        return file + (path.extname (file) || '.js') })),
 
     supervisorState: $memoized ($property (function () { return _.find (
                                                             _.keys (Supervisor.$defaults.argKeys),
