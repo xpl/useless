@@ -385,7 +385,7 @@ UselessApp = $component ({
 		/*    Tree-style defintions, Promise-backed method chains
 		 */
 		'api': {
-			'login': { post: [this.receiveJSON, this.doLogin] },
+			'login':  { post: [this.receiveJSON, this.doLogin] },
 			'logout': { post: () => $http.removeCookies (['email', 'password']) } } } },
 
 	/*	A complex request handler example, demonstrating some core features.
