@@ -841,7 +841,7 @@ _.reduce2 = function (_1, _2, _3) {
         rights = _1;
         op = _2;
     }
-    _.each2(rights, function (right) {
+    _.each2(rights, function (right, i) {
         left = no_left ? right : op(left, right);
         no_left = false;
     });

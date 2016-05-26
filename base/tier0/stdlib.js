@@ -298,7 +298,7 @@ _.withTest (['stdlib', 'reduce 2.0'], function () {
                        var left = _1,        rights = _2, op = _3
          if (no_left) {    left = undefined; rights = _1; op = _2 }
 
-         _.each2 (rights, function (right) {
+         _.each2 (rights, function (right, i) {
                   left =  no_left ? right :
                           op (left, right); no_left = false }); return left } // @hide
 

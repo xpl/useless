@@ -214,6 +214,27 @@
         extend: function (props) { return _.extend (this, props) },
 
 
+    /*  Attributes
+        ======================================================================== */
+
+        cls: function (x) { this.className = x; return this },
+        css: function (x) { _.extend (this.style, x); return this; },
+
+        hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
+
+        toggleAttribute: function (name, value) {
+                                     if (value) { this.setAttribute    (name, value) }
+                                           else { this.removeAttribute (name) }
+                                    return this },
+
+        toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
+        setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
+
+        intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
+
+        attr: $alias ('setAttributes'),
+
+
     /*  Splitting
         ======================================================================== */
 
@@ -267,26 +288,6 @@
         So will explicitly overrride it.    */
 
         append: Node.prototype.append,
-
-
-    /*  Attributes   */
-
-        cls: function (x) { this.className = x; return this },
-        css: function (x) { _.extend (this.style, x); return this; },
-
-        hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
-
-        toggleAttribute: function (name, value) {
-                                     if (value) { this.setAttribute    (name, value) }
-                                           else { this.removeAttribute (name) }
-                                    return this },
-
-        toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
-        setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
-
-        intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
-
-        attr: $alias ('setAttributes'),
 
 
     /*  Metrics     */
