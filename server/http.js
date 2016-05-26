@@ -308,8 +308,9 @@ module.exports = $trait ({
                             ' = ' + _.stringify (lvalue, { pure: true, pretty: true }) },
 
     receiveJSON: function () {
-                    return $http.data.then (log.ii)
-                                     .then (JSON.parse) },
+                    return $http.data
+                                .then (log.ii)
+                                .then (JSON.parse) },
 
     receiveForm: function () {
                     return $http.data
