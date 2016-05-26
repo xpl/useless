@@ -292,6 +292,7 @@
     /*  Metrics     */
 
         clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
+              bbox: $property (function () { return this.clientBBox.relativeTo (document.clientBBox) }),
 
         setWidthHeight: function (v) {
                             this.style.width = v.x + 'px'

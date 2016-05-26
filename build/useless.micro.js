@@ -361,7 +361,7 @@ _.withTest (['function', 'calls / tails'], function () {
 /*  binding to constructor arguments (cannot do this with bind/partial)
     ======================================================================== */
 
-_.new_ = $restArg (function (Constructor, a, b, c, d) {
+_.new = $restArg (function (Constructor, a, b, c, d) {
             switch (arguments.length) {
                 case 1: return new Constructor ()
                 case 2: return new Constructor (a)
@@ -3143,7 +3143,7 @@ $extensionMethods (Function, {
     and:    _.and,
     not:    _.not,
 
-    new_: _.new_,
+    new: _.higherOrder (_.new),
 
     each: function (fn, obj) { return _.each2 (obj, fn) },
     map:  function (fn, obj) { return _.map2  (obj, fn) },
@@ -5490,6 +5490,9 @@ BBox = $prototype ({
                              (this.left > other.right) ||
                              (this.bottom < other.top) ||
                              (this.top > other.bottom)) },
+
+    relativeTo: function (other) {
+                    return this.offset (other.leftTop.inverse) },
 
     toString: function () {
         return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }' } })

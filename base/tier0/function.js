@@ -108,7 +108,7 @@ _.withTest (['function', 'calls / tails'], function () {
 /*  binding to constructor arguments (cannot do this with bind/partial)
     ======================================================================== */
 
-_.new_ = $restArg (function (Constructor, a, b, c, d) {
+_.new = $restArg (function (Constructor, a, b, c, d) {
             switch (arguments.length) {
                 case 1: return new Constructor ()
                 case 2: return new Constructor (a)

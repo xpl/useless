@@ -659,7 +659,7 @@ _.argumentPrependingWrapper = function (fn, then) {
         });
     });
 };
-_.new_ = $restArg(function (Constructor, a, b, c, d) {
+_.new = $restArg(function (Constructor, a, b, c, d) {
     switch (arguments.length) {
     case 1:
         return new Constructor();
@@ -2356,7 +2356,7 @@ $extensionMethods(Function, {
     or: _.or,
     and: _.and,
     not: _.not,
-    new_: _.new_,
+    new: _.higherOrder(_.new),
     each: function (fn, obj) {
         return _.each2(obj, fn);
     },
@@ -4099,6 +4099,9 @@ BBox = $prototype({
     }),
     intersects: function (other) {
         return !(this.right < other.left || this.left > other.right || this.bottom < other.top || this.top > other.bottom);
+    },
+    relativeTo: function (other) {
+        return this.offset(other.leftTop.inverse);
     },
     toString: function () {
         return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';

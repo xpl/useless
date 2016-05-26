@@ -105,7 +105,7 @@ $extensionMethods (Function, {
     and:    _.and,
     not:    _.not,
 
-    new_: _.new_,
+    new: _.higherOrder (_.new),
 
     each: function (fn, obj) { return _.each2 (obj, fn) },
     map:  function (fn, obj) { return _.map2  (obj, fn) },

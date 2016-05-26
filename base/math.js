@@ -423,6 +423,9 @@ BBox = $prototype ({
                              (this.bottom < other.top) ||
                              (this.top > other.bottom)) },
 
+    relativeTo: function (other) {
+                    return this.offset (other.leftTop.inverse) },
+
     toString: function () {
         return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }' } })
 
