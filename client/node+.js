@@ -3,16 +3,6 @@
 (function () { var is   = function (tag) { return function () { return this.tagName === tag } }
                var make = function (tag) { return function () { return document.createElement (tag.uppercase) } }
 
-
-/*  $mixin is like 'take $prototype-like definition and unroll it onto
-     some existing stuff': not for creating new types, but for patching
-     existing ones.
-
-     P.S.   Not every feature of $prototype is applicable here (check
-            implementation at useless/base/OOP.js for details)
-            
-    ======================================================================== */
-
     $mixin (Node, {
 
         $: $prototype.impl.$,    // brings this.$ semantics from $prototype
@@ -83,13 +73,6 @@
                 forbidsEditing: function () {
                     return (this.nodeType === Node.ELEMENT_NODE) &&
                            (this.getAttribute ('contenteditable') === 'false') } } },
-
-
-    /*  Selectors
-        ======================================================================== */
-
-        query:    Element.prototype.querySelectorAll,
-        queryOne: Element.prototype.querySelector,
 
 
     /*  Up/outside means
@@ -231,59 +214,6 @@
         extend: function (props) { return _.extend (this, props) },
 
 
-    /*  Attributes
-        ======================================================================== */
-
-        cls: function (x) { this.className = x; return this },
-        css: function (x) { _.extend (this.style, x); return this; },
-
-        hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
-
-        toggleAttribute: function (name, value) {
-                                     if (value) { this.setAttribute    (name, value) }
-                                           else { this.removeAttribute (name) }
-                                    return this },
-
-        toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
-        setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
-
-        intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
-
-        attr: $alias ('setAttributes'),
-
-
-
-    /*  Metrics
-        ======================================================================== */
-
-        clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
-
-        setWidthHeight: function (v) {
-                            this.style.width = v.x + 'px'
-                            this.style.height = v.y + 'px'
-                            return this },
-
-        setTransform: function (x) { this.transform = x; return this },
-
-        transform: $property ({
-
-            get: function () {
-                    var components = (this.css ('transform') || '').match (/^matrix\((.+\))$/)
-                    if (components) {
-                        var m = components[1].split (',').map (parseFloat)
-                        return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }
-                    else {
-                        return Transform.identity } },
-
-            /*  Example value: { translate: new Vec2 (a, b),  scale: new Vec2 (x, y), rotate: 180 }
-             */
-            set: function (cfg) {
-                this.style.transform = (_.isStrictlyObject (cfg) && (
-                                            (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
-                                            (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
-                                            (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
-
-
     /*  Splitting
         ======================================================================== */
 
@@ -318,24 +248,79 @@
             return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
 
         animateWithAttribute: function (attr) { this.setAttribute (attr, true)
-             return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) },
-
-
+             return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) }
     })
 
-/*  New Safari (as seen in technology preview) defines its own Element.append
-    method, which gets into conflict with our previously-defined Node.append
-    So will explicitly overrride it.
-    ========================================================================= */
+
+/*  ========================================================================= */
 
     $mixin (Element, {
-        append: Node.prototype.append })
+
+    /*  Selectors   */
+
+        query:    Element.prototype.querySelectorAll,
+        queryOne: Element.prototype.querySelector,
 
 
-/*  Image extensions (again found myself writing the same repetitive
-    Image-loading snippet, so decided to finally make a reusable abstraction,
-    utilizing the recent Promise concept just for fun)
-    ========================================================================= */
+    /*  New Safari (as seen in technology preview) defines its own Element.append
+        method, which gets into conflict with our previously-defined Node.append
+        So will explicitly overrride it.    */
+
+        append: Node.prototype.append,
+
+
+    /*  Attributes   */
+
+        cls: function (x) { this.className = x; return this },
+        css: function (x) { _.extend (this.style, x); return this; },
+
+        hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
+
+        toggleAttribute: function (name, value) {
+                                     if (value) { this.setAttribute    (name, value) }
+                                           else { this.removeAttribute (name) }
+                                    return this },
+
+        toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
+        setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
+
+        intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
+
+        attr: $alias ('setAttributes'),
+
+
+    /*  Metrics     */
+
+        clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
+
+        setWidthHeight: function (v) {
+                            this.style.width = v.x + 'px'
+                            this.style.height = v.y + 'px'
+                            return this },
+
+        setTransform: function (x) { this.transform = x; return this },
+
+        transform: $property ({
+
+            get: function () {
+                    var components = (this.css ('transform') || '').match (/^matrix\((.+\))$/)
+                    if (components) {
+                        var m = components[1].split (',').map (parseFloat)
+                        return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }
+                    else {
+                        return Transform.identity } },
+
+            /*  Example value: { translate: new Vec2 (a, b),  scale: new Vec2 (x, y), rotate: 180 }
+             */
+            set: function (cfg) {
+                this.style.transform = (_.isStrictlyObject (cfg) && (
+                                            (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
+                                            (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
+                                            (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
+    })
+
+
+/*  ========================================================================= */
 
     $mixin (Image, {
         fetch: $static (function (url) {
@@ -345,6 +330,15 @@
                                              onload: function ()  { resolve (this) },
                                             onerror: function (e) { reject (e) } }) }) }) })
 
+
+/*  document.clientBBox
+    ======================================================================== */
+
+    _.defineProperties (document, {
+                            clientBBox: function () {
+                                            return BBox.fromLTWH (0, 0,
+                                                            window.innerWidth  || document.documentElement.clientWidth,
+                                                            window.innerHeight || document.documentElement.clientHeight) } })
 
 /*  document.ready
     ======================================================================== */

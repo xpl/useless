@@ -3545,6 +3545,9 @@ BBox = $prototype({
     area: $property(function () {
         return Math.abs(this.width * this.height);
     }),
+    intersects: function (other) {
+        return !(this.right < other.left || this.left > other.right || this.bottom < other.top || this.top > other.bottom);
+    },
     toString: function () {
         return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
     }
