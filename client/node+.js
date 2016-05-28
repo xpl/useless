@@ -176,6 +176,8 @@
         prependTo: function (ref) {
             ref.insertBefore (this, ref.firstChild); return this },
 
+        replaceWith: function (node) { this.insertBeforeMe (node).removeFromParent () },
+
         insertMeBefore: function (ref) {
             ref.parentNode.insertBefore (this, ref); return this },
 
@@ -279,8 +281,8 @@
 
     /*  Selectors   */
 
-        query:    Element.prototype.querySelectorAll,
-        queryOne: Element.prototype.querySelector,
+        all: Element.prototype.querySelectorAll,
+        one: Element.prototype.querySelector,
 
 
     /*  New Safari (as seen in technology preview) defines its own Element.append
@@ -293,7 +295,7 @@
     /*  Metrics     */
 
         clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
-              bbox: $property (function () { return this.clientBBox.relativeTo (document.clientBBox) }),
+              bbox: $property (function () { return this.clientBBox.offset (document.bbox.leftTop) }),
 
         setWidthHeight: function (v) {
                             this.style.width = v.x + 'px'
@@ -337,6 +339,10 @@
     ======================================================================== */
 
     _.defineProperties (document, {
+
+                            bbox: function () {
+                                    return this.clientBBox.offset (Vec2.y (document.body.scrollTop)) },
+                                    
                             clientBBox: function () {
                                             return BBox.fromLTWH (0, 0,
                                                             window.innerWidth  || document.documentElement.clientWidth,

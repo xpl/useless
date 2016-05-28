@@ -6342,7 +6342,8 @@ BBox = $prototype ({
     xywh: $property (function () {
         return { x: this.x, y: this.y, width: this.width, height: this.height } }),
 
-    ltwh: $alias ('css'),
+    ltwh: $property (function () {
+        return { left: this.left, top: this.top, width: this.width, height: this.height } }),
 
     union: function (other) { return BBox.fromLTRB (
                                         Math.min (this.left,   other.left),
@@ -6360,7 +6361,10 @@ BBox = $prototype ({
                                   Math.floor (this.bottom)) }),
 
     css: $property (function () {
-        return { left: this.left, top: this.top, width: this.width, height: this.height } }),
+                        return { left: this.left   + 'px',
+                                  top: this.top    + 'px',
+                                width: this.width  + 'px',
+                               height: this.height + 'px' } }),
 
     leftTop: $property (function () {
         return new Vec2 (this.left, this.top) }),
@@ -6406,6 +6410,9 @@ BBox = $prototype ({
     shrink: function (amount) {
         return this.grow (-amount) },
 
+    mul: function (z) {
+            return new BBox (this.x * z, this.y * z, this.width * z, this.height * z) },
+
     area: $property (function () {
         return Math.abs (this.width * this.height) }),
 
@@ -6414,9 +6421,6 @@ BBox = $prototype ({
                              (this.left > other.right) ||
                              (this.bottom < other.top) ||
                              (this.top > other.bottom)) },
-
-    relativeTo: function (other) {
-                    return this.offset (other.leftTop.inverse) },
 
     toString: function () {
         return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }' } })
