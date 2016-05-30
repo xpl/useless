@@ -102,40 +102,6 @@ BetterVec2 = $extends (Vec2, { /* ... */ })
 - Enables **$traits** to chain into method calls by overlapping method definitions
 - Enforces configuration contracts (**$requires**, **$defaults**)
 
-## Functional primitives
-
-[Reference](https://github.com/xpl/useless/blob/master/base/tier0/README.md)
-
-* Extends underscore.js `_` namespace
-* Functional primitives busybox (predicates, operators / higher order stuff)
-* Binding to tail of argument list / flipping argument list
-* Limiting number of arguments (arity)
-* Infix interface (as Array/String/Function extensions)
-* Handy string-processing operators
-
-```javascript
-  > [[1,2], [3,4]].zip (_.seq (_.sum, _.appends ('_foo'), _.quotesWith ('()')))
-  < ["(4_foo)", "(6_foo)"]
-```
-
-## Abstract `map/zip/filter/reduce/find`
-
-[Reference](https://github.com/xpl/useless/blob/master/base/tier0/README.md#stdlibjs)
-
-Datatype-abstract (works over arrays/objects/scalars):
-
-```javascript
-  > _.map2 ({ one: '1', two: '2' }, _.prepends ('foo_').then (_.appends ('_bar')))
-  < { one: "foo_1_bar", two: "foo_2_bar" }
-```
-
-Structure-abstract ('sees through' structure of arbitrary complexity):
-
-```javascript
-   > _.mapMap ({ foo: { bar: 1, baz: [2, 3] } }, _.plus (10))
-   < { foo: { bar: 10, baz: [12, 13] } }
-```
-
 ## Multicast model for method calls with simple functional I/O
 
 [Reference](https://github.com/xpl/useless/blob/master/base/dynamic/stream.js)
