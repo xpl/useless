@@ -136,52 +136,6 @@ Structure-abstract ('sees through' structure of arbitrary complexity):
    < { foo: { bar: 10, baz: [12, 13] } }
 ```
 
-## Asynchronous primitives
-
-[Reference](https://github.com/xpl/useless/blob/master/base/CPS.js)
-
-Continuation-passing style (`_.cps.xxx`) versions of **underscore.js** primitives:
-
-```javascript
-   function searchRemoteFilesForText (text, then) {
-      _.cps.find (['file1.txt', 'file2.txt', 'file3.txt'], function (name, return_) {
-          $.get (name, function (fileText) {
-              return_ (fileText.indexOf (text) >= 0) }) }, then) }
-```
-```javascript
-   log (_.map ([1,2,3],     _.constant ('stub'))      // prints ['stub','stub','stub']
-    _.cps.map ([1,2,3], _.cps.constant ('stub'), log) // prints ['stub','stub','stub']
-```
-```javascript
-   cachedReadFile = _.cps.memoize (_.tails ($.get, 'text'))
-   cachedReadFile ('/useless.js', log) // prints contents of /useless.js
-```
-
-Sequential composition of asynchronous operations:
-
-```
-  _.cps.sequence (doRoutine, waitUntilAssertionsComplete, done) ()
-```
-
-Task pooling (parallel map/reduce with limit on maximum concurrently running tasks):
-
-```javascript
-  _.mapReduce (array, {
-                  maxConcurrency: 10,
-                  next: function (item, index, next, skip, memo) { ... },
-                  complete: function (memo) { ... })
-```
-
-**_.interlocked** (puts a function under concurrency lock)
-
-```javascript
-  readFilesSequentially = _.interlocked (function (releaseLock, file, done) {
-                                         $.get (file, done.then (releaseLock), 'text') })
-
-  readFilesSequentially ('file1.txt', log)
-  readFilesSequentially ('file2.txt', log) // waits until file1.txt is read
-```
-
 ## Multicast model for method calls with simple functional I/O
 
 [Reference](https://github.com/xpl/useless/blob/master/base/dynamic/stream.js)
