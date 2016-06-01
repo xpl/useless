@@ -62,17 +62,7 @@ module.exports = $trait ({
                                                     : '')) } },
 
         coerce: $static (function (what) {
-                            return (what instanceof this) ? what : this.stub (what) }),
-
-        stub: $static (function (cfg) {
-                            return new this ({
-                                        request: _.extend ({ method: 'POST', pause: _.identity },
-                                                                cfg.request,
-                                                                    _.pick (cfg, 'url', 'method', 'code', 'nonce', 'headers', 'cookies')),
-                                        response: cfg.response,
-                                        cookies: cfg.cookies,
-                                        stub: true,
-                                        env: _.omit (cfg, 'json', 'method', 'url', 'code', 'nonce', 'headers', 'cookies') }) }),
+                            return (what instanceof this) ? what : new HttpContextStub (what) }),
 
         init: function () {
 
@@ -166,6 +156,9 @@ module.exports = $trait ({
                                                                         .pipe (this.response)) })
 
                     .catch (e => { throw this.NotFoundError }) } }),
+
+
+    HttpContextStub:
 
 /*  ======================================================================== */
 
@@ -346,6 +339,9 @@ module.exports = $trait ({
                     throw $http.ForbiddenError }
                 else {
                     return $http.file (path.join (location, file)) } } },
+
+    redirect: function (to, x) {
+                $http.redirect (to); return x }
 
 /*  ======================================================================== */
 

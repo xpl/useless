@@ -7075,25 +7075,22 @@ __.constant = function (x) {
 __.reject = function (e) { return Promise.reject (e) }
 __.rejects = function (e) { return function () { return Promise.reject (e) } }
 
-__.safe = function (fn) {
-            return function () {
-                        try     { return Promise.resolve (fn.apply (this, arguments)) }
-                      catch (e) { return Promise.reject (e) } } }
+__.map = function (x, fn) {
 
-__.map = __.safe (function (x, fn) {
+            return __(x).then (x => {
 
-                    if (_.isStrictlyObject (x)) {
+                if (_.isStrictlyObject (x)) {
 
-                        var result = _.coerceToEmpty (x),
-                            tasks = []
+                    var result = _.coerceToEmpty (x),
+                        tasks = []
 
-                        _.each2 (x, function (v, k) {
-                            tasks.push (__.identity (fn (v, k)).then (function (v) { result[k] = v })) })
+                    _.each2 (x, function (v, k) {
+                        tasks.push (__.identity (fn (v, k)).then (function (v) { result[k] = v })) })
 
-                        return __.all (tasks).then (_.constant (result)) }
+                    return __.all (tasks).then (_.constant (result)) }
 
-                    else {
-                        return fn (x) } })
+                else {
+                    return fn (x) } }) }
 
 __.then = function (a, b) { return __(a).then (_.coerceToFunction (b)) }
 
@@ -7224,8 +7221,10 @@ _.tests['Promise+'] = {
                                     __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar'),
                                     __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
                                     __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
+                                    __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
                                     __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
-                                    __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ]) }
+                                    __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }),
+                                ]) }
 }
 
 ;

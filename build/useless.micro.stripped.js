@@ -4380,28 +4380,21 @@ __.rejects = function (e) {
         return Promise.reject(e);
     };
 };
-__.safe = function (fn) {
-    return function () {
-        try {
-            return Promise.resolve(fn.apply(this, arguments));
-        } catch (e) {
-            return Promise.reject(e);
+__.map = function (x, fn) {
+    return __(x).then(x => {
+        if (_.isStrictlyObject(x)) {
+            var result = _.coerceToEmpty(x), tasks = [];
+            _.each2(x, function (v, k) {
+                tasks.push(__.identity(fn(v, k)).then(function (v) {
+                    result[k] = v;
+                }));
+            });
+            return __.all(tasks).then(_.constant(result));
+        } else {
+            return fn(x);
         }
-    };
+    });
 };
-__.map = __.safe(function (x, fn) {
-    if (_.isStrictlyObject(x)) {
-        var result = _.coerceToEmpty(x), tasks = [];
-        _.each2(x, function (v, k) {
-            tasks.push(__.identity(fn(v, k)).then(function (v) {
-                result[k] = v;
-            }));
-        });
-        return __.all(tasks).then(_.constant(result));
-    } else {
-        return fn(x);
-    }
-});
 __.then = function (a, b) {
     return __(a).then(_.coerceToFunction(b));
 };
