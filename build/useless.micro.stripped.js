@@ -4381,7 +4381,7 @@ __.rejects = function (e) {
     };
 };
 __.map = function (x, fn) {
-    return __(x).then(x => {
+    return __(x).then(function (x) {
         if (_.isStrictlyObject(x)) {
             var result = _.coerceToEmpty(x), tasks = [];
             _.each2(x, function (v, k) {

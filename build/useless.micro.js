@@ -7077,7 +7077,7 @@ __.rejects = function (e) { return function () { return Promise.reject (e) } }
 
 __.map = function (x, fn) {
 
-            return __(x).then (x => {
+            return __(x).then (function (x) {
 
                 if (_.isStrictlyObject (x)) {
 
