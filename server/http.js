@@ -72,7 +72,10 @@ module.exports = $trait ({
                                         response: cfg.response,
                                         cookies: cfg.cookies,
                                         stub: true,
-                                        env: _.omit (cfg, 'json', 'method', 'url', 'code', 'nonce', 'headers', 'cookies') }) }),
+                                        data: Promise.resolve ((this.data &&
+                                                                (_.isString (this.data)
+                                                                    ? this.data
+                                                                    : JSON.stringify (this.json))) || '') }) }),
 
         init: function () {
 
