@@ -72,10 +72,10 @@ module.exports = $trait ({
                                         response: cfg.response,
                                         cookies: cfg.cookies,
                                         stub: true,
-                                        data: Promise.resolve ((this.data &&
-                                                                (_.isString (this.data)
-                                                                    ? this.data
-                                                                    : JSON.stringify (this.json))) || '') }) }),
+                                        receiveData: () => Promise.resolve ((cfg.data &&
+                                                                (_.isString (cfg.data)
+                                                                    ? cfg.data
+                                                                    : JSON.stringify (cfg.data))) || '') }) }),
 
         init: function () {
 
@@ -121,13 +121,13 @@ module.exports = $trait ({
         removeCookies: function (cookies) {
                             return this.cookies (_.object (cookies.map (x => [x, undefined]))) },
 
-        data: $property (function () {
-                return new Promise ((then, err) => {
-                                        var data = ''
-                                        this.request.on ('data', chunk => { data += chunk })
-                                        this.request.on ('end', () => { then (data) })
-                                        this.request.on ('error', err)
-                                        this.request.resume () }) }),
+        receiveData: function () {
+                        return new Promise ((then, err) => {
+                                                var data = ''
+                                                this.request.on ('data', chunk => { data += chunk })
+                                                this.request.on ('end', () => { then (data) })
+                                                this.request.on ('error', err)
+                                                this.request.resume () }) },
 
         nocache: function () { // iOS aggressively caches even POST requests, so this is needed to prevent that
                     return this.setHeaders ({
@@ -311,12 +311,12 @@ module.exports = $trait ({
                             ' = ' + _.stringify (lvalue, { pure: true, pretty: true }) },
 
     receiveJSON: function () {
-                    return $http.data
+                    return $http.receiveData ()
                                 .then (log.ii)
                                 .then (JSON.parse) },
 
     receiveForm: function () {
-                    return $http.data
+                    return $http.receiveData ()
                                 .then (data => {
                                     return log.i ('POST vars:',
                                                     _.object (
