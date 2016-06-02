@@ -10,15 +10,13 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Upcoming features
 
-- [Lightweight HTTP server framework](https://github.com/xpl/useless#server-app-framework) with Promise-based flow control
-- Brand new test system based on [Promises](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise)
-- [Nonlinear/asynchronous logging and stack traces](http://img.leprosorium.com/2523074) (for Promise-based code)
+- Brand new test system based on [Promises](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise) (will replace old `Testosterone` subsystem)
 - Splitting of distinct framework parts to separate projects (finally, _useful_ ones).
 
 ### Recent updates / changelog
 
-- New HTTP server framework (https://github.com/xpl/useless/tree/master/server) based on Promises and `Androgene`.
-- Working prototype of [Androgene](https://github.com/xpl/useless/blob/master/Androgene.js) subsystem, delivering the "supervised Promises" concept.
+- [New HTTP server framework](https://github.com/xpl/useless/tree/master/server) based on Promises and `Androgene`.
+- Working prototype of [Androgene](https://github.com/xpl/useless/blob/master/Androgene.js) subsystem, delivering the "supervised Promises" concept for [nonlinear/asynchronous logging and stack traces](http://img.leprosorium.com/2523074).
 - First sketch of [Promise+](https://github.com/xpl/useless/blob/master/base/Promise%2B.js): abstract algorithms that can operate on any data type and any operator type (either synchronous or asynchronous).
 - Got rid of `__proto__` mutation, derived prototypes now utilize `Object.create` for faster code.
 - Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
