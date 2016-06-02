@@ -17,6 +17,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- New HTTP server framework (https://github.com/xpl/useless/tree/master/server) based on Promises and `Androgene`.
+- Working prototype of [Androgene](https://github.com/xpl/useless/blob/master/Androgene.js) subsystem, delivering the "supervised Promises" concept.
+- First sketch of [Promise+](https://github.com/xpl/useless/blob/master/base/Promise%2B.js): abstract algorithms that can operate on any data type and any operator type (either synchronous or asynchronous).
 - Got rid of `__proto__` mutation, derived prototypes now utilize `Object.create` for faster code.
 - Added wiki entry on how to do [pluggable methods with component traits](https://github.com/xpl/useless/wiki/$trait#pluggable-methods-with-component-traits).
 - [Read more...](https://github.com/xpl/useless/wiki/Changelog)
