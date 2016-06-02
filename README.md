@@ -11,7 +11,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 ### Upcoming features
 
 - Splitting of distinct framework parts to separate projects (finally, _useful_ ones).
-- New AST-based preprocessor / build system (see [ECMASquasher](https://github.com/xpl/ECMASquasher)).
+
+- New AST-based preprocessor / build system (see [ECMASquasher](https://github.com/xpl/ECMASquasher)) which will help deliver the framework and its submodules.
+
 
 ### Recent updates / changelog
 
