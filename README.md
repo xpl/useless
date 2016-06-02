@@ -17,7 +17,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - A new [HTTP server framework](https://github.com/xpl/useless/tree/master/server) built around the recent `Androgene` subsystem. See the code [example](https://github.com/xpl/useless#server-app-framework) here. It allows to write and debug complex asynchronous chains in no time, with unprecedented level of error reporting legibility.
 
-- Working prototype of [Androgene](https://github.com/xpl/useless/blob/master/Androgene.js) subsystem, delivering the "supervised Promises" concept for [asynchronous/nonlinear logging and stack traces](http://img.leprosorium.com/2523074). It is core mechanism behind the upcoming unit test system and a new HTTP server framework.
+- Working prototype of [Androgene](https://github.com/xpl/useless/blob/master/Androgene.js) subsystem, delivering the "supervised Promises" concept for [asynchronous/nonlinear logging and stack traces](http://img.leprosorium.com/2523074). It is a core mechanism behind the upcoming unit test system and a new HTTP server framework.
 
 - Early sketch of [Promise+](https://github.com/xpl/useless/blob/master/base/Promise%2B.js) library for highly abstract data-processing algorithms that can handle any type of data (arrays, objects, scalars) and any kind of operator function (either sync or async).
 
