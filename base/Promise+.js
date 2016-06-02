@@ -1,4 +1,91 @@
-/*  Promise-centric extensions (SKETCH)
+/*  Promise-centric extensions
+    ======================================================================== */
+
+_.tests['Promise+'] = {
+
+/*  ------------------------------------------------------------------------ */
+
+    promisify: function () {
+
+    /*  Example object  */
+
+        var fs = {
+
+        /*  Shouldn't be converted  */
+
+            42: 42,
+            dontTouchMe:  function () { $assert (arguments.length === 0); return 42 },
+            dontTouchMe2: function () { $assert (arguments.length === 0); return 42 },
+            readFileSync: function () { $assert (arguments.length === 0); return 42 },
+
+        /*  Will be promisified */
+
+            readFile: function (path,   callback) { $assert (this === fs)
+                            if (path) { callback (null, 'contents of ' + path) }
+                                 else { callback ('path empty') } } }
+
+    /*  Run     */
+
+        fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
+
+    /*  Check if 'except' worked successfully */
+
+        $assert (fsAsync.dontTouchMe (),
+                 fsAsync.dontTouchMe2 (),
+                 fsAsync.readFileSync (), fsAsync['42'], 42)
+
+    /*  Check if 'readFile' converted successfully */
+
+        return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
+                            fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
+
+/*  ------------------------------------------------------------------------ */
+
+    seq: function () { return [
+                            __.seq (123).assert (123),
+                            __.seq (_.constant (123)).assert (123),
+                            __.seq ([123, 333]).assert (333),
+                            __.seq ([Promise.resolve (123), Promise.resolve (333)]).assert (333),
+                            __.seq ([123, _.constant (333)]).assert (333),
+                            __.seq ([123, __.constant (333)]).assert (333),
+                            __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
+                            __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar')
+                        ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    map: function () {
+            return [
+                        __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
+                        __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
+                        __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
+                        __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
+                        __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    each: function () {
+
+        var pairs = function (input) { var pairs = []
+                        return __.each (input, function (x, i) { pairs.push ([x, i]) })
+                                    .then (_.constant (pairs)) }
+
+        return [    pairs ()         .assert ([]),
+                    pairs (undefined).assert ([]),
+
+                    pairs (42).assert ([[42, undefined]]),
+                    
+                    pairs ([    42,    48]) .assert ([[42,  0],  [48,  1 ]]),
+                    pairs ({ 0: 42, 1: 48 }).assert ([[42, '0'], [48, '1']]),
+
+                    __.each ([1,2], _.throws ('foo')).assertRejected ('foo') ] }
+
+/*  END OF TESTS ----------------------------------------------------------- */
+
+}
+
+
+/*  IMPLEMENTATION
     ======================================================================== */
 
 TimeoutError = $extends (Error, { message: 'timeout expired' })                                
@@ -23,7 +110,7 @@ __.rejects = function (e) { return function () { return Promise.reject (e) } }
 
 __.map = function (x, fn) {
 
-            return __(x).then (function (x) {
+            return __.then (x, function (x) {
 
                 if (_.isStrictlyObject (x)) {
 
@@ -37,6 +124,14 @@ __.map = function (x, fn) {
 
                 else {
                     return fn (x) } }) }
+
+__.each = function (obj, fn) {
+                return __.then (obj, function (obj) {
+                    return new Promise (function (complete, whoops) {
+                                        _.cps.each (obj, function (x, i, then) {
+                                                            __(fn (x, i))
+                                                                .then (then)
+                                                                .catch (whoops) }, complete) }) }) }
 
 __.then = function (a, b) { return __(a).then (_.coerceToFunction (b)) }
 
@@ -118,58 +213,4 @@ $mixin (Function, {
                                         f.apply (self, _.asArray (args).concat (function (err, what) {
                                                                                       if (err) { reject (err) }
                                                                                                  resolve (what) })) }) } })) })
-_.tests['Promise+'] = {
-
-    promisify: function () {
-
-    /*  Example object  */
-
-        var fs = {
-
-        /*  Shouldn't be converted  */
-
-            42: 42,
-            dontTouchMe:  function () { $assert (arguments.length === 0); return 42 },
-            dontTouchMe2: function () { $assert (arguments.length === 0); return 42 },
-            readFileSync: function () { $assert (arguments.length === 0); return 42 },
-
-        /*  Will be promisified */
-
-            readFile: function (path,   callback) { $assert (this === fs)
-                            if (path) { callback (null, 'contents of ' + path) }
-                                 else { callback ('path empty') } } }
-
-    /*  Run     */
-
-        fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
-
-    /*  Check if 'except' worked successfully */
-
-        $assert (fsAsync.dontTouchMe (),
-                 fsAsync.dontTouchMe2 (),
-                 fsAsync.readFileSync (), fsAsync['42'], 42)
-
-    /*  Check if 'readFile' converted successfully */
-
-        return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
-                            fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
-
-    'seq/map': function () {
-                        return
-                        return __.all ([
-                                    __.seq (123).assert (123),
-                                    __.seq (_.constant (123)).assert (123),
-                                    __.seq ([123, 333]).assert (333),
-                                    __.seq (Promise.resolve (123), Promise.resolve (333)).assert (333),
-                                    __.seq ([123, _.constant (333)]).assert (333),
-                                    __.seq ([123, __.constant (333)]).assert (333),
-                                    __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
-                                    __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar'),
-                                    __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
-                                    __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
-                                    __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
-                                    __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
-                                    __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }),
-                                ]) }
-}
 

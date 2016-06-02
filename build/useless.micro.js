@@ -775,10 +775,12 @@ _.deferTest (['type', 'isArray'], function () {
         var CustomArray = $extends (Array, {
             method: function () { return 42 } })
 
-        $assert (_.isArray (new CustomArray ())) }, function () {
+        $assert (_.isArray (new CustomArray ())) },
 
-    _.isArray = function (x) {
-        return x instanceof Array } })
+    function () {
+
+        _.isArray = function (x) {
+            return x instanceof Array } })
 
 
 /*  Better _.matches / $assertMatches: +regexp feature, +deep matching
@@ -828,26 +830,44 @@ _.deferTest (['type', 'matches(regex)'], function () {
                                 function (result, kv) {
                                     return result && _.match (a[kv[0]], kv[1]) }, true) } }) })
 
+/*  Scalar values
+    ======================================================================== */
+
+_.withTest (['type', 'isScalar'], function () {
+
+        $assert (_.every ([42, 'foo', null, undefined, true],        _.isScalar))
+        $assert (_.every ([/foo/, new Date (), {}, []],       _.not (_.isScalar))) },
+
+    function () {
+
+        _.isScalar = function (v) {
+                        return (v === undefined) ||
+                               (v === null) || ((v && v.constructor) &&
+                                                    ((v.constructor === String) ||
+                                                     (v.constructor === Number) ||
+                                                     (v.constructor === Boolean))) } })
+
+
 /*  POD data types
     ======================================================================== */
 
 _.withTest (['type', 'POD'], function () {
 
-    $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
-    $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD)))
+        $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
+        $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD))) },
 
-}, function () { _.extend (_, {
+    function () {
 
-    isNonPOD: function (v) {
-        return (v && v.constructor) &&
-            (v.constructor !== Object) &&
-            (v.constructor !== Array) &&
-            (v.constructor !== String) &&
-            (v.constructor !== Number) &&
-            (v.constructor !== Boolean) },
+        _.isNonPOD = function (v) {
+                        return (v && v.constructor) &&
+                            (v.constructor !== Object) &&
+                            (v.constructor !== Array) &&
+                            (v.constructor !== String) &&
+                            (v.constructor !== Number) &&
+                            (v.constructor !== Boolean) }
 
-    isPOD: function (v) {
-        return !_.isNonPOD (v) } }) })
+        _.isPOD = function (v) {
+                    return !_.isNonPOD (v) } })
 
 /*  Numbers
     ======================================================================== */
@@ -865,12 +885,12 @@ _.withTest (['type', 'numbers'], function () {
         Object.defineProperty (Number, 'EPSILON', { enumerable: true,
                                                     get:  _.constant (2.2204460492503130808472633361816E-16) }) } // NodeJS lack this
 
-    _.extend (_, {
-        isDecimal: function (x, tolerance) {
-                        if (!_.isNumber (x) || _.isNaN (x)) {
-                            return false }
-                        else {
-                            return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } }) })
+    
+    _.isDecimal = function (x, tolerance) {
+                    if (!_.isNumber (x) || _.isNaN (x)) {
+                        return false }
+                    else {
+                        return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } })
 
 /*  'empty' classifiers (fixes underscore shit)
     ======================================================================== */
@@ -991,24 +1011,22 @@ _.hasStdlib = true
 
 _.withTest (['stdlib', 'throwsError'], function () {
 
-        /*  Accepts either string...
-         */
-        $assertThrows (
-            _.throwsError ('неуловимый Джо'),
-            _.matches ({ message: 'неуловимый Джо' }))
+        $assertThrows (_.throws ('foo'), 'foo')
 
-        /*  ..or Error instance
-         */
-        $assertThrows (
-            _.throwsError (new Error ('неуловимый Джо')),
-            _.matches ({ message: 'неуловимый Джо' })) }, function () {
+        $assertThrows (_.throwsError (           'неуловимый Джо'),  _.matches ({ message: 'неуловимый Джо' }))
+        $assertThrows (_.throwsError (new Error ('неуловимый Джо')), _.matches ({ message: 'неуловимый Джо' }))   },
 
-    _.throwsError = _.higherOrder (
-        _.throwError = function (msg) {
-                         throw (msg instanceof Error) ? msg : new Error (msg) }) })
+    function () {
 
-_.overrideThis   = _.throwsError ('override this')
-_.notImplemented = _.throwsError ('not implemented')
+        _.throwsError = _.higherOrder (
+            _.throwError = function (msg) {
+                             throw (msg instanceof Error) ? msg : new Error (msg) })
+
+        _.throws = _.higherOrder (
+                        _.throw = function (msg) { throw msg })
+
+        _.overrideThis   = _.throwsError ('override this')
+        _.notImplemented = _.throwsError ('not implemented') })
 
 
 /*  Abstract _.values
@@ -1028,7 +1046,6 @@ _.withTest (['stdlib', 'values2'], function () {
                         else if (_.isStrictlyObject (x))    { return _.values (x) }
                         else if (_.isEmpty (x))             { return [] }
                         else                                { return [x] } } }) })
-
 
 /*  Map 2.0
     ======================================================================== */
@@ -1160,6 +1177,24 @@ _.withTest (['stdlib', 'hyperMap'], function () {
                         return _.hyperOperator (_.unary, function    (expr, f) {
                                                            return op (expr) ||
                                                               _.map2 (expr, f) }) (data, _.identity) } })
+
+
+/*  Abstract _.pairs
+    ======================================================================== */
+
+_.withTest (['stdlib', 'pairs2'], function () {
+
+    $assert (_.pairs2 (undefined),              [[undefined, undefined]]) // TODO: unify semantics with _.values2
+    $assert (_.pairs2 (_.identity),             [[undefined, _.identity]])
+    $assert (_.pairs2 ('foo'),                  [[undefined, 'foo']])
+    $assert (_.pairs2 (['foo', 'bar']),         [[ 0,  'foo'], [ 1,  'bar']])
+    $assert (_.pairs2 ({ 0: 'foo', 1: 'bar' }), [['0', 'foo'], ['1', 'bar']]) },
+
+        function () {
+
+            _.pairs2 = function (x) { return _.scatter (x, function (x, i, return_) { return_ ([i, x]) }) } })
+
+
 
 /*  Filter 2.0
     ======================================================================== */
@@ -2676,29 +2711,52 @@ _.withTest (['cps', 'each'], function () {
         _.cps.each (
             data2,
             function (item, name, then) { $assert (item === data2[name]); items__3 (); then () },
+            function () { final__1 () }) })
+
+    /*  Iterating over scalar is legal
+     */
+    $assertEveryCalled (function (items__1, final__1) {
+        _.cps.each (
+            'foo',
+            function (item, name, then) { $assert ([item, name], ['foo', undefined]); items__1 (); then () },
+            function () { final__1 () }) })
+
+    /*  Undefined/null are treated as empty (not scalars)
+     */
+    $assertEveryCalled (function (final__1) {
+        _.cps.each (
+            undefined,
+            function () { $fail },
             function () { final__1 () }) }) },
 
 function () { _.extend (_.cps, {
 
-    each: function (obj, elem, complete, index_, length_, keys_) {
-                var self    = arguments.callee
-                var index   = index_ || 0
-                var keys    = index === 0 ? (obj.length === undefined ? _.keys(obj) : undefined) : keys_
-                var length  = index === 0 ? (keys ? keys.length : obj.length) : length_
-                var passKey = (_.numArgs (elem) !== 2)
+    each: function (obj, elem_, complete_, index_, length_, keys_) {
 
-                if (!obj || (index >= (length || 0))) {
-                    if (complete) {
-                        complete () }}
+                var complete = complete_ || _.noop
+                var elem     = function (x, k, next) {
+                                    if (_.numArgs (elem_) === 2) { elem_ (x,    next, complete, obj) }
+                                                            else { elem_ (x, k, next, complete, obj) } }
+
+                if (_.isEmpty (obj)) {
+                    complete () }
+
+                else if (_.isScalar (obj)) {
+                    elem (obj, undefined, complete) }
 
                 else {
-                    var key  = keys ? keys[index] : index
-                    var next = function () { self (obj, elem, complete, index + 1, length, keys) }
 
-                    if (passKey) {
-                        elem (obj[key], key, next, complete, obj) }
+                    var index   = index_ || 0
+                    var keys    = index === 0 ? (obj.length === undefined ? _.keys(obj) : undefined) : keys_
+                    var length  = index === 0 ? (keys ? keys.length : obj.length) : length_
+
+                    if (index >= (length || 0)) {
+                        complete () }
+
                     else {
-                        elem (obj[key],      next, complete, obj) } } } })} )
+                        var key = keys ? keys[index] : index
+
+                        elem (obj[key], key, arguments.callee.bind (this, obj, elem_, complete_, index + 1, length, keys)) } } } })} )
 
 
 /*  map
@@ -3261,7 +3319,7 @@ _.withTest ('Array extensions', function () {
 
     var arr = [1,3,2,3,3,4,3]
 
-    $assert ([arr.first, arr.top, arr.last], [1, 3, 3])
+    $assert ([arr.first, arr.second, arr.top, arr.last], [1, 3, 3, 3])
     $assert (arr.rest, [3,2,3,3,4,3])
 
     $assert (arr.take (4), [1,3,2,3])
@@ -3337,10 +3395,11 @@ _.withTest ('Array extensions', function () {
         contains: function (arr, item) { return arr.indexOf (item) >= 0 },
 
 
-        top:   function (arr) { return arr[arr.length - 1] },        
-        first: function (arr) { return arr[0] },
-        rest:  function (arr) { return _.rest (arr) },
-        last:  function (arr) { return arr[arr.length - 1] },
+        top:    function (arr) { return arr[arr.length - 1] },        
+        first:  function (arr) { return arr[0] },
+        second: function (arr) { return arr[1] },
+        rest:   function (arr) { return _.rest (arr) },
+        last:   function (arr) { return arr[arr.length - 1] },
         
         /*  TODO: refactor
          */
@@ -7052,7 +7111,94 @@ Component = $prototype ({
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 
-/*  Promise-centric extensions (SKETCH)
+/*  Promise-centric extensions
+    ======================================================================== */
+
+_.tests['Promise+'] = {
+
+/*  ------------------------------------------------------------------------ */
+
+    promisify: function () {
+
+    /*  Example object  */
+
+        var fs = {
+
+        /*  Shouldn't be converted  */
+
+            42: 42,
+            dontTouchMe:  function () { $assert (arguments.length === 0); return 42 },
+            dontTouchMe2: function () { $assert (arguments.length === 0); return 42 },
+            readFileSync: function () { $assert (arguments.length === 0); return 42 },
+
+        /*  Will be promisified */
+
+            readFile: function (path,   callback) { $assert (this === fs)
+                            if (path) { callback (null, 'contents of ' + path) }
+                                 else { callback ('path empty') } } }
+
+    /*  Run     */
+
+        fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
+
+    /*  Check if 'except' worked successfully */
+
+        $assert (fsAsync.dontTouchMe (),
+                 fsAsync.dontTouchMe2 (),
+                 fsAsync.readFileSync (), fsAsync['42'], 42)
+
+    /*  Check if 'readFile' converted successfully */
+
+        return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
+                            fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
+
+/*  ------------------------------------------------------------------------ */
+
+    seq: function () { return [
+                            __.seq (123).assert (123),
+                            __.seq (_.constant (123)).assert (123),
+                            __.seq ([123, 333]).assert (333),
+                            __.seq ([Promise.resolve (123), Promise.resolve (333)]).assert (333),
+                            __.seq ([123, _.constant (333)]).assert (333),
+                            __.seq ([123, __.constant (333)]).assert (333),
+                            __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
+                            __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar')
+                        ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    map: function () {
+            return [
+                        __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
+                        __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
+                        __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
+                        __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
+                        __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    each: function () {
+
+        var pairs = function (input) { var pairs = []
+                        return __.each (input, function (x, i) { pairs.push ([x, i]) })
+                                    .then (_.constant (pairs)) }
+
+        return [    pairs ()         .assert ([]),
+                    pairs (undefined).assert ([]),
+
+                    pairs (42).assert ([[42, undefined]]),
+                    
+                    pairs ([    42,    48]) .assert ([[42,  0],  [48,  1 ]]),
+                    pairs ({ 0: 42, 1: 48 }).assert ([[42, '0'], [48, '1']]),
+
+                    __.each ([1,2], _.throws ('foo')).assertRejected ('foo') ] }
+
+/*  END OF TESTS ----------------------------------------------------------- */
+
+}
+
+
+/*  IMPLEMENTATION
     ======================================================================== */
 
 TimeoutError = $extends (Error, { message: 'timeout expired' })                                
@@ -7077,7 +7223,7 @@ __.rejects = function (e) { return function () { return Promise.reject (e) } }
 
 __.map = function (x, fn) {
 
-            return __(x).then (function (x) {
+            return __.then (x, function (x) {
 
                 if (_.isStrictlyObject (x)) {
 
@@ -7091,6 +7237,14 @@ __.map = function (x, fn) {
 
                 else {
                     return fn (x) } }) }
+
+__.each = function (obj, fn) {
+                return __.then (obj, function (obj) {
+                    return new Promise (function (complete, whoops) {
+                                        _.cps.each (obj, function (x, i, then) {
+                                                            __(fn (x, i))
+                                                                .then (then)
+                                                                .catch (whoops) }, complete) }) }) }
 
 __.then = function (a, b) { return __(a).then (_.coerceToFunction (b)) }
 
@@ -7172,60 +7326,6 @@ $mixin (Function, {
                                         f.apply (self, _.asArray (args).concat (function (err, what) {
                                                                                       if (err) { reject (err) }
                                                                                                  resolve (what) })) }) } })) })
-_.tests['Promise+'] = {
-
-    promisify: function () {
-
-    /*  Example object  */
-
-        var fs = {
-
-        /*  Shouldn't be converted  */
-
-            42: 42,
-            dontTouchMe:  function () { $assert (arguments.length === 0); return 42 },
-            dontTouchMe2: function () { $assert (arguments.length === 0); return 42 },
-            readFileSync: function () { $assert (arguments.length === 0); return 42 },
-
-        /*  Will be promisified */
-
-            readFile: function (path,   callback) { $assert (this === fs)
-                            if (path) { callback (null, 'contents of ' + path) }
-                                 else { callback ('path empty') } } }
-
-    /*  Run     */
-
-        fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
-
-    /*  Check if 'except' worked successfully */
-
-        $assert (fsAsync.dontTouchMe (),
-                 fsAsync.dontTouchMe2 (),
-                 fsAsync.readFileSync (), fsAsync['42'], 42)
-
-    /*  Check if 'readFile' converted successfully */
-
-        return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
-                            fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
-
-    'seq/map': function () {
-                        return
-                        return __.all ([
-                                    __.seq (123).assert (123),
-                                    __.seq (_.constant (123)).assert (123),
-                                    __.seq ([123, 333]).assert (333),
-                                    __.seq (Promise.resolve (123), Promise.resolve (333)).assert (333),
-                                    __.seq ([123, _.constant (333)]).assert (333),
-                                    __.seq ([123, __.constant (333)]).assert (333),
-                                    __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
-                                    __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar'),
-                                    __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
-                                    __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
-                                    __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
-                                    __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
-                                    __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }),
-                                ]) }
-}
 
 ;
 

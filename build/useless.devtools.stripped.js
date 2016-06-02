@@ -1402,6 +1402,9 @@ Test = $prototype({
                 routine.call(self.context, self.$(self.finalize));
             } else {
                 var result = routine.call(self.context);
+                if (_.isArrayLike(result) && result[0] instanceof Promise) {
+                    result = __.all(result);
+                }
                 if (result instanceof Promise) {
                     result.then(function (x) {
                         self.finalize();

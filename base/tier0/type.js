@@ -64,10 +64,12 @@ _.deferTest (['type', 'isArray'], function () {
         var CustomArray = $extends (Array, {
             method: function () { return 42 } })
 
-        $assert (_.isArray (new CustomArray ())) }, function () {
+        $assert (_.isArray (new CustomArray ())) },
 
-    _.isArray = function (x) {
-        return x instanceof Array } })
+    function () {
+
+        _.isArray = function (x) {
+            return x instanceof Array } })
 
 
 /*  Better _.matches / $assertMatches: +regexp feature, +deep matching
@@ -117,26 +119,44 @@ _.deferTest (['type', 'matches(regex)'], function () {
                                 function (result, kv) {
                                     return result && _.match (a[kv[0]], kv[1]) }, true) } }) })
 
+/*  Scalar values
+    ======================================================================== */
+
+_.withTest (['type', 'isScalar'], function () {
+
+        $assert (_.every ([42, 'foo', null, undefined, true],        _.isScalar))
+        $assert (_.every ([/foo/, new Date (), {}, []],       _.not (_.isScalar))) },
+
+    function () {
+
+        _.isScalar = function (v) {
+                        return (v === undefined) ||
+                               (v === null) || ((v && v.constructor) &&
+                                                    ((v.constructor === String) ||
+                                                     (v.constructor === Number) ||
+                                                     (v.constructor === Boolean))) } })
+
+
 /*  POD data types
     ======================================================================== */
 
 _.withTest (['type', 'POD'], function () {
 
-    $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
-    $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD)))
+        $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
+        $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD))) },
 
-}, function () { _.extend (_, {
+    function () {
 
-    isNonPOD: function (v) {
-        return (v && v.constructor) &&
-            (v.constructor !== Object) &&
-            (v.constructor !== Array) &&
-            (v.constructor !== String) &&
-            (v.constructor !== Number) &&
-            (v.constructor !== Boolean) },
+        _.isNonPOD = function (v) {
+                        return (v && v.constructor) &&
+                            (v.constructor !== Object) &&
+                            (v.constructor !== Array) &&
+                            (v.constructor !== String) &&
+                            (v.constructor !== Number) &&
+                            (v.constructor !== Boolean) }
 
-    isPOD: function (v) {
-        return !_.isNonPOD (v) } }) })
+        _.isPOD = function (v) {
+                    return !_.isNonPOD (v) } })
 
 /*  Numbers
     ======================================================================== */
@@ -154,12 +174,12 @@ _.withTest (['type', 'numbers'], function () {
         Object.defineProperty (Number, 'EPSILON', { enumerable: true,
                                                     get:  _.constant (2.2204460492503130808472633361816E-16) }) } // NodeJS lack this
 
-    _.extend (_, {
-        isDecimal: function (x, tolerance) {
-                        if (!_.isNumber (x) || _.isNaN (x)) {
-                            return false }
-                        else {
-                            return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } }) })
+    
+    _.isDecimal = function (x, tolerance) {
+                    if (!_.isNumber (x) || _.isNaN (x)) {
+                        return false }
+                    else {
+                        return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } })
 
 /*  'empty' classifiers (fixes underscore shit)
     ======================================================================== */

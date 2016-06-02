@@ -388,6 +388,10 @@ Test = $prototype ({
                                                 leads to broken unhandled exception handling after the Testosterone run completes  */
 
                                         var result = routine.call (self.context)
+
+                                        if (_.isArrayLike (result) && (result[0] instanceof Promise)) {
+                                            result = __.all (result) }
+
                                         if (result instanceof Promise) {
                                             result.then (
                                                 function (x) { self.finalize () }.postponed,

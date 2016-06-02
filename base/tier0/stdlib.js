@@ -5,24 +5,22 @@ _.hasStdlib = true
 
 _.withTest (['stdlib', 'throwsError'], function () {
 
-        /*  Accepts either string...
-         */
-        $assertThrows (
-            _.throwsError ('неуловимый Джо'),
-            _.matches ({ message: 'неуловимый Джо' }))
+        $assertThrows (_.throws ('foo'), 'foo')
 
-        /*  ..or Error instance
-         */
-        $assertThrows (
-            _.throwsError (new Error ('неуловимый Джо')),
-            _.matches ({ message: 'неуловимый Джо' })) }, function () {
+        $assertThrows (_.throwsError (           'неуловимый Джо'),  _.matches ({ message: 'неуловимый Джо' }))
+        $assertThrows (_.throwsError (new Error ('неуловимый Джо')), _.matches ({ message: 'неуловимый Джо' }))   },
 
-    _.throwsError = _.higherOrder (
-        _.throwError = function (msg) {
-                         throw (msg instanceof Error) ? msg : new Error (msg) }) })
+    function () {
 
-_.overrideThis   = _.throwsError ('override this')
-_.notImplemented = _.throwsError ('not implemented')
+        _.throwsError = _.higherOrder (
+            _.throwError = function (msg) {
+                             throw (msg instanceof Error) ? msg : new Error (msg) })
+
+        _.throws = _.higherOrder (
+                        _.throw = function (msg) { throw msg })
+
+        _.overrideThis   = _.throwsError ('override this')
+        _.notImplemented = _.throwsError ('not implemented') })
 
 
 /*  Abstract _.values
@@ -42,7 +40,6 @@ _.withTest (['stdlib', 'values2'], function () {
                         else if (_.isStrictlyObject (x))    { return _.values (x) }
                         else if (_.isEmpty (x))             { return [] }
                         else                                { return [x] } } }) })
-
 
 /*  Map 2.0
     ======================================================================== */
@@ -174,6 +171,24 @@ _.withTest (['stdlib', 'hyperMap'], function () {
                         return _.hyperOperator (_.unary, function    (expr, f) {
                                                            return op (expr) ||
                                                               _.map2 (expr, f) }) (data, _.identity) } })
+
+
+/*  Abstract _.pairs
+    ======================================================================== */
+
+_.withTest (['stdlib', 'pairs2'], function () {
+
+    $assert (_.pairs2 (undefined),              [[undefined, undefined]]) // TODO: unify semantics with _.values2
+    $assert (_.pairs2 (_.identity),             [[undefined, _.identity]])
+    $assert (_.pairs2 ('foo'),                  [[undefined, 'foo']])
+    $assert (_.pairs2 (['foo', 'bar']),         [[ 0,  'foo'], [ 1,  'bar']])
+    $assert (_.pairs2 ({ 0: 'foo', 1: 'bar' }), [['0', 'foo'], ['1', 'bar']]) },
+
+        function () {
+
+            _.pairs2 = function (x) { return _.scatter (x, function (x, i, return_) { return_ ([i, x]) }) } })
+
+
 
 /*  Filter 2.0
     ======================================================================== */

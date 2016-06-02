@@ -75,29 +75,52 @@ _.withTest (['cps', 'each'], function () {
         _.cps.each (
             data2,
             function (item, name, then) { $assert (item === data2[name]); items__3 (); then () },
+            function () { final__1 () }) })
+
+    /*  Iterating over scalar is legal
+     */
+    $assertEveryCalled (function (items__1, final__1) {
+        _.cps.each (
+            'foo',
+            function (item, name, then) { $assert ([item, name], ['foo', undefined]); items__1 (); then () },
+            function () { final__1 () }) })
+
+    /*  Undefined/null are treated as empty (not scalars)
+     */
+    $assertEveryCalled (function (final__1) {
+        _.cps.each (
+            undefined,
+            function () { $fail },
             function () { final__1 () }) }) },
 
 function () { _.extend (_.cps, {
 
-    each: function (obj, elem, complete, index_, length_, keys_) {
-                var self    = arguments.callee
-                var index   = index_ || 0
-                var keys    = index === 0 ? (obj.length === undefined ? _.keys(obj) : undefined) : keys_
-                var length  = index === 0 ? (keys ? keys.length : obj.length) : length_
-                var passKey = (_.numArgs (elem) !== 2)
+    each: function (obj, elem_, complete_, index_, length_, keys_) {
 
-                if (!obj || (index >= (length || 0))) {
-                    if (complete) {
-                        complete () }}
+                var complete = complete_ || _.noop
+                var elem     = function (x, k, next) {
+                                    if (_.numArgs (elem_) === 2) { elem_ (x,    next, complete, obj) }
+                                                            else { elem_ (x, k, next, complete, obj) } }
+
+                if (_.isEmpty (obj)) {
+                    complete () }
+
+                else if (_.isScalar (obj)) {
+                    elem (obj, undefined, complete) }
 
                 else {
-                    var key  = keys ? keys[index] : index
-                    var next = function () { self (obj, elem, complete, index + 1, length, keys) }
 
-                    if (passKey) {
-                        elem (obj[key], key, next, complete, obj) }
+                    var index   = index_ || 0
+                    var keys    = index === 0 ? (obj.length === undefined ? _.keys(obj) : undefined) : keys_
+                    var length  = index === 0 ? (keys ? keys.length : obj.length) : length_
+
+                    if (index >= (length || 0)) {
+                        complete () }
+
                     else {
-                        elem (obj[key],      next, complete, obj) } } } })} )
+                        var key = keys ? keys[index] : index
+
+                        elem (obj[key], key, arguments.callee.bind (this, obj, elem_, complete_, index + 1, length, keys)) } } } })} )
 
 
 /*  map

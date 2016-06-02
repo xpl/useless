@@ -632,29 +632,28 @@ _.mixin({
         }, true);
     }
 });
-_.extend(_, {
-    isNonPOD: function (v) {
-        return v && v.constructor && v.constructor !== Object && v.constructor !== Array && v.constructor !== String && v.constructor !== Number && v.constructor !== Boolean;
-    },
-    isPOD: function (v) {
-        return !_.isNonPOD(v);
-    }
-});
+_.isScalar = function (v) {
+    return v === undefined || v === null || v && v.constructor && (v.constructor === String || v.constructor === Number || v.constructor === Boolean);
+};
+_.isNonPOD = function (v) {
+    return v && v.constructor && v.constructor !== Object && v.constructor !== Array && v.constructor !== String && v.constructor !== Number && v.constructor !== Boolean;
+};
+_.isPOD = function (v) {
+    return !_.isNonPOD(v);
+};
 if (typeof Number.EPSILON === 'undefined') {
     Object.defineProperty(Number, 'EPSILON', {
         enumerable: true,
         get: _.constant(2.220446049250313e-16)
     });
 }
-_.extend(_, {
-    isDecimal: function (x, tolerance) {
-        if (!_.isNumber(x) || _.isNaN(x)) {
-            return false;
-        } else {
-            return Math.abs(Math.floor(x) - x) > (tolerance || Number.EPSILON);
-        }
+_.isDecimal = function (x, tolerance) {
+    if (!_.isNumber(x) || _.isNaN(x)) {
+        return false;
+    } else {
+        return Math.abs(Math.floor(x) - x) > (tolerance || Number.EPSILON);
     }
-});
+};
 _.extend(_, {
     isEmpty: function (obj) {
         return _.coerceToUndefined(obj) === undefined;
@@ -693,6 +692,9 @@ _.extend(_, {
 _.hasStdlib = true;
 _.throwsError = _.higherOrder(_.throwError = function (msg) {
     throw msg instanceof Error ? msg : new Error(msg);
+});
+_.throws = _.higherOrder(_.throw = function (msg) {
+    throw msg;
 });
 _.overrideThis = _.throwsError('override this');
 _.notImplemented = _.throwsError('not implemented');
@@ -770,6 +772,14 @@ _.hyperMap = function (data, op) {
     return _.hyperOperator(_.unary, function (expr, f) {
         return op(expr) || _.map2(expr, f);
     })(data, _.identity);
+};
+_.pairs2 = function (x) {
+    return _.scatter(x, function (x, i, return_) {
+        return_([
+            i,
+            x
+        ]);
+    });
 };
 _.reject2 = function (value, op) {
     return _.filter2(value, _.not(op));
@@ -1705,25 +1715,28 @@ _.cps.apply = function (fn, this_, args_, then) {
     return fn.apply(this_, args);
 };
 _.extend(_.cps, {
-    each: function (obj, elem, complete, index_, length_, keys_) {
-        var self = arguments.callee;
-        var index = index_ || 0;
-        var keys = index === 0 ? obj.length === undefined ? _.keys(obj) : undefined : keys_;
-        var length = index === 0 ? keys ? keys.length : obj.length : length_;
-        var passKey = _.numArgs(elem) !== 2;
-        if (!obj || index >= (length || 0)) {
-            if (complete) {
-                complete();
-            }
-        } else {
-            var key = keys ? keys[index] : index;
-            var next = function () {
-                self(obj, elem, complete, index + 1, length, keys);
-            };
-            if (passKey) {
-                elem(obj[key], key, next, complete, obj);
+    each: function (obj, elem_, complete_, index_, length_, keys_) {
+        var complete = complete_ || _.noop;
+        var elem = function (x, k, next) {
+            if (_.numArgs(elem_) === 2) {
+                elem_(x, next, complete, obj);
             } else {
-                elem(obj[key], next, complete, obj);
+                elem_(x, k, next, complete, obj);
+            }
+        };
+        if (_.isEmpty(obj)) {
+            complete();
+        } else if (_.isScalar(obj)) {
+            elem(obj, undefined, complete);
+        } else {
+            var index = index_ || 0;
+            var keys = index === 0 ? obj.length === undefined ? _.keys(obj) : undefined : keys_;
+            var length = index === 0 ? keys ? keys.length : obj.length : length_;
+            if (index >= (length || 0)) {
+                complete();
+            } else {
+                var key = keys ? keys[index] : index;
+                elem(obj[key], key, arguments.callee.bind(this, obj, elem_, complete_, index + 1, length, keys));
             }
         }
     }
@@ -2115,6 +2128,9 @@ $extensionMethods(Array, {
     },
     first: function (arr) {
         return arr[0];
+    },
+    second: function (arr) {
+        return arr[1];
     },
     rest: function (arr) {
         return _.rest(arr);
@@ -4381,7 +4397,7 @@ __.rejects = function (e) {
     };
 };
 __.map = function (x, fn) {
-    return __(x).then(function (x) {
+    return __.then(x, function (x) {
         if (_.isStrictlyObject(x)) {
             var result = _.coerceToEmpty(x), tasks = [];
             _.each2(x, function (v, k) {
@@ -4393,6 +4409,15 @@ __.map = function (x, fn) {
         } else {
             return fn(x);
         }
+    });
+};
+__.each = function (obj, fn) {
+    return __.then(obj, function (obj) {
+        return new Promise(function (complete, whoops) {
+            _.cps.each(obj, function (x, i, then) {
+                __(fn(x, i)).then(then).catch(whoops);
+            }, complete);
+        });
     });
 };
 __.then = function (a, b) {

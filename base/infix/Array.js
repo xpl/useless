@@ -5,7 +5,7 @@ _.withTest ('Array extensions', function () {
 
     var arr = [1,3,2,3,3,4,3]
 
-    $assert ([arr.first, arr.top, arr.last], [1, 3, 3])
+    $assert ([arr.first, arr.second, arr.top, arr.last], [1, 3, 3, 3])
     $assert (arr.rest, [3,2,3,3,4,3])
 
     $assert (arr.take (4), [1,3,2,3])
@@ -81,10 +81,11 @@ _.withTest ('Array extensions', function () {
         contains: function (arr, item) { return arr.indexOf (item) >= 0 },
 
 
-        top:   function (arr) { return arr[arr.length - 1] },        
-        first: function (arr) { return arr[0] },
-        rest:  function (arr) { return _.rest (arr) },
-        last:  function (arr) { return arr[arr.length - 1] },
+        top:    function (arr) { return arr[arr.length - 1] },        
+        first:  function (arr) { return arr[0] },
+        second: function (arr) { return arr[1] },
+        rest:   function (arr) { return _.rest (arr) },
+        last:   function (arr) { return arr[arr.length - 1] },
         
         /*  TODO: refactor
          */
