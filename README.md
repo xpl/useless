@@ -17,13 +17,11 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- A [wiki entry explaining on the new __ namespace](https://github.com/xpl/useless/wiki/Promise) (brought by [Promise+](https://github.com/xpl/useless/blob/master/base/Promise%2B.js)).
+- A [wiki entry explaining on the new __ namespace](https://github.com/xpl/useless/wiki/Promise) (brought by [Promise+](https://github.com/xpl/useless/blob/master/base/Promise%2B.js)). It contains a pack of highly abstract data-processing algorithms that can handle any type of data (arrays, objects, scalars) and any kind of operator function (either sync or async).
 
 - An early alpha of the new [HTTP server framework](https://github.com/xpl/useless/tree/master/server) built around the recent `Androgene` subsystem. See a brief [example](https://github.com/xpl/useless#server-app-framework) here. It allows to write and debug complex asynchronous chains in no time, with unprecedented level of error reporting legibility.
 
 - A working prototype of [Androgene](https://github.com/xpl/useless/blob/master/Androgene.js) subsystem, delivering the "supervised Promises" concept for [asynchronous/nonlinear logging and stack traces](http://img.leprosorium.com/2523074). It is also a core mechanism behind the upcoming unit test system (will replace the old `Testosterone` thing).
-
-- An early sketch of [Promise+](https://github.com/xpl/useless/blob/master/base/Promise%2B.js) library for highly abstract data-processing algorithms that can handle any type of data (arrays, objects, scalars) and any kind of operator function (either sync or async).
 
 - [Read more...](https://github.com/xpl/useless/wiki/Changelog)
 
