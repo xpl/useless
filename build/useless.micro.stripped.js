@@ -3380,6 +3380,9 @@ BBox = $prototype({
         unit: $property(function () {
             return new BBox(0, 0, 1, 1);
         }),
+        rect: $property(function (sideSize) {
+            return new BBox(0, 0, sideSize, sideSize);
+        }),
         fromLeftTopAndSize: function (pt, size) {
             return BBox.fromLTWH({
                 left: pt.x,
@@ -3520,6 +3523,9 @@ BBox = $prototype({
     }),
     union: function (other) {
         return BBox.fromLTRB(Math.min(this.left, other.left), Math.min(this.top, other.top), Math.max(this.right, other.right), Math.max(this.bottom, other.bottom));
+    },
+    centerIn: function (other) {
+        return new BBox(other.x, other.y, this.width, this.height);
     },
     clone: $property(function () {
         return new BBox(this.x, this.y, this.width, this.height);

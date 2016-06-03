@@ -210,7 +210,7 @@ $mixin (Promise, {
 
 _.withTest (['Promise+', '_.scatter with pooling'], function () {
 
-        var data = _.times (2, String.randomHex.arity0)
+        var data = _.times (21, String.randomHex.arity0)
         var numItems = 0
 
         var processedItems = []

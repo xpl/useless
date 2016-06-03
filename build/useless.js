@@ -6032,7 +6032,7 @@ $mixin (Promise, {
 
 _.withTest (['Promise+', '_.scatter with pooling'], function () {
 
-        var data = _.times (2, String.randomHex.arity0)
+        var data = _.times (21, String.randomHex.arity0)
         var numItems = 0
 
         var processedItems = []
@@ -6566,6 +6566,9 @@ BBox = $prototype ({
         unit: $property (function () {
             return new BBox (0, 0, 1, 1) }),
 
+        rect: $property (function (sideSize) {
+            return new BBox (0, 0, sideSize, sideSize) }),
+
         fromLeftTopAndSize: function (pt, size) {
             return BBox.fromLTWH ({ left: pt.x, top: pt.y, width: size.x, height: size.y }) },
 
@@ -6583,7 +6586,7 @@ BBox = $prototype ({
         fromSize: function (a, b) {
             if (b) { return new BBox (-a / 2.0, -b / 2.0, a, b) }
               else { return new BBox (-a.x / 2.0, -a.y / 2.0, a.x, a.y) } },
-        
+
         fromPoints: function (pts) { var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE
             _.each (pts, function (pt) {
                 l = Math.min (pt.x, l)
@@ -6700,6 +6703,9 @@ BBox = $prototype ({
                                         Math.min (this.top,    other.top),
                                         Math.max (this.right,  other.right),
                                         Math.max (this.bottom, other.bottom)) },
+
+    centerIn: function (other) {
+        return new BBox (other.x, other.y, this.width, this.height) },
 
     clone: $property (function () {
         return new BBox (this.x, this.y, this.width, this.height) }),
