@@ -466,7 +466,8 @@ _.sequence = function (arg) {
 _.seq = _.sequence;
 _.then = function (fn1, fn2) {
     return function (args) {
-        return fn2.call(this, fn1.apply(this, arguments));
+        var r = fn1.apply(this, arguments);
+        return r instanceof Promise ? r.then(fn2.bind(this)) : fn2.call(this, r);
     };
 };
 _.asString = function (what) {
@@ -2353,6 +2354,9 @@ $extensionMethods(String, {
 });
 _.extend(String, {
     randomHex: function (length) {
+        if (length === undefined) {
+            length = _.random(1, 32);
+        }
         var string = '';
         for (var i = 0; i < length; i++) {
             string += Math.floor(Math.random() * 16).toString(16);
@@ -2575,11 +2579,15 @@ _.extend(_, {
                 stream(value || stream.value);
             },
             when: function (match, then) {
-                var matchFn = _.isFunction(match) ? match : _.equals(match);
+                var matchFn = _.isFunction(match) ? match : _.equals(match), alreadyCalled = false;
                 stream(function (val) {
                     if (matchFn(val)) {
-                        stream.off(arguments.callee);
-                        then.apply(this, arguments);
+                        if (!alreadyCalled) {
+                            alreadyCalled = true;
+                            stream.off(arguments.callee);
+                            then.apply(this, arguments);
+                        } else {
+                        }
                     }
                 });
             }
@@ -2620,6 +2628,11 @@ _.extend(_, {
         if (defaultListener) {
             barrier(defaultListener);
         }
+        _.defineProperty(barrier, 'promise', function () {
+            return new Promise(function (resolve) {
+                barrier(resolve);
+            });
+        });
         return barrier;
     },
     triggerOnce: $restArg(function () {
@@ -3846,53 +3859,6 @@ Parse = {
         return _.first(_.last(path.split(/\\|\//)).split('.'));
     }
 };
-_.enumerate = _.cps.each;
-_.mapReduce = function (array, cfg) {
-    var cursor = 0;
-    var complete = false;
-    var length = array && array.length || 0;
-    var maxPoolSize = cfg.maxConcurrency || length;
-    var poolSize = 0;
-    var memo = cfg.memo;
-    if (length === 0) {
-        cfg.complete(cfg.memo || array);
-    } else {
-        var fetch = function () {
-            while (cursor < length && poolSize < maxPoolSize) {
-                poolSize += 1;
-                cfg.next(array[cursor], cursor++, function () {
-                    poolSize--;
-                    if (!complete) {
-                        if (cursor >= length) {
-                            if (poolSize === 0) {
-                                setTimeout(function () {
-                                    cfg.complete(cfg.memo || array);
-                                }, 0);
-                                complete = true;
-                            }
-                        } else {
-                            fetch();
-                        }
-                    }
-                }, function () {
-                    poolSize--;
-                }, memo);
-            }
-            if (!complete && cursor >= length && poolSize == 0) {
-                cfg.complete(cfg.memo || array);
-            }
-        };
-        fetch();
-    }
-};
-_.asyncJoin = function (functions, complete, context) {
-    _.mapReduce(functions, {
-        complete: complete.bind(context),
-        next: function (fn, i, next, skip) {
-            fn.call(context, next, skip);
-        }
-    });
-};
 Lock = $prototype({
     acquire: function (then) {
         this.wait(this.$(function () {
@@ -3922,15 +3888,21 @@ Lock = $prototype({
     }
 });
 _.interlocked = function (fn) {
-    var lock = new Lock();
+    var lock = new Lock(), fn = $untag(fn);
     return _.extendWith({
         lock: lock,
         wait: lock.$(lock.wait)
-    }, _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
-        lock.acquire(function () {
-            fn(lock.$(lock.release));
+    }, function () {
+        var this_ = this, args_ = arguments;
+        return new Promise(function (resolve) {
+            lock.acquire(function () {
+                __.then(fn.apply(this_, args_), function (x) {
+                    lock.release();
+                    resolve(x);
+                });
+            });
         });
-    }));
+    });
 };
 _.defineKeyword('scope', function (fn) {
     var releaseStack = undefined;
@@ -4232,14 +4204,8 @@ Component = $prototype({
                 }
             }
         }, this);
-        _.intercept(this, 'init', function (init) {
-            var evalChain = _.hasArgs(this.constructor.prototype.init) ? _.cps.sequence : _.sequence;
-            evalChain([
-                this._beforeInit,
-                init.bind(this),
-                this._afterInit
-            ]).call(this);
-        });
+        var init = this.init;
+        this.init = this._beforeInit.then(init.then(this._afterInit)).bind(this);
         _.each(cfg, function (value, name) {
             if (!(name in excludeFromCfg)) {
                 this[name] = _.isFunction(value) ? this.$(value) : value;
@@ -4265,43 +4231,42 @@ Component = $prototype({
             v[0].call(this, v[1]);
         }, this);
         if (!(cfg.init === false || this.constructor.$defaults && this.constructor.$defaults.init === false)) {
-            this.init();
+            var result = this.init();
+            if (result instanceof Promise) {
+                result.panic;
+            }
         }
     }),
-    callTraitsMethod: function (name, then) {
-        if (_.isFunction(then)) {
-            _.cps.sequence(_.filter2(this.constructor.$traits || [], this.$(function (Trait) {
-                var method = Trait.prototype[name];
-                return method && _.cps.arity0(_.noArgs(method) ? method.asContinuation : method).bind(this) || false;
-            })).concat(then.arity0))();
-        } else {
-            _.sequence(_.filter2(this.constructor.$traits || [], this.$(function (Trait) {
-                var method = Trait.prototype[name];
-                return method && (_.hasArgs(method) ? method.bind(this, _.identity) : method.bind(this)) || false;
-            })))();
-        }
+    callChainMethod: function (name) {
+        var self = this;
+        return __.seq(_.filter2(this.constructor.$traits || [], function (Trait) {
+            var method = Trait.prototype[name];
+            return method && method.bind(self) || false;
+        }));
     },
-    _beforeInit: function (then) {
+    _beforeInit: function () {
         if (this.initialized.already) {
             throw new Error('Component: I am already initialized. Probably you\'re doing it wrong.');
         }
-        this.callTraitsMethod('beforeInit', then);
+        return this.callChainMethod('beforeInit');
     },
     init: function () {
     },
-    _afterInit: function (then) {
-        var cfg = this.cfg;
-        this.callTraitsMethod('afterInit', then);
-        this.initialized(true);
-        _.each(this.constructor.$definition, function (def, name) {
-            if (def && def.$observableProperty) {
-                name += 'Change';
-                var defaultListener = cfg[name];
-                if (defaultListener) {
-                    this[name](defaultListener);
+    _afterInit: function () {
+        var cfg = this.cfg, self = this;
+        return __.then(this.callChainMethod.$('afterInit'), function () {
+            self.initialized(true);
+            _.each(self.constructor.$definition, function (def, name) {
+                if (def && def.$observableProperty) {
+                    name += 'Change';
+                    var defaultListener = cfg[name];
+                    if (defaultListener) {
+                        self[name](defaultListener);
+                    }
                 }
-            }
-        }, this);
+            });
+            return true;
+        });
     },
     initialized: $barrier(),
     beforeDestroy: function () {
@@ -4381,6 +4346,8 @@ __ = Promise.coerce = function (x) {
 __.noop = function () {
     return Promise.resolve();
 };
+__.eternity = new Promise(function () {
+});
 __.identity = function (x) {
     return Promise.resolve(x);
 };
@@ -4397,58 +4364,14 @@ __.rejects = function (e) {
         return Promise.reject(e);
     };
 };
-__.scatter = function (x, fn) {
-    return __.then(x, function (x) {
-        if (_.isStrictlyObject(x)) {
-            var result = _.coerceToEmpty(x), tasks = [];
-            _.each2(x, function (v, k) {
-                tasks.push(__(fn, v, k, x).then(function (vk) {
-                    if (vk instanceof Array) {
-                        result[vk.second] = vk.first;
-                    } else if (vk !== undefined) {
-                        if (result instanceof Array) {
-                            result.push(vk);
-                        } else {
-                            result[k] = vk;
-                        }
-                    }
-                }));
-            });
-            return __.all(tasks).then(_.constant(result));
-        } else {
-            return __(fn, x, undefined, x).then(function (vk) {
-                return vk instanceof Array ? vk.first : vk;
-            });
-        }
-    });
-};
-__.map = function (x, fn) {
-    return __.scatter(x, __.$(fn));
-};
-__.filter = function (x, fn) {
-    return __.scatter(x, function (v, k, x) {
-        return __(fn, v, k, x).then(function (decision) {
-            return decision === false ? undefined : decision === true ? v : decision;
-        });
-    });
-};
-__.each = function (obj, fn) {
-    return __.then(obj, function (obj) {
-        return new Promise(function (complete, whoops) {
-            _.cps.each(obj, function (x, i, then) {
-                __(fn(x, i)).then(then).catch(whoops);
-            }, complete);
-        });
-    });
-};
 __.then = function (a, b) {
-    return __(a).then(_.coerceToFunction(b));
-};
-__.seq = function (seq) {
-    return __(_.reduce2(seq, __.then));
-};
-__.all = function (x) {
-    return Promise.all(x);
+    b = _.coerceToFunction(b);
+    try {
+        var x = a instanceof Function ? a() : a;
+        return x instanceof Promise ? x.then(b) : b(x);
+    } catch (e) {
+        return Promise.reject(e);
+    }
 };
 __.delay = function (ms) {
     return __.delays(ms)();
@@ -4462,6 +4385,17 @@ __.delays = function (ms) {
         });
     };
 };
+$mixin(Promise, {
+    delay: function (ms) {
+        return this.then(__.delays(ms));
+    },
+    timeout: function (ms) {
+        return this.race(__.delay(ms).reject(new TimeoutError()));
+    },
+    now: $property(function () {
+        return this.timeout(0);
+    })
+});
 $mixin(Array, {
     race: $property(function () {
         return Promise.race(this);
@@ -4477,24 +4411,6 @@ $mixin(Promise, {
     reject: function (e) {
         return this.then(_.throwsError(e));
     },
-    delay: function (ms) {
-        return this.then(__.delays(ms));
-    },
-    timeout: function (ms) {
-        return this.race(__.delay(ms).reject(new TimeoutError()));
-    },
-    now: $property(function () {
-        return this.timeout(0);
-    }),
-    log: $property(function () {
-        return this.then(function (x) {
-            log(x);
-            return x;
-        }, log.e.then(_.throwError));
-    }),
-    alert: $property(function () {
-        return this.then(alert2, alert2.then(_.throwError));
-    }),
     chain: function (fn) {
         return this.then(function (x) {
             fn(x);
@@ -4516,6 +4432,18 @@ $mixin(Promise, {
             return fn(e, null);
         });
     },
+    log: $property(function () {
+        return this.then(log, log.then(_.throwsError));
+    }),
+    alert: $property(function () {
+        return this.done(alert2, alert2.then(_.throwsError));
+    }),
+    panic: $property(function () {
+        return this.catch(function (e) {
+            ($global.Panic || $global.log)(e);
+            throw e;
+        });
+    }),
     assert: function (desired) {
         return this.then(function (x) {
             $assert(x, desired);
@@ -4536,14 +4464,97 @@ $mixin(Promise, {
             }
             return x;
         });
-    },
-    panic: $property(function () {
-        return this.catch(function (e) {
-            ($global.Panic || $global.log)(e);
-            throw e;
-        });
-    })
+    }
 });
+(function () {
+    var TaskPool = $prototype({
+        constructor: function (cfg) {
+            this.maxTime = cfg && cfg.maxTime;
+            this.pending = [];
+            if (this.maxConcurrency = cfg && cfg.maxConcurrency) {
+                this.numActive = 0;
+                this.queue = [];
+            }
+        },
+        run: function (task) {
+            var self = this;
+            if (this.numActive >= this.maxConcurrency) {
+                return new Promise(function (resolve) {
+                    self.queue.push(function () {
+                        resolve(self.run(task));
+                    });
+                });
+            } else {
+                var p = __(task);
+                if (this.maxTime !== undefined) {
+                    p = p.timeout(this.maxTime);
+                }
+                if (this.maxConcurrency !== undefined) {
+                    self.numActive++;
+                    p = p.then(function (x) {
+                        self.numActive--;
+                        return self.queue.length && self.numActive < self.maxConcurrency ? self.queue.pop()() : x;
+                    });
+                }
+                this.pending.push(p);
+                return p;
+            }
+        },
+        all: $property(function () {
+            return Promise.all(this.pending);
+        })
+    });
+    __.scatter = function (x, fn, cfg) {
+        return __.then(x, function (x) {
+            if (_.isStrictlyObject(x)) {
+                var result = _.coerceToEmpty(x), tasks = new TaskPool(cfg);
+                _.each2(x, function (v, k) {
+                    tasks.run(fn.$(v, k, x)).then(function (vk) {
+                        if (vk instanceof Array) {
+                            result[vk.second] = vk.first;
+                        } else if (vk !== undefined) {
+                            if (result instanceof Array) {
+                                result.push(vk);
+                            } else {
+                                result[k] = vk;
+                            }
+                        }
+                    });
+                });
+                return tasks.all.then(_.constant(result));
+            } else {
+                return __(fn, x, undefined, x).then(function (vk) {
+                    return vk instanceof Array ? vk.first : vk;
+                });
+            }
+        });
+    };
+}());
+__.map = function (x, fn, cfg) {
+    return __.scatter(x, __.$(fn));
+};
+__.filter = function (x, fn, cfg) {
+    return __.scatter(x, function (v, k, x) {
+        return __(fn, v, k, x).then(function (decision) {
+            return decision === false ? undefined : decision === true ? v : decision;
+        });
+    });
+};
+__.each = function (obj, fn) {
+    return __.then(obj, function (obj) {
+        return new Promise(function (complete, whoops) {
+            _.cps.each(obj, function (x, i, then) {
+                __(fn(x, i)).then(then).catch(whoops);
+            }, complete);
+        });
+    });
+};
+__.seq = function (seq) {
+    return _.reduce2(seq, __.then);
+};
+__.all = function (x) {
+    return Promise.all(x);
+};
 $mixin(Function, {
     promisifyAll: $static(function (obj, cfg) {
         var cfg = cfg || {}, except = cfg.except || _.noop;
@@ -5634,7 +5645,11 @@ $prototype.impl.findMeta = function (stack) {
 };
 $prototype.macro(function (def, base) {
     if (!def.$meta) {
-        def.$meta = $static(_.cps.memoize($prototype.impl.findMeta(CallStack.currentAsRawString)));
+        var findMeta = _.cps.memoize($prototype.impl.findMeta(CallStack.currentAsRawString));
+        _.defineMemoizedProperty(findMeta, 'promise', function () {
+            return new Promise(findMeta);
+        });
+        def.$meta = $static(findMeta);
     }
     return def;
 });
@@ -6141,8 +6156,7 @@ Testosterone = $singleton({
         })));
         this.run = this.$(this.run);
     },
-    run: _.interlocked(function (releaseLock, cfg_, optionalThen) {
-        var then = arguments.length === 3 ? optionalThen : _.identity;
+    run: _.interlocked(function (cfg_) {
         var defaults = {
             suites: [],
             silent: true,
@@ -6159,8 +6173,7 @@ Testosterone = $singleton({
         var suites = _.map(cfg.suites, this.$(function (suite, name) {
             return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto);
         }));
-        var collectPrototypeTests = cfg.codebase === false ? _.cps.constant([]) : this.$(this.collectPrototypeTests);
-        collectPrototypeTests(this.$(function (prototypeTests) {
+        var result = (cfg.codebase === false ? __([]) : this.collectPrototypeTests()).then(this.$(function (prototypeTests) {
             var baseTests = cfg.codebase === false ? [] : this.collectTests();
             var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
             var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
@@ -6172,16 +6185,20 @@ Testosterone = $singleton({
             });
             _.assertTypeMatches(_.map(_.pluck(this.runningTests, 'routine'), $untag), ['function']);
             this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
-            _.cps.each(this.runningTests, this.$(this.runTest), this.$(function () {
+            return __.each(this.runningTests, this.$(this.runTest)).then(this.$(function () {
                 _.assert(cfg.done !== true);
                 cfg.done = true;
                 this.printLog(cfg);
                 this.failedTests = _.filter(this.runningTests, _.property('failed'));
                 this.failed = this.failedTests.length > 0;
-                then(!this.failed);
-                releaseLock();
+                return !this.failed;
             }));
         }));
+        return result.catch(function (e) {
+            log.margin();
+            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
+            throw e;
+        });
     }),
     onException: function (e) {
         if (this.currentAssertion)
@@ -6194,39 +6211,28 @@ Testosterone = $singleton({
             this.defineAssertion(name, fn);
         }, this);
     },
-    runTest: function (test, i, then) {
+    runTest: function (test, i) {
         var self = this, runConfig = this.runConfig;
         log.impl.configStack = [];
-        self.toCPS(runConfig.testStarted)(test, function (done) {
-            done = done || _.noop;
-            test.verbose = runConfig.verbose;
-            test.timeout = runConfig.timeout;
-            test.startTime = Date.now();
-            test.run(function () {
-                self.toCPS(runConfig.testComplete)(_.extend(test, { time: Date.now() - test.startTime }), function () {
-                    done();
-                    then();
-                });
-            });
+        test.verbose = runConfig.verbose;
+        test.timeout = runConfig.timeout;
+        test.startTime = Date.now();
+        return test.run().then(function () {
+            test.time = Date.now() - test.startTime;
         });
-    },
-    toCPS: function (fn) {
-        return _.numArgs(fn) === 2 ? fn : function (test, then) {
-            fn(test);
-            then();
-        };
     },
     collectTests: function () {
         return _.map(_.tests, this.$(function (suite, name) {
             return this.testSuite(name, suite);
         }));
     },
-    collectPrototypeTests: function (then) {
-        _.cps.map(this.prototypeTests, this.$(function (def, then) {
-            def.proto.$meta(this.$(function (meta) {
-                then(this.testSuite(meta.name, def.tests, undefined, def.proto));
-            }));
-        }), then);
+    collectPrototypeTests: function () {
+        var self = this;
+        return __.map(this.prototypeTests, function (def, then) {
+            return def.proto.$meta.promise.then(function (meta) {
+                return self.testSuite(meta.name, def.tests, undefined, def.proto);
+            });
+        });
     },
     testSuite: function (name, tests, context, proto) {
         return {
@@ -6307,7 +6313,7 @@ Test = $prototype({
             this.complete(true);
         }));
     },
-    babyAssertion: function (releaseLock, name, def, fn, args, loc) {
+    babyAssertion: function (name, def, fn, args, loc) {
         var self = this;
         var assertion = new Test({
             mother: this,
@@ -6339,25 +6345,20 @@ Test = $prototype({
                 };
             })
         });
-        var doneWithAssertion = function () {
-            if (assertion.failed && self.canFail) {
-                self.failedAssertions.push(assertion);
-            }
-            releaseLock();
-        };
-        assertion.run(function () {
+        return assertion.run().finally(function (e, x) {
             Testosterone.currentAssertion = self;
             if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
-                assertion.location.sourceReady(function (src) {
+                return assertion.location.sourceReady.promise.then(function (src) {
                     log.red(log.config({
                         location: assertion.location,
                         where: assertion.location
                     }), src);
                     assertion.evalLogCalls();
-                    doneWithAssertion();
                 });
-            } else {
-                doneWithAssertion();
+            }
+        }).then(function () {
+            if (assertion.failed && self.canFail) {
+                self.failedAssertions.push(assertion);
             }
         });
     },
@@ -6418,48 +6419,50 @@ Test = $prototype({
             this.finalize();
         }
     },
-    run: function (then) {
+    run: function () {
         var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
-        this.shouldFail = $shouldFail.is(this.routine);
-        this.failed = false;
-        this.hasLog = false;
-        this.logCalls = [];
-        this.failureLocations = {};
-        _.withTimeout({
-            maxTime: self.timeout,
-            expired: function () {
-                if (self.canFail) {
-                    log.ee('TIMEOUT EXPIRED');
-                    self.fail();
+        return new Promise(this.$(function (then) {
+            this.shouldFail = $shouldFail.is(this.routine);
+            this.failed = false;
+            this.hasLog = false;
+            this.logCalls = [];
+            this.failureLocations = {};
+            _.withTimeout({
+                maxTime: self.timeout,
+                expired: function () {
+                    if (self.canFail) {
+                        log.ee('TIMEOUT EXPIRED');
+                        self.fail();
+                    }
                 }
-            }
-        }, self.complete);
-        _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
-        log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
-            self.logCalls.push(x);
-        }), function (doneWithLogging) {
-            self.complete(doneWithLogging.arity0);
-            if (then) {
-                self.complete(then);
-            }
-            if (routine.length > 0) {
-                routine.call(self.context, self.$(self.finalize));
-            } else {
-                var result = routine.call(self.context);
-                if (_.isArrayLike(result) && result[0] instanceof Promise) {
-                    result = __.all(result);
+            }, self.complete);
+            _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
+            log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
+                self.logCalls.push(x);
+            }), function (doneWithLogging) {
+                self.complete(doneWithLogging.arity0);
+                if (then) {
+                    self.complete(then);
                 }
-                if (result instanceof Promise) {
-                    result.then(function (x) {
-                        self.finalize();
-                    }.postponed, function (e) {
-                        self.onException(e);
-                    });
+                if (routine.length > 0) {
+                    routine.call(self.context, self.$(self.finalize));
                 } else {
-                    self.finalize();
+                    var result = routine.call(self.context);
+                    if (_.isArrayLike(result) && result[0] instanceof Promise) {
+                        result = __.all(result);
+                    }
+                    if (result instanceof Promise) {
+                        result.then(function (x) {
+                            self.finalize();
+                        }.postponed, function (e) {
+                            self.onException(e);
+                        });
+                    } else {
+                        self.finalize();
+                    }
                 }
-            }
-        });
+            });
+        }));
     },
     printLog: function () {
         var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';

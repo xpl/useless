@@ -606,19 +606,29 @@ _.withTest (['function', 'sequence / then'], function () {
         $assert (anotherWay.call  (context, 'shit'), 'nice cookies from shit')
         $assert (wayAnother.call  (context, 'shit'), 'nice cookies from shit')
 
-        $assert (_.sequence ([]).call (context, 'foo'), 'foo') }, function () {
+        $assert (_.sequence ([]).call (context, 'foo'), 'foo')
 
-    _.sequence = function (arg) { // was _.flip (_.compose) before... but it needs performance
-        var chain = _.isArray (arg) ? arg : _.asArray (arguments)
-        var length = chain.length
-        return (length === 0) ? _.identity : function (x) {
-            for (var i = 0; i < length; i++) { x = chain[i].call (this, x) }
-            return x } }
+        var plusBar = _.then (function (x) { return Promise.resolve (x) },
+                              function (x) { return x + 'bar' })
 
-    _.seq = _.sequence
+        return plusBar ('foo').then (function (x) { $assert (x, 'foobar') })
 
-    _.then = function (fn1, fn2) { return function (args) {
-                                            return fn2.call (this, fn1.apply (this, arguments)) }} })
+    }, function () {
+
+        _.sequence = function (arg) { // was _.flip (_.compose) before... but it needs performance
+            var chain = _.isArray (arg) ? arg : _.asArray (arguments)
+            var length = chain.length
+            return (length === 0) ? _.identity : function (x) {
+                for (var i = 0; i < length; i++) { x = chain[i].call (this, x) }
+                return x } }
+
+        _.seq = _.sequence
+
+        _.then = function (fn1, fn2) { return function (args) {
+                                                var r = fn1.apply (this, arguments)
+                                                return (r instanceof Promise)
+                                                            ? r.then (fn2.bind (this))
+                                                            : fn2.call (this, r) }} })
 
 
 ;
@@ -3663,6 +3673,8 @@ _.deferTest ('String extensions', function () {
 _.extend (String, {
 
     randomHex: function (length) {
+                            if (length === undefined) {
+                                length = _.random (1, 32) }
                             var string = '';
                             for (var i = 0; i < length; i++) { string += Math.floor (Math.random () * 16).toString (16) }
                             return string },
@@ -3939,19 +3951,13 @@ _.tests.stream = {
         $assertEveryCalledOnce (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
-                value (432) })
+                value (432)
+                value (234) })
 
         $assertNotCalled (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
-                value (7) })
-
-        $assertEveryCalledOnce (function (mkay) {
-            var value = _.observable ()
-                value.when (_.equals ('bar'), function () { mkay () })
-                value ('bar')
-                value ('foo')
-                value ('bar') }) },
+                value (7) }) },
 
     'once': function () { $assertEveryCalledOnce (function (mkay) {
 
@@ -4158,11 +4164,16 @@ _.extend (_, {
                 stream.hasValue = false
                 stream (value || stream.value) },
                 
-            when: function (match, then) { var matchFn = _.isFunction (match) ? match : _.equals (match)
+            when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
+                                               alreadyCalled = false
                 stream (function (val) {
                     if (matchFn (val)) {
-                        stream.off (arguments.callee)
-                        then.apply (this, arguments) } }) } }) },
+                        if (!alreadyCalled) {
+                             alreadyCalled = true
+                             stream.off (arguments.callee)
+                             then.apply (this, arguments) }
+                        else { 
+                            /* log.w ('WTF') */ } } }) } }) },
 
 
     barrier: function (defaultValue) { var defaultListener = undefined
@@ -4198,6 +4209,9 @@ _.extend (_, {
 
         if (defaultListener) {
             barrier (defaultListener) }
+
+        _.defineProperty (barrier, 'promise', function () {
+                                                    return new Promise (function (resolve) { barrier (resolve) }) })
 
         return barrier },
 
@@ -5805,64 +5819,6 @@ Parse = {
 
 _.tests.concurrency = {
 
-    'mapReduce': function (testDone) {
-
-        var data = _.times (42, String.randomHex)
-        var numItems = 0
-
-        /*  Keep in mind that mapReduce is not linear! It does not guaranteee sequential order of execution,
-            it allows out-of-order, and it happens. Of course, you can set maxConcurrency=1, but what's the
-            point? For sequential processing, use _.enumerate, as it's way more simple.
-
-            maxConcurrency forbids execution of more than N tasks at once (useful when you have depend on
-            limited system resources, e.g. a number of simultaneously open connections / file system handles.
-
-            By default it's equal to array's length, meaning *everything* will be triggered at once. This
-            behavior was chosen to force utility user to make decision on it's value, cuz no 'common value'
-            exists to be the default one.
-
-            Also, it does not share standard 'reduce' semantics. Reduce operator from FP is known to be
-            linear and referentially transparent, and that's neither feasible nor sensible if you need
-            to parallelize your tasks. So it's memo is a shared state object/array that is kept until
-            execution ends, which you can use as execution context (to not explicitly specify one externally).
-         */
-        _.mapReduce (data, {
-            maxConcurrency: 10,
-            memo: {                                 // memo is optional
-                processedItems: [],
-                skippedItems: [] },
-
-            next: function (item, itemIndex, then, skip, memo) {
-                numItems++
-                $assert (!_.find (memo.processedItems, item))
-                $assert (!_.find (memo.skippedItems, item))
-
-                if (_.random (7) === 0) {
-                    memo.skippedItems.push (item)
-                    skip () }                       // for short circuiting (not delegating execution to some
-                                                    // scheduled utility) use skip (otherwise, a call stack
-                                                    // overrun may occur)
-                else {
-                    _.delay (function () {
-                    memo.processedItems.push (item)
-                    then () }, _.random (10)) }},   // simulate job
-
-            complete: function (memo) {
-                $assert ((memo.processedItems.length + memo.skippedItems.length), data.length)
-                testDone () } }) },
-
-
-    'asyncJoin': function (testDone) {
-        var tasksDone = []
-
-        _.asyncJoin ([
-            function (done) { _.delay (function () { tasksDone[0] = true; done () }, _.random (20)) },
-            function (done) { _.delay (function () { tasksDone[1] = true; done () }, _.random (20)) },
-            function (done) { _.delay (function () { tasksDone[2] = true; done () }, _.random (20)) } ],
-            function (/* complete */) {
-                $assert (_.filter (tasksDone, _.identity).length === 3)
-                testDone () }) },
-
     'scope': function (testDone) { var releases = [],
                                        acquires = [],
                                        count    = 10
@@ -5879,63 +5835,13 @@ _.tests.concurrency = {
 
         _.times (count, function () { method (_.random (1000)) }) },
 
-    'interlocked': function (testDone) { var isNowRunning = false
-        _.mapReduce (_.times (30, String.randomHex), {
-                complete: testDone,
-                maxConcurrency: 10,
-                next: _.interlocked (function (releaseLock, item, itemIndex, then, skip, memo) { $assert (!isNowRunning)
-                                        isNowRunning = true
-                                        _.delay (function () {
-                                            then (); isNowRunning = false; releaseLock (); }, _.random (10)) }) }) } }
+    'interlocked': function () { var isNowRunning = false
 
+        var op = _.interlocked (function (item, i) { $assert (         !isNowRunning)
+                                                                        isNowRunning = true
+                    return __.delay (_.random (2)).then (function () { isNowRunning = false }) })
 
-/*  Actual impl
-    ======================================================================== */
-
-_.enumerate = _.cps.each
-
-_.mapReduce = function (array, cfg) {
-    
-    var cursor = 0
-    var complete = false
-    var length = (array && array.length) || 0
-    var maxPoolSize = cfg.maxConcurrency || length
-    var poolSize = 0
-    var memo = cfg.memo
-
-    if (length === 0) {
-        cfg.complete (cfg.memo || array) }
-
-    else { var fetch = function () {
-            while ((cursor < length) && (poolSize < maxPoolSize)) {
-                poolSize += 1
-                cfg.next (
-                    /* item */  array[cursor],
-                    /* index */ cursor++,
-                    /* done */  function () {
-                                    poolSize--
-                                    if (!complete) {
-                                        if (cursor >= length) {
-                                            if (poolSize === 0) {
-                                                setTimeout (function () { cfg.complete (cfg.memo || array) }, 0)
-                                                complete = true }}
-                                            else {
-                                                fetch () }} },
-
-                    /* skip */  function () { poolSize-- },
-                    /* memo */  memo) }
-
-            if (!complete && (cursor >= length) && (poolSize == 0)) {
-                cfg.complete (cfg.memo || array) }}
-
-        fetch () }}
-
-
-_.asyncJoin = function (functions, complete, context) {
-    _.mapReduce (functions, {
-        complete: complete.bind (context),
-        next: function (fn, i, next, skip) {
-            fn.call (context, next, skip) } }) }
+        return __.scatter (_.times (15, String.randomHex), op, { maxConcurrency: 10 }) } }
 
 
 /*  Mutex/lock (now supports stand-alone operation, and it's re-usable).
@@ -5964,22 +5870,17 @@ Lock = $prototype ({
         else
             delete this.waitQueue } })
 
-   
-/*  Adds _.interlocked(fn) utility that wraps passed function into lock. Unfortunately,
-    it cannot be released automagically © at the moment, because _.interlocked does
-    not know how to bind to your chains of continuations, and no general mechanism
-    exist. Should look into Promise concept (as its now core JS feature)...
-
-    'Release' trigger passed as last argument to your target function.
- */
-_.interlocked = function (fn) { var lock = new Lock ()
-    return _.extendWith ({ lock: lock, wait: lock.$ (lock.wait) },
-        _.argumentPrependingWrapper (Tags.unwrap (fn),
-                                        function (fn) {
-                                            lock.acquire (function () {
-                                                fn (lock.$ (lock.release)) }) })) }
-
-
+_.interlocked = function (fn) { var lock = new Lock (),
+                                    fn   = $untag (fn)
+    return _.extendWith ({
+                lock: lock,
+                wait: lock.$ (lock.wait) }, function () { var this_ = this,
+                                                              args_ = arguments;
+                                                return new Promise (function (resolve) {
+                                                                        lock.acquire (function () {
+                                                                                        __.then (fn.apply (this_, args_),
+                                                                                            function (x) {
+                                                                                                lock.release (); resolve (x) }) }) }) }) }
 /*  EXPERIMENTAL (TBD)
  */
 _.defineKeyword ('scope', function (fn) { var releaseStack = undefined
@@ -6119,40 +6020,22 @@ _.tests.component = {
 
     /*  Pluggable init/destroy with $traits (tests all combinations of CPS / sequential style method calling)
      */
-    'pluggable init with $traits': function () {
+    'pluggable init with $traits': function () { var A, B, C, D
 
-        var Base = $component ({
-            assertBeforeInitCalls: function () {
-                $assertMatches (this, { foo: 'beforeInit called' }) } })
+        var A = $trait ({
+            beforeInit: function () { A = true; return Promise.resolve () },
+            afterInit:  function () { B = true; return Promise.resolve () } })
 
-        var assertAfterInitCalls = function (Compo) {
-            $assertEveryCalledOnce (function (mkay) {
-                new Compo ().initialized (function () {
-                    $assertMatches (this, { foo: 'afterInit called' }); mkay () }) }) }
+        var B = $trait ({
+            beforeInit: function () { C = true; },
+            afterInit:  function () { D = true; }
+        })
 
-        var assertTraitsInitCalls = function (trait) {
+        var C = $component ({
+            $traits: [B, A] })
 
-            //  CPS init()
-            $assertEveryCalledOnce (function (mkay) {
-                assertAfterInitCalls ($extends (Base, {
-                    $traits: [trait],
-                    init: function (then) { this.assertBeforeInitCalls (); mkay (); then () } })) })
-
-            //  Sequential init()
-            $assertEveryCalledOnce (function (mkay) {
-                assertAfterInitCalls ($extends (Base, {
-                    $traits: [trait],
-                    init: function () { this.assertBeforeInitCalls (); mkay () } })) }) }
-
-        //  Sequential afterInit/beforeInit
-        assertTraitsInitCalls ($trait ({
-            beforeInit: function () { this.foo = 'beforeInit called' },
-            afterInit: function () { this.foo = 'afterInit called' } }))
-
-        //  CPS afterInit/beforeInit
-        assertTraitsInitCalls ($trait ({
-            beforeInit: function (then) { this.foo = 'beforeInit called'; then () },
-            afterInit: function (then) { this.foo = 'afterInit called'; then () } })) },
+        return (new C ()).initialized.promise.then (function () {
+                                                        $assert (A,B,C,D,true) }) },
 
 
     /*  $defaults is convenient macro to extract _.defaults thing from init() to definition level
@@ -6940,13 +6823,12 @@ Component = $prototype ({
             else if (def.$memoizeCPS) {
                 this[name] = _.cps.memoize (this[name]) } } }, this)
 
-
-        /*  Bind stuff to init (either in CPS, or in sequential flow control style)
+        /*  Add before/after stage to init
          */
-        _.intercept (this, 'init', function (init) {
-            var evalChain = _.hasArgs (this.constructor.prototype.init) ? _.cps.sequence : _.sequence
-                evalChain ([this._beforeInit, init.bind (this), this._afterInit]).call (this) })
-
+        var init  = this.init
+                    this.init = this._beforeInit
+                                     .then (init
+                                     .then (this._afterInit)).bind (this)
 
         /*  Apply cfg thing
          */
@@ -6985,55 +6867,49 @@ Component = $prototype ({
         /*  Call init (if not marked as deferred)
          */
         if (!(cfg.init === false || (this.constructor.$defaults && (this.constructor.$defaults.init === false)))) {
-            this.init () } }),
+            var result = this.init ()
+            if (result instanceof Promise) {
+                result.panic } } }),
 
     /*  Arranges methods defined in $traits in chains and evals them
      */
-    callTraitsMethod: function (name, then) {
-
-        //  Continuation-passing style chain
-        if (_.isFunction (then)) {
-            _.cps.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
-                var method = Trait.prototype[name]
-                return (method && _.cps.arity0 ((
-                    _.noArgs (method) ?             // convert to CPS convention if needed
-                        method.asContinuation :
-                        method)).bind (this)) || false })).concat (then.arity0)) () }
-
-        //  Sequential style chain
-        else {
-            _.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
-                var method = Trait.prototype[name]
-                return (method && (_.hasArgs (method) ?
-                                    method.bind (this, _.identity) : // if method is CPS, give identity function as (unused) 'then' argument,
-                                    method.bind (this))) || false }))) () } },  // (to prevent errors, as trait methods not required to support both calling styles)
+    callChainMethod: function (name) { var self = this
+        return __.seq (
+                _.filter2 (this.constructor.$traits || [], function (Trait) {
+                                                              var method = Trait.prototype[name]
+                                                              return (method && method.bind (self)) || false })) },
 
     /*  Lifecycle
      */
-    _beforeInit: function (then) {
+    _beforeInit: function () {
         if (this.initialized.already) {
             throw new Error ('Component: I am already initialized. Probably you\'re doing it wrong.') }
 
-        this.callTraitsMethod ('beforeInit', then) },
+        return this.callChainMethod ('beforeInit') },
 
-    init: function (/* then */) {},
+    init: function () { /* return Promise for asynchronous init */ },
 
-    _afterInit: function (then) { var cfg = this.cfg
+    _afterInit: function () { var cfg  = this.cfg,
+                                  self = this
 
-        this.callTraitsMethod ('afterInit', then)
+        return __.then (this.callChainMethod.$ ('afterInit'), function () {
 
-        this.initialized (true)
+                        self.initialized (true)
 
-        /*  Bind default property listeners. Doing this after init, because property listeners
-            get called immediately after bind (observable semantics), and we're want to make
-            sure that component is initialized at the moment of call.
+                        /*  Bind default property listeners. Doing this after init, because property listeners
+                            get called immediately after bind (observable semantics), and we're want to make
+                            sure that component is initialized at the moment of call.
 
-            We do not do this for other streams, as their execution is up to component logic,
-            and they're might get called at init, so their default values get bound before init.
-         */
-        _.each (this.constructor.$definition, function (def, name) {
-            if (def && def.$observableProperty) { name += 'Change'; var defaultListener = cfg[name]
-                if (defaultListener) { this[name] (defaultListener) } } }, this) },
+                            We do not do this for other streams, as their execution is up to component logic,
+                            and they're might get called at init, so their default values get bound before init.
+                         */
+                        _.each (self.constructor.$definition, function (def, name) {
+                            if (def && def.$observableProperty) {            name += 'Change'
+                                var defaultListener = cfg[name]
+                                if (defaultListener) {
+                                    self[name] (defaultListener) } } })
+
+                        return true }) },
     
     initialized: $barrier (),
 
@@ -7111,7 +6987,7 @@ Component = $prototype ({
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 
-/*  Promise-centric extensions
+/*  Promise-centric extensions (WIP) /// TODO: REFACTOR
     ======================================================================== */
 
 _.tests['Promise+'] = {
@@ -7166,12 +7042,12 @@ _.tests['Promise+'] = {
 
 /*  ------------------------------------------------------------------------ */
 
-    seq: function () { return [
-                            __.seq (123).assert (123),
-                            __.seq (_.constant (123)).assert (123),
-                            __.seq ([123, 333]).assert (333),
+    seq: function () {  $assert (__.seq (123), 123)
+                        $assert (__.seq ([123, 333]), 333)
+                        $assert (__.seq ([123, _.constant (333)]), 333)
+
+                        return [
                             __.seq ([Promise.resolve (123), Promise.resolve (333)]).assert (333),
-                            __.seq ([123, _.constant (333)]).assert (333),
                             __.seq ([123, __.constant (333)]).assert (333),
                             __.seq ([123, __.rejects ('foo')]).assertRejected ('foo'),
                             __.seq ([123, __.delays (0), _.appends ('bar')]).assert ('123bar')
@@ -7213,7 +7089,9 @@ _.tests['Promise+'] = {
                     pairs ([    42,    48]) .assert ([[42,  0],  [48,  1 ]]),
                     pairs ({ 0: 42, 1: 48 }).assert ([[42, '0'], [48, '1']]),
 
-                    __.each ([1,2], _.throws ('foo')).assertRejected ('foo') ] }
+                    __.each ([1,2], function (x, i) {
+                                        if (i > 0) $fail
+                                        return Promise.reject ('foo') }).assertRejected ('foo') ] }
 
 /*  END OF TESTS ----------------------------------------------------------- */
 
@@ -7223,7 +7101,10 @@ _.tests['Promise+'] = {
 /*  IMPLEMENTATION
     ======================================================================== */
 
+
 TimeoutError = $extends (Error, { message: 'timeout expired' })                                
+
+/*  ------------------------------------------------------------------------ */
 
 __ = Promise.coerce = function ( x) { var this_ = this,
                                           args = _.rest (arguments)
@@ -7232,8 +7113,12 @@ __ = Promise.coerce = function ( x) { var this_ = this,
                                ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x.apply (this_, args)) }) : // @hide
                                                             Promise.resolve (x))) }
 
+/*  ------------------------------------------------------------------------ */
+
 __.noop = function () {
             return Promise.resolve () }
+
+__.eternity = new Promise (function () {})
 
 __.identity = function (x) {
                 return Promise.resolve (x) }
@@ -7245,58 +7130,16 @@ __.constant = function (x) {
 __.reject = function (e) { return Promise.reject (e) }
 __.rejects = function (e) { return function () { return Promise.reject (e) } }
 
-__.scatter = function (x, fn) {
+/*  ------------------------------------------------------------------------ */
 
-            return __.then (x, function (x) {
+__.then = function (a, b) { b = _.coerceToFunction (b)
+                try {
+                    var x = (a instanceof Function) ? a () : a
+                    return  (x instanceof Promise)  ? x.then (b) : b (x) }
+                catch (e) {
+                    return Promise.reject (e) } }
 
-                if (_.isStrictlyObject (x)) {
-
-                    var result = _.coerceToEmpty (x),
-                        tasks = []
-
-                    _.each2 (x, function (v, k) {
-                                    tasks.push (__(fn, v, k, x).then (
-                                        function (vk) {
-                                            if (vk instanceof Array) {
-                                                result[vk.second] = vk.first }
-                                            else if (vk !== undefined) {
-                                                if (result instanceof Array) {
-                                                    result.push (vk) }
-                                                else {
-                                                    result[k] = vk } } })) })
-
-                    return __.all (tasks).then (_.constant (result)) }
-
-                else {
-                    return __(fn, x, undefined, x).then (function (vk) {
-                                                            return (vk instanceof Array) ? vk.first : vk }) } }) }
-
-__.map = function (x, fn) {
-            return __.scatter (x, __.$ (fn)) }
-
-__.filter = function (x, fn) {
-                return __.scatter (x, function (v, k, x) {
-                                        return __(fn, v, k, x).then (
-                                            function (decision) {
-                                                return ((decision === false) ? undefined :
-                                                       ((decision === true)  ? v
-                                                                             : decision)) }) }) }
-
-__.each = function (obj, fn) {
-                return __.then (obj, function (obj) {
-                    return new Promise (function (complete, whoops) {
-                                        _.cps.each (obj, function (x, i, then) {
-                                                            __(fn (x, i))
-                                                                .then (then)
-                                                                .catch (whoops) }, complete) }) }) }
-
-__.then = function (a, b) { return __(a).then (_.coerceToFunction (b)) }
-
-__.seq = function (seq) {
-            return __(_.reduce2 (seq, __.then)) }
-
-__.all = function (x) {
-            return Promise.all (x) }
+/*  ------------------------------------------------------------------------ */
 
 __.delay = function (ms) { return __.delays (ms) () }
 
@@ -7304,20 +7147,24 @@ __.delays = function (ms) {
                 return function (x) {
                     return new Promise (function (return_) { setTimeout (function () { return_ (x) }, ms || 0) }) } }
 
-$mixin (Array, {
+$mixin (Promise, {
+    delay:              function (ms) { return this.then (__.delays (ms)) },
+    timeout:            function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
+    now:     $property (function (  ) { return this.timeout (0) }) })
 
-    race: $property (function () { return Promise.race (this) })
-})
+
+/*  ------------------------------------------------------------------------ */
+
+$mixin (Array, {
+    
+    race: $property (function () { return Promise.race (this) }) })
+
+/*  ------------------------------------------------------------------------ */
 
 $mixin (Promise, {
 
     race: function (other) { return [this, other].race },
     reject: function (e) { return this.then (_.throwsError (e)) },
-    delay: function (ms) { return this.then (__.delays (ms)) },
-    timeout: function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
-    now: $property (function () { return this.timeout (0) }),
-    log: $property (function () { return this.then (function (x) { log (x); return x }, log.e.then (_.throwError)) }),
-    alert: $property (function () { return this.then (alert2, alert2.then (_.throwError)) }),
 
     chain: function (fn) { return this.then (function (x) { fn (x); return x; }) },
 
@@ -7333,6 +7180,10 @@ $mixin (Promise, {
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
                                            return { state: 'pending', pending: true } }) }),*/
 
+    log:   $property (function () { return this.then (log,       log.then (_.throwsError)) }),
+    alert: $property (function () { return this.done (alert2, alert2.then (_.throwsError)) }),
+    panic: $property (function () { return this.catch (function (e) { ($global.Panic || $global.log) (e); throw e }) }),
+
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },
 
@@ -7342,9 +7193,128 @@ $mixin (Promise, {
     assertRejected: function (desired) { var check = (arguments.length > 0)
                         return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) },
 
-    panic: $property (function () {
-                return this.catch (function (e) { ($global.Panic || $global.log) (e); throw e }) })
 })
+
+/*  ------------------------------------------------------------------------ */
+
+_.withTest (['Promise+', '_.scatter with pooling'], function () {
+
+        var data = _.times (2, String.randomHex.arity0)
+        var numItems = 0
+
+        var processedItems = []
+
+        var op = function (item, i) {
+                    numItems++
+                    $assert (!_.find (processedItems, item))
+                    return __.delay (_.random (2))
+                             .then (function () {
+                                        processedItems.push (item)
+                                        return item }) }
+
+        return __.scatter (data, op, { maxConcurrency: 10 })
+                 .then (function () { $assert ([], _.difference (data, processedItems)) })
+                 .panic  },
+
+    /*  ------------------------------------------------------------------------ */
+
+    function () {
+
+        var TaskPool = $prototype ({
+
+            constructor: function (cfg) {
+                            
+                            this.maxTime        = cfg && cfg.maxTime
+                            this.pending        = []
+
+                            if (this.maxConcurrency = cfg && cfg.maxConcurrency) {
+                                this.numActive = 0
+                                this.queue     = [] } },
+
+            run: function (task) { var self = this
+
+                        if (this.numActive >= this.maxConcurrency) {
+                            return new Promise (function (resolve) {
+                                                    self.queue.push (function () {
+                                                                        resolve (self.run (task)) }) }) }
+
+                        else {
+                            var p = __(task)
+
+                            if (this.maxTime !== undefined) {
+                                p = p.timeout (this.maxTime) }
+
+                            if (this.maxConcurrency !== undefined) {
+
+                                                           self.numActive++
+                                p = p.then (function (x) { self.numActive--
+                                                   return (self.queue.length &&
+                                                          (self.numActive < self.maxConcurrency))
+                                                                          ? self.queue.pop () ()
+                                                                          : x }) }
+                            this.pending.push (p)
+
+                            return p } },
+
+
+            all: $property (function () {
+                                return Promise.all (this.pending) }) })
+
+    /*  ------------------------------------------------------------------------ */
+
+        __.scatter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
+
+                    return __.then (x, function (x) {
+
+                        if (_.isStrictlyObject (x)) {
+
+                            var result = _.coerceToEmpty (x),
+                                tasks  = new TaskPool (cfg)
+
+                            _.each2 (x, function (v, k) {
+                                            tasks.run (fn.$ (v, k, x)).then (
+                                                                        function (vk) {
+                                                                            if (vk instanceof Array) {
+                                                                                result[vk.second] = vk.first }
+                                                                            else if (vk !== undefined) {
+                                                                                if (result instanceof Array) {
+                                                                                    result.push (vk) }
+                                                                                else {
+                                                                                    result[k] = vk } } }) })
+                            return tasks.all.then (_.constant (result)) }
+
+                        else {
+                            return __(fn, x, undefined, x).then (function (vk) {
+                                                                    return (vk instanceof Array) ? vk.first : vk }) } }) }
+})
+
+/*  ------------------------------------------------------------------------ */
+
+__.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
+            return __.scatter (x, __.$ (fn)) }
+
+__.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
+                return __.scatter (x, function (v, k, x) {
+                                        return __(fn, v, k, x).then (
+                                            function (decision) {
+                                                return ((decision === false) ? undefined :
+                                                       ((decision === true)  ? v
+                                                                             : decision)) }) }) }
+
+__.each = function (obj, fn) {
+                return __.then (obj, function (obj) {
+                    return new Promise (function (complete, whoops) {
+                                        _.cps.each (obj, function (x, i, then) {
+                                                            __(fn (x, i))
+                                                                .then (then)
+                                                                .catch (whoops) }, complete) }) }) }
+__.seq = function (seq) {
+            return _.reduce2 (seq, __.then) }
+
+__.all = function (x) {
+            return Promise.all (x) }
+
+/*  ------------------------------------------------------------------------ */
 
 $mixin (Function, {
     

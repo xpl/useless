@@ -2,7 +2,7 @@
 
     callStackFilter: undefined,
 
-    beforeInit: function (then) { log.minor ('Setting up exception handling')
+    beforeInit: function () { log.minor ('Setting up exception handling')
 
         if (this.callStackFilter) {
             $aspect (CallStack, { isThirdParty: (x, impl) => this.callStackFilter (x) || impl (x) }) }
@@ -14,6 +14,4 @@
 
             if (e.fatal) {
                 log.e (log.boldLine + ' cannot continue ' + log.boldLine + '\n')
-                process.exit () } }))
-
-        then () } })
+                process.exit () } })) } })

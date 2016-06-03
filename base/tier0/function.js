@@ -353,18 +353,28 @@ _.withTest (['function', 'sequence / then'], function () {
         $assert (anotherWay.call  (context, 'shit'), 'nice cookies from shit')
         $assert (wayAnother.call  (context, 'shit'), 'nice cookies from shit')
 
-        $assert (_.sequence ([]).call (context, 'foo'), 'foo') }, function () {
+        $assert (_.sequence ([]).call (context, 'foo'), 'foo')
 
-    _.sequence = function (arg) { // was _.flip (_.compose) before... but it needs performance
-        var chain = _.isArray (arg) ? arg : _.asArray (arguments)
-        var length = chain.length
-        return (length === 0) ? _.identity : function (x) {
-            for (var i = 0; i < length; i++) { x = chain[i].call (this, x) }
-            return x } }
+        var plusBar = _.then (function (x) { return Promise.resolve (x) },
+                              function (x) { return x + 'bar' })
 
-    _.seq = _.sequence
+        return plusBar ('foo').then (function (x) { $assert (x, 'foobar') })
 
-    _.then = function (fn1, fn2) { return function (args) {
-                                            return fn2.call (this, fn1.apply (this, arguments)) }} })
+    }, function () {
+
+        _.sequence = function (arg) { // was _.flip (_.compose) before... but it needs performance
+            var chain = _.isArray (arg) ? arg : _.asArray (arguments)
+            var length = chain.length
+            return (length === 0) ? _.identity : function (x) {
+                for (var i = 0; i < length; i++) { x = chain[i].call (this, x) }
+                return x } }
+
+        _.seq = _.sequence
+
+        _.then = function (fn1, fn2) { return function (args) {
+                                                var r = fn1.apply (this, arguments)
+                                                return (r instanceof Promise)
+                                                            ? r.then (fn2.bind (this))
+                                                            : fn2.call (this, r) }} })
 
 

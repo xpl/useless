@@ -11,13 +11,13 @@ BuildApp = $singleton (Component, {
 
     $depends: [
         require ('./server/args'),
-        require ('./server/exceptions'),
+        require ('./server/tests'),
         require ('./server/supervisor') ],
 
 /*  ======================================================================== */
 
-    init: function (then) {
-            Testosterone.run ({
-                 verbose: this.args.verbose,
-                  silent: false,
-                  filter: t => this.args.values.isEmpty || this.args.values.contains (t.name) }) } })
+    init: function () {
+            return Testosterone.run ({
+                     verbose: this.args.verbose,
+                      silent: false,
+                      filter: t => this.args.values.isEmpty || this.args.values.contains (t.name) }) } })

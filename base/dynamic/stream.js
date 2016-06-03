@@ -56,19 +56,13 @@ _.tests.stream = {
         $assertEveryCalledOnce (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
-                value (432) })
+                value (432)
+                value (234) })
 
         $assertNotCalled (function (mkay) {
             var value = _.observable ()
                 value.when (_.equals (432), function () { mkay () })
-                value (7) })
-
-        $assertEveryCalledOnce (function (mkay) {
-            var value = _.observable ()
-                value.when (_.equals ('bar'), function () { mkay () })
-                value ('bar')
-                value ('foo')
-                value ('bar') }) },
+                value (7) }) },
 
     'once': function () { $assertEveryCalledOnce (function (mkay) {
 
@@ -275,11 +269,16 @@ _.extend (_, {
                 stream.hasValue = false
                 stream (value || stream.value) },
                 
-            when: function (match, then) { var matchFn = _.isFunction (match) ? match : _.equals (match)
+            when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
+                                               alreadyCalled = false
                 stream (function (val) {
                     if (matchFn (val)) {
-                        stream.off (arguments.callee)
-                        then.apply (this, arguments) } }) } }) },
+                        if (!alreadyCalled) {
+                             alreadyCalled = true
+                             stream.off (arguments.callee)
+                             then.apply (this, arguments) }
+                        else { 
+                            /* log.w ('WTF') */ } } }) } }) },
 
 
     barrier: function (defaultValue) { var defaultListener = undefined
@@ -315,6 +314,9 @@ _.extend (_, {
 
         if (defaultListener) {
             barrier (defaultListener) }
+
+        _.defineProperty (barrier, 'promise', function () {
+                                                    return new Promise (function (resolve) { barrier (resolve) }) })
 
         return barrier },
 

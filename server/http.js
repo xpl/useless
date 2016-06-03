@@ -72,6 +72,9 @@ module.exports = $trait ({
                                         response: cfg.response,
                                         cookies: cfg.cookies,
                                         stub: true,
+                                        writeHead: function () { return this },
+                                        write: function () { return this },
+                                        end: function () { return this },
                                         receiveData: () => Promise.resolve ((cfg.data &&
                                                                 (_.isString (cfg.data)
                                                                     ? cfg.data
@@ -89,9 +92,7 @@ module.exports = $trait ({
                                            this.request.headers.cookie &&
                                            this.request.headers.cookie.split (';')) || [], cookie => cookie.split ('=').map (
                                                                                                         val => (val || '').trimmed))),
-                env: {
-                    when: Date.now (),
-                    who:  null } })
+                env: _.extend ({ when: Date.now (), who: null }, $env, this.env) })
 
             this.uri       = this.request && this.request.url && url.parse (this.request.url)
             this.path      = this.uri && this.uri.path.split ('/')
@@ -188,23 +189,31 @@ module.exports = $trait ({
 /*  Entry point
     ======================================================================== */
 
-    beforeInit: function (then) {
+    beforeInit: function () {
 
         log.ii ('Starting HTTP @ localhost:' + this.config.port)
 
         /*  Creates $http thing
          */
         $global.define ('$http', {
-            get: () => AndrogeneProcessContext.current.env,
-            set: x  => AndrogeneProcessContext.current.env = x })
+            get: () => AndrogeneProcessContext.current &&  AndrogeneProcessContext.current.env,
+            set: x  => AndrogeneProcessContext.current && (AndrogeneProcessContext.current.env = x) })
 
-        this.httpServer = http
-                            .createServer ((request, response) => {
-                                this.serveRequest (new this.HttpContext ({
-                                    request: request,
-                                    response: response })) })
-                            
-                            .listen (this.config.port, then.arity0) },
+        /*  Creates $env thing
+         */
+        $global.define ('$env', {
+            get: () => ($http && $http.env) || {},
+            set: x  => _.extend ($http.env, x) })
+
+        /*  Starts HTTP server
+         */
+        return new Promise (then => {
+                                this.httpServer = http.createServer ((request, response) => {
+                                                                            this.serveRequest (new this.HttpContext ({
+                                                                                request: request,
+                                                                                response: response })) })
+
+                                                                            .listen (this.config.port, then.arity0) }) },
 
 
 /*  Entry point for all requests, now accepting either actual Context or
@@ -251,7 +260,7 @@ module.exports = $trait ({
                                         throw $http.NotFoundError }
 
                         else {
-                            _.extend ($http.env, match.vars); return match.fn () } },
+                            _.extend ($env, match.vars); return match.fn () } },
 
     writeResult: function (x) {
 
@@ -346,7 +355,7 @@ module.exports = $trait ({
     file: function (location) { var location    = path.join (process.cwd (), location),
                                     isDirectory = fs.lstatSync (location).isDirectory ()
             return () => {
-                var file = isDirectory ? $http.env.file : ''
+                var file = isDirectory ? $env.file : ''
                 if (file.split ('/').find (x => (x === '.') || (x === '..'))) {
                     throw $http.ForbiddenError }
                 else {

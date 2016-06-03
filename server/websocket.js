@@ -33,7 +33,7 @@ ServerWebsocket = module.exports = $trait ({
 
         _.invoke (peers, 'send', msg) },
 
-    afterInit: function (then) { log.minor ('Starting WebSocket...')
+    afterInit: function () { log.minor ('Starting WebSocket...')
 
         var websocket = require ('websocket')
         
@@ -63,6 +63,4 @@ ServerWebsocket = module.exports = $trait ({
                         connection.user = user
                         this.peers.push (connection) }), drop) }
                 else {
-                    drop ('invalid auth format') } })) }))
-
-        then () } })
+                    drop ('invalid auth format') } })) })) } })

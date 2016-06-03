@@ -210,6 +210,8 @@ _.deferTest ('String extensions', function () {
 _.extend (String, {
 
     randomHex: function (length) {
+                            if (length === undefined) {
+                                length = _.random (1, 32) }
                             var string = '';
                             for (var i = 0; i < length; i++) { string += Math.floor (Math.random () * 16).toString (16) }
                             return string },
