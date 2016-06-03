@@ -7152,6 +7152,18 @@ _.tests['Promise+'] = {
         return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
                             fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
 
+
+/*  ------------------------------------------------------------------------ */
+
+    __: function () { var adds = function (a, b) {
+                                    return function (x, y) { return [x + a, y + b] } }
+        return [
+            __(123).assert (123),
+            __(Promise.resolve (123)).assert (123),
+            __(function () { return 123 }).assert (123),
+            __(function () { throw 123 }).assertRejected (123),
+            __(adds ('foo', 'bar'), 123, 456).assert (['123foo', '456bar']) ] },
+
 /*  ------------------------------------------------------------------------ */
 
     seq: function () { return [
@@ -7169,11 +7181,21 @@ _.tests['Promise+'] = {
 
     map: function () {
             return [
-                        __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
-                        __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
-                        __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
-                        __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
-                        __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
+                        __.map (       111 ,   _.appends ('bar')).assert (       '111bar'),
+                        __.map (      [222],   _.appends ('bar')).assert (      ['222bar']),
+                        __.map (    __(333),   _.appends ('bar')).assert (       '333bar'),
+                        __.map ({ foo: 444 },  _.appends ('bar')).assert ({ foo: '444bar' }),
+                        __.map ({ foo: 555 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    filter: function () {
+            return [
+                        __.filter (123, 456).assert (456),
+                        __.filter (['foo', 456], _.isString).assert (['foo']),
+                        __.filter (['foo', 456], _.constant ('baz')).assert (['baz', 'baz']),
+                        __.filter ({ foo: 123, bar: '456' }, _.isNumber).assert ({ foo: 123 })
+                    ] },
 
 /*  ------------------------------------------------------------------------ */
 
@@ -7203,9 +7225,11 @@ _.tests['Promise+'] = {
 
 TimeoutError = $extends (Error, { message: 'timeout expired' })                                
 
-__ = Promise.coerce = function (x) {
+__ = Promise.coerce = function ( x) { var this_ = this,
+                                          args = _.rest (arguments)
+
                         return ((x instanceof Promise)   ?  x :
-                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) : // @hide
+                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x.apply (this_, args)) }) : // @hide
                                                             Promise.resolve (x))) }
 
 __.noop = function () {
@@ -7221,7 +7245,7 @@ __.constant = function (x) {
 __.reject = function (e) { return Promise.reject (e) }
 __.rejects = function (e) { return function () { return Promise.reject (e) } }
 
-__.map = function (x, fn) {
+__.scatter = function (x, fn) {
 
             return __.then (x, function (x) {
 
@@ -7231,12 +7255,32 @@ __.map = function (x, fn) {
                         tasks = []
 
                     _.each2 (x, function (v, k) {
-                        tasks.push (__.identity (fn (v, k)).then (function (v) { result[k] = v })) })
+                                    tasks.push (__(fn, v, k, x).then (
+                                        function (vk) {
+                                            if (vk instanceof Array) {
+                                                result[vk.second] = vk.first }
+                                            else if (vk !== undefined) {
+                                                if (result instanceof Array) {
+                                                    result.push (vk) }
+                                                else {
+                                                    result[k] = vk } } })) })
 
                     return __.all (tasks).then (_.constant (result)) }
 
                 else {
-                    return fn (x) } }) }
+                    return __(fn, x, undefined, x).then (function (vk) {
+                                                            return (vk instanceof Array) ? vk.first : vk }) } }) }
+
+__.map = function (x, fn) {
+            return __.scatter (x, __.$ (fn)) }
+
+__.filter = function (x, fn) {
+                return __.scatter (x, function (v, k, x) {
+                                        return __(fn, v, k, x).then (
+                                            function (decision) {
+                                                return ((decision === false) ? undefined :
+                                                       ((decision === true)  ? v
+                                                                             : decision)) }) }) }
 
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
@@ -7291,6 +7335,9 @@ $mixin (Promise, {
 
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },
+
+    assertTypeMatches: function (desired) {
+                return this.then (function (x) { $assertTypeMatches (x, desired); return x }) },
 
     assertRejected: function (desired) { var check = (arguments.length > 0)
                         return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) },

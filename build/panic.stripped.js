@@ -4373,8 +4373,9 @@ Component = $prototype({
 });
 TimeoutError = $extends(Error, { message: 'timeout expired' });
 __ = Promise.coerce = function (x) {
+    var this_ = this, args = _.rest(arguments);
     return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
-        resolve(x());
+        resolve(x.apply(this_, args));
     }) : Promise.resolve(x);
 };
 __.noop = function () {
@@ -4396,19 +4397,39 @@ __.rejects = function (e) {
         return Promise.reject(e);
     };
 };
-__.map = function (x, fn) {
+__.scatter = function (x, fn) {
     return __.then(x, function (x) {
         if (_.isStrictlyObject(x)) {
             var result = _.coerceToEmpty(x), tasks = [];
             _.each2(x, function (v, k) {
-                tasks.push(__.identity(fn(v, k)).then(function (v) {
-                    result[k] = v;
+                tasks.push(__(fn, v, k, x).then(function (vk) {
+                    if (vk instanceof Array) {
+                        result[vk.second] = vk.first;
+                    } else if (vk !== undefined) {
+                        if (result instanceof Array) {
+                            result.push(vk);
+                        } else {
+                            result[k] = vk;
+                        }
+                    }
                 }));
             });
             return __.all(tasks).then(_.constant(result));
         } else {
-            return fn(x);
+            return __(fn, x, undefined, x).then(function (vk) {
+                return vk instanceof Array ? vk.first : vk;
+            });
         }
+    });
+};
+__.map = function (x, fn) {
+    return __.scatter(x, __.$(fn));
+};
+__.filter = function (x, fn) {
+    return __.scatter(x, function (v, k, x) {
+        return __(fn, v, k, x).then(function (decision) {
+            return decision === false ? undefined : decision === true ? v : decision;
+        });
     });
 };
 __.each = function (obj, fn) {
@@ -4498,6 +4519,12 @@ $mixin(Promise, {
     assert: function (desired) {
         return this.then(function (x) {
             $assert(x, desired);
+            return x;
+        });
+    },
+    assertTypeMatches: function (desired) {
+        return this.then(function (x) {
+            $assertTypeMatches(x, desired);
             return x;
         });
     },

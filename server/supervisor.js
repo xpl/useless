@@ -63,7 +63,8 @@ module.exports = Supervisor = $trait ({
 
                                     this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {
                                                                     max: 0,                                                                     
-                                                                    args: _.concat (this.args.all, ['spawned-by-supervisor']) })
+                                                                    args: _.concat (this.args.all, ['spawned-by-supervisor']
+                                                                            .concat (this.testsFailed ? 'tests-failed' : [])) })
 
                                     this.supervisedProcess.on ('exit:code', code => {
                                         log.brown ('Exited with code', code)

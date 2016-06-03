@@ -16,7 +16,8 @@ ServerTests = module.exports = $trait ({
     $defaults: {
 
         argKeys: {
-            noTests: 1 },
+            noTests: 1,
+            testsFailed: 1 },
 
         supressCodeBaseTests:     false,
         supressAppComponentTests: false },
@@ -98,6 +99,8 @@ ServerTests = module.exports = $trait ({
      */
     beforeInit: function (then) {
 
+        this.testsFailed = this.args.testsFailed ? true : false
+
         /*  Skip tests if...
          */
         if ((this.testsAlreadyExecutedAtMasterProcess = (this.args.spawnedBySupervisor && !this.args.respawnedBecauseCodeChange)) ||
@@ -107,10 +110,13 @@ ServerTests = module.exports = $trait ({
                 Testosterone.run ({
                     verbose: false,
                     silent:  true }, okay => {
+                                        this.testsFailed = this.testsFailed || !okay
                                         if (okay) {
                                             if (this.deferAppComponentTests ||
                                                 this.supressAppComponentTests) {                            then () }
-                                                                         else  { this.runAppComponentTests (then) } } })} },
+                                                                         else  { this.runAppComponentTests (then) } }
+                                        else {
+                                            then () } })} },
 
     afterInit: function (then) {
         if ( this.args.noTests ||
@@ -159,7 +165,9 @@ ServerTests = module.exports = $trait ({
                                  verbose: false,
                                   silent: false,
                                   suites: _.nonempty (suites),
-                             testStarted: this.withTestRoutineEnvironment }, okay => { releaseEnvironment (); doneWithTests () }) }) }) } },    
+                             testStarted: this.withTestRoutineEnvironment },
+
+                                okay => { this.testsFailed = this.testsFailed || !okay; releaseEnvironment (); doneWithTests () }) }) }) } },    
 })
 
 

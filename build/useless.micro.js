@@ -7181,22 +7181,21 @@ _.tests['Promise+'] = {
 
     map: function () {
             return [
-                        __.map (       123 ,   _.appends ('bar')).assert (       '123bar'),
-                        __.map (      [123],   _.appends ('bar')).assert (      ['123bar']),
-                        __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
-                        __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
-                        __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
+                        __.map (       111 ,   _.appends ('bar')).assert (       '111bar'),
+                        __.map (      [222],   _.appends ('bar')).assert (      ['222bar']),
+                        __.map (    __(333),   _.appends ('bar')).assert (       '333bar'),
+                        __.map ({ foo: 444 },  _.appends ('bar')).assert ({ foo: '444bar' }),
+                        __.map ({ foo: 555 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
 
 /*  ------------------------------------------------------------------------ */
 
     filter: function () {
             return [
                         __.filter (123, 456).assert (456),
-                        __.filter ([123, 'foo'], _.isString).assert (['foo']),
-                        __.filter ({ foo: 123, bar: 456 },
-                                                function (x, i) {
-                                                    if (i === 0) { return Promise.resolve ([x, i]) }
-                                                            else { return false } }).assert ([[123, 'foo']]) ] },
+                        __.filter (['foo', 456], _.isString).assert (['foo']),
+                        __.filter (['foo', 456], _.constant ('baz')).assert (['baz', 'baz']),
+                        __.filter ({ foo: 123, bar: '456' }, _.isNumber).assert ({ foo: 123 })
+                    ] },
 
 /*  ------------------------------------------------------------------------ */
 
@@ -7256,28 +7255,32 @@ __.scatter = function (x, fn) {
                         tasks = []
 
                     _.each2 (x, function (v, k) {
-                                    tasks.push (__(fn.$ (v, k, x)).then (
+                                    tasks.push (__(fn, v, k, x).then (
                                         function (vk) {
-                                            if (vk) {
-                                                result[vk.second] = vk.first } })) })
+                                            if (vk instanceof Array) {
+                                                result[vk.second] = vk.first }
+                                            else if (vk !== undefined) {
+                                                if (result instanceof Array) {
+                                                    result.push (vk) }
+                                                else {
+                                                    result[k] = vk } } })) })
 
                     return __.all (tasks).then (_.constant (result)) }
 
                 else {
-                    return fn (x) } }) }
+                    return __(fn, x, undefined, x).then (function (vk) {
+                                                            return (vk instanceof Array) ? vk.first : vk }) } }) }
 
 __.map = function (x, fn) {
-            return __.scatter (x, function (v, k, x) {
-                                    return __(fn.$ (v, k, x)).then (
-                                        function (v) { return [v, k] }) }) }
+            return __.scatter (x, __.$ (fn)) }
 
 __.filter = function (x, fn) {
                 return __.scatter (x, function (v, k, x) {
-                                        return __(fn.$ (v, k, x)).then (
+                                        return __(fn, v, k, x).then (
                                             function (decision) {
                                                 return ((decision === false) ? undefined :
-                                                       ((decision === true)  ? [v,        k]
-                                                                             : [decision, k])) }) }) }
+                                                       ((decision === true)  ? v
+                                                                             : decision)) }) }) }
 
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
@@ -7332,6 +7335,9 @@ $mixin (Promise, {
 
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },
+
+    assertTypeMatches: function (desired) {
+                return this.then (function (x) { $assertTypeMatches (x, desired); return x }) },
 
     assertRejected: function (desired) { var check = (arguments.length > 0)
                         return this.catch (function (x) { if (check) { $assert (x, desired) } return x }) },
