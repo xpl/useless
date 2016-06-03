@@ -39,6 +39,18 @@ _.tests['Promise+'] = {
         return __.all ([    fsAsync.readFile (null) .assertRejected ('path empty'),
                             fsAsync.readFile ('foo').assert         ('contents of foo') ]) },
 
+
+/*  ------------------------------------------------------------------------ */
+
+    __: function () { var adds = function (a, b) {
+                                    return function (x, y) { return [x + a, y + b] } }
+        return [
+            __(123).assert (123),
+            __(Promise.resolve (123)).assert (123),
+            __(function () { return 123 }).assert (123),
+            __(function () { throw 123 }).assertRejected (123),
+            __(adds ('foo', 'bar'), 123, 456).assert (['123foo', '456bar']) ] },
+
 /*  ------------------------------------------------------------------------ */
 
     seq: function () { return [
@@ -61,6 +73,17 @@ _.tests['Promise+'] = {
                         __.map (    __(123),   _.appends ('bar')).assert (       '123bar'),
                         __.map ({ foo: 123 },  _.appends ('bar')).assert ({ foo: '123bar' }),
                         __.map ({ foo: 123 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    filter: function () {
+            return [
+                        __.filter (123, 456).assert (456),
+                        __.filter ([123, 'foo'], _.isString).assert (['foo']),
+                        __.filter ({ foo: 123, bar: 456 },
+                                                function (x, i) {
+                                                    if (i === 0) { return Promise.resolve ([x, i]) }
+                                                            else { return false } }).assert ([[123, 'foo']]) ] },
 
 /*  ------------------------------------------------------------------------ */
 
@@ -90,9 +113,11 @@ _.tests['Promise+'] = {
 
 TimeoutError = $extends (Error, { message: 'timeout expired' })                                
 
-__ = Promise.coerce = function (x) {
+__ = Promise.coerce = function ( x) { var this_ = this,
+                                          args = _.rest (arguments)
+
                         return ((x instanceof Promise)   ?  x :
-                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x ()) }) : // @hide
+                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x.apply (this_, args)) }) : // @hide
                                                             Promise.resolve (x))) }
 
 __.noop = function () {
@@ -108,7 +133,7 @@ __.constant = function (x) {
 __.reject = function (e) { return Promise.reject (e) }
 __.rejects = function (e) { return function () { return Promise.reject (e) } }
 
-__.map = function (x, fn) {
+__.scatter = function (x, fn) {
 
             return __.then (x, function (x) {
 
@@ -118,12 +143,28 @@ __.map = function (x, fn) {
                         tasks = []
 
                     _.each2 (x, function (v, k) {
-                        tasks.push (__.identity (fn (v, k)).then (function (v) { result[k] = v })) })
+                                    tasks.push (__(fn.$ (v, k, x)).then (
+                                        function (vk) {
+                                            if (vk) {
+                                                result[vk.second] = vk.first } })) })
 
                     return __.all (tasks).then (_.constant (result)) }
 
                 else {
                     return fn (x) } }) }
+
+__.map = function (x, fn) {
+            return __.scatter (x, function (v, k, x) {
+                                    return __(fn.$ (v, k, x)).then (
+                                        function (v) { return [v, k] }) }) }
+
+__.filter = function (x, fn) {
+                return __.scatter (x, function (v, k, x) {
+                                        return __(fn.$ (v, k, x)).then (
+                                            function (decision) {
+                                                return ((decision === false) ? undefined :
+                                                       ((decision === true)  ? [v,        k]
+                                                                             : [decision, k])) }) }) }
 
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {

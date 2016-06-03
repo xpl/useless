@@ -238,7 +238,9 @@ module.exports = $trait ({
                                     log.margin ()
                                     log.gg (log.indent (1), _.isString (x) ? x.limitedTo (120) : x, '\n') } }) })
 
-                .catch (log.ee.$ (log.config ({ indent: 1, location: false }), '\n')) },
+                .catch (function (e) {
+                    log.ee (log.config ({ indent: 1, location: false }), '\n', e)
+                    throw e }) },
 
     callAPIHandler: function () {
 
