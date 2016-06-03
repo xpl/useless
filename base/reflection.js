@@ -348,7 +348,13 @@ $prototype.impl.findMeta = function (stack) {
 $prototype.macro (function (def, base) {
 
     if (!def.$meta) {
-        def.$meta = $static (_.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))) }
+
+        var findMeta = _.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))
+
+        _.defineMemoizedProperty (findMeta, 'promise', function () {
+              return new Promise (findMeta) })
+
+        def.$meta = $static (findMeta) }
 
     return def })
 

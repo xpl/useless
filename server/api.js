@@ -69,21 +69,16 @@ ServerAPI = module.exports = $trait ({
 
             $assert (APISchema.collapse (input), result) } },
 
-    beforeInit: function (then) { log.minor ('Reading API schema')
+    beforeInit: function () { log.minor ('Reading API schema')
 
         this.apiSchema = APISchema.validate (
                          APISchema.collapse (
                             _.flat (_.filter2 ((this.constructor.$traits || []).reversed, this.$ (function (Trait) {
-                                return (Trait.prototype.api ? APISchema.canonicalize (Trait.prototype.api.call (this)) : false) })))))
+                                return (Trait.prototype.api ? APISchema.canonicalize (Trait.prototype.api.call (this)) : false) }))))) },
 
-        then () },
-
-    afterInit: function (then) {
-
-        if (_.isFunction (this.api)) {
-            this.defineAPIs (this.api ()) }
-
-        then () },
+    afterInit: function () {
+                    if (_.isFunction (this.api)) {
+                        this.defineAPIs (this.api ()) } },
 
     defineAPIs: function (schemaPart) {
         return (this.apiSchema = APISchema.collapse (this.apiSchema.concat (this.normalizeAPIs (schemaPart)))) },
@@ -197,7 +192,7 @@ APISchema = {
                             var chain =  (args.length > 1 ? [match.vars] :
                                           args.length > 0 ? args : []).concat (_.coerceToArray (handler))
 
-                            return { fn: __.seq.$ (chain), vars: vars } } }
+                            return { fn: function () { return __(__.seq (chain)) }, vars: vars } } }
 
                     else {
                         trace (route)

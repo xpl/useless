@@ -30,5 +30,5 @@ Examples = $singleton (Component, {
     erroneousMethod: function () {
                         unknownFunction () },
 
-    init: function (then) {
-                log.green ('Example app is running at http://localhost:1333'); then () } })
+    init: function () {
+                log.green ('Example app is running at http://localhost:1333') } })

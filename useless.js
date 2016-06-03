@@ -93,6 +93,8 @@ _ = (function () {
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+    $include ('./base/infix/Set')
+    $include ('./base/Promise+')
     $include ('./base/Parse')           // clumsy parsing utils
     $include ('./base/Sort')            // (this one is normal)
     $include ('./base/concurrency')     // concurrency utility
@@ -115,8 +117,6 @@ _ = (function () {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $include ('./base/AOP')
-    $include ('./base/Promise+')
-    $include ('./base/infix/Set')
 
 
 /*  Networking

@@ -11,9 +11,8 @@ module.exports = CommandLineArguments = $trait ({
 
     argsReady: $barrier (),
 
-    beforeInit: function (then) {
-        this.argsReady (this.args = this.parseProcessArgs (_.keys (this.argKeys)))
-        then () },
+    beforeInit: function () {
+        this.argsReady (this.args = this.parseProcessArgs (_.keys (this.argKeys))) },
 
     $private: {
         parseProcessArgs: function (proposedKeys) {

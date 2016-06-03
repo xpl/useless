@@ -21,14 +21,15 @@ module.exports = Supervisor = $trait ({
                                                             _.keys (Supervisor.$defaults.argKeys),
                                                             _.propertyOf (this.args)) || 'supervisor' })),
 
-    beforeInit: function (then) {
-                    this[this.supervisorState] (then) },
+    beforeInit: function () {
+                    return this[this.supervisorState] () },
 
-    respawnedBecauseCodeChange: _.cps.identity,
-           spawnedBySupervisor: _.cps.identity,
-                  noSupervisor: _.cps.identity,
+    respawnedBecauseCodeChange: _.identity,
+           spawnedBySupervisor: _.identity,
+                  noSupervisor: _.identity,
                     supervisor: function () {
-                                    this.watchDirectory (process.cwd (), this.onSourceChange, this.spawnSupervisedProcess) },
+                                    this.watchDirectory (process.cwd (), this.onSourceChange, this.spawnSupervisedProcess)
+                                    return __.eternity },
 
     /*  Other traits can vote via subscribing to this trigger
      */
@@ -63,7 +64,8 @@ module.exports = Supervisor = $trait ({
 
                                     this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {
                                                                     max: 0,                                                                     
-                                                                    args: _.concat (this.args.all, ['spawned-by-supervisor']) })
+                                                                    args: _.concat (this.args.all, ['spawned-by-supervisor']
+                                                                            .concat (this.testsFailed ? 'tests-failed' : [])) })
 
                                     this.supervisedProcess.on ('exit:code', code => {
                                         log.brown ('Exited with code', code)

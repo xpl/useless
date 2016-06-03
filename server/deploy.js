@@ -19,7 +19,7 @@ var fs              = require ('fs'),
 
     /*  Self deployment protocol
      */
-    beforeInit: function (then) { _.each (this.buildScripts, this.buildScript); then () } })
+    beforeInit: function () { _.each (this.buildScripts, this.buildScript) } })
 
 
 

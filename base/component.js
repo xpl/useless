@@ -115,40 +115,22 @@ _.tests.component = {
 
     /*  Pluggable init/destroy with $traits (tests all combinations of CPS / sequential style method calling)
      */
-    'pluggable init with $traits': function () {
+    'pluggable init with $traits': function () { var A, B, C, D
 
-        var Base = $component ({
-            assertBeforeInitCalls: function () {
-                $assertMatches (this, { foo: 'beforeInit called' }) } })
+        var A = $trait ({
+            beforeInit: function () { A = true; return Promise.resolve () },
+            afterInit:  function () { B = true; return Promise.resolve () } })
 
-        var assertAfterInitCalls = function (Compo) {
-            $assertEveryCalledOnce (function (mkay) {
-                new Compo ().initialized (function () {
-                    $assertMatches (this, { foo: 'afterInit called' }); mkay () }) }) }
+        var B = $trait ({
+            beforeInit: function () { C = true; },
+            afterInit:  function () { D = true; }
+        })
 
-        var assertTraitsInitCalls = function (trait) {
+        var C = $component ({
+            $traits: [B, A] })
 
-            //  CPS init()
-            $assertEveryCalledOnce (function (mkay) {
-                assertAfterInitCalls ($extends (Base, {
-                    $traits: [trait],
-                    init: function (then) { this.assertBeforeInitCalls (); mkay (); then () } })) })
-
-            //  Sequential init()
-            $assertEveryCalledOnce (function (mkay) {
-                assertAfterInitCalls ($extends (Base, {
-                    $traits: [trait],
-                    init: function () { this.assertBeforeInitCalls (); mkay () } })) }) }
-
-        //  Sequential afterInit/beforeInit
-        assertTraitsInitCalls ($trait ({
-            beforeInit: function () { this.foo = 'beforeInit called' },
-            afterInit: function () { this.foo = 'afterInit called' } }))
-
-        //  CPS afterInit/beforeInit
-        assertTraitsInitCalls ($trait ({
-            beforeInit: function (then) { this.foo = 'beforeInit called'; then () },
-            afterInit: function (then) { this.foo = 'afterInit called'; then () } })) },
+        return (new C ()).initialized.promise.then (function () {
+                                                        $assert (A,B,C,D,true) }) },
 
 
     /*  $defaults is convenient macro to extract _.defaults thing from init() to definition level
@@ -936,13 +918,12 @@ Component = $prototype ({
             else if (def.$memoizeCPS) {
                 this[name] = _.cps.memoize (this[name]) } } }, this)
 
-
-        /*  Bind stuff to init (either in CPS, or in sequential flow control style)
+        /*  Add before/after stage to init
          */
-        _.intercept (this, 'init', function (init) {
-            var evalChain = _.hasArgs (this.constructor.prototype.init) ? _.cps.sequence : _.sequence
-                evalChain ([this._beforeInit, init.bind (this), this._afterInit]).call (this) })
-
+        var init  = this.init
+                    this.init = this._beforeInit
+                                     .then (init
+                                     .then (this._afterInit)).bind (this)
 
         /*  Apply cfg thing
          */
@@ -981,55 +962,49 @@ Component = $prototype ({
         /*  Call init (if not marked as deferred)
          */
         if (!(cfg.init === false || (this.constructor.$defaults && (this.constructor.$defaults.init === false)))) {
-            this.init () } }),
+            var result = this.init ()
+            if (result instanceof Promise) {
+                result.panic } } }),
 
     /*  Arranges methods defined in $traits in chains and evals them
      */
-    callTraitsMethod: function (name, then) {
-
-        //  Continuation-passing style chain
-        if (_.isFunction (then)) {
-            _.cps.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
-                var method = Trait.prototype[name]
-                return (method && _.cps.arity0 ((
-                    _.noArgs (method) ?             // convert to CPS convention if needed
-                        method.asContinuation :
-                        method)).bind (this)) || false })).concat (then.arity0)) () }
-
-        //  Sequential style chain
-        else {
-            _.sequence (_.filter2 (this.constructor.$traits || [], this.$ (function (Trait) {
-                var method = Trait.prototype[name]
-                return (method && (_.hasArgs (method) ?
-                                    method.bind (this, _.identity) : // if method is CPS, give identity function as (unused) 'then' argument,
-                                    method.bind (this))) || false }))) () } },  // (to prevent errors, as trait methods not required to support both calling styles)
+    callChainMethod: function (name) { var self = this
+        return __.seq (
+                _.filter2 (this.constructor.$traits || [], function (Trait) {
+                                                              var method = Trait.prototype[name]
+                                                              return (method && method.bind (self)) || false })) },
 
     /*  Lifecycle
      */
-    _beforeInit: function (then) {
+    _beforeInit: function () {
         if (this.initialized.already) {
             throw new Error ('Component: I am already initialized. Probably you\'re doing it wrong.') }
 
-        this.callTraitsMethod ('beforeInit', then) },
+        return this.callChainMethod ('beforeInit') },
 
-    init: function (/* then */) {},
+    init: function () { /* return Promise for asynchronous init */ },
 
-    _afterInit: function (then) { var cfg = this.cfg
+    _afterInit: function () { var cfg  = this.cfg,
+                                  self = this
 
-        this.callTraitsMethod ('afterInit', then)
+        return __.then (this.callChainMethod.$ ('afterInit'), function () {
 
-        this.initialized (true)
+                        self.initialized (true)
 
-        /*  Bind default property listeners. Doing this after init, because property listeners
-            get called immediately after bind (observable semantics), and we're want to make
-            sure that component is initialized at the moment of call.
+                        /*  Bind default property listeners. Doing this after init, because property listeners
+                            get called immediately after bind (observable semantics), and we're want to make
+                            sure that component is initialized at the moment of call.
 
-            We do not do this for other streams, as their execution is up to component logic,
-            and they're might get called at init, so their default values get bound before init.
-         */
-        _.each (this.constructor.$definition, function (def, name) {
-            if (def && def.$observableProperty) { name += 'Change'; var defaultListener = cfg[name]
-                if (defaultListener) { this[name] (defaultListener) } } }, this) },
+                            We do not do this for other streams, as their execution is up to component logic,
+                            and they're might get called at init, so their default values get bound before init.
+                         */
+                        _.each (self.constructor.$definition, function (def, name) {
+                            if (def && def.$observableProperty) {            name += 'Change'
+                                var defaultListener = cfg[name]
+                                if (defaultListener) {
+                                    self[name] (defaultListener) } } })
+
+                        return true }) },
     
     initialized: $barrier (),
 

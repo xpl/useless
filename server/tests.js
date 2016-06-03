@@ -16,7 +16,8 @@ ServerTests = module.exports = $trait ({
     $defaults: {
 
         argKeys: {
-            noTests: 1 },
+            noTests: 1,
+            testsFailed: 1 },
 
         supressCodeBaseTests:     false,
         supressAppComponentTests: false },
@@ -27,16 +28,10 @@ ServerTests = module.exports = $trait ({
     deferAppComponentTests: true,
 
 
-    /*  Example of a custom assertion
+    /*  Custom assertions example
      */
-    assert101: $assertion (function (x) { $assert (x, 101) }),
-
-
-    /*  Example of a custom asynchronous assertion.
-     */
-    assert101AfterDelay: $assertion ($async (function (x, then) {
-                                                _.delay (function () {
-                                                    $assert101 (x); then ('you may pass arguments to callback') }) })),
+    assert101:           $assertion (function (x) { $assert (x, 101) }),
+    assert101AfterDelay: $assertion (function (x) { return __.delay (0).assert (101) }),
 
 
     /*  A single test (example).
@@ -50,30 +45,9 @@ ServerTests = module.exports = $trait ({
      */
     tests: {
 
-        /*  Simple synchronous test
-         */
         'sync test': function () { $assert101 (101) },
-
-        /*  An asynchronous test with explicit termination callback.
-            Runs under timeout, so if you forget to call 'done', it won't hang.
-         */
-        'explicit async test': function (done) { done () },
-
-        /*  DEPRECATED (will be replaced by Androgene.js superpowers)
-            ----------
-
-            Fun part with $async-marked assertions is that Testosterone supervises their
-            execution, allowing to omit that tedious 'done' calling burden. The test
-            will automatically finish after the last asynchronous assertion completes.
-            Each asynchronous assertion creates its own execution context, waiting
-            until child tasks complete.
-         */
-        'implicit async test': function () {
-
-            $assert101AfterDelay (101)
-            $assert101AfterDelay (101, function (arg) { $assert (arg, 'you may pass arguments to callback')
-                $assert101AfterDelay (101)
-                $assert101AfterDelay (101) }) } },
+        'async test with callback': function (done) { done () },
+        'async test with Promise': function () { return new Promise (function (resolve) { resolve () }) } },
 
 
     /*  Sometimes it is more convenient to define tests along with methods.
@@ -96,70 +70,67 @@ ServerTests = module.exports = $trait ({
 
     /*  Impl
      */
-    beforeInit: function (then) {
+    beforeInit: function () {
+
+        this.testsFailed = this.args.testsFailed ? true : false
+
+        var skip = (this.testsAlreadyExecutedAtMasterProcess = (this.args.spawnedBySupervisor && !this.args.respawnedBecauseCodeChange)) ||
+                    this.args.noTests ||
+                    this.supressCodeBaseTests
 
         /*  Skip tests if...
          */
-        if ((this.testsAlreadyExecutedAtMasterProcess = (this.args.spawnedBySupervisor && !this.args.respawnedBecauseCodeChange)) ||
-             this.args.noTests || this.supressCodeBaseTests) { then () }
+        if (!skip) {
+            log.ii ('Running code base tests')
+            return Testosterone.run ({ verbose: false, silent:  true })
+                               .then (okay => { this.testsFailed = this.testsFailed || !okay })} },
 
-        else {  log.ii ('Running code base tests')
-                Testosterone.run ({
-                    verbose: false,
-                    silent:  true }, okay => {
-                                        if (okay) {
-                                            if (this.deferAppComponentTests ||
-                                                this.supressAppComponentTests) {                            then () }
-                                                                         else  { this.runAppComponentTests (then) } } })} },
+    afterInit: function () {
 
-    afterInit: function (then) {
-        if ( this.args.noTests ||
-             this.supressAppComponentTests ||
-            !this.deferAppComponentTests) {                            then () }
-                                     else { this.runAppComponentTests (then) } },
+        var skip =  this.args.noTests ||
+                    this.supressAppComponentTests ||
+                   (this.supervisorState === 'supervisor')
 
-    runAppComponentTests: function (doneWithTests) {
+        if (!skip) {
 
-            if ((this.supervisorState === 'supervisor') &&
-                (this.deferAppComponentTests !== false)) { // don't run at master process
-                doneWithTests () }
+            log.i ('Running app components tests')
 
-            else {
-                log.i ('Running app components tests')
+            /*  Adds custom assertions to help test application traits
+             */
+            Testosterone.defineAssertions (this.constructor.$membersByTag.assertion || {})
 
-                /*  Adds custom assertions to help test application traits
-                 */
-                Testosterone.defineAssertions (this.constructor.$membersByTag.assertion || {})
+            /*  Init test environment and run tests within that context.
+             */
+            return this.withTestEnvironment (() =>
 
-                /*  Init test environment and run tests within that context.
-                 */
-                this.withTestEnvironment (releaseEnvironment => {
+                __.map (this.constructor.$traits || [], 
 
-                    _.cps.map (this.constructor.$traits || [], 
+                    /*  Extract test suite from $trait
+                     */
+                    Trait =>
+                    Trait.$meta.promise.then (meta => {
 
-                        /*  Extract test suite from $trait
+                        /*  Gather tests from 'test', 'tests' and $withTest-tagged methods.
                          */
-                        (Trait, return_) => {
-                            Trait.$meta (meta => {
+                        return    { name: (meta.name === 'exports' ? meta.file : meta.name),
+                                   proto: Trait,
+                                   tests: _.nonempty (_.extended (Trait.prototype.tests || {},
+                                                                  Trait.prototype.test ? { '': Trait.prototype.test } : {},
+                                                          _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest'))))} }))
 
-                                /*  Gather tests from 'test', 'tests' and $withTest-tagged methods.
-                                 */
-                                return_ ({ name: (meta.name === 'exports' ? meta.file : meta.name),
-                                           proto: Trait,
-                                           tests: _.nonempty (_.extended (Trait.prototype.tests || {},
-                                                                          Trait.prototype.test ? { '': Trait.prototype.test } : {},
-                                                                  _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest')))) }) }) },
-
-                        /*  Run collected tests
-                         */
+                    .then (
                         suites => {
-                            Testosterone.run ({                             
+
+                            return Testosterone.run ({    
+
                                  context: this,
                                 codebase: false,
                                  verbose: false,
                                   silent: false,
                                   suites: _.nonempty (suites),
-                             testStarted: this.withTestRoutineEnvironment }, okay => { releaseEnvironment (); doneWithTests () }) }) }) } },    
+                             testStarted: this.withTestRoutineEnvironment }).then (
+                                                                                okay => {
+                                                                                    this.testsFailed = this.testsFailed || !okay }) })) } },    
 })
 
 
