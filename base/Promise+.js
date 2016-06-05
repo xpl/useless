@@ -208,7 +208,7 @@ $mixin (Promise, {
 
 /*  ------------------------------------------------------------------------ */
 
-_.withTest (['Promise+', '_.scatter with pooling'], function () {
+_.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
         var data = _.times (21, String.randomHex.arity0)
         var numItems = 0
