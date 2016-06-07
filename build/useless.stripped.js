@@ -3688,7 +3688,7 @@ $mixin(Promise, {
             if (this.numActive >= this.maxConcurrency) {
                 return new Promise(function (resolve) {
                     self.queue.push(function () {
-                        resolve(self.run(task));
+                        return self.run(task).then(resolve);
                     });
                 });
             } else {
@@ -3717,13 +3717,15 @@ $mixin(Promise, {
                 var result = _.coerceToEmpty(x), tasks = new TaskPool(cfg);
                 _.each2(x, function (v, k) {
                     tasks.run(fn.$(v, k, x)).then(function (vk) {
-                        if (vk instanceof Array) {
-                            result[vk.second] = vk.first;
-                        } else if (vk !== undefined) {
-                            if (result instanceof Array) {
-                                result.push(vk);
+                        if (vk) {
+                            if (vk.length > 1) {
+                                result[vk[1]] = vk[0];
                             } else {
-                                result[k] = vk;
+                                if (result instanceof Array) {
+                                    result.push(vk[0]);
+                                } else {
+                                    result[k] = vk[0];
+                                }
                             }
                         }
                     });
@@ -3731,19 +3733,23 @@ $mixin(Promise, {
                 return tasks.all.then(_.constant(result));
             } else {
                 return __(fn, x, undefined, x).then(function (vk) {
-                    return vk instanceof Array ? vk.first : vk;
+                    return vk[0];
                 });
             }
         });
     };
 }());
 __.map = function (x, fn, cfg) {
-    return __.scatter(x, __.$(fn));
+    return __.scatter(x, function (v, k, x) {
+        return __.then(fn(v, k, x), function (x) {
+            return [x];
+        });
+    });
 };
 __.filter = function (x, fn, cfg) {
     return __.scatter(x, function (v, k, x) {
-        return __(fn, v, k, x).then(function (decision) {
-            return decision === false ? undefined : decision === true ? v : decision;
+        return __.then(fn(v, k, x), function (decision) {
+            return decision === false ? undefined : decision === true ? [v] : [decision];
         });
     });
 };
@@ -6110,7 +6116,12 @@ Testosterone = $singleton({
                     index: i
                 });
             });
-            _.assertTypeMatches(_.map(_.pluck(this.runningTests, 'routine'), $untag), ['function']);
+            _.each(this.runningTests, function (t) {
+                if (!(t.routine instanceof Function)) {
+                    log.ee(t.suite, t.name, '\u2013 test routine is not a function:', t.routine);
+                    throw new Error();
+                }
+            });
             this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
             return __.each(this.runningTests, this.$(this.runTest)).then(this.$(function () {
                 _.assert(cfg.done !== true);
@@ -6364,7 +6375,7 @@ Test = $prototype({
                 }
             }, self.complete);
             _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
-            log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
+            log.withWriteBackend(_.extendWith({ indent: 1 }, function (x) {
                 self.logCalls.push(x);
             }), function (doneWithLogging) {
                 self.complete(doneWithLogging.arity0);
@@ -6374,7 +6385,12 @@ Test = $prototype({
                 if (routine.length > 0) {
                     routine.call(self.context, self.$(self.finalize));
                 } else {
-                    var result = routine.call(self.context);
+                    var result = undefined;
+                    try {
+                        result = routine.call(self.context);
+                    } catch (e) {
+                        self.onException(e);
+                    }
                     if (_.isArrayLike(result) && result[0] instanceof Promise) {
                         result = __.all(result);
                     }

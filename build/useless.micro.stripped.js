@@ -4487,7 +4487,7 @@ $mixin(Promise, {
             if (this.numActive >= this.maxConcurrency) {
                 return new Promise(function (resolve) {
                     self.queue.push(function () {
-                        resolve(self.run(task));
+                        return self.run(task).then(resolve);
                     });
                 });
             } else {
@@ -4516,13 +4516,15 @@ $mixin(Promise, {
                 var result = _.coerceToEmpty(x), tasks = new TaskPool(cfg);
                 _.each2(x, function (v, k) {
                     tasks.run(fn.$(v, k, x)).then(function (vk) {
-                        if (vk instanceof Array) {
-                            result[vk.second] = vk.first;
-                        } else if (vk !== undefined) {
-                            if (result instanceof Array) {
-                                result.push(vk);
+                        if (vk) {
+                            if (vk.length > 1) {
+                                result[vk[1]] = vk[0];
                             } else {
-                                result[k] = vk;
+                                if (result instanceof Array) {
+                                    result.push(vk[0]);
+                                } else {
+                                    result[k] = vk[0];
+                                }
                             }
                         }
                     });
@@ -4530,19 +4532,23 @@ $mixin(Promise, {
                 return tasks.all.then(_.constant(result));
             } else {
                 return __(fn, x, undefined, x).then(function (vk) {
-                    return vk instanceof Array ? vk.first : vk;
+                    return vk[0];
                 });
             }
         });
     };
 }());
 __.map = function (x, fn, cfg) {
-    return __.scatter(x, __.$(fn));
+    return __.scatter(x, function (v, k, x) {
+        return __.then(fn(v, k, x), function (x) {
+            return [x];
+        });
+    });
 };
 __.filter = function (x, fn, cfg) {
     return __.scatter(x, function (v, k, x) {
-        return __(fn, v, k, x).then(function (decision) {
-            return decision === false ? undefined : decision === true ? v : decision;
+        return __.then(fn(v, k, x), function (decision) {
+            return decision === false ? undefined : decision === true ? [v] : [decision];
         });
     });
 };

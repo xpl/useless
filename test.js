@@ -20,4 +20,6 @@ BuildApp = $singleton (Component, {
             return Testosterone.run ({
                      verbose: this.args.verbose,
                       silent: false,
-                      filter: t => this.args.values.isEmpty || this.args.values.contains (t.name) }) } })
+                      filter: t => this.args.values.isEmpty ||
+                                   this.args.values.contains (t.name) ||
+                                   this.args.values.contains (t.suite) }) } })

@@ -1128,7 +1128,12 @@ Testosterone = $singleton({
                     index: i
                 });
             });
-            _.assertTypeMatches(_.map(_.pluck(this.runningTests, 'routine'), $untag), ['function']);
+            _.each(this.runningTests, function (t) {
+                if (!(t.routine instanceof Function)) {
+                    log.ee(t.suite, t.name, '\u2013 test routine is not a function:', t.routine);
+                    throw new Error();
+                }
+            });
             this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
             return __.each(this.runningTests, this.$(this.runTest)).then(this.$(function () {
                 _.assert(cfg.done !== true);
@@ -1382,7 +1387,7 @@ Test = $prototype({
                 }
             }, self.complete);
             _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
-            log.withWriteBackend(_.extendWith({ indent: self.depth + (self.indent || 0) }, function (x) {
+            log.withWriteBackend(_.extendWith({ indent: 1 }, function (x) {
                 self.logCalls.push(x);
             }), function (doneWithLogging) {
                 self.complete(doneWithLogging.arity0);
@@ -1392,7 +1397,12 @@ Test = $prototype({
                 if (routine.length > 0) {
                     routine.call(self.context, self.$(self.finalize));
                 } else {
-                    var result = routine.call(self.context);
+                    var result = undefined;
+                    try {
+                        result = routine.call(self.context);
+                    } catch (e) {
+                        self.onException(e);
+                    }
                     if (_.isArrayLike(result) && result[0] instanceof Promise) {
                         result = __.all(result);
                     }

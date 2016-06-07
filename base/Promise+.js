@@ -78,7 +78,7 @@ _.tests['Promise+'] = {
 
     filter: function () {
             return [
-                        __.filter (123, 456).assert (456),
+                        __.filter (123, _.constant (456)).assert (456),
                         __.filter (['foo', 456], _.isString).assert (['foo']),
                         __.filter (['foo', 456], _.constant ('baz')).assert (['baz', 'baz']),
                         __.filter ({ foo: 123, bar: '456' }, _.isNumber).assert ({ foo: 123 })
@@ -210,22 +210,20 @@ $mixin (Promise, {
 
 _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
-        var data = _.times (21, String.randomHex.arity0)
+        var data = _.times (21, function (i) { return 'item_' + i })
         var numItems = 0
-
         var processedItems = []
 
         var op = function (item, i) {
                     numItems++
-                    $assert (!_.find (processedItems, item))
+                    $assert (!processedItems.contains (item))
                     return __.delay (_.random (2))
                              .then (function () {
                                         processedItems.push (item)
                                         return item }) }
 
-        return __.scatter (data, op, { maxConcurrency: 10 })
-                 .then (function () { $assert ([], _.difference (data, processedItems)) })
-                 .panic  },
+        return __.scatter (data, op, { maxConcurrency: 5 })
+                 .then (function () { $assert (_.difference (data, processedItems).isEmpty) }) },
 
     /*  ------------------------------------------------------------------------ */
 
@@ -244,18 +242,20 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
             run: function (task) { var self = this
 
-                        if (this.numActive >= this.maxConcurrency) {
+                        if (this.numActive >= this.maxConcurrency) { // queue task
+
                             return new Promise (function (resolve) {
                                                     self.queue.push (function () {
-                                                                        resolve (self.run (task)) }) }) }
+                                                                        return self.run  (task)
+                                                                                   .then (resolve) }) }) }
+                        else { // execute task
 
-                        else {
                             var p = __(task)
 
                             if (this.maxTime !== undefined) {
                                 p = p.timeout (this.maxTime) }
 
-                            if (this.maxConcurrency !== undefined) {
+                            if (this.maxConcurrency !== undefined) { // if queueing, wait until complete and pop next task
 
                                                            self.numActive++
                                 p = p.then (function (x) { self.numActive--
@@ -283,34 +283,35 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
                                 tasks  = new TaskPool (cfg)
 
                             _.each2 (x, function (v, k) {
-                                            tasks.run (fn.$ (v, k, x)).then (
+                                            tasks.run (fn.$ (v, k, x)).then ( // TODO: remove debug
                                                                         function (vk) {
-                                                                            if (vk instanceof Array) {
-                                                                                result[vk.second] = vk.first }
-                                                                            else if (vk !== undefined) {
-                                                                                if (result instanceof Array) {
-                                                                                    result.push (vk) }
+                                                                            if (vk) {
+                                                                                if (vk.length > 1) { // key provided
+                                                                                    result[vk[1]] = vk[0] }
                                                                                 else {
-                                                                                    result[k] = vk } } }) })
+                                                                                    if (result instanceof Array) {
+                                                                                        result.push (vk[0]) }
+                                                                                    else {
+                                                                                        result[k] = vk[0] } } } }) })
                             return tasks.all.then (_.constant (result)) }
 
                         else {
-                            return __(fn, x, undefined, x).then (function (vk) {
-                                                                    return (vk instanceof Array) ? vk.first : vk }) } }) }
+                            return __(fn, x, undefined, x).then (function (vk) { return vk[0] }) } }) }
 })
 
 /*  ------------------------------------------------------------------------ */
 
 __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
-            return __.scatter (x, __.$ (fn)) }
+            return __.scatter (x, function (v, k, x) {
+                return __.then (fn (v, k, x), function (x) { return [x] }) }) }
 
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                 return __.scatter (x, function (v, k, x) {
-                                        return __(fn, v, k, x).then (
+                                        return __.then (fn (v, k, x),
                                             function (decision) {
                                                 return ((decision === false) ? undefined :
-                                                       ((decision === true)  ? v
-                                                                             : decision)) }) }) }
+                                                       ((decision === true)  ? [v]
+                                                                             : [decision])) }) }) }
 
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
