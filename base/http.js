@@ -109,11 +109,18 @@ JSONAPI = $singleton (Component, {
                 return Http
                         .request (type, '/api/' + path, cfg)
                         .finally (function (e, response) {
-                            if ((response && (response = JSON.parse (response))) ||                                  // from HTTP 200
-                                (e && e.httpResponse && ((response = _.json (e.httpResponse)).success === false))) { // from HTTP errors
-                                return response }
+
+                            if (response) {
+                                return JSON.parse (response) }
+
+                            else if (e) {
+                                if (e.httpResponse) {
+                                    return JSON.parse (e.httpResponse) }
+                                else {
+                                    throw e } }
+
                             else {
-                                throw e } })
+                                throw new Error ('empty response') } })
 
                         .then (function (response) {
                             if (response.success) {

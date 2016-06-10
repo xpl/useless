@@ -1610,9 +1610,6 @@ _.perfTest = function (arg, then) {
             dismiss: _.identity,
             raw: false
         });
-        if (what === null) {
-            return;
-        }
         if (_.isTypeOf(Error, what)) {
             _.extend(cfg, _.pick(what, 'retry', 'dismiss'));
         }
@@ -1724,7 +1721,7 @@ _.perfTest = function (arg, then) {
             this.layout();
         },
         hash: function (what) {
-            return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : what) || '').hash;
+            return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : _.stringify(what)) || '').hash;
         },
         print: function (what, raw) {
             return _.isTypeOf(Error, what) ? this.printError(what) : _.isTypeOf(Test, what) ? this.printFailedTest(what) : this.printUnknownStuff(what, raw);

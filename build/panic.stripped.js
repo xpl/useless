@@ -4446,7 +4446,7 @@ $mixin(Promise, {
     }),
     panic: $property(function () {
         return this.catch(function (e) {
-            ($global.Panic || $global.log)(e);
+            ($global.Panic || $global.alert || $global.log)(e);
             throw e;
         });
     }),
@@ -4686,10 +4686,16 @@ JSONAPI = $singleton(Component, {
             cfg.data = JSON.stringify(cfg.what);
         }
         return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
-            if (response && (response = JSON.parse(response)) || e && e.httpResponse && (response = _.json(e.httpResponse)).success === false) {
-                return response;
+            if (response) {
+                return JSON.parse(response);
+            } else if (e) {
+                if (e.httpResponse) {
+                    return JSON.parse(e.httpResponse);
+                } else {
+                    throw e;
+                }
             } else {
-                throw e;
+                throw new Error('empty response');
             }
         }).then(function (response) {
             if (response.success) {
@@ -6677,9 +6683,6 @@ _.perfTest = function (arg, then) {
             dismiss: _.identity,
             raw: false
         });
-        if (what === null) {
-            return;
-        }
         if (_.isTypeOf(Error, what)) {
             _.extend(cfg, _.pick(what, 'retry', 'dismiss'));
         }
@@ -6791,7 +6794,7 @@ _.perfTest = function (arg, then) {
             this.layout();
         },
         hash: function (what) {
-            return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : what) || '').hash;
+            return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : _.stringify(what)) || '').hash;
         },
         print: function (what, raw) {
             return _.isTypeOf(Error, what) ? this.printError(what) : _.isTypeOf(Test, what) ? this.printFailedTest(what) : this.printUnknownStuff(what, raw);

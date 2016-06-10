@@ -264,7 +264,10 @@ module.exports = $trait ({
 
     writeResult: function (x) {
 
-                if ((x !== undefined) && (x !== $http)) {
+                if (x === $http) { // for handlers like () => $http.setCookies (..)
+                    x = undefined }
+                    
+                if (x !== undefined || $http.isJSONAPI) {
 
                 /*  Make /api/ URLS respond with { success: true, value: .. } pattern by default, but only if
                     no Content-Type was explicitly specified. So that a handler can override that behavior by

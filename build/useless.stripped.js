@@ -3647,7 +3647,7 @@ $mixin(Promise, {
     }),
     panic: $property(function () {
         return this.catch(function (e) {
-            ($global.Panic || $global.log)(e);
+            ($global.Panic || $global.alert || $global.log)(e);
             throw e;
         });
     }),
@@ -6931,10 +6931,16 @@ JSONAPI = $singleton(Component, {
             cfg.data = JSON.stringify(cfg.what);
         }
         return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
-            if (response && (response = JSON.parse(response)) || e && e.httpResponse && (response = _.json(e.httpResponse)).success === false) {
-                return response;
+            if (response) {
+                return JSON.parse(response);
+            } else if (e) {
+                if (e.httpResponse) {
+                    return JSON.parse(e.httpResponse);
+                } else {
+                    throw e;
+                }
             } else {
-                throw e;
+                throw new Error('empty response');
             }
         }).then(function (response) {
             if (response.success) {

@@ -7188,7 +7188,7 @@ $mixin (Promise, {
 
     log:   $property (function () { return this.then (log,       log.then (_.throwsError)) }),
     alert: $property (function () { return this.done (alert2, alert2.then (_.throwsError)) }),
-    panic: $property (function () { return this.catch (function (e) { ($global.Panic || $global.log) (e); throw e }) }),
+    panic: $property (function () { return this.catch (function (e) { ($global.Panic || $global.alert || $global.log) (e); throw e }) }),
 
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },
@@ -7468,11 +7468,18 @@ JSONAPI = $singleton (Component, {
                 return Http
                         .request (type, '/api/' + path, cfg)
                         .finally (function (e, response) {
-                            if ((response && (response = JSON.parse (response))) ||                                  // from HTTP 200
-                                (e && e.httpResponse && ((response = _.json (e.httpResponse)).success === false))) { // from HTTP errors
-                                return response }
+
+                            if (response) {
+                                return JSON.parse (response) }
+
+                            else if (e) {
+                                if (e.httpResponse) {
+                                    return JSON.parse (e.httpResponse) }
+                                else {
+                                    throw e } }
+
                             else {
-                                throw e } })
+                                throw new Error ('empty response') } })
 
                         .then (function (response) {
                             if (response.success) {
@@ -9813,9 +9820,6 @@ if (typeof UI === 'undefined') {
 
 Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
 
-	if (what === null) {
-		return }
-		
 	if (_.isTypeOf (Error, what)) {
 		_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
 
@@ -9921,7 +9925,8 @@ Panic.widget = $singleton (Component, {
 
 	hash: function (what) {
 		return ((_.isTypeOf (Error, what) ? (what && what.stack) :
-				(_.isTypeOf (Test, what)  ? (what.suite + what.name) : what)) || '').hash },
+				(_.isTypeOf (Test, what)  ? (what.suite + what.name) :
+                _.stringify (what))) || '').hash },
 
 	print: function (what, raw) {
 		return (_.isTypeOf (Error, what) ?
