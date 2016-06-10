@@ -9938,13 +9938,10 @@ Panic.widget = $singleton (Component, {
 	printUnknownStuff: function (what, raw) {
 		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 
-	cleanupFileName: function (s) {
-		return s && s.replace (/^\d\d\d\d\d+_/, '') }, // cut WebAssets-generated prefix
-
 	printLocation: function (where) {
 		return $('<span class="location">')
 					.append ([$('<span class="callee">').text (where.calleeShort),
-							  $('<span class="file">')  .text (this.cleanupFileName (where.fileName)), 
+							  $('<span class="file">')  .text (where.fileName), 
 							  $('<span class="line">')  .text (where.line)]) },
 
 	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
