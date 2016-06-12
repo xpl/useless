@@ -144,6 +144,8 @@ module.exports = $trait ({
                                                                     'Content-Type': this.mime.addUTF8 (this.headers['Content-Type']) }))) }; return this },
 
         write: function (x) {
+                    if (!this.headWritten) {
+                         this.writeHead () }
                     if (!this.ended) {
                          this.response.write (_.isString (x) ? x : JSON.stringify (x)) }; return this },
 
@@ -316,8 +318,7 @@ module.exports = $trait ({
                     return _.interlocked (releaseLock => { _.onAfter ($http, 'end', releaseLock); then () }) },
 
     allowOrigin: function (value) {
-                    return function (x) {
-                        $http.headers['Access-Control-Allow-Origin'] = value; return x } },
+                    return x => ($http.headers['Access-Control-Allow-Origin'] = value, x) },
 
     jsVariable: function (rvalue, lvalue) {
                     $http.contentType ($http.mime.javascript)
@@ -364,8 +365,8 @@ module.exports = $trait ({
                 else {
                     return $http.file (path.join (location, file)) } } },
 
-    redirect: function (to, x) {
-                $http.redirect (to); return x }
+    redirect: function (to) {
+                return x => ($http.redirect (to), x) }
 
 /*  ======================================================================== */
 

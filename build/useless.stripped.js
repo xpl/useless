@@ -6812,6 +6812,15 @@ if ($platform.NodeJS) {
             console.log(x);
         });
     });
+    var eachTest = assertion(function () {
+        return __.each([
+            1,
+            2,
+            3
+        ], function (x) {
+            log.i(x);
+        });
+    });
 }());
 ;
 (function () {

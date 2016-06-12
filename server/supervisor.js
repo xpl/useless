@@ -1,6 +1,8 @@
 var fs              = require ('fs'),
     path            = require ('path'),
     process         = require ('process'),
+    chokidar        = require ('chokidar'),
+    foreverMonitor  = require ('forever-monitor'),
     util            = require ('./base/util')
 
 module.exports = Supervisor = $trait ({
@@ -28,7 +30,8 @@ module.exports = Supervisor = $trait ({
            spawnedBySupervisor: _.identity,
                   noSupervisor: _.identity,
                     supervisor: function () {
-                                    this.watchDirectory (process.cwd (), this.onSourceChange, this.spawnSupervisedProcess)
+                                    this.watchDirectory (process.cwd (), this.onSourceChange)
+                                    this.spawnSupervisedProcess ()
                                     return __.eternity },
 
     /*  Other traits can vote via subscribing to this trigger
@@ -60,38 +63,27 @@ module.exports = Supervisor = $trait ({
 
     spawnSupervisedProcess: function () { log.gg ('Spawning supervised process')
 
-                                this.require ('foreverMonitor', () => {
+                                this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {
+                                                                max: 0,                                                                     
+                                                                args: _.concat (this.args.all, ['spawned-by-supervisor']
+                                                                        .concat (this.testsFailed ? 'tests-failed' : [])) })
 
-                                    this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {
-                                                                    max: 0,                                                                     
-                                                                    args: _.concat (this.args.all, ['spawned-by-supervisor']
-                                                                            .concat (this.testsFailed ? 'tests-failed' : [])) })
+                                this.supervisedProcess.on ('exit:code', code => {
+                                    log.brown ('Exited with code', code)
+                                    log.w ('Waiting for file change (or press Ctrl-C to exit)....\n')
+                                    this.supervisedProcess.stop () /* prevents Forever from restarting it */ })
 
-                                    this.supervisedProcess.on ('exit:code', code => {
-                                        log.brown ('Exited with code', code)
-                                        log.w ('Waiting for file change (or press Ctrl-C to exit)....\n')
-                                        this.supervisedProcess.stop () /* prevents Forever from restarting it */ })
+                                this.supervisedProcess.start () },
 
-                                    this.supervisedProcess.start () }) },
-
-    restart: function () {
-
-                log.e ('\nRestarting', log.line, '\n')
+    restart: function () { log.e ('\nRestarting', log.line, '\n')
                 
                 if (this.supervised) { process.exit (0) }
                                 else { this.supervisedProcess.restart () }  },
 
-    watchDirectory: function (path, changed, then) {
+    watchDirectory: function (path, changed) { log.pink ('Watching:', path)
 
-                        this.require ('chokidar', () => {
-
-                            log.pink ('Watching:', path)
-
-                            chokidar.watch (path, { ignoreInitial: true }).on ('all',
-                                (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) })
-                            
-                            if (then)
-                                then () }) }
+                        chokidar.watch (path, { ignoreInitial: true })
+                                .on ('all', (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) }) }
 
 })
 

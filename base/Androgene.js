@@ -289,11 +289,14 @@
                                             return Promise.resolve ().then (function () { return function () { } })
                                                 .then (function (x) { console.log (x) }) })
 
-    // uncomment, then run "node test.js Androgene" to see output
+    var eachTest = assertion (function () {
+                                return __.each ([1,2,3], function (x) { log.i (x) }) })
+
+    // uncomment, then run "node test Androgene" to see output
 
     /*_.tests['Androgene'] = function () {
 
-        var result = thenFunctionTest ()
+        var result = eachTest ()
 
         return result.disarmAndrogene ().finally (function (e, x) {
 
