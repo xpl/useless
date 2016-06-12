@@ -61,11 +61,11 @@ ServerTests = module.exports = $trait ({
 
     /*  Overrideable
      */
-    withTestEnvironment: function (what) {
-                                   what (() => { /* release environment here */ }) },
+    //withTestEnvironment: function (run) {
+    //                               return run (task =>
+    //                                           task.then (() => { /* release environment here */ })) },
 
-    withTestRoutineEnvironment: function (test, what) {
-                                                what (() => { /* release environment here */ }) },
+    //withTestRoutineEnvironment: function (test) { },
 
 
     /*  Impl
@@ -101,7 +101,7 @@ ServerTests = module.exports = $trait ({
 
             /*  Init test environment and run tests within that context.
              */
-            return this.withTestEnvironment (() =>
+            return //this.withTestEnvironment (() =>
 
                 __.map (this.constructor.$traits || [], 
 
@@ -127,10 +127,10 @@ ServerTests = module.exports = $trait ({
                                 codebase: false,
                                  verbose: false,
                                   silent: false,
-                                  suites: _.nonempty (suites),
-                             testStarted: this.withTestRoutineEnvironment }).then (
-                                                                                okay => {
-                                                                                    this.testsFailed = this.testsFailed || !okay }) })) } },    
+                                  suites: _.nonempty (suites) }).then (okay => {
+                                                                        this.testsFailed = this.testsFailed || !okay }) })
+            //)
+        } },    
 })
 
 

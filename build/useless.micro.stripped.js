@@ -4473,7 +4473,11 @@ $mixin(Promise, {
     }),
     panic: $property(function () {
         return this.catch(function (e) {
-            ($global.Panic || $global.alert || $global.log)(e);
+            if ($platform.NodeJS) {
+                log(e);
+            } else {
+                ($global.Panic || $global.alert)(e);
+            }
             throw e;
         });
     }),

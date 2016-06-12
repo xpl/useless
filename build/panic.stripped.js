@@ -4473,7 +4473,11 @@ $mixin(Promise, {
     }),
     panic: $property(function () {
         return this.catch(function (e) {
-            ($global.Panic || $global.alert || $global.log)(e);
+            if ($platform.NodeJS) {
+                log(e);
+            } else {
+                ($global.Panic || $global.alert)(e);
+            }
             throw e;
         });
     }),
@@ -6276,11 +6280,14 @@ Testosterone = $singleton({
     runTest: function (test, i) {
         var self = this, runConfig = this.runConfig;
         log.impl.configStack = [];
-        test.verbose = runConfig.verbose;
-        test.timeout = runConfig.timeout;
-        test.startTime = Date.now();
-        return test.run().then(function () {
-            test.time = Date.now() - test.startTime;
+        return __.then(runConfig.testStarted(test), function () {
+            test.verbose = runConfig.verbose;
+            test.timeout = runConfig.timeout;
+            test.startTime = Date.now();
+            return test.run().then(function () {
+                test.time = Date.now() - test.startTime;
+                return runConfig.testComplete(test);
+            });
         });
     },
     collectTests: function () {

@@ -7221,7 +7221,16 @@ $mixin (Promise, {
 
     log:   $property (function () { return this.then (log,       log.then (_.throwsError)) }),
     alert: $property (function () { return this.done (alert2, alert2.then (_.throwsError)) }),
-    panic: $property (function () { return this.catch (function (e) { ($global.Panic || $global.alert || $global.log) (e); throw e }) }),
+    
+    panic: $property (function () { return this.catch (function (e) {
+
+                                                        if ($platform.NodeJS) {
+                                                            log (e) }
+
+                                                        else {
+                                                            ($global.Panic || $global.alert) (e) }
+
+                                                        throw e }) }),
 
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },

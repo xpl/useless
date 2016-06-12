@@ -7221,7 +7221,16 @@ $mixin (Promise, {
 
     log:   $property (function () { return this.then (log,       log.then (_.throwsError)) }),
     alert: $property (function () { return this.done (alert2, alert2.then (_.throwsError)) }),
-    panic: $property (function () { return this.catch (function (e) { ($global.Panic || $global.alert || $global.log) (e); throw e }) }),
+    
+    panic: $property (function () { return this.catch (function (e) {
+
+                                                        if ($platform.NodeJS) {
+                                                            log (e) }
+
+                                                        else {
+                                                            ($global.Panic || $global.alert) (e) }
+
+                                                        throw e }) }),
 
     assert: function (desired) {
                 return this.then (function (x) { $assert (x, desired); return x }) },
@@ -9479,16 +9488,16 @@ Testosterone = $singleton ({
 
         log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
     
-        //return runConfig.testStarted (function () {
+        return __.then (runConfig.testStarted (test), function () {
 
-                                            test.verbose = runConfig.verbose
-                                            test.timeout = runConfig.timeout
-                                            test.startTime = Date.now ()
+            test.verbose = runConfig.verbose
+            test.timeout = runConfig.timeout
+            test.startTime = Date.now ()
 
-                                            return test.run ()
-                                                       .then (function () {
-                                                                test.time = (Date.now () - test.startTime)
-                                                                /*return runConfig.testComplete (test)*/ /*})*/ }) },
+            return test.run ()
+                       .then (function () {
+                                test.time = (Date.now () - test.startTime)
+                                return runConfig.testComplete (test) }) }) },
 
     collectTests: function () {
         return _.map (_.tests, this.$ (function (suite, name) {
