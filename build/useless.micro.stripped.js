@@ -4343,11 +4343,14 @@ Component = $prototype({
     }
 });
 TimeoutError = $extends(Error, { message: 'timeout expired' });
-__ = Promise.coerce = function (x) {
+__ = Promise.eval = function (x) {
     var this_ = this, args = _.rest(arguments);
     return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
         resolve(x.apply(this_, args));
     }) : Promise.resolve(x);
+};
+Promise.coerce = function (x) {
+    return x instanceof Promise ? x : Promise.resolve(x);
 };
 __.noop = function () {
     return Promise.resolve();
@@ -4414,6 +4417,29 @@ $mixin(Promise, {
             other
         ].race;
     },
+    firstResolved: $static(function (arr) {
+        return new Promise(function (resolve, reject) {
+            var todo = arr && arr.length;
+            if (!todo) {
+                reject(null);
+            } else {
+                _.each(arr, function (x) {
+                    Promise.coerce(x).then(function (x) {
+                        todo--;
+                        if (resolve) {
+                            resolve(x);
+                            resolve = undefined;
+                        }
+                    }).catch(function () {
+                        todo--;
+                        if (!todo) {
+                            reject(null);
+                        }
+                    });
+                });
+            }
+        });
+    }),
     reject: function (e) {
         return this.then(_.throwsError(e));
     },
@@ -4425,7 +4451,8 @@ $mixin(Promise, {
     },
     done: function (fn) {
         return this.then(function (x) {
-            return fn(null, x);
+            fn(null, x);
+            return x;
         }, function (e) {
             fn(e, null);
             throw e;
@@ -4540,14 +4567,14 @@ $mixin(Promise, {
 }());
 __.map = function (x, fn, cfg) {
     return __.scatter(x, function (v, k, x) {
-        return __.then(fn(v, k, x), function (x) {
+        return __.then(fn.$(v, k, x), function (x) {
             return [x];
         });
     });
 };
 __.filter = function (x, fn, cfg) {
     return __.scatter(x, function (v, k, x) {
-        return __.then(fn(v, k, x), function (decision) {
+        return __.then(fn.$(v, k, x), function (decision) {
             return decision === false ? undefined : decision === true ? [v] : [decision];
         });
     });
@@ -4556,16 +4583,19 @@ __.each = function (obj, fn) {
     return __.then(obj, function (obj) {
         return new Promise(function (complete, whoops) {
             _.cps.each(obj, function (x, i, then) {
-                __(fn(x, i)).then(then).catch(whoops);
+                Promise.coerce(fn(x, i)).then(then).catch(whoops);
             }, complete);
         });
     });
 };
-__.seq = function (seq) {
-    return _.reduce2(seq, __.then);
+__.seq = function (arr) {
+    return _.reduce2(arr, __.then);
 };
-__.all = function (x) {
-    return Promise.all(x);
+__.all = function (arr) {
+    return Promise.all(_.map(arr, __));
+};
+__.race = function (arr) {
+    return Promise.race(_.map(arr, __));
 };
 $mixin(Function, {
     promisifyAll: $static(function (obj, cfg) {

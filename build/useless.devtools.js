@@ -901,23 +901,44 @@ _.tests.log = {
 
         log         ('log (x)')         //  Basic API
 
-        log.green   ('log.green')       //  Use for plain colored output.
-        log.blue    ('log.blue')
-        log.orange  ('log.orange')
-        log.red     ('log.red')
+        log.green      ('log.green')       //  Use for plain colored output.
+        log.boldGreen  ('log.boldGreen')
+        log.darkGreen  ('log.darkGreen')
+        log.blue       ('log.blue')
+        log.boldBlue   ('log.boldBlue')
+        log.darkBlue   ('log.darkBlue')
+        log.orange     ('log.orange')
+        log.boldOrange ('log.boldOrange')
+        log.darkOrange ('log.darkOrange')
+        log.red        ('log.red')         //  ..for more colors, see the implementation below
+        log.boldRed    ('log.boldRed')
+        log.darkRed    ('log.darkRed')
+        log.pink       ('log.pink')
+        log.boldPink   ('log.boldPink')
+        log.darkPink   ('log.darkPink')
+
+        log.margin ()
+        log.margin ()  // collapses
+
+        log.bright ('log.bright')
+        log.dark   ('log.dark')
+
+        log.margin ()
 
         log.success ('log.success')     //  Use for quality production logging (logging that lasts).
         log.ok      ('log.ok')
         log.g       ('log.g')
+        log.gg      ('log.gg')
         log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
         log.i       ('log.i')
+        log.ii      ('log.ii')
         log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
         log.warn    ('log.warn')
         log.w       ('log.w')
-        log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
-                                        //  to where {success:fn,failure:fn} config expected.
+        log.ww      ('log.ww')        
         log.error   ('log.error')
         log.e       ('log.e')
+        log.ee      ('log.ee')
 
         $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
                                                             // (as it returns it first argument, like in _.identity)
@@ -992,8 +1013,8 @@ _.extend (log, {
 
         _.object (
         _.map  ([['none',        '0m',           ''],
-                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
                  ['red',         '31m',          'color:crimson'],
+                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
                  ['darkRed',    ['31m', '2m'],   'color:crimson'],
                  ['blue',        '36m',          'color:royalblue'],
                  ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
@@ -1004,9 +1025,10 @@ _.extend (log, {
                  ['brown',      ['33m', '2m'],   'color:saddlebrown'],
                  ['green',       '32m',          'color:forestgreen'],
                  ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
+                 ['darkGreen',  ['32m', '2m'],   'color:forestgreen;opacity:0.5'],
                  ['pink',        '35m',          'color:magenta'],
                  ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
-                 ['purple',     ['35m', '2m'],   'color:magenta'],
+                 ['darkPink',   ['35m', '2m'],   'color:magenta'],
                  ['black',       '0m',           'color:black'],
                  ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
                  ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
@@ -1259,13 +1281,14 @@ _.extend (log, {
                                                'darkBlue minor m',
                                           'orange warning warn w',
                                              'green success ok g',
+                                                   'darkGreen dg',
                                             'pink notice alert p',
                                                     'boldPink pp',
                                                     'dark hint d',
                                                    'boldGreen gg',
                                                        'bright b',
                                           'boldRed bloody bad ee',
-                                                      'purple dp',
+                                                    'darkPink dp',
                                                        'brown br',
                                                  'darkOrange wtf',
                                                   'boldOrange ww',
@@ -2096,7 +2119,7 @@ Panic.widget = $singleton (Component, {
                         .toggleClass ('hide',        entry.hide)
 						.toggleClass ('native',      entry['native'])
 						.append ([
-							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : this.cleanupFileName (entry.fileShort),
+							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort,
 																		entry.line]).join (':')),
 							$('<span class="callee">').text (entry.calleeShort),
 							$('<span class="src i-am-busy">').click (this.$ (function (e) { var el = $(e.delegateTarget)

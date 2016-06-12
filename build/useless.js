@@ -5873,6 +5873,20 @@ _.tests['Promise+'] = {
             __(function () { throw 123 }).assertRejected (123),
             __(adds ('foo', 'bar'), 123, 456).assert (['123foo', '456bar']) ] },
 
+    first: function () {
+            return [
+                Promise.firstResolved ([Promise.reject (123), Promise.resolve (456)]).assert (456),
+                Promise.firstResolved ([Promise.reject (123), Promise.reject  (456)]).assertRejected (null),
+                Promise.firstResolved ([])                                           .assertRejected (null) ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    all: function () {
+            return [
+                __.all ([                 123,                   456 ]).assert ([123, 456]),
+                __.all ([     _.constant (123),      _.constant (456)]).assert ([123, 456]),
+                __.all ([Promise.resolve (123), Promise.resolve (456)]).assert ([123, 456]) ] },
+
 /*  ------------------------------------------------------------------------ */
 
     seq: function () {  $assert (__.seq (123), 123)
@@ -5902,7 +5916,7 @@ _.tests['Promise+'] = {
             return [
                         __.filter (123, _.constant (456)).assert (456),
                         __.filter (['foo', 456], _.isString).assert (['foo']),
-                        __.filter (['foo', 456], _.constant ('baz')).assert (['baz', 'baz']),
+                        __.filter (['foo', 456], __.constant ('baz')).assert (['baz', 'baz']),
                         __.filter ({ foo: 123, bar: '456' }, _.isNumber).assert ({ foo: 123 })
                     ] },
 
@@ -5939,12 +5953,15 @@ TimeoutError = $extends (Error, { message: 'timeout expired' })
 
 /*  ------------------------------------------------------------------------ */
 
-__ = Promise.coerce = function ( x) { var this_ = this,
-                                          args = _.rest (arguments)
+__ = Promise.eval = function (x) { var this_ = this,
+                                       args = _.rest (arguments)
 
                         return ((x instanceof Promise)   ?  x :
                                ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x.apply (this_, args)) }) : // @hide
-                                                            Promise.resolve (x))) }
+                                                                Promise.resolve (x))) }
+
+Promise.coerce = function (x) {
+                        return (x instanceof Promise) ? x : Promise.resolve (x) }
 
 /*  ------------------------------------------------------------------------ */
 
@@ -5997,12 +6014,28 @@ $mixin (Array, {
 $mixin (Promise, {
 
     race: function (other) { return [this, other].race },
+
+    firstResolved: $static (function (arr) {
+                        return new Promise (function (resolve, reject) { var todo = arr && arr.length
+                            if (!todo) {
+                                reject (null) }
+                            else {
+                                _.each (arr, function (x) {
+                                                Promise.coerce (x)
+                                                       .then (function (x) { todo--
+                                                                if (resolve) {
+                                                                    resolve (x)
+                                                                    resolve = undefined } })
+                                                       .catch (function () { todo--
+                                                            if (!todo) {
+                                                                reject (null) } }) }) } }) }),
+
     reject: function (e) { return this.then (_.throwsError (e)) },
 
     chain: function (fn) { return this.then (function (x) { fn (x); return x; }) },
 
-    done: function (fn) { return this.then (function (x) { return fn (null, x) },
-                                            function (e) {        fn (e, null); throw e }) },
+    done: function (fn) { return this.then (function (x) { fn (null, x); return x },
+                                            function (e) { fn (e, null); throw e }) },
 
     finally: function (fn) { return this.then (function (x) { return fn (null, x) },
                                                function (e) { return fn (e, null) }) },
@@ -6125,28 +6158,31 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
 __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
             return __.scatter (x, function (v, k, x) {
-                return __.then (fn (v, k, x), function (x) { return [x] }) }) }
+                return __.then (fn.$ (v, k, x), function (x) { return [x] }) }) }
 
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                 return __.scatter (x, function (v, k, x) {
-                                        return __.then (fn (v, k, x),
+                                        return __.then (fn.$ (v, k, x),
                                             function (decision) {
                                                 return ((decision === false) ? undefined :
                                                        ((decision === true)  ? [v]
                                                                              : [decision])) }) }) }
-
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
                     return new Promise (function (complete, whoops) {
                                         _.cps.each (obj, function (x, i, then) {
-                                                            __(fn (x, i))
-                                                                .then (then)
-                                                                .catch (whoops) }, complete) }) }) }
-__.seq = function (seq) {
-            return _.reduce2 (seq, __.then) }
+                                                            Promise.coerce (fn (x, i))
+                                                                   .then (then)
+                                                                   .catch (whoops) }, complete) }) }) }
 
-__.all = function (x) {
-            return Promise.all (x) }
+__.seq = function (arr) {
+            return _.reduce2 (arr, __.then) }
+
+__.all = function (arr) {
+            return Promise.all (_.map (arr, __)) }
+
+__.race = function (arr) {
+            return Promise.race (_.map (arr, __)) }
 
 /*  ------------------------------------------------------------------------ */
 
@@ -8633,23 +8669,44 @@ _.tests.log = {
 
         log         ('log (x)')         //  Basic API
 
-        log.green   ('log.green')       //  Use for plain colored output.
-        log.blue    ('log.blue')
-        log.orange  ('log.orange')
-        log.red     ('log.red')
+        log.green      ('log.green')       //  Use for plain colored output.
+        log.boldGreen  ('log.boldGreen')
+        log.darkGreen  ('log.darkGreen')
+        log.blue       ('log.blue')
+        log.boldBlue   ('log.boldBlue')
+        log.darkBlue   ('log.darkBlue')
+        log.orange     ('log.orange')
+        log.boldOrange ('log.boldOrange')
+        log.darkOrange ('log.darkOrange')
+        log.red        ('log.red')         //  ..for more colors, see the implementation below
+        log.boldRed    ('log.boldRed')
+        log.darkRed    ('log.darkRed')
+        log.pink       ('log.pink')
+        log.boldPink   ('log.boldPink')
+        log.darkPink   ('log.darkPink')
+
+        log.margin ()
+        log.margin ()  // collapses
+
+        log.bright ('log.bright')
+        log.dark   ('log.dark')
+
+        log.margin ()
 
         log.success ('log.success')     //  Use for quality production logging (logging that lasts).
         log.ok      ('log.ok')
         log.g       ('log.g')
+        log.gg      ('log.gg')
         log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
         log.i       ('log.i')
+        log.ii      ('log.ii')
         log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
         log.warn    ('log.warn')
         log.w       ('log.w')
-        log.failure ('log.failure')     //  Allows 'log' to be transparently passed as stub handler,
-                                        //  to where {success:fn,failure:fn} config expected.
+        log.ww      ('log.ww')        
         log.error   ('log.error')
         log.e       ('log.e')
+        log.ee      ('log.ee')
 
         $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
                                                             // (as it returns it first argument, like in _.identity)
@@ -8724,8 +8781,8 @@ _.extend (log, {
 
         _.object (
         _.map  ([['none',        '0m',           ''],
-                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
                  ['red',         '31m',          'color:crimson'],
+                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
                  ['darkRed',    ['31m', '2m'],   'color:crimson'],
                  ['blue',        '36m',          'color:royalblue'],
                  ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
@@ -8736,9 +8793,10 @@ _.extend (log, {
                  ['brown',      ['33m', '2m'],   'color:saddlebrown'],
                  ['green',       '32m',          'color:forestgreen'],
                  ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
+                 ['darkGreen',  ['32m', '2m'],   'color:forestgreen;opacity:0.5'],
                  ['pink',        '35m',          'color:magenta'],
                  ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
-                 ['purple',     ['35m', '2m'],   'color:magenta'],
+                 ['darkPink',   ['35m', '2m'],   'color:magenta'],
                  ['black',       '0m',           'color:black'],
                  ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
                  ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
@@ -8991,13 +9049,14 @@ _.extend (log, {
                                                'darkBlue minor m',
                                           'orange warning warn w',
                                              'green success ok g',
+                                                   'darkGreen dg',
                                             'pink notice alert p',
                                                     'boldPink pp',
                                                     'dark hint d',
                                                    'boldGreen gg',
                                                        'bright b',
                                           'boldRed bloody bad ee',
-                                                      'purple dp',
+                                                    'darkPink dp',
                                                        'brown br',
                                                  'darkOrange wtf',
                                                   'boldOrange ww',
@@ -9763,7 +9822,7 @@ if ($platform.NodeJS) {
         static race (promises) {
             return OriginalPromise.race (promises) }
 
-        static coerce (x) {
+        static eval (x) {
                 return ((x instanceof AndrogenePromise) ? x :
                        ((x instanceof Function)         ? new AndrogenePromise (function (resolve) { resolve (x ()) }) : // @hide
                                                           AndrogenePromise.resolve (x))) } }
@@ -9772,7 +9831,7 @@ if ($platform.NodeJS) {
 
     var assertion = function (fn) {
                         return function () {
-                            return AndrogenePromise.coerce (fn) } } // @hide
+                            return AndrogenePromise.eval (fn) } } // @hide
 
 /*  ------------------------------------------------------------------------ */
 

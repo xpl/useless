@@ -632,17 +632,17 @@ _.extend(log, {
             ''
         ],
         [
+            'red',
+            '31m',
+            'color:crimson'
+        ],
+        [
             'boldRed',
             [
                 '31m',
                 '1m'
             ],
             'color:crimson;font-weight:bold'
-        ],
-        [
-            'red',
-            '31m',
-            'color:crimson'
         ],
         [
             'darkRed',
@@ -716,6 +716,14 @@ _.extend(log, {
             'color:forestgreen;font-weight:bold'
         ],
         [
+            'darkGreen',
+            [
+                '32m',
+                '2m'
+            ],
+            'color:forestgreen;opacity:0.5'
+        ],
+        [
             'pink',
             '35m',
             'color:magenta'
@@ -729,7 +737,7 @@ _.extend(log, {
             'color:magenta;font-weight:bold;'
         ],
         [
-            'purple',
+            'darkPink',
             [
                 '35m',
                 '2m'
@@ -994,13 +1002,14 @@ _.extend(log, {
         'darkBlue minor m',
         'orange warning warn w',
         'green success ok g',
+        'darkGreen dg',
         'pink notice alert p',
         'boldPink pp',
         'dark hint d',
         'boldGreen gg',
         'bright b',
         'boldRed bloody bad ee',
-        'purple dp',
+        'darkPink dp',
         'brown br',
         'darkOrange wtf',
         'boldOrange ww',
@@ -1778,7 +1787,7 @@ _.perfTest = function (arg, then) {
                 $('<ul class="callstack">').append(_.map(stackEntries, this.$(function (entry) {
                     var dom = $('<li class="callstack-entry">').toggleClass('third-party', entry.thirdParty).toggleClass('hide', entry.hide).toggleClass('native', entry['native']).append([
                         $('<span class="file">').text(_.nonempty([
-                            entry.index ? '(index)' : this.cleanupFileName(entry.fileShort),
+                            entry.index ? '(index)' : entry.fileShort,
                             entry.line
                         ]).join(':')),
                         $('<span class="callee">').text(entry.calleeShort),

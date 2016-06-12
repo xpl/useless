@@ -177,7 +177,7 @@
         static race (promises) {
             return OriginalPromise.race (promises) }
 
-        static coerce (x) {
+        static eval (x) {
                 return ((x instanceof AndrogenePromise) ? x :
                        ((x instanceof Function)         ? new AndrogenePromise (function (resolve) { resolve (x ()) }) : // @hide
                                                           AndrogenePromise.resolve (x))) } }
@@ -186,7 +186,7 @@
 
     var assertion = function (fn) {
                         return function () {
-                            return AndrogenePromise.coerce (fn) } } // @hide
+                            return AndrogenePromise.eval (fn) } } // @hide
 
 /*  ------------------------------------------------------------------------ */
 

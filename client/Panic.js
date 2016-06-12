@@ -194,7 +194,7 @@ Panic.widget = $singleton (Component, {
                         .toggleClass ('hide',        entry.hide)
 						.toggleClass ('native',      entry['native'])
 						.append ([
-							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : this.cleanupFileName (entry.fileShort),
+							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort,
 																		entry.line]).join (':')),
 							$('<span class="callee">').text (entry.calleeShort),
 							$('<span class="src i-am-busy">').click (this.$ (function (e) { var el = $(e.delegateTarget)
