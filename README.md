@@ -350,7 +350,7 @@ UselessApp = $singleton (Component, {
 
 Example report generated from failed Promise chain:
 
-![Promise stack demo](http://img.leprosorium.com/2523961)
+![Promise stack demo](http://wtf.jpg.wtf/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png)
 
 Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
