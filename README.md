@@ -348,7 +348,7 @@ UselessApp = $singleton (Component, {
             then () } })
 ```
 
-Example report generated from failed Promise chain:
+Example report generated from a Promise chain:
 
 ![Promise stack demo](http://wtf.jpg.wtf/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png)
 
