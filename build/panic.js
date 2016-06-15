@@ -7224,11 +7224,8 @@ $mixin (Promise, {
     
     panic: $property (function () { return this.catch (function (e) {
 
-                                                        if ($platform.NodeJS) {
-                                                            log (e) }
-
-                                                        else {
-                                                            ($global.Panic || $global.alert) (e) }
+                                                        if (_.globalUncaughtExceptionHandler) {
+                                                            _.globalUncaughtExceptionHandler (e) }
 
                                                         throw e }) }),
 
@@ -8336,7 +8333,7 @@ if (_.hasStdlib) {
                                         stack: _.rest ((new Error ()).stack.split ('\n'), 3).join ('\n') }) },
 
         isAssertionError: function (e) {        
-                            return e.assertion === true } })
+                            return e && (e.assertion === true) } })
 
 
     /*  $assert helper

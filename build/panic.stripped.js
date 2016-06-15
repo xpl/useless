@@ -4473,10 +4473,8 @@ $mixin(Promise, {
     }),
     panic: $property(function () {
         return this.catch(function (e) {
-            if ($platform.NodeJS) {
-                log(e);
-            } else {
-                ($global.Panic || $global.alert)(e);
+            if (_.globalUncaughtExceptionHandler) {
+                _.globalUncaughtExceptionHandler(e);
             }
             throw e;
         });
@@ -5339,7 +5337,7 @@ _.extend(_, {
             throw _.extend(_.assertionError(additionalInfo), { stack: _.rest(new Error().stack.split('\n'), 3).join('\n') });
         },
         isAssertionError: function (e) {
-            return e.assertion === true;
+            return e && e.assertion === true;
         }
     });
     _.extend(_, {

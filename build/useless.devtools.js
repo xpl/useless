@@ -388,7 +388,7 @@ if (_.hasStdlib) {
                                         stack: _.rest ((new Error ()).stack.split ('\n'), 3).join ('\n') }) },
 
         isAssertionError: function (e) {        
-                            return e.assertion === true } })
+                            return e && (e.assertion === true) } })
 
 
     /*  $assert helper

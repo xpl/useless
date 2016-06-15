@@ -61,10 +61,6 @@
                 isParagraph: is ('P'),
                 isHyperlink: is ('A'),
 
-                isEmptyParagraph: function () {
-                    return this.noChildren ||
-                         ((this.childNodes.length === 1) && this.firstChild.isLinebreak) },
-
                 isAttachedToDocument: function () {
                     return this.matchUpwards (_.equals (document.body)) ? true : false },
 

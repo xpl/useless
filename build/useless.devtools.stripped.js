@@ -232,7 +232,7 @@ _.extend(_, {
             throw _.extend(_.assertionError(additionalInfo), { stack: _.rest(new Error().stack.split('\n'), 3).join('\n') });
         },
         isAssertionError: function (e) {
-            return e.assertion === true;
+            return e && e.assertion === true;
         }
     });
     _.extend(_, {
