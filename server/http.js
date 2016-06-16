@@ -289,7 +289,7 @@ module.exports = $trait ({
             (!$http.headers['Content-Type']  && $http.isJSONAPI)) { // or if /api/ and no Content-Type explicitly specified
             
             if (e instanceof Error) {
-                $http.setCode (e.httpCode || $http.code || 500)
+                $http.setCode (e.code || $http.code || 500)
                      .writeHead ()
                      .write ({
                         success: false,
@@ -303,7 +303,7 @@ module.exports = $trait ({
 
         else { var x = log.impl.stringify (e)
 
-            $http.setCode ($http.code || 500)
+            $http.setCode (((e instanceof Error) && e.code) || $http.code || 500)
                  .writeHead ()
                  .write (($http.headers['Content-Type'] === $http.mime.html) ?
                             ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x) }
