@@ -4060,6 +4060,8 @@ Vec2 = $prototype({
     },
     w: $alias($property('x')),
     h: $alias($property('y')),
+    width: $alias($property('x')),
+    height: $alias($property('y')),
     length: $property(function () {
         return Math.sqrt(this.lengthSquared);
     }),
