@@ -4659,7 +4659,8 @@ Http = $singleton(Component, {
         })],
     request: function (type, path, cfg_) {
         var cfg = _.extend2({ headers: { 'Cache-Control': 'no-cache' } }, cfg_);
-        return new Promise(function (resolve, reject) {
+        var abort = undefined;
+        var p = new Promise(function (resolve, reject) {
             if ($platform.Browser) {
                 var prePath = cfg.protocol || cfg.hostname || cfg.port ? (cfg.protocol || window.location.protocol) + '//' + (cfg.hostname || window.location.hostname) + ':' + (cfg.port || window.location.port) : '';
                 var xhr = new XMLHttpRequest();
@@ -4688,6 +4689,10 @@ Http = $singleton(Component, {
                         }
                     }
                 };
+                abort = function () {
+                    xhr.abort();
+                    reject('aborted');
+                };
                 if (cfg.data) {
                     xhr.send(cfg.data);
                 } else {
@@ -4697,6 +4702,7 @@ Http = $singleton(Component, {
                 reject('not implemented');
             }
         });
+        return _.extend(p, { abort: abort });
     },
     progressCallbackWithSimulation: function (progress) {
         var simulated = 0;

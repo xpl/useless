@@ -1850,10 +1850,7 @@ _.perfTest = function (arg, then) {
 ;
 (function ($) {
     LogOverlay = $singleton(Component, {
-        $defaults: {
-            opaque: false,
-            init: false
-        },
+        $defaults: { opaque: false },
         init: function () {
             log.withWriteBackend(this.write, function () {
             });

@@ -10117,8 +10117,14 @@ Http = $singleton (Component, {
      */
 
     request: function (type, path, cfg_) { var cfg = _.extend2 ({ headers: { 'Cache-Control': 'no-cache' } }, cfg_)
+                                           
+                /*  Reference to the abort method (will be initialized at Promise construction)
+                 */
+                var abort = undefined
 
-                return new Promise (function (resolve, reject) {
+                /*  returned Promise
+                 */
+                var p = new Promise (function (resolve, reject) {
 
                     if ($platform.Browser) {
 
@@ -10161,13 +10167,23 @@ Http = $singleton (Component, {
                                                        else { reject  (_.extend (new Error (xhr.statusText), {
                                                                                         httpResponse: response,
                                                                                         httpStatus: xhr.status })) } } }
+                        /*  Set up the abort method
+                         */
+                        abort = function () {
+                                    xhr.abort ()
+                                    reject ('aborted') }
+
                         /*  Send
                          */
                         if (cfg.data) { xhr.send (cfg.data) }
                                  else { xhr.send () } }
 
                     else {
-                        reject ('not implemented') } }) },
+                        reject ('not implemented') } })
+
+                /*  Add abort method to the returned Promise
+                 */
+                return _.extend (p, { abort: abort }) },
 
     progressCallbackWithSimulation: function (progress) { var simulated = 0
                                                         progress (0)
