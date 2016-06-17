@@ -11,8 +11,8 @@ Modal overlay that renders log.js output for debugging purposes
 	LogOverlay = $singleton (Component, {
 
 		$defaults: {
-			opaque: false,   // disables passing of printed log messages to default write backend (console.log) 
-			init:   false }, // deferred init
+			opaque: false,     // disables passing of printed log messages to default write backend (console.log) 
+			/*init: false*/ }, // deferred init
 
 		init: function () {
 				log.withWriteBackend (this.write, function () {})
