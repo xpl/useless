@@ -29,10 +29,10 @@ module.exports = $trait ({
     HttpContext: $component ({
 
         ForbiddenError: $property (function () {
-                                        return _.extend (new Error ('Forbidden (403)'), { code: 403 }) }),
+                                        return _.extend (new Error ('Forbidden (403)'), { httpErrorCode: 403 }) }),
 
         NotFoundError: $property (function () {
-                                        return _.extend (new Error ('Not Found (404)'), { code: 404 }) }),
+                                        return _.extend (new Error ('Not Found (404)'), { httpErrorCode: 404 }) }),
 
         mime: {
             'html'       : 'text/html',
@@ -289,7 +289,7 @@ module.exports = $trait ({
             (!$http.headers['Content-Type']  && $http.isJSONAPI)) { // or if /api/ and no Content-Type explicitly specified
             
             if (e instanceof Error) {
-                $http.setCode (e.code || $http.code || 500)
+                $http.setCode (e.httpErrorCode || $http.code || 500)
                      .writeHead ()
                      .write ({
                         success: false,
@@ -303,7 +303,7 @@ module.exports = $trait ({
 
         else { var x = log.impl.stringify (e)
 
-            $http.setCode (((e instanceof Error) && e.code) || $http.code || 500)
+            $http.setCode (((e instanceof Error) && e.httpErrorCode) || $http.code || 500)
                  .writeHead ()
                  .write (($http.headers['Content-Type'] === $http.mime.html) ?
                             ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x) }
