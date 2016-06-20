@@ -10116,7 +10116,7 @@ Http = $singleton (Component, {
     /*  Impl
      */
 
-    request: function (type, path, cfg_) { var cfg = _.extend2 ({ headers: { 'Cache-Control': 'no-cache' } }, cfg_)
+    request: function (type, path, cfg_) { var cfg = cfg_ || {}
                                            
                 /*  Reference to the abort method (will be initialized at Promise construction)
                  */
@@ -10203,9 +10203,12 @@ JSONAPI = $singleton (Component, {
 
     $traits: [HttpMethods],
 
-    request: function (type, path, cfg) { cfg = cfg || {}; var stackBeforeCall = _.hasReflection && $callStack.offset ((cfg.stackOffset || 0) + 1).asArray
+    request: function (type, path, cfg) { var stackBeforeCall = _.hasReflection && $callStack.offset ((cfg.stackOffset || 0) + 1).asArray
 
-                var cfg = _.extend2 ({ headers: { 'Content-Type': 'application/json; charset=utf-8' } }, cfg)
+                var cfg = _.extend2 ({ headers: {
+                                            'Cache-Control': 'no-cache',
+                                            'Content-Type' : 'application/json; charset=utf-8' } }, cfg)
+
                 if (cfg.what) {
                     cfg.data = JSON.stringify (cfg.what) }
 

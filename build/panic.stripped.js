@@ -4658,7 +4658,7 @@ Http = $singleton(Component, {
             }
         })],
     request: function (type, path, cfg_) {
-        var cfg = _.extend2({ headers: { 'Cache-Control': 'no-cache' } }, cfg_);
+        var cfg = cfg_ || {};
         var abort = undefined;
         var p = new Promise(function (resolve, reject) {
             if ($platform.Browser) {
@@ -4719,9 +4719,13 @@ Http = $singleton(Component, {
 JSONAPI = $singleton(Component, {
     $traits: [HttpMethods],
     request: function (type, path, cfg) {
-        cfg = cfg || {};
         var stackBeforeCall = _.hasReflection && $callStack.offset((cfg.stackOffset || 0) + 1).asArray;
-        var cfg = _.extend2({ headers: { 'Content-Type': 'application/json; charset=utf-8' } }, cfg);
+        var cfg = _.extend2({
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        }, cfg);
         if (cfg.what) {
             cfg.data = JSON.stringify(cfg.what);
         }
