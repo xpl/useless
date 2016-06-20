@@ -43,7 +43,7 @@ module.exports = $trait ({
             'jpg'        : 'image/jpeg',
             'png'        : 'image/png',
             'js'         : 'text/javascript',
-            'javascript' : 'text/javascript',
+            'javascript' : 'application/javascript',
             'css'        : 'text/css',
             'svg'        : 'image/svg+xml',
             'ico'        : 'image/x-icon',
