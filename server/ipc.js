@@ -19,7 +19,7 @@ module.exports = $trait ({
                                                                 var id = lastId++,
                                                                     waitForReturnValue = msg => {
                                                                         if (msg.id === id) { 
-                                                                            this.supervisedProcess.removeListener ('message', waitForReturnValue)
+                                                                            this.supervisedProcess.child.removeListener ('message', waitForReturnValue)
                                                                             resolve (msg.returnValue) } }
 
                                                                 this.supervisedProcess.child.setMaxListeners (100)
