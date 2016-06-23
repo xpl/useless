@@ -26,6 +26,13 @@
                 _.defineProperty (N, tag, function () {
                                             return document.createElement (TAG) }) })
 
+
+/*  Querying                                                                 */
+
+    N.all = document.querySelectorAll.bind (document)
+    N.one = document.querySelector.bind (document)
+
+
 /*  Node+
     ======================================================================== */
 
