@@ -21,8 +21,8 @@ _.tests['DOMReference + DOMEvents'] = {
                 ---------------------------------------------------------------- */
 
                 init: function () { this.domReady (
-                                            Node.make ('textarea')
-                                                .insertMeAfter (document.body.lastChild)) },
+                                            N.textarea
+                                             .insertMeAfter (document.body.lastChild)) },
 
             /*  That's how you bind to events (simplest way)
                 ---------------------------------------------------------------- */
@@ -123,8 +123,7 @@ _.tests['DOMReference + DOMEvents'] = {
                               $trait ({ shouldNotCall:    $on ('change', function (e) { $fail }) }) ],
 
                     init: function () { this.domReady (
-                                            Node.make ('textarea')
-                                                .insertMeAfter (document.body.lastChild)) } })) ()
+                                            N.textarea.insertMeAfter (document.body.lastChild)) } })) ()
 
                 textarea.dispatchEvent ('change')
                 textarea.destroy () }) } }

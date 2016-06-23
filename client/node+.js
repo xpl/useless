@@ -1,32 +1,38 @@
-              /*   local macros, to help define stuff
-               */
-(function () { var is   = function (tag) { return function () { return this.tagName === tag } }
-               var make = function (tag) { return function () { return document.createElement (tag.uppercase) } }
+(function () { var is = function (tag) { return function () { return this.tagName === tag } }
+
+/*  Constructors
+    ======================================================================== */
+
+/*  N (tag)                                                                  */
+
+    N = function (tag) {
+            return document.createElement (tag.uppercase) }
+
+/*  N.text                                                                   */
+
+    N.text = function (text) {
+                return document.createTextNode (text) }
+
+/*  N.span / N.div ...                                                       */
+
+    _.each (['br', 'p', 'div', 'em', 'a', 'b', 'i', 'u', 's', 'strong', 'span',
+             'sup', 'sub', 'button', 'iframe', 'pre', 'img', 'video', 'source',
+             'h1', 'h2', 'h3', 'h4', 'h5', 'textarea', 'input', 'style'],
+
+             function (tag) {
+
+                var TAG = tag.uppercase
+
+                _.defineProperty (N, tag, function () {
+                                            return document.createElement (TAG) }) })
+
+/*  Node+
+    ======================================================================== */
 
     $mixin (Node, {
 
         $: $prototype.impl.$,    // brings this.$ semantics from $prototype
 
-
-    /*  Constructors
-        ======================================================================== */
-
-        $static: {
-
-            make: make.then (_.call),
-            text: function (text) { return document.createTextNode (text) },
-
-            $property: {    linebreak: make ('BR'),
-                            paragraph: make ('P'),
-                            div:       make ('DIV'),
-                            span:      make ('SPAN'),
-                            button:    make ('BUTTON'),
-                            iframe:    make ('IFRAME'),
-                            pre:       make ('PRE'),
-                            img:       make ('IMG'),
-                            h1:        make ('H1'),
-                            h2:        make ('H2'),
-                            h3:        make ('H3') } },
         
     /*  Various predicates
         ------------------
@@ -130,7 +136,7 @@
 
         /*  Useful for clutterless DOM trees construction. Can append text nodes via .append ('text')
          */
-        append: function (what) { return this.appendChildren (_.isString (what) ? Node.text (what) : what) },
+        append: function (what) { return this.appendChildren (_.isString (what) ? document.createTextNode (what) : what) },
         add: $alias ('append'),
 
         walkTree: function (cfg, accept) { accept = (arguments.length === 1) ? cfg : accept
@@ -164,7 +170,9 @@
                                                                    if (n)                   { n = n.nextSibling } // take next sibling
                                                                 return n })),
 
-        nextInnermostSibling: $callableAsMethod ($property (function (n) { Node.firstInnermostChild (Node.nextOutermostSibling (this)) })),
+        nextInnermostSibling: $callableAsMethod ($property (function (n) {
+                                                                return Node.firstInnermostChild (
+                                                                        Node.nextOutermostSibling (this)) })),
 
         appendTo: function (ref) {
             ref.appendChild (this); return this },
@@ -250,7 +258,7 @@
 
         splitSubtreeAt: function (location) { var n = location.node, i = location.offset
             return (i > 0) ? (location.node.isText ?
-                                this.splitSubtreeBefore (Node.text (n.nodeValue.substr (i)).insertMeAfter (_.extend (n, { nodeValue: n.nodeValue.substr (0, i) }))) :
+                                this.splitSubtreeBefore (N.text (n.nodeValue.substr (i)).insertMeAfter (_.extend (n, { nodeValue: n.nodeValue.substr (0, i) }))) :
                                 this.splitSubtreeBefore (n.childNodes[i])) :
                                 this.splitSubtreeBefore (n) },
 
@@ -357,8 +365,8 @@ _.tests.NodePlus = {
     'tree splitting': function () {
 
         Testosterone.defineAssertions ({
-            assertSplitAtBr: function (html, desiredResult) {   var node = _.extend (Node.div, { innerHTML: html })
-                                                                    node.splitSubtreeBefore (node.querySelector ('br'))
+            assertSplitAtBr: function (html, desiredResult) {   var node = N.div.html (html)
+                                                                    node.splitSubtreeBefore (node.one ('br'))
                                                                     return _.assert (node.innerHTML, desiredResult) } })
         $assertSplitAtBr ('<b><br>foo</b>', '<b><br>foo</b>')
         $assertSplitAtBr ('<b>foo<br></b>', '<b>foo</b><b><br></b>')
