@@ -41,12 +41,9 @@ BuildApp = $singleton (Component, {
 /*  ======================================================================== */
 
     init: function () {
-            return new Promise (this.$ (function (then) {
-                                            if (this.testsFailed !== true) {
-                                                this.require (['esprima', 'escodegen'],
-                                                    this.$ (function () { _.each (this.inputFiles, this.compileFile.$ ()); then () })) }
-                                            else {
-                                                then () } })) },
+            if (this.testsFailed !== true) {
+                _.each (this.inputFiles,
+                    this.compileFile.$ ()) } },
 
 /*  ======================================================================== */
 
