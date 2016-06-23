@@ -477,10 +477,11 @@ _.withTest ('OOP', {
                         this.applyMacroTags (macroTags, def) } } return def } },
 
             applyMacroTags: function (macroTags, def) {
-                 _.each (def, function (memberDef, memberName) {
+                _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
-                                if (_.keyword (tagName) in memberDef) {
-                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }, this) }, this); return def },
+                                if (_.isObject (memberDef) && (_.keyword (tagName) in memberDef)) {
+                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }, this) }, this)
+                return def },
 
             generateCustomCompilerImpl: function (base) {
                 return function (def) {

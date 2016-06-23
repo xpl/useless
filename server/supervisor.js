@@ -8,7 +8,7 @@ var fs              = require ('fs'),
 module.exports = Supervisor = $trait ({
 
     $depends: [require ('./args'),
-               require ('./require')],
+               require ('./ipc')],
 
     $defaults: $const ({ argKeys: { respawnedBecauseCodeChange: 1,
                                            spawnedBySupervisor: 1,
@@ -43,30 +43,38 @@ module.exports = Supervisor = $trait ({
                                              !file.contains ($uselessPath) &&
                                              !file.contains (path.join ($uselessPath, './node_modules')))))) { yes () } } }),
 
+    voteForRestartOnSourceChange: $callableFromMasterProcess (function (action, file) {
+
+                                    var yes = false
+                                    var no  = false
+
+                                    this.shouldRestartOnSourceChange (action, file, // ask traits
+                                        () => { yes = true },
+                                        () => { no  = true })
+
+                                    return (yes && !no) }),
+
     onSourceChange: function (action, file) {
 
-                        var yes = false
-                        var no  = false
+                        __.then (this.voteForRestartOnSourceChange (action, file), yes => {
 
-                        this.shouldRestartOnSourceChange (action, file,
-                            () => { yes = true },
-                            () => { no  = true })
+                            if (yes) {
 
-                        if (yes && !no) {
-
-                            log.e ('\nRestarting because ', log.color.boldRed, file, log.color.red, ' changed\n')
+                                log.e ('\nRestarting because ', log.color.boldRed, file, log.color.red, ' changed\n')
 
                                 if (!this.supervisedProcess.args.contains ('respawned-because-code-change')) {
                                      this.supervisedProcess.args.push     ('respawned-because-code-change') }
 
-                                this.supervisedProcess.restart () } },
+                                this.supervisedProcess.restart () } }) },
 
     spawnSupervisedProcess: function () { log.gg ('Spawning supervised process')
 
                                 this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {
-                                                                max: 0,                                                                     
+                                                                max: 0,
+                                                                fork: true, // for IPC to work
                                                                 args: _.concat (this.args.all, ['spawned-by-supervisor']
-                                                                        .concat (this.testsFailed ? 'tests-failed' : [])) })
+                                                                                                    .concat (this.testsFailed ?
+                                                                                                        'tests-failed' : [])) })
 
                                 this.supervisedProcess.on ('exit:code', code => {
                                     log.brown ('Exited with code', code)
@@ -83,7 +91,9 @@ module.exports = Supervisor = $trait ({
     watchDirectory: function (path, changed) { log.pink ('Watching:', path)
 
                         chokidar.watch (path, { ignoreInitial: true })
-                                .on ('all', (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) }) }
+                                .on ('all', (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) }) },
+
+    
 
 })
 
