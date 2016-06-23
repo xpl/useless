@@ -274,8 +274,14 @@
         onceAnimationEnd: $property (function () {
             return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
 
+        onceTransitionEnd: $property (function () {
+            return this.once ($platform.WebKit ? 'webkitTransitionEnd' : 'transitionend') }),
+
         animateWithAttribute: function (attr) { this.setAttribute (attr, true)
-             return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) }
+             return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) },
+
+        transitonWithAttribute: function (attr) { this.setAttribute (attr, true)
+             return this.onceTransitionEnd.then ( this.removeAttribute.bind (this, attr)) }
     })
 
 
