@@ -5,7 +5,9 @@ var fs          = require ('fs'),
     querystring = require ('querystring'),
     http        = require ('http'),
     process     = require ('process'),
-    path        = require ('path')
+    path        = require ('path'),
+    esprima     = require ('esprima'),
+    escodegen   = require ('escodegen')
 
 /*  ======================================================================== */
 

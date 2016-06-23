@@ -3266,7 +3266,7 @@ _.extend($prototype, {
             _.each(def, function (memberDef, memberName) {
                 _.each(macroTags, function (macroFn, tagName) {
                     memberDef = def[memberName];
-                    if (_.keyword(tagName) in memberDef) {
+                    if (_.isObject(memberDef) && _.keyword(tagName) in memberDef) {
                         def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
                     }
                 }, this);
