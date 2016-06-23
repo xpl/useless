@@ -199,12 +199,6 @@
             _.each (_.coerceToArray (nodes).reversed, function (n) { parent.insertBefore (n, next) }); return this },
 
 
-    /*  Caret & selection
-        ======================================================================== */
-
-        moveCaret: function (offset) { NormalizedCaretPosition.move (this, offset); return this },
-
-
     /*  Events
         ======================================================================== */
 
