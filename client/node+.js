@@ -130,21 +130,29 @@
             Use following method to safely do so.
          */
         safeEnumChildren: function (fn, context) {
-            _.each (this.childNodesArray, fn, context || this); return this },
+                                _.each (this.childNodesArray, fn, context || this); return this },
 
         /*  childNodes is not really an array, so to get Array instance, use this helper
          */
-        childNodesArray: $property (function () { return _.asArray (this.childNodes) }),
+        childNodesArray: $property (function () {
+                                        return _.asArray (this.childNodes) }),
 
-        appendChildren: function (nodes) { _.each (_.coerceToArray (nodes), function (n) { this.appendChild (n) }, this); return this },
-        removeChildren: function (nodes) { _.each (_.coerceToArray (nodes), function (n) { this.removeChild (n) }, this); return this },
+        add:    $alias ('appendChildren'),
+        append: $alias ('appendChildren'),
 
-        removeAllChildren: function () { this.removeChildren (this.childNodesArray); return this },
+        appendChildren: function (nodes) {
+                            for (var arr = _.coerceToArray (nodes), i = 0, len = arr.length; i < len; i++) {
+                                var n = arr[i]
+                                this.appendChild (_.isString (n) ? document.createTextNode (n) : n) }
+                            return this },
 
-        /*  Useful for clutterless DOM trees construction. Can append text nodes via .append ('text')
-         */
-        append: function (what) { return this.appendChildren (_.isString (what) ? document.createTextNode (what) : what) },
-        add: $alias ('append'),
+        removeChildren: function (nodes) {
+                            for (var arr = _.coerceToArray (nodes), i = 0, len = arr.length; i < len; i++) {
+                                this.removeChild (arr[i]) }
+                            return this },
+
+        removeAllChildren: function () {
+                                return this.removeChildren (this.childNodesArray) },
 
         walkTree: function (cfg, accept) { accept = (arguments.length === 1) ? cfg : accept
 
