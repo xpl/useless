@@ -107,7 +107,7 @@ $global.alert2 = function (args) {
     return arguments[0];
 };
 $global.log = function () {
-    console.log.apply(console.log, arguments);
+    console.log.apply(console, arguments);
 };
 _.extend(_, {
     asArray: function (x) {

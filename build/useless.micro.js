@@ -126,7 +126,7 @@ if ($platform.NodeJS) {
 $global.alert2 = function (args) {
     alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] }
 
-$global.log = function () { console.log.apply (console.log, arguments) } // placeholder for log.js
+$global.log = function () { console.log.apply (console, arguments) } // placeholder for log.js
 
 
 ;
