@@ -1,4 +1,4 @@
-/*  Run this file with
+/*  Run this file with this command in console
 
     > node example.js
  */
