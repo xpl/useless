@@ -107,7 +107,7 @@ $global.alert2 = function (args) {
     return arguments[0];
 };
 $global.log = function () {
-    console.log.apply(console.log, arguments);
+    console.log.apply(console, arguments);
 };
 _.extend(_, {
     asArray: function (x) {
@@ -3126,20 +3126,20 @@ $prototype.macroTag('callableAsMethod', function (def, value, name) {
 $singleton = function (arg1, arg2) {
     return new ($prototype.apply(null, arguments))();
 };
-_.clamp = function (n, min, max) {
+Math.clamp = _.clamp = function (n, min, max) {
     return Math.max(min, Math.min(max, n));
 };
-_.lerp = function (t, min, max) {
+Math.lerp = _.lerp = function (t, min, max) {
     return min + (max - min) * t;
 };
-_.rescale = function (v, from, to, opts) {
+Math.rescale = _.rescale = function (v, from, to, opts) {
     var unit = (v - from[0]) / (from[1] - from[0]);
     return _.lerp(opts && opts.clamp ? _.clamp(unit, 0, 1) : unit, to[0], to[1]);
 };
-_.rescaleClamped = function (v, from, to) {
+Math.rescaleClamped = _.rescaleClamped = function (v, from, to) {
     return _.rescale(v, from, to, { clamp: true });
 };
-_.sqr = function (x) {
+Math.sqr = _.sqr = function (x) {
     return x * x;
 };
 if (!Math.sign) {
