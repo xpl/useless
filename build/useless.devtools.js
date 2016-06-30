@@ -407,6 +407,12 @@ if (_.hasStdlib) {
     _.each (_.keys (_.assertions), function (name) {
         $global.define ('$' + name, _[name], { configurable: true }) })
 
+    for (var k in _.assertions) {
+        $global['$' + k] = 1
+    }
+
+    $assert
+
 })
 
 

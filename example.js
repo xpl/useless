@@ -5,6 +5,7 @@
 
 require ('./useless')
 
+
 Examples = $singleton (Component, {
 
     api: function () { return {
