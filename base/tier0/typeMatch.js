@@ -12,7 +12,7 @@ _.defineKeyword ('any', _.identity)
 _.deferTest (['type', 'type matching'], function () {
 
     $assert (_.omitTypeMismatches ( { '*': $any, foo: $required ('number'), bar: $required ('number') },
-                                    { baz: 'x', foo: 42,            bar: 'foo' }),
+                                    { baz: 'x', foo: 42, bar: 'foo' }),
                                     { })
 
     $assert (_.omitTypeMismatches ( { foo: { '*': $any } },
@@ -91,9 +91,8 @@ _.deferTest (['type', 'type matching'], function () {
                                 return  (contract === $any) ||
                                         ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (
-                                            _.isPrototypeConstructor (contract) ?
-                                                _.isTypeOf (contract, v) :   // constructor type
-                                                (contract (v) === true))) || // test predicate
+                                                (v instanceof contract)   || // type constructor
+                                                (contract (v) === true))) || // predicate
                                         (typeof v === contract) ||           // plain JS type
                                         (v === contract) }                   // constant match
 
