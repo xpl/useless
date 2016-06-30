@@ -126,7 +126,7 @@ if ($platform.NodeJS) {
 $global.alert2 = function (args) {
     alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] }
 
-$global.log = function () { console.log.apply (console.log, arguments) } // placeholder for log.js
+$global.log = function () { console.log.apply (console, arguments) } // placeholder for log.js
 
 
 ;
@@ -5143,22 +5143,22 @@ _.withTest ('OOP', {
 /*  TODO:   UNIT TEST DAT MUTHAFUCKA
  */
 
+/*  TODO:   get rid of _ namespace (now legacy)
+ */
 
-/*  Context-free math functions
-    ======================================================================== */
+Math.clamp = _.clamp = function (n, min, max) {
+                            return Math.max (min, Math.min (max, n)) }
 
-_.clamp = function (n, min, max) {
-    return Math.max (min, Math.min (max, n)) }
+Math.lerp = _.lerp = function (t, min, max) {
+                        return min + (max - min) * t }
 
-_.lerp = function (t, min, max) {
-    return min + (max - min) * t }
+Math.rescale = _.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
+                                return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
 
-_.rescale = function (v, from, to, opts) { var unit = (v - from[0]) / (from[1] - from[0])
-    return _.lerp (opts && opts.clamp ? _.clamp (unit, 0, 1) : unit, to[0], to[1]) }
+Math.rescaleClamped = _.rescaleClamped = function (v, from, to) {
+                                            return _.rescale (v, from, to, { clamp: true }) }
 
-_.rescaleClamped = function (v, from, to) { return _.rescale (v, from, to, { clamp: true }) }
-
-_.sqr = function (x) { return x * x }
+Math.sqr = _.sqr = function (x) { return x * x }
 
 
 /*  Math.sign (missing from Safari)
@@ -5199,6 +5199,9 @@ Intersect = {
 
             return undefined } }
 }
+
+/*  TODO: Vec1, for consistency with arity-abstract vector algorithms
+    ======================================================================== */
 
 /*  2-dimensional vector
     ======================================================================== */

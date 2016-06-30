@@ -223,6 +223,9 @@
                     return new Promise (function (resolve) {
                         node.addEventListener (e, fn = function (e) { node.removeEventListener (e, fn); resolve (e) }) }) },
 
+        touched: function (fn) {
+                    return this.on ($platform.touch ? 'touchstart' : 'click', fn) },
+
     /*  Properties
         ======================================================================== */
 
@@ -237,10 +240,15 @@
 
         hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
 
-        toggleAttribute: function (name, value) {
+        toggleAttribute: function (name, value) { var arg1 = arguments.length < 2
+
+                                    if (arg1) {
+                                        value = !this.hasAttribute (name) }
+
                                      if (value) { this.setAttribute    (name, value) }
                                            else { this.removeAttribute (name) }
-                                    return this },
+
+                                    return arg1 ? value : this },
 
         toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
         setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
