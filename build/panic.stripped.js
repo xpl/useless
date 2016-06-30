@@ -4719,7 +4719,6 @@ Http = $singleton(Component, {
 JSONAPI = $singleton(Component, {
     $traits: [HttpMethods],
     request: function (type, path, cfg) {
-        var stackBeforeCall = _.hasReflection && $callStack.offset((cfg.stackOffset || 0) + 1).asArray;
         var cfg = _.extend2({
             headers: {
                 'Cache-Control': 'no-cache',
@@ -4729,6 +4728,7 @@ JSONAPI = $singleton(Component, {
         if (cfg.what) {
             cfg.data = JSON.stringify(cfg.what);
         }
+        var stackBeforeCall = _.hasReflection && $callStack.offset((cfg.stackOffset || 0) + 1).asArray;
         return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
             if (response) {
                 return JSON.parse(response);
@@ -5362,6 +5362,10 @@ _.extend(_, {
     _.each(_.keys(_.assertions), function (name) {
         $global.define('$' + name, _[name], { configurable: true });
     });
+    for (var k in _.assertions) {
+        $global['$' + k] = 1;
+    }
+    $assert;
 }());
 (function () {
     _.hasUncaught = true;
