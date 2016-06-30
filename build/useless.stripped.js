@@ -1760,7 +1760,7 @@ _.defineKeyword('any', _.identity);
     });
     var typeMatchesValue = function (c, v) {
         var contract = Tags.unwrap(c);
-        return contract === $any || contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v)) || typeof v === contract || v === contract;
+        return contract === $any || contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v) === true) || typeof v === contract || v === contract;
     };
     _.mismatches = function (op, contract, value) {
         return hyperMatch(contract, value, function (contract, v) {
