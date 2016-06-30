@@ -2236,14 +2236,15 @@ _.deferTest (['type', 'type matching'], function () {
             else {
                 return zip (type_, value, pred) } })
 
-    var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
+ var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
                                 return  (contract === $any) ||
                                         ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (
-                                                (v instanceof contract)   || // type constructor
-                                                (contract (v) === true))) || // predicate
-                                        (typeof v === contract) ||           // plain JS type
-                                        (v === contract) }                   // constant match
+                                            _.isPrototypeConstructor (contract) ?
+                                                _.isTypeOf (contract, v) :  // constructor type
+                                                contract (v))) ||           // test predicate
+                                        (typeof v === contract) ||          // plain JS type
+                                        (v === contract) }                  // constant match
 
     _.mismatches = function (op, contract, value) {
                             return hyperMatch (contract, value,
