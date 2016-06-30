@@ -1,6 +1,6 @@
 {
   "name": "useless",
-  "version": "0.0.181",
+  "version": "0.0.182",
   "description": "Use Less. Do More. JavaScript on steroids.",
   "main": "useless.js",
   "engines": {
