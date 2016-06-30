@@ -92,10 +92,10 @@ _.deferTest (['type', 'type matching'], function () {
                                         ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (
                                             _.isPrototypeConstructor (contract) ?
-                                                _.isTypeOf (contract, v) :  // constructor type
-                                                contract (v))) ||           // test predicate
-                                        (typeof v === contract) ||          // plain JS type
-                                        (v === contract) }                  // constant match
+                                                _.isTypeOf (contract, v) :   // constructor type
+                                                (contract (v) === true))) || // test predicate
+                                        (typeof v === contract) ||           // plain JS type
+                                        (v === contract) }                   // constant match
 
     _.mismatches = function (op, contract, value) {
                             return hyperMatch (contract, value,
