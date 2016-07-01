@@ -2207,6 +2207,9 @@ _.zap = function (firstArg) {
 };
 $extensionMethods(String, {
     quote: _.quote,
+    pluck: function (s, arr) {
+        return arr.map(_.property(s));
+    },
     contains: function (s, other) {
         return s.indexOf(other) >= 0;
     },

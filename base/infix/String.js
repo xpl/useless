@@ -90,9 +90,14 @@ _.deferTest ('String extensions', function () {
     $assert  ('жоп'.pad (5),      'жоп  ')
     $assert  ('жоп'.pad (5, '→'), 'жоп→→')
 
+    $assert ('foo'.pluck ([{ foo: 10 }, { foo: 11 }]), [10, 11])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
+
+    pluck: function (s, arr) {
+                return arr.map (_.property (s)) },
 
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 

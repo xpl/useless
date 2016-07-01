@@ -1792,7 +1792,7 @@ _.perfTest = function (arg, then) {
                     return $('<pre>').text(log.impl.stringify(s));
                 })),
                 $('<ul class="callstack">').append(_.map(stackEntries, this.$(function (entry) {
-                    var dom = $('<li class="callstack-entry">').toggleClass('third-party', entry.thirdParty).toggleClass('hide', entry.hide).toggleClass('native', entry['native']).append([
+                    var dom = $('<li class="callstack-entry">').toggleClass('third-party', entry.thirdParty || false).toggleClass('hide', entry.hide || false).toggleClass('native', entry['native'] || false).append([
                         $('<span class="file">').text(_.nonempty([
                             entry.index ? '(index)' : entry.fileShort,
                             entry.line

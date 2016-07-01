@@ -3553,9 +3553,14 @@ _.deferTest ('String extensions', function () {
     $assert  ('жоп'.pad (5),      'жоп  ')
     $assert  ('жоп'.pad (5, '→'), 'жоп→→')
 
+    $assert ('foo'.pluck ([{ foo: 10 }, { foo: 11 }]), [10, 11])
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
+
+    pluck: function (s, arr) {
+                return arr.map (_.property (s)) },
 
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
@@ -10094,9 +10099,9 @@ Panic.widget = $singleton (Component, {
 			$('<ul class="callstack">').append (_.map (stackEntries, this.$ (function (entry) {
 
 				var dom = $('<li class="callstack-entry">')
-						.toggleClass ('third-party', entry.thirdParty)
-                        .toggleClass ('hide',        entry.hide)
-						.toggleClass ('native',      entry['native'])
+						.toggleClass ('third-party', entry.thirdParty || false)
+                        .toggleClass ('hide',        entry.hide || false)
+						.toggleClass ('native',      entry['native'] || false)
 						.append ([
 							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort,
 																		entry.line]).join (':')),
