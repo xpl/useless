@@ -7,7 +7,7 @@
 
     N = function (tag, children) {
             var n = document.createElement (tag.uppercase)
-                return children ? n.add (children) : n }
+                return children ? n.append (children) : n }
 
 /*  N.text                                                                   */
 
