@@ -1725,6 +1725,12 @@ _.withTest (['stdlib', 'map2'], function () {
                 _.mapsWith = _.higherOrder (
                 _.mapWith  = _.flip2 (_.map2)) })
 
+/*  Pluck 2.0
+    ======================================================================== */
+
+_.pluck2 = function (x, prop) {
+                return _.map2 (x, _.property (prop)) }
+
 
 /*  Maps one-to-many
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -4196,14 +4202,15 @@ _.deferTest ('String extensions', function () {
     $assert  ('жоп'.pad (5),      'жоп  ')
     $assert  ('жоп'.pad (5, '→'), 'жоп→→')
 
-    $assert ('foo'.pluck ([{ foo: 10 }, { foo: 11 }]), [10, 11])
+    $assert ('foo'.pluck ([    { foo: 10 },    { foo: 11 } ]), [    10,    11 ])
+    $assert ('foo'.pluck ({ a: { foo: 10 }, b: { foo: 11 } }), { a: 10, b: 11 })
 
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
 
     pluck: function (s, arr) {
-                return arr.map (_.property (s)) },
+                return _.pluck2 (arr, s) },
 
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
@@ -4778,7 +4785,6 @@ _.extend (_, {
         var stream = _.stream ({
                         hasValue: arguments.length > 0,
                         value:    _.isFunction (value) ? undefined : value,
-                        read:     _.identity,
 
                         read: function (schedule) {
                                 return function (returnResult) {
@@ -4959,6 +4965,54 @@ _.extend (_, {
                     write:    write,
                     postpone: function () { this.postponed.apply (self.context, arguments) } })) } })
 
+
+/*  Observable.map (experimental)
+    ======================================================================== */
+
+_.deferTest (['stream', 'observable map'], function () {
+
+/*  General semantics   */
+
+    var foo = _.observable ('foo'),
+        bar = _.observable ('bar')
+
+    var fooBar = _.observable.map ([foo, bar], _.appends ('42'))
+
+    var results = []
+
+    fooBar (function (value) {
+        results.push (value.copy) })
+
+    $assert (results, [['foo42', 'bar42']])
+
+    foo ('qux')
+    bar ('zap')
+
+    $assert (results, [['foo42', 'bar42'],
+                       ['qux42', 'bar42'],
+                       ['qux42', 'zap42']])
+
+
+/*  Works over objects  */
+
+    _.observable.map ({ 'foo': _.observable ('bar') }) (function (obj) {
+                                                            $assert ({ 'foo': 'bar' }, obj) })
+
+}, function () {
+
+    _.observable.map = function (obj, fn) { fn = fn || _.identity
+
+        var value = _.isArray (obj) ? new Array (obj.length) : {}
+        var result = _.observable (value)
+
+        _.each (obj, function (read, i) {
+                        read (function (x) {
+                                value[i] = fn (x, i); result.force (value) }) })
+
+        return result
+    }
+
+})
 
 
 ;

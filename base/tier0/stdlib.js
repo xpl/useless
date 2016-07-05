@@ -74,6 +74,12 @@ _.withTest (['stdlib', 'map2'], function () {
                 _.mapsWith = _.higherOrder (
                 _.mapWith  = _.flip2 (_.map2)) })
 
+/*  Pluck 2.0
+    ======================================================================== */
+
+_.pluck2 = function (x, prop) {
+                return _.map2 (x, _.property (prop)) }
+
 
 /*  Maps one-to-many
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

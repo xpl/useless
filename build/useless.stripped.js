@@ -1117,6 +1117,9 @@ _.mapSet = function (set, fn, ctx) {
     return out;
 };
 _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
+_.pluck2 = function (x, prop) {
+    return _.map2(x, _.property(prop));
+};
 _.mixin({
     scatter: function (obj, elem) {
         var result = undefined;
@@ -2600,7 +2603,7 @@ _.zap = function (firstArg) {
 $extensionMethods(String, {
     quote: _.quote,
     pluck: function (s, arr) {
-        return arr.map(_.property(s));
+        return _.pluck2(arr, s);
     },
     contains: function (s, other) {
         return s.indexOf(other) >= 0;
@@ -2937,7 +2940,6 @@ _.extend(_, {
         var stream = _.stream({
             hasValue: arguments.length > 0,
             value: _.isFunction(value) ? undefined : value,
-            read: _.identity,
             read: function (schedule) {
                 return function (returnResult) {
                     if (stream.hasValue) {
@@ -3141,6 +3143,18 @@ _.extend(_, {
         });
     }
 });
+_.observable.map = function (obj, fn) {
+    fn = fn || _.identity;
+    var value = _.isArray(obj) ? new Array(obj.length) : {};
+    var result = _.observable(value);
+    _.each(obj, function (read, i) {
+        read(function (x) {
+            value[i] = fn(x, i);
+            result.force(value);
+        });
+    });
+    return result;
+};
 _.hasOOP = true;
 _([
     'property',

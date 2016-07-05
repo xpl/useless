@@ -1090,6 +1090,12 @@ _.withTest (['stdlib', 'map2'], function () {
                 _.mapsWith = _.higherOrder (
                 _.mapWith  = _.flip2 (_.map2)) })
 
+/*  Pluck 2.0
+    ======================================================================== */
+
+_.pluck2 = function (x, prop) {
+                return _.map2 (x, _.property (prop)) }
+
 
 /*  Maps one-to-many
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -3553,14 +3559,15 @@ _.deferTest ('String extensions', function () {
     $assert  ('жоп'.pad (5),      'жоп  ')
     $assert  ('жоп'.pad (5, '→'), 'жоп→→')
 
-    $assert ('foo'.pluck ([{ foo: 10 }, { foo: 11 }]), [10, 11])
+    $assert ('foo'.pluck ([    { foo: 10 },    { foo: 11 } ]), [    10,    11 ])
+    $assert ('foo'.pluck ({ a: { foo: 10 }, b: { foo: 11 } }), { a: 10, b: 11 })
 
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
 
     pluck: function (s, arr) {
-                return _.map (arr, _.property (s)) },
+                return _.pluck2 (arr, s) },
 
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 
