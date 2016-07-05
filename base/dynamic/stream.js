@@ -231,7 +231,6 @@ _.extend (_, {
         var stream = _.stream ({
                         hasValue: arguments.length > 0,
                         value:    _.isFunction (value) ? undefined : value,
-                        read:     _.identity,
 
                         read: function (schedule) {
                                 return function (returnResult) {
@@ -412,5 +411,45 @@ _.extend (_, {
                     write:    write,
                     postpone: function () { this.postponed.apply (self.context, arguments) } })) } })
 
+
+/*  Observable.map (experimental)
+    ======================================================================== */
+
+_.deferTest (['stream', 'observable map'], function () {
+
+    var foo = _.observable ('foo'),
+        bar = _.observable ('bar')
+
+    var fooBar = _.observable.map ([foo, bar], _.appends ('42'))
+
+    var results = []
+
+    fooBar (function (value) {
+        results.push (value.copy) })
+
+    $assert (results, [['foo42', 'bar42']])
+
+    foo ('qux')
+    bar ('zap')
+
+    $assert (results, [['foo42', 'bar42'],
+                       ['qux42', 'bar42'],
+                       ['qux42', 'zap42']])
+
+}, function () {
+
+    _.observable.map = function (streams, fn) {
+
+        var arr = new Array (streams.length)
+        var result = _.observable (arr)
+
+        streams.forEach (function (read, i) {
+                            read (function (x) {
+                                    arr[i] = fn (x, i); result.force (arr) }) })
+
+        return result
+    }
+
+})
 
 

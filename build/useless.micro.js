@@ -3964,6 +3964,10 @@ _.tests.stream = {
                 value.when (_.equals (432), function () { mkay () })
                 value (7) }) },
 
+    'observable.map': function () {
+
+    },
+
     'once': function () { $assertEveryCalledOnce (function (mkay) {
 
         var whenSomething = _.trigger ()
