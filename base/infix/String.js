@@ -97,7 +97,7 @@ _.deferTest ('String extensions', function () {
     quote: _.quote,
 
     pluck: function (s, arr) {
-                return arr.map (_.property (s)) },
+                return _.map (arr, _.property (s)) },
 
     contains: function (s, other) { return s.indexOf (other) >= 0 },
 

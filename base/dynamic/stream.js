@@ -417,6 +417,8 @@ _.extend (_, {
 
 _.deferTest (['stream', 'observable map'], function () {
 
+/*  General semantics   */
+
     var foo = _.observable ('foo'),
         bar = _.observable ('bar')
 
@@ -436,16 +438,22 @@ _.deferTest (['stream', 'observable map'], function () {
                        ['qux42', 'bar42'],
                        ['qux42', 'zap42']])
 
+
+/*  Works over objects  */
+
+    _.observable.map ({ 'foo': _.observable ('bar') }) (function (obj) {
+                                                            $assert ({ 'foo': 'bar' }, obj) })
+
 }, function () {
 
-    _.observable.map = function (streams, fn) {
+    _.observable.map = function (obj, fn) { fn = fn || _.identity
 
-        var arr = new Array (streams.length)
-        var result = _.observable (arr)
+        var value = _.isArray (obj) ? new Array (obj.length) : {}
+        var result = _.observable (value)
 
-        streams.forEach (function (read, i) {
-                            read (function (x) {
-                                    arr[i] = fn (x, i); result.force (arr) }) })
+        _.each2 (obj, function (read, i) {
+                            read (function (x, i) {
+                                    value[i] = fn (x, i); result.force (value) }) })
 
         return result
     }
