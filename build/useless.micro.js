@@ -4351,9 +4351,9 @@ _.deferTest (['stream', 'observable map'], function () {
         var value = _.isArray (obj) ? new Array (obj.length) : {}
         var result = _.observable (value)
 
-        _.each2 (obj, function (read, i) {
-                            read (function (x, i) {
-                                    value[i] = fn (x, i); result.force (value) }) })
+        _.each (obj, function (read, i) {
+                        read (function (x) {
+                                value[i] = fn (x, i); result.force (value) }) })
 
         return result
     }
