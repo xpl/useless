@@ -141,8 +141,8 @@
         add:    $alias ('appendChildren'),
         append: $alias ('appendChildren'),
 
-        appendChildren: function (nodes) {
-                            for (var arr = _.coerceToArray (nodes), i = 0, len = arr.length; i < len; i++) {
+        appendChildren: function (arg1, arg2) {
+                            for (var arr = (arg2 === undefined ? _.coerceToArray (arg1) : arguments), i = 0, len = arr.length; i < len; i++) {
                                 var n = arr[i]
                                 this.appendChild (_.isString (n) ? document.createTextNode (n) : n) }
                             return this },

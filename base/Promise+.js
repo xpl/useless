@@ -342,7 +342,7 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
 __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
             return __.scatter (x, function (v, k, x) {
-                return __.then (fn.$ (v, k, x), function (x) { return [x] }) }) }
+                return __.then (fn.$ (v, k, x), function (x) { return [x] }) }, cfg) }
 
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                 return __.scatter (x, function (v, k, x) {
@@ -350,7 +350,7 @@ __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                                             function (decision) {
                                                 return ((decision === false) ? undefined :
                                                        ((decision === true)  ? [v]
-                                                                             : [decision])) }) }) }
+                                                                             : [decision])) }) }, cfg) }
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
                     return new Promise (function (complete, whoops) {

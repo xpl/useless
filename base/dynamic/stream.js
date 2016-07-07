@@ -267,7 +267,13 @@ _.extend (_, {
             force: function (value) {
                 stream.hasValue = false
                 stream (value || stream.value) },
-                
+
+            then: function (fn) {
+                        var next = _.observable ()
+                            next.beforeWrite = fn
+                        stream (next)
+                        return next },
+
             when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
                                                alreadyCalled = false
                 stream (function (val) {
@@ -415,7 +421,7 @@ _.extend (_, {
 /*  Observable.map (experimental)
     ======================================================================== */
 
-_.deferTest (['stream', 'observable map'], function () {
+_.deferTest (['stream', 'observable.map'], function () {
 
 /*  General semantics   */
 
@@ -457,6 +463,8 @@ _.deferTest (['stream', 'observable map'], function () {
 
         return result
     }
+
+    _.observable.all = _.observable.map
 
 })
 

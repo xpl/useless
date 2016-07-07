@@ -2501,6 +2501,7 @@ $extensionMethods(Array, {
     object: _.object,
     shuffle: _.shuffle,
     pluck: $method(_.pluck),
+    without: $method(_.without),
     join: function (strJoin) {
         return $forceOverride(function (arr, delim) {
             delim = arguments.length < 2 ? '' : delim;
@@ -2975,6 +2976,12 @@ _.extend(_, {
                 stream.hasValue = false;
                 stream(value || stream.value);
             },
+            then: function (fn) {
+                var next = _.observable();
+                next.beforeWrite = fn;
+                stream(next);
+                return next;
+            },
             when: function (match, then) {
                 var matchFn = _.isFunction(match) ? match : _.equals(match), alreadyCalled = false;
                 stream(function (val) {
@@ -3155,6 +3162,7 @@ _.observable.map = function (obj, fn) {
     });
     return result;
 };
+_.observable.all = _.observable.map;
 _.hasOOP = true;
 _([
     'property',
@@ -3794,14 +3802,14 @@ __.map = function (x, fn, cfg) {
         return __.then(fn.$(v, k, x), function (x) {
             return [x];
         });
-    });
+    }, cfg);
 };
 __.filter = function (x, fn, cfg) {
     return __.scatter(x, function (v, k, x) {
         return __.then(fn.$(v, k, x), function (decision) {
             return decision === false ? undefined : decision === true ? [v] : [decision];
         });
-    });
+    }, cfg);
 };
 __.each = function (obj, fn) {
     return __.then(obj, function (obj) {
@@ -4922,7 +4930,7 @@ Component = $prototype({
                             return observable.value;
                         },
                         set: function (x) {
-                            observable.call(this, x);
+                            observable.write.call(this, x);
                         }
                     });
                     if (def.listeners) {

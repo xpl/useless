@@ -71,6 +71,7 @@ _.withTest ('Array extensions', function () {
         object:      _.object,
         shuffle:     _.shuffle,
         pluck:       $method (_.pluck),
+        without:     $method (_.without),
 
         join: (function (strJoin) {
                     return $forceOverride (function (arr, delim) { delim = (arguments.length < 2) ? '' : delim

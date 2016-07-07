@@ -851,7 +851,7 @@ Component = $prototype ({
                  */
                 _.defineProperty (this, name, {
                         get: function ()  { return observable.value },
-                        set: function (x) { observable.call (this, x) } })
+                        set: function (x) { observable.write.call (this, x) } })
 
                 /*  Default listeners (come from traits)
                  */

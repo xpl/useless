@@ -4044,6 +4044,7 @@ _.withTest ('Array extensions', function () {
         object:      _.object,
         shuffle:     _.shuffle,
         pluck:       $method (_.pluck),
+        without:     $method (_.without),
 
         join: (function (strJoin) {
                     return $forceOverride (function (arr, delim) { delim = (arguments.length < 2) ? '' : delim
@@ -4821,7 +4822,13 @@ _.extend (_, {
             force: function (value) {
                 stream.hasValue = false
                 stream (value || stream.value) },
-                
+
+            then: function (fn) {
+                        var next = _.observable ()
+                            next.beforeWrite = fn
+                        stream (next)
+                        return next },
+
             when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
                                                alreadyCalled = false
                 stream (function (val) {
@@ -4969,7 +4976,7 @@ _.extend (_, {
 /*  Observable.map (experimental)
     ======================================================================== */
 
-_.deferTest (['stream', 'observable map'], function () {
+_.deferTest (['stream', 'observable.map'], function () {
 
 /*  General semantics   */
 
@@ -5011,6 +5018,8 @@ _.deferTest (['stream', 'observable map'], function () {
 
         return result
     }
+
+    _.observable.all = _.observable.map
 
 })
 
@@ -6230,7 +6239,7 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
 __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
             return __.scatter (x, function (v, k, x) {
-                return __.then (fn.$ (v, k, x), function (x) { return [x] }) }) }
+                return __.then (fn.$ (v, k, x), function (x) { return [x] }) }, cfg) }
 
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                 return __.scatter (x, function (v, k, x) {
@@ -6238,7 +6247,7 @@ __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                                             function (decision) {
                                                 return ((decision === false) ? undefined :
                                                        ((decision === true)  ? [v]
-                                                                             : [decision])) }) }) }
+                                                                             : [decision])) }) }, cfg) }
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
                     return new Promise (function (complete, whoops) {
@@ -7953,7 +7962,7 @@ Component = $prototype ({
                  */
                 _.defineProperty (this, name, {
                         get: function ()  { return observable.value },
-                        set: function (x) { observable.call (this, x) } })
+                        set: function (x) { observable.write.call (this, x) } })
 
                 /*  Default listeners (come from traits)
                  */
