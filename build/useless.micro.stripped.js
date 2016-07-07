@@ -2050,12 +2050,16 @@ $extensionMethods(Function, {
     }),
     postponed: function (fn) {
         return function () {
-            var args = arguments, this_ = this;
-            if (!fn._postponed) {
-                fn._postponed = true;
+            var shouldPostpone = !fn._postponed;
+            fn._postponed = _.asArray(arguments);
+            fn._postponedThis = this;
+            if (shouldPostpone) {
                 _.delay(function () {
-                    fn._postponed = false;
-                    fn.apply(this_, args);
+                    var args_ = fn._postponed;
+                    var this_ = fn._postponedThis;
+                    fn._postponed = undefined;
+                    fn._postponedThis = undefined;
+                    fn.apply(this_, args_);
                 });
             }
         };

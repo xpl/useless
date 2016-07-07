@@ -3160,6 +3160,17 @@ _.tests.Function = {
                 $assert (this, 'foo')
                 $assert (42, _42); mkay (); }).postponed.call ('foo', 42) }), testDone) },
 
+    'postponed args': function (done) {
+
+        var xs = []
+        var f = function (x) { xs.push (x) }
+
+        f.postponed (42)
+        f.postponed (43)
+
+        _.delay (function () {
+            $assert (xs, [43]); done () }, 1) },
+
     /*  Returns function that executed after _.delay
      */
     'delayed': function (testDone) {
@@ -3269,10 +3280,24 @@ $extensionMethods (Function, {
     postpone: $method (function (fn) { fn.postponed.apply (null, arguments) }),
 
     postponed: function (fn) {
-        return function () {               var args  = arguments, this_ = this
-            if (!fn._postponed) {      fn._postponed = true
-                _.delay (function () { fn._postponed = false
-                    fn.apply (this_, args) }) } } },
+        return function () {
+
+            var shouldPostpone = !fn._postponed
+
+            fn._postponed = _.asArray (arguments)
+            fn._postponedThis = this
+            
+            if (shouldPostpone) {
+
+                _.delay (function () {
+                    
+                    var args_ = fn._postponed
+                    var this_ = fn._postponedThis
+
+                    fn._postponed     = undefined
+                    fn._postponedThis = undefined
+
+                    fn.apply (this_, args_) }) } } },
 
     delay: _.delay,
     delayed: function (fn, time) {
