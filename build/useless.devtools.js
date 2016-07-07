@@ -1169,7 +1169,8 @@ _.extend (log, {
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
 
         walkStack: function (stack) {
-            return _.find (stack.clean.offset (2), function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
+            return _.find (stack.clean.offset ($platform.Browser ? 1 : 2),
+                        function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 
         defaultWriteBackend: function (params) {
 
