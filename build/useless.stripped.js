@@ -7200,6 +7200,7 @@ if ($platform.Browser) {
                         }) || e;
                     };
                     return function (cfg) {
+                        this[0].dragConfig = cfg;
                         if (!$platform.touch && !window.__globalDragOverlay) {
                             window.__globalDragOverlay = $('<div>').css({
                                 display: 'none',

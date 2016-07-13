@@ -220,9 +220,16 @@
 
         on:   function (e, fn) { this.addEventListener (e, fn); return this },
         once: function (e) {
-                    var node = this, fn = undefined
-                    return new Promise (function (resolve) {
-                        node.addEventListener (e, fn = function (e) { node.removeEventListener (e, fn); resolve (e) }) }) },
+                    var node = this, finalize, finalized = false
+                    var p = new Promise (function (resolve) {
+                                            node.addEventListener (e, finalize =
+                                                function (e) {
+                                                    if (!finalized) {
+                                                        finalized = true
+                                                        node.removeEventListener (e, finalize)
+                                                        resolve (e) } }) })
+                    p.finalize = finalize
+                    return p },
 
         touched: function (fn) {
                     return this.on ($platform.touch ? 'touchstart' : 'click', fn) },
@@ -258,6 +265,7 @@
 
         attr: $alias ('setAttributes'),
 
+        removeAttr: function (name) { this.removeAttribute (name); return this },
 
     /*  Splitting
         ======================================================================== */
@@ -295,11 +303,33 @@
         onceTransitionEnd: $property (function () {
             return this.once ($platform.WebKit ? 'webkitTransitionEnd' : 'transitionend') }),
 
-        animateWithAttribute: function (attr) { this.setAttribute (attr, true)
-             return this.onceAnimationEnd.then (this.removeAttribute.bind (this, attr)) },
+        animateWithAttribute: function (attr) {
 
-        transitonWithAttribute: function (attr) { this.setAttribute (attr, true)
-             return this.onceTransitionEnd.then ( this.removeAttribute.bind (this, attr)) }
+        /*  If already animating with this attribute — return previously allocated promise    */
+
+            if (this.hasAttribute (attr) && this._onceAnimationEnd) {
+                return this._onceAnimationEnd }
+
+        /*  If already animating — finalize the existing promise */
+
+            if (this._onceAnimationEnd) {
+                this._onceAnimationEnd.finalize () }
+
+        /*  Allocate new promise    */
+
+            this.setAttribute (attr, true)
+
+            this._onceAnimationEnd = this.onceAnimationEnd
+
+            return this._onceAnimationEnd.then (this.$ (function () {
+                    _.delay (this.$ (function () { this.removeAttribute (attr) }))
+                    this._onceAnimationEnd = undefined })) },
+
+        animatedWithAttribute: function (attr) {
+                                    this.animateWithAttribute (attr); return this },
+
+        //transitionWithAttribute: function (attr) { this.setAttribute (attr, true)
+        //     return this.onceTransitionEnd.then ( this.removeAttribute.bind (this, attr)).delay () }
     })
 
 
@@ -394,7 +424,31 @@ _.tests.NodePlus = {
                                                                     return _.assert (node.innerHTML, desiredResult) } })
         $assertSplitAtBr ('<b><br>foo</b>', '<b><br>foo</b>')
         $assertSplitAtBr ('<b>foo<br></b>', '<b>foo</b><b><br></b>')
-        $assertSplitAtBr ('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>') } }
+        $assertSplitAtBr ('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>') },
+
+    // 'animateWithAttribute': function () {
+
+    //     var style =
+    //         N.style.text (
+    //             '@keyframes nodeplus-test-h { 0% { left: 0px; } 100% { left: 1000px; } }\n' +
+    //             '@keyframes nodeplus-test-v { 0% { top: 0px; } 100% { top: 1000px; } }\n' +
+    //             '[nodeplus-test-h] { animation: nodeplus-test-h 1s linear; }\n' +
+    //             '[nodeplus-test-v] { animation: nodeplus-test-v 1s linear; }\n' +
+    //             '[nodeplus-test-h-rev] { animation: nodeplus-test-h 1s linear; animation-direction: reverse; }').appendTo (document.body)
+
+    //     var div =
+    //         N.div.css ({
+    //             position: 'fixed', left: '0px', top: '0px', width: '100px', height: '100px', background: 'red' }).appendTo (document.body)
+
+    //     div.animateWithAttribute ('nodeplus-test-h').then (function () {
+    //         div.style.background = 'blue' })
+
+    //     __.delay (500).then (function () {
+    //         div.animateWithAttribute ('nodeplus-test-h-rev').then (function () {
+    //             div.style.background = 'green' }) })
+    // }
+
+}
 
 /*  ======================================================================== */
 
