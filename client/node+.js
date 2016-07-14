@@ -322,7 +322,8 @@
             this._onceAnimationEnd = this.onceAnimationEnd
 
             return this._onceAnimationEnd.then (this.$ (function () {
-                    _.delay (this.$ (function () { this.removeAttribute (attr) }))
+                    this.removeAttribute (attr)
+                    this.getBoundingClientRect () // forces layout recalc, otherwise new animation (if set in callback) may not start
                     this._onceAnimationEnd = undefined })) },
 
         animatedWithAttribute: function (attr) {
@@ -426,27 +427,29 @@ _.tests.NodePlus = {
         $assertSplitAtBr ('<b>foo<br></b>', '<b>foo</b><b><br></b>')
         $assertSplitAtBr ('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>') },
 
-    // 'animateWithAttribute': function () {
+    /*'animateWithAttribute': function () {
 
-    //     var style =
-    //         N.style.text (
-    //             '@keyframes nodeplus-test-h { 0% { left: 0px; } 100% { left: 1000px; } }\n' +
-    //             '@keyframes nodeplus-test-v { 0% { top: 0px; } 100% { top: 1000px; } }\n' +
-    //             '[nodeplus-test-h] { animation: nodeplus-test-h 1s linear; }\n' +
-    //             '[nodeplus-test-v] { animation: nodeplus-test-v 1s linear; }\n' +
-    //             '[nodeplus-test-h-rev] { animation: nodeplus-test-h 1s linear; animation-direction: reverse; }').appendTo (document.body)
+        var style =
 
-    //     var div =
-    //         N.div.css ({
-    //             position: 'fixed', left: '0px', top: '0px', width: '100px', height: '100px', background: 'red' }).appendTo (document.body)
+            N.style.text (
+                '@keyframes slide-to-right {' +
+                    '0%   { transform: translate(0,0); opacity: 1; }' +
+                    '100% { transform: translate(100%,0); opacity: 0; } }' +
 
-    //     div.animateWithAttribute ('nodeplus-test-h').then (function () {
-    //         div.style.background = 'blue' })
+                '[slide-to-right] { animation: slide-to-right 1s ease-in-out; }' +
+                '[slide-from-right] { animation: slide-to-right 1s ease-in-out; animation-direction: reverse; }'
 
-    //     __.delay (500).then (function () {
-    //         div.animateWithAttribute ('nodeplus-test-h-rev').then (function () {
-    //             div.style.background = 'green' }) })
-    // }
+            ).appendTo (document.body)
+
+        var div =
+            N.div.css ({
+                position: 'fixed', left: '0px', top: '0px', width: '100px', height: '100px', background: 'red' }).appendTo (document.body)
+
+        div.animateWithAttribute ('slide-to-right').then (function () {
+            div.style.background = 'blue'
+            div.animateWithAttribute ('slide-from-right').then (function () {
+                div.style.background = 'green' }) })
+    }*/
 
 }
 
