@@ -267,6 +267,7 @@
 
         removeAttr: function (name) { this.removeAttribute (name); return this },
 
+
     /*  Splitting
         ======================================================================== */
 
@@ -288,11 +289,26 @@
                                 this.splitSubtreeBefore (n.childNodes[i])) :
                                 this.splitSubtreeBefore (n) },
 
-    /*  Extra stuff
+
+    /*  innerHTML/innerText
         ======================================================================== */
 
         html: function (x) { this.innerHTML = x; return this },
         text: function (x) { this.innerText = x; return this },
+
+
+    /*  Experimental FRP stuff
+        ======================================================================== */
+
+        reads: function (stream, fn) {
+                    stream (this.$ (function (x) { x = (fn || _.identity) (x)
+                        this.removeAllChildren ()
+                        this.add (x instanceof Node ? x : (x + '')) }))
+                    return this },
+
+
+    /*  Animation
+        ======================================================================== */
 
         busyUntil: function (promise) {                              this.   setAttribute ('busy', true)
                       return promise.done (this.$ (function (e, x) { this.removeAttribute ('busy') })) },
