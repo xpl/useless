@@ -40,18 +40,19 @@ _.deferTest = _.withTest = function (name, test, subj) {
 (function () {
     var p = function () {
         if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
+            var platform = navigator.platform, userAgent = navigator.userAgent, platformOrUserAgent = platform + '\n' + userAgent;
             return _.extend({
                 engine: 'browser',
-                browserEngine: navigator.userAgent.indexOf('AppleWebKit') >= 0 ? 'WebKit' : undefined,
-                browser: navigator.userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : navigator.userAgent.indexOf('Chrome') >= 0 ? 'Chrome' : navigator.userAgent.indexOf('Safari') >= 0 ? 'Safari' : navigator.userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
-            }, navigator.platform.indexOf('Linux arm') >= 0 || navigator.platform.indexOf('Android') >= 0 || navigator.userAgent.indexOf('Android') >= 0 ? {
+                browserEngine: userAgent.indexOf('AppleWebKit') >= 0 ? 'WebKit' : undefined,
+                browser: userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : userAgent.indexOf('Chrome') >= 0 ? 'Chrome' : userAgent.indexOf('Safari') >= 0 ? 'Safari' : userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
+            }, platform.indexOf('Linux arm') >= 0 || platformOrUserAgent.indexOf('Android') >= 0 ? {
                 touch: true,
                 system: 'Android'
-            } : navigator.platform.indexOf('iPad') >= 0 ? {
+            } : platformOrUserAgent.indexOf('iPad') >= 0 ? {
                 touch: true,
                 system: 'iOS',
                 device: 'iPad'
-            } : navigator.platform.indexOf('iPhone') >= 0 || navigator.platform.indexOf('iPod') >= 0 ? {
+            } : platformOrUserAgent.indexOf('iPhone') >= 0 || platformOrUserAgent.indexOf('iPod') >= 0 ? {
                 touch: true,
                 system: 'iOS',
                 device: 'iPhone'
