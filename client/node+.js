@@ -398,16 +398,32 @@
                                             (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
     })
 
+/*  ========================================================================= */
+
+    $mixin (HTMLInputElement, {
+
+        observableValue: $property (function () {
+
+                                        if (!this._observableValue) {
+                                             this._observableValue = _.observable (this.value)
+                                             this._observableValue.context = this
+                                             this.on ('input', this.$ (function () {
+                                                 this._observableValue (this.value) })) }
+
+                                        return this._observableValue })
+
+    })
 
 /*  ========================================================================= */
 
     $mixin (Image, {
+        
         fetch: $static (function (url) {
-            return new Promise (function (resolve, reject) {
-                                _.extend (new Image (), {
-                                                src: url,
-                                             onload: function ()  { resolve (this) },
-                                            onerror: function (e) { reject (e) } }) }) }) })
+                            return new Promise (function (resolve, reject) {
+                                                _.extend (new Image (), {
+                                                                src: url,
+                                                             onload: function ()  { resolve (this) },
+                                                            onerror: function (e) { reject (e) } }) }) }) })
 
 
 /*  document.clientBBox
