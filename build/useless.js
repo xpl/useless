@@ -9073,6 +9073,8 @@ _.extend (log, {
             else {
                 console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
+                	log.timestampEnabled ? log.timestamp () : '',
+
                     _.map (params.lines, function (line, i) {
                                             return params.indentation + _.reduce2 ('', line, function (s, run) {
                                                 return s + (run.text && ((run.config.color ? '%c' : '') +
@@ -9087,11 +9089,7 @@ _.extend (log, {
         /*  Formats timestamp preceding log messages
          */
         timestamp: function (x) {
-            var date = new Date (x)
-            return (String.leadingZero (date.getDay ()) + '/' +
-                    String.leadingZero (date.getMonth () + 1) + ' ' +
-                    String.leadingZero (date.getHours ()) + ':' +
-                    String.leadingZero (date.getMonth ())) },
+        	return (new Date (x)).toISOString () },
 
         /*  Formats that "function @ source.js:321" thing
          */
