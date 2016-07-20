@@ -45,7 +45,9 @@ BuildApp = $singleton (Component, {
     init: function () {
             if (this.testsFailed !== true) {
                 _.each (this.inputFiles,
-                    this.compileFile.$ ()) } },
+                    this.compileFile.$ ()) }
+
+            process.exit () /* call explicitly, because supervisor's ipc.js prevents from auto-exiting (while listening to messages) */ },
 
 /*  ======================================================================== */
 
