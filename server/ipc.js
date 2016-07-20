@@ -11,10 +11,12 @@ module.exports = $trait ({
                     if (this.supervisorState === 'supervisor') {
                         this.mapMethods ((fn, name, def) => {
                             if (def && def.$callableFromMasterProcess) {
-                                return function () {
-                                    return new Promise (resolve => {
 
-                                                            if (this.supervisedProcess.child) {
+                                return function () { var args = _.asArray (arguments)
+                                    
+                                    return new Promise (resolve => {
+ 
+                                                            if (this.supervisedProcess.child && this.supervisedProcess.child.connected) {
 
                                                                 var id = lastId++,
                                                                     waitForReturnValue = msg => {
@@ -27,10 +29,11 @@ module.exports = $trait ({
                                                                 this.supervisedProcess.child.send ({
                                                                     id: id,
                                                                     methodName: name,
-                                                                    methodArgs: _.asArray (arguments) }) }
+                                                                    methodArgs: args }) }
 
                                                             else {
-                                                                log.w ('Trying to call a child process method when the child process is not started yet...') } }) } } }) }
+                                                                
+                                                                resolve (fn.apply (null, args)) } }) } } }) }
 
                 /*  Setup receive   */
 
