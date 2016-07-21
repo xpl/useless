@@ -408,15 +408,15 @@ node build
 
 It will generate `./build/***.js` by substituting `$include` directives found in header files. Produced result will undergo stripping of tests and comments, and then finally compiled using Google Closure Compiler, outputting minified result to `./build/***.min.js`
 
-## no-compress option
+### no-compress option
 
 Disables minification. Greatly speeds up build.
 
-## no-stripped option
+### no-stripped option
 
 Disables generation of `***.stripped.js` files.
 
-## no-supervisor option
+### no-supervisor option
 
 Disables file monitor (for termination after run).
 
