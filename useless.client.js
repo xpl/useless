@@ -76,7 +76,7 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 
     $include ('./base/concurrency')     // concurrency utility
     $include ('./base/component')       // component model
-//  $include ('./base/Rx')              // regular expressions helper
+    $include ('./base/Rx')              // regular expressions helper
 
 
 /*  Experimental stuff
