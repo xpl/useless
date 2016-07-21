@@ -43,11 +43,10 @@ BuildApp = $singleton (Component, {
 /*  ======================================================================== */
 
     init: function () {
-            if (this.testsFailed !== true) {
-                _.each (this.inputFiles,
-                    this.compileFile.$ ()) }
-
-            process.exit () /* call explicitly, because supervisor's ipc.js prevents from auto-exiting (while listening to messages) */ },
+            __.all (this.testsFailed ? [] : this.inputFiles.map (this.compileFile)).panic.finally (function () {
+                process.exit () // call explicitly, because supervisor's ipc.js prevents from auto-exiting (while listening to messages)
+            })
+    },
 
 /*  ======================================================================== */
 
@@ -55,7 +54,9 @@ BuildApp = $singleton (Component, {
         log.ok ('Writing', fullPath)
         util.writeFile (fullPath, src) },
 
-    compileWithGoogle: function (src, then) { log.info ('Calling Google Closure compiler...')
+    compileWithGoogle: function (src) { log.info ('Calling Google Closure compiler...')
+
+        return __((resolve, reject) => {
 
             var post_data = querystring.stringify ({
                 'compilation_level' : 'SIMPLE_OPTIMIZATIONS',
@@ -75,14 +76,14 @@ BuildApp = $singleton (Component, {
                     'Content-Length': post_data.length } };
 
             var post_req = http.request(post_options, util.readHttpResponse ('utf-8',
-                                                            function (response) {
+                                                            response => {
                                                                 if (response.trimmed.length) {
-                                                                    then (response) }
+                                                                    resolve (response) }
                                                                 else {
-                                                                    throw new Error ('Google Closure Compiler replied with empty response')  } }))
+                                                                    reject (new Error ('Google Closure Compiler replied with empty response'))  } }))
 
             post_req.write (post_data)
-            post_req.end () },
+            post_req.end () }) },
 
     stripCommentsAndTests: function (src, name, path) {
         log.hint ('Stripping comments and tests...')
@@ -190,11 +191,9 @@ BuildApp = $singleton (Component, {
                                 !this.args.noStripped &&
                                  this.buildPath)
 
-        if (!this.args.noCompress) {
-            this.compileWithGoogle (
-                strippedSrc,
-                this.writeCompiled.$ (name + '.min.js', this.buildPath)) }
+        this.writeCompiled (name + '.js', this.buildPath, compiledSrc)
 
-        this.writeCompiled (name + '.js', this.buildPath, compiledSrc) }
+        if (!this.args.noCompress) {
+            return this.compileWithGoogle (strippedSrc).then (this.writeCompiled.$ (name + '.min.js', this.buildPath)) } }
 
 })

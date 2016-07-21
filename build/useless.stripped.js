@@ -3867,6 +3867,94 @@ $mixin(Function, {
         };
     }))
 });
+'use strict';
+$global.Channel = $extends(Promise, {
+    constructor: function (fn, transducers, before) {
+        this.before = before;
+        this.after = [];
+        this.state = 'pending';
+        this.value = undefined;
+        this.transducers = {
+            resolve: transducers && transducers.resolve || (x => x),
+            reject: transducers && transducers.reject || (e => {
+                throw e;
+            })
+        };
+        if (fn instanceof Function) {
+            try {
+                fn.call(this, this.$(this.resolve), this.$(this.reject));
+            } catch (e) {
+                this.reject(e);
+            }
+        } else if (fn !== undefined) {
+            this.resolve(fn);
+        }
+    },
+    $private: {
+        _resolve: function (x) {
+            this.state = 'resolved';
+            this.value = x;
+            this.after.forEach(c => c.resolve(x));
+        },
+        _reject: function (e) {
+            this.state = 'rejected';
+            this.value = e;
+            this.after.forEach(c => c.reject(e));
+        }
+    },
+    resolve: function (x, transducer) {
+        try {
+            x = (transducer || this.transducers.resolve)(x);
+            if (x instanceof Promise) {
+                x.then(x => this._resolve(x), e => this._reject(e));
+            } else {
+                this._resolve(x);
+            }
+        } catch (e) {
+            this._reject(e);
+        }
+    },
+    reject: function (e) {
+        return this.resolve(e, this.transducers.reject);
+    },
+    then: function (resolve, reject) {
+        var c = new Channel(undefined, {
+            resolve: resolve,
+            reject: reject
+        }, this);
+        this.after.push(c);
+        if (this.state === 'resolved') {
+            c.resolve(this.value);
+        } else if (this.state === 'rejected') {
+            c.reject(this.value);
+        }
+        return c;
+    },
+    catch: function (fn) {
+        return this.then(undefined, fn);
+    }
+});
+Channel.all = function (arr) {
+    return new Channel(resolve => {
+        var complete = new Set(), value = new Array(arr.length);
+        arr.forEach((c, i) => {
+            c.then(x => {
+                value[i] = x;
+                if (complete.length === value.length) {
+                    resolve(value);
+                } else {
+                    complete.add(i);
+                }
+            });
+        });
+    });
+};
+Channel.resolve = function (x) {
+    return new Channel(resolve => resolve(x));
+};
+Channel.reject = function (e) {
+    return new Channel((resolve, reject) => reject(e));
+};
 Parse = {
     keyCodeAsString: function (key) {
         return String.fromCharCode(96 <= key && key <= 105 ? key - 48 : key);
@@ -6402,12 +6490,12 @@ Test = $prototype({
                     if (e.asColumns) {
                         log.orange(log.columns(_.map(notMatching, function (obj) {
                             return [
-                                '\u2022 ' + _.keys(obj)[0],
+                                '\t\u2022 ' + _.keys(obj)[0],
                                 _.stringify(_.values(obj)[0])
                             ];
                         })).join('\n'));
                     } else {
-                        var cases = _.map(notMatching, log.impl.stringify.arity1.then(_.bullet.$('\u2022 ')));
+                        var cases = _.map(notMatching, log.impl.stringify.arity1.then(_.bullet.$('\t\u2022 ')));
                         var common = _.reduce2(cases, _.longestCommonSubstring) || '';
                         if (common.length < 4) {
                             common = undefined;

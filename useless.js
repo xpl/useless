@@ -95,8 +95,9 @@ _ = (function () {
 
     $include ('./base/infix/Set')
     $include ('./base/Promise+')
+    $include ('./base/Channel')
     $include ('./base/Parse')           // clumsy parsing utils
-    $include ('./base/Sort')            // (this one is normal)
+    $include ('./base/Sort')            // sort utils
     $include ('./base/concurrency')     // concurrency utility
     $include ('./base/math')            // math utility
     $include ('./base/component')       // component facility

@@ -7215,7 +7215,7 @@ _.tests['Promise+'] = {
                     pairs ({ 0: 42, 1: 48 }).assert ([[42, '0'], [48, '1']]),
 
                     __.each ([1,2], function (x, i) {
-                                        if (i > 0) $fail
+                                        if (i > 0) $fail // should stop at 0, due to rejection
                                         return Promise.reject ('foo') }).assertRejected ('foo') ] }
 
 /*  END OF TESTS ----------------------------------------------------------- */

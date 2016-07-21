@@ -1194,6 +1194,8 @@ _.extend (log, {
             else {
                 console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
+                	log.timestampEnabled ? log.timestamp () : '',
+
                     _.map (params.lines, function (line, i) {
                                             return params.indentation + _.reduce2 ('', line, function (s, run) {
                                                 return s + (run.text && ((run.config.color ? '%c' : '') +
@@ -1208,11 +1210,7 @@ _.extend (log, {
         /*  Formats timestamp preceding log messages
          */
         timestamp: function (x) {
-            var date = new Date (x)
-            return (String.leadingZero (date.getDay ()) + '/' +
-                    String.leadingZero (date.getMonth () + 1) + ' ' +
-                    String.leadingZero (date.getHours ()) + ':' +
-                    String.leadingZero (date.getMonth ())) },
+        	return (new Date (x)).toISOString () },
 
         /*  Formats that "function @ source.js:321" thing
          */
@@ -1647,8 +1645,8 @@ Test = $prototype ({
                                                                                                              then.apply (this, args) }
                                                                                                          done () }) }
                                                     else {
-                                                        try       { fn.apply (self.context, args); done () }
-                                                        catch (e) { assertion.onException (e) } } } }) })
+                                                        try       { fn.apply (self.context, args); done (); }
+                                                        catch (e) { assertion.onException (e); } } } }) })
 
         return assertion.run ()
                         .finally (function (e, x) {
@@ -1687,9 +1685,9 @@ Test = $prototype ({
                         if (e.asColumns) {
                             log.orange (
                                 log.columns (_.map (notMatching, function (obj) {
-                                    return ['• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
+                                    return ['\t• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('• ')))
+                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('\t• ')))
                             var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
                             if (common.length < 4) {
                                 common = undefined }
