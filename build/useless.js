@@ -9236,7 +9236,7 @@ _.extend (log, {
             else {
                 console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
-                	log.timestampEnabled ? log.timestamp () : '',
+                	log.timestampEnabled ? log.impl.timestamp () : '',
 
                     _.map (params.lines, function (line, i) {
                                             return params.indentation + _.reduce2 ('', line, function (s, run) {
