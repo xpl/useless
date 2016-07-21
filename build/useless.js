@@ -9252,7 +9252,7 @@ _.extend (log, {
         /*  Formats timestamp preceding log messages
          */
         timestamp: function (x) {
-        	return (new Date (x)).toISOString () },
+        	return (new Date ()).toISOString () },
 
         /*  Formats that "function @ source.js:321" thing
          */

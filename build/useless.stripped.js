@@ -6064,7 +6064,7 @@ _.extend(log, {
             }
         },
         timestamp: function (x) {
-            return new Date(x).toISOString();
+            return new Date().toISOString();
         },
         location: function (where) {
             return _.quoteWith('()', _.nonempty([
