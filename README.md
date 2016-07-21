@@ -10,8 +10,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Browser builds
 
-- [useless.client.js](https://github.com/xpl/useless/blob/master/build/useless.client.js)
-- [useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.client.js)
+- [useless.client.js](https://github.com/xpl/useless/blob/master/build/useless.client.js) — everything, except devtools
+- [useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.client.js) — logging / stacktraces / assertions / Panic.js
 
 ### Upcoming features
 
