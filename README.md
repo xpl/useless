@@ -384,13 +384,17 @@ Type `npm install useless` in root directory of your project.
 1. Go to `node_modules` subfolder of your project
 2. Run `git clone https://github.com/xpl/useless.git`, go to `useless` folder
 3. Run `npm install` to install dependencies
-4. Optionally, run `node build.js` to test if everything's ok
+4. Optionally, run `node build` to test if everything's ok
 
 ### As monolithic pre-built script
 
-Go to `build` folder and pick `useless.js`. For minified version (with unit tests stripped) pick `useless.min.js`. This one is ready to be used in production setup.
+Go to [`/build`](https://github.com/xpl/useless/tree/master/build) folder and pick files needed.
 
-This version includes only the platform-independent part of the library, not including any of the `./client` features. If you need any of these, you can either link them them in browser code separately, or make custom build file with the additional files included (see instructions below).
+- [useless.js](https://github.com/xpl/useless/blob/master/build/useless.js) for only the platform-independent part
+- [useless.client.js](https://github.com/xpl/useless/blob/master/build/useless.client.js) for everything, except devtools
+- [useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.client.js) for logging / stacktraces / assertions / Panic.js
+
+There also exist a compressed (minified) version of each file.
 
 # Building
 
