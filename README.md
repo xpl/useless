@@ -397,22 +397,32 @@ This version includes only the platform-independent part of the library, not inc
 Build command:
 
 ```bash
-node build.js <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress] [no-stripped]
+node build <header-file-1> <header-file-2> ... <header-file-N> <output-folder> [no-compress] [no-stripped] [no-supervisor]
 ```
 
-For generic build, run `node build.js ./useless.js ./build`, or simply
+For building everything, run:
 
 ```bash
-> node build.js
+> node build
 ```
 
-It will generate `./build/useless.js` by substituting `$include` directives found in header file. Produced result will undergo stripping of tests and comments, and then finally compiled using Google Closure Compiler, outputting minified result to `./build/useless.min.js`
+It will generate `./build/***.js` by substituting `$include` directives found in header files. Produced result will undergo stripping of tests and comments, and then finally compiled using Google Closure Compiler, outputting minified result to `./build/***.min.js`
+
+## no-compress option
+
+Disables minification. Greatly speeds up build.
+
+## no-stripped option
+
+Disables generation of `***.stripped.js` files.
+
+## no-supervisor option
+
+Disables file monitor (for termination after run).
 
 ## Custom build
 
-To make reduced/extended distribution (with some submodules disabled or enabled), you can create your own version of default header file, commenting out unneeded `$include` directives or including additional ones.
-
-There exists `./useless.micro.js` as an example of reduced build. Running `node build.js ./useless.micro.js ./build` will produce `./build/useless.micro.min.js` as output.
+To make reduced/extended distribution (with some submodules disabled or enabled), you can create your own version of default header file, commenting out unneeded `$include` directives or including additional ones. There exists `./useless.client.js` as an example of custom distribution.
 
 ## Integrated build
 

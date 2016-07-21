@@ -17,7 +17,7 @@ BuildApp = $singleton (Component, {
 
     $defaults: {
         argKeys: { noCompress: 1, noStripped: 1 },
-        inputFiles: ['./useless.js'],
+        inputFiles: ['./useless.js', './useless.client.js', './useless.devtools.js', './panic.js'],
         buildPath:   './build' },
 
     $depends: [

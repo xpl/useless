@@ -1,4 +1,4 @@
-$include ('./useless.micro')
+$include ('./useless.client')
 
 $uselessFile = 'panic.js'
 

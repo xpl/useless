@@ -1,7 +1,7 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
    ------------------------------------------------------------------- */
 
-$uselessFile = 'useless.micro.js'
+$uselessFile = 'useless.client.js'
 
 /* -------------------------------------------------------------------
    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -39,12 +39,10 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 /*  Internal dependencies
     ======================================================================== */
 
-
-//  $include ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-//  $include ('./base/3rd/Base64')        // Base64 encoder/decoder
+    $include ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
+    $include ('./base/3rd/Base64')        // Base64 encoder/decoder
 
     $include ('./base/tier0/platform')    // platform abstraction layer
-//  $include ('./base/tier0/assert')      // $assert syntax
     $include ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)
     $include ('./base/tier0/function')    // function-centric utilities
     $include ('./base/tier0/busybox')     // a vocabulary for functional expressions that process real stuff
@@ -68,34 +66,25 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 
     $include ('./base/OOP')
 
-
     $include ('./base/math')      // clumsy math utils
     $include ('./base/Parse')     // clumsy parsing utils
-//  $include ('./base/Sort')      // (this one is normal)
-
-
-/*  Self-awareness utils
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-//  $include ('./base/reflection')  // callstack access + source code access
-//  $include ('./base/profiling')   // performance measurement utility
+    $include ('./base/Sort')      // (this one is normal)
 
 
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-//  $include ('./base/log')             // logging facility
     $include ('./base/concurrency')     // concurrency utility
     $include ('./base/component')       // component model
-//  $include ('./base/Testosterone')    // unit test shell
 //  $include ('./base/Rx')              // regular expressions helper
 
 
 /*  Experimental stuff
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-//  $include ('./base/AOP')
+    $include ('./base/AOP')
     $include ('./base/Promise+')
+    $include ('./base/Channel')
 
 
 /*  Networking
@@ -108,4 +97,7 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     $include ('./client/jQueryPlus')
+    $include ('./client/node+')
+    $include ('./client/DOMReference')
+    $include ('./client/anim')
 

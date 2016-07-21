@@ -6,7 +6,7 @@ var fs              = require ('fs'),
  module.exports = ServerDeploy = $trait ({
 
     buildScriptPaths: [process.cwd (), $uselessPath],
-    buildScripts: ['useless.js', 'useless.micro.js', 'useless.devtools.js'],
+    buildScripts: ['useless.js', 'useless.client.js', 'useless.devtools.js'],
     buildPath: $uselessPath + 'build/',
 
     buildTargetPath: function (file) { return path.join (this.buildPath, file) },

@@ -126,13 +126,6 @@ _ = (function () {
     $include ('./base/http')
 
 
-/*  Browser-related code
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if ($platform.Browser) {
-        $include ('./client/jQueryPlus')
-    }
-
 /*  ==================================================================== */
 
     if ($platform.NodeJS) { // Should strip it from client with conditional macro in future...
