@@ -8,6 +8,11 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 > npm install useless
 ```
 
+### Browser builds
+
+- [useless.client.js](https://github.com/xpl/useless/blob/master/build/useless.client.js)
+- [useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.client.js)
+
 ### Upcoming features
 
 - New unit test system based on Promises (will replace the old buggy `Testosterone` thing).
@@ -25,11 +30,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 - A working prototype of [Androgene](https://github.com/xpl/useless/blob/master/base/Androgene.js) subsystem, delivering the "supervised Promises" concept for [asynchronous/nonlinear logging and stack traces](http://wtf.jpg.wtf/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png). It is also a core mechanism behind the upcoming unit test system (will replace the old `Testosterone` thing).
 
 - [Read more...](https://github.com/xpl/useless/wiki/Changelog)
-
-### Browser builds
-
-* Compiled/minified (for production setup): [useless.min.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.min.js)
-* Readable source (for development use): [useless.js](https://raw.githubusercontent.com/xpl/useless/master/build/useless.js)
 
 ### Running example app
 
