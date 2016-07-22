@@ -297,6 +297,8 @@ _.extend (log, {
 
                     (log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + ' ') : '') 
 
+                        + '%c' // default color
+
                         + _.map (params.lines, function (line, i) {
                                                 return params.indentation + _.reduce2 ('', line, function (s, run) {
                                                     return s + (run.text && ((run.config.color ? '%c' : '') +
@@ -307,6 +309,8 @@ _.extend (log, {
                 /*  Colors */
 
                     (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)'] : [])
+
+                        .concat ('color:black') // default color
 
                         .concat ((_.scatter (params.lines, function (line, i, emit) {
                             _.each (line, function (run) {
