@@ -6050,7 +6050,7 @@ _.extend(log, {
                 }
                 console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
             } else {
-                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(log.timestampEnabled ? log.impl.timestamp() : '', _.map(params.lines, function (line, i) {
+                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(_.map(params.lines, function (line, i) {
                     return params.indentation + _.reduce2('', line, function (s, run) {
                         return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
                     });
