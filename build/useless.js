@@ -4074,6 +4074,7 @@ _.withTest ('Array extensions', function () {
         flat:        _.flatten.tails2 (true),
         object:      _.object,
         shuffle:     _.shuffle,
+        nonempty:    _.nonempty,
         pluck:       $method (_.pluck),
         without:     $method (_.without),
 
@@ -9259,22 +9260,18 @@ _.extend (log, {
 
                 /*  Text   */
 
-                    (log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + ' ') : '') 
+                    [(log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + '%c') : '')
 
-                        + '%c' // default color
-
-                        + _.map (params.lines, function (line, i) {
+                        , _.map (params.lines, function (line, i) {
                                                 return params.indentation + _.reduce2 ('', line, function (s, run) {
                                                     return s + (run.text && ((run.config.color ? '%c' : '') +
                                                         run.text) || '') }) }).join ('\n')
 
-                        + (codeLocation ? ('%c ' + codeLocation) : ''),
+                        , (codeLocation ? ('%c' + codeLocation) : '')].nonempty.join (' '),
 
                 /*  Colors */
 
-                    (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)'] : [])
-
-                        .concat ('color:black') // default color
+                    (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)', 'color:black'] : [])
 
                         .concat ((_.scatter (params.lines, function (line, i, emit) {
                             _.each (line, function (run) {

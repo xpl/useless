@@ -2260,6 +2260,7 @@ $extensionMethods(Array, {
     flat: _.flatten.tails2(true),
     object: _.object,
     shuffle: _.shuffle,
+    nonempty: _.nonempty,
     pluck: $method(_.pluck),
     without: $method(_.without),
     join: function (strJoin) {
@@ -7173,11 +7174,18 @@ _.extend(log, {
                 }
                 console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
             } else {
-                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat((log.timestampEnabled ? '%c' + log.impl.timestamp(params.when) + ' ' : '') + '%c' + _.map(params.lines, function (line, i) {
-                    return params.indentation + _.reduce2('', line, function (s, run) {
-                        return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
-                    });
-                }).join('\n') + (codeLocation ? '%c ' + codeLocation : ''), (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)'] : []).concat('color:black').concat(_.scatter(params.lines, function (line, i, emit) {
+                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat([
+                    log.timestampEnabled ? '%c' + log.impl.timestamp(params.when) + '%c' : '',
+                    _.map(params.lines, function (line, i) {
+                        return params.indentation + _.reduce2('', line, function (s, run) {
+                            return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
+                        });
+                    }).join('\n'),
+                    codeLocation ? '%c' + codeLocation : ''
+                ].nonempty.join(' '), (log.timestampEnabled ? [
+                    'color:rgba(0,0,0,0.4)',
+                    'color:black'
+                ] : []).concat(_.scatter(params.lines, function (line, i, emit) {
                     _.each(line, function (run) {
                         if (run.text && run.config.color) {
                             emit(run.config.color.css);

@@ -2260,6 +2260,7 @@ $extensionMethods(Array, {
     flat: _.flatten.tails2(true),
     object: _.object,
     shuffle: _.shuffle,
+    nonempty: _.nonempty,
     pluck: $method(_.pluck),
     without: $method(_.without),
     join: function (strJoin) {
