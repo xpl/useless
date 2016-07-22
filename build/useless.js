@@ -9197,7 +9197,7 @@ _.extend (log, {
                 lines:         lines,
                 config:        config,
                 color:         config.color,
-                when:          Date.now (),
+                when:          (new Date ()).toISOString (),
                 args:          _.reject (args, _.isTypeOf.$ (log.Config)),
                 indentation:   indentation,
                 indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
@@ -9236,7 +9236,7 @@ _.extend (log, {
             else {
                 console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
-                	log.timestampEnabled ? log.timestamp () : '',
+		    log.timestampEnabled ? log.impl.timestamp (params.when) : undefined,
 
                     _.map (params.lines, function (line, i) {
                                             return params.indentation + _.reduce2 ('', line, function (s, run) {
@@ -9252,7 +9252,7 @@ _.extend (log, {
         /*  Formats timestamp preceding log messages
          */
         timestamp: function (x) {
-        	return (new Date (x)).toISOString () },
+        	return x },
 
         /*  Formats that "function @ source.js:321" thing
          */
