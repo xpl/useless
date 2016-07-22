@@ -6021,7 +6021,7 @@ _.extend(log, {
                 lines: lines,
                 config: config,
                 color: config.color,
-                when: Date.now(),
+                when: new Date().toISOString(),
                 args: _.reject(args, _.isTypeOf.$(log.Config)),
                 indentation: indentation,
                 indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
@@ -6050,7 +6050,7 @@ _.extend(log, {
                 }
                 console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
             } else {
-                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(_.map(params.lines, function (line, i) {
+                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(log.timestampEnabled ? log.impl.timestamp(params.when) : undefined, _.map(params.lines, function (line, i) {
                     return params.indentation + _.reduce2('', line, function (s, run) {
                         return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
                     });
@@ -6064,7 +6064,7 @@ _.extend(log, {
             }
         },
         timestamp: function (x) {
-            return new Date().toISOString();
+            return x;
         },
         location: function (where) {
             return _.quoteWith('()', _.nonempty([
