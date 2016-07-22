@@ -293,23 +293,33 @@ _.extend (log, {
             else {
                 console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
-		    log.timestampEnabled ? log.impl.timestamp (params.when) : undefined,
+                /*  Text   */
 
-                    _.map (params.lines, function (line, i) {
-                                            return params.indentation + _.reduce2 ('', line, function (s, run) {
-                                                return s + (run.text && ((run.config.color ? '%c' : '') +
-                                                    run.text) || '') }) }).join ('\n') + (codeLocation && ('%c ' + codeLocation) || ''),
+                    (log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + ' ') : '') 
 
-                    (_.scatter (params.lines, function (line, i, emit) {
-                        _.each (line, function (run) {
-                            if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+                        + _.map (params.lines, function (line, i) {
+                                                return params.indentation + _.reduce2 ('', line, function (s, run) {
+                                                    return s + (run.text && ((run.config.color ? '%c' : '') +
+                                                        run.text) || '') }) }).join ('\n')
+
+                        + (codeLocation ? ('%c ' + codeLocation) : ''),
+
+                /*  Colors */
+
+                    (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)'] : [])
+
+                        .concat ((_.scatter (params.lines, function (line, i, emit) {
+                            _.each (line, function (run) {
+                                if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []))
+
+                        .concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
 
                     params.trailNewlines))) } },
 
         /*  Formats timestamp preceding log messages
          */
         timestamp: function (x) {
-        	return x },
+        	           return x },
 
         /*  Formats that "function @ source.js:321" thing
          */

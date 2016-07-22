@@ -1197,7 +1197,8 @@ _.quotesWith = _.higherOrder(_.quoteWith);
 _.partition2 = function (arr, pred) {
     return _.pluck(_.partition3(arr, pred), 'items');
 };
-_.partition3 = function (arr, pred) {
+_.partition3 = function (arr_, pred) {
+    var arr = arr_ || [];
     var spans = [], span = {
             label: undefined,
             items: [arr.first]

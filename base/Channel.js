@@ -52,7 +52,27 @@ _.tests['Channel'] = {
         y.resolve (789)
 
         $assert (calls, [456, 789])
-    }
+    },
+
+/*
+    '$channel for $prototype': () => {
+
+        var Model = $prototype ({
+
+            numPersons: $channel ()
+        })
+
+        var View = $prototype ({
+
+            label: $channel ()
+        })
+
+        var model = new Model ({ numPersons: 10 }),
+            view  = new View ()
+
+        view.label = model.numPersons.then (x => x + ' persons')
+
+    }*/
 }
 
 /*  ------------------------------------------------------------------------ */

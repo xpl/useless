@@ -1963,8 +1963,9 @@ _.withTest (['stdlib', 'partition2'], function () {
 
     _.partition2 = function (arr, pred) { return _.pluck (_.partition3 (arr, pred), 'items') }
 
-    _.partition3 = function (arr, pred) { var spans = [],
-                                              span  = { label: undefined, items: [arr.first] }
+    _.partition3 = function (arr_, pred) {  var arr  = arr_ || []
+                                            var spans = [],
+                                                span  = { label: undefined, items: [arr.first] }
 
             _.each (arr, function (x) { var label = pred (x)
                 if ((span.label != label) &&
@@ -8048,7 +8049,27 @@ _.tests['Channel'] = {
         y.resolve (789)
 
         $assert (calls, [456, 789])
-    }
+    },
+
+/*
+    '$channel for $prototype': () => {
+
+        var Model = $prototype ({
+
+            numPersons: $channel ()
+        })
+
+        var View = $prototype ({
+
+            label: $channel ()
+        })
+
+        var model = new Model ({ numPersons: 10 }),
+            view  = new View ()
+
+        view.label = model.numPersons.then (x => x + ' persons')
+
+    }*/
 }
 
 /*  ------------------------------------------------------------------------ */

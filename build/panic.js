@@ -1963,8 +1963,9 @@ _.withTest (['stdlib', 'partition2'], function () {
 
     _.partition2 = function (arr, pred) { return _.pluck (_.partition3 (arr, pred), 'items') }
 
-    _.partition3 = function (arr, pred) { var spans = [],
-                                              span  = { label: undefined, items: [arr.first] }
+    _.partition3 = function (arr_, pred) {  var arr  = arr_ || []
+                                            var spans = [],
+                                                span  = { label: undefined, items: [arr.first] }
 
             _.each (arr, function (x) { var label = pred (x)
                 if ((span.label != label) &&
@@ -8048,7 +8049,27 @@ _.tests['Channel'] = {
         y.resolve (789)
 
         $assert (calls, [456, 789])
-    }
+    },
+
+/*
+    '$channel for $prototype': () => {
+
+        var Model = $prototype ({
+
+            numPersons: $channel ()
+        })
+
+        var View = $prototype ({
+
+            label: $channel ()
+        })
+
+        var model = new Model ({ numPersons: 10 }),
+            view  = new View ()
+
+        view.label = model.numPersons.then (x => x + ' persons')
+
+    }*/
 }
 
 /*  ------------------------------------------------------------------------ */
@@ -10702,23 +10723,33 @@ _.extend (log, {
             else {
                 console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
 
-		    log.timestampEnabled ? log.impl.timestamp (params.when) : undefined,
+                /*  Text   */
 
-                    _.map (params.lines, function (line, i) {
-                                            return params.indentation + _.reduce2 ('', line, function (s, run) {
-                                                return s + (run.text && ((run.config.color ? '%c' : '') +
-                                                    run.text) || '') }) }).join ('\n') + (codeLocation && ('%c ' + codeLocation) || ''),
+                    (log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + ' ') : '') 
 
-                    (_.scatter (params.lines, function (line, i, emit) {
-                        _.each (line, function (run) {
-                            if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []).concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+                        + _.map (params.lines, function (line, i) {
+                                                return params.indentation + _.reduce2 ('', line, function (s, run) {
+                                                    return s + (run.text && ((run.config.color ? '%c' : '') +
+                                                        run.text) || '') }) }).join ('\n')
+
+                        + (codeLocation ? ('%c ' + codeLocation) : ''),
+
+                /*  Colors */
+
+                    (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)'] : [])
+
+                        .concat ((_.scatter (params.lines, function (line, i, emit) {
+                            _.each (line, function (run) {
+                                if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []))
+
+                        .concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
 
                     params.trailNewlines))) } },
 
         /*  Formats timestamp preceding log messages
          */
         timestamp: function (x) {
-        	return x },
+        	           return x },
 
         /*  Formats that "function @ source.js:321" thing
          */
