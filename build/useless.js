@@ -6361,6 +6361,15 @@ _.tests['Channel'] = {
                       () => { $fail })
     },
 
+    'throw from .then': done => {
+
+        new Channel (123)
+                .then (x => { throw x + 1 })
+                .catch (x => { $assert (x, 124); done () })
+    },
+
+    'pending state': () => { $assert ('pending', new Channel ().then (() => $fail).state) },
+
     'new Channel (const)': () => (new Channel (123)).assert (123),
 
     'recognized by tests as Promise': () => Channel.resolve (123).assert (123),
@@ -6384,7 +6393,6 @@ _.tests['Channel'] = {
         $assert (calls, [456, 789])
     },
 
-/*
     '$channel for $prototype': () => {
 
         var Model = $prototype ({
@@ -6397,12 +6405,37 @@ _.tests['Channel'] = {
             label: $channel ()
         })
 
+    /*  $channel tag creates a readwrite property with same name,
+        but it should keep $channel tag in meta-information (for reflection purposes)   */
+
+        $assert ($channel.is (Model.$definition.numPersons))
+
+    /*  Should be configurable from constructor params  */
+
         var model = new Model ({ numPersons: 10 }),
             view  = new View ()
 
+        $assert (model.numPersons.value, 10)
+        $assert (view.label.state, 'pending')
+
+    /*  This is not a simple by-reference assignment, but a channel binding   */
+
         view.label = model.numPersons.then (x => x + ' persons')
 
-    }*/
+        $assert (view.label !== model.numPersons)
+        $assert (view.label.value, '10 persons')
+
+    /*  Assignment to a non-promise should update value    */
+
+        model.numPersons = 11
+        
+        $assert (view.label.value, '11 persons')
+    },
+
+    '$channel(const)': () => {
+
+        $assert ($singleton ({ count: $channel (7) }).count.value, 7)
+    }
 }
 
 /*  ------------------------------------------------------------------------ */
@@ -6482,32 +6515,44 @@ $global.Channel = $extends (Promise, {
 
 /*  ------------------------------------------------------------------------ */
 
-Channel.all = function (arr) {
+Channel.all = arr => new Channel (resolve => {
 
-                    return new Channel (resolve => {
+                                    var complete = new Set (),
+                                        value = new Array (arr.length)
 
-                        var complete = new Set (),
-                            value = new Array (arr.length)
+                                    arr.forEach ((c, i) => {
 
-                        arr.forEach ((c, i) => {
-
-                            c.then (x => { value[i] = x
-                                
-                                if (complete.length === value.length) {
-                                    resolve (value) }
-                                else {
-                                    complete.add (i) } }) }) }) }
+                                        c.then (x => { value[i] = x
+                                            
+                                            if (complete.length === value.length) {
+                                                resolve (value) }
+                                            else {
+                                                complete.add (i) } }) }) })
 
 /*  ------------------------------------------------------------------------ */
 
-Channel.resolve = function (x) {
-                    return new Channel (resolve => resolve (x)) }
-
-Channel.reject = function (e) {
-                    return new Channel ((resolve, reject) => reject (e)) }
+Channel.resolve = x => new Channel ( resolve          => resolve (x))
+Channel.reject  = e => new Channel ((resolve, reject) => reject  (e))
 
 /*  ------------------------------------------------------------------------ */
 
+$prototype.macroTag ('channel', (def, value, name) => {
+
+    var memberName = '_' + name
+    var initialValue = $untag (value)
+
+    def[name] = Tags.modify (value, () => $property ({
+
+        get: function () {
+                return this[memberName] ||
+                      (this[memberName] = new Channel (initialValue)) },
+
+        set: function (x) {
+                this[name].resolve (x) }
+    }))
+})
+
+/*  ------------------------------------------------------------------------ */
 
 
 ;

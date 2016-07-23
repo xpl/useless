@@ -3936,27 +3936,33 @@ $global.Channel = $extends(Promise, {
         return this.then(undefined, fn);
     }
 });
-Channel.all = function (arr) {
-    return new Channel(resolve => {
-        var complete = new Set(), value = new Array(arr.length);
-        arr.forEach((c, i) => {
-            c.then(x => {
-                value[i] = x;
-                if (complete.length === value.length) {
-                    resolve(value);
-                } else {
-                    complete.add(i);
-                }
-            });
+Channel.all = arr => new Channel(resolve => {
+    var complete = new Set(), value = new Array(arr.length);
+    arr.forEach((c, i) => {
+        c.then(x => {
+            value[i] = x;
+            if (complete.length === value.length) {
+                resolve(value);
+            } else {
+                complete.add(i);
+            }
         });
     });
-};
-Channel.resolve = function (x) {
-    return new Channel(resolve => resolve(x));
-};
-Channel.reject = function (e) {
-    return new Channel((resolve, reject) => reject(e));
-};
+});
+Channel.resolve = x => new Channel(resolve => resolve(x));
+Channel.reject = e => new Channel((resolve, reject) => reject(e));
+$prototype.macroTag('channel', (def, value, name) => {
+    var memberName = '_' + name;
+    var initialValue = $untag(value);
+    def[name] = Tags.modify(value, () => $property({
+        get: function () {
+            return this[memberName] || (this[memberName] = new Channel(initialValue));
+        },
+        set: function (x) {
+            this[name].resolve(x);
+        }
+    }));
+});
 Parse = {
     keyCodeAsString: function (key) {
         return String.fromCharCode(96 <= key && key <= 105 ? key - 48 : key);
