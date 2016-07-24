@@ -1,7 +1,7 @@
 /*  Some handy jQuery extensions
     ======================================================================== */
 
-if (jQuery) { (function ($) {
+if (typeof jQuery !== 'undefined') { (function ($) {
 
 /*  We override some jQuery methods, so store previous impl. here
  */

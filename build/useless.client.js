@@ -7895,9 +7895,10 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
                                                            self.numActive++
                                 p = p.then (function (x) { self.numActive--
+
                                                    return (self.queue.length &&
                                                           (self.numActive < self.maxConcurrency))
-                                                                          ? self.queue.pop () ()
+                                                                          ? self.queue.shift () ().then (_.constant (x))
                                                                           : x }) }
                             this.pending.push (p)
 
@@ -8112,7 +8113,6 @@ $global.Channel = $extends (Promise, {
 
     constructor: function (fn, transducers, before) { 
 
-                    this.before = before
                     this.after = []
                     this.state = 'pending'
                     this.value = undefined
@@ -8392,7 +8392,7 @@ JSONAPI = $singleton (Component, {
 /*  Some handy jQuery extensions
     ======================================================================== */
 
-if (jQuery) { (function ($) {
+if (typeof jQuery !== 'undefined') { (function ($) {
 
 /*  We override some jQuery methods, so store previous impl. here
  */

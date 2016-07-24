@@ -1,0 +1,47 @@
+<html>
+    <head>
+        <meta charset="utf-8"></meta>
+        <title>Promise+ test</title>
+
+        <script src="lib/underscore-min.js"></script>        
+        <script src="../build/useless.client.js"></script>
+
+    </head>
+    <style>
+        body > div { height: 20px; border: 1px solid gray; margin-top: -1px; }
+    </style>
+    <script>
+
+        document.ready (function () {
+
+            var divs = _.times (20, function () { return N.div.appendTo (document.body) })
+
+            __.map (divs, function (div, divIndex) {
+
+                return new Promise (function (resolve) {
+
+                    var n = _.random (100, 1000)
+                    var i = 0
+                    var loop = setInterval (function () {
+
+                        if (i > n) {
+                            clearInterval (loop)
+                            resolve (divIndex) }
+
+                        else {
+                            div.style.backgroundColor = _.hue2CSS (i / n); i++ } }, 0)
+                })
+
+            }, { maxConcurrency: 6 }).then (function (x) {
+
+                alert (JSON.stringify (x) + ' done. Total: ' + x.length)
+            })
+        })
+
+
+    </script>
+
+    <body>
+
+    </body>
+</html>
