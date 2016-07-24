@@ -114,7 +114,6 @@ $global.Channel = $extends (Promise, {
 
     constructor: function (fn, transducers, before) { 
 
-                    this.before = before
                     this.after = []
                     this.state = 'pending'
                     this.value = undefined
