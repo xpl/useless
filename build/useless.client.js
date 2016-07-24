@@ -3637,6 +3637,7 @@ _.withTest ('Array extensions', function () {
         indexBy:     _.indexBy,
         find:        _.find,
         filter:      _.filter,
+	reject:      _.reject,
         flat:        _.flatten.tails2 (true),
         object:      _.object,
         shuffle:     _.shuffle,
