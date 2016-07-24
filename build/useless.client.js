@@ -7683,7 +7683,11 @@ _.tests['Promise+'] = {
                         __.map (      [222],   _.appends ('bar')).assert (      ['222bar']),
                         __.map (    __(333),   _.appends ('bar')).assert (       '333bar'),
                         __.map ({ foo: 444 },  _.appends ('bar')).assert ({ foo: '444bar' }),
-                        __.map ({ foo: 555 }, __.constant ('bar')).assert ({ foo: 'bar' }) ] },
+                        __.map ({ foo: 555 }, __.constant ('bar')).assert ({ foo: 'bar' }),
+
+                        __.map (['a','b','c','d','e'],
+                            function (x,i) { return Promise.resolve ([i,x]).delay (10 - i) })
+                                .assert ([[0,'a'], [1,'b'], [2,'c'], [3,'d'], [4,'e']]) ] },
 
 /*  ------------------------------------------------------------------------ */
 
@@ -7920,16 +7924,10 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
                                 tasks  = new TaskPool (cfg)
 
                             _.each2 (x, function (v, k) {
-                                            tasks.run (fn.$ (v, k, x)).then ( // TODO: remove debug
+                                            tasks.run (fn.$ (v, k, x)).then (
                                                                         function (vk) {
                                                                             if (vk) {
-                                                                                if (vk.length > 1) { // key provided
-                                                                                    result[vk[1]] = vk[0] }
-                                                                                else {
-                                                                                    if (result instanceof Array) {
-                                                                                        result.push (vk[0]) }
-                                                                                    else {
-                                                                                        result[k] = vk[0] } } } }) })
+                                                                                result[vk[1]] = vk[0] } }) })
                             return tasks.all.then (_.constant (result)) }
 
                         else {
@@ -7940,15 +7938,15 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
 __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
             return __.scatter (x, function (v, k, x) {
-                return __.then (fn.$ (v, k, x), function (x) { return [x] }) }, cfg) }
+                return __.then (fn.$ (v, k, x), function (x) { return [x, k] }) }, cfg) }
 
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                 return __.scatter (x, function (v, k, x) {
                                         return __.then (fn.$ (v, k, x),
                                             function (decision) {
                                                 return ((decision === false) ? undefined :
-                                                       ((decision === true)  ? [v]
-                                                                             : [decision])) }) }, cfg) }
+                                                       ((decision === true)  ? [v, k]
+                                                                             : [decision, k])) }) }, cfg) }
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
                     return new Promise (function (complete, whoops) {

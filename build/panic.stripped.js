@@ -5023,15 +5023,7 @@ $mixin(Promise, {
                 _.each2(x, function (v, k) {
                     tasks.run(fn.$(v, k, x)).then(function (vk) {
                         if (vk) {
-                            if (vk.length > 1) {
-                                result[vk[1]] = vk[0];
-                            } else {
-                                if (result instanceof Array) {
-                                    result.push(vk[0]);
-                                } else {
-                                    result[k] = vk[0];
-                                }
-                            }
+                            result[vk[1]] = vk[0];
                         }
                     });
                 });
@@ -5047,14 +5039,23 @@ $mixin(Promise, {
 __.map = function (x, fn, cfg) {
     return __.scatter(x, function (v, k, x) {
         return __.then(fn.$(v, k, x), function (x) {
-            return [x];
+            return [
+                x,
+                k
+            ];
         });
     }, cfg);
 };
 __.filter = function (x, fn, cfg) {
     return __.scatter(x, function (v, k, x) {
         return __.then(fn.$(v, k, x), function (decision) {
-            return decision === false ? undefined : decision === true ? [v] : [decision];
+            return decision === false ? undefined : decision === true ? [
+                v,
+                k
+            ] : [
+                decision,
+                k
+            ];
         });
     }, cfg);
 };
