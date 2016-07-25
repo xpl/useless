@@ -27,7 +27,7 @@ _.atIndex = function (n) { return function (arr) { return arr[n] } }
 
 This utility *"wraps around a function"* and generates a higher-order version of it, which, when called later, applies (passes) a set of arguments to the wrapped *"internal"* function. Passing the arguments to a function is the same as applying a set of arguments to a function in terms of Javascript syntax. This comes very handy with modern combinatoric JavaScript code.
 
-Note the *'s'* letter at the end the function name (_.applie**\[s\]**). This is conventional naming for all such *"wrapping"* functions.The letter *'s'* indicates that the function is not called immediately, but generates another function instead, which _"doe**\[s\]** something"_ later upon its turn.
+Note the *'s'* letter at the end the function name (_.applie**\[s\]**). This is conventional naming for all such *"wrapping"* functions.The letter *'s'* indicates that the function is not called immediately, but generates another function instead, which "doe**[s]** something" later upon its turn.
 
 ```javascript
 
