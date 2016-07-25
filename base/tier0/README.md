@@ -21,15 +21,63 @@ _.concat = function (a, b) { ... } // a.concat (b) or a + b (if strings)
 
 _.atIndex = function (n) { return function (arr) { return arr[n] } }
 
+```
+
+## \_.applies (fn, this\_, args)
+
+A utility for higher-order logic. It *"wraps around a function"* and generates a higher-order version of it, which, when called later, applies (passes) a set of arguments to the wrapped *"internal"* function. Passing the arguments to a function is the same as applying a set of arguments to a function in terms of Javascript function syntax. This comes very handy with modern combinatoric JavaScript code.
+
+Note the *'s'* letter at the end the function name (_.applie**s**). This is conventional naming for all such *"wrapping"* functions, which do not call their wrapped functions, but generate higher-order versions. The letter *'s'* indicates that the function is not called immediately, but generates another function instead, which doe**s** something later in its turn.
+
+```javascript
+
+// Definition
 _.applies = function (fn, this_, args) { return function () { return fn.apply (this_, args) } }
 
+// Examples
+
+// Basic standalone syntax
+var f = _.applies (console.log, console, [ 1, 2, 3 ])
+f () // prints 1 2 3
+
+// Infix form is defined in Function.prototype
+// .applies () can be called on any function
+var g = console.log.applies (console, [ 1, 2, 3 ])
+g () // prints 1 2 3
+
+```
+
+## \_.prepends (what) & \_.appends (what)
+
+ The _.prepends () function *"wraps around a function"* and generate a higher-order version of it, which, when called, prepends its argument with an arbitrary user value. The _.appends works the same way, but appends a user value to the end of the argument.
+
+```javascript
+
+// Definition
 _.prepends = function (what) { return function (to) { return what + to } }
 _.appends = function (what)  { return function (to) { return to + what } }
 
+// Example
+let [ mike, tom, world ] = [ 'Mike', 'Tom', 'World' ]
+var prependsGreeting = _.prepends ('Hello, ')
+var appendsQuestion  = _.appends  ('! How are you?')
+console.log (prependsGreeting (world)) // prints Hello, World
+console.log (prependsGreeting (mike)) // prints Hello, Mike
+
+// _.prepends and _.appends can be mixed in any order
+var f = function (username) { return appendsQuestion (prependsGreeting (username)) }
+var g = function (username) { return prependsGreeting (appendsQuestion (username)) }
+console.log (f (tom)) // prints Hello, Tom! How are you?
+console.log (g (mike)) // prints Hello, Mike! How are you?
+
+```
+
+```javascript
 _.join      = function (arr, s) { return arr.join (s) }
 _.joinWith  = _.flip2 (_.join)
 _.joinsWith = _.higherOrder (_.joinWith)
-
+```
+```javascript
 _.sum      = function (a, b) { return (a || 0) + (b || 0) }
 _.subtract = function (a, b) { return (a || 0) - (b || 0) }
 _.mul      = function (a, b) { return (a || 0) * (b || 0) }
@@ -39,7 +87,8 @@ _.sums      = _.plus  = _.higherOrder (_.sum)
 _.subtracts = _.minus = _.higherOrder (_.subtract)
 _.muls                = _.higherOrder (_.mul)
 _.equals              = _.higherOrder (_.equal)
-
+```
+```javascript
 _.largest = function (a, b) { .. } // underscore already taken _.max for its dirty needs
 
 _.notZero = function (x)      { return x !== 0 }
