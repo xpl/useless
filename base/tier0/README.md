@@ -76,8 +76,8 @@ console.log (prependsGreeting (mike)) // prints Hello, Mike
 var f = function (username) { return appendsQuestion (prependsGreeting (username)) }
 var g = function (username) { return prependsGreeting (appendsQuestion (username)) }
 
-console.log (f (tom)) // prints Hello, Tom! How are you?
-console.log (g (mike)) // prints Hello, Mike! How are you?
+f (tom)  // yields Hello, Tom! How are you?
+g (mike) // yields Hello, Mike! How are you?
 
 ```
 
