@@ -57,16 +57,20 @@ g () // prints 1 2 3
 _.prepends = function (what) { return function (to) { return what + to } }
 _.appends = function (what)  { return function (to) { return to + what } }
 
-// Example
+// Examples
+
 let [ mike, tom, world ] = [ 'Mike', 'Tom', 'World' ]
+
 var prependsGreeting = _.prepends ('Hello, ')
 var appendsQuestion  = _.appends  ('! How are you?')
+
 console.log (prependsGreeting (world)) // prints Hello, World
 console.log (prependsGreeting (mike)) // prints Hello, Mike
 
 // _.prepends and _.appends can be mixed in any order
 var f = function (username) { return appendsQuestion (prependsGreeting (username)) }
 var g = function (username) { return prependsGreeting (appendsQuestion (username)) }
+
 console.log (f (tom)) // prints Hello, Tom! How are you?
 console.log (g (mike)) // prints Hello, Mike! How are you?
 
