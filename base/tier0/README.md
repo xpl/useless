@@ -32,6 +32,7 @@ Note the letter **'s'** at the end the function name (_.applie**\[s\]**). This i
 ```javascript
 
 // Definition
+
 _.applies = function (fn, this_, args) { return function () { return fn.apply (this_, args) } }
 
 ```
@@ -57,6 +58,7 @@ logs321 () // prints 3 2 1
 ```javascript
 
 // Definition
+
 _.prepends = function (what) { return function (to) { return what + to } }
 _.appends = function (what)  { return function (to) { return to + what } }
 ```
