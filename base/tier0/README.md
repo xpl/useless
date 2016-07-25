@@ -34,6 +34,9 @@ Note the *'s'* letter at the end the function name (_.applie**\[s\]**). This is 
 // Definition
 _.applies = function (fn, this_, args) { return function () { return fn.apply (this_, args) } }
 
+```
+
+```javascript
 // Examples
 
 // Basic standalone syntax
@@ -56,7 +59,9 @@ g () // prints 1 2 3
 // Definition
 _.prepends = function (what) { return function (to) { return what + to } }
 _.appends = function (what)  { return function (to) { return to + what } }
+```
 
+```javascript
 // Examples
 
 let [ mike, tom, world ] = [ 'Mike', 'Tom', 'World' ]
