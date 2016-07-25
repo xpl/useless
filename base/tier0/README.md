@@ -72,6 +72,8 @@ console.log (g (mike)) // prints Hello, Mike! How are you?
 
 ```
 
+---
+
 ```javascript
 _.join      = function (arr, s) { return arr.join (s) }
 _.joinWith  = _.flip2 (_.join)
