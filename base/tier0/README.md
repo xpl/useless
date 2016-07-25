@@ -40,13 +40,13 @@ _.applies = function (fn, this_, args) { return function () { return fn.apply (t
 // Examples
 
 // Basic standalone syntax
-var f = _.applies (console.log, console, [ 1, 2, 3 ])
-f () // prints 1 2 3
+var logs123 = _.applies (console.log, console, [ 1, 2, 3 ])
+logs123 () // prints 1 2 3
 
 // Infix form is defined in Function.prototype
 // .applies () can be called on any function
-var g = console.log.applies (console, [ 1, 2, 3 ])
-g () // prints 1 2 3
+var logs321 = console.log.applies (console, [ 3, 2, 1 ])
+logs321 () // prints 3 2 1
 
 ```
 
