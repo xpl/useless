@@ -25,7 +25,7 @@ _.atIndex = function (n) { return function (arr) { return arr[n] } }
 
 ## \_.applies (fn, this\_, args)
 
-A utility for higher-order logic. It *"wraps around a function"* and generates a higher-order version of it, which, when called later, applies (passes) a set of arguments to the wrapped *"internal"* function. Passing the arguments to a function is the same as applying a set of arguments to a function in terms of Javascript function syntax. This comes very handy with modern combinatoric JavaScript code.
+This utility *"wraps around a function"* and generates a higher-order version of it, which, when called later, applies (passes) a set of arguments to the wrapped *"internal"* function. Passing the arguments to a function is the same as applying a set of arguments to a function in terms of Javascript function syntax. This comes very handy with modern combinatoric JavaScript code.
 
 Note the *'s'* letter at the end the function name (_.applie**\[s\]**). This is conventional naming for all such *"wrapping"* functions.The letter *'s'* indicates that the function is not called immediately, but generates another function instead, which doe**\[s\]** something later in its turn.
 
