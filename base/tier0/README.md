@@ -67,7 +67,7 @@ var appendsQuestion  = _.appends  ('! How are you?')
 console.log (prependsGreeting (world)) // prints Hello, World
 console.log (prependsGreeting (mike)) // prints Hello, Mike
 
-// _.prepends and _.appends can be mixed in any order
+// _.prepends and _.appends can be mixed together in any order
 var f = function (username) { return appendsQuestion (prependsGreeting (username)) }
 var g = function (username) { return prependsGreeting (appendsQuestion (username)) }
 
