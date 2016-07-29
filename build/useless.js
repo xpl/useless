@@ -4862,6 +4862,9 @@ _.extend (_, {
                         stream (next)
                         return next },
 
+            toggle: function () {
+                        stream (!stream.value) },
+
             when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
                                                alreadyCalled = false
                 stream (function (val) {
