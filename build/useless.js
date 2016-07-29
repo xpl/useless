@@ -4859,7 +4859,7 @@ _.extend (_, {
             then: function (fn) {
                         var next = _.observable ()
                             next.beforeWrite = fn
-                        stream (next)
+                        stream (function (x) { next.write (x) })
                         return next },
 
             toggle: function () {

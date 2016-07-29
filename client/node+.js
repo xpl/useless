@@ -258,6 +258,9 @@
 
                                     return arg1 ? value : this },
 
+        $toggleAttribute: function (name, value) {
+                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
+
         toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
         setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
 
@@ -301,7 +304,7 @@
         ======================================================================== */
 
         reads: function (stream, fn) {
-                    stream (this.$ (function (x) { x = (fn || _.identity) (x)
+                    stream (this.$ (function (x) { x = (fn || _.identity).call (this, x)
                         this.removeAllChildren ()
                         this.add (x instanceof Node ? x : (x + '')) }))
                     return this },
@@ -402,15 +405,15 @@
 
     $mixin (HTMLInputElement, {
 
-        observableValue: $property (function () {
+        $value: $property (function () {
 
-                                        if (!this._observableValue) {
-                                             this._observableValue = _.observable (this.value)
-                                             this._observableValue.context = this
-                                             this.on ('input', this.$ (function () {
-                                                 this._observableValue (this.value) })) }
+                            if (!this._observableValue) {
+                                 this._observableValue = _.observable (this.value)
+                                 this._observableValue.context = this
+                                 this.on ('input', this.$ (function () {
+                                     this._observableValue (this.value) })) }
 
-                                        return this._observableValue })
+                            return this._observableValue })
 
     })
 

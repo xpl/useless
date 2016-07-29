@@ -2741,7 +2741,9 @@ _.extend(_, {
             then: function (fn) {
                 var next = _.observable();
                 next.beforeWrite = fn;
-                stream(next);
+                stream(function (x) {
+                    next.write(x);
+                });
                 return next;
             },
             toggle: function () {
@@ -5965,6 +5967,12 @@ if (typeof jQuery !== 'undefined') {
             }
             return arg1 ? value : this;
         },
+        $toggleAttribute: function (name, value) {
+            value(this.$(function (value) {
+                this.toggleAttribute(name, value);
+            }));
+            return this;
+        },
         toggleAttributes: function (cfg) {
             _.map(cfg, _.flip2(this.toggleAttribute), this);
             return this;
@@ -6002,7 +6010,7 @@ if (typeof jQuery !== 'undefined') {
         },
         reads: function (stream, fn) {
             stream(this.$(function (x) {
-                x = (fn || _.identity)(x);
+                x = (fn || _.identity).call(this, x);
                 this.removeAllChildren();
                 this.add(x instanceof Node ? x : x + '');
             }));
@@ -6082,7 +6090,7 @@ if (typeof jQuery !== 'undefined') {
         })
     });
     $mixin(HTMLInputElement, {
-        observableValue: $property(function () {
+        $value: $property(function () {
             if (!this._observableValue) {
                 this._observableValue = _.observable(this.value);
                 this._observableValue.context = this;
