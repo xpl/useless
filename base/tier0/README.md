@@ -25,7 +25,7 @@ _.atIndex = function (n) { return function (arr) { return arr[n] } }
 
 ## \_.applies (fn, this\_, args)
 
-This utility *"wraps around a function"* and generates a higher-order version of it, which, when called later, applies (passes) a set of arguments to the wrapped *"internal"* function. Passing the arguments to a function is the same as applying a set of arguments to a function in terms of Javascript syntax. This comes very handy with modern combinatoric JavaScript code.
+This utility *"wraps around a function"* and generates a higher-order version of it, which, when called later, applies (passes) a set of arguments to the wrapped *"internal"* function. Passing the arguments to a function is the same as applying an array of arguments to a function in terms of Javascript syntax. This comes very handy with modern combinatoric JavaScript code.
 
 Note the letter **'s'** at the end the function name (_.applie**\[s\]**). This is conventional naming for all such *"wrapping"* functions. The present continuous tense indicates that internal function is not called immediately, but another wrapper-function is created instead, which "doe**[s]** something" by design later upon its turn.
 
