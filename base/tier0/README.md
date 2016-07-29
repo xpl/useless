@@ -53,7 +53,7 @@ logs321 () // prints 3 2 1
 
 ## \_.prepends (what) & \_.appends (what)
 
- The _.prepends () function *"wraps around a function"* and generate a higher-order version of it, which, when called, prepends its argument with an arbitrary user value. The _.appends works the same way, but appends a user value to the end of the argument.
+ The _.prepends () function *"wraps around a function"* and makes a higher-order version of it, which, when called, prepends its argument with an arbitrary user value. The _.appends works the same way, but appends a user value to the end of the argument.
 
 ```javascript
 
