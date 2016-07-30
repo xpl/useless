@@ -192,3 +192,14 @@ DOMEvents = $trait ({
 
 /*  ======================================================================== */
 
+HideOnEscape = $trait ({
+
+    hideOnEscape: $on ({ what: 'keydown', target: document }, function (e) {
+                                                                if (e.keyCode === 27) {
+                                                                    this.destroy ()
+                                                                    e.preventDefault () } })
+})
+
+/*  ======================================================================== */
+
+

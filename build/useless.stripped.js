@@ -5010,8 +5010,8 @@ Component = $prototype({
                 return this.$(fn);
             }
         });
-        _.onBefore(this, 'destroy', this.beforeDestroy);
-        _.onAfter(this, 'destroy', this.afterDestroy);
+        _.onBefore(this, 'destroy', this._beforeDestroy);
+        _.onAfter(this, 'destroy', this._afterDestroy);
         var initialStreamListeners = [];
         var excludeFromCfg = { init: true };
         _.each(componentDefinition, function (def, name) {
@@ -5154,6 +5154,7 @@ Component = $prototype({
         var cfg = this.cfg, self = this;
         return __.then(this.callChainMethod.$('afterInit'), function () {
             self.initialized(true);
+            self.alive(true);
             _.each(self.constructor.$definition, function (def, name) {
                 if (def && def.$observableProperty) {
                     name += 'Change';
@@ -5167,7 +5168,8 @@ Component = $prototype({
         });
     },
     initialized: $barrier(),
-    beforeDestroy: function () {
+    alive: $observable(false),
+    _beforeDestroy: function () {
         if (this.destroyed_) {
             throw new Error('Component: I am already destroyed. Probably you\'re doing it wrong.');
         }
@@ -5175,16 +5177,25 @@ Component = $prototype({
             throw new Error('Component: Recursive destroy() call detected. Probably you\'re doing it wrong.');
         }
         this.destroying_ = true;
+        _.each(this.constructor.$traits, function (Trait) {
+            if (Trait.prototype.beforeDestroy) {
+                Trait.prototype.beforeDestroy.call(this);
+            }
+        }, this);
+        this.alive(false);
         this.enumMethods(_.off);
         _.each(this.children_, _.method('destroy'));
         this.children_ = [];
     },
     destroy: function () {
     },
-    afterDestroy: function () {
+    _afterDestroy: function () {
         _.each(this.constructor.$traits, function (Trait) {
             if (Trait.prototype.destroy) {
                 Trait.prototype.destroy.call(this);
+            }
+            if (Trait.prototype.afterDestroy) {
+                Trait.prototype.afterDestroy.call(this);
             }
         }, this);
         delete this.destroying_;
@@ -6849,6 +6860,7 @@ if ($platform.NodeJS) {
         printEvents: function (state) {
             var state = state || {}, indent = state.indent || 0, visited = state.visited || new Set();
             if (state.verbose || this.numEvents.all > 0) {
+                log.margin();
                 for (var e of this.eventLog) {
                     if (e instanceof AndrogeneProcessContext) {
                         if (e.eventLog.length) {

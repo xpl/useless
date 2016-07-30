@@ -196,7 +196,7 @@
         prependTo: function (ref) {
             ref.insertBefore (this, ref.firstChild); return this },
 
-        replaceWith: function (node) { this.insertBeforeMe (node).removeFromParent () },
+        replaceWith: function (what) { this.insertBeforeMe (what).removeFromParent () },
 
         insertMeBefore: function (ref) {
             ref.parentNode.insertBefore (this, ref); return this },
@@ -258,9 +258,6 @@
 
                                     return arg1 ? value : this },
 
-        $toggleAttribute: function (name, value) {
-                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
-
         toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
         setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
 
@@ -300,21 +297,14 @@
         text: function (x) { this.innerText = x; return this },
 
 
-    /*  Experimental FRP stuff
-        ======================================================================== */
-
-        reads: function (stream, fn) {
-                    stream (this.$ (function (x) { x = (fn || _.identity).call (this, x)
-                        this.removeAllChildren ()
-                        this.add (x instanceof Node ? x : (x + '')) }))
-                    return this },
-
-
     /*  Animation
         ======================================================================== */
 
-        busyUntil: function (promise) {                              this.   setAttribute ('busy', true)
-                      return promise.done (this.$ (function (e, x) { this.removeAttribute ('busy') })) },
+        attributeUntil: function (attr, promise) {
+                                                                     this.   setAttribute (attr, true)
+                      return promise.done (this.$ (function (e, x) { this.removeAttribute (attr) })) },
+
+        busyUntil: function (promise) { return this.attributeUntil ('busy', promise) },
 
         onceAnimationEnd: $property (function () {
             return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
@@ -370,7 +360,8 @@
         append: Node.prototype.append,
 
 
-    /*  Metrics     */
+    /*  Metrics
+        ======================================================================== */
 
         clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
               bbox: $property (function () { return this.clientBBox.offset (document.bbox.leftTop) }),
@@ -399,6 +390,31 @@
                                             (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
                                             (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
                                             (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
+
+    /*  Experimental FRP stuff
+        ======================================================================== */
+
+        reads: function (stream, fn) { // DEPRECATED
+                    stream (this.$ (function (x) { x = (fn || _.identity).call (this, x)
+                        this.removeAllChildren ()
+                        this.add (x instanceof Node ? x : (x + '')) }))
+                    return this },
+
+        $toggleAttribute: function (name, value) {
+                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
+
+        $add: function (nodes) {
+
+                if (nodes instanceof Promise) {
+                    var placeholder = document.createElement ('PROMISE')
+                        this.appendChild (placeholder)
+                        nodes.then (function (nodes) {
+                            placeholder.replaceWith (nodes) }).panic }
+
+                else {
+                    this.add (nodes) }
+
+                return this }
     })
 
 /*  ========================================================================= */

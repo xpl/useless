@@ -7082,8 +7082,8 @@ Component = $prototype ({
 
         /*  Listen self destroy method
          */
-        _.onBefore  (this, 'destroy', this.beforeDestroy)
-        _.onAfter   (this, 'destroy', this.afterDestroy)
+        _.onBefore  (this, 'destroy', this._beforeDestroy)
+        _.onAfter   (this, 'destroy', this._afterDestroy)
 
 
         var initialStreamListeners = []
@@ -7262,6 +7262,7 @@ Component = $prototype ({
         return __.then (this.callChainMethod.$ ('afterInit'), function () {
 
                         self.initialized (true)
+                        self.alive (true)
 
                         /*  Bind default property listeners. Doing this after init, because property listeners
                             get called immediately after bind (observable semantics), and we're want to make
@@ -7279,13 +7280,20 @@ Component = $prototype ({
                         return true }) },
     
     initialized: $barrier (),
+    alive:       $observable (false),
 
-    beforeDestroy: function () {
+    _beforeDestroy: function () {
         if (this.destroyed_) {
             throw new Error ('Component: I am already destroyed. Probably you\'re doing it wrong.') }
         if (this.destroying_) {
             throw new Error ('Component: Recursive destroy() call detected. Probably you\'re doing it wrong.') }
             this.destroying_ = true
+
+        _.each (this.constructor.$traits, function (Trait) {
+            if (Trait.prototype.beforeDestroy) {
+                Trait.prototype.beforeDestroy.call (this) } }, this)
+
+        this.alive (false)
 
         /*  Unbind streams
          */
@@ -7298,11 +7306,13 @@ Component = $prototype ({
 
     destroy: function () {},
 
-    afterDestroy: function () {
+    _afterDestroy: function () {
 
         _.each (this.constructor.$traits, function (Trait) {
             if (Trait.prototype.destroy) {
-                Trait.prototype.destroy.call (this) } }, this)
+                Trait.prototype.destroy.call (this) }
+            if (Trait.prototype.afterDestroy) {
+                Trait.prototype.afterDestroy.call (this) } }, this)
 
         delete this.destroying_
         this.parent_ = undefined
@@ -8991,7 +9001,7 @@ _.extend ($, {
         prependTo: function (ref) {
             ref.insertBefore (this, ref.firstChild); return this },
 
-        replaceWith: function (node) { this.insertBeforeMe (node).removeFromParent () },
+        replaceWith: function (what) { this.insertBeforeMe (what).removeFromParent () },
 
         insertMeBefore: function (ref) {
             ref.parentNode.insertBefore (this, ref); return this },
@@ -9053,9 +9063,6 @@ _.extend ($, {
 
                                     return arg1 ? value : this },
 
-        $toggleAttribute: function (name, value) {
-                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
-
         toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
         setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
 
@@ -9095,21 +9102,14 @@ _.extend ($, {
         text: function (x) { this.innerText = x; return this },
 
 
-    /*  Experimental FRP stuff
-        ======================================================================== */
-
-        reads: function (stream, fn) {
-                    stream (this.$ (function (x) { x = (fn || _.identity).call (this, x)
-                        this.removeAllChildren ()
-                        this.add (x instanceof Node ? x : (x + '')) }))
-                    return this },
-
-
     /*  Animation
         ======================================================================== */
 
-        busyUntil: function (promise) {                              this.   setAttribute ('busy', true)
-                      return promise.done (this.$ (function (e, x) { this.removeAttribute ('busy') })) },
+        attributeUntil: function (attr, promise) {
+                                                                     this.   setAttribute (attr, true)
+                      return promise.done (this.$ (function (e, x) { this.removeAttribute (attr) })) },
+
+        busyUntil: function (promise) { return this.attributeUntil ('busy', promise) },
 
         onceAnimationEnd: $property (function () {
             return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
@@ -9165,7 +9165,8 @@ _.extend ($, {
         append: Node.prototype.append,
 
 
-    /*  Metrics     */
+    /*  Metrics
+        ======================================================================== */
 
         clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
               bbox: $property (function () { return this.clientBBox.offset (document.bbox.leftTop) }),
@@ -9194,6 +9195,31 @@ _.extend ($, {
                                             (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
                                             (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
                                             (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
+
+    /*  Experimental FRP stuff
+        ======================================================================== */
+
+        reads: function (stream, fn) { // DEPRECATED
+                    stream (this.$ (function (x) { x = (fn || _.identity).call (this, x)
+                        this.removeAllChildren ()
+                        this.add (x instanceof Node ? x : (x + '')) }))
+                    return this },
+
+        $toggleAttribute: function (name, value) {
+                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
+
+        $add: function (nodes) {
+
+                if (nodes instanceof Promise) {
+                    var placeholder = document.createElement ('PROMISE')
+                        this.appendChild (placeholder)
+                        nodes.then (function (nodes) {
+                            placeholder.replaceWith (nodes) }).panic }
+
+                else {
+                    this.add (nodes) }
+
+                return this }
     })
 
 /*  ========================================================================= */
@@ -9486,6 +9512,17 @@ DOMEvents = $trait ({
                                                                                            this[on_def.fn]) }, this) }) } })
 
 /*  ======================================================================== */
+
+HideOnEscape = $trait ({
+
+    hideOnEscape: $on ({ what: 'keydown', target: document }, function (e) {
+                                                                if (e.keyCode === 27) {
+                                                                    this.destroy ()
+                                                                    e.preventDefault () } })
+})
+
+/*  ======================================================================== */
+
 
 ;
 /*  Animation tools

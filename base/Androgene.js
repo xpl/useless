@@ -102,6 +102,8 @@
             
             if (state.verbose || (this.numEvents.all > 0)) {
 
+                log.margin ()
+                
                 for (var e of this.eventLog) {
                     if (e instanceof AndrogeneProcessContext) {
                         if (e.eventLog.length) {

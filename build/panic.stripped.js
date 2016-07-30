@@ -4351,8 +4351,8 @@ Component = $prototype({
                 return this.$(fn);
             }
         });
-        _.onBefore(this, 'destroy', this.beforeDestroy);
-        _.onAfter(this, 'destroy', this.afterDestroy);
+        _.onBefore(this, 'destroy', this._beforeDestroy);
+        _.onAfter(this, 'destroy', this._afterDestroy);
         var initialStreamListeners = [];
         var excludeFromCfg = { init: true };
         _.each(componentDefinition, function (def, name) {
@@ -4495,6 +4495,7 @@ Component = $prototype({
         var cfg = this.cfg, self = this;
         return __.then(this.callChainMethod.$('afterInit'), function () {
             self.initialized(true);
+            self.alive(true);
             _.each(self.constructor.$definition, function (def, name) {
                 if (def && def.$observableProperty) {
                     name += 'Change';
@@ -4508,7 +4509,8 @@ Component = $prototype({
         });
     },
     initialized: $barrier(),
-    beforeDestroy: function () {
+    alive: $observable(false),
+    _beforeDestroy: function () {
         if (this.destroyed_) {
             throw new Error('Component: I am already destroyed. Probably you\'re doing it wrong.');
         }
@@ -4516,16 +4518,25 @@ Component = $prototype({
             throw new Error('Component: Recursive destroy() call detected. Probably you\'re doing it wrong.');
         }
         this.destroying_ = true;
+        _.each(this.constructor.$traits, function (Trait) {
+            if (Trait.prototype.beforeDestroy) {
+                Trait.prototype.beforeDestroy.call(this);
+            }
+        }, this);
+        this.alive(false);
         this.enumMethods(_.off);
         _.each(this.children_, _.method('destroy'));
         this.children_ = [];
     },
     destroy: function () {
     },
-    afterDestroy: function () {
+    _afterDestroy: function () {
         _.each(this.constructor.$traits, function (Trait) {
             if (Trait.prototype.destroy) {
                 Trait.prototype.destroy.call(this);
+            }
+            if (Trait.prototype.afterDestroy) {
+                Trait.prototype.afterDestroy.call(this);
             }
         }, this);
         delete this.destroying_;
@@ -5893,8 +5904,8 @@ if (typeof jQuery !== 'undefined') {
             ref.insertBefore(this, ref.firstChild);
             return this;
         },
-        replaceWith: function (node) {
-            this.insertBeforeMe(node).removeFromParent();
+        replaceWith: function (what) {
+            this.insertBeforeMe(what).removeFromParent();
         },
         insertMeBefore: function (ref) {
             ref.parentNode.insertBefore(this, ref);
@@ -5967,12 +5978,6 @@ if (typeof jQuery !== 'undefined') {
             }
             return arg1 ? value : this;
         },
-        $toggleAttribute: function (name, value) {
-            value(this.$(function (value) {
-                this.toggleAttribute(name, value);
-            }));
-            return this;
-        },
         toggleAttributes: function (cfg) {
             _.map(cfg, _.flip2(this.toggleAttribute), this);
             return this;
@@ -6008,19 +6013,14 @@ if (typeof jQuery !== 'undefined') {
             this.innerText = x;
             return this;
         },
-        reads: function (stream, fn) {
-            stream(this.$(function (x) {
-                x = (fn || _.identity).call(this, x);
-                this.removeAllChildren();
-                this.add(x instanceof Node ? x : x + '');
+        attributeUntil: function (attr, promise) {
+            this.setAttribute(attr, true);
+            return promise.done(this.$(function (e, x) {
+                this.removeAttribute(attr);
             }));
-            return this;
         },
         busyUntil: function (promise) {
-            this.setAttribute('busy', true);
-            return promise.done(this.$(function (e, x) {
-                this.removeAttribute('busy');
-            }));
+            return this.attributeUntil('busy', promise);
         },
         onceAnimationEnd: $property(function () {
             return this.once($platform.WebKit ? 'webkitAnimationEnd' : 'animationend');
@@ -6087,7 +6087,33 @@ if (typeof jQuery !== 'undefined') {
             set: function (cfg) {
                 this.style.transform = _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '';
             }
-        })
+        }),
+        reads: function (stream, fn) {
+            stream(this.$(function (x) {
+                x = (fn || _.identity).call(this, x);
+                this.removeAllChildren();
+                this.add(x instanceof Node ? x : x + '');
+            }));
+            return this;
+        },
+        $toggleAttribute: function (name, value) {
+            value(this.$(function (value) {
+                this.toggleAttribute(name, value);
+            }));
+            return this;
+        },
+        $add: function (nodes) {
+            if (nodes instanceof Promise) {
+                var placeholder = document.createElement('PROMISE');
+                this.appendChild(placeholder);
+                nodes.then(function (nodes) {
+                    placeholder.replaceWith(nodes);
+                }).panic;
+            } else {
+                this.add(nodes);
+            }
+            return this;
+        }
     });
     $mixin(HTMLInputElement, {
         $value: $property(function () {
@@ -6202,6 +6228,17 @@ DOMEvents = $trait({
             }, this);
         });
     }
+});
+HideOnEscape = $trait({
+    hideOnEscape: $on({
+        what: 'keydown',
+        target: document
+    }, function (e) {
+        if (e.keyCode === 27) {
+            this.destroy();
+            e.preventDefault();
+        }
+    })
 });
 InertialValue = $component({
     $defaults: {
