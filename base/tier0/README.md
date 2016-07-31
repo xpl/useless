@@ -81,6 +81,8 @@ var g = function (username) { return prependsGreeting (appendsQuestion (username
 f (tom)  // yields Hello, Tom! How are you?
 g (mike) // yields Hello, Mike! How are you?
 
+[ 10, 20, 30 ].map (_.appends (' units')) // returns [ '10 units', '20 units', '30 units' ]
+
 ```
 
 ---
