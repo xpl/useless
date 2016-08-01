@@ -4198,7 +4198,6 @@ _([
     'trigger',
     'triggerOnce',
     'barrier',
-    'observable',
     'bindable',
     'memoize',
     'interlocked',
@@ -4213,11 +4212,15 @@ _([
     'binds',
     'observes'
 ]).each(_.defineTagKeyword);
-_.defineTagKeyword('observableProperty', function (impl) {
-    return function (x, fn) {
-        return _.isFunction(x) && arguments.length === 1 ? impl(x, fn) : impl(fn, x);
+(function () {
+    var impl = function (impl) {
+        return function (x, fn) {
+            return _.isFunction(x) && arguments.length === 1 ? impl(x, fn) : impl(fn, x);
+        };
     };
-});
+    _.defineTagKeyword('observableProperty', impl);
+    _.defineTagKeyword('observable', impl);
+}());
 _.defineKeyword('observableRef', function (x) {
     return $observableProperty($reference(x));
 });
@@ -4427,6 +4430,9 @@ Component = $prototype({
                         context: this,
                         postpones: def.$postpones
                     });
+                    if (def.$reference) {
+                        observable.trackReference = true;
+                    }
                     if (def.listeners) {
                         _.each(def.listeners, function (value) {
                             initialStreamListeners.push([
@@ -4434,6 +4440,12 @@ Component = $prototype({
                                 value
                             ]);
                         });
+                    }
+                    if (_.isFunction(def.$observable)) {
+                        initialStreamListeners.push([
+                            stream,
+                            def.$observable
+                        ]);
                     }
                     var defaultListener = cfg[name];
                     if (defaultListener) {

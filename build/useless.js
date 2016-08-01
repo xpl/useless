@@ -7916,6 +7916,13 @@ _.tests.component = {
                                                 $assert (value === compo.prop) } }) })
                 compo.prop = 43 }) },
 
+    'two-argument $observable': function () {
+
+        $assertEveryCalled (function (mkay) {
+            $assert ('foo', $singleton (Component, {
+                foo: $observable ('foo', function (x) { $assert (x, 'foo'); mkay () }) }).foo.value)
+        })
+    },
 
     'destroyAll()': function () { $assertEveryCalled (function (destroyed__2) {
         
@@ -8079,15 +8086,20 @@ _.tests.component = {
 _.defineKeyword ('component', function (definition) {
                                 return $extends (Component, definition) })
 
-_([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'observable', 'bindable', 'memoize', 'interlocked',
+_([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw', 'binds', 'observes'])
     .each (_.defineTagKeyword)
 
-_.defineTagKeyword ('observableProperty', function (impl) {
-                                                return function (x, fn) {
-                                                    return ((_.isFunction (x) && (arguments.length === 1)) ?
-                                                                impl (x, fn) :     // $observableProperty (listener)
-                                                                impl (fn, x)) } }) // $observableProperty (value[, listener])
+;(function () {
+    var impl = function (impl) {
+                return function (x, fn) {
+                    return ((_.isFunction (x) && (arguments.length === 1)) ?
+                                impl (x, fn) :     // $observableProperty (listener)
+                                impl (fn, x)) } }  // $observableProperty (value[, listener])
+
+    _.defineTagKeyword ('observableProperty', impl) 
+    _.defineTagKeyword ('observable',         impl) 
+}) ();
 
 _.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
 
@@ -8324,9 +8336,19 @@ Component = $prototype ({
                                 (def.$observable    ? _.observable :
                                 (def.$barrier       ? _.barrier : undefined)))) (def.subject), { context: this, postpones: def.$postpones })
 
+                /*  tracking by reference
+                 */
+                if (def.$reference) {
+                    observable.trackReference = true }
+
                 if (def.listeners) {
                     _.each (def.listeners, function (value) {
                         initialStreamListeners.push ([stream, value]) }) }
+
+                /*  Default listener which comes from $observable (defValue, defListener) syntax
+                 */
+                if (_.isFunction (def.$observable)) {
+                      initialStreamListeners.push ([stream, def.$observable]) }
 
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
