@@ -2756,12 +2756,22 @@ _.extend(_, {
                 return stream;
             },
             item: function (id) {
-                var all = stream.itemObservables || (steam.itemObservables = {});
-                var item = all[id] || (all[id] = _.observable((stream.value && stream.value)[id]));
-                item(function (x) {
-                });
-                stream(function (items) {
-                });
+                var all = stream.itemObservables || (stream.itemObservables = {});
+                var item = all[id];
+                if (!item) {
+                    item = all[id] = _.observable((stream.value && stream.value)[id]);
+                    item(function (x) {
+                        var oldValue = stream.value && stream.value[x];
+                        if (oldValue !== x) {
+                            (stream.value || (stream.value = {}))[id] = x;
+                            stream.force();
+                        }
+                    });
+                    stream(function (items) {
+                        item.write(items[id]);
+                    });
+                }
+                return item;
             },
             when: function (match, then) {
                 var matchFn = _.isFunction(match) ? match : _.equals(match), alreadyCalled = false;

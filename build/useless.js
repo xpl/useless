@@ -4786,6 +4786,28 @@ _.tests.stream = {
              var willBe42 = _.barrier (42)
         $assert (willBe42.already)
                  willBe42 (function (_42) { $assert (_42, 42); mkay () }) }) },
+
+    'observable.item': function () {
+
+        var items = _.observable ({ foo: 7, bar: 8 })
+        var foo = items.item ('foo')
+        var bar = items.item ('bar')
+
+        $assert (foo, items.item ('foo')) // should be same cached observable
+        $assert (foo.value, 7)
+        $assert (bar.value, 8)
+
+        foo (77)
+
+        $assert (foo.value, 77)
+        $assert (items.value, { foo: 77, bar: 8 })
+
+        items ({ bar: 88 })
+
+        $assert (foo.value, undefined)
+        $assert (bar.value, 88)
+        $assert (items.value, { bar: 88 })
+    }
 }
 
 _.extend (_, {
@@ -4877,19 +4899,20 @@ _.extend (_, {
 
             item: function (id) {
 
-                var all = stream.itemObservables || (steam.itemObservables = {})
-                var item = all[id] || (all[id] = _.observable ((stream.value && stream.value)[id]))
+                var all = stream.itemObservables || (stream.itemObservables = {})
+                var item = all[id]
+                if (!item) { item = all[id] = _.observable ((stream.value && stream.value)[id])
 
-                item (function (x) {
+                    item (function (x) {
+                        var oldValue = (stream.value && stream.value[x])
+                        if (oldValue !== x) {
+                            (stream.value || (stream.value = {}))[id] = x
+                            stream.force () } })
 
+                    stream (function (items) {
+                        item.write (items[id]) }) }
 
-                })
-
-                stream (function (items) {
-
-
-                })
-
+                return item
             },
 
             when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
