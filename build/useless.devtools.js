@@ -1411,7 +1411,6 @@ _.defineTagKeyword ('async')
  */
 _.tests.Testosterone = {
 
-
     /*  3.  To write asynchronous tests, define second argument in your test routine, which
             is 'done' callback. The framework will look into argument count of your routine,
             and if second argument is there, your routine will be considered as asynchronous,
@@ -1439,7 +1438,6 @@ _.tests.Testosterone = {
         $assertMatches (_.pluck (Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest .$tests,
                                                                          DummyPrototypeWithTests.$tests]) }
  }
-
 
 /*  For marking methods in internal impl that should publish themselves as global keywords (like $assert)
  */
@@ -1667,9 +1665,10 @@ Test = $prototype ({
                                                     .promise
                                                     .then (function (src) {
                                                                 log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
-                                                                assertion.evalLogCalls () }) } })
+                                                                assertion.evalLogCalls ()
+                                                                return src }) } })
 
-                        .then (function () {
+                        .then (function (src) {
                             if (assertion.failed && self.canFail) {
                                 self.failedAssertions.push (assertion) } }) },
 
@@ -1724,7 +1723,7 @@ Test = $prototype ({
     run: function () { var self    = Testosterone.currentAssertion = this,
                            routine = Tags.unwrap (this.routine)
 
-        return new Promise (this.$ (function (then) {
+        return new Channel (this.$ (function (then) {
 
             this.shouldFail = $shouldFail.is (this.routine)
             this.failed = false

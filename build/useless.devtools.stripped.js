@@ -1326,9 +1326,10 @@ Test = $prototype({
                         where: assertion.location
                     }), src);
                     assertion.evalLogCalls();
+                    return src;
                 });
             }
-        }).then(function () {
+        }).then(function (src) {
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push(assertion);
             }
@@ -1393,7 +1394,7 @@ Test = $prototype({
     },
     run: function () {
         var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
-        return new Promise(this.$(function (then) {
+        return new Channel(this.$(function (then) {
             this.shouldFail = $shouldFail.is(this.routine);
             this.failed = false;
             this.hasLog = false;

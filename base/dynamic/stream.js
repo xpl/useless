@@ -229,6 +229,8 @@ _.extend (_, {
 
     observable: function (value) {
         var stream = _.stream ({
+
+                        isObservable: true,
                         hasValue: arguments.length > 0,
                         value:    _.isFunction (value) ? undefined : value,
 
@@ -259,6 +261,7 @@ _.extend (_, {
                                                 returnResult.call (this, false /* flush */, stream.value, prevValue) }
                                             else {
                                                 returnResult.call (this, false /* flush */, stream.value) } } } } })
+
         if (arguments.length) {
             stream.apply (this, arguments) }
 
@@ -275,7 +278,31 @@ _.extend (_, {
                         return next },
 
             toggle: function () {
-                        stream (!stream.value) },
+                        return stream (!stream.value) },
+
+            tie: function (other) {
+
+                stream (other)
+                 other (stream)
+
+                return stream },
+
+            item: function (id) {
+
+                var all = stream.itemObservables || (steam.itemObservables = {})
+                var item = all[id] || (all[id] = _.observable ((stream.value && stream.value)[id]))
+
+                item (function (x) {
+
+
+                })
+
+                stream (function (items) {
+
+
+                })
+
+            },
 
             when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
                                                alreadyCalled = false

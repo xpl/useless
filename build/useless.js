@@ -4817,6 +4817,8 @@ _.extend (_, {
 
     observable: function (value) {
         var stream = _.stream ({
+
+                        isObservable: true,
                         hasValue: arguments.length > 0,
                         value:    _.isFunction (value) ? undefined : value,
 
@@ -4847,6 +4849,7 @@ _.extend (_, {
                                                 returnResult.call (this, false /* flush */, stream.value, prevValue) }
                                             else {
                                                 returnResult.call (this, false /* flush */, stream.value) } } } } })
+
         if (arguments.length) {
             stream.apply (this, arguments) }
 
@@ -4863,7 +4866,31 @@ _.extend (_, {
                         return next },
 
             toggle: function () {
-                        stream (!stream.value) },
+                        return stream (!stream.value) },
+
+            tie: function (other) {
+
+                stream (other)
+                 other (stream)
+
+                return stream },
+
+            item: function (id) {
+
+                var all = stream.itemObservables || (steam.itemObservables = {})
+                var item = all[id] || (all[id] = _.observable ((stream.value && stream.value)[id]))
+
+                item (function (x) {
+
+
+                })
+
+                stream (function (items) {
+
+
+                })
+
+            },
 
             when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
                                                alreadyCalled = false
@@ -7917,6 +7944,29 @@ _.tests.component = {
         var    method = compo.   method;    method (compo)
         var rawMethod = compo.rawMethod; rawMethod (compo) },
 
+    'two-way $observable binding': function () {
+
+        var Compo = $component ({ x: $observable ('foo') })
+        var x = _.observable ('bar')
+
+        var compo = new Compo ({ x: x })
+
+        $assert (compo.x !== x)
+        $assert (compo.x.value, x.value, 'bar')
+
+        compo.x (42); $assert (x.value, 42)
+        x ('lol'); $assert (compo.x.value, 'lol')
+
+    /*  Test unbinding    */
+
+        compo.destroy ()
+
+        $assert (compo.x.queue, [])
+
+        compo.x ('yo'); $assert (x.value, 'lol') // shouldnt change
+        x ('oy'); $assert (compo.x.value, 'yo')  // shouldnt change
+    },
+
     /*  $alias (TODO: fix bugs)
      */
     /*'$alias': function () { var value = 41
@@ -8256,7 +8306,11 @@ Component = $prototype ({
                         initialStreamListeners.push ([stream, value]) }) }
 
                 var defaultListener = cfg[name]                
-                if (defaultListener) { initialStreamListeners.push ([stream, defaultListener]) } }
+                if (defaultListener) {
+                    if (def.$observable && defaultListener.isObservable) { // two-way observable binding
+                        defaultListener.tie (stream) }
+                    else {
+                        initialStreamListeners.push ([stream, defaultListener]) } } }
 
             /*  Expand $listener (TODO: REMOVE)
              */
@@ -8398,7 +8452,7 @@ Component = $prototype ({
 
         /*  Unbind streams
          */
-        this.enumMethods (_.off)
+        this.enumMethods (_.off.arity1)
 
         /*  Destroy children
          */
@@ -9532,7 +9586,6 @@ _.defineTagKeyword ('async')
  */
 _.tests.Testosterone = {
 
-
     /*  3.  To write asynchronous tests, define second argument in your test routine, which
             is 'done' callback. The framework will look into argument count of your routine,
             and if second argument is there, your routine will be considered as asynchronous,
@@ -9560,7 +9613,6 @@ _.tests.Testosterone = {
         $assertMatches (_.pluck (Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest .$tests,
                                                                          DummyPrototypeWithTests.$tests]) }
  }
-
 
 /*  For marking methods in internal impl that should publish themselves as global keywords (like $assert)
  */
@@ -9788,9 +9840,10 @@ Test = $prototype ({
                                                     .promise
                                                     .then (function (src) {
                                                                 log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
-                                                                assertion.evalLogCalls () }) } })
+                                                                assertion.evalLogCalls ()
+                                                                return src }) } })
 
-                        .then (function () {
+                        .then (function (src) {
                             if (assertion.failed && self.canFail) {
                                 self.failedAssertions.push (assertion) } }) },
 
@@ -9845,7 +9898,7 @@ Test = $prototype ({
     run: function () { var self    = Testosterone.currentAssertion = this,
                            routine = Tags.unwrap (this.routine)
 
-        return new Promise (this.$ (function (then) {
+        return new Channel (this.$ (function (then) {
 
             this.shouldFail = $shouldFail.is (this.routine)
             this.failed = false

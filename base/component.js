@@ -544,6 +544,29 @@ _.tests.component = {
         var    method = compo.   method;    method (compo)
         var rawMethod = compo.rawMethod; rawMethod (compo) },
 
+    'two-way $observable binding': function () {
+
+        var Compo = $component ({ x: $observable ('foo') })
+        var x = _.observable ('bar')
+
+        var compo = new Compo ({ x: x })
+
+        $assert (compo.x !== x)
+        $assert (compo.x.value, x.value, 'bar')
+
+        compo.x (42); $assert (x.value, 42)
+        x ('lol'); $assert (compo.x.value, 'lol')
+
+    /*  Test unbinding    */
+
+        compo.destroy ()
+
+        $assert (compo.x.queue, [])
+
+        compo.x ('yo'); $assert (x.value, 'lol') // shouldnt change
+        x ('oy'); $assert (compo.x.value, 'yo')  // shouldnt change
+    },
+
     /*  $alias (TODO: fix bugs)
      */
     /*'$alias': function () { var value = 41
@@ -883,7 +906,11 @@ Component = $prototype ({
                         initialStreamListeners.push ([stream, value]) }) }
 
                 var defaultListener = cfg[name]                
-                if (defaultListener) { initialStreamListeners.push ([stream, defaultListener]) } }
+                if (defaultListener) {
+                    if (def.$observable && defaultListener.isObservable) { // two-way observable binding
+                        defaultListener.tie (stream) }
+                    else {
+                        initialStreamListeners.push ([stream, defaultListener]) } } }
 
             /*  Expand $listener (TODO: REMOVE)
              */
@@ -1025,7 +1052,7 @@ Component = $prototype ({
 
         /*  Unbind streams
          */
-        this.enumMethods (_.off)
+        this.enumMethods (_.off.arity1)
 
         /*  Destroy children
          */

@@ -403,14 +403,13 @@
         $toggleAttribute: function (name, value) {
                                 value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
 
-        $add: function (nodes) {
+        $add: function (nodes) { // TODO: make it default .add impl (but keep .appendChildren intact)
 
                 if (nodes instanceof Promise) {
                     var placeholder = document.createElement ('PROMISE')
                         this.appendChild (placeholder)
                         nodes.then (function (nodes) {
                             placeholder.replaceWith (nodes) }).panic }
-
                 else {
                     this.add (nodes) }
 

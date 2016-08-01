@@ -2701,6 +2701,7 @@ _.extend(_, {
     },
     observable: function (value) {
         var stream = _.stream({
+            isObservable: true,
             hasValue: arguments.length > 0,
             value: _.isFunction(value) ? undefined : value,
             read: function (schedule) {
@@ -2747,7 +2748,20 @@ _.extend(_, {
                 return next;
             },
             toggle: function () {
-                stream(!stream.value);
+                return stream(!stream.value);
+            },
+            tie: function (other) {
+                stream(other);
+                other(stream);
+                return stream;
+            },
+            item: function (id) {
+                var all = stream.itemObservables || (steam.itemObservables = {});
+                var item = all[id] || (all[id] = _.observable((stream.value && stream.value)[id]));
+                item(function (x) {
+                });
+                stream(function (items) {
+                });
             },
             when: function (match, then) {
                 var matchFn = _.isFunction(match) ? match : _.equals(match), alreadyCalled = false;
@@ -4413,10 +4427,14 @@ Component = $prototype({
                     }
                     var defaultListener = cfg[name];
                     if (defaultListener) {
-                        initialStreamListeners.push([
-                            stream,
-                            defaultListener
-                        ]);
+                        if (def.$observable && defaultListener.isObservable) {
+                            defaultListener.tie(stream);
+                        } else {
+                            initialStreamListeners.push([
+                                stream,
+                                defaultListener
+                            ]);
+                        }
                     }
                 }
                 if (def.$listener) {
@@ -4524,7 +4542,7 @@ Component = $prototype({
             }
         }, this);
         this.alive(false);
-        this.enumMethods(_.off);
+        this.enumMethods(_.off.arity1);
         _.each(this.children_, _.method('destroy'));
         this.children_ = [];
     },
@@ -7645,9 +7663,10 @@ Test = $prototype({
                         where: assertion.location
                     }), src);
                     assertion.evalLogCalls();
+                    return src;
                 });
             }
-        }).then(function () {
+        }).then(function (src) {
             if (assertion.failed && self.canFail) {
                 self.failedAssertions.push(assertion);
             }
@@ -7712,7 +7731,7 @@ Test = $prototype({
     },
     run: function () {
         var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
-        return new Promise(this.$(function (then) {
+        return new Channel(this.$(function (then) {
             this.shouldFail = $shouldFail.is(this.routine);
             this.failed = false;
             this.hasLog = false;
