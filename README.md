@@ -108,7 +108,7 @@ BetterVec2 = $extends (Vec2, { /* ... */ })
 - Enforces configuration contracts (**$requires**, **$defaults**)
 
 ## Multicast model for method calls with simple functional I/O
-
+[Wiki](https://github.com/xpl/useless/wiki/Streams)
 [Reference](https://github.com/xpl/useless/blob/master/base/dynamic/stream.js)
 
 * `_.trigger`, `_.triggerOnce` / one-to-many broadcast
