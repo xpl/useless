@@ -38,7 +38,7 @@ module.exports = Supervisor = $trait ({
      */
     shouldRestartOnSourceChange: $trigger (function (action, file, yes, no) {
                                     if ((action !== 'add') && (action !== 'addDir')) {
-                                        if (!(file.contains (this.buildPath) ||
+                                        if (!(file.contains (this.buildPath) || file.contains ('.DS_Store') ||
                                              (file.contains (path.join (process.cwd (), './node_modules') &&
                                              !file.contains ($uselessPath) &&
                                              !file.contains (path.join ($uselessPath, './node_modules')))))) { yes () } } }),
