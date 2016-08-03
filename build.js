@@ -88,7 +88,7 @@ BuildApp = $singleton (Component, {
 
             hasVarDeclarations = body => (_.find (body, _.matches ({ type: 'VariableDeclaration' })) || false)
 
-        var sourceAST = esprima.parse (src, { raw: true, tokens: true, range: true, loc: true })
+        var sourceAST = esprima.parse (src, { loc: true })
 
         _.each (sourceAST.body[0].expression.arguments[0].elements, scope => {
 
@@ -116,13 +116,13 @@ BuildApp = $singleton (Component, {
                 else {
                     return expr } }) })
 
-        var output = escodegen.generate (sourceAST, { sourceMap: true, sourceMapWithCode: true })
+        var output = escodegen.generate (sourceAST, { sourceMap: name + '.stripped.js.map', sourceMapWithCode: true })
 
         if (path) {
             this.writeCompiled (name + '.stripped.js', path,
                 '/*    AUTO GENERATED from ' + name + '.js (stripped unit tests and comments) */\n\n' + output.code)
 
-            /*this.writeCompiled (name + '.stripped.js.map', path, output.map.toString ())*/  }
+            this.writeCompiled (name + '.stripped.js.map', path, output.map.toString ())  }
 
         return output.code },
 
