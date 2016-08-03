@@ -1,5 +1,5 @@
  module.exports = function (input, output) {
-
+    
     var webpack = require ('webpack'),
         path    = require ('path'),
         fs      = require ('fs')

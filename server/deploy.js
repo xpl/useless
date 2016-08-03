@@ -12,7 +12,9 @@ var fs              = require ('fs'),
 
     buildScript: function (name) { log.blue ('Building monolithic ', log.color.pink, name)
 
-        return webpack (name, path.join (this.buildPath, name)).panic
+        return webpack (
+                    util.locateFile (name, this.buildScriptPaths),
+                    path.join (this.buildPath, name)).panic
     },
 
     /*  Self deployment protocol
