@@ -21,7 +21,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- A wiki entry explaining the [Stream concept](https://github.com/xpl/useless/wiki/Stream). Thanks to @kroitor for translation from Russian!
+- A wiki entry explaining the [Stream concept](https://github.com/xpl/useless/wiki/Stream). Thanks to @kroitor for translation/adaptation from Russian!
 
 - Build system now utilizes **webpack** for squashing `require` imports. All external dependencies (e.g. underscore) now embedded in `useless.client.js` — no need to link them separately.
 
