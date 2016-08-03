@@ -1,16 +1,19 @@
-$include ('./base/tier0/assert')
-$include ('./base/uncaught')
-$include ('./base/uncaughtAsync')
-$include ('./base/reflection')
-$include ('./base/log')
-$include ('./base/Testosterone')
-$include ('./base/profiling')
-$include ('./client/Panic')
-$include ('./client/LogOverlay')
+require ('./base/tier0/assert')
+require ('./base/uncaught')
+require ('./base/uncaughtAsync')
+require ('./base/reflection')
+require ('./base/log')
+require ('./base/Testosterone')
+require ('./base/profiling')
+require ('./client/Panic')
+require ('./client/LogOverlay')
+
+require ('./client/Panic.css')
+require ('./client/LogOverlay.css')
 
 /*  ======================================================================== */
 
-(function ($ /* JQUERY */) {
+document.ready (function () {
 	
 	Panic.init ()
 
@@ -19,7 +22,4 @@ $include ('./client/LogOverlay')
 	           (file.indexOf ('jquery') >= 0)     ||
 	           (file.indexOf ('useless') >= 0)    ||
 	           (file.indexOf ('mootools') >= 0) })
-
-    $('head').append ([
-    	$('<style type="text/css">').text ($includeStr ('client/Panic.css')),
-    	$('<style type="text/css">').text ($includeStr ('client/LogOverlay.css')) ]) }) (jQuery);
+})

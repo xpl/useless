@@ -1,7 +1,8 @@
-_ = require ('./useless')
+require ('./useless')
 
 var fs          = require ('fs'),
     util        = require ('./server/base/util'),
+    webpack     = require ('./server/base/webpack')
     querystring = require ('querystring'),
     http        = require ('http'),
     process     = require ('process'),
@@ -40,58 +41,27 @@ BuildApp = $singleton (Component, {
                         _.pick (this, 'inputFiles',
                                       'buildPath'))) } },
 
-/*  ======================================================================== */
-
     init: function () {
-            __.all (this.testsFailed ? [] : this.inputFiles.map (this.compileFile)).panic.finally (function () {
+            __.all (this.testsFailed ? [] : this.inputFiles.map (this.compile)).panic.finally (function () {
                 process.exit () // call explicitly, because supervisor's ipc.js prevents from auto-exiting (while listening to messages)
             })
     },
 
-/*  ======================================================================== */
+    compile: function (file) { log.w ('Compiling', log.color.boldOrange, ' ' + file)
 
-    writeCompiled: function (file, dir, src) { var fullPath = path.resolve (process.cwd (), path.join (dir, file))
-        log.ok ('Writing', fullPath)
-        util.writeFile (fullPath, src) },
+        var name = _.initial (path.basename (file).split ('.')).join ('.')
 
-    compileWithGoogle: function (src) { log.info ('Calling Google Closure compiler...')
+        return webpack (file, path.join (this.buildPath, name + '.js')).then (compiledSrc => {
 
-        return __((resolve, reject) => {
+            var strippedSrc = this.stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name,
+                                    !this.args.noStripped &&
+                                     this.buildPath)
 
-            var post_data = querystring.stringify ({
-                'compilation_level' : 'SIMPLE_OPTIMIZATIONS',
-                'output_format': 'text',
-                'output_info': 'compiled_code',
-                'language_out': 'ecmascript5',
-                'warning_level' : 'QUIET',
-                'js_code' : src })
+            if (!this.args.noCompress) {
+                return this.compileWithGoogle (strippedSrc).then (
+                       this.writeCompiled.$ (name + '.min.js', this.buildPath)) } }) },
 
-            var post_options = {
-                host: 'closure-compiler.appspot.com',
-                port: '80',
-                path: '/compile',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Content-Length': post_data.length } };
-
-            var post_req = http.request(post_options, util.readHttpResponse ('utf-8',
-                                                            response => {
-                                                                if (response.trimmed.length) {
-                                                                    resolve (response) }
-                                                                else {
-                                                                    reject (new Error ('Google Closure Compiler replied with empty response'))  } }))
-
-            post_req.write (post_data)
-            post_req.end () }) },
-
-    stripCommentsAndTests: function (src, name, path) {
-        log.hint ('Stripping comments and tests...')
-
-        var matchesRequire =
-            _.matches ({  expression: { operator: "=",
-                                        left:     { name: "_"  },
-                                        right:    { callee: { name: "require"  } }  }  })
+    stripCommentsAndTests: function (src, name, path) { log.hint ('Stripping tests...')
 
         var testExpr = function (fnName) {
             return { expression: {
@@ -150,11 +120,9 @@ BuildApp = $singleton (Component, {
                         hasModules[module] = true
                         return true }
 
-                    else if (matchesIfHasModule (expr)) {
-                        return hasModules[expr.test.property.name] ? expr : false }
+                    else if (matchesIfHasModule (expr)) { return hasModules[expr.test.property.name] ? expr : false }
 
-                    else if (matchesRequire (expr) ||
-                             matchesTestsDefExpr (expr) ||
+                    else if (matchesTestsDefExpr (expr) ||
                              matchesTestsDefExpr2 (expr)) { return false }
 
                     else if (matchesTest (expr)) {
@@ -171,10 +139,6 @@ BuildApp = $singleton (Component, {
                     else {
                         return true } })) }
 
-    //  log.info (_.stringify (stripped, { pretty: true, maxArrayLength: 10000, maxDepth: 10 }))
-
-    //  log.write (escodegen.generate (stripped))
-
         var output = escodegen.generate (stripped)
 
         if (path) {
@@ -183,17 +147,42 @@ BuildApp = $singleton (Component, {
 
         return output },
 
-    compileFile: function (file) { log.w ('Compiling', log.color.boldOrange, ' ' + file)
+    compileWithGoogle: function (src) { log.info ('Calling Google Closure compiler...')
 
-        var name = _.initial (path.basename (file).split ('.')).join ('.')
-        var compiledSrc = util.compileScript ({ sourceFile: file })
-        var strippedSrc = this.stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name,
-                                !this.args.noStripped &&
-                                 this.buildPath)
+        return new Promise ((resolve, reject) => {
 
-        this.writeCompiled (name + '.js', this.buildPath, compiledSrc)
+            var post_data = querystring.stringify ({
+                'compilation_level' : 'SIMPLE_OPTIMIZATIONS',
+                'output_format': 'text',
+                'output_info': 'compiled_code',
+                'language_out': 'ecmascript5',
+                'warning_level' : 'QUIET',
+                'js_code' : src })
 
-        if (!this.args.noCompress) {
-            return this.compileWithGoogle (strippedSrc).then (this.writeCompiled.$ (name + '.min.js', this.buildPath)) } }
+            var post_options = {
+                host: 'closure-compiler.appspot.com',
+                port: '80',
+                path: '/compile',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Length': post_data.length } };
+
+            var post_req = http.request(post_options, util.readHttpResponse ('utf-8',
+                                                            response => {
+                                                                if (response.trimmed.length) {
+                                                                    resolve (response) }
+                                                                else {
+                                                                    reject (new Error ('Google Closure Compiler replied with empty response'))  } }))
+
+            post_req.write (post_data)
+            post_req.end () }) },
+
+    writeCompiled: function (file, dir, src) {
+
+        var fullPath = path.resolve (process.cwd (), path.join (dir, file))
+
+            log.ok ('Writing', fullPath)
+            util.writeFile (fullPath, src) }
 
 })

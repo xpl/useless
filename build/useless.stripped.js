@@ -1,7223 +1,13472 @@
 /*    AUTO GENERATED from useless.js (stripped unit tests and comments) */
 
-$uselessFile = 'useless.js';
-if (typeof require !== 'undefined') {
-    _ = require('underscore');
-    $include = require;
-}
-_ = function () {
-    _.mixin({
-        zipWith: function (rows, zippo) {
-            return _.reduce(_.rest(rows), function (memo, row) {
-                return _.times(Math.max(memo && memo.length || 0, row && row.length || 0), function (i) {
-                    return zippo(memo && memo[i], row && row[i]);
-                });
-            }, _.first(rows));
-        }
-    });
-    if ('a1 b2 c3' !== _.zipWith([
-            [
-                'a',
-                'b',
-                'c'
-            ],
-            [
-                1,
-                2,
-                3
-            ]
-        ], function (a, b) {
-            return a + b;
-        }).join(' ')) {
-        throw new Error('_.zipWith broken');
-    }
-    return _;
-}();
-unicode_hack = function () {
-    var unicodeCategories = {
-        Cn: '[\u0378\u0379Ϳ-\u0383\u038B\u038D\u03A2Ԩ-\u0530\u0557\u0558\u0560\u0588\u058B-\u0590\u05C8-\u05CF\u05EB-\u05EF\u05F5-\u05FF\u0604\u0605\u061C\u061D\u070E\u074B\u074C\u07B2-\u07BF\u07FB-\u07FF\u082E\u082F\u083F\u085C\u085D\u085F-ࣿॸঀ\u0984\u098D\u098E\u0991\u0992\u09A9\u09B1\u09B3-\u09B5\u09BA\u09BB\u09C5\u09C6\u09C9\u09CA\u09CF-\u09D6\u09D8-\u09DB\u09DE\u09E4\u09E5\u09FC-\u0A00\u0A04\u0A0B-\u0A0E\u0A11\u0A12\u0A29\u0A31\u0A34\u0A37\u0A3A\u0A3B\u0A3D\u0A43-\u0A46\u0A49\u0A4A\u0A4E-\u0A50\u0A52-\u0A58\u0A5D\u0A5F-\u0A65\u0A76-\u0A80\u0A84\u0A8E\u0A92\u0AA9\u0AB1\u0AB4\u0ABA\u0ABB\u0AC6\u0ACA\u0ACE\u0ACF\u0AD1-\u0ADF\u0AE4\u0AE5\u0AF0\u0AF2-\u0B00\u0B04\u0B0D\u0B0E\u0B11\u0B12\u0B29\u0B31\u0B34\u0B3A\u0B3B\u0B45\u0B46\u0B49\u0B4A\u0B4E-\u0B55\u0B58-\u0B5B\u0B5E\u0B64\u0B65\u0B78-\u0B81\u0B84\u0B8B-\u0B8D\u0B91\u0B96-\u0B98\u0B9B\u0B9D\u0BA0-\u0BA2\u0BA5-\u0BA7\u0BAB-\u0BAD\u0BBA-\u0BBD\u0BC3-\u0BC5\u0BC9\u0BCE\u0BCF\u0BD1-\u0BD6\u0BD8-\u0BE5\u0BFB-ఀ\u0C04\u0C0D\u0C11\u0C29ఴ\u0C3A-\u0C3C\u0C45\u0C49\u0C4E-\u0C54\u0C57\u0C5A-\u0C5F\u0C64\u0C65\u0C70-\u0C77\u0C80ಁ\u0C84\u0C8D\u0C91\u0CA9\u0CB4\u0CBA\u0CBB\u0CC5\u0CC9\u0CCE-\u0CD4\u0CD7-\u0CDD\u0CDF\u0CE4\u0CE5\u0CF0\u0CF3-ഁ\u0D04\u0D0D\u0D11\u0D3B\u0D3C\u0D45\u0D49\u0D4F-\u0D56\u0D58-\u0D5F\u0D64\u0D65\u0D76-\u0D78\u0D80\u0D81\u0D84\u0D97-\u0D99\u0DB2\u0DBC\u0DBE\u0DBF\u0DC7-\u0DC9\u0DCB-\u0DCE\u0DD5\u0DD7\u0DE0-\u0DF1\u0DF5-\u0E00\u0E3B-\u0E3E\u0E5C-\u0E80\u0E83\u0E85\u0E86\u0E89\u0E8B\u0E8C\u0E8E-\u0E93\u0E98\u0EA0\u0EA4\u0EA6\u0EA8\u0EA9\u0EAC\u0EBA\u0EBE\u0EBF\u0EC5\u0EC7\u0ECE\u0ECF\u0EDA\u0EDBໞ-\u0EFF\u0F48\u0F6D-\u0F70\u0F98\u0FBD\u0FCD\u0FDB-\u0FFF\u10C6-\u10CFჽ-ჿ\u1249\u124E\u124F\u1257\u1259\u125E\u125F\u1289\u128E\u128F\u12B1\u12B6\u12B7\u12BF\u12C1\u12C6\u12C7\u12D7\u1311\u1316\u1317\u135B\u135C\u137D-\u137F\u139A-\u139F\u13F5-\u13FF\u169D-\u169Fᛱ-\u16FF\u170D\u1715-\u171F\u1737-\u173F\u1754-\u175F\u176D\u1771\u1774-\u177F\u17DE\u17DF\u17EA-\u17EF\u17FA-\u17FF\u180F\u181A-\u181F\u1878-\u187F\u18AB-\u18AF\u18F6-\u18FFᤝ-\u191F\u192C-\u192F\u193C-\u193F\u1941-\u1943\u196E\u196F\u1975-\u197F\u19AC-\u19AF\u19CA-\u19CF\u19DB-\u19DD\u1A1C\u1A1D\u1A5F\u1A7D\u1A7E\u1A8A-\u1A8F\u1A9A-\u1A9F\u1AAE-\u1AFF\u1B4C-\u1B4F\u1B7D-\u1B7F᮫-ᮭᮺ-ᮿ\u1BF4-\u1BFB\u1C38-\u1C3A\u1C4A-\u1C4C\u1C80-\u1CCFᳳ-\u1CFFᷧ-\u1DFB\u1F16\u1F17\u1F1E\u1F1F\u1F46\u1F47\u1F4E\u1F4F\u1F58\u1F5A\u1F5C\u1F5E\u1F7E\u1F7F\u1FB5\u1FC5\u1FD4\u1FD5\u1FDC\u1FF0\u1FF1\u1FF5\u1FFF\u2065-\u2069\u2072\u2073\u208F\u209D-\u209F\u20BA-\u20CF\u20F1-\u20FF\u218A-\u218F\u23F4-\u23FF\u2427-\u243F\u244B-\u245F\u2700\u27CB\u27CD\u2B4D-\u2B4F\u2B5A-\u2BFF\u2C2F\u2C5FⳲ-\u2CF8\u2D26-\u2D2Fⵦ-\u2D6E\u2D71-\u2D7E\u2D97-\u2D9F\u2DA7\u2DAF\u2DB7\u2DBF\u2DC7\u2DCF\u2DD7\u2DDF\u2E32-\u2E7F\u2E9A\u2EF4-\u2EFF\u2FD6-\u2FEF\u2FFC-\u2FFF\u3040\u3097\u3098\u3100-\u3104\u312E-\u3130\u318F\u31BB-\u31BF\u31E4-\u31EF\u321F\u32FF\u4DB6-\u4DBF鿌-\u9FFF\uA48D-\uA48F\uA4C7-\uA4CF\uA62C-\uA63Fꙴ-ꙻꚘ-ꚟ\uA6F8-\uA6FF\uA78FꞒ-ꞟꞪ-ꟹ\uA82C-\uA82F\uA83A-\uA83F\uA878-\uA87F\uA8C5-\uA8CD\uA8DA-\uA8DF\uA8FC-\uA8FF\uA954-\uA95E\uA97D-\uA97F\uA9CE\uA9DA-\uA9DDꧠ-\uA9FF\uAA37-\uAA3F\uAA4E\uAA4F\uAA5A\uAA5Bꩼ-ꩿ\uAAC3-\uAADAꫠ-\uAB00\uAB07\uAB08\uAB0F\uAB10\uAB17-\uAB1F\uAB27\uAB2F-\uABBF\uABEE\uABEF\uABFA-\uABFF\uD7A4-\uD7AF\uD7C7-\uD7CA\uD7FC-\uD7FF郞隷\uFA6E\uFA6F\uFADA-\uFAFF\uFB07-\uFB12\uFB18-\uFB1C\uFB37\uFB3D\uFB3F\uFB42\uFB45\uFBC2-\uFBD2\uFD40-\uFD4F\uFD90\uFD91\uFDC8-\uFDEF\uFDFE\uFDFF\uFE1A-\uFE1F︧-\uFE2F\uFE53\uFE67\uFE6C-\uFE6F\uFE75\uFEFD\uFEFE\uFF00\uFFBF-\uFFC1\uFFC8\uFFC9\uFFD0\uFFD1\uFFD8\uFFD9\uFFDD-\uFFDF\uFFE7\uFFEF-\uFFF8\uFFFE\uFFFF]',
-        Lu: '[A-ZÀ-ÖØ-ÞĀĂĄĆĈĊČĎĐĒĔĖĘĚĜĞĠĢĤĦĨĪĬĮİĲĴĶĹĻĽĿŁŃŅŇŊŌŎŐŒŔŖŘŚŜŞŠŢŤŦŨŪŬŮŰŲŴŶŸŹŻŽƁƂƄƆƇƉ-ƋƎ-ƑƓƔƖ-ƘƜƝƟƠƢƤƦƧƩƬƮƯƱ-ƳƵƷƸƼǄǇǊǍǏǑǓǕǗǙǛǞǠǢǤǦǨǪǬǮǱǴǶ-ǸǺǼǾȀȂȄȆȈȊȌȎȐȒȔȖȘȚȜȞȠȢȤȦȨȪȬȮȰȲȺȻȽȾɁɃ-ɆɈɊɌɎͰͲͶΆΈ-ΊΌΎΏΑ-ΡΣ-ΫϏϒ-ϔϘϚϜϞϠϢϤϦϨϪϬϮϴϷϹϺϽ-ЯѠѢѤѦѨѪѬѮѰѲѴѶѸѺѼѾҀҊҌҎҐҒҔҖҘҚҜҞҠҢҤҦҨҪҬҮҰҲҴҶҸҺҼҾӀӁӃӅӇӉӋӍӐӒӔӖӘӚӜӞӠӢӤӦӨӪӬӮӰӲӴӶӸӺӼӾԀԂԄԆԈԊԌԎԐԒԔԖԘԚԜԞԠԢԤԦԱ-ՖႠ-ჅḀḂḄḆḈḊḌḎḐḒḔḖḘḚḜḞḠḢḤḦḨḪḬḮḰḲḴḶḸḺḼḾṀṂṄṆṈṊṌṎṐṒṔṖṘṚṜṞṠṢṤṦṨṪṬṮṰṲṴṶṸṺṼṾẀẂẄẆẈẊẌẎẐẒẔẞẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼẾỀỂỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪỬỮỰỲỴỶỸỺỼỾἈ-ἏἘ-ἝἨ-ἯἸ-ἿὈ-ὍὙὛὝὟὨ-ὯᾸ-ΆῈ-ΉῘ-ΊῨ-ῬῸ-Ώℂℇℋ-ℍℐ-ℒℕℙ-ℝℤΩℨK-ℭℰ-ℳℾℿⅅↃⰀ-ⰮⱠⱢ-ⱤⱧⱩⱫⱭ-ⱰⱲⱵⱾ-ⲀⲂⲄⲆⲈⲊⲌⲎⲐⲒⲔⲖⲘⲚⲜⲞⲠⲢⲤⲦⲨⲪⲬⲮⲰⲲⲴⲶⲸⲺⲼⲾⳀⳂⳄⳆⳈⳊⳌⳎⳐⳒⳔⳖⳘⳚⳜⳞⳠⳢⳫⳭꙀꙂꙄꙆꙈꙊꙌꙎꙐꙒꙔꙖꙘꙚꙜꙞꙠꙢꙤꙦꙨꙪꙬꚀꚂꚄꚆꚈꚊꚌꚎꚐꚒꚔꚖꜢꜤꜦꜨꜪꜬꜮꜲꜴꜶꜸꜺꜼꜾꝀꝂꝄꝆꝈꝊꝌꝎꝐꝒꝔꝖꝘꝚꝜꝞꝠꝢꝤꝦꝨꝪꝬꝮꝹꝻꝽꝾꞀꞂꞄꞆꞋꞍꞐꞠꞢꞤꞦꞨＡ-Ｚ]',
-        Ll: '[a-zªµºß-öø-ÿāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįıĳĵķĸĺļľŀłńņňŉŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷźżž-ƀƃƅƈƌƍƒƕƙ-ƛƞơƣƥƨƪƫƭưƴƶƹƺƽ-ƿǆǉǌǎǐǒǔǖǘǚǜǝǟǡǣǥǧǩǫǭǯǰǳǵǹǻǽǿȁȃȅȇȉȋȍȏȑȓȕȗșțȝȟȡȣȥȧȩȫȭȯȱȳ-ȹȼȿɀɂɇɉɋɍɏ-ʓʕ-ʯͱͳͷͻ-ͽΐά-ώϐϑϕ-ϗϙϛϝϟϡϣϥϧϩϫϭϯ-ϳϵϸϻϼа-џѡѣѥѧѩѫѭѯѱѳѵѷѹѻѽѿҁҋҍҏґғҕҗҙқҝҟҡңҥҧҩҫҭүұҳҵҷҹһҽҿӂӄӆӈӊӌӎӏӑӓӕӗәӛӝӟӡӣӥӧөӫӭӯӱӳӵӷӹӻӽӿԁԃԅԇԉԋԍԏԑԓԕԗԙԛԝԟԡԣԥԧա-ևᴀ-ᴫᵢ-ᵷᵹ-ᶚḁḃḅḇḉḋḍḏḑḓḕḗḙḛḝḟḡḣḥḧḩḫḭḯḱḳḵḷḹḻḽḿṁṃṅṇṉṋṍṏṑṓṕṗṙṛṝṟṡṣṥṧṩṫṭṯṱṳṵṷṹṻṽṿẁẃẅẇẉẋẍẏẑẓẕ-ẝẟạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹỻỽỿ-ἇἐ-ἕἠ-ἧἰ-ἷὀ-ὅὐ-ὗὠ-ὧὰ-ώᾀ-ᾇᾐ-ᾗᾠ-ᾧᾰ-ᾴᾶᾷιῂ-ῄῆῇῐ-ΐῖῗῠ-ῧῲ-ῴῶῷℊℎℏℓℯℴℹℼℽⅆ-ⅉⅎↄⰰ-ⱞⱡⱥⱦⱨⱪⱬⱱⱳⱴⱶ-ⱼⲁⲃⲅⲇⲉⲋⲍⲏⲑⲓⲕⲗⲙⲛⲝⲟⲡⲣⲥⲧⲩⲫⲭⲯⲱⲳⲵⲷⲹⲻⲽⲿⳁⳃⳅⳇⳉⳋⳍⳏⳑⳓⳕⳗⳙⳛⳝⳟⳡⳣⳤⳬⳮⴀ-ⴥꙁꙃꙅꙇꙉꙋꙍꙏꙑꙓꙕꙗꙙꙛꙝꙟꙡꙣꙥꙧꙩꙫꙭꚁꚃꚅꚇꚉꚋꚍꚏꚑꚓꚕꚗꜣꜥꜧꜩꜫꜭꜯ-ꜱꜳꜵꜷꜹꜻꜽꜿꝁꝃꝅꝇꝉꝋꝍꝏꝑꝓꝕꝗꝙꝛꝝꝟꝡꝣꝥꝧꝩꝫꝭꝯꝱ-ꝸꝺꝼꝿꞁꞃꞅꞇꞌꞎꞑꞡꞣꞥꞧꞩꟺﬀ-ﬆﬓ-ﬗａ-ｚ]',
-        Lt: '[ǅǈǋǲᾈ-ᾏᾘ-ᾟᾨ-ᾯᾼῌῼ]',
-        Lm: '[ʰ-ˁˆ-ˑˠ-ˤˬˮʹͺՙـۥۦߴߵߺࠚࠤࠨॱๆໆჼៗᡃᪧᱸ-ᱽᴬ-ᵡᵸᶛ-ᶿⁱⁿₐ-ₜⱽⵯⸯ々〱-〵〻ゝゞー-ヾꀕꓸ-ꓽꘌꙿꜗ-ꜟꝰꞈꧏꩰꫝｰﾞﾟ]',
-        Lo: '[ƻǀ-ǃʔא-תװ-ײؠ-ؿف-يٮٯٱ-ۓەۮۯۺ-ۼۿܐܒ-ܯݍ-ޥޱߊ-ߪࠀ-ࠕࡀ-ࡘऄ-हऽॐक़-ॡॲ-ॷॹ-ॿঅ-ঌএঐও-নপ-রলশ-হঽৎড়ঢ়য়-ৡৰৱਅ-ਊਏਐਓ-ਨਪ-ਰਲਲ਼ਵਸ਼ਸਹਖ਼-ੜਫ਼ੲ-ੴઅ-ઍએ-ઑઓ-નપ-રલળવ-હઽૐૠૡଅ-ଌଏଐଓ-ନପ-ରଲଳଵ-ହଽଡ଼ଢ଼ୟ-ୡୱஃஅ-ஊஎ-ஐஒ-கஙசஜஞடணதந-பம-ஹௐఅ-ఌఎ-ఐఒ-నప-ళవ-హఽౘౙౠౡಅ-ಌಎ-ಐಒ-ನಪ-ಳವ-ಹಽೞೠೡೱೲഅ-ഌഎ-ഐഒ-ഺഽൎൠൡൺ-ൿඅ-ඖක-නඳ-රලව-ෆก-ะาำเ-ๅກຂຄງຈຊຍດ-ທນ-ຟມ-ຣລວສຫອ-ະາຳຽເ-ໄໜໝༀཀ-ཇཉ-ཬྈ-ྌက-ဪဿၐ-ၕၚ-ၝၡၥၦၮ-ၰၵ-ႁႎა-ჺᄀ-ቈቊ-ቍቐ-ቖቘቚ-ቝበ-ኈኊ-ኍነ-ኰኲ-ኵኸ-ኾዀዂ-ዅወ-ዖዘ-ጐጒ-ጕጘ-ፚᎀ-ᎏᎠ-Ᏼᐁ-ᙬᙯ-ᙿᚁ-ᚚᚠ-ᛪᜀ-ᜌᜎ-ᜑᜠ-ᜱᝀ-ᝑᝠ-ᝬᝮ-ᝰក-ឳៜᠠ-ᡂᡄ-ᡷᢀ-ᢨᢪᢰ-ᣵᤀ-ᤜᥐ-ᥭᥰ-ᥴᦀ-ᦫᧁ-ᧇᨀ-ᨖᨠ-ᩔᬅ-ᬳᭅ-ᭋᮃ-ᮠᮮᮯᯀ-ᯥᰀ-ᰣᱍ-ᱏᱚ-ᱷᳩ-ᳬᳮ-ᳱℵ-ℸⴰ-ⵥⶀ-ⶖⶠ-ⶦⶨ-ⶮⶰ-ⶶⶸ-ⶾⷀ-ⷆⷈ-ⷎⷐ-ⷖⷘ-ⷞ〆〼ぁ-ゖゟァ-ヺヿㄅ-ㄭㄱ-ㆎㆠ-ㆺㇰ-ㇿ㐀-䶵一-鿋ꀀ-ꀔꀖ-ꒌꓐ-ꓷꔀ-ꘋꘐ-ꘟꘪꘫꙮꚠ-ꛥꟻ-ꠁꠃ-ꠅꠇ-ꠊꠌ-ꠢꡀ-ꡳꢂ-ꢳꣲ-ꣷꣻꤊ-ꤥꤰ-ꥆꥠ-ꥼꦄ-ꦲꨀ-ꨨꩀ-ꩂꩄ-ꩋꩠ-ꩯꩱ-ꩶꩺꪀ-ꪯꪱꪵꪶꪹ-ꪽꫀꫂꫛꫜꬁ-ꬆꬉ-ꬎꬑ-ꬖꬠ-ꬦꬨ-ꬮꯀ-ꯢ가-힣ힰ-ퟆퟋ-ퟻ豈-鶴侮-舘並-龎יִײַ-ﬨשׁ-זּטּ-לּמּנּסּףּפּצּ-ﮱﯓ-ﴽﵐ-ﶏﶒ-ﷇﷰ-ﷻﹰ-ﹴﹶ-ﻼｦ-ｯｱ-ﾝﾠ-ﾾￂ-ￇￊ-ￏￒ-ￗￚ-ￜ]',
-        Mn: '[̀-ͯ҃-֑҇-ׇֽֿׁׂׅׄؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۤۧۨ-ܑۭܰ-݊ަ-ް߫-߳ࠖ-࠙ࠛ-ࠣࠥ-ࠧࠩ-࡙࠭-࡛ऀ-ंऺ़ु-ै्॑-ॗॢॣঁ়ু-ৄ্ৢৣਁਂ਼ੁੂੇੈੋ-੍ੑੰੱੵઁં઼ુ-ૅેૈ્ૢૣଁ଼ିୁ-ୄ୍ୖୢୣஂீ்ా-ీె-ైొ-్ౕౖౢౣ಼ಿೆೌ್ೢೣു-ൄ്ൢൣ්ි-ුූัิ-ฺ็-๎ັິ-ູົຼ່-ໍཱ༹༘༙༵༷-ཾྀ-྄྆྇ྍ-ྗྙ-ྼ࿆ိ-ူဲ-့္်ွှၘၙၞ-ၠၱ-ၴႂႅႆႍႝ፝-፟ᜒ-᜔ᜲ-᜴ᝒᝓᝲᝳិ-ួំ៉-៓៝᠋-᠍ᢩᤠ-ᤢᤧᤨᤲ᤹-᤻ᨘᨗᩖᩘ-ᩞ᩠ᩢᩥ-ᩬᩳ-᩿᩼ᬀ-ᬃ᬴ᬶ-ᬺᬼᭂ᭫-᭳ᮀᮁᮢ-ᮥᮨᮩ᯦ᯨᯩᯭᯯ-ᯱᰬ-ᰳᰶ᰷᳐-᳔᳒-᳢᳠-᳨᳭᷀-ᷦ᷼-᷿⃐-⃥⃜⃡-⃰⳯-⵿⳱ⷠ-〪ⷿ-゙゚〯꙯꙼꙽꛰꛱ꠂ꠆ꠋꠥꠦ꣄꣠-꣱ꤦ-꤭ꥇ-ꥑꦀ-ꦂ꦳ꦶ-ꦹꦼꨩ-ꨮꨱꨲꨵꨶꩃꩌꪰꪲ-ꪴꪷꪸꪾ꪿꫁ꯥꯨ꯭ﬞ︀-️︠-︦]',
-        Me: '[\u0488\u0489\u20DD-\u20E0\u20E2-\u20E4\uA670-\uA672]',
-        Mc: '[ःऻा-ीॉ-ौॎॏংঃা-ীেৈোৌৗਃਾ-ੀઃા-ીૉોૌଂଃାୀେୈୋୌୗாிுூெ-ைொ-ௌௗఁ-ఃు-ౄಂಃಾೀ-ೄೇೈೊೋೕೖംഃാ-ീെ-ൈൊ-ൌൗංඃා-ෑෘ-ෟෲෳ༾༿ཿါာေးျြၖၗၢ-ၤၧ-ၭႃႄႇ-ႌႏႚ-ႜាើ-ៅះៈᤣ-ᤦᤩ-ᤫᤰᤱᤳ-ᤸᦰ-ᧀᧈᧉᨙ-ᨛᩕᩗᩡᩣᩤᩭ-ᩲᬄᬵᬻᬽ-ᭁᭃ᭄ᮂᮡᮦᮧ᮪ᯧᯪ-ᯬᯮ᯲᯳ᰤ-ᰫᰴᰵ᳡ᳲꠣꠤꠧꢀꢁꢴ-ꣃꥒ꥓ꦃꦴꦵꦺꦻꦽ-꧀ꨯꨰꨳꨴꩍꩻꯣꯤꯦꯧꯩꯪ꯬]',
-        Nd: '[0-9٠-٩۰-۹߀-߉०-९০-৯੦-੯૦-૯୦-୯௦-௯౦-౯೦-೯൦-൯๐-๙໐-໙༠-༩၀-၉႐-႙០-៩᠐-᠙᥆-᥏᧐-᧙᪀-᪉᪐-᪙᭐-᭙᮰-᮹᱀-᱉᱐-᱙꘠-꘩꣐-꣙꤀-꤉꧐-꧙꩐-꩙꯰-꯹０-９]',
-        Nl: '[ᛮ-ᛰⅠ-ↂↅ-ↈ〇〡-〩〸-〺ꛦ-ꛯ]',
-        No: '[\xB2\xB3\xB9\xBC-\xBE\u09F4-\u09F9\u0B72-\u0B77\u0BF0-\u0BF2\u0C78-\u0C7E\u0D70-\u0D75\u0F2A-\u0F33\u1369-\u137C\u17F0-\u17F9\u19DA\u2070\u2074-\u2079\u2080-\u2089\u2150-\u215F\u2189\u2460-\u249B\u24EA-\u24FF\u2776-\u2793\u2CFD\u3192-\u3195\u3220-\u3229\u3251-\u325F\u3280-\u3289\u32B1-\u32BF\uA830-\uA835]',
-        Zs: '[ \xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]',
-        Zl: '[\u2028]',
-        Zp: '[\u2029]',
-        Cc: '[\0-\x1F\x7F-\x9F]',
-        Cf: '[\xAD\u0600-\u0603\u06DD\u070F឴឵\u200B-\u200F\u202A-\u202E\u2060-\u2064\u206A-\u206F\uFEFF\uFFF9-\uFFFB]',
-        Cs: '[\uD800-\uDFFF]',
-        Co: '[\uE000-\uF8FF]',
-        Ps: '[([{\u0F3A\u0F3C\u169B\u201A\u201E\u2045\u207D\u208D\u2329\u2768\u276A\u276C\u276E\u2770\u2772\u2774\u27C5\u27E6\u27E8\u27EA\u27EC\u27EE\u2983\u2985\u2987\u2989\u298B\u298D\u298F\u2991\u2993\u2995\u2997\u29D8\u29DA\u29FC\u2E22\u2E24\u2E26\u2E28\u3008\u300A\u300C\u300E\u3010\u3014\u3016\u3018\u301A\u301D\uFD3E\uFE17\uFE35\uFE37\uFE39\uFE3B\uFE3D\uFE3F\uFE41\uFE43\uFE47\uFE59\uFE5B\uFE5D\uFF08\uFF3B\uFF5B\uFF5F\uFF62]',
-        Pd: '[-\u058A\u05BE\u1400\u1806\u2010-\u2015\u2E17\u2E1A\u301C\u3030\u30A0\uFE31\uFE32\uFE58\uFE63\uFF0D]',
-        Pc: '[_‿⁀⁔︳︴﹍-﹏＿]',
-        Pe: '[)]}\u0F3B\u0F3D\u169C\u2046\u207E\u208E\u232A\u2769\u276B\u276D\u276F\u2771\u2773\u2775\u27C6\u27E7\u27E9\u27EB\u27ED\u27EF\u2984\u2986\u2988\u298A\u298C\u298E\u2990\u2992\u2994\u2996\u2998\u29D9\u29DB\u29FD\u2E23\u2E25\u2E27\u2E29\u3009\u300B\u300D\u300F\u3011\u3015\u3017\u3019\u301B\u301E\u301F\uFD3F\uFE18\uFE36\uFE38\uFE3A\uFE3C\uFE3E\uFE40\uFE42\uFE44\uFE48\uFE5A\uFE5C\uFE5E\uFF09\uFF3D\uFF5D\uFF60\uFF63]',
-        Sm: '[+<->|~\xAC\xB1\xD7\xF7\u03F6\u0606-\u0608\u2044\u2052\u207A-\u207C\u208A-\u208C\u2118\u2140-\u2144\u214B\u2190-\u2194\u219A\u219B\u21A0\u21A3\u21A6\u21AE\u21CE\u21CF\u21D2\u21D4\u21F4-\u22FF\u2308-\u230B\u2320\u2321\u237C\u239B-\u23B3\u23DC-\u23E1\u25B7\u25C1\u25F8-\u25FF\u266F\u27C0-\u27C4\u27C7-\u27CA\u27CC\u27CE-\u27E5\u27F0-\u27FF\u2900-\u2982\u2999-\u29D7\u29DC-\u29FB\u29FE-\u2AFF\u2B30-\u2B44\u2B47-\u2B4C\uFB29\uFE62\uFE64-\uFE66\uFF0B\uFF1C-\uFF1E\uFF5C\uFF5E\uFFE2\uFFE9-\uFFEC]',
-        Po: '[!-#%-\'*,./:;?@\\\xA1\xB7\xBF\u037E\u0387\u055A-\u055F\u0589\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061E\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1361-\u1368\u166D\u166E\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u1805\u1807-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B5A-\u1B60\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CD3\u2016\u2017\u2020-\u2027\u2030-\u2038\u203B-\u203E\u2041-\u2043\u2047-\u2051\u2053\u2055-\u205E\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00\u2E01\u2E06-\u2E08\u2E0B\u2E0E-\u2E16\u2E18\u2E19\u2E1B\u2E1E\u2E1F\u2E2A-\u2E2E\u2E30\u2E31\u3001-\u3003\u303D\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uABEB\uFE10-\uFE16\uFE19\uFE30\uFE45\uFE46\uFE49-\uFE4C\uFE50-\uFE52\uFE54-\uFE57\uFE5F-\uFE61\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF07\uFF0A\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3C\uFF61\uFF64\uFF65]',
-        Sk: '[^`\xA8\xAF\xB4\xB8\u02C2-\u02C5\u02D2-\u02DF\u02E5-\u02EB\u02ED\u02EF-\u02FF\u0375\u0384\u0385\u1FBD\u1FBF-\u1FC1\u1FCD-\u1FCF\u1FDD-\u1FDF\u1FED-\u1FEF\u1FFD\u1FFE\u309B\u309C\uA700-\uA716\uA720\uA721\uA789\uA78A\uFBB2-\uFBC1\uFF3E\uFF40\uFFE3]',
-        Sc: '[$\xA2-\xA5\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0-\u20B9\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6]',
-        Pi: '[\xAB\u2018\u201B\u201C\u201F\u2039\u2E02\u2E04\u2E09\u2E0C\u2E1C\u2E20]',
-        So: '[\xA6\xA7\xA9\xAE\xB0\xB6\u0482\u060E\u060F\u06DE\u06E9\u06FD\u06FE\u07F6\u09FA\u0B70\u0BF3-\u0BF8\u0BFA\u0C7F\u0D79\u0F01-\u0F03\u0F13-\u0F17\u0F1A-\u0F1F\u0F34\u0F36\u0F38\u0FBE-\u0FC5\u0FC7-\u0FCC\u0FCE\u0FCF\u0FD5-\u0FD8\u109E\u109F\u1360\u1390-\u1399\u1940\u19DE-\u19FF\u1B61-\u1B6A\u1B74-\u1B7C\u2100\u2101\u2103-\u2106\u2108\u2109\u2114\u2116\u2117\u211E-\u2123\u2125\u2127\u2129\u212E\u213A\u213B\u214A\u214C\u214D\u214F\u2195-\u2199\u219C-\u219F\u21A1\u21A2\u21A4\u21A5\u21A7-\u21AD\u21AF-\u21CD\u21D0\u21D1\u21D3\u21D5-\u21F3\u2300-\u2307\u230C-\u231F\u2322-\u2328\u232B-\u237B\u237D-\u239A\u23B4-\u23DB\u23E2-\u23F3\u2400-\u2426\u2440-\u244A\u249C-\u24E9\u2500-\u25B6\u25B8-\u25C0\u25C2-\u25F7\u2600-\u266E\u2670-\u26FF\u2701-\u2767\u2794-\u27BF\u2800-\u28FF\u2B00-\u2B2F\u2B45\u2B46\u2B50-\u2B59\u2CE5-\u2CEA\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u2FF0-\u2FFB\u3004\u3012\u3013\u3020\u3036\u3037\u303E\u303F\u3190\u3191\u3196-\u319F\u31C0-\u31E3\u3200-\u321E\u322A-\u3250\u3260-\u327F\u328A-\u32B0\u32C0-\u32FE\u3300-\u33FF\u4DC0-\u4DFF\uA490-\uA4C6\uA828-\uA82B\uA836\uA837\uA839\uAA77-\uAA79\uFDFD\uFFE4\uFFE8\uFFED\uFFEE\uFFFC\uFFFD]',
-        Pf: '[\xBB\u2019\u201D\u203A\u2E03\u2E05\u2E0A\u2E0D\u2E1D\u2E21]'
-    };
-    var firstLetters = {};
-    for (var p in unicodeCategories) {
-        if (firstLetters[p[0]])
-            firstLetters[p[0]] = unicodeCategories[p].substring(0, unicodeCategories[p].length - 1) + firstLetters[p[0]].substring(1);
-        else
-            firstLetters[p[0]] = unicodeCategories[p];
-    }
-    for (var p in firstLetters)
-        unicodeCategories[p] = firstLetters[p];
-    return function (regexpString) {
-        var modifiers = '';
-        if (regexpString instanceof RegExp) {
-            modifiers = (regexpString.global ? 'g' : '') + (regexpString.ignoreCase ? 'i' : '') + (regexpString.multiline ? 'm' : '');
-            regexpString = regexpString.source;
-        }
-        regexpString = regexpString.replace(/\\p\{(..?)\}/g, function (match, group) {
-            return unicodeCategories[group] || match;
-        });
-        return new RegExp(regexpString, modifiers);
-    };
-}();
-;
-Base64 = {
-    _keyStr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
-    encode: function (input) {
-        var output = '';
-        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-        var i = 0;
-        input = Base64._utf8_encode(input);
-        while (i < input.length) {
-            chr1 = input.charCodeAt(i++);
-            chr2 = input.charCodeAt(i++);
-            chr3 = input.charCodeAt(i++);
-            enc1 = chr1 >> 2;
-            enc2 = (chr1 & 3) << 4 | chr2 >> 4;
-            enc3 = (chr2 & 15) << 2 | chr3 >> 6;
-            enc4 = chr3 & 63;
-            if (isNaN(chr2)) {
-                enc3 = enc4 = 64;
-            } else if (isNaN(chr3)) {
-                enc4 = 64;
-            }
-            output = output + Base64._keyStr.charAt(enc1) + Base64._keyStr.charAt(enc2) + Base64._keyStr.charAt(enc3) + Base64._keyStr.charAt(enc4);
-        }
-        return output;
-    },
-    decode: function (input) {
-        var output = '';
-        var chr1, chr2, chr3;
-        var enc1, enc2, enc3, enc4;
-        var i = 0;
-        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
-        while (i < input.length) {
-            enc1 = Base64._keyStr.indexOf(input.charAt(i++));
-            enc2 = Base64._keyStr.indexOf(input.charAt(i++));
-            enc3 = Base64._keyStr.indexOf(input.charAt(i++));
-            enc4 = Base64._keyStr.indexOf(input.charAt(i++));
-            chr1 = enc1 << 2 | enc2 >> 4;
-            chr2 = (enc2 & 15) << 4 | enc3 >> 2;
-            chr3 = (enc3 & 3) << 6 | enc4;
-            output = output + String.fromCharCode(chr1);
-            if (enc3 != 64) {
-                output = output + String.fromCharCode(chr2);
-            }
-            if (enc4 != 64) {
-                output = output + String.fromCharCode(chr3);
-            }
-        }
-        output = Base64._utf8_decode(output);
-        return output;
-    },
-    _utf8_encode: function (string) {
-        string = string.replace(/\r\n/g, '\n');
-        var utftext = '';
-        for (var n = 0; n < string.length; n++) {
-            var c = string.charCodeAt(n);
-            if (c < 128) {
-                utftext += String.fromCharCode(c);
-            } else if (c > 127 && c < 2048) {
-                utftext += String.fromCharCode(c >> 6 | 192);
-                utftext += String.fromCharCode(c & 63 | 128);
-            } else {
-                utftext += String.fromCharCode(c >> 12 | 224);
-                utftext += String.fromCharCode(c >> 6 & 63 | 128);
-                utftext += String.fromCharCode(c & 63 | 128);
-            }
-        }
-        return utftext;
-    },
-    _utf8_decode: function (utftext) {
-        var string = '';
-        var i = 0;
-        var c = c1 = c2 = 0;
-        while (i < utftext.length) {
-            c = utftext.charCodeAt(i);
-            if (c < 128) {
-                string += String.fromCharCode(c);
-                i++;
-            } else if (c > 191 && c < 224) {
-                c2 = utftext.charCodeAt(i + 1);
-                string += String.fromCharCode((c & 31) << 6 | c2 & 63);
-                i += 2;
-            } else {
-                c2 = utftext.charCodeAt(i + 1);
-                c3 = utftext.charCodeAt(i + 2);
-                string += String.fromCharCode((c & 15) << 12 | (c2 & 63) << 6 | c3 & 63);
-                i += 3;
-            }
-        }
-        return string;
-    }
-};
-;
-(function () {
-    var p = function () {
-        if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
-            var platform = navigator.platform, userAgent = navigator.userAgent, platformOrUserAgent = platform + '\n' + userAgent;
-            return _.extend({
-                engine: 'browser',
-                browserEngine: userAgent.indexOf('AppleWebKit') >= 0 ? 'WebKit' : undefined,
-                browser: userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : userAgent.indexOf('Chrome') >= 0 ? 'Chrome' : userAgent.indexOf('Safari') >= 0 ? 'Safari' : userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
-            }, platform.indexOf('Linux arm') >= 0 || platformOrUserAgent.indexOf('Android') >= 0 ? {
-                touch: true,
-                system: 'Android'
-            } : platformOrUserAgent.indexOf('iPad') >= 0 ? {
-                touch: true,
-                system: 'iOS',
-                device: 'iPad'
-            } : platformOrUserAgent.indexOf('iPhone') >= 0 || platformOrUserAgent.indexOf('iPod') >= 0 ? {
-                touch: true,
-                system: 'iOS',
-                device: 'iPhone'
-            } : {});
-        } else if (typeof global !== 'undefined' && global._) {
-            return { engine: 'node' };
-        } else {
-            return {};
-        }
-    }();
-    var $global = p.engine === 'browser' ? window : p.engine === 'node' ? global : undefined;
-    $global.define = function (name, v, cfg) {
-        if (name in $global) {
-            throw new Error('cannot define global ' + name + ': already there');
-        }
-        var def = v && v.get instanceof Function && v.set instanceof Function && v || v instanceof Function && v.length === 0 && { get: v } || { value: v };
-        return Object.defineProperty($global, name, _.extend(def, { enumerable: true }, cfg));
-    };
-    $global.define('$global', $global);
-    $global.define('$platform', Object.defineProperties({}, _.mapObject({
-        engine: p.engine,
-        system: p.system,
-        device: p.device,
-        touch: p.touch || false,
-        IE: p.browser === 'IE',
-        Firefox: p.browser === 'Firefox',
-        Safari: p.browser === 'Safari',
-        Chrome: p.browser === 'Chrome',
-        WebKit: p.browserEngine === 'WebKit',
-        Browser: p.engine === 'browser',
-        NodeJS: p.engine === 'node',
-        iPad: p.device === 'iPad',
-        iPhone: p.device === 'iPhone',
-        iOS: p.system === 'iOS'
-    }, function (v, k) {
-        return {
-            enumerable: true,
-            value: v
+(function (modules) {
+    var installedModules = {};
+    function __webpack_require__(moduleId) {
+        if (installedModules[moduleId])
+            return installedModules[moduleId].exports;
+        var module = installedModules[moduleId] = {
+            exports: {},
+            id: moduleId,
+            loaded: false
         };
-    })));
-}());
-$overrideUnderscore = function (name, genImpl) {
-    return _[name] = genImpl(_[name]);
-};
-if ($platform.NodeJS) {
-    $global.alert = function (args) {
-        var print = $global.log && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
-        print.apply(print, ['ALERT:'].concat(_.asArray(arguments)));
-    };
-}
-$global.alert2 = function (args) {
-    alert(_.map(arguments, _.stringify).join(', '));
-    return arguments[0];
-};
-$global.log = function () {
-    console.log.apply(console, arguments);
-};
-_.hasAsserts = true;
-_.extend(_, {
-    tests: {},
-    withTest: function (name, test, defineSubject) {
-        defineSubject();
-        _.runTest(name, test);
-        _.publishToTestsNamespace(name, test);
-    },
-    deferTest: function (name, test, defineSubject) {
-        defineSubject();
-        _.publishToTestsNamespace(name, test);
-    },
-    runTest: function (name, test) {
-        try {
-            if (_.isFunction(test)) {
-                test();
-            } else {
-                _.each(test, function (fn) {
-                    fn();
-                });
-            }
-        } catch (e) {
-            if (_.isAssertionError(e)) {
-                var printedName = (_.isArray(name) && name || [name]).join('.');
-                console.log(printedName + ':', e.message, '\n' + _.times(printedName.length, _.constant('~')).join('') + '\n');
-                _.each(e.notMatching, function (x) {
-                    console.log('  \u2022', x);
-                });
-            }
-            throw e;
-        }
-    },
-    publishToTestsNamespace: function (name, test) {
-        if (_.isArray(name)) {
-            (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test;
-        } else {
-            _.tests[name] = test;
-        }
+        modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+        module.loaded = true;
+        return module.exports;
     }
-});
-(function () {
-    var assertImpl = function (positive) {
-        return function (__) {
-            var args = [].splice.call(arguments, 0);
-            if (args.length === 1) {
-                if (positive && args[0] !== true) {
-                    _.assertionFailed({ notMatching: args });
-                }
-            } else if (positive && _.allEqual(args) !== true) {
-                _.assertionFailed({ notMatching: args });
-            }
-            return true;
-        };
-    };
-    $overrideUnderscore('matches', function (matches) {
-        return function (a) {
-            return _.isObject(a) ? matches(a) : function (b) {
-                return a === b;
-            };
-        };
-    });
-    _.extend(_, _.assertions = {
-        assert: assertImpl(true),
-        assertNot: assertImpl(false),
-        assertCPS: function (fn, args, then) {
-            var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
-            fn(function () {
-                $assert([].splice.call(arguments, 0), requiredResult);
-                if (then) {
-                    then();
-                    return true;
+    __webpack_require__.m = modules;
+    __webpack_require__.c = installedModules;
+    __webpack_require__.p = '';
+    return __webpack_require__(0);
+}([
+    function (module, exports, __webpack_require__) {
+        var require;
+        $uselessFile = 'useless.js';
+        if (true) {
+            _ = __webpack_require__(1);
+            $include = require;
+        }
+        _ = function () {
+            _.mixin({
+                zipWith: function (rows, zippo) {
+                    return _.reduce(_.rest(rows), function (memo, row) {
+                        return _.times(Math.max(memo && memo.length || 0, row && row.length || 0), function (i) {
+                            return zippo(memo && memo[i], row && row[i]);
+                        });
+                    }, _.first(rows));
                 }
             });
-        },
-        assertNotCalled: function (context) {
-            var inContext = true;
-            context(function () {
-                if (inContext) {
-                    $fail;
-                }
-            });
-            inContext = false;
-        },
-        assertEveryCalledOnce: function (fn, then) {
-            return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
-        },
-        assertEveryCalled: function (fn_, then) {
-            var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
-            once = _.hasTags ? $once.is(fn_) : fn_.once;
-            var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
-            var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
-                var parts = arg.trim().match(/^(.+)__(\d+)$/);
-                var num = parts && parseInt(parts[2], 10);
-                return _.isFinite(num) ? num || false : true;
-            });
-            var status = _.times(fn.length, _.constant(false));
-            var callbacks = _.times(fn.length, function (i) {
-                return function () {
-                    status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
-                    if (async && _.isEqual(status, contracts))
-                        then();
-                };
-            });
-            fn.apply(null, callbacks);
-            if (!async) {
-                _.assert(status, contracts);
-                if (then) {
-                    then();
-                }
-            }
-        },
-        assertCalledWithArguments: function (argsPattern, generateCalls) {
-            return _.assert(_.arr(generateCalls), argsPattern);
-        },
-        assertCallOrder: function (fn) {
-            var callIndex = 0;
-            var callbacks = _.times(fn.length, function (i) {
-                return function () {
-                    arguments.callee.callIndex = callIndex++;
-                };
-            });
-            fn.apply(null, callbacks);
-            return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
-        },
-        assertMatches: function (value, pattern) {
-            try {
-                return _.assert(_.matches.apply(null, _.rest(arguments))(value));
-            } catch (e) {
-                throw _.isAssertionError(e) ? _.extend(e, {
-                    notMatching: [
-                        value,
-                        pattern
+            if ('a1 b2 c3' !== _.zipWith([
+                    [
+                        'a',
+                        'b',
+                        'c'
+                    ],
+                    [
+                        1,
+                        2,
+                        3
                     ]
-                }) : e;
-            }
-        },
-        assertNotMatches: function (value, pattern) {
-            try {
-                return _.assert(!_.matches.apply(null, _.rest(arguments))(value));
-            } catch (e) {
-                throw _.isAssertionError(e) ? _.extend(e, {
-                    notMatching: [
-                        value,
-                        pattern
-                    ]
-                }) : e;
-            }
-        },
-        assertType: function (value, contract) {
-            return _.assert(_.decideType(value), contract);
-        },
-        assertTypeMatches: function (value, contract) {
-            return _.isEmpty(mismatches = _.typeMismatches(contract, value)) ? true : _.assertionFailed({
-                message: 'provided value type not matches required contract',
-                asColumns: true,
-                notMatching: [
-                    { provided: value },
-                    { required: contract },
-                    { mismatches: mismatches }
-                ]
-            });
-        },
-        assertFails: function (what) {
-            return _.assertThrows.call(this, what, _.isAssertionError);
-        },
-        assertThrows: function (what, errorPattern) {
-            var e = undefined, thrown = false;
-            try {
-                what.call(this);
-            } catch (__) {
-                e = __;
-                thrown = true;
-            }
-            _.assert.call(this, thrown);
-            if (arguments.length > 1) {
-                _.assertMatches.call(this, e, errorPattern);
-            }
-        },
-        assertNotThrows: function (what) {
-            return _.assertEveryCalled(function (ok) {
-                what();
-                ok();
-            });
-        },
-        assertArguments: function (args, callee, name) {
-            var fn = (callee || args.callee).toString();
-            var match = fn.match(/.*function[^\(]\(([^\)]+)\)/);
-            if (match) {
-                var valuesPassed = _.asArray(args);
-                var valuesNeeded = _.map(match[1].split(','), function (_s) {
-                    var s = _s.trim()[0] === '_' ? _s.replace(/_/g, ' ').trim() : undefined;
-                    var n = parseInt(s, 10);
-                    return _.isFinite(n) ? n : s;
-                });
-                var zap = _.zipWith([
-                    valuesNeeded,
-                    valuesPassed
                 ], function (a, b) {
-                    return a === undefined ? true : a === b;
+                    return a + b;
+                }).join(' ')) {
+                throw new Error('_.zipWith broken');
+            }
+            return _;
+        }();
+        __webpack_require__(2);
+        __webpack_require__(3);
+        __webpack_require__(4);
+        __webpack_require__(5);
+        __webpack_require__(6);
+        __webpack_require__(7);
+        __webpack_require__(8);
+        __webpack_require__(9);
+        __webpack_require__(10);
+        __webpack_require__(11);
+        __webpack_require__(12);
+        __webpack_require__(13);
+        __webpack_require__(14);
+        __webpack_require__(15);
+        __webpack_require__(16);
+        __webpack_require__(17);
+        __webpack_require__(18);
+        __webpack_require__(19);
+        __webpack_require__(20);
+        __webpack_require__(21);
+        __webpack_require__(22);
+        __webpack_require__(23);
+        __webpack_require__(24);
+        __webpack_require__(25);
+        __webpack_require__(26);
+        __webpack_require__(27);
+        __webpack_require__(28);
+        __webpack_require__(29);
+        __webpack_require__(30);
+        __webpack_require__(31);
+        __webpack_require__(32);
+        __webpack_require__(33);
+        __webpack_require__(35);
+        __webpack_require__(36);
+        __webpack_require__(37);
+        __webpack_require__(38);
+        __webpack_require__(39);
+        __webpack_require__(40);
+        if ($platform.NodeJS) {
+            module.exports = _;
+        }
+    },
+    function (module, exports, __webpack_require__) {
+        var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
+        (function () {
+            var root = this;
+            var previousUnderscore = root._;
+            var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
+            var push = ArrayProto.push, slice = ArrayProto.slice, toString = ObjProto.toString, hasOwnProperty = ObjProto.hasOwnProperty;
+            var nativeIsArray = Array.isArray, nativeKeys = Object.keys, nativeBind = FuncProto.bind, nativeCreate = Object.create;
+            var Ctor = function () {
+            };
+            var _ = function (obj) {
+                if (obj instanceof _)
+                    return obj;
+                if (!(this instanceof _))
+                    return new _(obj);
+                this._wrapped = obj;
+            };
+            if (true) {
+                if (typeof module !== 'undefined' && module.exports) {
+                    exports = module.exports = _;
+                }
+                exports._ = _;
+            } else {
+                root._ = _;
+            }
+            _.VERSION = '1.8.3';
+            var optimizeCb = function (func, context, argCount) {
+                if (context === void 0)
+                    return func;
+                switch (argCount == null ? 3 : argCount) {
+                case 1:
+                    return function (value) {
+                        return func.call(context, value);
+                    };
+                case 2:
+                    return function (value, other) {
+                        return func.call(context, value, other);
+                    };
+                case 3:
+                    return function (value, index, collection) {
+                        return func.call(context, value, index, collection);
+                    };
+                case 4:
+                    return function (accumulator, value, index, collection) {
+                        return func.call(context, accumulator, value, index, collection);
+                    };
+                }
+                return function () {
+                    return func.apply(context, arguments);
+                };
+            };
+            var cb = function (value, context, argCount) {
+                if (value == null)
+                    return _.identity;
+                if (_.isFunction(value))
+                    return optimizeCb(value, context, argCount);
+                if (_.isObject(value))
+                    return _.matcher(value);
+                return _.property(value);
+            };
+            _.iteratee = function (value, context) {
+                return cb(value, context, Infinity);
+            };
+            var createAssigner = function (keysFunc, undefinedOnly) {
+                return function (obj) {
+                    var length = arguments.length;
+                    if (length < 2 || obj == null)
+                        return obj;
+                    for (var index = 1; index < length; index++) {
+                        var source = arguments[index], keys = keysFunc(source), l = keys.length;
+                        for (var i = 0; i < l; i++) {
+                            var key = keys[i];
+                            if (!undefinedOnly || obj[key] === void 0)
+                                obj[key] = source[key];
+                        }
+                    }
+                    return obj;
+                };
+            };
+            var baseCreate = function (prototype) {
+                if (!_.isObject(prototype))
+                    return {};
+                if (nativeCreate)
+                    return nativeCreate(prototype);
+                Ctor.prototype = prototype;
+                var result = new Ctor();
+                Ctor.prototype = null;
+                return result;
+            };
+            var property = function (key) {
+                return function (obj) {
+                    return obj == null ? void 0 : obj[key];
+                };
+            };
+            var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+            var getLength = property('length');
+            var isArrayLike = function (collection) {
+                var length = getLength(collection);
+                return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+            };
+            _.each = _.forEach = function (obj, iteratee, context) {
+                iteratee = optimizeCb(iteratee, context);
+                var i, length;
+                if (isArrayLike(obj)) {
+                    for (i = 0, length = obj.length; i < length; i++) {
+                        iteratee(obj[i], i, obj);
+                    }
+                } else {
+                    var keys = _.keys(obj);
+                    for (i = 0, length = keys.length; i < length; i++) {
+                        iteratee(obj[keys[i]], keys[i], obj);
+                    }
+                }
+                return obj;
+            };
+            _.map = _.collect = function (obj, iteratee, context) {
+                iteratee = cb(iteratee, context);
+                var keys = !isArrayLike(obj) && _.keys(obj), length = (keys || obj).length, results = Array(length);
+                for (var index = 0; index < length; index++) {
+                    var currentKey = keys ? keys[index] : index;
+                    results[index] = iteratee(obj[currentKey], currentKey, obj);
+                }
+                return results;
+            };
+            function createReduce(dir) {
+                function iterator(obj, iteratee, memo, keys, index, length) {
+                    for (; index >= 0 && index < length; index += dir) {
+                        var currentKey = keys ? keys[index] : index;
+                        memo = iteratee(memo, obj[currentKey], currentKey, obj);
+                    }
+                    return memo;
+                }
+                return function (obj, iteratee, memo, context) {
+                    iteratee = optimizeCb(iteratee, context, 4);
+                    var keys = !isArrayLike(obj) && _.keys(obj), length = (keys || obj).length, index = dir > 0 ? 0 : length - 1;
+                    if (arguments.length < 3) {
+                        memo = obj[keys ? keys[index] : index];
+                        index += dir;
+                    }
+                    return iterator(obj, iteratee, memo, keys, index, length);
+                };
+            }
+            _.reduce = _.foldl = _.inject = createReduce(1);
+            _.reduceRight = _.foldr = createReduce(-1);
+            _.find = _.detect = function (obj, predicate, context) {
+                var key;
+                if (isArrayLike(obj)) {
+                    key = _.findIndex(obj, predicate, context);
+                } else {
+                    key = _.findKey(obj, predicate, context);
+                }
+                if (key !== void 0 && key !== -1)
+                    return obj[key];
+            };
+            _.filter = _.select = function (obj, predicate, context) {
+                var results = [];
+                predicate = cb(predicate, context);
+                _.each(obj, function (value, index, list) {
+                    if (predicate(value, index, list))
+                        results.push(value);
                 });
-                if (!_.every(zap)) {
-                    _.assertionFailed({
-                        notMatching: _.nonempty([
-                            [
-                                name,
-                                fn
-                            ].join(': '),
-                            valuesNeeded,
-                            valuesPassed
-                        ])
+                return results;
+            };
+            _.reject = function (obj, predicate, context) {
+                return _.filter(obj, _.negate(cb(predicate)), context);
+            };
+            _.every = _.all = function (obj, predicate, context) {
+                predicate = cb(predicate, context);
+                var keys = !isArrayLike(obj) && _.keys(obj), length = (keys || obj).length;
+                for (var index = 0; index < length; index++) {
+                    var currentKey = keys ? keys[index] : index;
+                    if (!predicate(obj[currentKey], currentKey, obj))
+                        return false;
+                }
+                return true;
+            };
+            _.some = _.any = function (obj, predicate, context) {
+                predicate = cb(predicate, context);
+                var keys = !isArrayLike(obj) && _.keys(obj), length = (keys || obj).length;
+                for (var index = 0; index < length; index++) {
+                    var currentKey = keys ? keys[index] : index;
+                    if (predicate(obj[currentKey], currentKey, obj))
+                        return true;
+                }
+                return false;
+            };
+            _.contains = _.includes = _.include = function (obj, item, fromIndex, guard) {
+                if (!isArrayLike(obj))
+                    obj = _.values(obj);
+                if (typeof fromIndex != 'number' || guard)
+                    fromIndex = 0;
+                return _.indexOf(obj, item, fromIndex) >= 0;
+            };
+            _.invoke = function (obj, method) {
+                var args = slice.call(arguments, 2);
+                var isFunc = _.isFunction(method);
+                return _.map(obj, function (value) {
+                    var func = isFunc ? method : value[method];
+                    return func == null ? func : func.apply(value, args);
+                });
+            };
+            _.pluck = function (obj, key) {
+                return _.map(obj, _.property(key));
+            };
+            _.where = function (obj, attrs) {
+                return _.filter(obj, _.matcher(attrs));
+            };
+            _.findWhere = function (obj, attrs) {
+                return _.find(obj, _.matcher(attrs));
+            };
+            _.max = function (obj, iteratee, context) {
+                var result = -Infinity, lastComputed = -Infinity, value, computed;
+                if (iteratee == null && obj != null) {
+                    obj = isArrayLike(obj) ? obj : _.values(obj);
+                    for (var i = 0, length = obj.length; i < length; i++) {
+                        value = obj[i];
+                        if (value > result) {
+                            result = value;
+                        }
+                    }
+                } else {
+                    iteratee = cb(iteratee, context);
+                    _.each(obj, function (value, index, list) {
+                        computed = iteratee(value, index, list);
+                        if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
+                            result = value;
+                            lastComputed = computed;
+                        }
                     });
                 }
-            }
-        },
-        fail: function () {
-            _.assertionFailed();
-        },
-        fails: _.constant(function () {
-            _.assertionFailed();
-        }),
-        stub: function () {
-            _.assertionFailed();
-        }
-    });
-    _.extend(_, {
-        assertionError: function (additionalInfo) {
-            return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
-        },
-        assertionFailed: function (additionalInfo) {
-            throw _.extend(_.assertionError(additionalInfo), { stack: _.rest(new Error().stack.split('\n'), 3).join('\n') });
-        },
-        isAssertionError: function (e) {
-            return e && e.assertion === true;
-        }
-    });
-    _.extend(_, {
-        allEqual: function (values) {
-            return _.reduce(values, function (prevEqual, x) {
-                return prevEqual && _.isEqual(values[0], x);
-            }, true);
-        }
-    });
-    _.each(_.keys(_.assertions), function (name) {
-        $global.define('$' + name, _[name], { configurable: true });
-    });
-    for (var k in _.assertions) {
-        $global['$' + k] = 1;
-    }
-    $assert;
-}());
-_.extend(_, {
-    asArray: function (x) {
-        return x.length !== undefined ? [].slice.call(x, 0) : [x];
-    }
-});
-_.extend(_, {
-    numArgs: function (fn) {
-        return fn._ac === undefined ? fn.length : fn._ac;
-    },
-    restArg: function (fn) {
-        return fn._ra || false;
-    },
-    noArgs: function (fn) {
-        return _.numArgs(fn) === 0 && !fn._ra;
-    },
-    hasArgs: function (fn) {
-        return _.numArgs(fn) > 0 && !fn._ra;
-    },
-    oneArg: function (fn) {
-        return _.numArgs(fn) === 1 && !fn._ra;
-    },
-    withRestArg: $restArg = function (fn) {
-        Object.defineProperty(fn, '_ra', {
-            enumerable: false,
-            writable: true,
-            value: true
-        });
-        return fn;
-    },
-    withArgs: function (numArgs, restArg, fn) {
-        if (numArgs !== undefined) {
-            Object.defineProperty(fn, '_ac', {
-                enumerable: false,
-                writable: true,
-                value: numArgs
-            });
-        }
-        if (restArg !== undefined) {
-            Object.defineProperty(fn, '_ra', {
-                enumerable: false,
-                writable: true,
-                value: restArg
-            });
-        }
-        return fn;
-    },
-    withSameArgs: function (other, fn) {
-        return _.withArgs(_.numArgs(other), _.restArg(other), fn);
-    }
-});
-$overrideUnderscore('memoize', function (memoize) {
-    return function (fn) {
-        return _.withSameArgs(fn, memoize(fn));
-    };
-});
-$overrideUnderscore('partial', function (partial) {
-    return $restArg(function (fn) {
-        return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 1)), fn._ra, partial.apply(this, arguments));
-    });
-});
-$overrideUnderscore('bind', function (bind) {
-    return $restArg(function (fn, this_) {
-        return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 2)), fn._ra, bind.apply(this, arguments));
-    });
-});
-_.debugEcho = function () {
-    return [this].concat(_.asArray(arguments));
-};
-_.call = function (fn, this_, args) {
-    return fn.apply(this_, _.rest(arguments, 2));
-};
-_.arity = function (N, fn) {
-    return function () {
-        return fn.apply(this, _.first(arguments, N));
-    };
-};
-_.arity0 = function (fn) {
-    return function () {
-        return fn.call(this);
-    };
-};
-_.arity1 = function (fn) {
-    return function (a) {
-        return fn.call(this, a);
-    };
-};
-_.arity2 = function (fn) {
-    return function (a, b) {
-        return fn.call(this, a, b);
-    };
-};
-_.arity3 = function (fn) {
-    return function (a, b, c) {
-        return fn.call(this, a, b, c);
-    };
-};
-_.arityFn = function (N) {
-    return _['arity' + N];
-};
-_.tails = $restArg(function (fn) {
-    var tailArgs = _.rest(arguments);
-    return function () {
-        return fn.apply(this, _.asArray(arguments).concat(tailArgs));
-    };
-});
-_.tails2 = $restArg(function (fn) {
-    var tailArgs = _.rest(arguments);
-    return function (a) {
-        return fn.apply(this, [a].concat(tailArgs));
-    };
-});
-_.tails3 = $restArg(function (fn) {
-    var tailArgs = _.rest(arguments);
-    return function (a, b) {
-        return fn.apply(this, [
-            a,
-            b
-        ].concat(tailArgs));
-    };
-});
-_.callsTo = function (fn) {
-    return $restArg(function () {
-        return _.callsWith.apply(null, arguments)(fn);
-    });
-};
-_.tailsTo = function (fn, then) {
-    return $restArg(function () {
-        return _.tailsWith.apply(null, arguments)(fn);
-    });
-};
-_.callsWith = $restArg(function () {
-    var args = _.asArray(arguments);
-    return function (fn) {
-        return _.withSameArgs(fn, function () {
-            return fn.apply(this, args.concat(_.asArray(arguments)));
-        });
-    };
-});
-_.tailsWith = $restArg(function () {
-    var args = _.asArray(arguments);
-    return function (fn) {
-        return _.withSameArgs(fn, function () {
-            return fn.apply(this, _.asArray(arguments).concat(args));
-        });
-    };
-});
-_.argumentAppendingWrapper = function (fn, then) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this, args = _.asArray(arguments);
-        return then(function () {
-            return fn.apply(this_, args.concat(_.asArray(arguments)));
-        });
-    });
-};
-_.argumentPrependingWrapper = function (fn, then) {
-    return _.withSameArgs(fn, function () {
-        var this_ = this, args = _.asArray(arguments);
-        return then(function () {
-            return fn.apply(this_, _.asArray(arguments).concat(args));
-        });
-    });
-};
-_.new = $restArg(function (Constructor, a, b, c, d) {
-    switch (arguments.length) {
-    case 1:
-        return new Constructor();
-    case 2:
-        return new Constructor(a);
-    case 3:
-        return new Constructor(a, b);
-    case 4:
-        return new Constructor(a, b, c);
-    case 5:
-        return new Constructor(a, b, c, d);
-    default:
-        _.notImplemented();
-    }
-});
-_.flipN = function (fn) {
-    return $restArg(function () {
-        return fn.apply(this, _.asArray(arguments).reverse());
-    });
-};
-_.flip = function (fn) {
-    if (_.restArg(fn)) {
-        return _.flipN(fn);
-    } else {
-        switch (_.numArgs(fn)) {
-        case 0:
-        case 1:
-            return fn;
-        case 2:
-            return _.flip2(fn);
-        case 3:
-            return _.flip3(fn);
-        default:
-            throw new Error('flip: unsupported arity');
-        }
-    }
-};
-_.flip2 = function (fn) {
-    return function (a, b) {
-        return fn.call(this, b, a);
-    };
-};
-_.flip3 = function (fn) {
-    return function (a, b, c) {
-        return fn.call(this, c, b, a);
-    };
-};
-_.or = function (a, b) {
-    return function () {
-        return a.apply(this, arguments) || b.apply(this, arguments);
-    };
-}, _.and = function (a, b) {
-    return function () {
-        return a.apply(this, arguments) && b.apply(this, arguments);
-    };
-}, _.not = function (x) {
-    return function () {
-        return !x.apply(this, arguments);
-    };
-};
-_.extend(_, {
-    Y: function (eatSelf) {
-        var self = eatSelf(function () {
-            return self.apply(this, arguments);
-        });
-        return self;
-    }
-});
-(function () {
-    _.hyperOperator = function (N, operator, diCaprioPredicate, nonTrivial) {
-        var arity = _.arityFn(N) || _.identity;
-        var weNeedToGoDeeper = (diCaprioPredicate || _.goDeeperWhenFirstArgumentIsGood)(N, nonTrivial || _.isNonTrivial);
-        return function () {
-            var subOperator = _.last(arguments);
-            return _.Y(function (hyperOperator_) {
-                var hyperOperator = _.tails(operator, arity(hyperOperator_));
-                return function () {
-                    return (weNeedToGoDeeper(arguments) ? hyperOperator : subOperator).apply(this, arguments);
-                };
-            }).apply(this, _.initial(arguments));
-        };
-    };
-    _.goDeeperWhenFirstArgumentIsGood = function (N, canGoDeeper) {
-        return function (args) {
-            return args.length > 0 ? canGoDeeper(args[0]) : false;
-        };
-    };
-    _.goDeeperAlwaysIfPossible = function (N, canGoDeeper) {
-        if (N === 0) {
-            return _.constant(false);
-        } else if (N === 1) {
-            return function (args) {
-                return canGoDeeper(args[0]);
+                return result;
             };
-        } else if (N === 2) {
-            return function (args) {
-                return canGoDeeper(args[0]) || canGoDeeper(args[1]);
-            };
-        } else {
-            return function (args) {
-                return _.some(_.asArray(args), canGoDeeper);
-            };
-        }
-    };
-    _.goDeeperOnlyWhenNessesary = function (N, canGoDeeper) {
-        if (N === 0) {
-            return _.constant(false);
-        } else if (N === 1) {
-            return function (args) {
-                return canGoDeeper(args[0]);
-            };
-        } else if (N === 2) {
-            return function (args) {
-                return canGoDeeper(args[0]) && canGoDeeper(args[1]);
-            };
-        } else {
-            return function (args) {
-                return _.every(_.asArray(args), canGoDeeper);
-            };
-        }
-    };
-    _.isTrivial = function (x) {
-        return _.isEmpty(x) || _.isString(x) || _.isNumber(x) || !(_.isStrictlyObject(x) || _.isArray(x)) || _.isPrototypeInstance(x) || _.isMeta(x);
-    };
-    _.isMeta = _.constant(false);
-    _.isNonTrivial = _.not(_.isTrivial);
-    _.binary = 2;
-    _.unary = 1;
-}());
-_.higherOrder = _.callsTo;
-_.eval = function (x) {
-    return _.isFunction(x) ? x.call(this) : x;
-};
-_.evals = function (__args__) {
-    var arguments_ = arguments;
-    return function (x) {
-        return _.isFunction(x) ? x.apply(this, arguments_) : x;
-    };
-};
-_.method = function (name) {
-    var args = _.rest(arguments);
-    return function (obj) {
-        return obj[name].apply(obj, args);
-    };
-};
-_.asFreeFunction = function (fn) {
-    return function (this_, restArg) {
-        return fn.apply(this_, _.rest(arguments));
-    };
-};
-_.asMethod = function (fn) {
-    return function () {
-        return fn.apply(undefined, [this].concat(_.asArray(arguments)));
-    };
-};
-_.once = function (fn) {
-    var called = false;
-    return function () {
-        if (!called) {
-            called = true;
-            return fn.apply(this, arguments);
-        }
-    };
-};
-_.withTimeout = function (cfg, what, then) {
-    var expired = false;
-    var timeout = setTimeout(function () {
-        expired = true;
-        if (cfg.expired) {
-            cfg.expired(then);
-        }
-    }, cfg.maxTime);
-    what(function () {
-        if (!expired) {
-            clearTimeout(timeout);
-            if (then) {
-                then.apply(this, arguments);
-            }
-        }
-    });
-};
-_.sequence = function (arg) {
-    var chain = _.isArray(arg) ? arg : _.asArray(arguments);
-    var length = chain.length;
-    return length === 0 ? _.identity : function (x) {
-        for (var i = 0; i < length; i++) {
-            x = chain[i].call(this, x);
-        }
-        return x;
-    };
-};
-_.seq = _.sequence;
-_.then = function (fn1, fn2) {
-    return function (args) {
-        var r = fn1.apply(this, arguments);
-        return r instanceof Promise ? r.then(fn2.bind(this)) : fn2.call(this, r);
-    };
-};
-_.asString = function (what) {
-    return what + '';
-};
-_.typeOf = function (what) {
-    return typeof what;
-};
-_.instanceOf = function (what) {
-    return function (x) {
-        return x instanceof what;
-    };
-};
-_.count = function (what) {
-    return what.length;
-};
-_.array = _.tuple = function () {
-    return _.asArray(arguments);
-};
-_.cons = function (head, tail) {
-    return [head].concat(tail || []);
-};
-_.atIndex = function (n) {
-    return function (arr) {
-        return arr[n];
-    };
-};
-_.takesFirst = _.higherOrder(_.first);
-_.takesLast = _.higherOrder(_.last);
-_.applies = function (fn, this_, args) {
-    return function () {
-        return fn.apply(this_, args);
-    };
-};
-_.prepends = function (what) {
-    return function (to) {
-        return what + to;
-    };
-};
-_.appends = function (what) {
-    return function (to) {
-        return to + what;
-    };
-};
-_.join = function (arr, s) {
-    return arr.join(s);
-};
-_.joinWith = _.flip2(_.join);
-_.joinsWith = _.higherOrder(_.joinWith);
-_.split = function (s, del) {
-    return s.split(del);
-};
-_.splitWith = _.flip2(_.split);
-_.splitsWith = _.higherOrder(_.splitWith);
-_.sum = function (a, b) {
-    return (a || 0) + (b || 0);
-};
-_.subtract = function (a, b) {
-    return (a || 0) - (b || 0);
-};
-_.mul = function (a, b) {
-    return (a || 0) * (b || 0);
-};
-_.equal = function (a, b) {
-    return a === b;
-};
-_.sums = _.plus = _.higherOrder(_.sum);
-_.subtracts = _.minus = _.higherOrder(_.subtract);
-_.muls = _.higherOrder(_.mul);
-_.equals = _.higherOrder(_.equal);
-_.less = function (a, b) {
-    return a < b;
-};
-_.lessOrEqual = function (a, b) {
-    return a <= b;
-};
-_.greater = function (a, b) {
-    return a > b;
-};
-_.greaterOrEqual = function (a, b) {
-    return a >= b;
-};
-_.isNegative = function (a) {
-    return a < 0;
-};
-_.largest = function (a, b) {
-    if (isNaN(a) && isNaN(b)) {
-        return NaN;
-    } else if (isNaN(a)) {
-        return b;
-    } else if (isNaN(b)) {
-        return a;
-    } else {
-        return Math.max(a, b);
-    }
-};
-_.notZero = function (x) {
-    return x !== 0;
-};
-_.propertyOf = function (obj) {
-    return function (prop) {
-        return obj[prop];
-    };
-};
-_.oneOf = $restArg(function () {
-    return _.propertyOf(_.index(_.asArray(arguments)));
-});
-_.isInstanceofSyntaxAvailable = function () {
-    var e = new Error();
-    try {
-        return e instanceof Error;
-    } catch (e) {
-        return false;
-    }
-};
-_.isTypeOf_ES4 = function (constructor, what) {
-    while (what) {
-        if (what.constructor === constructor) {
-            return true;
-        }
-        what = what.constructor.$base;
-    }
-    return false;
-};
-_.isTypeOf_ES5 = function (constructor, what) {
-    return what instanceof constructor;
-};
-_.isTypeOf = _.isInstanceofSyntaxAvailable() ? _.isTypeOf_ES5 : _.isTypeOf_ES4;
-_.isPrototypeInstance = function (x) {
-    return x && x.constructor && _.isPrototypeConstructor(x.constructor);
-};
-_.isPrototypeConstructor = function (x) {
-    return x && x.$definition !== undefined || false;
-};
-_.coerceToNaN = function (x) {
-    return _.isFinite(x) ? x : Number.NaN;
-};
-_.coerceToArray = function (x) {
-    return x === undefined ? [] : _.isArray(x) ? x : [x];
-};
-_.coerceToFunction = function (x) {
-    return _.isFunction(x) ? x : _.constant(x);
-};
-_.isArrayLike = function (x) {
-    return x instanceof Array || $platform.Browser && x instanceof NodeList;
-};
-_.isArray = function (x) {
-    return x instanceof Array;
-};
-_.mixin({
-    matches: function (pattern) {
-        return arguments.length === 0 && _.constant(true) || _.tails2(_.match, pattern);
-    },
-    match: function (a, ptrn) {
-        return a === ptrn || _.isArray(a) && _.isArray(ptrn) && _.arrayMatch(a, ptrn) || _.isObject(a) && _.isObject(ptrn) && _.objectMatch(a, ptrn) || _.isTypeOf(RegExp, ptrn) && _.isString(a) && a.match(ptrn) !== null;
-    },
-    arrayMatch: function (a, pattern) {
-        return _.every(pattern, _.propertyOf(_.index(a)));
-    },
-    objectMatch: function (a, pattern) {
-        return _.reduce(_.pairs(pattern), function (result, kv) {
-            return result && _.match(a[kv[0]], kv[1]);
-        }, true);
-    }
-});
-_.isScalar = function (v) {
-    return v === undefined || v === null || v && v.constructor && (v.constructor === String || v.constructor === Number || v.constructor === Boolean);
-};
-_.isNonPOD = function (v) {
-    return v && v.constructor && v.constructor !== Object && v.constructor !== Array && v.constructor !== String && v.constructor !== Number && v.constructor !== Boolean;
-};
-_.isPOD = function (v) {
-    return !_.isNonPOD(v);
-};
-if (typeof Number.EPSILON === 'undefined') {
-    Object.defineProperty(Number, 'EPSILON', {
-        enumerable: true,
-        get: _.constant(2.220446049250313e-16)
-    });
-}
-_.isDecimal = function (x, tolerance) {
-    if (!_.isNumber(x) || _.isNaN(x)) {
-        return false;
-    } else {
-        return Math.abs(Math.floor(x) - x) > (tolerance || Number.EPSILON);
-    }
-};
-_.extend(_, {
-    isEmpty: function (obj) {
-        return _.coerceToUndefined(obj) === undefined;
-    },
-    isNonempty: function (obj) {
-        return _.coerceToUndefined(obj) !== undefined;
-    },
-    isEmptyObject: function (v) {
-        return !_.isArray(v) && !_.isFunction(v) && _.isObject(v) && _.keys(v).length === 0;
-    },
-    isStrictlyObject: function (v) {
-        return v && typeof v === 'object' ? true : false;
-    },
-    isEmptyArray: function (v) {
-        return _.isArray(v) && v.length === 0;
-    },
-    isNonemptyString: function (v) {
-        return typeof v === 'string' && v.length > 0;
-    },
-    coerceToObject: function (x) {
-        return _.isStrictlyObject(x) ? x : {};
-    },
-    coerceToEmpty: function (x) {
-        if (_.isArray(x)) {
-            return [];
-        } else if (_.isStrictlyObject(x)) {
-            return {};
-        } else {
-            return undefined;
-        }
-    },
-    coerceToUndefined: function (v) {
-        return v === undefined || v === null || v === Math.NaN || v === '' || _.isPOD(v) && (_.isEmptyObject(v) || v.length === 0) ? undefined : v;
-    }
-});
-_.hasStdlib = true;
-_.throwsError = _.higherOrder(_.throwError = function (msg) {
-    throw msg instanceof Error ? msg : new Error(msg);
-});
-_.throws = _.higherOrder(_.throw = function (msg) {
-    throw msg;
-});
-_.overrideThis = _.throwsError('override this');
-_.notImplemented = _.throwsError('not implemented');
-_.mixin({
-    values2: function (x) {
-        if (_.isArrayLike(x)) {
-            return x;
-        } else if (_.isStrictlyObject(x)) {
-            return _.values(x);
-        } else if (_.isEmpty(x)) {
-            return [];
-        } else {
-            return [x];
-        }
-    }
-});
-_.mixin({
-    map2: function (value, fn, context) {
-        return _.isArrayLike(value) ? _.map(value, fn, context) : value instanceof Set ? _.mapSet(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
-    }
-});
-_.mapSet = function (set, fn, ctx) {
-    var out = new Set();
-    for (var x of set) {
-        out.add(fn.call(ctx, x));
-    }
-    return out;
-};
-_.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
-_.pluck2 = function (x, prop) {
-    return _.map2(x, _.property(prop));
-};
-_.mixin({
-    scatter: function (obj, elem) {
-        var result = undefined;
-        _.map2(obj, function (x, i) {
-            elem(x, i, function (v, k) {
-                if (arguments.length < 2) {
-                    (result = result || []).push(v);
-                } else {
-                    (result = result || {})[k] = v;
-                }
-            });
-        });
-        return result;
-    }
-});
-_.obj = function (emitItems) {
-    var x = undefined;
-    emitItems(function (v, k) {
-        (x = x || {})[k] = v;
-    });
-    return x;
-};
-_.arr = function (emitItems) {
-    var x = undefined;
-    emitItems(function (v) {
-        (x = x || []).push(arguments.length < 2 ? v : _.asArray(arguments));
-    });
-    return x;
-};
-_.mapKeys = function (x, fn) {
-    if (_.isArrayLike(x)) {
-        return _.map(x, _.tails2(_.mapKeys, fn));
-    } else if (_.isStrictlyObject(x)) {
-        return _.object(_.map(_.pairs(x), function (kv) {
-            return [
-                fn(kv[0]),
-                _.mapKeys(kv[1], fn)
-            ];
-        }));
-    } else {
-        return x;
-    }
-};
-_.mapMap = _.hyperOperator(_.unary, _.map2);
-_.hyperMap = function (data, op) {
-    return _.hyperOperator(_.unary, function (expr, f) {
-        return op(expr) || _.map2(expr, f);
-    })(data, _.identity);
-};
-_.pairs2 = function (x) {
-    return _.scatter(x, function (x, i, return_) {
-        return_([
-            i,
-            x
-        ]);
-    });
-};
-_.reject2 = function (value, op) {
-    return _.filter2(value, _.not(op));
-};
-_.filter2 = function (value, op) {
-    if (_.isArrayLike(value)) {
-        var result = [];
-        for (var i = 0, n = value.length; i < n; i++) {
-            var v = value[i], opSays = op(v, i);
-            if (opSays === true) {
-                result.push(v);
-            } else if (opSays !== false) {
-                result.push(opSays);
-            }
-        }
-        return result;
-    } else if (_.isStrictlyObject(value)) {
-        var result = {};
-        _.each(Object.keys(value), function (key) {
-            var v = value[key], opSays = op(v, key);
-            if (opSays === true) {
-                result[key] = v;
-            } else if (opSays !== false) {
-                result[key] = opSays;
-            }
-        });
-        return result;
-    } else {
-        var opSays = op(value);
-        if (opSays === true) {
-            return value;
-        } else if (opSays !== false) {
-            return opSays;
-        } else {
-            return undefined;
-        }
-    }
-};
-_.filterFilter = _.hyperOperator(_.unary, _.filter2);
-_.hyperFilter = function (data, op) {
-    return _.hyperOperator(_.unary, function (expr, f) {
-        var x = op(expr);
-        return x === true && _.filter2(expr, f) || x;
-    })(data, _.identity);
-};
-_.hyperReject = function (data, op) {
-    return _.hyperFilter(data, function (x) {
-        var opa = op(x);
-        return _.isBoolean(opa) ? !opa : opa;
-    });
-};
-_.each2 = function (x, f) {
-    if (_.isArrayLike(x)) {
-        for (var i = 0, n = x.length; i < n; i++)
-            f(x[i], i, n);
-    } else if (_.isStrictlyObject(x)) {
-        var k = Object.keys(x);
-        for (var ki, i = 0, n = k.length; i < n; i++)
-            f(x[ki = k[i]], ki, n);
-    } else {
-        f(x, undefined, 1);
-    }
-};
-_.reduce2 = function (_1, _2, _3) {
-    var no_left = arguments.length < 3;
-    var left = _1, rights = _2, op = _3;
-    if (no_left) {
-        left = undefined;
-        rights = _1;
-        op = _2;
-    }
-    _.each2(rights, function (right, i) {
-        left = no_left ? right : op(left, right);
-        no_left = false;
-    });
-    return left;
-};
-_.reduceReduce = function (_1, _2, _3) {
-    var initial = _1, value = _2, op = _3;
-    if (arguments.length < 3) {
-        initial = {};
-        value = _1;
-        op = _2;
-    }
-    return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(initial, value, op);
-};
-_.concat = function (a, b) {
-    var first, rest;
-    if (arguments.length === 1) {
-        first = a[0];
-        rest = _.rest(a);
-    } else {
-        first = a;
-        rest = _.rest(arguments);
-    }
-    return _.isArrayLike(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
-        if (_.isObject(a) && _.isObject(b)) {
-            return _.extend({}, a, b);
-        } else {
-            return a + b;
-        }
-    });
-};
-_.mixin({
-    zipSetsWith: function (sets, fn) {
-        return _.reduce(_.rest(sets), function (memo, obj) {
-            _.each(_.union(obj && Array.from(obj.values()) || [], memo && Array.from(memo.values()) || []), function (k) {
-                var zipped = fn(memo && memo.has(k) ? k : undefined, obj && obj.has(k) ? k : undefined);
-                if (zipped === undefined) {
-                    memo.delete(k);
-                } else {
-                    memo.add(zipped);
-                }
-            });
-            return memo;
-        }, new Set(sets[0]));
-    },
-    zipObjectsWith: function (objects, fn) {
-        return _.reduce(_.rest(objects), function (memo, obj) {
-            _.each(_.union(_.keys(obj), _.keys(memo)), function (k) {
-                var zipped = fn(memo && memo[k], obj && obj[k]);
-                if (zipped === undefined) {
-                    delete memo[k];
-                } else {
-                    memo[k] = zipped;
-                }
-            });
-            return memo;
-        }, _.clone(objects[0]));
-    },
-    zip2: function (rows_, fn_) {
-        var rows = arguments.length === 2 ? rows_ : _.initial(arguments);
-        var fn = arguments.length === 2 ? fn_ : _.last(arguments);
-        if (!_.isArrayLike(rows) || rows.length === 0) {
-            return rows;
-        } else {
-            if (_.isArrayLike(rows[0])) {
-                return _.zipWith(rows, fn);
-            } else if (rows[0] instanceof Set) {
-                return _.zipSetsWith(rows, fn);
-            } else if (_.isStrictlyObject(rows[0])) {
-                return _.zipObjectsWith(rows, fn);
-            } else {
-                return _.reduce2(rows, fn);
-            }
-        }
-    }
-});
-_.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
-_.extend = $restArg(_.extend);
-_.extended = $restArg(function () {
-    return _.extend.apply(this, [{}].concat(_.asArray(arguments)));
-});
-_.extendWith = _.flip(_.extend);
-_.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
-_.extendedDeep = _.tails3(_.zipZip, function (a, b) {
-    return b === undefined ? a : b;
-});
-_.extend2 = $restArg(function (what) {
-    return _.extend(what, _.reduceRight(arguments, function (right, left) {
-        return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
-            var lvalue = left[key];
-            return [
-                key,
-                key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
-            ];
-        }));
-    }, {}));
-});
-_.find2 = function (value, pred) {
-    if (_.isArrayLike(value)) {
-        for (var i = 0, n = value.length; i < n; i++) {
-            var x = pred(value[i], i, value);
-            if (typeof x !== 'boolean') {
-                return x;
-            } else if (x === true) {
-                return value[i];
-            }
-        }
-    } else if (_.isStrictlyObject(value)) {
-        for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
-            var k = ks[i];
-            var x = pred(value[k], k, value);
-            if (typeof x !== 'boolean') {
-                return x;
-            } else if (x === true) {
-                return value[k];
-            }
-        }
-    }
-};
-_.findFind = function (obj, pred_) {
-    return _.hyperOperator(_.unary, function (value, pred) {
-        if (_.isArrayLike(value)) {
-            for (var i = 0, n = value.length; i < n; i++) {
-                var x = pred(value[i]);
-                if (typeof x !== 'boolean') {
-                    return x;
-                } else if (x === true) {
-                    return value[i];
-                }
-            }
-        } else if (_.isStrictlyObject(value)) {
-            for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
-                var k = ks[i];
-                var x = pred(value[k]);
-                if (typeof x !== 'boolean') {
-                    return x;
-                } else if (x === true) {
-                    return value[k];
-                }
-            }
-        }
-        var x = pred_(value);
-        if (typeof x !== 'boolean') {
-            return x;
-        } else if (x === true) {
-            return value;
-        }
-        return false;
-    })(obj, pred_);
-};
-_.nonempty = function (obj) {
-    return _.filter2(obj, _.isNonempty);
-};
-_.extend(_, {
-    clone: function (x) {
-        return x instanceof Set ? new Set(x) : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
-    },
-    cloneDeep: _.tails2(_.mapMap, function (value) {
-        return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
-    })
-});
-_.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
-    return _.coerceToUndefined(_.nonempty(_.zip2(a, b, pred)));
-});
-_.diff = _.tails3(_.hyperMatch, function (a, b) {
-    return $atom.unwrap(a) === $atom.unwrap(b) || a === $any || b === $any ? undefined : b;
-});
-_.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
-    return _.coerceToUndefined(_.zip2(a, b, pred));
-});
-_.undiff = _.tails3(_.hyperMatch, function (a, b) {
-    return $atom.unwrap(a) === $atom.unwrap(b) || a === $any || b === $any ? b : undefined;
-});
-_.extend(_, {
-    index: function (list) {
-        var result = {};
-        for (var i = 0, n = list.length; i < n; i++) {
-            result[list[i]] = true;
-        }
-        return result;
-    }
-});
-_.quote = function (s, pattern_) {
-    var pattern = pattern_ || '';
-    var splitAt = Math.floor(pattern.length / 2 + pattern.length % 2);
-    var before = pattern.slice(0, splitAt);
-    var after = pattern.slice(splitAt) || before;
-    return before + s + after;
-};
-_.quoteWith = _.flip2(_.quote);
-_.quotesWith = _.higherOrder(_.quoteWith);
-_.partition2 = function (arr, pred) {
-    return _.pluck(_.partition3(arr, pred), 'items');
-};
-_.partition3 = function (arr_, pred) {
-    var arr = arr_ || [];
-    var spans = [], span = {
-            label: undefined,
-            items: [arr.first]
-        };
-    _.each(arr, function (x) {
-        var label = pred(x);
-        if (span.label != label && span.items.length) {
-            spans.push(span = {
-                label: label,
-                items: [x]
-            });
-        } else {
-            span.items.push(x);
-        }
-    });
-    return span.length && spans.push(span), spans;
-};
-(function () {
-    var indexMap = function (list) {
-        var map = {};
-        _.each(list, function (each, i) {
-            map[each] = map[each] || [];
-            map[each].push(i);
-        });
-        return map;
-    };
-    _.longestCommonSubstring = function (a, b) {
-        var where = _.indexOfLongestCommonSubstring(a, b);
-        return where.length ? a.substr(where.a, where.length) : undefined;
-    };
-    _.indexOfLongestCommonSubstring = function (a, b) {
-        var result = {
-            a: 0,
-            b: 0,
-            length: 0
-        };
-        var indexMapBefore = indexMap(a);
-        var previousOverlap = [];
-        _.each(b, function (eachAfter, indexAfter) {
-            var overlapLength;
-            var overlap = [];
-            var indexesBefore = indexMapBefore[eachAfter] || [];
-            _.each(indexesBefore, function (indexBefore) {
-                overlapLength = (indexBefore && previousOverlap[indexBefore - 1] || 0) + 1;
-                if (overlapLength > result.length) {
-                    result.length = overlapLength;
-                    result.a = indexBefore - overlapLength + 1;
-                    result.b = indexAfter - overlapLength + 1;
-                }
-                overlap[indexBefore] = overlapLength;
-            });
-            previousOverlap = overlap;
-        });
-        return result;
-    };
-}());
-_.key = function (fn) {
-    return function (value, key) {
-        return fn(key);
-    };
-};
-_.filterKeys = function (arr, predicate) {
-    return _.filter(arr, function (v, k) {
-        return predicate(k);
-    });
-};
-_.rejectKeys = function (arr, predicate) {
-    return _.reject(arr, function (v, k) {
-        return predicate(k);
-    });
-};
-_.pickKeys = function (obj, predicate) {
-    return _.pick(obj, function (v, k) {
-        return predicate(k);
-    });
-};
-_.omitKeys = function (obj, predicate) {
-    return _.omit(obj, function (v, k) {
-        return predicate(k);
-    });
-};
-_.extend(_, {
-    defineProperty: function (targetObject, name, def, defaultCfg) {
-        if (_.isObject(targetObject) && targetObject.hasOwnProperty(name)) {
-            throw new Error('_.defineProperty: targetObject already has property ' + name);
-        } else {
-            Object.defineProperty(targetObject, name, _.extend({ enumerable: true }, defaultCfg, _.coerceToPropertyDefinition(def, name)));
-        }
-    },
-    defineHiddenProperty: function (targetObject, name, def, defaultCfg) {
-        return _.defineProperty(targetObject, name, def, _.extend({ enumerable: false }, defaultCfg));
-    },
-    defineMemoizedProperty: function (targetObject, name, def_, defaultCfg) {
-        var def = _.coerceToPropertyDefinition(def_, name);
-        return _.defineProperty(targetObject, name, _.extend({}, def, { get: _.memoizeToThis('_' + name, def.get) }), defaultCfg);
-    },
-    defineProperties: function (targetObject, properties) {
-        _.each(properties, _.defineProperty.partial(targetObject).flip2);
-    },
-    memoizedState: function (obj) {
-        return _.filter2(obj, function (v, k) {
-            return k[0] === '_' && !_.isFunction(v);
-        });
-    },
-    memoizeToThis: function (name, fn) {
-        return function () {
-            var memo = this[name];
-            return memo !== undefined ? memo : this[name] = fn.call(this);
-        };
-    },
-    coerceToPropertyDefinition: function (value_, name) {
-        var value = value_ || {};
-        var actualValue = typeof Tags === 'undefined' ? value_ : Tags.unwrap(value_);
-        return !value.$constant && !value.$get && _.isPropertyDefinition(actualValue) && actualValue || (value.$get || !value.$constant && _.isFunction(actualValue) && _.noArgs(actualValue)) && {
-            get: actualValue,
-            set: _.throwsError('cannot change ' + (name || 'property') + ' (as it\'s an accessor function)')
-        } || !value.$get && {
-            get: _.constant(actualValue),
-            set: _.throwsError('cannot change ' + (name || 'property') + ' (as it\'s sealed to ' + actualValue + ')')
-        } || _.throwsError('coerceToPropertyDefinition: crazy input, unable to match')();
-    },
-    isPropertyDefinition: function (obj) {
-        return _.isObject(obj) && (_.isFunction(obj.get) || _.isFunction(obj.set));
-    },
-    ownProperties: function (obj) {
-        return obj && _.pickKeys(obj, obj.hasOwnProperty.bind(obj)) || {};
-    }
-});
-_.hasTags = true;
-Tags = _.extend2(function (subject, keys) {
-    if (subject !== undefined) {
-        this.subject = subject;
-    }
-    if (keys !== undefined) {
-        _.extend(this, keys);
-    }
-}, {
-    $definition: {},
-    prototype: {
-        add: function (name, additionalData) {
-            return this[_.keyword(name)] = additionalData || true, this;
-        },
-        clone: function (newSubject) {
-            return _.extend(new Tags(newSubject || this.subject), _.pick(this, _.keyIsKeyword));
-        },
-        modify: function (changesFn) {
-            this.subject = changesFn(this.subject);
-            if (_.isTypeOf(Tags, this.subject)) {
-                return _.extend(this.subject, _.pick(this, _.keyIsKeyword));
-            } else {
-                return this;
-            }
-        },
-        extend: function (other) {
-            return _.isTypeOf(Tags, other) ? _.extend(this, _.pick(other, _.keyIsKeyword)) : this;
-        }
-    },
-    omit: $restArg(function (what, ___) {
-        if (_.isTypeOf(Tags, what)) {
-            var keysToOmit = _.index(_.rest(arguments));
-            var keysLeft = _.pick(what, function (v, k) {
-                return _.isKeyword(k) && !(k in keysToOmit);
-            });
-            return !_.isEmptyObject(keysLeft) ? new Tags(what.subject, keysLeft) : what.subject;
-        } else {
-            return what;
-        }
-    }),
-    clone: function (what, newSubject) {
-        return _.isTypeOf(Tags, what) ? what.clone(newSubject) : newSubject || what;
-    },
-    extend: function (what, other) {
-        return _.isTypeOf(Tags, what) ? what.clone().extend(other) : _.isTypeOf(Tags, other) ? Tags.wrap(what).extend(other) : what;
-    },
-    get: function (def) {
-        return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
-    },
-    each: function (def, accept) {
-        if (_.isTypeOf(Tags, def)) {
-            _.each(def, function (v, k) {
-                if (k[0] === '$') {
-                    accept(k.slice(1));
-                }
-            });
-        }
-    },
-    hasSubject: function (def) {
-        return _.isTypeOf(Tags, def) && 'subject' in def;
-    },
-    matches: function (name) {
-        return function (obj) {
-            return obj && obj[_.keyword(name)] !== undefined;
-        };
-    },
-    unwrapAll: function (definition) {
-        return _.map2(definition, Tags.unwrap);
-    },
-    unwrap: function (what) {
-        return _.isTypeOf(Tags, what) ? what.subject : what;
-    },
-    wrap: function (what) {
-        return _.isTypeOf(Tags, what) ? what : arguments.length === 0 ? new Tags() : new Tags(what);
-    },
-    modify: function (what, changesFn) {
-        return _.isTypeOf(Tags, what) ? what.clone().modify(changesFn) : changesFn(what);
-    },
-    map: function (obj, op) {
-        return Tags.modify(obj, function (obj) {
-            return _.map2(obj, function (t, k) {
-                return Tags.modify(t, function (v) {
-                    return op(v, k, _.isTypeOf(Tags, t) ? t : undefined);
-                });
-            });
-        });
-    },
-    add: function (name, toWhat, additionalData) {
-        return Tags.wrap.apply(null, _.rest(arguments, 1)).add(name, additionalData);
-    }
-});
-_.keyword = function (name) {
-    return '$' + name;
-};
-_.isKeyword = function (key) {
-    return key[0] == '$';
-};
-_.keywordName = function (x) {
-    return _.isKeyword(x) ? x.slice(1) : x;
-};
-_.keywords = function (obj) {
-    return _.pick(obj, _.keyIsKeyword);
-};
-_.tagKeywords = {};
-_.isTagKeyword = function (k) {
-    return _.keywordName(k) in _.tagKeywords;
-};
-_.keyIsKeyword = function (value, key) {
-    return _.isKeyword(key[0]);
-};
-_.defineKeyword = function (name, value) {
-    _.defineProperty($global, _.keyword(name), value);
-};
-_.defineKeyword('untag', Tags.unwrap);
-_.defineTagKeyword = function (k, fn) {
-    fn = _.isFunction(fn) && fn || _.identity;
-    if (!(_.keyword(k) in $global)) {
-        _.defineKeyword(k, Tags.add('constant', _.extendWith({ matches: Tags.matches(k) }, fn(function (a, b) {
-            if (arguments.length < 2) {
-                return Tags.add(k, a);
-            } else {
-                return Tags.add(k, b, a);
-            }
-        }))));
-        _.tagKeywords[k] = true;
-    }
-    var kk = _.keyword(k);
-    return _.extend($global[kk], {
-        is: function (x) {
-            return _.isTypeOf(Tags, x) && kk in x || false;
-        },
-        isNot: function (x) {
-            return !(_.isTypeOf(Tags, x) && kk in x) || false;
-        },
-        unwrap: function (x) {
-            return $atom.matches(x) === true ? Tags.unwrap(x) : x;
-        }
-    });
-};
-_([
-    'constant',
-    'get',
-    'once',
-    'async'
-]).each(_.defineTagKeyword);
-_.defineModifierKeyword = function (name, fn) {
-    _.defineKeyword(name, function (val) {
-        return Tags.modify(val, fn);
-    });
-};
-_.deleteKeyword = function (name) {
-    delete $global[_.keyword(name)];
-};
-_.hasTypeMatch = true;
-_.defineTagKeyword('required');
-_.defineTagKeyword('atom');
-_.defineKeyword('any', _.identity);
-(function () {
-    _.isMeta = function (x) {
-        return x === $any || $atom.is(x) === true || $required.is(x) === true;
-    };
-    var zip = function (type, value, pred) {
-        var required = Tags.unwrapAll(_.filter2(type, $required.matches));
-        var match = _.nonempty(_.zip2(Tags.unwrapAll(type), value, pred));
-        if (_.isEmpty(required)) {
-            return match;
-        } else {
-            var requiredMatch = _.nonempty(_.zip2(required, value, pred));
-            var allSatisfied = _.values2(required).length === _.values2(requiredMatch).length;
-            return allSatisfied ? match : _.coerceToEmpty(value);
-        }
-    };
-    var hyperMatch = _.hyperOperator(_.binary, function (type_, value, pred) {
-        var type = Tags.unwrap(type_);
-        if (_.isArray(type)) {
-            if (_.isArray(value)) {
-                return zip(_.times(value.length, _.constant(type[0])), value, pred);
-            } else {
-                return undefined;
-            }
-        } else if (_.isStrictlyObject(type) && type['*']) {
-            if (_.isStrictlyObject(value)) {
-                return zip(_.extend(_.map2(value, _.constant(type['*'])), _.omit(type, '*')), value, pred);
-            } else {
-                return undefined;
-            }
-        } else {
-            return zip(type_, value, pred);
-        }
-    });
-    var typeMatchesValue = function (c, v) {
-        var contract = Tags.unwrap(c);
-        return contract === $any || contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v) === true) || typeof v === contract || v === contract;
-    };
-    _.mismatches = function (op, contract, value) {
-        return hyperMatch(contract, value, function (contract, v) {
-            return op(contract, v) ? undefined : contract;
-        });
-    };
-    _.omitMismatches = function (op, contract, value) {
-        return hyperMatch(contract, value, function (contract, v) {
-            return op(contract, v) ? v : undefined;
-        });
-    };
-    _.typeMismatches = _.partial(_.mismatches, typeMatchesValue);
-    _.omitTypeMismatches = _.partial(_.omitMismatches, typeMatchesValue);
-    _.valueMismatches = _.partial(_.mismatches, function (a, b) {
-        return a === $any || b === $any || a === b;
-    });
-    var unifyType = function (value) {
-        if (_.isArray(value)) {
-            return _.nonempty([_.reduce(_.rest(value), function (a, b) {
-                    return _.undiff(a, b);
-                }, _.first(value) || undefined)]);
-        } else if (_.isStrictlyObject(value)) {
-            var pairs = _.pairs(value);
-            var unite = _.map(_.reduce(_.rest(pairs), function (a, b) {
-                return _.undiff(a, b);
-            }, _.first(pairs) || [
-                undefined,
-                undefined
-            ]), _.nonempty);
-            return _.isEmpty(unite) || _.isEmpty(unite[1]) ? value : _.object([[
-                    unite[0] || '*',
-                    unite[1]
-                ]]);
-        } else {
-            return value;
-        }
-    };
-    _.decideType = function (value) {
-        var operator = _.hyperOperator(_.unary, function (value, pred) {
-            if (value && value.constructor && value.constructor.$definition) {
-                return value.constructor;
-            }
-            return unifyType(_.map2(value, pred));
-        });
-        return operator(value, function (value) {
-            if (_.isPrototypeInstance(value)) {
-                return value.constructor;
-            } else {
-                return _.isEmptyArray(value) ? value : typeof value;
-            }
-        });
-    };
-}());
-_.json = function (arg) {
-    if (typeof arg === 'string') {
-        try {
-            return JSON.parse(arg);
-        } catch (e) {
-            return {};
-        }
-    } else {
-        return JSON.stringify(arg);
-    }
-};
-_.alignStringsRight = function (strings) {
-    var lengths = strings.map(_.count);
-    var max = _.max(lengths);
-    return [
-        lengths,
-        strings
-    ].zip(function (ln, str) {
-        return ' '.repeats(max - ln) + str;
-    });
-};
-_.bullet = function (bullet, str) {
-    var indent = ' '.repeats(bullet.length);
-    return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
-        return i === 0 ? bullet + line : indent + line;
-    }));
-};
-_.stringifyOneLine = function (x, cfg) {
-    return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
-};
-_.pretty = function (x, cfg) {
-    return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
-};
-_.stringify = function (x, cfg) {
-    cfg = cfg || {};
-    var measured = _.stringifyImpl(x, [], [], 0, cfg);
-    return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
-};
-_.stringifyPrototype = function (x) {
-    if ($platform.NodeJS && x.$meta) {
-        var name = '';
-        x.$meta(function (values) {
-            name = values.name;
-        });
-        return name && name + ' ()';
-    } else
-        return '<prototype>';
-};
-_.builtInTypes = {
-    'Event': { target: $any },
-    'MutationEvent': {
-        target: $any,
-        attrName: $any,
-        prevValue: $any
-    },
-    'Range': {
-        startContainer: $any,
-        startOffset: $any,
-        endContainer: $any,
-        endOffset: $any
-    },
-    'ClientRect': {
-        left: $any,
-        top: $any,
-        right: $any,
-        bottom: $any,
-        width: $any,
-        height: $any
-    }
-};
-_.stringifyImpl = function (x, parents, siblings, depth, cfg) {
-    var customFormat = cfg.formatter && cfg.formatter(x);
-    if (customFormat) {
-        return customFormat;
-    }
-    if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
-        x = _.asArray(x);
-    }
-    if (x === $global) {
-        return '$global';
-    } else if (parents.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<cyclic>';
-    } else if (siblings.indexOf(x) >= 0) {
-        return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
-    } else if (x === undefined) {
-        return 'undefined';
-    } else if (x === null) {
-        return 'null';
-    } else if (_.isFunction(x)) {
-        return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
-    } else if (typeof x === 'string') {
-        return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 60));
-    } else if (_.isTypeOf(Tags, x)) {
-        return _.reduce(Tags.get(x), function (memo, value, tag) {
-            return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
-        }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
-    } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
-        return x.toString();
-    } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
-        var builtInValue = _.find2(_.builtInTypes, function (schema, name) {
-            return $global[name] && x instanceof $global[name] && name + ' ' + _.stringifyOneLine(_.omitTypeMismatches(schema, x)) || false;
-        });
-        if (builtInValue) {
-            return builtInValue;
-        } else {
-            if (x instanceof Set) {
-                x = x.asArray;
-            }
-            var isArray = _.isArray(x);
-            var pretty = cfg.pretty || false;
-            if ($platform.Browser) {
-                if (_.isTypeOf(Element, x)) {
-                    return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
-                } else if (_.isTypeOf(Text, x)) {
-                    return '@' + x.wholeText.limitedTo(20);
-                }
-            }
-            if (x.toJSON) {
-                return _.quoteWith('"', x.toJSON());
-            }
-            if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 60))) {
-                return isArray ? '<array[' + x.length + ']>' : '<object>';
-            }
-            var parentsPlusX = parents.concat([x]);
-            siblings.push(x);
-            var values = _.pairs(x);
-            var oneLine = !pretty || values.length < 2;
-            var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
-            var quoteKeys = cfg.json ? '""' : '';
-            if (pretty) {
-                values = _.values(x);
-                var printedKeys = _.alignStringsRight(_.keys(x).map(_.quotesWith(quoteKeys).then(_.appends(': '))));
-                var printedValues = values.map(impl);
-                var leftPaddings = printedValues.map(function (x, i) {
-                    return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
-                });
-                var maxLeftPadding = _.max(leftPaddings);
-                var indentedValues = [
-                    leftPaddings,
-                    printedValues
-                ].zip(function (padding, x) {
-                    return ' '.repeats(maxLeftPadding - padding) + x;
-                });
-                var internals = isArray ? indentedValues : [
-                    printedKeys,
-                    indentedValues
-                ].zip(_.bullet);
-                var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
-                var lines = printed.split('\n');
-                return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
-            }
-            return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
-                return (isArray ? '' : kv[0].quote(quoteKeys) + ': ') + impl(kv[1]);
-            })));
-        }
-    } else if (_.isDecimal(x) && cfg.precision > 0) {
-        return _.toFixed(x, cfg.precision);
-    } else {
-        return x + '';
-    }
-};
-_.toFixed = function (x, precision) {
-    return x && x.toFixed && x.toFixed(precision) || undefined;
-};
-_.toFixed2 = function (x) {
-    return _.toFixed(x, 2);
-};
-_.toFixed3 = function (x) {
-    return _.toFixed(x, 3);
-};
-Array.prototype.squash = function (cfg) {
-    cfg = cfg || {};
-    var key = cfg.key || _.identity, sort = cfg.sort || undefined;
-    var head = {
-        key: null,
-        next: {},
-        depth: {}
-    };
-    var nodes = {};
-    _.each(this, function (arr) {
-        for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-            var item = arr[i];
-            var k = key(item);
-            node = nodes[k] || (nodes[k] = {
-                key: k,
-                item: item,
-                next: {},
-                depth: {}
-            });
-            if (prev) {
-                prev.next[k] = node;
-                prev.depth[k] = 0;
-            }
-        }
-    });
-    var decyclize = function (visited, node, prev, depth) {
-        depth = depth || 0;
-        visited[node.key] = true;
-        node.next = _.filter2(_.values(node.next), function (next) {
-            if (next.key in visited) {
-                return false;
-            } else {
-                next = decyclize(visited, next, node);
-                depth = Math.max(depth, node.depth[next.key]);
-                return next;
-            }
-        });
-        if (prev) {
-            prev.depth[node.key] = Math.max(prev.depth[node.key] || 0, depth + 1);
-        }
-        delete visited[node.key];
-        return node;
-    };
-    var ordered = function (a, b) {
-        return a === b || _.some(a.next, function (aa) {
-            return ordered(aa, b);
-        });
-    };
-    var flatten = function (node) {
-        if (!node)
-            return [];
-        var next = (node.next || []).sort(function (a, b) {
-            return (node.depth[a.key] || 0) < (node.depth[b.key] || 0);
-        });
-        if (false) {
-            log.gg(node.key);
-            log.pp(next.map(function (next) {
-                return next.key + ' ' + node.depth[next.key];
-            }));
-        }
-        return [node].concat(flatten(_.reduce(next, function (a, b) {
-            if (a === b) {
-                return a;
-            } else if (ordered(b, a)) {
-                b.next.push(a);
-                return b;
-            } else {
-                a.next.push(b);
-                return a;
-            }
-        })));
-    };
-    return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
-};
-DAG = function (cfg) {
-    this.cfg = cfg || {}, this.nodes = cfg.nodes || _.noop;
-}, DAG.prototype.each = function (N, fn, prev, visited) {
-    visited = visited || new Set();
-    if (!visited.has(N)) {
-        visited.add(N);
-        var self = this, nodes = this.nodes(N) || [], stop = fn.call(this, N, {
-                nodes: nodes,
-                prev: prev,
-                visited: visited
-            });
-        if (stop !== true) {
-            nodes.forEach(function (NN) {
-                self.each(NN, fn, N, visited);
-            });
-        }
-    }
-    ;
-    return visited;
-}, DAG.prototype.edges = function (N) {
-    var edges = [];
-    this.each(N, function (N, context) {
-        context.nodes.concat(N).reduce(function (A, B) {
-            edges.push([
-                A,
-                B
-            ]);
-            return B;
-        });
-    });
-    return edges;
-}, DAG.prototype.squash = function (node0) {
-    return this.edges(node0).squash(this.cfg).remove(node0);
-};
-DAG.squash = function (node0, cfg) {
-    return new DAG(cfg).squash(node0);
-};
-_.cps = function () {
-    return _.cps.sequence.apply(null, arguments);
-};
-_.cps.apply = function (fn, this_, args_, then) {
-    var args = _.asArray(args_);
-    var lastArgN = _.numArgs(fn) - 1;
-    var thenArg = args[lastArgN];
-    args[lastArgN] = function () {
-        then.call(this, arguments, thenArg);
-    };
-    return fn.apply(this_, args);
-};
-_.extend(_.cps, {
-    each: function (obj, elem_, complete_, index_, length_, keys_) {
-        var complete = complete_ || _.noop;
-        var elem = function (x, k, next) {
-            if (_.numArgs(elem_) === 2) {
-                elem_(x, next, complete, obj);
-            } else {
-                elem_(x, k, next, complete, obj);
-            }
-        };
-        if (_.isEmpty(obj)) {
-            complete();
-        } else if (_.isScalar(obj)) {
-            elem(obj, undefined, complete);
-        } else {
-            var index = index_ || 0;
-            var keys = index === 0 ? obj.length === undefined ? _.keys(obj) : undefined : keys_;
-            var length = index === 0 ? keys ? keys.length : obj.length : length_;
-            if (index >= (length || 0)) {
-                complete();
-            } else {
-                var key = keys ? keys[index] : index;
-                elem(obj[key], key, arguments.callee.bind(this, obj, elem_, complete_, index + 1, length, keys));
-            }
-        }
-    }
-});
-_.extend(_.cps, {
-    map: function (obj, iter, complete) {
-        var result = _.isArray(obj) ? [] : {};
-        _.cps.each(obj, _.numArgs(iter) == 2 ? function (x, i, next) {
-            iter(x, function (y) {
-                result[i] = y;
-                next();
-            });
-        } : function (x, i, next) {
-            iter(x, i, function (y) {
-                result[i] = y;
-                next();
-            });
-        }, function () {
-            complete(result);
-        });
-    }
-});
-_.extend(_.cps, {
-    find: function (obj, pred, complete) {
-        var passKey = _.numArgs(pred) !== 2;
-        _.cps.each(obj, function (x, key, next, complete) {
-            var take = function (match) {
-                if (match === false) {
-                    next();
-                } else {
-                    complete(match === true ? x : match, key);
-                }
-            };
-            if (passKey) {
-                pred(x, key, take);
-            } else {
-                pred(x, take);
-            }
-        }, complete);
-    }
-});
-_.extend(_.cps, {
-    memoize: function (fn) {
-        return _.barrier ? _.cps._betterMemoize(fn) : _.cps._poorMemoize(fn);
-    },
-    _poorMemoize: function (fn) {
-        var cache = {};
-        return function (value, then) {
-            if (value in cache) {
-                then(cache[value]);
-            } else {
-                fn.call(this, value, function (result) {
-                    then(cache[value] = result);
-                });
-            }
-        };
-    },
-    _betterMemoize: function (fn) {
-        var cache = {};
-        switch (_.numArgs(fn)) {
-        case 1:
-            return function (then) {
-                if (!cache.already) {
-                    fn.call(this, cache = _.barrier());
-                }
-                cache(then);
-            };
-        case 2:
-            cache = {};
-            return function (value, then) {
-                if (!(value in cache)) {
-                    fn.call(this, value, cache[value] = _.barrier());
-                }
-                cache[value](then);
-            };
-        default:
-            throw new Error('_.cps.memoize: unsupported number of arguments');
-        }
-    }
-});
-(function () {
-    var reduce = function (array, op, then, memo, index) {
-        if (!array || index >= (array.length || 0)) {
-            then(memo);
-        } else {
-            op(memo, array[index], function (result) {
-                reduce(array, op, then, result, index + 1);
-            });
-        }
-    };
-    _.cps.reduce = function (array, op, then, memo) {
-        if (arguments.length < 4) {
-            reduce(array, op, then, array[0], 1);
-        } else {
-            reduce(array, op, then, memo, 0);
-        }
-    };
-}());
-_.extend(_.cps, {
-    noop: $restArg(function () {
-        return _.last(arguments).call(this);
-    }),
-    identity: $restArg(function () {
-        var args = _.initial(arguments), then = _.last(arguments);
-        if (then) {
-            return then.apply(this, args);
-        }
-    }),
-    constant: $restArg(function () {
-        var args = arguments;
-        return function () {
-            return _.last(arguments).apply(this, args);
-        };
-    })
-});
-_.cps.arity0 = function (fn) {
-    return function () {
-        fn.call(this, _.last(arguments));
-    };
-};
-_.cps.arity1 = function (fn) {
-    return function () {
-        fn.call(this, arguments[0], _.last(arguments));
-    };
-};
-_.cps.arity2 = function (fn) {
-    return function () {
-        fn.call(this, arguments[0], arguments[1], _.last(arguments));
-    };
-};
-_.cps.transformResult = function (operator, fn) {
-    return function (args) {
-        fn.apply(this, _.initial(arguments).concat(operator(_.last(arguments))));
-    };
-};
-_.cps.resultArity2 = _.partial(_.cps.transformResult, _.arity2);
-_.cps.resultArity1 = _.partial(_.cps.transformResult, _.arity1);
-_.cps.resultArity0 = _.partial(_.cps.transformResult, _.arity0);
-_.cps.sequence = $restArg(function (arr) {
-    var functions = _.isArray(arr) && arr || _.asArray(arguments);
-    return _.reduceRight(functions, function (a, b) {
-        return function () {
-            return b.apply(this, _.asArray(arguments).concat(a));
-        };
-    }, _.cps.identity);
-});
-_.cps.compose = $restArg(function (arr) {
-    var functions = _.isArray(arr) && arr || _.asArray(arguments);
-    return _.cps.sequence(functions.slice().reverse());
-});
-_.cps.trySequence = function (functions, then, err) {
-    _.reduceRight(functions, function (a, b) {
-        return function (e) {
-            if (_.isTypeOf(Error, e)) {
-                return (err || then)(e);
-            } else {
-                try {
-                    return b.apply(this, _.asArray(arguments).concat(a));
-                } catch (e) {
-                    return (err || then)(e);
-                }
-            }
-        };
-    }, then)();
-};
-_([
-    'method',
-    'property',
-    'flipped',
-    'forceOverride'
-]).each(_.defineTagKeyword);
-$extensionMethods = function (Type, methods) {
-    _.each(methods, function (tags, name) {
-        var fn = Tags.unwrap(tags);
-        if (!(name in _)) {
-            _[name] = _[name] || fn;
-        }
-        if (!tags.$method && (tags.$property || _.oneArg(fn))) {
-            if (!(name in Type.prototype) || tags.$forceOverride) {
-                _.defineHiddenProperty(Type.prototype, name, function () {
-                    return fn(this);
-                });
-            }
-        } else if (!tags.$property) {
-            if (!(name in Type.prototype) || tags.$forceOverride) {
-                Type.prototype[name] = _.asMethod(tags.$flipped ? _.flip(fn) : fn);
-            }
-        } else {
-            throw new Error('$extensionMethods: crazy input, unable to match');
-        }
-    });
-};
-$extensionMethods(Function, {
-    $: $method(_.partial),
-    $$: $method(_.tails),
-    bind: _.bind,
-    partial: _.partial,
-    calls: _.bind,
-    tails: _.tails,
-    tails2: _.tails2,
-    tails3: _.tails3,
-    applies: _.applies,
-    compose: _.compose,
-    then: _.then,
-    flip: _.flip,
-    with: _.flipN,
-    flip2: _.flip2,
-    flip3: _.flip3,
-    asFreeFunction: _.asFreeFunction,
-    asMethod: _.asMethod,
-    callsWith: _.callsTo,
-    tailsWith: _.tailsTo,
-    higherOrder: _.higherOrder,
-    returns: function (fn, returns) {
-        return function () {
-            fn.apply(this, arguments);
-            return returns;
-        };
-    },
-    asContinuation: function (f) {
-        return $restArg(function () {
-            _.last(arguments)(f.apply(this, _.initial(arguments)));
-        });
-    },
-    wraps: function (f, w) {
-        f._wrapped = _.withSameArgs(f, w);
-        return f;
-    },
-    wrapped: function (f) {
-        return f._wrapped || f;
-    },
-    original: function (f) {
-        while (f && f._wrapped) {
-            f = f._wrapped;
-        }
-        return f;
-    },
-    arity0: _.arity0,
-    arity1: _.arity1,
-    arity2: _.arity2,
-    arity3: _.arity3,
-    or: _.or,
-    and: _.and,
-    not: _.not,
-    new: _.higherOrder(_.new),
-    each: function (fn, obj) {
-        return _.each2(obj, fn);
-    },
-    map: function (fn, obj) {
-        return _.map2(obj, fn);
-    },
-    oneShot: function (fn) {
-        var called = false;
-        return function () {
-            if (!called) {
-                called = true;
-                return fn.apply(this, arguments);
-            }
-        };
-    },
-    memoized: _.memoize,
-    throttled: _.throttle,
-    debounced: function (func, wait, immediate) {
-        var timestamp, timeout, result, args, context;
-        var later = function () {
-            var last = Date.now() - timestamp;
-            if (last < wait && last > 0) {
-                timeout = setTimeout(later, wait - last);
-            } else {
-                timeout = null;
-                if (!immediate) {
-                    result = func.apply(context, args);
-                    if (!timeout) {
-                        context = args = null;
-                    }
-                }
-            }
-        };
-        var debouncedFn = function () {
-            context = this;
-            args = arguments;
-            timestamp = Date.now();
-            var callNow = immediate && !timeout;
-            if (!timeout) {
-                timeout = setTimeout(later, wait);
-            }
-            if (callNow) {
-                result = func.apply(context, args);
-                context = args = null;
-            }
-            return result;
-        };
-        debouncedFn.cancel = function () {
-            if (timeout) {
-                clearTimeout(timeout);
-                timeout = null;
-            }
-        };
-        debouncedFn.callImmediately = function () {
-            debouncedFn.cancel();
-            func.apply(context, args);
-        };
-        return debouncedFn;
-    },
-    postpone: $method(function (fn) {
-        fn.postponed.apply(null, arguments);
-    }),
-    postponed: function (fn) {
-        return function () {
-            var shouldPostpone = !fn._postponed;
-            fn._postponed = _.asArray(arguments);
-            fn._postponedThis = this;
-            if (shouldPostpone) {
-                _.delay(function () {
-                    var args_ = fn._postponed;
-                    var this_ = fn._postponedThis;
-                    fn._postponed = undefined;
-                    fn._postponedThis = undefined;
-                    fn.apply(this_, args_);
-                });
-            }
-        };
-    },
-    delay: _.delay,
-    delayed: function (fn, time) {
-        return function () {
-            var args = arguments, context = this;
-            _.delay(function () {
-                fn.apply(context, args);
-            }, time);
-        };
-    }
-});
-$extensionMethods(Function, {
-    catch_: function (fn, catch_, then, finally_) {
-        return fn.catches(catch_, then)();
-    },
-    catches: function (fn, catch_, then, finally_) {
-        var args = arguments.length;
-        catch_ = args > 1 ? _.coerceToFunction(catch_) : _.identity;
-        then = args > 2 ? _.coerceToFunction(then) : _.identity;
-        finally_ = args > 3 ? _.coerceToFunction(finally_) : _.identity;
-        return function () {
-            var result = undefined, catched = false;
-            try {
-                result = fn.apply(this, arguments);
-            } catch (e) {
-                result = catch_(e);
-                catched = true;
-            }
-            if (!catched) {
-                result = then(result);
-            }
-            return finally_(result);
-        };
-    }
-});
-$extensionMethods(Array, {
-    each: _.each,
-    map: _.map,
-    fold: _.reduce2,
-    reduce: _.reduce,
-    reduceRight: _.reduceRight,
-    zip: _.zipWith,
-    groupBy: _.groupBy,
-    indexBy: _.indexBy,
-    find: _.find,
-    filter: _.filter,
-    reject: _.reject,
-    flat: _.flatten.tails2(true),
-    object: _.object,
-    shuffle: _.shuffle,
-    nonempty: _.nonempty,
-    pluck: $method(_.pluck),
-    without: $method(_.without),
-    join: function (strJoin) {
-        return $forceOverride(function (arr, delim) {
-            delim = arguments.length < 2 ? '' : delim;
-            if (_.isString(delim)) {
-                return strJoin.call(arr, delim);
-            } else {
-                return _.reduce2(arr, function (a, b) {
-                    return [a].concat([
-                        delim,
-                        b
-                    ]);
-                });
-            }
-        });
-    }(Array.prototype.join),
-    contains: function (arr, item) {
-        return arr.indexOf(item) >= 0;
-    },
-    top: function (arr) {
-        return arr[arr.length - 1];
-    },
-    first: function (arr) {
-        return arr[0];
-    },
-    second: function (arr) {
-        return arr[1];
-    },
-    rest: function (arr) {
-        return _.rest(arr);
-    },
-    last: function (arr) {
-        return arr[arr.length - 1];
-    },
-    take: function (arr, n) {
-        return arr.slice(0, n);
-    },
-    lastN: $method(_.last),
-    before: function (arr, x) {
-        var i = arr.indexOf(x);
-        return i < 0 ? arr : arr.slice(0, i - 1);
-    },
-    after: function (arr, x) {
-        var i = arr.indexOf(x);
-        return i < 0 ? arr : arr.slice(i + 1);
-    },
-    isEmpty: function (arr) {
-        return arr.length === 0;
-    },
-    notEmpty: function (arr) {
-        return arr.length > 0;
-    },
-    lastIndex: function (arr) {
-        return arr.length - 1;
-    },
-    random: function (arr) {
-        return arr[_.random(0, arr.lastIndex)];
-    },
-    copy: function (arr) {
-        return arr.slice(0);
-    },
-    removeAll: $method(function (arr) {
-        return arr.splice(0, arr.length), arr;
-    }),
-    remove: function (arr, item) {
-        var i;
-        while ((i = arr.indexOf(item)) !== -1) {
-            arr.splice(i, 1);
-        }
-        return arr;
-    },
-    removeAt: function (arr, index) {
-        arr.splice(index, 1);
-        return arr;
-    },
-    insertAt: function (arr, item, index) {
-        arr.splice(index, 0, item);
-        return arr;
-    },
-    itemAtWrappedIndex: function (arr, i) {
-        return arr[i % arr.length];
-    },
-    reversed: function (arr) {
-        return arr.slice().reverse();
-    },
-    swap: $method(function (arr, indexA, indexB) {
-        var a = arr[indexA], b = arr[indexB];
-        arr[indexA] = b;
-        arr[indexB] = a;
-        return arr;
-    })
-});
-_.zap = function (firstArg) {
-    var zippo = _.last(arguments);
-    return _.reduce(_.rest(_.initial(arguments)), function (memo, row) {
-        return _.times(Math.max(memo.length, row.length), function (i) {
-            return zippo(memo[i], row[i]);
-        });
-    }, firstArg);
-};
-$extensionMethods(String, {
-    quote: _.quote,
-    pluck: function (s, arr) {
-        return _.pluck2(arr, s);
-    },
-    contains: function (s, other) {
-        return s.indexOf(other) >= 0;
-    },
-    startsWith: function (s, x) {
-        return x.length === 1 ? s[0] === x : s.substring(0, x.length) === x;
-    },
-    endsWith: function (s, x) {
-        return x.length === 1 ? s[s.length - 1] === x : s.substring(s.length - x.length) === x;
-    },
-    pad: function (s, len, filler) {
-        return s += (filler || ' ').repeats(Math.max(0, len - s.length));
-    },
-    cut: function (s, from) {
-        return s.substring(0, from - 1) + s.substring(from, s.length);
-    },
-    insert: function (s, position, what) {
-        return s.substring(0, position) + what + s.substring(position, s.length);
-    },
-    lowercase: function (s) {
-        return s.toLowerCase();
-    },
-    uppercase: function (s) {
-        return s.toUpperCase();
-    },
-    trimmed: function (s) {
-        return s.trim();
-    },
-    limitedTo: function (s, n) {
-        return s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026');
-    },
-    escaped: function (s) {
-        return _.escape(s);
-    },
-    repeats: function (s, n) {
-        return _.times(n, _.constant(s)).join('');
-    },
-    prepend: function (s, other) {
-        return other + s;
-    },
-    append: function (s, other) {
-        return s + other;
-    },
-    first: function (s, n) {
-        return _.first(s, n).join('');
-    },
-    last: function (s, n) {
-        return _.last(s, n).join('');
-    },
-    reversed: function (s) {
-        return s.split('').reverse().join('');
-    },
-    capitalized: function (s) {
-        return s.charAt(0).toUpperCase() + s.slice(1);
-    },
-    decapitalized: function (s) {
-        return s.charAt(0).toLowerCase() + s.slice(1);
-    },
-    latinAlphanumericValue: function (s) {
-        return s.replace(/[^a-z0-9]/gi, '');
-    },
-    alphanumericValue: function (s) {
-        return s.replace(unicode_hack(/[^0-9\p{L}|^0-9\p{N}|^0-9\p{Pc}|^0-9\p{M}]/g), '');
-    },
-    numericValue: function (s) {
-        return s.replace(/[^0-9]/g, '');
-    },
-    integerValue: function (s) {
-        return s.numericValue.parsedInt;
-    },
-    parsedInt: function (s) {
-        var result = parseInt(s, 10);
-        return _.isFinite(result) ? result : undefined;
-    },
-    bytes: function (s) {
-        var bytes = new Uint8Array(s.length);
-        for (var i = 0; i < s.length; ++i) {
-            bytes[i] = s.charCodeAt(i);
-        }
-        return bytes;
-    },
-    hash: function (s) {
-        var hash = 0, i, chr, len;
-        if (s.length === 0) {
-            return hash;
-        }
-        for (i = 0, len = s.length; i < len; i++) {
-            chr = s.charCodeAt(i);
-            hash = (hash << 5) - hash + chr;
-            hash |= 0;
-        }
-        return hash;
-    },
-    transliterate: function () {
-        var table = _.extend({
-            'а': 'a',
-            'б': 'b',
-            'в': 'v',
-            'г': 'g',
-            'д': 'd',
-            'е': 'e',
-            'ё': 'yo',
-            'ж': 'zh',
-            'з': 'z',
-            'и': 'i',
-            'й': 'y',
-            'к': 'k',
-            'л': 'l',
-            'м': 'm',
-            'н': 'n',
-            'о': 'o',
-            'п': 'p',
-            'р': 'r',
-            'с': 's',
-            'т': 't',
-            'у': 'u',
-            'ф': 'ph',
-            'х': 'h',
-            'ц': 'ts',
-            'ч': 'ch',
-            'ш': 'sh',
-            'щ': 'sch',
-            'ь': '',
-            'ъ': '',
-            'ы': 'y',
-            'э': 'e',
-            'ю': 'yu',
-            'я': 'ya'
-        }, _.object(_.map('_-1234567890qwertyuiopasdfghjklzxcvbnm', function (x) {
-            return [
-                x,
-                x
-            ];
-        })));
-        return function (s) {
-            var result = '';
-            var source = (s || '').toLowerCase();
-            for (var i = 0, n = source.length; i < n; i++) {
-                var c = source[i];
-                var x = table[c] || '';
-                result += x;
-            }
-            return result;
-        };
-    }()
-});
-_.extend(String, {
-    randomHex: function (length) {
-        if (length === undefined) {
-            length = _.random(1, 32);
-        }
-        var string = '';
-        for (var i = 0; i < length; i++) {
-            string += Math.floor(Math.random() * 16).toString(16);
-        }
-        return string;
-    },
-    leadingZero: function (n) {
-        return n < 10 ? '0' + n : n.toString();
-    }
-});
-_.camelCaseToDashes = function (x) {
-    return x.replace(/[a-z][A-Z]/g, function (x) {
-        return x[0] + '-' + x[1].lowercase;
-    });
-};
-_.camelCaseToLoDashes = function (x) {
-    return x.replace(/[a-z][A-Z]/g, function (x) {
-        return x[0] + '_' + x[1].lowercase;
-    });
-};
-_.dashesToCamelCase = function (x) {
-    return x.replace(/(-.)/g, function (x) {
-        return x[1].uppercase;
-    });
-};
-_.loDashesToCamelCase = function (x) {
-    return x.replace(/(_.)/g, function (x) {
-        return x[1].uppercase;
-    });
-};
-(function () {
-    var hooks = [
-        'onceBefore',
-        'onceAfter',
-        'onBefore',
-        'onAfter',
-        'intercept'
-    ];
-    var hooksShort = [
-        'onceBefore',
-        'onceAfter',
-        'before',
-        'after',
-        'intercept'
-    ];
-    var copyHooks = function (from, to) {
-        _.extend(to, _.map2(_.pick(from, hooks), _.clone));
-    };
-    var makeBindable = function (obj, targetMethod) {
-        var method = obj[targetMethod];
-        return _.isBindable(method) ? method : obj[targetMethod] = _.bindable(method);
-    };
-    var hookProc = function (name) {
-        return function (obj, targetMethod, delegate) {
-            var bindable = makeBindable(obj, targetMethod);
-            return bindable[name].call(bindable, delegate);
-        };
-    };
-    var mixin = function (method, context) {
-        if (typeof method !== 'function') {
-            throw new Error('method should be a function');
-        }
-        return _.extend({}, method, {
-            _bindable: true,
-            impl: method,
-            _wrapped: method,
-            context: context,
-            off: function (delegate) {
-                _.each(hooks, function (hook) {
-                    if (delegate) {
-                        this['_' + hook].remove(delegate);
-                    } else {
-                        this['_' + hook].removeAll();
-                    }
-                }, this);
-                return this;
-            }
-        }, _.object(_.map(hooks, function (name) {
-            var queueName = '_' + name;
-            var once = name.indexOf('once') >= 0;
-            return [
-                name,
-                function (fn) {
-                    if (!_.isBindable(this)) {
-                        throw new Error('wrong this');
-                    }
-                    var queue = this[queueName];
-                    if (!once || queue.indexOf(fn) < 0) {
-                        this[queueName].push(fn);
-                    }
-                    return this;
-                }
-            ];
-        })), _.object(_.map(hooks, function (name) {
-            return [
-                '_' + name,
-                []
-            ];
-        })));
-    };
-    _.extend(_, _.mapObject(_.invert(hooks), hookProc.flip2), {
-        unbind: function (obj, targetMethod, delegate) {
-            var method = obj[targetMethod];
-            if (method && method.off) {
-                method.off(delegate);
-            }
-        },
-        isBindable: function (fn) {
-            return fn && fn._bindable ? true : false;
-        },
-        bindable: _.extendWith({
-            hooks: hooks,
-            hooksShort: hooksShort
-        }, function (method, context) {
-            return _.withSameArgs(method, _.extendWith(mixin(method, context), function () {
-                var wrapper = arguments.callee;
-                var onceBefore = wrapper._onceBefore;
-                var onceAfter = wrapper._onceAfter;
-                var before = wrapper._onBefore;
-                var after = wrapper._onAfter;
-                var intercept = wrapper._intercept;
-                var this_ = context || this;
-                var i, ni = undefined;
-                if (onceBefore.length) {
-                    for (i = 0, ni = onceBefore.length; i < ni; i++) {
-                        onceBefore[i].apply(this_, arguments);
-                    }
-                    onceBefore.removeAll();
-                }
-                for (i = 0, ni = before.length; i < ni; i++) {
-                    before[i].apply(this_, arguments);
-                }
-                var result = (intercept.length ? _.cps.compose([method].concat(intercept)) : method).apply(this_, arguments);
-                if (after.length || onceAfter.length) {
-                    var args = _.asArray(arguments).concat(result);
-                    for (i = 0, ni = after.length; i < ni; i++) {
-                        after[i].apply(this_, args);
-                    }
-                    if (onceAfter.length) {
-                        var arr = onceAfter.copy;
-                        onceAfter.removeAll();
-                        for (i = 0, ni = arr.length; i < ni; i++) {
-                            arr[i].apply(this_, args);
+            _.min = function (obj, iteratee, context) {
+                var result = Infinity, lastComputed = Infinity, value, computed;
+                if (iteratee == null && obj != null) {
+                    obj = isArrayLike(obj) ? obj : _.values(obj);
+                    for (var i = 0, length = obj.length; i < length; i++) {
+                        value = obj[i];
+                        if (value < result) {
+                            result = value;
                         }
+                    }
+                } else {
+                    iteratee = cb(iteratee, context);
+                    _.each(obj, function (value, index, list) {
+                        computed = iteratee(value, index, list);
+                        if (computed < lastComputed || computed === Infinity && result === Infinity) {
+                            result = value;
+                            lastComputed = computed;
+                        }
+                    });
+                }
+                return result;
+            };
+            _.shuffle = function (obj) {
+                var set = isArrayLike(obj) ? obj : _.values(obj);
+                var length = set.length;
+                var shuffled = Array(length);
+                for (var index = 0, rand; index < length; index++) {
+                    rand = _.random(0, index);
+                    if (rand !== index)
+                        shuffled[index] = shuffled[rand];
+                    shuffled[rand] = set[index];
+                }
+                return shuffled;
+            };
+            _.sample = function (obj, n, guard) {
+                if (n == null || guard) {
+                    if (!isArrayLike(obj))
+                        obj = _.values(obj);
+                    return obj[_.random(obj.length - 1)];
+                }
+                return _.shuffle(obj).slice(0, Math.max(0, n));
+            };
+            _.sortBy = function (obj, iteratee, context) {
+                iteratee = cb(iteratee, context);
+                return _.pluck(_.map(obj, function (value, index, list) {
+                    return {
+                        value: value,
+                        index: index,
+                        criteria: iteratee(value, index, list)
+                    };
+                }).sort(function (left, right) {
+                    var a = left.criteria;
+                    var b = right.criteria;
+                    if (a !== b) {
+                        if (a > b || a === void 0)
+                            return 1;
+                        if (a < b || b === void 0)
+                            return -1;
+                    }
+                    return left.index - right.index;
+                }), 'value');
+            };
+            var group = function (behavior) {
+                return function (obj, iteratee, context) {
+                    var result = {};
+                    iteratee = cb(iteratee, context);
+                    _.each(obj, function (value, index) {
+                        var key = iteratee(value, index, obj);
+                        behavior(result, value, key);
+                    });
+                    return result;
+                };
+            };
+            _.groupBy = group(function (result, value, key) {
+                if (_.has(result, key))
+                    result[key].push(value);
+                else
+                    result[key] = [value];
+            });
+            _.indexBy = group(function (result, value, key) {
+                result[key] = value;
+            });
+            _.countBy = group(function (result, value, key) {
+                if (_.has(result, key))
+                    result[key]++;
+                else
+                    result[key] = 1;
+            });
+            _.toArray = function (obj) {
+                if (!obj)
+                    return [];
+                if (_.isArray(obj))
+                    return slice.call(obj);
+                if (isArrayLike(obj))
+                    return _.map(obj, _.identity);
+                return _.values(obj);
+            };
+            _.size = function (obj) {
+                if (obj == null)
+                    return 0;
+                return isArrayLike(obj) ? obj.length : _.keys(obj).length;
+            };
+            _.partition = function (obj, predicate, context) {
+                predicate = cb(predicate, context);
+                var pass = [], fail = [];
+                _.each(obj, function (value, key, obj) {
+                    (predicate(value, key, obj) ? pass : fail).push(value);
+                });
+                return [
+                    pass,
+                    fail
+                ];
+            };
+            _.first = _.head = _.take = function (array, n, guard) {
+                if (array == null)
+                    return void 0;
+                if (n == null || guard)
+                    return array[0];
+                return _.initial(array, array.length - n);
+            };
+            _.initial = function (array, n, guard) {
+                return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)));
+            };
+            _.last = function (array, n, guard) {
+                if (array == null)
+                    return void 0;
+                if (n == null || guard)
+                    return array[array.length - 1];
+                return _.rest(array, Math.max(0, array.length - n));
+            };
+            _.rest = _.tail = _.drop = function (array, n, guard) {
+                return slice.call(array, n == null || guard ? 1 : n);
+            };
+            _.compact = function (array) {
+                return _.filter(array, _.identity);
+            };
+            var flatten = function (input, shallow, strict, startIndex) {
+                var output = [], idx = 0;
+                for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
+                    var value = input[i];
+                    if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
+                        if (!shallow)
+                            value = flatten(value, shallow, strict);
+                        var j = 0, len = value.length;
+                        output.length += len;
+                        while (j < len) {
+                            output[idx++] = value[j++];
+                        }
+                    } else if (!strict) {
+                        output[idx++] = value;
+                    }
+                }
+                return output;
+            };
+            _.flatten = function (array, shallow) {
+                return flatten(array, shallow, false);
+            };
+            _.without = function (array) {
+                return _.difference(array, slice.call(arguments, 1));
+            };
+            _.uniq = _.unique = function (array, isSorted, iteratee, context) {
+                if (!_.isBoolean(isSorted)) {
+                    context = iteratee;
+                    iteratee = isSorted;
+                    isSorted = false;
+                }
+                if (iteratee != null)
+                    iteratee = cb(iteratee, context);
+                var result = [];
+                var seen = [];
+                for (var i = 0, length = getLength(array); i < length; i++) {
+                    var value = array[i], computed = iteratee ? iteratee(value, i, array) : value;
+                    if (isSorted) {
+                        if (!i || seen !== computed)
+                            result.push(value);
+                        seen = computed;
+                    } else if (iteratee) {
+                        if (!_.contains(seen, computed)) {
+                            seen.push(computed);
+                            result.push(value);
+                        }
+                    } else if (!_.contains(result, value)) {
+                        result.push(value);
                     }
                 }
                 return result;
-            }));
-        })
-    });
-}());
-_.extend(_, {
-    gatherChanges: function (observables_) {
-        var observables = _.isArray(observables_) ? observables_ : _.initial(arguments);
-        var accept = _.last(arguments);
-        var gather = function (value) {
-            accept.apply(this, _.pluck(observables, 'value'));
-        };
-        _.each(observables, function (read) {
-            read(gather);
-        });
-    },
-    allTriggered: function (triggers, then) {
-        var triggered = [];
-        if (triggers.length > 0) {
-            _.each(triggers, function (t) {
-                t(function () {
-                    triggered = _.union(triggered, [t]);
-                    if (then && triggered.length === triggers.length) {
-                        then();
-                        then = undefined;
+            };
+            _.union = function () {
+                return _.uniq(flatten(arguments, true, true));
+            };
+            _.intersection = function (array) {
+                var result = [];
+                var argsLength = arguments.length;
+                for (var i = 0, length = getLength(array); i < length; i++) {
+                    var item = array[i];
+                    if (_.contains(result, item))
+                        continue;
+                    for (var j = 1; j < argsLength; j++) {
+                        if (!_.contains(arguments[j], item))
+                            break;
                     }
-                });
-            });
-        } else {
-            then();
-        }
-    },
-    observableRef: function (value) {
-        return _.extend(_.observable.apply(this, arguments), { trackReference: true });
-    },
-    observable: function (value) {
-        var stream = _.stream({
-            isObservable: true,
-            hasValue: arguments.length > 0,
-            value: _.isFunction(value) ? undefined : value,
-            read: function (schedule) {
-                return function (returnResult) {
-                    if (stream.hasValue) {
-                        returnResult.call(this, stream.value);
-                    }
-                    schedule.call(this, returnResult);
-                };
-            },
-            write: function (returnResult) {
-                return function (value) {
-                    if (stream.beforeWrite) {
-                        value = stream.beforeWrite(value);
-                    }
-                    if (!stream.hasValue || !(stream.trackReference ? stream.value === value : _.isEqual(stream.value, value))) {
-                        var prevValue = stream.value;
-                        var hadValue = stream.hasValue;
-                        stream.hasValue = true;
-                        stream.value = value;
-                        if (hadValue) {
-                            returnResult.call(this, false, stream.value, prevValue);
-                        } else {
-                            returnResult.call(this, false, stream.value);
-                        }
-                    }
-                };
-            }
-        });
-        if (arguments.length) {
-            stream.apply(this, arguments);
-        }
-        return _.extend(stream, {
-            force: function (value) {
-                stream.hasValue = false;
-                stream(value || stream.value);
-            },
-            then: function (fn) {
-                var next = _.observable();
-                next.beforeWrite = fn;
-                stream(function (x) {
-                    next.write(x);
-                });
-                return next;
-            },
-            toggle: function () {
-                return stream(!stream.value);
-            },
-            tie: function (other) {
-                stream(other);
-                other(stream);
-                return stream;
-            },
-            item: function (id) {
-                var all = stream.itemObservables || (stream.itemObservables = {});
-                var item = all[id];
-                if (!item) {
-                    item = all[id] = _.observable((stream.value && stream.value)[id]);
-                    item(function (x) {
-                        var oldValue = stream.value && stream.value[x];
-                        if (oldValue !== x) {
-                            (stream.value || (stream.value = {}))[id] = x;
-                            stream.force();
-                        }
-                    });
-                    stream(function (items) {
-                        item.write(items[id]);
-                    });
+                    if (j === argsLength)
+                        result.push(item);
                 }
-                return item;
-            },
-            when: function (match, then) {
-                var matchFn = _.isFunction(match) ? match : _.equals(match), alreadyCalled = false;
-                stream(function (val) {
-                    if (matchFn(val)) {
-                        if (!alreadyCalled) {
-                            alreadyCalled = true;
-                            stream.off(arguments.callee);
-                            then.apply(this, arguments);
-                        } else {
-                        }
-                    }
+                return result;
+            };
+            _.difference = function (array) {
+                var rest = flatten(arguments, true, true, 1);
+                return _.filter(array, function (value) {
+                    return !_.contains(rest, value);
                 });
-            }
-        });
-    },
-    barrier: function (defaultValue) {
-        var defaultListener = undefined;
-        if (_.isFunction(defaultValue)) {
-            defaultListener = defaultValue;
-            defaultValue = undefined;
-        }
-        var barrier = _.stream({
-            already: defaultValue !== undefined,
-            value: defaultValue,
-            reset: function () {
-                barrier.already = false;
-                delete barrier.value;
-            },
-            write: function (returnResult) {
-                return function (value) {
-                    if (!barrier.already) {
-                        barrier.already = true;
-                        barrier.value = value;
-                    }
-                    returnResult.call(this, true, barrier.value);
-                };
-            },
-            read: function (schedule) {
-                return function (returnResult) {
-                    if (barrier.already) {
-                        (barrier.postpones || barrier.commitingReads ? returnResult.postponed : returnResult).call(this, barrier.value);
+            };
+            _.zip = function () {
+                return _.unzip(arguments);
+            };
+            _.unzip = function (array) {
+                var length = array && _.max(array, getLength).length || 0;
+                var result = Array(length);
+                for (var index = 0; index < length; index++) {
+                    result[index] = _.pluck(array, index);
+                }
+                return result;
+            };
+            _.object = function (list, values) {
+                var result = {};
+                for (var i = 0, length = getLength(list); i < length; i++) {
+                    if (values) {
+                        result[list[i]] = values[i];
                     } else {
-                        schedule.call(this, returnResult);
+                        result[list[i][0]] = list[i][1];
                     }
+                }
+                return result;
+            };
+            function createPredicateIndexFinder(dir) {
+                return function (array, predicate, context) {
+                    predicate = cb(predicate, context);
+                    var length = getLength(array);
+                    var index = dir > 0 ? 0 : length - 1;
+                    for (; index >= 0 && index < length; index += dir) {
+                        if (predicate(array[index], index, array))
+                            return index;
+                    }
+                    return -1;
                 };
             }
-        });
-        if (defaultListener) {
-            barrier(defaultListener);
-        }
-        _.defineProperty(barrier, 'promise', function () {
-            return new Promise(function (resolve) {
-                barrier(resolve);
-            });
-        });
-        return barrier;
-    },
-    triggerOnce: $restArg(function () {
-        var stream = _.stream({
-            read: function (schedule) {
-                return function (listener) {
-                    if (stream.queue.indexOf(listener) < 0) {
-                        schedule.call(this, listener);
+            _.findIndex = createPredicateIndexFinder(1);
+            _.findLastIndex = createPredicateIndexFinder(-1);
+            _.sortedIndex = function (array, obj, iteratee, context) {
+                iteratee = cb(iteratee, context, 1);
+                var value = iteratee(obj);
+                var low = 0, high = getLength(array);
+                while (low < high) {
+                    var mid = Math.floor((low + high) / 2);
+                    if (iteratee(array[mid]) < value)
+                        low = mid + 1;
+                    else
+                        high = mid;
+                }
+                return low;
+            };
+            function createIndexFinder(dir, predicateFind, sortedIndex) {
+                return function (array, item, idx) {
+                    var i = 0, length = getLength(array);
+                    if (typeof idx == 'number') {
+                        if (dir > 0) {
+                            i = idx >= 0 ? idx : Math.max(idx + length, i);
+                        } else {
+                            length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
+                        }
+                    } else if (sortedIndex && idx && length) {
+                        idx = sortedIndex(array, item);
+                        return array[idx] === item ? idx : -1;
                     }
+                    if (item !== item) {
+                        idx = predicateFind(slice.call(array, i, length), _.isNaN);
+                        return idx >= 0 ? idx + i : -1;
+                    }
+                    for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
+                        if (array[idx] === item)
+                            return idx;
+                    }
+                    return -1;
                 };
-            },
-            write: function (writes) {
-                return writes.partial(true);
             }
-        }).apply(this, arguments);
-        return stream;
-    }),
-    trigger: $restArg(function () {
-        return _.stream({
-            read: _.identity,
-            write: function (writes) {
-                return writes.partial(false);
-            }
-        }).apply(this, arguments);
-    }),
-    off: function (fn, what) {
-        if (fn.queue) {
-            if (arguments.length === 1) {
-                fn.queue.off();
-            } else {
-                fn.queue.off(what);
-            }
-        }
-        if (fn.queuedBy) {
-            _.each(fn.queuedBy, function (queue) {
-                queue.remove(fn);
-            });
-            delete fn.queuedBy;
-        }
-    },
-    stream: function (cfg_) {
-        var cfg = cfg_ || {};
-        var queue = _.extend([], {
-            off: function (fn) {
-                if (this.length) {
-                    if (arguments.length === 0) {
-                        _.each(this, function (fn) {
-                            fn.queuedBy.remove(this);
-                        }, this);
-                        this.removeAll();
-                    } else {
-                        if (fn.queuedBy) {
-                            fn.queuedBy.remove(this);
-                            this.remove(fn);
-                        }
-                    }
+            _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
+            _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
+            _.range = function (start, stop, step) {
+                if (stop == null) {
+                    stop = start || 0;
+                    start = 0;
                 }
-            }
-        });
-        var self = undefined;
-        var scheduleRead = function (fn) {
-            if (queue.indexOf(fn) < 0) {
-                if (fn.queuedBy) {
-                    fn.queuedBy.push(queue);
-                } else {
-                    fn.queuedBy = [queue];
+                step = step || 1;
+                var length = Math.max(Math.ceil((stop - start) / step), 0);
+                var range = Array(length);
+                for (var idx = 0; idx < length; idx++, start += step) {
+                    range[idx] = start;
                 }
-                queue.push(fn);
-            }
-        };
-        var commitPendingReads = function (flush, __args__) {
-            var args = _.rest(arguments), context = self.context || this, schedule = queue.copy;
-            if (flush) {
-                queue.off();
-            }
-            self.commitingReads = true;
-            for (var i = 0, n = schedule.length; i < n; i++) {
-                (self.postpones ? schedule[i].postponed : schedule[i]).apply(context, args);
-            }
-            delete self.commitingReads;
-        };
-        var write = cfg.write(commitPendingReads);
-        var read = cfg.read(scheduleRead);
-        var frontEnd = function (fn) {
-            if (_.isFunction(fn)) {
-                read.call(this, fn);
-            } else {
-                write.apply(this, arguments);
-            }
-            return arguments.callee;
-        };
-        var once = function (then) {
-            if (!_.find(queue, function (f) {
-                    return f.onceWrapped_ === then;
-                })) {
-                read(_.extend(function (v) {
-                    _.off(self, arguments.callee);
-                    then(v);
-                }, { onceWrapped_: then }));
-            }
-        };
-        return self = _.extend($restArg(frontEnd), cfg, {
-            queue: queue,
-            once: once,
-            off: _.off.asMethod,
-            read: read,
-            write: write,
-            postpone: function () {
-                this.postponed.apply(self.context, arguments);
-            }
-        });
-    }
-});
-_.observable.map = function (obj, fn) {
-    fn = fn || _.identity;
-    var value = _.isArray(obj) ? new Array(obj.length) : {};
-    var result = _.observable(value);
-    _.each(obj, function (read, i) {
-        read(function (x) {
-            value[i] = fn(x, i);
-            result.force(value);
-        });
-    });
-    return result;
-};
-_.observable.all = _.observable.map;
-_.hasOOP = true;
-_([
-    'property',
-    'static',
-    'final',
-    'alias',
-    'memoized',
-    'private',
-    'builtin',
-    'hidden',
-    'testArguments'
-]).each(_.defineTagKeyword);
-$prototype = function (arg1, arg2) {
-    return $prototype.impl.compile.apply($prototype.impl, arguments.length > 1 ? _.asArray(arguments).reverse() : arguments);
-};
-$extends = function (base, def) {
-    return $prototype(base, def || {});
-};
-$mixin = function (constructor, def) {
-    return $prototype.impl.compileMixin(_.extend(def, { constructor: constructor }));
-};
-_.extend($prototype, {
-    isConstructor: function (what) {
-        return _.isPrototypeConstructor(what);
-    },
-    macro: function (arg, fn) {
-        if (arguments.length === 1) {
-            $prototype.impl.alwaysTriggeredMacros.push(arg);
-        } else {
-            $prototype.impl.memberNameTriggeredMacros[arg] = fn;
-        }
-    },
-    macroTag: function (name, fn) {
-        _.defineTagKeyword(name);
-        $prototype.impl.tagTriggeredMacros[_.keyword(name)] = fn;
-    },
-    each: function (visitor) {
-        var namespace = $global;
-        for (var k in namespace) {
-            if (!_.isKeyword(k)) {
-                var value = namespace[k];
-                if ($prototype.isConstructor(value)) {
-                    visitor(value, k);
-                }
-            }
-        }
-    },
-    defines: function (constructor, member) {
-        return _.find($prototype.inheritanceChain(constructor), function (supa) {
-            return supa.$definition && supa.$definition.hasOwnProperty(member) || false;
-        }) ? true : false;
-    },
-    inheritanceChain: function (def) {
-        var chain = [];
-        while (def) {
-            chain.push(def);
-            def = def.$base && def.$base.constructor;
-        }
-        return chain;
-    },
-    wrapMethods: function (def, op) {
-        return Tags.map(def, function (fn, k, t) {
-            return _.isFunction(fn) ? op(fn, k, t).wraps(fn) : fn;
-        });
-    },
-    impl: {
-        alwaysTriggeredMacros: [],
-        memberNameTriggeredMacros: {},
-        tagTriggeredMacros: {},
-        compile: function (def, base) {
-            var impl = base && base.$impl || this;
-            return $untag(impl.sequence(def, base).call(impl, def || {}).constructor);
-        },
-        sequence: function (def, base) {
-            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
-        },
-        compileMixin: function (def) {
-            return _.sequence(this.flatten, this.contributeTraits(), this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
-        },
-        flatten: function (def) {
-            var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
-            var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
-                return _.map(this.flatten(membersDef), function (member, memberName) {
-                    return [
-                        memberName,
-                        $global[keyword](member)
-                    ];
-                });
-            }, this), true));
-            var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
-            return _.extend(memberDefinitions, mergedKeywordGroups);
-        },
-        evalAlwaysTriggeredMacros: function (base) {
-            return function (def) {
-                var macros = $prototype.impl.alwaysTriggeredMacros;
-                for (var i = 0, n = macros.length; i < n; i++) {
-                    def = macros[i](def, base) || def;
-                }
-                return def;
+                return range;
             };
-        },
-        evalMemberTriggeredMacros: function (base) {
-            return function (def) {
-                var names = $prototype.impl.memberNameTriggeredMacros, tags = $prototype.impl.tagTriggeredMacros;
-                _.each(def, function (value, name) {
-                    if (names.hasOwnProperty(name)) {
-                        def = names[name](def, value, name, base) || def;
-                    }
-                    _.each(_.keys(value), function (tag) {
-                        if (tags.hasOwnProperty(tag)) {
-                            def = tags[tag](def, value, name, base) || def;
-                        }
-                    });
-                });
-                return def;
+            var executeBound = function (sourceFunc, boundFunc, context, callingContext, args) {
+                if (!(callingContext instanceof boundFunc))
+                    return sourceFunc.apply(context, args);
+                var self = baseCreate(sourceFunc.prototype);
+                var result = sourceFunc.apply(self, args);
+                if (_.isObject(result))
+                    return result;
+                return self;
             };
-        },
-        evalPrototypeSpecificMacros: function (base) {
-            return function (def) {
-                if (!def.isTraitOf) {
-                    var macroTags = $untag(def.$macroTags || base && base.$definition && base.$definition.$macroTags);
-                    if (macroTags) {
-                        this.applyMacroTags(macroTags, def);
+            _.bind = function (func, context) {
+                if (nativeBind && func.bind === nativeBind)
+                    return nativeBind.apply(func, slice.call(arguments, 1));
+                if (!_.isFunction(func))
+                    throw new TypeError('Bind must be called on a function');
+                var args = slice.call(arguments, 2);
+                var bound = function () {
+                    return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
+                };
+                return bound;
+            };
+            _.partial = function (func) {
+                var boundArgs = slice.call(arguments, 1);
+                var bound = function () {
+                    var position = 0, length = boundArgs.length;
+                    var args = Array(length);
+                    for (var i = 0; i < length; i++) {
+                        args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i];
                     }
+                    while (position < arguments.length)
+                        args.push(arguments[position++]);
+                    return executeBound(func, bound, this, this, args);
+                };
+                return bound;
+            };
+            _.bindAll = function (obj) {
+                var i, length = arguments.length, key;
+                if (length <= 1)
+                    throw new Error('bindAll must be passed function names');
+                for (i = 1; i < length; i++) {
+                    key = arguments[i];
+                    obj[key] = _.bind(obj[key], obj);
                 }
-                return def;
+                return obj;
             };
-        },
-        applyMacroTags: function (macroTags, def) {
-            _.each(def, function (memberDef, memberName) {
-                _.each(macroTags, function (macroFn, tagName) {
-                    memberDef = def[memberName];
-                    if (_.isObject(memberDef) && _.keyword(tagName) in memberDef) {
-                        def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
-                    }
-                }, this);
-            }, this);
-            return def;
-        },
-        generateCustomCompilerImpl: function (base) {
-            return function (def) {
-                if (def.$impl) {
-                    def.$impl = _.extend(Object.create(base && base.$impl || this), def.$impl);
-                    def.$impl = $static($builtin($property(def.$impl)));
-                } else if (base && base.$impl) {
-                    def.$impl = $static($builtin($property(base.$impl)));
-                }
-                return def;
+            _.memoize = function (func, hasher) {
+                var memoize = function (key) {
+                    var cache = memoize.cache;
+                    var address = '' + (hasher ? hasher.apply(this, arguments) : key);
+                    if (!_.has(cache, address))
+                        cache[address] = func.apply(this, arguments);
+                    return cache[address];
+                };
+                memoize.cache = {};
+                return memoize;
             };
-        },
-        generateArgumentContractsIfNeeded: function (def) {
-            return def.$testArguments ? $prototype.wrapMethods(def, function (fn, name) {
+            _.delay = function (func, wait) {
+                var args = slice.call(arguments, 2);
+                return setTimeout(function () {
+                    return func.apply(null, args);
+                }, wait);
+            };
+            _.defer = _.partial(_.delay, _, 1);
+            _.throttle = function (func, wait, options) {
+                var context, args, result;
+                var timeout = null;
+                var previous = 0;
+                if (!options)
+                    options = {};
+                var later = function () {
+                    previous = options.leading === false ? 0 : _.now();
+                    timeout = null;
+                    result = func.apply(context, args);
+                    if (!timeout)
+                        context = args = null;
+                };
                 return function () {
-                    var args = _.asArray(arguments);
-                    $assertArguments(args.copy, fn.original, name);
-                    return fn.apply(this, args);
-                };
-            }) : def;
-        },
-        contributeTraits: function (base) {
-            return function (def) {
-                if (def.$traits) {
-                    var traits = def.$traits;
-                    this.mergeTraitsMembers(def, traits, base);
-                    def.$traits = $static($builtin($property(traits)));
-                    def.hasTrait = $static($builtin(function (Constructor) {
-                        return traits.indexOf(Constructor) >= 0;
-                    }));
-                }
-                return def;
-            };
-        },
-        mergeTraitsMembers: function (def, traits, base) {
-            _.each(traits, function (trait) {
-                _.defaults(def, _.omit(trait.$definition, _.or($builtin.matches, _.key(_.equals('constructor')))));
-            });
-        },
-        extendWithTags: function (def) {
-            return _.extendWith($untag(def), _.mapObject(Tags.get(def), $static.arity1));
-        },
-        callStaticConstructor: function (def) {
-            if (!def.isTraitOf) {
-                _.each($untag(def.$traits), function (T) {
-                    if (T.$definition.$constructor) {
-                        $untag(T.$definition.$constructor).call(def);
+                    var now = _.now();
+                    if (!previous && options.leading === false)
+                        previous = now;
+                    var remaining = wait - (now - previous);
+                    context = this;
+                    args = arguments;
+                    if (remaining <= 0 || remaining > wait) {
+                        if (timeout) {
+                            clearTimeout(timeout);
+                            timeout = null;
+                        }
+                        previous = now;
+                        result = func.apply(context, args);
+                        if (!timeout)
+                            context = args = null;
+                    } else if (!timeout && options.trailing !== false) {
+                        timeout = setTimeout(later, remaining);
                     }
-                });
-                if (def.$constructor) {
-                    $untag(def.$constructor).call(def);
+                    return result;
+                };
+            };
+            _.debounce = function (func, wait, immediate) {
+                var timeout, args, context, timestamp, result;
+                var later = function () {
+                    var last = _.now() - timestamp;
+                    if (last < wait && last >= 0) {
+                        timeout = setTimeout(later, wait - last);
+                    } else {
+                        timeout = null;
+                        if (!immediate) {
+                            result = func.apply(context, args);
+                            if (!timeout)
+                                context = args = null;
+                        }
+                    }
+                };
+                return function () {
+                    context = this;
+                    args = arguments;
+                    timestamp = _.now();
+                    var callNow = immediate && !timeout;
+                    if (!timeout)
+                        timeout = setTimeout(later, wait);
+                    if (callNow) {
+                        result = func.apply(context, args);
+                        context = args = null;
+                    }
+                    return result;
+                };
+            };
+            _.wrap = function (func, wrapper) {
+                return _.partial(wrapper, func);
+            };
+            _.negate = function (predicate) {
+                return function () {
+                    return !predicate.apply(this, arguments);
+                };
+            };
+            _.compose = function () {
+                var args = arguments;
+                var start = args.length - 1;
+                return function () {
+                    var i = start;
+                    var result = args[start].apply(this, arguments);
+                    while (i--)
+                        result = args[i].call(this, result);
+                    return result;
+                };
+            };
+            _.after = function (times, func) {
+                return function () {
+                    if (--times < 1) {
+                        return func.apply(this, arguments);
+                    }
+                };
+            };
+            _.before = function (times, func) {
+                var memo;
+                return function () {
+                    if (--times > 0) {
+                        memo = func.apply(this, arguments);
+                    }
+                    if (times <= 1)
+                        func = null;
+                    return memo;
+                };
+            };
+            _.once = _.partial(_.before, 2);
+            var hasEnumBug = !{ toString: null }.propertyIsEnumerable('toString');
+            var nonEnumerableProps = [
+                'valueOf',
+                'isPrototypeOf',
+                'toString',
+                'propertyIsEnumerable',
+                'hasOwnProperty',
+                'toLocaleString'
+            ];
+            function collectNonEnumProps(obj, keys) {
+                var nonEnumIdx = nonEnumerableProps.length;
+                var constructor = obj.constructor;
+                var proto = _.isFunction(constructor) && constructor.prototype || ObjProto;
+                var prop = 'constructor';
+                if (_.has(obj, prop) && !_.contains(keys, prop))
+                    keys.push(prop);
+                while (nonEnumIdx--) {
+                    prop = nonEnumerableProps[nonEnumIdx];
+                    if (prop in obj && obj[prop] !== proto[prop] && !_.contains(keys, prop)) {
+                        keys.push(prop);
+                    }
                 }
             }
-            return def;
-        },
-        generateConstructor: function (base) {
-            return function (def) {
-                return _.extend(def, {
-                    constructor: Tags.modify(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
-                        if (base) {
-                            fn.prototype = Object.create(base.prototype);
-                            fn.prototype.constructor = fn;
-                        }
-                        return fn;
-                    })
-                });
+            _.keys = function (obj) {
+                if (!_.isObject(obj))
+                    return [];
+                if (nativeKeys)
+                    return nativeKeys(obj);
+                var keys = [];
+                for (var key in obj)
+                    if (_.has(obj, key))
+                        keys.push(key);
+                if (hasEnumBug)
+                    collectNonEnumProps(obj, keys);
+                return keys;
             };
-        },
-        generateBuiltInMembers: function (base) {
-            return function (def) {
-                if (def.$constructor) {
-                    def.$constructor = $builtin($static(def.$constructor));
+            _.allKeys = function (obj) {
+                if (!_.isObject(obj))
+                    return [];
+                var keys = [];
+                for (var key in obj)
+                    keys.push(key);
+                if (hasEnumBug)
+                    collectNonEnumProps(obj, keys);
+                return keys;
+            };
+            _.values = function (obj) {
+                var keys = _.keys(obj);
+                var length = keys.length;
+                var values = Array(length);
+                for (var i = 0; i < length; i++) {
+                    values[i] = obj[keys[i]];
                 }
-                return _.defaults(def, {
-                    $base: $builtin($static($property(_.constant(base && base.prototype)))),
-                    $definition: $builtin($static($property(_.constant(_.extend({}, base && base.$definition, def))))),
-                    isTypeOf: $builtin($static(_.partial(_.isTypeOf, $untag(def.constructor)))),
-                    isInstanceOf: $builtin(function (constructor) {
-                        return _.isTypeOf(constructor, this);
-                    }),
-                    $: $builtin($prototype.impl.$)
-                });
+                return values;
             };
-        },
-        $: function (fn) {
-            return _.$.apply(null, [this].concat(_.asArray(arguments)));
-        },
-        defaultConstructor: function (base) {
-            return base ? function () {
-                base.prototype.constructor.apply(this, arguments);
-            } : function (cfg) {
-                _.extend(this, cfg || {});
-            };
-        },
-        defineStaticMembers: function (def) {
-            this.defineMembers($untag(def.constructor), _.pick(def, $static.matches));
-            return def;
-        },
-        defineInstanceMembers: function (def) {
-            this.defineMembers($untag(def.constructor).prototype, _.omit(def, $static.matches));
-            return def;
-        },
-        defineMembers: function (targetObject, def) {
-            _.each(def, function (value, key) {
-                if (key !== 'constructor' && def.hasOwnProperty(key)) {
-                    this.defineMember(targetObject, value, key);
+            _.mapObject = function (obj, iteratee, context) {
+                iteratee = cb(iteratee, context);
+                var keys = _.keys(obj), length = keys.length, results = {}, currentKey;
+                for (var index = 0; index < length; index++) {
+                    currentKey = keys[index];
+                    results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
                 }
-            }, this);
-        },
-        defineMember: function (targetObject, def, key) {
-            if (def && def.$property) {
-                if (def.$memoized) {
-                    _.defineMemoizedProperty(targetObject, key, def);
+                return results;
+            };
+            _.pairs = function (obj) {
+                var keys = _.keys(obj);
+                var length = keys.length;
+                var pairs = Array(length);
+                for (var i = 0; i < length; i++) {
+                    pairs[i] = [
+                        keys[i],
+                        obj[keys[i]]
+                    ];
+                }
+                return pairs;
+            };
+            _.invert = function (obj) {
+                var result = {};
+                var keys = _.keys(obj);
+                for (var i = 0, length = keys.length; i < length; i++) {
+                    result[obj[keys[i]]] = keys[i];
+                }
+                return result;
+            };
+            _.functions = _.methods = function (obj) {
+                var names = [];
+                for (var key in obj) {
+                    if (_.isFunction(obj[key]))
+                        names.push(key);
+                }
+                return names.sort();
+            };
+            _.extend = createAssigner(_.allKeys);
+            _.extendOwn = _.assign = createAssigner(_.keys);
+            _.findKey = function (obj, predicate, context) {
+                predicate = cb(predicate, context);
+                var keys = _.keys(obj), key;
+                for (var i = 0, length = keys.length; i < length; i++) {
+                    key = keys[i];
+                    if (predicate(obj[key], key, obj))
+                        return key;
+                }
+            };
+            _.pick = function (object, oiteratee, context) {
+                var result = {}, obj = object, iteratee, keys;
+                if (obj == null)
+                    return result;
+                if (_.isFunction(oiteratee)) {
+                    keys = _.allKeys(obj);
+                    iteratee = optimizeCb(oiteratee, context);
                 } else {
-                    _.defineProperty(targetObject, key, def, def.$hidden ? { enumerable: false } : {});
+                    keys = flatten(arguments, false, false, 1);
+                    iteratee = function (value, key, obj) {
+                        return key in obj;
+                    };
+                    obj = Object(obj);
                 }
-            } else {
-                var what = $untag(def);
-                targetObject[key] = what;
-            }
-        },
-        ensureFinalContracts: function (base) {
-            return function (def) {
-                if (base) {
-                    if (base.$final) {
-                        throw new Error('Cannot derive from $final-marked prototype');
-                    }
-                    if (base.$definition) {
-                        var invalidMembers = _.intersection(_.keys(_.pick(base.$definition, $final.matches)), _.keys(def));
-                        if (invalidMembers.length) {
-                            throw new Error('Cannot override $final ' + invalidMembers.join(', '));
-                        }
-                    }
+                for (var i = 0, length = keys.length; i < length; i++) {
+                    var key = keys[i];
+                    var value = obj[key];
+                    if (iteratee(value, key, obj))
+                        result[key] = value;
                 }
-                return def;
+                return result;
             };
-        },
-        expandAliases: function (def) {
-            _.each(def, function (v, k) {
-                def[k] = this.resolveMember(def, k, v)[1];
-            }, this);
-            return def;
-        },
-        resolveMember: function (def, name, member) {
-            member = member || def[name];
-            if ($alias.is(member)) {
-                var ref = this.resolveMember(def, $untag(member));
-                var refName = ref[0];
-                var refValue = ref[1];
-                return [
-                    refName,
-                    $property.is(member) ? $property({
-                        get: function () {
-                            return this[refName];
+            _.omit = function (obj, iteratee, context) {
+                if (_.isFunction(iteratee)) {
+                    iteratee = _.negate(iteratee);
+                } else {
+                    var keys = _.map(flatten(arguments, false, false, 1), String);
+                    iteratee = function (value, key) {
+                        return !_.contains(keys, key);
+                    };
+                }
+                return _.pick(obj, iteratee, context);
+            };
+            _.defaults = createAssigner(_.allKeys, true);
+            _.create = function (prototype, props) {
+                var result = baseCreate(prototype);
+                if (props)
+                    _.extendOwn(result, props);
+                return result;
+            };
+            _.clone = function (obj) {
+                if (!_.isObject(obj))
+                    return obj;
+                return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
+            };
+            _.tap = function (obj, interceptor) {
+                interceptor(obj);
+                return obj;
+            };
+            _.isMatch = function (object, attrs) {
+                var keys = _.keys(attrs), length = keys.length;
+                if (object == null)
+                    return !length;
+                var obj = Object(object);
+                for (var i = 0; i < length; i++) {
+                    var key = keys[i];
+                    if (attrs[key] !== obj[key] || !(key in obj))
+                        return false;
+                }
+                return true;
+            };
+            var eq = function (a, b, aStack, bStack) {
+                if (a === b)
+                    return a !== 0 || 1 / a === 1 / b;
+                if (a == null || b == null)
+                    return a === b;
+                if (a instanceof _)
+                    a = a._wrapped;
+                if (b instanceof _)
+                    b = b._wrapped;
+                var className = toString.call(a);
+                if (className !== toString.call(b))
+                    return false;
+                switch (className) {
+                case '[object RegExp]':
+                case '[object String]':
+                    return '' + a === '' + b;
+                case '[object Number]':
+                    if (+a !== +a)
+                        return +b !== +b;
+                    return +a === 0 ? 1 / +a === 1 / b : +a === +b;
+                case '[object Date]':
+                case '[object Boolean]':
+                    return +a === +b;
+                }
+                var areArrays = className === '[object Array]';
+                if (!areArrays) {
+                    if (typeof a != 'object' || typeof b != 'object')
+                        return false;
+                    var aCtor = a.constructor, bCtor = b.constructor;
+                    if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof aCtor && _.isFunction(bCtor) && bCtor instanceof bCtor) && ('constructor' in a && 'constructor' in b)) {
+                        return false;
+                    }
+                }
+                aStack = aStack || [];
+                bStack = bStack || [];
+                var length = aStack.length;
+                while (length--) {
+                    if (aStack[length] === a)
+                        return bStack[length] === b;
+                }
+                aStack.push(a);
+                bStack.push(b);
+                if (areArrays) {
+                    length = a.length;
+                    if (length !== b.length)
+                        return false;
+                    while (length--) {
+                        if (!eq(a[length], b[length], aStack, bStack))
+                            return false;
+                    }
+                } else {
+                    var keys = _.keys(a), key;
+                    length = keys.length;
+                    if (_.keys(b).length !== length)
+                        return false;
+                    while (length--) {
+                        key = keys[length];
+                        if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack)))
+                            return false;
+                    }
+                }
+                aStack.pop();
+                bStack.pop();
+                return true;
+            };
+            _.isEqual = function (a, b) {
+                return eq(a, b);
+            };
+            _.isEmpty = function (obj) {
+                if (obj == null)
+                    return true;
+                if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj)))
+                    return obj.length === 0;
+                return _.keys(obj).length === 0;
+            };
+            _.isElement = function (obj) {
+                return !!(obj && obj.nodeType === 1);
+            };
+            _.isArray = nativeIsArray || function (obj) {
+                return toString.call(obj) === '[object Array]';
+            };
+            _.isObject = function (obj) {
+                var type = typeof obj;
+                return type === 'function' || type === 'object' && !!obj;
+            };
+            _.each([
+                'Arguments',
+                'Function',
+                'String',
+                'Number',
+                'Date',
+                'RegExp',
+                'Error'
+            ], function (name) {
+                _['is' + name] = function (obj) {
+                    return toString.call(obj) === '[object ' + name + ']';
+                };
+            });
+            if (!_.isArguments(arguments)) {
+                _.isArguments = function (obj) {
+                    return _.has(obj, 'callee');
+                };
+            }
+            if (typeof /./ != 'function' && typeof Int8Array != 'object') {
+                _.isFunction = function (obj) {
+                    return typeof obj == 'function' || false;
+                };
+            }
+            _.isFinite = function (obj) {
+                return isFinite(obj) && !isNaN(parseFloat(obj));
+            };
+            _.isNaN = function (obj) {
+                return _.isNumber(obj) && obj !== +obj;
+            };
+            _.isBoolean = function (obj) {
+                return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
+            };
+            _.isNull = function (obj) {
+                return obj === null;
+            };
+            _.isUndefined = function (obj) {
+                return obj === void 0;
+            };
+            _.has = function (obj, key) {
+                return obj != null && hasOwnProperty.call(obj, key);
+            };
+            _.noConflict = function () {
+                root._ = previousUnderscore;
+                return this;
+            };
+            _.identity = function (value) {
+                return value;
+            };
+            _.constant = function (value) {
+                return function () {
+                    return value;
+                };
+            };
+            _.noop = function () {
+            };
+            _.property = property;
+            _.propertyOf = function (obj) {
+                return obj == null ? function () {
+                } : function (key) {
+                    return obj[key];
+                };
+            };
+            _.matcher = _.matches = function (attrs) {
+                attrs = _.extendOwn({}, attrs);
+                return function (obj) {
+                    return _.isMatch(obj, attrs);
+                };
+            };
+            _.times = function (n, iteratee, context) {
+                var accum = Array(Math.max(0, n));
+                iteratee = optimizeCb(iteratee, context, 1);
+                for (var i = 0; i < n; i++)
+                    accum[i] = iteratee(i);
+                return accum;
+            };
+            _.random = function (min, max) {
+                if (max == null) {
+                    max = min;
+                    min = 0;
+                }
+                return min + Math.floor(Math.random() * (max - min + 1));
+            };
+            _.now = Date.now || function () {
+                return new Date().getTime();
+            };
+            var escapeMap = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                '\'': '&#x27;',
+                '`': '&#x60;'
+            };
+            var unescapeMap = _.invert(escapeMap);
+            var createEscaper = function (map) {
+                var escaper = function (match) {
+                    return map[match];
+                };
+                var source = '(?:' + _.keys(map).join('|') + ')';
+                var testRegexp = RegExp(source);
+                var replaceRegexp = RegExp(source, 'g');
+                return function (string) {
+                    string = string == null ? '' : '' + string;
+                    return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
+                };
+            };
+            _.escape = createEscaper(escapeMap);
+            _.unescape = createEscaper(unescapeMap);
+            _.result = function (object, property, fallback) {
+                var value = object == null ? void 0 : object[property];
+                if (value === void 0) {
+                    value = fallback;
+                }
+                return _.isFunction(value) ? value.call(object) : value;
+            };
+            var idCounter = 0;
+            _.uniqueId = function (prefix) {
+                var id = ++idCounter + '';
+                return prefix ? prefix + id : id;
+            };
+            _.templateSettings = {
+                evaluate: /<%([\s\S]+?)%>/g,
+                interpolate: /<%=([\s\S]+?)%>/g,
+                escape: /<%-([\s\S]+?)%>/g
+            };
+            var noMatch = /(.)^/;
+            var escapes = {
+                '\'': '\'',
+                '\\': '\\',
+                '\r': 'r',
+                '\n': 'n',
+                '\u2028': 'u2028',
+                '\u2029': 'u2029'
+            };
+            var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
+            var escapeChar = function (match) {
+                return '\\' + escapes[match];
+            };
+            _.template = function (text, settings, oldSettings) {
+                if (!settings && oldSettings)
+                    settings = oldSettings;
+                settings = _.defaults({}, settings, _.templateSettings);
+                var matcher = RegExp([
+                    (settings.escape || noMatch).source,
+                    (settings.interpolate || noMatch).source,
+                    (settings.evaluate || noMatch).source
+                ].join('|') + '|$', 'g');
+                var index = 0;
+                var source = '__p+=\'';
+                text.replace(matcher, function (match, escape, interpolate, evaluate, offset) {
+                    source += text.slice(index, offset).replace(escaper, escapeChar);
+                    index = offset + match.length;
+                    if (escape) {
+                        source += '\'+\n((__t=(' + escape + '))==null?\'\':_.escape(__t))+\n\'';
+                    } else if (interpolate) {
+                        source += '\'+\n((__t=(' + interpolate + '))==null?\'\':__t)+\n\'';
+                    } else if (evaluate) {
+                        source += '\';\n' + evaluate + '\n__p+=\'';
+                    }
+                    return match;
+                });
+                source += '\';\n';
+                if (!settings.variable)
+                    source = 'with(obj||{}){\n' + source + '}\n';
+                source = 'var __t,__p=\'\',__j=Array.prototype.join,' + 'print=function(){__p+=__j.call(arguments,\'\');};\n' + source + 'return __p;\n';
+                try {
+                    var render = new Function(settings.variable || 'obj', '_', source);
+                } catch (e) {
+                    e.source = source;
+                    throw e;
+                }
+                var template = function (data) {
+                    return render.call(this, data, _);
+                };
+                var argument = settings.variable || 'obj';
+                template.source = 'function(' + argument + '){\n' + source + '}';
+                return template;
+            };
+            _.chain = function (obj) {
+                var instance = _(obj);
+                instance._chain = true;
+                return instance;
+            };
+            var result = function (instance, obj) {
+                return instance._chain ? _(obj).chain() : obj;
+            };
+            _.mixin = function (obj) {
+                _.each(_.functions(obj), function (name) {
+                    var func = _[name] = obj[name];
+                    _.prototype[name] = function () {
+                        var args = [this._wrapped];
+                        push.apply(args, arguments);
+                        return result(this, func.apply(_, args));
+                    };
+                });
+            };
+            _.mixin(_);
+            _.each([
+                'pop',
+                'push',
+                'reverse',
+                'shift',
+                'sort',
+                'splice',
+                'unshift'
+            ], function (name) {
+                var method = ArrayProto[name];
+                _.prototype[name] = function () {
+                    var obj = this._wrapped;
+                    method.apply(obj, arguments);
+                    if ((name === 'shift' || name === 'splice') && obj.length === 0)
+                        delete obj[0];
+                    return result(this, obj);
+                };
+            });
+            _.each([
+                'concat',
+                'join',
+                'slice'
+            ], function (name) {
+                var method = ArrayProto[name];
+                _.prototype[name] = function () {
+                    return result(this, method.apply(this._wrapped, arguments));
+                };
+            });
+            _.prototype.value = function () {
+                return this._wrapped;
+            };
+            _.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
+            _.prototype.toString = function () {
+                return '' + this._wrapped;
+            };
+            if (true) {
+                !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
+                    return _;
+                }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+            }
+        }.call(this));
+    },
+    function (module, exports) {
+        unicode_hack = function () {
+            var unicodeCategories = {
+                Cn: '[\u0378\u0379Ϳ-\u0383\u038B\u038D\u03A2Ԩ-\u0530\u0557\u0558\u0560\u0588\u058B-\u0590\u05C8-\u05CF\u05EB-\u05EF\u05F5-\u05FF\u0604\u0605\u061C\u061D\u070E\u074B\u074C\u07B2-\u07BF\u07FB-\u07FF\u082E\u082F\u083F\u085C\u085D\u085F-ࣿॸঀ\u0984\u098D\u098E\u0991\u0992\u09A9\u09B1\u09B3-\u09B5\u09BA\u09BB\u09C5\u09C6\u09C9\u09CA\u09CF-\u09D6\u09D8-\u09DB\u09DE\u09E4\u09E5\u09FC-\u0A00\u0A04\u0A0B-\u0A0E\u0A11\u0A12\u0A29\u0A31\u0A34\u0A37\u0A3A\u0A3B\u0A3D\u0A43-\u0A46\u0A49\u0A4A\u0A4E-\u0A50\u0A52-\u0A58\u0A5D\u0A5F-\u0A65\u0A76-\u0A80\u0A84\u0A8E\u0A92\u0AA9\u0AB1\u0AB4\u0ABA\u0ABB\u0AC6\u0ACA\u0ACE\u0ACF\u0AD1-\u0ADF\u0AE4\u0AE5\u0AF0\u0AF2-\u0B00\u0B04\u0B0D\u0B0E\u0B11\u0B12\u0B29\u0B31\u0B34\u0B3A\u0B3B\u0B45\u0B46\u0B49\u0B4A\u0B4E-\u0B55\u0B58-\u0B5B\u0B5E\u0B64\u0B65\u0B78-\u0B81\u0B84\u0B8B-\u0B8D\u0B91\u0B96-\u0B98\u0B9B\u0B9D\u0BA0-\u0BA2\u0BA5-\u0BA7\u0BAB-\u0BAD\u0BBA-\u0BBD\u0BC3-\u0BC5\u0BC9\u0BCE\u0BCF\u0BD1-\u0BD6\u0BD8-\u0BE5\u0BFB-ఀ\u0C04\u0C0D\u0C11\u0C29ఴ\u0C3A-\u0C3C\u0C45\u0C49\u0C4E-\u0C54\u0C57\u0C5A-\u0C5F\u0C64\u0C65\u0C70-\u0C77\u0C80ಁ\u0C84\u0C8D\u0C91\u0CA9\u0CB4\u0CBA\u0CBB\u0CC5\u0CC9\u0CCE-\u0CD4\u0CD7-\u0CDD\u0CDF\u0CE4\u0CE5\u0CF0\u0CF3-ഁ\u0D04\u0D0D\u0D11\u0D3B\u0D3C\u0D45\u0D49\u0D4F-\u0D56\u0D58-\u0D5F\u0D64\u0D65\u0D76-\u0D78\u0D80\u0D81\u0D84\u0D97-\u0D99\u0DB2\u0DBC\u0DBE\u0DBF\u0DC7-\u0DC9\u0DCB-\u0DCE\u0DD5\u0DD7\u0DE0-\u0DF1\u0DF5-\u0E00\u0E3B-\u0E3E\u0E5C-\u0E80\u0E83\u0E85\u0E86\u0E89\u0E8B\u0E8C\u0E8E-\u0E93\u0E98\u0EA0\u0EA4\u0EA6\u0EA8\u0EA9\u0EAC\u0EBA\u0EBE\u0EBF\u0EC5\u0EC7\u0ECE\u0ECF\u0EDA\u0EDBໞ-\u0EFF\u0F48\u0F6D-\u0F70\u0F98\u0FBD\u0FCD\u0FDB-\u0FFF\u10C6-\u10CFჽ-ჿ\u1249\u124E\u124F\u1257\u1259\u125E\u125F\u1289\u128E\u128F\u12B1\u12B6\u12B7\u12BF\u12C1\u12C6\u12C7\u12D7\u1311\u1316\u1317\u135B\u135C\u137D-\u137F\u139A-\u139F\u13F5-\u13FF\u169D-\u169Fᛱ-\u16FF\u170D\u1715-\u171F\u1737-\u173F\u1754-\u175F\u176D\u1771\u1774-\u177F\u17DE\u17DF\u17EA-\u17EF\u17FA-\u17FF\u180F\u181A-\u181F\u1878-\u187F\u18AB-\u18AF\u18F6-\u18FFᤝ-\u191F\u192C-\u192F\u193C-\u193F\u1941-\u1943\u196E\u196F\u1975-\u197F\u19AC-\u19AF\u19CA-\u19CF\u19DB-\u19DD\u1A1C\u1A1D\u1A5F\u1A7D\u1A7E\u1A8A-\u1A8F\u1A9A-\u1A9F\u1AAE-\u1AFF\u1B4C-\u1B4F\u1B7D-\u1B7F᮫-ᮭᮺ-ᮿ\u1BF4-\u1BFB\u1C38-\u1C3A\u1C4A-\u1C4C\u1C80-\u1CCFᳳ-\u1CFFᷧ-\u1DFB\u1F16\u1F17\u1F1E\u1F1F\u1F46\u1F47\u1F4E\u1F4F\u1F58\u1F5A\u1F5C\u1F5E\u1F7E\u1F7F\u1FB5\u1FC5\u1FD4\u1FD5\u1FDC\u1FF0\u1FF1\u1FF5\u1FFF\u2065-\u2069\u2072\u2073\u208F\u209D-\u209F\u20BA-\u20CF\u20F1-\u20FF\u218A-\u218F\u23F4-\u23FF\u2427-\u243F\u244B-\u245F\u2700\u27CB\u27CD\u2B4D-\u2B4F\u2B5A-\u2BFF\u2C2F\u2C5FⳲ-\u2CF8\u2D26-\u2D2Fⵦ-\u2D6E\u2D71-\u2D7E\u2D97-\u2D9F\u2DA7\u2DAF\u2DB7\u2DBF\u2DC7\u2DCF\u2DD7\u2DDF\u2E32-\u2E7F\u2E9A\u2EF4-\u2EFF\u2FD6-\u2FEF\u2FFC-\u2FFF\u3040\u3097\u3098\u3100-\u3104\u312E-\u3130\u318F\u31BB-\u31BF\u31E4-\u31EF\u321F\u32FF\u4DB6-\u4DBF鿌-\u9FFF\uA48D-\uA48F\uA4C7-\uA4CF\uA62C-\uA63Fꙴ-ꙻꚘ-ꚟ\uA6F8-\uA6FF\uA78FꞒ-ꞟꞪ-ꟹ\uA82C-\uA82F\uA83A-\uA83F\uA878-\uA87F\uA8C5-\uA8CD\uA8DA-\uA8DF\uA8FC-\uA8FF\uA954-\uA95E\uA97D-\uA97F\uA9CE\uA9DA-\uA9DDꧠ-\uA9FF\uAA37-\uAA3F\uAA4E\uAA4F\uAA5A\uAA5Bꩼ-ꩿ\uAAC3-\uAADAꫠ-\uAB00\uAB07\uAB08\uAB0F\uAB10\uAB17-\uAB1F\uAB27\uAB2F-\uABBF\uABEE\uABEF\uABFA-\uABFF\uD7A4-\uD7AF\uD7C7-\uD7CA\uD7FC-\uD7FF郞隷\uFA6E\uFA6F\uFADA-\uFAFF\uFB07-\uFB12\uFB18-\uFB1C\uFB37\uFB3D\uFB3F\uFB42\uFB45\uFBC2-\uFBD2\uFD40-\uFD4F\uFD90\uFD91\uFDC8-\uFDEF\uFDFE\uFDFF\uFE1A-\uFE1F︧-\uFE2F\uFE53\uFE67\uFE6C-\uFE6F\uFE75\uFEFD\uFEFE\uFF00\uFFBF-\uFFC1\uFFC8\uFFC9\uFFD0\uFFD1\uFFD8\uFFD9\uFFDD-\uFFDF\uFFE7\uFFEF-\uFFF8\uFFFE\uFFFF]',
+                Lu: '[A-ZÀ-ÖØ-ÞĀĂĄĆĈĊČĎĐĒĔĖĘĚĜĞĠĢĤĦĨĪĬĮİĲĴĶĹĻĽĿŁŃŅŇŊŌŎŐŒŔŖŘŚŜŞŠŢŤŦŨŪŬŮŰŲŴŶŸŹŻŽƁƂƄƆƇƉ-ƋƎ-ƑƓƔƖ-ƘƜƝƟƠƢƤƦƧƩƬƮƯƱ-ƳƵƷƸƼǄǇǊǍǏǑǓǕǗǙǛǞǠǢǤǦǨǪǬǮǱǴǶ-ǸǺǼǾȀȂȄȆȈȊȌȎȐȒȔȖȘȚȜȞȠȢȤȦȨȪȬȮȰȲȺȻȽȾɁɃ-ɆɈɊɌɎͰͲͶΆΈ-ΊΌΎΏΑ-ΡΣ-ΫϏϒ-ϔϘϚϜϞϠϢϤϦϨϪϬϮϴϷϹϺϽ-ЯѠѢѤѦѨѪѬѮѰѲѴѶѸѺѼѾҀҊҌҎҐҒҔҖҘҚҜҞҠҢҤҦҨҪҬҮҰҲҴҶҸҺҼҾӀӁӃӅӇӉӋӍӐӒӔӖӘӚӜӞӠӢӤӦӨӪӬӮӰӲӴӶӸӺӼӾԀԂԄԆԈԊԌԎԐԒԔԖԘԚԜԞԠԢԤԦԱ-ՖႠ-ჅḀḂḄḆḈḊḌḎḐḒḔḖḘḚḜḞḠḢḤḦḨḪḬḮḰḲḴḶḸḺḼḾṀṂṄṆṈṊṌṎṐṒṔṖṘṚṜṞṠṢṤṦṨṪṬṮṰṲṴṶṸṺṼṾẀẂẄẆẈẊẌẎẐẒẔẞẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼẾỀỂỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪỬỮỰỲỴỶỸỺỼỾἈ-ἏἘ-ἝἨ-ἯἸ-ἿὈ-ὍὙὛὝὟὨ-ὯᾸ-ΆῈ-ΉῘ-ΊῨ-ῬῸ-Ώℂℇℋ-ℍℐ-ℒℕℙ-ℝℤΩℨK-ℭℰ-ℳℾℿⅅↃⰀ-ⰮⱠⱢ-ⱤⱧⱩⱫⱭ-ⱰⱲⱵⱾ-ⲀⲂⲄⲆⲈⲊⲌⲎⲐⲒⲔⲖⲘⲚⲜⲞⲠⲢⲤⲦⲨⲪⲬⲮⲰⲲⲴⲶⲸⲺⲼⲾⳀⳂⳄⳆⳈⳊⳌⳎⳐⳒⳔⳖⳘⳚⳜⳞⳠⳢⳫⳭꙀꙂꙄꙆꙈꙊꙌꙎꙐꙒꙔꙖꙘꙚꙜꙞꙠꙢꙤꙦꙨꙪꙬꚀꚂꚄꚆꚈꚊꚌꚎꚐꚒꚔꚖꜢꜤꜦꜨꜪꜬꜮꜲꜴꜶꜸꜺꜼꜾꝀꝂꝄꝆꝈꝊꝌꝎꝐꝒꝔꝖꝘꝚꝜꝞꝠꝢꝤꝦꝨꝪꝬꝮꝹꝻꝽꝾꞀꞂꞄꞆꞋꞍꞐꞠꞢꞤꞦꞨＡ-Ｚ]',
+                Ll: '[a-zªµºß-öø-ÿāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįıĳĵķĸĺļľŀłńņňŉŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷźżž-ƀƃƅƈƌƍƒƕƙ-ƛƞơƣƥƨƪƫƭưƴƶƹƺƽ-ƿǆǉǌǎǐǒǔǖǘǚǜǝǟǡǣǥǧǩǫǭǯǰǳǵǹǻǽǿȁȃȅȇȉȋȍȏȑȓȕȗșțȝȟȡȣȥȧȩȫȭȯȱȳ-ȹȼȿɀɂɇɉɋɍɏ-ʓʕ-ʯͱͳͷͻ-ͽΐά-ώϐϑϕ-ϗϙϛϝϟϡϣϥϧϩϫϭϯ-ϳϵϸϻϼа-џѡѣѥѧѩѫѭѯѱѳѵѷѹѻѽѿҁҋҍҏґғҕҗҙқҝҟҡңҥҧҩҫҭүұҳҵҷҹһҽҿӂӄӆӈӊӌӎӏӑӓӕӗәӛӝӟӡӣӥӧөӫӭӯӱӳӵӷӹӻӽӿԁԃԅԇԉԋԍԏԑԓԕԗԙԛԝԟԡԣԥԧա-ևᴀ-ᴫᵢ-ᵷᵹ-ᶚḁḃḅḇḉḋḍḏḑḓḕḗḙḛḝḟḡḣḥḧḩḫḭḯḱḳḵḷḹḻḽḿṁṃṅṇṉṋṍṏṑṓṕṗṙṛṝṟṡṣṥṧṩṫṭṯṱṳṵṷṹṻṽṿẁẃẅẇẉẋẍẏẑẓẕ-ẝẟạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹỻỽỿ-ἇἐ-ἕἠ-ἧἰ-ἷὀ-ὅὐ-ὗὠ-ὧὰ-ώᾀ-ᾇᾐ-ᾗᾠ-ᾧᾰ-ᾴᾶᾷιῂ-ῄῆῇῐ-ΐῖῗῠ-ῧῲ-ῴῶῷℊℎℏℓℯℴℹℼℽⅆ-ⅉⅎↄⰰ-ⱞⱡⱥⱦⱨⱪⱬⱱⱳⱴⱶ-ⱼⲁⲃⲅⲇⲉⲋⲍⲏⲑⲓⲕⲗⲙⲛⲝⲟⲡⲣⲥⲧⲩⲫⲭⲯⲱⲳⲵⲷⲹⲻⲽⲿⳁⳃⳅⳇⳉⳋⳍⳏⳑⳓⳕⳗⳙⳛⳝⳟⳡⳣⳤⳬⳮⴀ-ⴥꙁꙃꙅꙇꙉꙋꙍꙏꙑꙓꙕꙗꙙꙛꙝꙟꙡꙣꙥꙧꙩꙫꙭꚁꚃꚅꚇꚉꚋꚍꚏꚑꚓꚕꚗꜣꜥꜧꜩꜫꜭꜯ-ꜱꜳꜵꜷꜹꜻꜽꜿꝁꝃꝅꝇꝉꝋꝍꝏꝑꝓꝕꝗꝙꝛꝝꝟꝡꝣꝥꝧꝩꝫꝭꝯꝱ-ꝸꝺꝼꝿꞁꞃꞅꞇꞌꞎꞑꞡꞣꞥꞧꞩꟺﬀ-ﬆﬓ-ﬗａ-ｚ]',
+                Lt: '[ǅǈǋǲᾈ-ᾏᾘ-ᾟᾨ-ᾯᾼῌῼ]',
+                Lm: '[ʰ-ˁˆ-ˑˠ-ˤˬˮʹͺՙـۥۦߴߵߺࠚࠤࠨॱๆໆჼៗᡃᪧᱸ-ᱽᴬ-ᵡᵸᶛ-ᶿⁱⁿₐ-ₜⱽⵯⸯ々〱-〵〻ゝゞー-ヾꀕꓸ-ꓽꘌꙿꜗ-ꜟꝰꞈꧏꩰꫝｰﾞﾟ]',
+                Lo: '[ƻǀ-ǃʔא-תװ-ײؠ-ؿف-يٮٯٱ-ۓەۮۯۺ-ۼۿܐܒ-ܯݍ-ޥޱߊ-ߪࠀ-ࠕࡀ-ࡘऄ-हऽॐक़-ॡॲ-ॷॹ-ॿঅ-ঌএঐও-নপ-রলশ-হঽৎড়ঢ়য়-ৡৰৱਅ-ਊਏਐਓ-ਨਪ-ਰਲਲ਼ਵਸ਼ਸਹਖ਼-ੜਫ਼ੲ-ੴઅ-ઍએ-ઑઓ-નપ-રલળવ-હઽૐૠૡଅ-ଌଏଐଓ-ନପ-ରଲଳଵ-ହଽଡ଼ଢ଼ୟ-ୡୱஃஅ-ஊஎ-ஐஒ-கஙசஜஞடணதந-பம-ஹௐఅ-ఌఎ-ఐఒ-నప-ళవ-హఽౘౙౠౡಅ-ಌಎ-ಐಒ-ನಪ-ಳವ-ಹಽೞೠೡೱೲഅ-ഌഎ-ഐഒ-ഺഽൎൠൡൺ-ൿඅ-ඖක-නඳ-රලව-ෆก-ะาำเ-ๅກຂຄງຈຊຍດ-ທນ-ຟມ-ຣລວສຫອ-ະາຳຽເ-ໄໜໝༀཀ-ཇཉ-ཬྈ-ྌက-ဪဿၐ-ၕၚ-ၝၡၥၦၮ-ၰၵ-ႁႎა-ჺᄀ-ቈቊ-ቍቐ-ቖቘቚ-ቝበ-ኈኊ-ኍነ-ኰኲ-ኵኸ-ኾዀዂ-ዅወ-ዖዘ-ጐጒ-ጕጘ-ፚᎀ-ᎏᎠ-Ᏼᐁ-ᙬᙯ-ᙿᚁ-ᚚᚠ-ᛪᜀ-ᜌᜎ-ᜑᜠ-ᜱᝀ-ᝑᝠ-ᝬᝮ-ᝰក-ឳៜᠠ-ᡂᡄ-ᡷᢀ-ᢨᢪᢰ-ᣵᤀ-ᤜᥐ-ᥭᥰ-ᥴᦀ-ᦫᧁ-ᧇᨀ-ᨖᨠ-ᩔᬅ-ᬳᭅ-ᭋᮃ-ᮠᮮᮯᯀ-ᯥᰀ-ᰣᱍ-ᱏᱚ-ᱷᳩ-ᳬᳮ-ᳱℵ-ℸⴰ-ⵥⶀ-ⶖⶠ-ⶦⶨ-ⶮⶰ-ⶶⶸ-ⶾⷀ-ⷆⷈ-ⷎⷐ-ⷖⷘ-ⷞ〆〼ぁ-ゖゟァ-ヺヿㄅ-ㄭㄱ-ㆎㆠ-ㆺㇰ-ㇿ㐀-䶵一-鿋ꀀ-ꀔꀖ-ꒌꓐ-ꓷꔀ-ꘋꘐ-ꘟꘪꘫꙮꚠ-ꛥꟻ-ꠁꠃ-ꠅꠇ-ꠊꠌ-ꠢꡀ-ꡳꢂ-ꢳꣲ-ꣷꣻꤊ-ꤥꤰ-ꥆꥠ-ꥼꦄ-ꦲꨀ-ꨨꩀ-ꩂꩄ-ꩋꩠ-ꩯꩱ-ꩶꩺꪀ-ꪯꪱꪵꪶꪹ-ꪽꫀꫂꫛꫜꬁ-ꬆꬉ-ꬎꬑ-ꬖꬠ-ꬦꬨ-ꬮꯀ-ꯢ가-힣ힰ-ퟆퟋ-ퟻ豈-鶴侮-舘並-龎יִײַ-ﬨשׁ-זּטּ-לּמּנּסּףּפּצּ-ﮱﯓ-ﴽﵐ-ﶏﶒ-ﷇﷰ-ﷻﹰ-ﹴﹶ-ﻼｦ-ｯｱ-ﾝﾠ-ﾾￂ-ￇￊ-ￏￒ-ￗￚ-ￜ]',
+                Mn: '[̀-ͯ҃-֑҇-ׇֽֿׁׂׅׄؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۤۧۨ-ܑۭܰ-݊ަ-ް߫-߳ࠖ-࠙ࠛ-ࠣࠥ-ࠧࠩ-࡙࠭-࡛ऀ-ंऺ़ु-ै्॑-ॗॢॣঁ়ু-ৄ্ৢৣਁਂ਼ੁੂੇੈੋ-੍ੑੰੱੵઁં઼ુ-ૅેૈ્ૢૣଁ଼ିୁ-ୄ୍ୖୢୣஂீ்ా-ీె-ైొ-్ౕౖౢౣ಼ಿೆೌ್ೢೣു-ൄ്ൢൣ්ි-ුූัิ-ฺ็-๎ັິ-ູົຼ່-ໍཱ༹༘༙༵༷-ཾྀ-྄྆྇ྍ-ྗྙ-ྼ࿆ိ-ူဲ-့္်ွှၘၙၞ-ၠၱ-ၴႂႅႆႍႝ፝-፟ᜒ-᜔ᜲ-᜴ᝒᝓᝲᝳិ-ួំ៉-៓៝᠋-᠍ᢩᤠ-ᤢᤧᤨᤲ᤹-᤻ᨘᨗᩖᩘ-ᩞ᩠ᩢᩥ-ᩬᩳ-᩿᩼ᬀ-ᬃ᬴ᬶ-ᬺᬼᭂ᭫-᭳ᮀᮁᮢ-ᮥᮨᮩ᯦ᯨᯩᯭᯯ-ᯱᰬ-ᰳᰶ᰷᳐-᳔᳒-᳢᳠-᳨᳭᷀-ᷦ᷼-᷿⃐-⃥⃜⃡-⃰⳯-⵿⳱ⷠ-〪ⷿ-゙゚〯꙯꙼꙽꛰꛱ꠂ꠆ꠋꠥꠦ꣄꣠-꣱ꤦ-꤭ꥇ-ꥑꦀ-ꦂ꦳ꦶ-ꦹꦼꨩ-ꨮꨱꨲꨵꨶꩃꩌꪰꪲ-ꪴꪷꪸꪾ꪿꫁ꯥꯨ꯭ﬞ︀-️︠-︦]',
+                Me: '[\u0488\u0489\u20DD-\u20E0\u20E2-\u20E4\uA670-\uA672]',
+                Mc: '[ःऻा-ीॉ-ौॎॏংঃা-ীেৈোৌৗਃਾ-ੀઃા-ીૉોૌଂଃାୀେୈୋୌୗாிுூெ-ைொ-ௌௗఁ-ఃు-ౄಂಃಾೀ-ೄೇೈೊೋೕೖംഃാ-ീെ-ൈൊ-ൌൗංඃා-ෑෘ-ෟෲෳ༾༿ཿါာေးျြၖၗၢ-ၤၧ-ၭႃႄႇ-ႌႏႚ-ႜាើ-ៅះៈᤣ-ᤦᤩ-ᤫᤰᤱᤳ-ᤸᦰ-ᧀᧈᧉᨙ-ᨛᩕᩗᩡᩣᩤᩭ-ᩲᬄᬵᬻᬽ-ᭁᭃ᭄ᮂᮡᮦᮧ᮪ᯧᯪ-ᯬᯮ᯲᯳ᰤ-ᰫᰴᰵ᳡ᳲꠣꠤꠧꢀꢁꢴ-ꣃꥒ꥓ꦃꦴꦵꦺꦻꦽ-꧀ꨯꨰꨳꨴꩍꩻꯣꯤꯦꯧꯩꯪ꯬]',
+                Nd: '[0-9٠-٩۰-۹߀-߉०-९০-৯੦-੯૦-૯୦-୯௦-௯౦-౯೦-೯൦-൯๐-๙໐-໙༠-༩၀-၉႐-႙០-៩᠐-᠙᥆-᥏᧐-᧙᪀-᪉᪐-᪙᭐-᭙᮰-᮹᱀-᱉᱐-᱙꘠-꘩꣐-꣙꤀-꤉꧐-꧙꩐-꩙꯰-꯹０-９]',
+                Nl: '[ᛮ-ᛰⅠ-ↂↅ-ↈ〇〡-〩〸-〺ꛦ-ꛯ]',
+                No: '[\xB2\xB3\xB9\xBC-\xBE\u09F4-\u09F9\u0B72-\u0B77\u0BF0-\u0BF2\u0C78-\u0C7E\u0D70-\u0D75\u0F2A-\u0F33\u1369-\u137C\u17F0-\u17F9\u19DA\u2070\u2074-\u2079\u2080-\u2089\u2150-\u215F\u2189\u2460-\u249B\u24EA-\u24FF\u2776-\u2793\u2CFD\u3192-\u3195\u3220-\u3229\u3251-\u325F\u3280-\u3289\u32B1-\u32BF\uA830-\uA835]',
+                Zs: '[ \xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]',
+                Zl: '[\u2028]',
+                Zp: '[\u2029]',
+                Cc: '[\0-\x1F\x7F-\x9F]',
+                Cf: '[\xAD\u0600-\u0603\u06DD\u070F឴឵\u200B-\u200F\u202A-\u202E\u2060-\u2064\u206A-\u206F\uFEFF\uFFF9-\uFFFB]',
+                Cs: '[\uD800-\uDFFF]',
+                Co: '[\uE000-\uF8FF]',
+                Ps: '[([{\u0F3A\u0F3C\u169B\u201A\u201E\u2045\u207D\u208D\u2329\u2768\u276A\u276C\u276E\u2770\u2772\u2774\u27C5\u27E6\u27E8\u27EA\u27EC\u27EE\u2983\u2985\u2987\u2989\u298B\u298D\u298F\u2991\u2993\u2995\u2997\u29D8\u29DA\u29FC\u2E22\u2E24\u2E26\u2E28\u3008\u300A\u300C\u300E\u3010\u3014\u3016\u3018\u301A\u301D\uFD3E\uFE17\uFE35\uFE37\uFE39\uFE3B\uFE3D\uFE3F\uFE41\uFE43\uFE47\uFE59\uFE5B\uFE5D\uFF08\uFF3B\uFF5B\uFF5F\uFF62]',
+                Pd: '[-\u058A\u05BE\u1400\u1806\u2010-\u2015\u2E17\u2E1A\u301C\u3030\u30A0\uFE31\uFE32\uFE58\uFE63\uFF0D]',
+                Pc: '[_‿⁀⁔︳︴﹍-﹏＿]',
+                Pe: '[)]}\u0F3B\u0F3D\u169C\u2046\u207E\u208E\u232A\u2769\u276B\u276D\u276F\u2771\u2773\u2775\u27C6\u27E7\u27E9\u27EB\u27ED\u27EF\u2984\u2986\u2988\u298A\u298C\u298E\u2990\u2992\u2994\u2996\u2998\u29D9\u29DB\u29FD\u2E23\u2E25\u2E27\u2E29\u3009\u300B\u300D\u300F\u3011\u3015\u3017\u3019\u301B\u301E\u301F\uFD3F\uFE18\uFE36\uFE38\uFE3A\uFE3C\uFE3E\uFE40\uFE42\uFE44\uFE48\uFE5A\uFE5C\uFE5E\uFF09\uFF3D\uFF5D\uFF60\uFF63]',
+                Sm: '[+<->|~\xAC\xB1\xD7\xF7\u03F6\u0606-\u0608\u2044\u2052\u207A-\u207C\u208A-\u208C\u2118\u2140-\u2144\u214B\u2190-\u2194\u219A\u219B\u21A0\u21A3\u21A6\u21AE\u21CE\u21CF\u21D2\u21D4\u21F4-\u22FF\u2308-\u230B\u2320\u2321\u237C\u239B-\u23B3\u23DC-\u23E1\u25B7\u25C1\u25F8-\u25FF\u266F\u27C0-\u27C4\u27C7-\u27CA\u27CC\u27CE-\u27E5\u27F0-\u27FF\u2900-\u2982\u2999-\u29D7\u29DC-\u29FB\u29FE-\u2AFF\u2B30-\u2B44\u2B47-\u2B4C\uFB29\uFE62\uFE64-\uFE66\uFF0B\uFF1C-\uFF1E\uFF5C\uFF5E\uFFE2\uFFE9-\uFFEC]',
+                Po: '[!-#%-\'*,./:;?@\\\xA1\xB7\xBF\u037E\u0387\u055A-\u055F\u0589\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061E\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1361-\u1368\u166D\u166E\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u1805\u1807-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B5A-\u1B60\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CD3\u2016\u2017\u2020-\u2027\u2030-\u2038\u203B-\u203E\u2041-\u2043\u2047-\u2051\u2053\u2055-\u205E\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00\u2E01\u2E06-\u2E08\u2E0B\u2E0E-\u2E16\u2E18\u2E19\u2E1B\u2E1E\u2E1F\u2E2A-\u2E2E\u2E30\u2E31\u3001-\u3003\u303D\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uABEB\uFE10-\uFE16\uFE19\uFE30\uFE45\uFE46\uFE49-\uFE4C\uFE50-\uFE52\uFE54-\uFE57\uFE5F-\uFE61\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF07\uFF0A\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3C\uFF61\uFF64\uFF65]',
+                Sk: '[^`\xA8\xAF\xB4\xB8\u02C2-\u02C5\u02D2-\u02DF\u02E5-\u02EB\u02ED\u02EF-\u02FF\u0375\u0384\u0385\u1FBD\u1FBF-\u1FC1\u1FCD-\u1FCF\u1FDD-\u1FDF\u1FED-\u1FEF\u1FFD\u1FFE\u309B\u309C\uA700-\uA716\uA720\uA721\uA789\uA78A\uFBB2-\uFBC1\uFF3E\uFF40\uFFE3]',
+                Sc: '[$\xA2-\xA5\u060B\u09F2\u09F3\u09FB\u0AF1\u0BF9\u0E3F\u17DB\u20A0-\u20B9\uA838\uFDFC\uFE69\uFF04\uFFE0\uFFE1\uFFE5\uFFE6]',
+                Pi: '[\xAB\u2018\u201B\u201C\u201F\u2039\u2E02\u2E04\u2E09\u2E0C\u2E1C\u2E20]',
+                So: '[\xA6\xA7\xA9\xAE\xB0\xB6\u0482\u060E\u060F\u06DE\u06E9\u06FD\u06FE\u07F6\u09FA\u0B70\u0BF3-\u0BF8\u0BFA\u0C7F\u0D79\u0F01-\u0F03\u0F13-\u0F17\u0F1A-\u0F1F\u0F34\u0F36\u0F38\u0FBE-\u0FC5\u0FC7-\u0FCC\u0FCE\u0FCF\u0FD5-\u0FD8\u109E\u109F\u1360\u1390-\u1399\u1940\u19DE-\u19FF\u1B61-\u1B6A\u1B74-\u1B7C\u2100\u2101\u2103-\u2106\u2108\u2109\u2114\u2116\u2117\u211E-\u2123\u2125\u2127\u2129\u212E\u213A\u213B\u214A\u214C\u214D\u214F\u2195-\u2199\u219C-\u219F\u21A1\u21A2\u21A4\u21A5\u21A7-\u21AD\u21AF-\u21CD\u21D0\u21D1\u21D3\u21D5-\u21F3\u2300-\u2307\u230C-\u231F\u2322-\u2328\u232B-\u237B\u237D-\u239A\u23B4-\u23DB\u23E2-\u23F3\u2400-\u2426\u2440-\u244A\u249C-\u24E9\u2500-\u25B6\u25B8-\u25C0\u25C2-\u25F7\u2600-\u266E\u2670-\u26FF\u2701-\u2767\u2794-\u27BF\u2800-\u28FF\u2B00-\u2B2F\u2B45\u2B46\u2B50-\u2B59\u2CE5-\u2CEA\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u2FF0-\u2FFB\u3004\u3012\u3013\u3020\u3036\u3037\u303E\u303F\u3190\u3191\u3196-\u319F\u31C0-\u31E3\u3200-\u321E\u322A-\u3250\u3260-\u327F\u328A-\u32B0\u32C0-\u32FE\u3300-\u33FF\u4DC0-\u4DFF\uA490-\uA4C6\uA828-\uA82B\uA836\uA837\uA839\uAA77-\uAA79\uFDFD\uFFE4\uFFE8\uFFED\uFFEE\uFFFC\uFFFD]',
+                Pf: '[\xBB\u2019\u201D\u203A\u2E03\u2E05\u2E0A\u2E0D\u2E1D\u2E21]'
+            };
+            var firstLetters = {};
+            for (var p in unicodeCategories) {
+                if (firstLetters[p[0]])
+                    firstLetters[p[0]] = unicodeCategories[p].substring(0, unicodeCategories[p].length - 1) + firstLetters[p[0]].substring(1);
+                else
+                    firstLetters[p[0]] = unicodeCategories[p];
+            }
+            for (var p in firstLetters)
+                unicodeCategories[p] = firstLetters[p];
+            return function (regexpString) {
+                var modifiers = '';
+                if (regexpString instanceof RegExp) {
+                    modifiers = (regexpString.global ? 'g' : '') + (regexpString.ignoreCase ? 'i' : '') + (regexpString.multiline ? 'm' : '');
+                    regexpString = regexpString.source;
+                }
+                regexpString = regexpString.replace(/\\p\{(..?)\}/g, function (match, group) {
+                    return unicodeCategories[group] || match;
+                });
+                return new RegExp(regexpString, modifiers);
+            };
+        }();
+    },
+    function (module, exports) {
+        Base64 = {
+            _keyStr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
+            encode: function (input) {
+                var output = '';
+                var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+                var i = 0;
+                input = Base64._utf8_encode(input);
+                while (i < input.length) {
+                    chr1 = input.charCodeAt(i++);
+                    chr2 = input.charCodeAt(i++);
+                    chr3 = input.charCodeAt(i++);
+                    enc1 = chr1 >> 2;
+                    enc2 = (chr1 & 3) << 4 | chr2 >> 4;
+                    enc3 = (chr2 & 15) << 2 | chr3 >> 6;
+                    enc4 = chr3 & 63;
+                    if (isNaN(chr2)) {
+                        enc3 = enc4 = 64;
+                    } else if (isNaN(chr3)) {
+                        enc4 = 64;
+                    }
+                    output = output + Base64._keyStr.charAt(enc1) + Base64._keyStr.charAt(enc2) + Base64._keyStr.charAt(enc3) + Base64._keyStr.charAt(enc4);
+                }
+                return output;
+            },
+            decode: function (input) {
+                var output = '';
+                var chr1, chr2, chr3;
+                var enc1, enc2, enc3, enc4;
+                var i = 0;
+                input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
+                while (i < input.length) {
+                    enc1 = Base64._keyStr.indexOf(input.charAt(i++));
+                    enc2 = Base64._keyStr.indexOf(input.charAt(i++));
+                    enc3 = Base64._keyStr.indexOf(input.charAt(i++));
+                    enc4 = Base64._keyStr.indexOf(input.charAt(i++));
+                    chr1 = enc1 << 2 | enc2 >> 4;
+                    chr2 = (enc2 & 15) << 4 | enc3 >> 2;
+                    chr3 = (enc3 & 3) << 6 | enc4;
+                    output = output + String.fromCharCode(chr1);
+                    if (enc3 != 64) {
+                        output = output + String.fromCharCode(chr2);
+                    }
+                    if (enc4 != 64) {
+                        output = output + String.fromCharCode(chr3);
+                    }
+                }
+                output = Base64._utf8_decode(output);
+                return output;
+            },
+            _utf8_encode: function (string) {
+                string = string.replace(/\r\n/g, '\n');
+                var utftext = '';
+                for (var n = 0; n < string.length; n++) {
+                    var c = string.charCodeAt(n);
+                    if (c < 128) {
+                        utftext += String.fromCharCode(c);
+                    } else if (c > 127 && c < 2048) {
+                        utftext += String.fromCharCode(c >> 6 | 192);
+                        utftext += String.fromCharCode(c & 63 | 128);
+                    } else {
+                        utftext += String.fromCharCode(c >> 12 | 224);
+                        utftext += String.fromCharCode(c >> 6 & 63 | 128);
+                        utftext += String.fromCharCode(c & 63 | 128);
+                    }
+                }
+                return utftext;
+            },
+            _utf8_decode: function (utftext) {
+                var string = '';
+                var i = 0;
+                var c = c1 = c2 = 0;
+                while (i < utftext.length) {
+                    c = utftext.charCodeAt(i);
+                    if (c < 128) {
+                        string += String.fromCharCode(c);
+                        i++;
+                    } else if (c > 191 && c < 224) {
+                        c2 = utftext.charCodeAt(i + 1);
+                        string += String.fromCharCode((c & 31) << 6 | c2 & 63);
+                        i += 2;
+                    } else {
+                        c2 = utftext.charCodeAt(i + 1);
+                        c3 = utftext.charCodeAt(i + 2);
+                        string += String.fromCharCode((c & 15) << 12 | (c2 & 63) << 6 | c3 & 63);
+                        i += 3;
+                    }
+                }
+                return string;
+            }
+        };
+    },
+    function (module, exports) {
+        (function (global) {
+            ;
+            (function () {
+                var p = function () {
+                    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
+                        var platform = navigator.platform, userAgent = navigator.userAgent, platformOrUserAgent = platform + '\n' + userAgent;
+                        return _.extend({
+                            engine: 'browser',
+                            browserEngine: userAgent.indexOf('AppleWebKit') >= 0 ? 'WebKit' : undefined,
+                            browser: userAgent.indexOf('Firefox') >= 0 ? 'Firefox' : userAgent.indexOf('Chrome') >= 0 ? 'Chrome' : userAgent.indexOf('Safari') >= 0 ? 'Safari' : userAgent.indexOf('Trident') >= 0 ? 'IE' : undefined
+                        }, platform.indexOf('Linux arm') >= 0 || platformOrUserAgent.indexOf('Android') >= 0 ? {
+                            touch: true,
+                            system: 'Android'
+                        } : platformOrUserAgent.indexOf('iPad') >= 0 ? {
+                            touch: true,
+                            system: 'iOS',
+                            device: 'iPad'
+                        } : platformOrUserAgent.indexOf('iPhone') >= 0 || platformOrUserAgent.indexOf('iPod') >= 0 ? {
+                            touch: true,
+                            system: 'iOS',
+                            device: 'iPhone'
+                        } : {});
+                    } else if (typeof global !== 'undefined' && global._) {
+                        return { engine: 'node' };
+                    } else {
+                        return {};
+                    }
+                }();
+                var $global = p.engine === 'browser' ? window : p.engine === 'node' ? global : undefined;
+                $global.define = function (name, v, cfg) {
+                    if (name in $global) {
+                        throw new Error('cannot define global ' + name + ': already there');
+                    }
+                    var def = v && v.get instanceof Function && v.set instanceof Function && v || v instanceof Function && v.length === 0 && { get: v } || { value: v };
+                    return Object.defineProperty($global, name, _.extend(def, { enumerable: true }, cfg));
+                };
+                $global.define('$global', $global);
+                $global.define('$platform', Object.defineProperties({}, _.mapObject({
+                    engine: p.engine,
+                    system: p.system,
+                    device: p.device,
+                    touch: p.touch || false,
+                    IE: p.browser === 'IE',
+                    Firefox: p.browser === 'Firefox',
+                    Safari: p.browser === 'Safari',
+                    Chrome: p.browser === 'Chrome',
+                    WebKit: p.browserEngine === 'WebKit',
+                    Browser: p.engine === 'browser',
+                    NodeJS: p.engine === 'node',
+                    iPad: p.device === 'iPad',
+                    iPhone: p.device === 'iPhone',
+                    iOS: p.system === 'iOS'
+                }, function (v, k) {
+                    return {
+                        enumerable: true,
+                        value: v
+                    };
+                })));
+            }());
+            $overrideUnderscore = function (name, genImpl) {
+                return _[name] = genImpl(_[name]);
+            };
+            if ($platform.NodeJS) {
+                $global.alert = function (args) {
+                    var print = $global.log && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
+                    print.apply(print, ['ALERT:'].concat(_.asArray(arguments)));
+                };
+            }
+            $global.alert2 = function (args) {
+                alert(_.map(arguments, _.stringify).join(', '));
+                return arguments[0];
+            };
+            $global.log = function () {
+                console.log.apply(console, arguments);
+            };
+        }.call(exports, function () {
+            return this;
+        }()));
+    },
+    function (module, exports) {
+        _.hasAsserts = true;
+        _.extend(_, {
+            tests: {},
+            withTest: function (name, test, defineSubject) {
+                defineSubject();
+                _.runTest(name, test);
+                _.publishToTestsNamespace(name, test);
+            },
+            deferTest: function (name, test, defineSubject) {
+                defineSubject();
+                _.publishToTestsNamespace(name, test);
+            },
+            runTest: function (name, test) {
+                try {
+                    if (_.isFunction(test)) {
+                        test();
+                    } else {
+                        _.each(test, function (fn) {
+                            fn();
+                        });
+                    }
+                } catch (e) {
+                    if (_.isAssertionError(e)) {
+                        var printedName = (_.isArray(name) && name || [name]).join('.');
+                        console.log(printedName + ':', e.message, '\n' + _.times(printedName.length, _.constant('~')).join('') + '\n');
+                        _.each(e.notMatching, function (x) {
+                            console.log('  \u2022', x);
+                        });
+                    }
+                    throw e;
+                }
+            },
+            publishToTestsNamespace: function (name, test) {
+                if (_.isArray(name)) {
+                    (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test;
+                } else {
+                    _.tests[name] = test;
+                }
+            }
+        });
+        _.deferTest('assert.js bootstrap', function () {
+            $assert(true);
+            $assert(_.assert === _.assertions.assert);
+            $assertNot(false);
+            $assertNot(5);
+            $assert(2 + 2, 2 * 2, 4);
+            $assert({
+                foo: [
+                    1,
+                    2,
+                    3
+                ]
+            }, {
+                foo: [
+                    1,
+                    2,
+                    3
+                ]
+            });
+            $assert({
+                foo: { bar: 1 },
+                baz: 2
+            }, {
+                baz: 2,
+                foo: { bar: 1 }
+            });
+            $assertNot(2 + 2, 5);
+            $assertMatches({
+                foo: 1,
+                bar: 2
+            }, { foo: 1 });
+            if (_.hasStdlib) {
+                $assertMatches({
+                    foo: [
+                        1,
+                        2
+                    ],
+                    bar: 3
+                }, { foo: [1] });
+            }
+            if (_.hasStdlib) {
+                $assertMatches('123', /[0-9]+/);
+            }
+            if (_.hasStdlib) {
+                $assertTypeMatches(42, 'number');
+                $assertFails(function () {
+                    $assertTypeMatches('foo', 'number');
+                });
+            }
+            if (_.hasStdlib) {
+                $assertTypeMatches([
+                    1,
+                    2
+                ], []);
+                $assertTypeMatches([], []);
+                $assertTypeMatches([
+                    1,
+                    2,
+                    3
+                ], ['number']);
+                $assertTypeMatches([], ['number']);
+                $assertFails(function () {
+                    $assertTypeMatches([
+                        1,
+                        2,
+                        3
+                    ], ['string']);
+                    $assertTypeMatches([
+                        1,
+                        2,
+                        'foo'
+                    ], ['number']);
+                });
+            }
+            if (_.hasStdlib) {
+                $assertTypeMatches({
+                    foo: 42,
+                    bar: {
+                        even: 4,
+                        many: [
+                            'foo',
+                            'bar'
+                        ]
+                    }
+                }, {
+                    foo: 'number',
+                    qux: 'undefined',
+                    bar: {
+                        even: function (n) {
+                            return n % 2 === 0;
                         },
-                        set: function (x) {
-                            this[refName] = x;
-                        }
-                    }) : Tags.extend(refValue, Tags.omit(member, '$alias'))
-                ];
-            } else {
-                return [
-                    name,
-                    member
-                ];
-            }
-        },
-        groupMembersByTagForFastEnumeration: function (def) {
-            var membersByTag = {};
-            _.each(def, function (m, name) {
-                Tags.each(m, function (tag) {
-                    (membersByTag[tag] = membersByTag[tag] || {})[name] = m;
-                });
-            });
-            def.$membersByTag = $static($builtin($property(membersByTag)));
-            return def;
-        },
-        isTagKeywordGroup: function (value_, key) {
-            var value = $untag(value_);
-            return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
-        },
-        modifyMember: function (member, newValue) {
-            return $property.is(member) && Tags.modify(member, function (value) {
-                return _.extend(value, _.map2(_.pick(value, 'get', 'set'), newValue));
-            }) || _.isFunction($untag(member)) && Tags.modify(member, newValue) || member;
-        }
-    }
-});
-_.isTraitOf = function (Trait, instance) {
-    var constructor = instance && instance.constructor;
-    return constructor && constructor.hasTrait && constructor.hasTrait(Trait) || false;
-};
-_.isTypeOf = _.or(_.isTypeOf, _.isTraitOf);
-$trait = function (arg1, arg2) {
-    var constructor = undefined;
-    var def = _.extend(arguments.length > 1 ? arg2 : arg1, {
-        constructor: _.throwsError('Traits are not instantiable (what for?)'),
-        isTraitOf: $static($builtin(function (instance) {
-            return _.isTraitOf(constructor, instance);
-        }))
-    });
-    return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
-};
-$prototype.macro('$macroTags', function (def, value, name) {
-    _.each($untag(value), function (v, k) {
-        _.defineTagKeyword(k);
-    });
-});
-_.$ = function (this_, fn) {
-    var arguments_ = _.rest(arguments, 2);
-    var result = arguments_.length ? _.bind.apply(undefined, [
-        fn,
-        this_
-    ].concat(_.rest(arguments, 2))) : _.withSameArgs(fn, function () {
-        return fn.apply(this_, arguments);
-    });
-    return result;
-};
-if (typeof jQuery !== 'undefined') {
-    jQuery.fn.extend({
-        $: function () {
-            return _.$.apply(null, [this].concat(_.asArray(arguments)));
-        }
-    });
-}
-_.defineKeyword('const', function (x) {
-    return $static($property(x));
-});
-_.defineTagKeyword('callableAsFreeFunction');
-$prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
-    def.constructor[name] = $untag(value).asFreeFunction;
-    return def;
-});
-_.defineTagKeyword('callableAsMethod');
-$prototype.macroTag('callableAsMethod', function (def, value, name) {
-    def[name] = Tags.modify(value, _.asMethod);
-    def.constructor[name] = $untag(value);
-    return def;
-});
-$singleton = function (arg1, arg2) {
-    return new ($prototype.apply(null, arguments))();
-};
-$mixin(Array, {
-    asSet: $property(function () {
-        return new Set(this);
-    })
-});
-$mixin(Set, {
-    copy: $property(function () {
-        return new Set(this);
-    }),
-    asArray: $property(function () {
-        return Array.from(this.values());
-    }),
-    matches: $property(function () {
-        var self = this;
-        return function (x) {
-            return self.has(x);
-        };
-    }),
-    extend: function (b) {
-        for (var x of b) {
-            this.add(x);
-        }
-        ;
-        return this;
-    },
-    extended: function (b) {
-        return this.copy.extend(b);
-    }
-});
-TimeoutError = $extends(Error, { message: 'timeout expired' });
-__ = Promise.eval = function (x) {
-    var this_ = this, args = _.rest(arguments);
-    return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
-        resolve(x.apply(this_, args));
-    }) : Promise.resolve(x);
-};
-Promise.coerce = function (x) {
-    return x instanceof Promise ? x : Promise.resolve(x);
-};
-__.noop = function () {
-    return Promise.resolve();
-};
-__.eternity = new Promise(function () {
-});
-__.identity = function (x) {
-    return Promise.resolve(x);
-};
-__.constant = function (x) {
-    return function () {
-        return Promise.resolve(x);
-    };
-};
-__.reject = function (e) {
-    return Promise.reject(e);
-};
-__.rejects = function (e) {
-    return function () {
-        return Promise.reject(e);
-    };
-};
-__.then = function (a, b) {
-    b = _.coerceToFunction(b);
-    try {
-        var x = a instanceof Function ? a() : a;
-        return x instanceof Promise ? x.then(b) : b(x);
-    } catch (e) {
-        return Promise.reject(e);
-    }
-};
-__.delay = function (ms) {
-    return __.delays(ms)();
-};
-__.delays = function (ms) {
-    return function (x) {
-        return new Promise(function (return_) {
-            setTimeout(function () {
-                return_(x);
-            }, ms || 0);
-        });
-    };
-};
-$mixin(Promise, {
-    delay: function (ms) {
-        return this.then(__.delays(ms));
-    },
-    timeout: function (ms) {
-        return this.race(__.delay(ms).reject(new TimeoutError()));
-    },
-    now: $property(function () {
-        return this.timeout(0);
-    })
-});
-$mixin(Array, {
-    race: $property(function () {
-        return Promise.race(this);
-    })
-});
-$mixin(Promise, {
-    race: function (other) {
-        return [
-            this,
-            other
-        ].race;
-    },
-    firstResolved: $static(function (arr) {
-        return new Promise(function (resolve, reject) {
-            var todo = arr && arr.length;
-            if (!todo) {
-                reject(null);
-            } else {
-                _.each(arr, function (x) {
-                    Promise.coerce(x).then(function (x) {
-                        todo--;
-                        if (resolve) {
-                            resolve(x);
-                            resolve = undefined;
-                        }
-                    }).catch(function () {
-                        todo--;
-                        if (!todo) {
-                            reject(null);
-                        }
-                    });
-                });
-            }
-        });
-    }),
-    reject: function (e) {
-        return this.then(_.throwsError(e));
-    },
-    chain: function (fn) {
-        return this.then(function (x) {
-            fn(x);
-            return x;
-        });
-    },
-    done: function (fn) {
-        return this.then(function (x) {
-            fn(null, x);
-            return x;
-        }, function (e) {
-            fn(e, null);
-            throw e;
-        });
-    },
-    finally: function (fn) {
-        return this.then(function (x) {
-            return fn(null, x);
-        }, function (e) {
-            return fn(e, null);
-        });
-    },
-    log: $property(function () {
-        return this.then(log, log.then(_.throwsError));
-    }),
-    alert: $property(function () {
-        return this.done(alert2, alert2.then(_.throwsError));
-    }),
-    panic: $property(function () {
-        return this.catch(function (e) {
-            if (_.globalUncaughtExceptionHandler) {
-                _.globalUncaughtExceptionHandler(e);
-            }
-            throw e;
-        });
-    }),
-    assert: function (desired) {
-        return this.then(function (x) {
-            $assert(x, desired);
-            return x;
-        });
-    },
-    assertTypeMatches: function (desired) {
-        return this.then(function (x) {
-            $assertTypeMatches(x, desired);
-            return x;
-        });
-    },
-    assertRejected: function (desired) {
-        var check = arguments.length > 0;
-        return this.catch(function (x) {
-            if (check) {
-                $assert(x, desired);
-            }
-            return x;
-        });
-    }
-});
-(function () {
-    var TaskPool = $prototype({
-        constructor: function (cfg) {
-            this.maxTime = cfg && cfg.maxTime;
-            this.pending = [];
-            if (this.maxConcurrency = cfg && cfg.maxConcurrency) {
-                this.numActive = 0;
-                this.queue = [];
-            }
-        },
-        run: function (task) {
-            var self = this;
-            if (this.numActive >= this.maxConcurrency) {
-                return new Promise(function (resolve) {
-                    self.queue.push(function () {
-                        return self.run(task).then(resolve);
-                    });
-                });
-            } else {
-                var p = __(task);
-                if (this.maxTime !== undefined) {
-                    p = p.timeout(this.maxTime);
-                }
-                if (this.maxConcurrency !== undefined) {
-                    self.numActive++;
-                    p = p.then(function (x) {
-                        self.numActive--;
-                        return self.queue.length && self.numActive < self.maxConcurrency ? self.queue.shift()().then(_.constant(x)) : x;
-                    });
-                }
-                this.pending.push(p);
-                return p;
-            }
-        },
-        all: $property(function () {
-            return Promise.all(this.pending);
-        })
-    });
-    __.scatter = function (x, fn, cfg) {
-        return __.then(x, function (x) {
-            if (_.isStrictlyObject(x)) {
-                var result = _.coerceToEmpty(x), tasks = new TaskPool(cfg);
-                _.each2(x, function (v, k) {
-                    tasks.run(fn.$(v, k, x)).then(function (vk) {
-                        if (vk) {
-                            result[vk[1]] = vk[0];
-                        }
-                    });
-                });
-                return tasks.all.then(_.constant(result));
-            } else {
-                return __(fn, x, undefined, x).then(function (vk) {
-                    return vk[0];
-                });
-            }
-        });
-    };
-}());
-__.map = function (x, fn, cfg) {
-    return __.scatter(x, function (v, k, x) {
-        return __.then(fn.$(v, k, x), function (x) {
-            return [
-                x,
-                k
-            ];
-        });
-    }, cfg);
-};
-__.filter = function (x, fn, cfg) {
-    return __.scatter(x, function (v, k, x) {
-        return __.then(fn.$(v, k, x), function (decision) {
-            return decision === false ? undefined : decision === true ? [
-                v,
-                k
-            ] : [
-                decision,
-                k
-            ];
-        });
-    }, cfg);
-};
-__.each = function (obj, fn) {
-    return __.then(obj, function (obj) {
-        return new Promise(function (complete, whoops) {
-            _.cps.each(obj, function (x, i, then) {
-                Promise.coerce(fn(x, i)).then(then).catch(whoops);
-            }, complete);
-        });
-    });
-};
-__.seq = function (arr) {
-    return _.reduce2(arr, __.then);
-};
-__.all = function (arr) {
-    return Promise.all(_.map(arr, __));
-};
-__.race = function (arr) {
-    return Promise.race(_.map(arr, __));
-};
-$mixin(Function, {
-    promisifyAll: $static(function (obj, cfg) {
-        var cfg = cfg || {}, except = cfg.except || _.noop;
-        if (except instanceof Array) {
-            except = except.asSet.matches;
-        }
-        var result = {};
-        for (var k in obj) {
-            var x = obj[k];
-            if (x instanceof Function) {
-                var fn = x.bind(obj);
-                result[k] = except(k) ? fn : fn.promisify;
-            } else {
-                result[k] = x;
-            }
-        }
-        return result;
-    }),
-    promisify: $hidden($property(function () {
-        var f = this;
-        return function () {
-            var self = this, args = arguments;
-            return new Promise(function (resolve, reject) {
-                f.apply(self, _.asArray(args).concat(function (err, what) {
-                    if (err) {
-                        reject(err);
+                        many: ['string']
                     }
-                    resolve(what);
-                }));
-            });
-        };
-    }))
-});
-'use strict';
-$global.Channel = $extends(Promise, {
-    constructor: function (fn, transducers, before) {
-        this.after = [];
-        this.state = 'pending';
-        this.value = undefined;
-        this.transducers = {
-            resolve: transducers && transducers.resolve || (x => x),
-            reject: transducers && transducers.reject || (e => {
-                throw e;
-            })
-        };
-        if (fn instanceof Function) {
-            try {
-                fn.call(this, this.$(this.resolve), this.$(this.reject));
-            } catch (e) {
-                this.reject(e);
-            }
-        } else if (fn !== undefined) {
-            this.resolve(fn);
-        }
-    },
-    $private: {
-        _resolve: function (x) {
-            this.state = 'resolved';
-            this.value = x;
-            this.after.forEach(c => c.resolve(x));
-        },
-        _reject: function (e) {
-            this.state = 'rejected';
-            this.value = e;
-            this.after.forEach(c => c.reject(e));
-        }
-    },
-    resolve: function (x, transducer) {
-        try {
-            x = (transducer || this.transducers.resolve)(x);
-            if (x instanceof Promise) {
-                x.then(x => this._resolve(x), e => this._reject(e));
-            } else {
-                this._resolve(x);
-            }
-        } catch (e) {
-            this._reject(e);
-        }
-    },
-    reject: function (e) {
-        return this.resolve(e, this.transducers.reject);
-    },
-    then: function (resolve, reject) {
-        var c = new Channel(undefined, {
-            resolve: resolve,
-            reject: reject
-        }, this);
-        this.after.push(c);
-        if (this.state === 'resolved') {
-            c.resolve(this.value);
-        } else if (this.state === 'rejected') {
-            c.reject(this.value);
-        }
-        return c;
-    },
-    catch: function (fn) {
-        return this.then(undefined, fn);
-    }
-});
-Channel.all = arr => new Channel(resolve => {
-    var complete = new Set(), value = new Array(arr.length);
-    arr.forEach((c, i) => {
-        c.then(x => {
-            value[i] = x;
-            if (complete.length === value.length) {
-                resolve(value);
-            } else {
-                complete.add(i);
-            }
-        });
-    });
-});
-Channel.resolve = x => new Channel(resolve => resolve(x));
-Channel.reject = e => new Channel((resolve, reject) => reject(e));
-$prototype.macroTag('channel', (def, value, name) => {
-    var memberName = '_' + name;
-    var initialValue = $untag(value);
-    def[name] = Tags.modify(value, () => $property({
-        get: function () {
-            return this[memberName] || (this[memberName] = new Channel(initialValue));
-        },
-        set: function (x) {
-            this[name].resolve(x);
-        }
-    }));
-});
-Parse = {
-    keyCodeAsString: function (key) {
-        return String.fromCharCode(96 <= key && key <= 105 ? key - 48 : key);
-    },
-    fileName: function (path) {
-        return _.first(_.last(path.split(/\\|\//)).split('.'));
-    }
-};
-Sort = {
-    Ascending: 1,
-    Descending: -1,
-    strings: function (a, b) {
-        a = $.trim(a).toLowerCase();
-        b = $.trim(b).toLowerCase();
-        if (a.length == 0 && b.length > 0) {
-            return 1;
-        } else if (a.length > 0 && b.length == 0) {
-            return -1;
-        } else {
-            return a == b ? 0 : a < b ? -1 : 1;
-        }
-    },
-    numbers: function (a, b) {
-        if (isNaN(a) && isNaN(b)) {
-            return 0;
-        } else if (isNaN(a)) {
-            return -1;
-        } else if (isNaN(b)) {
-            return 1;
-        } else {
-            return a < b ? -1 : a > b ? 1 : 0;
-        }
-    },
-    generic: function (a, b) {
-        if (!a && !b) {
-            return 0;
-        } else if (!a) {
-            return -1;
-        } else if (!b) {
-            return 1;
-        } else {
-            return a < b ? -1 : a > b ? 1 : 0;
-        }
-    },
-    inverse: function (sort) {
-        return function (a, b) {
-            return -sort(a, b);
-        };
-    },
-    field: function (name, sort, order) {
-        return function (a, b) {
-            return sort(a[name], b[name]) * order;
-        };
-    }
-};
-Lock = $prototype({
-    acquire: function (then) {
-        this.wait(this.$(function () {
-            if (!this.waitQueue) {
-                this.waitQueue = [];
-            }
-            then();
-        }));
-    },
-    acquired: function () {
-        return this.waitQueue !== undefined;
-    },
-    wait: function (then) {
-        if (this.acquired()) {
-            this.waitQueue.push(then);
-        } else {
-            then();
-        }
-    },
-    release: function () {
-        if (this.waitQueue.length) {
-            var queueFirst = _.first(this.waitQueue);
-            this.waitQueue = _.rest(this.waitQueue);
-            queueFirst();
-        } else
-            delete this.waitQueue;
-    }
-});
-_.interlocked = function (fn) {
-    var lock = new Lock(), fn = $untag(fn);
-    return _.extendWith({
-        lock: lock,
-        wait: lock.$(lock.wait)
-    }, function () {
-        var this_ = this, args_ = arguments;
-        return new Promise(function (resolve) {
-            lock.acquire(function () {
-                __.then(fn.apply(this_, args_), function (x) {
-                    lock.release();
-                    resolve(x);
                 });
-            });
-        });
-    });
-};
-_.defineKeyword('scope', function (fn) {
-    var releaseStack = undefined;
-    return _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
-        var released = { when: undefined };
-        (releaseStack = releaseStack || []).push(released);
-        fn(function (then) {
-            if (released.when)
-                throw new Error('$scope: release called twice');
-            released.when = then;
-            while (releaseStack && releaseStack.last && releaseStack.last.when) {
-                var trigger = releaseStack.last.when;
-                if ((releaseStack = _.initial(releaseStack)).isEmpty) {
-                    releaseStack = undefined;
-                }
-                trigger();
             }
-        });
-    });
-});
-if ($platform.NodeJS) {
-    module.exports = _;
-}
-;
-Math.clamp = _.clamp = function (n, min, max) {
-    return Math.max(min, Math.min(max, n));
-};
-Math.lerp = _.lerp = function (t, min, max) {
-    return min + (max - min) * t;
-};
-Math.rescale = _.rescale = function (v, from, to, opts) {
-    var unit = (v - from[0]) / (from[1] - from[0]);
-    return _.lerp(opts && opts.clamp ? _.clamp(unit, 0, 1) : unit, to[0], to[1]);
-};
-Math.rescaleClamped = _.rescaleClamped = function (v, from, to) {
-    return _.rescale(v, from, to, { clamp: true });
-};
-Math.sqr = _.sqr = function (x) {
-    return x * x;
-};
-if (!Math.sign) {
-    Math.sign = function (x) {
-        return x < 0 ? -1 : x > 0 ? 1 : 0;
-    };
-}
-Intersect = {
-    rayCircle: function (origin, d, center, r) {
-        var f = origin.sub(center);
-        var a = d.dot(d);
-        var b = 2 * f.dot(d);
-        var c = f.dot(f) - r * r;
-        var discriminant = b * b - 4 * a * c;
-        if (discriminant < 0) {
-            return undefined;
-        } else {
-            discriminant = Math.sqrt(discriminant);
-            var t1 = (-b - discriminant) / (2 * a);
-            var t2 = (-b + discriminant) / (2 * a);
-            if (t1 >= 0 && t1 <= 1) {
-                return {
-                    time: t1,
-                    where: origin.add(d.scale(t1))
-                };
-            }
-            if (t2 >= 0 && t2 <= 1) {
-                return {
-                    time: t2,
-                    where: origin.add(d.scale(t2)),
-                    insideOut: true
-                };
-            }
-            return undefined;
-        }
-    }
-};
-Vec2 = $prototype({
-    $static: {
-        xx: function (x) {
-            return new Vec2(x, x);
-        },
-        xy: function (x, y) {
-            return new Vec2(x, y);
-        },
-        x: function (x) {
-            return new Vec2(x, 0);
-        },
-        y: function (y) {
-            return new Vec2(0, y);
-        },
-        zero: $property(function () {
-            return new Vec2(0, 0);
-        }),
-        unit: $property(function () {
-            return new Vec2(1, 1);
-        }),
-        one: $alias('unit'),
-        lt: $alias('fromLT'),
-        wh: $alias('fromWH'),
-        fromLT: function (lt) {
-            return lt && new Vec2(lt.left, lt.top);
-        },
-        fromWH: function (wh) {
-            return wh && new Vec2(wh.width, wh.height);
-        },
-        fromLeftTop: $alias('fromLT'),
-        fromWidthHeight: $alias('fromWH'),
-        lerp: function (t, a, b) {
-            return new Vec2(_.lerp(t, a.x, b.x), _.lerp(t, a.y, b.y));
-        },
-        clamp: function (n, a, b) {
-            return new Vec2(_.clamp(n.x, a.x, b.x), _.clamp(n.y, a.y, b.y));
-        }
-    },
-    constructor: function (x, y) {
-        if (arguments.length === 1) {
-            if (_.isNumber(x)) {
-                this.x = this.y = x;
-            } else {
-                this.x = x.x;
-                this.y = x.y;
-            }
-        } else {
-            this.x = x;
-            this.y = y;
-        }
-    },
-    w: $alias($property('x')),
-    h: $alias($property('y')),
-    width: $alias($property('x')),
-    height: $alias($property('y')),
-    length: $property(function () {
-        return Math.sqrt(this.lengthSquared);
-    }),
-    lengthSquared: $property(function () {
-        return this.x * this.x + this.y * this.y;
-    }),
-    distance: function (pt) {
-        return this.sub(pt).length;
-    },
-    aspect: $property(function () {
-        return this.x / this.y;
-    }),
-    add: function (a, b) {
-        if (b === undefined) {
-            return typeof a === 'number' ? new Vec2(this.x + a, this.y + a) : new Vec2(this.x + a.x, this.y + a.y);
-        } else {
-            return new Vec2(this.x + a, this.y + b);
-        }
-    },
-    aspect: $property(function () {
-        return this.w / this.h;
-    }),
-    dot: function (other) {
-        return this.x * other.x + this.y * other.y;
-    },
-    sub: function (other) {
-        return new Vec2(this.x - other.x, this.y - other.y);
-    },
-    scale: function (tx, ty) {
-        return new Vec2(this.x * tx, this.y * (ty === undefined ? tx : ty));
-    },
-    mul: function (other) {
-        return new Vec2(this.x * other.x, this.y * other.y);
-    },
-    divide: function (other) {
-        return new Vec2(this.x / other.x, this.y / other.y);
-    },
-    normal: $property(function () {
-        return this.scale(1 / this.length);
-    }),
-    perp: $property(function () {
-        return new Vec2(this.y, -this.x);
-    }),
-    half: $property(function () {
-        return new Vec2(this.x * 0.5, this.y * 0.5);
-    }),
-    inverse: $property(function () {
-        return new Vec2(-this.x, -this.y);
-    }),
-    asArray: $property(function () {
-        return [
-            this.x,
-            this.y
-        ];
-    }),
-    asLeftTop: $property(function () {
-        return {
-            left: this.x,
-            top: this.y
-        };
-    }),
-    asLeftTopMargin: $property(function () {
-        return {
-            marginLeft: this.x,
-            marginTop: this.y
-        };
-    }),
-    asWidthHeight: $property(function () {
-        return {
-            width: this.x,
-            height: this.y
-        };
-    }),
-    asTranslate: $property(function () {
-        return 'translate(' + this.x + ' ' + this.y + ')';
-    }),
-    separatedWith: function (sep) {
-        return this.x + sep + this.y;
-    },
-    floor: $property(function () {
-        return new Vec2(Math.floor(this.x), Math.floor(this.y));
-    }),
-    sum: $static(function (arr) {
-        return _.reduce(_.isArray(arr) && arr || _.asArray(arguments), function (memo, v) {
-            return memo.add(v || Vec2.zero);
-        }, Vec2.zero);
-    }),
-    toString: function () {
-        return '{' + this.x + ',' + this.y + '}';
-    },
-    projectOnCircle: function (center, r) {
-        return center.add(this.sub(center).normal.scale(r));
-    },
-    projectOnLineSegment: function (v, w) {
-        var wv = w.sub(v);
-        var l2 = wv.lengthSquared;
-        if (l2 == 0)
-            return v;
-        var t = this.sub(v).dot(wv) / l2;
-        if (t < 0)
-            return v;
-        if (t > 1)
-            return w;
-        return v.add(wv.scale(t));
-    },
-    projectOnRay: function (origin, dir) {
-        var l2 = dir.lengthSquared;
-        if (l2 == 0)
-            return 0;
-        return this.sub(origin).dot(dir) / l2;
-    }
-});
-Bezier = {
-    cubic: function (t, p0, p1, p2, p3) {
-        var cube = t * t * t;
-        var square = t * t;
-        var ax = 3 * (p1.x - p0.x);
-        var ay = 3 * (p1.y - p0.y);
-        var bx = 3 * (p2.x - p1.x) - ax;
-        var by = 3 * (p2.y - p1.y) - ay;
-        var cx = p3.x - p0.x - ax - bx;
-        var cy = p3.y - p0.y - ay - by;
-        var x = cx * cube + bx * square + ax * t + p0.x;
-        var y = cy * cube + by * square + ay * t + p0.y;
-        return new Vec2(x, y);
-    },
-    cubic1D: function (t, a, b, c, d) {
-        return Bezier.cubic(t, Vec2.zero, new Vec2(a, b), new Vec2(c, d), Vec2.one).y;
-    },
-    make: {
-        cubic: function (a, b, c, d) {
-            return function (t) {
-                return Bezier.cubic(t, a, b, c, d);
-            };
-        },
-        cubic1D: function (a, b, c, d) {
-            return function (t) {
-                return Bezier.cubic1D(t, a, b, c, d);
-            };
-        }
-    }
-};
-BBox = $prototype({
-    $static: {
-        zero: $property(function () {
-            return new BBox(0, 0, 0, 0);
-        }),
-        unit: $property(function () {
-            return new BBox(0, 0, 1, 1);
-        }),
-        rect: $property(function (sideSize) {
-            return new BBox(0, 0, sideSize, sideSize);
-        }),
-        fromLeftTopAndSize: function (pt, size) {
-            return BBox.fromLTWH({
-                left: pt.x,
-                top: pt.y,
-                width: size.x,
-                height: size.y
-            });
-        },
-        fromLTWH: function (l, t, w, h) {
-            if (arguments.length === 1) {
-                return l && BBox.fromLTWH(l.left, l.top, l.width, l.height);
-            } else {
-                return new BBox(l + w / 2, t + h / 2, w, h);
-            }
-        },
-        fromLTRB: function (l, t, r, b) {
-            if (arguments.length === 1) {
-                return l && BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
-            } else {
-                return new BBox(_.lerp(0.5, l, r), _.lerp(0.5, t, b), r - l, b - t);
-            }
-        },
-        fromSizeAndCenter: function (size, center) {
-            return new BBox(center.x - size.x / 2, center.y - size.y / 2, size.x, size.y);
-        },
-        fromSize: function (a, b) {
-            if (b) {
-                return new BBox(-a / 2, -b / 2, a, b);
-            } else {
-                return new BBox(-a.x / 2, -a.y / 2, a.x, a.y);
-            }
-        },
-        fromPoints: function (pts) {
-            var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE;
-            _.each(pts, function (pt) {
-                l = Math.min(pt.x, l);
-                t = Math.min(pt.y, t);
-                r = Math.max(pt.x, r);
-                b = Math.max(pt.y, b);
-            });
-            return BBox.fromLTRB(l, t, r, b);
-        }
-    },
-    constructor: function (x, y, w, h) {
-        if (arguments.length == 4) {
-            this.x = x;
-            this.y = y;
-            this.width = w;
-            this.height = h;
-        } else {
-            _.extend(this, x);
-        }
-    },
-    classifyPoint: function (pt) {
-        var sides = _.extend(pt.x > this.right ? { right: true } : {}, pt.x < this.left ? { left: true } : {}, pt.y > this.bottom ? { bottom: true } : {}, pt.y < this.top ? { top: true } : {});
-        return _.extend(sides, !sides.left && !sides.right && !sides.bottom && !sides.top ? { inside: true } : {});
-    },
-    classifyRay: function (origin, delta, cornerRadius) {
-        var half = this.size.half;
-        var farTime, farTimeX, farTimeY, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
-        scaleX = 1 / delta.x;
-        scaleY = 1 / delta.y;
-        signX = Math.sign(scaleX);
-        signY = Math.sign(scaleY);
-        nearTimeX = (this.x - signX * half.x - origin.x) * scaleX;
-        nearTimeY = (this.y - signY * half.y - origin.y) * scaleY;
-        farTimeX = (this.x + signX * half.x - origin.x) * scaleX;
-        farTimeY = (this.y + signY * half.y - origin.y) * scaleY;
-        if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
-            return undefined;
-        }
-        nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
-        farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
-        if (nearTime >= 1 || farTime <= 0) {
-            return undefined;
-        }
-        var hit = { time: _.clamp(nearTime, 0, 1) };
-        if (nearTimeX > nearTimeY) {
-            hit.normal = new Vec2(-signX, 0);
-        } else {
-            hit.normal = new Vec2(0, -signY);
-        }
-        hit.delta = delta.scale(hit.time);
-        hit.where = origin.add(hit.delta);
-        if (cornerRadius) {
-            var inner = this.grow(-cornerRadius);
-            if (hit.where.x > inner.right) {
-                if (hit.where.y < inner.top) {
-                    hit = Intersect.rayCircle(origin, delta, inner.rightTop, cornerRadius);
-                } else if (hit.where.y > inner.bottom) {
-                    hit = Intersect.rayCircle(origin, delta, inner.rightBottom, cornerRadius);
-                }
-            } else if (hit.where.x < inner.left) {
-                if (hit.where.y < inner.top) {
-                    hit = Intersect.rayCircle(origin, delta, inner.leftTop, cornerRadius);
-                } else if (hit.where.y > inner.bottom) {
-                    hit = Intersect.rayCircle(origin, delta, inner.leftBottom, cornerRadius);
-                }
-            }
-            if (hit && hit.insideOut) {
-                hit.where = origin;
-            }
-        }
-        return hit;
-    },
-    nearestPointTo: function (pt, cornerRadius) {
-        var r = cornerRadius || 0;
-        var a = new Vec2(this.left, this.top), b = new Vec2(this.right, this.top), c = new Vec2(this.right, this.bottom), d = new Vec2(this.left, this.bottom);
-        var pts = [
-            pt.projectOnLineSegment(a.add(r, 0), b.add(-r, 0)),
-            pt.projectOnLineSegment(b.add(0, r), c.add(0, -r)),
-            pt.projectOnLineSegment(c.add(-r, 0), d.add(r, 0)),
-            pt.projectOnLineSegment(d.add(0, -r), a.add(0, r)),
-            pt.projectOnCircle(a.add(r, r), r),
-            pt.projectOnCircle(b.add(-r, r), r),
-            pt.projectOnCircle(c.add(-r, -r), r),
-            pt.projectOnCircle(d.add(r, -r), r)
-        ];
-        return _.min(pts, function (test) {
-            return pt.sub(test).length;
-        });
-    },
-    xywh: $property(function () {
-        return {
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height
-        };
-    }),
-    ltwh: $property(function () {
-        return {
-            left: this.left,
-            top: this.top,
-            width: this.width,
-            height: this.height
-        };
-    }),
-    union: function (other) {
-        return BBox.fromLTRB(Math.min(this.left, other.left), Math.min(this.top, other.top), Math.max(this.right, other.right), Math.max(this.bottom, other.bottom));
-    },
-    centerIn: function (other) {
-        return new BBox(other.x, other.y, this.width, this.height);
-    },
-    clone: $property(function () {
-        return new BBox(this.x, this.y, this.width, this.height);
-    }),
-    floor: $property(function () {
-        return new BBox.fromLTRB(Math.floor(this.left), Math.floor(this.top), Math.floor(this.right), Math.floor(this.bottom));
-    }),
-    css: $property(function () {
-        return {
-            left: this.left + 'px',
-            top: this.top + 'px',
-            width: this.width + 'px',
-            height: this.height + 'px'
-        };
-    }),
-    leftTop: $property(function () {
-        return new Vec2(this.left, this.top);
-    }),
-    leftBottom: $property(function () {
-        return new Vec2(this.left, this.bottom);
-    }),
-    rightBottom: $property(function () {
-        return new Vec2(this.right, this.bottom);
-    }),
-    rightTop: $property(function () {
-        return new Vec2(this.right, this.top);
-    }),
-    left: $property(function () {
-        return this.x - this.width / 2;
-    }),
-    right: $property(function () {
-        return this.x + this.width / 2;
-    }),
-    top: $property(function () {
-        return this.y - this.height / 2;
-    }),
-    bottom: $property(function () {
-        return this.y + this.height / 2;
-    }),
-    center: $property(function () {
-        return new Vec2(this.x, this.y);
-    }),
-    extent: $alias('size'),
-    size: $property(function () {
-        return new Vec2(this.width, this.height);
-    }),
-    offset: function (amount) {
-        return new BBox(this.x + amount.x, this.y + amount.y, this.width, this.height);
-    },
-    newWidth: function (width) {
-        return new BBox(this.x - (width - this.width) / 2, this.y, width, this.height);
-    },
-    grow: function (amount) {
-        return new BBox(this.x, this.y, this.width + amount * 2, this.height + amount * 2);
-    },
-    shrink: function (amount) {
-        return this.grow(-amount);
-    },
-    mul: function (z) {
-        return new BBox(this.x * z, this.y * z, this.width * z, this.height * z);
-    },
-    area: $property(function () {
-        return Math.abs(this.width * this.height);
-    }),
-    intersects: function (other) {
-        return !(this.right < other.left || this.left > other.right || this.bottom < other.top || this.top > other.bottom);
-    },
-    toString: function () {
-        return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
-    }
-});
-Transform = $prototype({
-    $static: {
-        identity: $property(function () {
-            return new Transform();
-        }),
-        svgMatrix: function (m) {
-            return new Transform([
-                [
-                    m.a,
-                    m.c,
-                    m.e
-                ],
-                [
-                    m.b,
-                    m.d,
-                    m.f
-                ],
-                [
-                    0,
-                    0,
-                    1
-                ]
-            ]);
-        },
-        translation: function (v) {
-            return new Transform([
-                [
-                    1,
-                    0,
-                    v.x
-                ],
-                [
-                    0,
-                    1,
-                    v.y
-                ],
-                [
-                    0,
-                    0,
-                    1
-                ]
-            ]);
-        }
-    },
-    constructor: function (components) {
-        this.components = components || [
-            [
-                1,
-                0,
-                0
-            ],
-            [
-                0,
-                1,
-                0
-            ],
-            [
-                0,
-                0,
-                1
-            ]
-        ];
-    },
-    multiply: function (m) {
-        var result = [
-            [
-                0,
-                0,
-                0
-            ],
-            [
-                0,
-                0,
-                0
-            ],
-            [
-                0,
-                0,
-                0
-            ]
-        ];
-        var i, j, k, a = this.components, b = m.components;
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 3; j++) {
-                for (k = 0; k < 3; k++) {
-                    result[i][j] += a[i][k] * b[k][j];
-                }
-            }
-        }
-        return new Transform(result);
-    },
-    translate: function (v) {
-        return this.multiply(Transform.translation(v));
-    },
-    scale: function (s) {
-        return this.multiply(new Transform([
-            [
-                s,
-                0,
-                0
-            ],
-            [
-                0,
-                s,
-                0
-            ],
-            [
-                0,
-                0,
-                1
-            ]
-        ]));
-    },
-    inverse: $property($memoized(function () {
-        var m = this.components;
-        var id = 1 / (m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]));
-        return new Transform([
-            [
-                (m[1][1] * m[2][2] - m[2][1] * m[1][2]) * id,
-                -(m[0][1] * m[2][2] - m[0][2] * m[2][1]) * id,
-                (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * id
-            ],
-            [
-                (m[1][0] * m[2][2] - m[1][2] * m[2][0]) * id,
-                (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * id,
-                -(m[0][0] * m[1][2] - m[1][0] * m[0][2]) * id
-            ],
-            [
-                (m[1][0] * m[2][1] - m[2][0] * m[1][1]) * id,
-                -(m[0][0] * m[2][1] - m[2][0] * m[0][1]) * id,
-                (m[0][0] * m[1][1] - m[1][0] * m[0][1]) * id
-            ]
-        ]);
-    })),
-    unproject: function (v) {
-        var m = this.components;
-        return new Vec2(v.x * m[0][0] + v.y * m[0][1] + m[0][2], v.x * m[1][0] + v.y * m[1][1] + m[1][2]);
-    },
-    project: function (v) {
-        return this.inverse.unproject(v);
-    }
-});
-_.rng = function (seed, from, to) {
-    var m_w = seed;
-    var m_z = 987654321;
-    var mask = 4294967295;
-    return function () {
-        m_z = 36969 * (m_z & 65535) + (m_z >> 16) & mask;
-        m_w = 18000 * (m_w & 65535) + (m_w >> 16) & mask;
-        var result = (m_z << 16) + m_w & mask;
-        result /= 4294967296;
-        result += 0.5;
-        if (from === undefined && to === undefined) {
-            return result;
-        } else {
-            return Math.round(from + result * (to - from));
-        }
-    };
-};
-_.equalDistribution = function (value, n) {
-    var average = value / n;
-    var realLeft = 0;
-    return _.times(n, function () {
-        var left = Math.round(realLeft);
-        var right = Math.round(realLeft += average);
-        var rough = Math.floor(right - left);
-        return rough;
-    });
-};
-_.ptInRect = function (pt, rect) {
-    return pt.x >= rect.left && pt.y >= rect.top && pt.x < rect.right && pt.y < rect.bottom;
-};
-_.hue2CSS = function (H, a) {
-    return _.RGB2CSS(_.hue2RGB(H), a);
-};
-_.HSL2CSS = function (hsl, a) {
-    return _.RGB2CSS(_.HSL2RGB(hsl), a);
-};
-_.HSL2RGB = function (hsl) {
-    var h = hsl[0], s = hsl[1], l = hsl[2];
-    var rgb = _.hue2RGB(h);
-    var c = (1 - Math.abs(2 * l - 1)) * s;
-    return [
-        (rgb[0] - 0.5) * c + l,
-        (rgb[1] - 0.5) * c + l,
-        (rgb[2] - 0.5) * c + l
-    ];
-};
-_.hue2RGB = function (hue) {
-    return [
-        Math.max(0, Math.min(1, Math.abs(hue * 6 - 3) - 1)),
-        Math.max(0, Math.min(1, 2 - Math.abs(hue * 6 - 2))),
-        Math.max(0, Math.min(1, 2 - Math.abs(hue * 6 - 4)))
-    ];
-};
-_.RGB2CSS = function (rgb, a) {
-    return 'rgba(' + Math.round(rgb[0] * 255) + ',' + Math.round(rgb[1] * 255) + ',' + Math.round(rgb[2] * 255) + ',' + (a === undefined ? rgb[3] === undefined ? 1 : rgb[3] : a) + ')';
-};
-_.RGB2HSL = function (rgb, a_) {
-    var r = rgb[0], g = rgb[1], b = rgb[2], a = a_ === undefined ? rgb[3] : a_;
-    var max = Math.max(r, g, b), min = Math.min(r, g, b);
-    var h, s, l = (max + min) / 2;
-    if (max == min) {
-        h = s = 0;
-    } else {
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-        case r:
-            h = (g - b) / d + (g < b ? 6 : 0);
-            break;
-        case g:
-            h = (b - r) / d + 2;
-            break;
-        case b:
-            h = (r - g) / d + 4;
-            break;
-        }
-        h /= 6;
-    }
-    return a === undefined ? [
-        h,
-        s,
-        l
-    ] : [
-        h,
-        s,
-        l,
-        a
-    ];
-};
-_.extend(Math, function (decimalAdjust) {
-    return {
-        roundTo: function (value, precision) {
-            return value - value % precision;
-        },
-        round10: function (value, exp) {
-            return decimalAdjust('round', value, exp);
-        },
-        floor10: function (value, exp) {
-            return decimalAdjust('floor', value, exp);
-        },
-        ceil10: function (value, exp) {
-            return decimalAdjust('ceil', value, exp);
-        }
-    };
-}(function (type, value, exp) {
-    if (typeof exp === 'undefined' || +exp === 0) {
-        return Math[type](value);
-    }
-    value = +value;
-    exp = +exp;
-    if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
-        return NaN;
-    }
-    value = value.toString().split('e');
-    value = Math[type](+(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp)));
-    value = value.toString().split('e');
-    return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
-}));
-_.defineKeyword('component', function (definition) {
-    return $extends(Component, definition);
-});
-_([
-    'extendable',
-    'trigger',
-    'triggerOnce',
-    'barrier',
-    'bindable',
-    'memoize',
-    'interlocked',
-    'memoizeCPS',
-    'debounce',
-    'throttle',
-    'overrideThis',
-    'listener',
-    'postpones',
-    'reference',
-    'raw',
-    'binds',
-    'observes'
-]).each(_.defineTagKeyword);
-(function () {
-    var impl = function (impl) {
-        return function (x, fn) {
-            return _.isFunction(x) && arguments.length === 1 ? impl(x, fn) : impl(fn, x);
-        };
-    };
-    _.defineTagKeyword('observableProperty', impl);
-    _.defineTagKeyword('observable', impl);
-}());
-_.defineKeyword('observableRef', function (x) {
-    return $observableProperty($reference(x));
-});
-$prototype.macro('$depends', function (def, value, name) {
-    def.$depends = $builtin($const(_.coerceToArray(value)));
-    return def;
-});
-$prototype.macroTag('extendable', function (def, value, name) {
-    def[name] = $builtin($const(value));
-    return def;
-});
-$prototype.macro(function (def) {
-    def.$nonce = $static($builtin($property(String.randomHex(32))));
-    return def;
-});
-Component = $prototype({
-    $defaults: $extendable({}),
-    $requires: $extendable({}),
-    $macroTags: $extendable({}),
-    $impl: {
-        sequence: function (def, base) {
-            return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
-        },
-        expandTraitsDependencies: function (def) {
-            if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
-                def.$traits = DAG.squash(def, {
-                    nodes: function (def) {
-                        return $untag(def.$depends);
-                    },
-                    key: function (def) {
-                        return $untag(def.$nonce);
-                    }
+            if (_.hasOOP) {
+                var Foo = $prototype(), Bar = $prototype();
+                $assertTypeMatches({
+                    foo: new Foo(),
+                    bar: new Bar()
+                }, {
+                    foo: Foo,
+                    bar: Bar
+                });
+                $assertFails(function () {
+                    $assertTypeMatches(new Bar(), Foo);
                 });
             }
             ;
-            return def;
-        },
-        mergeExtendables: function (base) {
-            return function (def) {
-                _.each(base.$definition, function (value, name) {
-                    if (value && value.$extendable) {
-                        def[name] = Tags.modify(value, function (value) {
-                            value = _.extendedDeep(value, $untag(def[name] || {}));
-                            _.each($untag(def.$traits), function (trait) {
-                                if (!trait) {
-                                    log.e(def.$traits);
-                                    throw new Error('invalid $traits value');
-                                }
-                                var traitVal = trait.$definition[name];
-                                if (traitVal) {
-                                    value = _.extendedDeep($untag(traitVal), value);
-                                }
-                            });
-                            return value;
-                        });
-                    }
+            if (_.hasStdlib) {
+                var testF = function (_777, _foo_bar_baz, notInvolved) {
+                    $assertArguments(arguments);
+                };
+                testF(777, 'foo bar baz');
+                $assertFails(function () {
+                    testF(777, 42);
                 });
-                return def;
-            };
-        },
-        mergeTraitsMembers: function (def, traits) {
-            var pool = {}, bindables = {}, streams = {};
-            var macroTags = $untag(def.$macroTags);
-            var definitions = _.pluck(traits, '$definition').concat(_.clone(def));
-            _.each(definitions, function (traitDef) {
-                _.each(macroTags && this.applyMacroTags(macroTags, _.extend(_.clone(traitDef), { constructor: def.constructor })) || traitDef, function (member, name) {
-                    if ($builtin.isNot(member) && $builtin.isNot(def[name]) && name !== 'constructor') {
-                        if ($bindable.is(member)) {
-                            bindables[name] = member;
-                        }
-                        if (Component.isStreamDefinition(member)) {
-                            streams[name] = member;
-                        }
-                        (pool[name] || (pool[name] = [])).push(member);
-                        def[name] = member;
-                    }
+            }
+            $assertThrows(function () {
+                throw 42;
+            });
+            $assertNotThrows(function () {
+            });
+            $assertThrows(function () {
+                throw 42;
+            }, 42);
+            $assertThrows(function () {
+                throw new Error('42');
+            }, _.matches({ message: '42' }));
+            $assertFails(function () {
+                $assertThrows(function () {
+                    throw 42;
+                }, 24);
+                $assertThrows(function () {
+                    throw new Error('42');
+                }, _.matches({ message: '24' }));
+            });
+            $assertEveryCalled(function (a, b, c) {
+                a();
+                a();
+                b();
+                c();
+            });
+            $assertEveryCalledOnce(function (a, b, c) {
+                a();
+                b();
+                c();
+            });
+            $assertEveryCalled(function (x__3) {
+                x__3();
+                x__3();
+                x__3();
+            });
+            if (_.hasStdlib) {
+                $assertCalledWithArguments([
+                    'foo',
+                    [
+                        'foo',
+                        'bar'
+                    ]
+                ], function (fn) {
+                    fn('foo');
+                    fn('foo', 'bar');
                 });
-            }, this);
-            def.__bindables = bindables;
-            def.__streams = streams;
-            def.__membersByName = pool;
-        },
-        mergeStreams: function (def) {
-            var pool = def.__membersByName;
-            _.each(def.__streams, function (stream, name) {
-                var clonedStream = def[name] = Tags.clone(stream);
-                clonedStream.listeners = [];
-                _.each(pool[name], function (member) {
-                    if (member !== stream) {
-                        clonedStream.listeners.push($untag(member));
-                    }
-                });
-            });
-            return def;
-        },
-        mergeBindables: function (def) {
-            var pool = def.__membersByName;
-            _.each(def.__bindables, function (member, name) {
-                var bound = _.filter2(_.bindable.hooks, function (hook, i) {
-                    var bound = pool[_.bindable.hooksShort[i] + name.capitalized];
-                    return bound ? [
-                        hook,
-                        bound
-                    ] : false;
-                });
-                if (bound.length) {
-                    var hooks = {};
-                    _.each(bound, function (kv) {
-                        _.each(kv[1], function (fn) {
-                            fn = $untag(fn);
-                            if (_.isFunction(fn)) {
-                                var k = '_' + kv[0];
-                                (hooks[k] || (hooks[k] = [])).push(fn);
-                            }
-                        });
-                    });
-                    def[name] = $bindable({ hooks: hooks }, Tags.clone(member));
-                }
-            }, this);
-            return def;
-        }
-    },
-    isStreamDefinition: $static(function (def) {
-        return _.isObject(def) && (def.$trigger || def.$triggerOnce || def.$barrier || def.$observable || def.$observableProperty);
-    }),
-    mapMethods: function () {
-        var iterator = _.last(arguments), predicate = arguments.length === 1 ? _.constant(true) : arguments[0];
-        var methods = [];
-        for (var k in this) {
-            var def = this.constructor.$definition[k];
-            if (!(def && def.$property)) {
-                var fn = this[k];
-                if (_.isFunction(fn) && !_.isPrototypeConstructor(fn) && predicate(def)) {
-                    this[k] = iterator.call(this, fn, k, def) || fn;
-                }
             }
-        }
-    },
-    enumMethods: function (_1, _2) {
-        if (arguments.length === 2) {
-            this.mapMethods(_1, _2.returns(undefined));
-        } else {
-            this.mapMethods(_1.returns(undefined));
-        }
-    },
-    constructor: $final(function (arg1, arg2) {
-        this.parent_ = undefined;
-        this.children_ = [];
-        var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
-        if (this.constructor.$defaults) {
-            cfg = this.cfg = _.extend(_.cloneDeep(this.constructor.$defaults), cfg);
-        }
-        this.mapMethods(function (fn, name, def) {
-            if (name !== '$' && name !== 'init' && !(def && def.$raw)) {
-                return this.$(fn);
-            }
-        });
-        _.onBefore(this, 'destroy', this._beforeDestroy);
-        _.onAfter(this, 'destroy', this._afterDestroy);
-        var initialStreamListeners = [];
-        var excludeFromCfg = { init: true };
-        _.each(componentDefinition, function (def, name) {
-            if (def !== undefined) {
-                if (def.$observableProperty) {
-                    var definitionValue = def.subject;
-                    var defaultValue = name in cfg ? cfg[name] : definitionValue;
-                    var streamName = name + 'Change';
-                    var observable = excludeFromCfg[streamName] = this[streamName] = _.observable();
-                    observable.context = this;
-                    observable.postpones = def.$postpones;
-                    if (_.isPrototypeInstance(definitionValue)) {
-                        var constructor = definitionValue.constructor;
-                        observable.beforeWrite = function (value) {
-                            return constructor.isTypeOf(value) ? value : new constructor(value);
-                        };
-                    }
-                    if (def.$reference) {
-                        observable.trackReference = true;
-                    }
-                    _.defineProperty(this, name, {
-                        get: function () {
-                            return observable.value;
-                        },
-                        set: function (x) {
-                            observable.write.call(this, x);
-                        }
-                    });
-                    if (def.listeners) {
-                        _.each(def.listeners, function (value) {
-                            initialStreamListeners.push([
-                                observable,
-                                value
-                            ]);
-                        });
-                    }
-                    if (_.isFunction(def.$observableProperty)) {
-                        initialStreamListeners.push([
-                            observable,
-                            def.$observableProperty
-                        ]);
-                    }
-                    if (defaultValue !== undefined) {
-                        observable(defaultValue);
-                    }
-                } else if (Component.isStreamDefinition(def)) {
-                    var stream = excludeFromCfg[name] = this[name] = _.extend((def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(def.subject), {
-                        context: this,
-                        postpones: def.$postpones
-                    });
-                    if (def.$reference) {
-                        observable.trackReference = true;
-                    }
-                    if (def.listeners) {
-                        _.each(def.listeners, function (value) {
-                            initialStreamListeners.push([
-                                stream,
-                                value
-                            ]);
-                        });
-                    }
-                    if (_.isFunction(def.$observable)) {
-                        initialStreamListeners.push([
-                            stream,
-                            def.$observable
-                        ]);
-                    }
-                    var defaultListener = cfg[name];
-                    if (defaultListener) {
-                        if (def.$observable && defaultListener.isObservable) {
-                            defaultListener.tie(stream);
-                        } else {
-                            initialStreamListeners.push([
-                                stream,
-                                defaultListener
-                            ]);
-                        }
-                    }
-                }
-                if (def.$listener) {
-                    this[name].queuedBy = [];
-                }
-                if (def.$interlocked) {
-                    this[name] = _.interlocked(this[name]);
-                }
-                if (def.$bindable) {
-                    this[name] = _.extend(_.bindable(this[name], this), _.map2(def.$bindable.hooks || {}, _.mapsWith(this.$.bind(this).arity1)));
-                }
-                if (def.$debounce) {
-                    var fn = this[name], opts = _.coerceToObject(def.$debounce);
-                    this[name] = fn.debounced(opts.wait || 500, opts.immediate);
-                }
-                if (def.$throttle) {
-                    var fn = this[name], opts = _.coerceToObject(def.$throttle);
-                    this[name] = _.throttle(fn, opts.wait || 500, opts);
-                }
-                if (def.$memoize) {
-                    this[name] = _.memoize(this[name]);
-                } else if (def.$memoizeCPS) {
-                    this[name] = _.cps.memoize(this[name]);
-                }
-            }
-        }, this);
-        var init = this.init;
-        this.init = this._beforeInit.then(init.then(this._afterInit)).bind(this);
-        _.each(cfg, function (value, name) {
-            if (!(name in excludeFromCfg)) {
-                this[name] = _.isFunction(value) ? this.$(value) : value;
-            }
-        }, this);
-        _.each(componentDefinition, function (def, name) {
-            if (def && def.$alias && !def.$raw) {
-                this[name] = this[$untag(def)];
-            }
-        }, this);
-        if (_.hasAsserts) {
-            _.each(this.constructor.$requires, function (contract, name) {
-                $assertTypeMatches(_.object([[
-                        name,
-                        this[name]
-                    ]]), _.object([[
-                        name,
-                        contract
-                    ]]));
-            }, this);
-        }
-        _.each(initialStreamListeners, function (v) {
-            v[0].call(this, v[1]);
-        }, this);
-        if (!(cfg.init === false || this.constructor.$defaults && this.constructor.$defaults.init === false)) {
-            var result = this.init();
-            if (result instanceof Promise) {
-                result.panic;
-            }
-        }
-    }),
-    callChainMethod: function (name) {
-        var self = this;
-        return __.seq(_.filter2(this.constructor.$traits || [], function (Trait) {
-            var method = Trait.prototype[name];
-            return method && method.bind(self) || false;
-        }));
-    },
-    _beforeInit: function () {
-        if (this.initialized.already) {
-            throw new Error('Component: I am already initialized. Probably you\'re doing it wrong.');
-        }
-        return this.callChainMethod('beforeInit');
-    },
-    init: function () {
-    },
-    _afterInit: function () {
-        var cfg = this.cfg, self = this;
-        return __.then(this.callChainMethod.$('afterInit'), function () {
-            self.initialized(true);
-            self.alive(true);
-            _.each(self.constructor.$definition, function (def, name) {
-                if (def && def.$observableProperty) {
-                    name += 'Change';
-                    var defaultListener = cfg[name];
-                    if (defaultListener) {
-                        self[name](defaultListener);
-                    }
-                }
-            });
-            return true;
-        });
-    },
-    initialized: $barrier(),
-    alive: $observable(false),
-    _beforeDestroy: function () {
-        if (this.destroyed_) {
-            throw new Error('Component: I am already destroyed. Probably you\'re doing it wrong.');
-        }
-        if (this.destroying_) {
-            throw new Error('Component: Recursive destroy() call detected. Probably you\'re doing it wrong.');
-        }
-        this.destroying_ = true;
-        _.each(this.constructor.$traits, function (Trait) {
-            if (Trait.prototype.beforeDestroy) {
-                Trait.prototype.beforeDestroy.call(this);
-            }
-        }, this);
-        this.alive(false);
-        this.enumMethods(_.off.arity1);
-        _.each(this.children_, _.method('destroy'));
-        this.children_ = [];
-    },
-    destroy: function () {
-    },
-    _afterDestroy: function () {
-        _.each(this.constructor.$traits, function (Trait) {
-            if (Trait.prototype.destroy) {
-                Trait.prototype.destroy.call(this);
-            }
-            if (Trait.prototype.afterDestroy) {
-                Trait.prototype.afterDestroy.call(this);
-            }
-        }, this);
-        delete this.destroying_;
-        this.parent_ = undefined;
-        this.destroyed_ = true;
-    },
-    attachedTo: $property(function () {
-        return this.parent_;
-    }),
-    attachTo: function (p) {
-        if (p === this) {
-            throw new Error('smells like time-travel paradox.. how else can I be parent of myself?');
-        }
-        if (this.parent_ !== p) {
-            if (this.parent_ !== undefined) {
-                this.parent_.children_.remove(this);
-            }
-            if ((this.parent_ = p) !== undefined) {
-                this.parent_.children_.push(this);
-            }
-        }
-        return this;
-    },
-    detach: function () {
-        return this.attachTo(undefined);
-    },
-    attached: $property(function () {
-        return this.children_;
-    }),
-    attach: function (c) {
-        _.invoke(_.coerceToArray(c), 'attachTo', this);
-        return this;
-    },
-    detachAll: function () {
-        _.each(this.children_, function (c) {
-            c.parent_ = undefined;
-        });
-        this.children_ = [];
-        return this;
-    },
-    destroyAll: function () {
-        _.each(this.children_, function (c) {
-            c.parent_ = undefined;
-            c.destroy();
-        });
-        this.children_ = [];
-        return this;
-    }
-});
-R = $singleton({
-    $test: function () {
-        var $assertExpr = function (a, b) {
-            $assert(a, _.quote(b.str, '//'));
-        };
-        $assertExpr('/[^\\s]*/', $r.anyOf.except.space.$);
-        $assertExpr('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$);
-        var expr = $r.expr('before', $r.anything.text('$print').something).then($r.expr('argument', $r.someOf.except.text(',)')).inParentheses.then($r.expr('tail', $r.anything))).$;
-        $assertExpr('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr);
-        $assert(expr.parse(' var x = $print (blabla) // lalala '), {
-            before: ' var x = $print ',
-            argument: 'blabla',
-            tail: ' // lalala '
-        });
-        $assert([
-            [
-                '[^',
-                '\\s',
-                ']'
-            ],
-            '*'
-        ], R.anyOf(R.except(R.space)));
-    },
-    constructor: function () {
-        this.reduce = _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible, _.isNonTrivial.and(_.not(this.isSubexpr)));
-        this.initDSL();
-    },
-    expr: function (expr, subexprs) {
-        subexprs = subexprs || [];
-        return new R.Expr(R.reduce('', expr, function (memo, s) {
-            if (R.isSubexpr(s)) {
-                subexprs.push(s);
-                return memo + R.expr(R.root(s.value), subexprs).str;
-            } else {
-                return memo + s;
-            }
-        }), subexprs);
-    },
-    Expr: $prototype({
-        constructor: function (str, subexprs) {
-            this.rx = new RegExp();
-            this.rx.compile(str);
-            this.str = str;
-            this.subexprs = subexprs;
-        },
-        parse: function (str) {
-            var match = str.match(this.rx);
-            return match && _.extend.apply(null, _.zipWith([
-                _.rest(match),
-                this.subexprs
-            ], function (match, subexpr) {
-                return _.object([[
-                        subexpr.name,
-                        match
-                    ]]);
-            })) || {};
-        }
-    }),
-    metacharacters: $property(_.index('\\^$.|?*+()[{')),
-    escape: function (s) {
-        return _.map(s, function (x) {
-            return R.metacharacters[x] ? '\\' + x : x;
-        }).join('');
-    },
-    text: $alias('escape'),
-    subexpr: function (name, s) {
-        return {
-            name: name,
-            value: [
-                '(',
-                s,
-                ')'
-            ]
-        };
-    },
-    maybe: function (s) {
-        return [
-            s,
-            '?'
-        ];
-    },
-    anyOf: function (s) {
-        return [
-            s,
-            '*'
-        ];
-    },
-    someOf: function (s) {
-        return [
-            s,
-            '+'
-        ];
-    },
-    oneOf: function (s) {
-        return [
-            '[',
-            s,
-            ']'
-        ];
-    },
-    except: function (s) {
-        return [
-            '[^',
-            s,
-            ']'
-        ];
-    },
-    or: function (a, b) {
-        return [
-            a,
-            '|',
-            b
-        ];
-    },
-    begin: $property('^'),
-    end: $property('$'),
-    space: $property('\\s'),
-    maybeSpaces: $property('\\s*'),
-    spaces: $property('\\s+'),
-    anything: $property('.*'),
-    something: $property('.+'),
-    comma: $property(','),
-    parentheses: function (s) {
-        return [
-            '\\(',
-            s,
-            '\\)'
-        ];
-    },
-    brackets: function (s) {
-        return [
-            '\\[',
-            s,
-            '\\]'
-        ];
-    },
-    isSubexpr: function (s) {
-        return _.isStrictlyObject(s) && !_.isArray(s) ? true : false;
-    },
-    root: function (r) {
-        return r && r.$$ ? r.$$ : r;
-    },
-    initDSL: function () {
-        _.defineKeyword('r', function () {
-            return $$r([]);
-        });
-        _.defineKeyword('$r', function (cursor) {
-            var shift = function (x) {
-                cursor.push(x);
-                return cursor.forward;
-            };
-            _.defineHiddenProperty(cursor, 'then', function (x) {
-                cursor.push(R.root(x));
-                return cursor;
-            });
-            _.defineHiddenProperty(cursor, 'text', function (x) {
-                cursor.push(R.text(x));
-                return cursor;
-            });
-            _.defineHiddenProperty(cursor, 'expr', function (x, s) {
-                cursor.push(R.subexpr(x, R.root(s)));
-                return cursor;
-            });
-            _.defineHiddenProperty(cursor, 'forward', function () {
-                return cursor.next || ((cursor.next = $r).prev = cursor).next;
-            });
-            _.each([
-                'maybe',
-                'anyOf',
-                'someOf',
-                'oneOf',
-                'except'
-            ], function (key) {
-                _.defineHiddenProperty(cursor, key, function () {
-                    return shift(R[key](cursor.forward));
-                });
-            });
-            _.each([
-                'parentheses',
-                'brackets'
-            ], function (key) {
-                _.defineHiddenProperty(cursor, 'in' + key.capitalized, function () {
-                    return cursor.$$.prev = $$r(R[key](cursor.$$));
-                });
-            });
-            _.each(['or'], function (key) {
-                _.defineHiddenProperty(cursor, key, function () {
-                    var next = $r;
-                    return (next.prev = cursor.$$.prev = $$r(R[key](cursor.$$, next))).next = next;
-                });
-            });
-            _.each([
-                'begin',
-                'end',
-                'space',
-                'anything',
-                'something'
-            ], function (key) {
-                _.defineHiddenProperty(cursor, key, function () {
-                    return shift([
-                        R[key],
-                        cursor.forward
-                    ]);
-                });
-            });
-            _.defineHiddenProperty(cursor, '$$', function () {
-                var root = cursor;
-                while (root.prev) {
-                    root = root.prev;
-                }
-                return root;
-            });
-            _.defineHiddenProperty(cursor, '$', function () {
-                return R.expr(cursor.$$);
-            });
-            return cursor;
-        });
-    }
-});
-(function () {
-    _.hasUncaught = true;
-    var reThrownTag = ' [re-thrown by a hook]';
-    var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
-        var chain = arguments.callee.chain;
-        arguments.callee.chain = _.reject(chain, _.property('catchesOnce'));
-        if (chain.length) {
-            for (var i = 0, n = chain.length; i < n; i++) {
-                try {
-                    chain[i](e);
-                    break;
-                } catch (newE) {
-                    console.log(newE);
-                    if (i === n - 1) {
-                        newE.message += reThrownTag;
-                        throw newE;
-                    } else {
-                        if (newE && typeof newE === 'object') {
-                            newE.originalError = e;
-                        }
-                        e = newE;
-                    }
-                }
-            }
-        } else {
-            e.message += reThrownTag;
-            throw e;
-        }
-    };
-    _.withUncaughtExceptionHandler = function (handler, context_) {
-        var context = context_ || _.identity;
-        if (context_) {
-            handler.catchesOnce = true;
-        }
-        globalUncaughtExceptionHandler.chain.unshift(handler);
-        context(function () {
-            globalUncaughtExceptionHandler.chain.remove(handler);
-        });
-    };
-    globalUncaughtExceptionHandler.chain = [];
-    switch ($platform.engine) {
-    case 'node':
-        require('process').on('uncaughtException', globalUncaughtExceptionHandler);
-        break;
-    case 'browser':
-        window.addEventListener('error', function (e) {
-            if (e.message.indexOf(reThrownTag) < 0) {
-                if (e.error) {
-                    globalUncaughtExceptionHandler(e.error);
-                } else {
-                    globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
-                        stub: true,
-                        stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno
-                    }));
-                }
-            }
-        });
-    }
-}());
-_.hasReflection = true;
-_.defineKeyword('callStack', function () {
-    return CallStack.fromRawString(CallStack.currentAsRawString).offset($platform.NodeJS ? 1 : 0);
-});
-_.defineKeyword('currentFile', function () {
-    return (CallStack.rawStringToArray(CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file;
-});
-_.defineKeyword('uselessPath', _.memoize(function () {
-    return _.initial(__filename.split('/'), $platform.NodeJS ? 2 : 1).join('/') + '/';
-}));
-_.defineKeyword('sourcePath', _.memoize(function () {
-    var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
-    return local ? local + '/' : $uselessPath;
-}));
-if ($platform.Browser) {
-    _.defineProperty(window, '__filename', function () {
-        return $currentFile;
-    });
-}
-SourceFiles = $singleton(Component, {
-    line: function (file, line, then) {
-        SourceFiles.read(file, function (data) {
-            then((data.split('\n')[line] || '').trimmed);
-        });
-    },
-    read: $memoizeCPS(function (file, then) {
-        if (file.indexOf('<') < 0) {
-            try {
-                if ($platform.NodeJS) {
-                    then(require('fs').readFileSync(file, { encoding: 'utf8' }) || '');
-                } else {
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('GET', file, true);
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState == 4) {
-                            then(xhr.responseText);
-                        }
-                    };
-                    xhr.send(null);
-                }
-            } catch (e) {
-                then('');
-            }
-        } else {
-            then('');
-        }
-    }),
-    write: function (file, text, then) {
-        if ($platform.NodeJS) {
-            this.read(file, function (prevText) {
-                var fs = require('fs'), opts = { encoding: 'utf8' };
-                try {
-                    fs.mkdirSync(file + '.backups');
-                } catch (e) {
-                }
-                fs.writeFileSync(file + '.backups/' + Date.now(), prevText, opts);
-                fs.writeFileSync(file, text, opts);
+            $assertCPS(function (then) {
+                then('foo', 'bar');
+            }, [
+                'foo',
+                'bar'
+            ]);
+            $assertCPS(function (then) {
+                then('foo');
+            }, 'foo');
+            $assertCPS(function (then) {
                 then();
             });
-        } else {
-            JSONAPI.post('source/' + file, _.extend2({}, this.apiConfig, { what: { text: text } })).then(function () {
-                log.ok(file, '\u2014 successfully saved');
-                if (then) {
-                    then();
-                }
-            });
-        }
-    }
-});
-CallStack = $extends(Array, {
-    current: $static($property(function () {
-        return CallStack.fromRawString(CallStack.currentAsRawString).offset(1);
-    })),
-    fromError: $static(function (e) {
-        if (e && e.parsedStack) {
-            return CallStack.fromParsedArray(e.parsedStack).offset(e.stackOffset || 0);
-        } else if (e && e.stack) {
-            return CallStack.fromRawString(e.stack).offset(e.stackOffset || 0);
-        } else {
-            return CallStack.fromParsedArray([]);
-        }
-    }),
-    fromErrorWithAsync: $static(function (e) {
-        var stackEntries = CallStack.fromError(e), asyncContext = e.asyncContext;
-        while (asyncContext) {
-            stackEntries = stackEntries.concat(CallStack.fromRawString(asyncContext.stack));
-            asyncContext = asyncContext.asyncContext;
-        }
-        return stackEntries.mergeDuplicateLines;
-    }),
-    locationEquals: $static(function (a, b) {
-        return a.file === b.file && a.line === b.line && a.column === b.column;
-    }),
-    safeLocation: function (n) {
-        return this[n] || {
-            callee: '',
-            calleeShort: '',
-            file: '',
-            fileName: '',
-            fileShort: '',
-            thirdParty: false,
-            source: '??? WRONG LOCATION ???',
-            sourceReady: _.barrier('??? WRONG LOCATION ???')
-        };
-    },
-    mergeDuplicateLines: $property(function () {
-        return CallStack.fromParsedArray(_.map(_.partition2(this, function (e) {
-            return e.file + e.line;
-        }), function (group) {
-            return _.reduce(_.rest(group), function (memo, entry) {
-                memo.callee = (memo.callee || '<anonymous>') + ' \u2192 ' + (entry.callee || '<anonymous>');
-                memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' \u2192 ' + (entry.calleeShort || '<anonymous>');
-                return memo;
-            }, _.clone(group[0]));
-        }));
-    }),
-    clean: $property(function () {
-        var clean = this.mergeDuplicateLines.reject(function (e, i) {
-            return (e.thirdParty || e.hide) && i !== 0;
-        });
-        return clean.length === 0 ? this : clean;
-    }),
-    asArray: $property(function () {
-        return _.asArray(this);
-    }),
-    offset: function (N) {
-        return N && CallStack.fromParsedArray(_.rest(this, N)) || this;
-    },
-    initial: function (N) {
-        return N && CallStack.fromParsedArray(_.initial(this, N)) || this;
-    },
-    concat: function (stack) {
-        return CallStack.fromParsedArray(this.asArray.concat(stack.asArray));
-    },
-    filter: function (fn) {
-        return CallStack.fromParsedArray(_.filter(this, fn));
-    },
-    reject: function (fn) {
-        return CallStack.fromParsedArray(_.reject(this, fn));
-    },
-    reversed: $property(function () {
-        return CallStack.fromParsedArray(_.reversed(this));
-    }),
-    sourcesReady: function (then) {
-        return _.allTriggered(_.pluck(this, 'sourceReady'), then);
-    },
-    constructor: function (arr) {
-        Array.prototype.constructor.call(this);
-        _.each(arr, function (entry) {
-            if (!entry.sourceReady) {
-                entry.sourceReady = _.barrier();
-                SourceFiles.line((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
-                    entry.hide = src.contains('// @hide');
-                    entry.sourceReady(entry.source = src.replace('// @hide', ''));
+            $assertFails(function () {
+                $fail;
+                $stub;
+                $assert('not true');
+                $assert({
+                    foo: 1,
+                    bar: 2
+                }, { foo: 1 });
+                $assert([
+                    1,
+                    2,
+                    3,
+                    4
+                ], [
+                    1,
+                    2,
+                    3
+                ]);
+                $assert(['foo'], {
+                    0: 'foo',
+                    length: 1
                 });
-            }
-            this.push(entry);
-        }, this);
-    },
-    fromParsedArray: $static(function (arr) {
-        return new CallStack(arr);
-    }),
-    currentAsRawString: $static($property(function () {
-        var cut = $platform.Browser ? 3 : 2;
-        return _.rest((new Error().stack || '').split('\n'), cut).join('\n');
-    })),
-    shortenPath: $static(function (path) {
-        var relative = path.replace($uselessPath, '').replace($sourcePath, '');
-        return relative !== path ? relative.replace(/^node_modules\//, '') : path.split('/').last;
-    }),
-    isThirdParty: $static(_.bindable(function (file) {
-        var local = file.replace($sourcePath, '');
-        return $platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
-    })),
-    fromRawString: $static(_.sequence(function (rawString) {
-        return CallStack.rawStringToArray(rawString);
-    }, function (array) {
-        return _.map(array, function (entry) {
-            return _.extend(entry, {
-                calleeShort: _.last(entry.callee.split('.')),
-                fileName: _.last(entry.file.split('/')),
-                fileShort: CallStack.shortenPath(entry.file),
-                thirdParty: CallStack.isThirdParty(entry.file) && !entry.index
-            });
-        });
-    }, function (parsedArrayWithSourceLines) {
-        return CallStack.fromParsedArray(parsedArrayWithSourceLines);
-    })),
-    rawStringToArray: $static(function (rawString) {
-        var lines = (rawString || '').split('\n');
-        return _.filter2(lines, function (line) {
-            line = line.trimmed;
-            var callee, fileLineColumn = [], native_ = false;
-            var planA = undefined, planB = undefined;
-            if ((planA = line.match(/at (.+) \((.+)\)/)) || (planA = line.match(/(.*)@(.*)/))) {
-                callee = planA[1];
-                native_ = planA[2] === 'native';
-                fileLineColumn = _.rest(planA[2].match(/(.*):(.+):(.+)/) || []);
-            } else if (planB = line.match(/^(at\s+)*(.+):([0-9]+):([0-9]+)/)) {
-                fileLineColumn = _.rest(planB, 2);
-            } else {
-                return false;
-            }
-            if ((callee || '').indexOf('__supressErrorReporting') >= 0) {
-                return false;
-            }
-            return {
-                beforeParse: line,
-                callee: callee || '',
-                index: $platform.Browser && fileLineColumn[0] === window.location.href,
-                'native': native_,
-                file: fileLineColumn[0] || '',
-                line: (fileLineColumn[1] || '').integerValue,
-                column: (fileLineColumn[2] || '').integerValue
-            };
-        });
-    })
-});
-$prototype.impl.findMeta = function (stack) {
-    return function (then) {
-        _.cps.find(CallStack.fromRawString(stack).reversed, function (entry, found) {
-            entry.sourceReady(function (text) {
-                var match = (text || '').match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/);
-                found(match && {
-                    name: match[1],
-                    type: match[2],
-                    file: entry.fileShort
-                } || false);
-            });
-        }, function (found) {
-            then(found || {});
-        });
-    };
-};
-$prototype.macro(function (def, base) {
-    if (!def.$meta) {
-        var findMeta = _.cps.memoize($prototype.impl.findMeta(CallStack.currentAsRawString));
-        _.defineMemoizedProperty(findMeta, 'promise', function () {
-            return new Promise(findMeta);
-        });
-        def.$meta = $static(findMeta);
-    }
-    return def;
-});
-_.hasLog = true;
-_.extend(log = function () {
-    return log.write.apply(this, [log.config({
-            location: true,
-            stackOffset: 1
-        })].concat(_.asArray(arguments)));
-}, {
-    Config: $prototype(),
-    config: function (cfg) {
-        return new log.Config(cfg);
-    }
-});
-_.extend(log, {
-    indent: function (n) {
-        return log.config({ indent: n });
-    },
-    stackOffset: function (n) {
-        return log.config({ stackOffset: n });
-    },
-    where: function (wat) {
-        return log.config({
-            location: true,
-            where: wat || undefined
-        });
-    },
-    color: _.extend(function (x) {
-        return (log.color[x] || {}).color;
-    }, _.object(_.map([
-        [
-            'none',
-            '0m',
-            ''
-        ],
-        [
-            'red',
-            '31m',
-            'color:crimson'
-        ],
-        [
-            'boldRed',
-            [
-                '31m',
-                '1m'
-            ],
-            'color:crimson;font-weight:bold'
-        ],
-        [
-            'darkRed',
-            [
-                '31m',
-                '2m'
-            ],
-            'color:crimson'
-        ],
-        [
-            'blue',
-            '36m',
-            'color:royalblue'
-        ],
-        [
-            'boldBlue',
-            [
-                '36m',
-                '1m'
-            ],
-            'color:royalblue;font-weight:bold;'
-        ],
-        [
-            'darkBlue',
-            [
-                '36m',
-                '2m'
-            ],
-            'color:rgba(65,105,225,0.5)'
-        ],
-        [
-            'boldOrange',
-            [
-                '33m',
-                '1m'
-            ],
-            'color:saddlebrown;font-weight:bold;'
-        ],
-        [
-            'darkOrange',
-            [
-                '33m',
-                '2m'
-            ],
-            'color:saddlebrown'
-        ],
-        [
-            'orange',
-            '33m',
-            'color:saddlebrown'
-        ],
-        [
-            'brown',
-            [
-                '33m',
-                '2m'
-            ],
-            'color:saddlebrown'
-        ],
-        [
-            'green',
-            '32m',
-            'color:forestgreen'
-        ],
-        [
-            'boldGreen',
-            [
-                '32m',
-                '1m'
-            ],
-            'color:forestgreen;font-weight:bold'
-        ],
-        [
-            'darkGreen',
-            [
-                '32m',
-                '2m'
-            ],
-            'color:forestgreen;opacity:0.5'
-        ],
-        [
-            'pink',
-            '35m',
-            'color:magenta'
-        ],
-        [
-            'boldPink',
-            [
-                '35m',
-                '1m'
-            ],
-            'color:magenta;font-weight:bold;'
-        ],
-        [
-            'darkPink',
-            [
-                '35m',
-                '2m'
-            ],
-            'color:magenta'
-        ],
-        [
-            'black',
-            '0m',
-            'color:black'
-        ],
-        [
-            'bright',
-            [
-                '0m',
-                '1m'
-            ],
-            'color:rgba(0,0,0);font-weight:bold'
-        ],
-        [
-            'dark',
-            [
-                '0m',
-                '2m'
-            ],
-            'color:rgba(0,0,0,0.25)'
-        ]
-    ], function (def) {
-        return [
-            def[0],
-            log.config({
-                color: {
-                    shell: _.coerceToArray(_.map2(def[1], _.prepends('\x1B['))).join(),
-                    css: def[2]
-                }
-            })
-        ];
-    }))),
-    boldLine: '======================================',
-    line: '--------------------------------------',
-    thinLine: '......................................',
-    timestampEnabled: false,
-    withWriteBackend: $scope(function (release, backend, contextFn, done) {
-        var prev = log.writeBackend.value;
-        log.writeBackend.value = backend;
-        contextFn(function (then) {
-            release(function () {
-                log.writeBackend.value = prev;
-                if (then)
-                    then();
-                if (done)
-                    done();
-            });
-        });
-    }),
-    writeUsingDefaultBackend: function () {
-        var args = arguments;
-        log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
-            log.write.apply(null, args);
-            done();
-        });
-    },
-    writeBackend: function () {
-        return arguments.callee.value || log.impl.defaultWriteBackend;
-    },
-    withConfig: function (config, what) {
-        log.impl.configStack.push(log.impl.configure([
-            { stackOffset: -1 },
-            config
-        ]));
-        var result = what();
-        log.impl.configStack.pop();
-        return result;
-    },
-    currentConfig: function () {
-        return log.impl.configure(log.impl.configStack);
-    },
-    margin: function () {
-        var lastWrite = undefined;
-        return function () {
-            if (lastWrite !== log.impl.numWrites)
-                log.newline();
-            lastWrite = log.impl.numWrites;
-        };
-    }(),
-    impl: {
-        configStack: [],
-        numWrites: 0,
-        configure: function (configs) {
-            return _.reduce2({
-                stackOffset: 0,
-                indent: 0
-            }, _.nonempty(configs), function (memo, cfg) {
-                return _.extend(memo, _.nonempty(cfg), {
-                    indent: memo.indent + (cfg.indent || 0),
-                    stackOffset: memo.stackOffset + (cfg.stackOffset || 0)
+                $assertFails(function () {
                 });
             });
-        },
-        write: $restArg(_.bindable(function () {
-            var writeBackend = log.writeBackend();
-            log.impl.numWrites++;
-            var args = _.asArray(arguments);
-            var config = log.impl.configure([{
-                    stackOffset: $platform.NodeJS ? 1 : 3,
-                    indent: writeBackend.indent || 0
-                }].concat(log.impl.configStack));
-            var runs = _.reduce2([], _.partition3(args, _.isTypeOf.$(log.Config)), function (runs, span) {
-                if (span.label === true) {
-                    config = log.impl.configure([config].concat(span.items));
-                    return runs;
-                } else {
-                    return runs.concat({
-                        config: config,
-                        text: log.impl.stringifyArguments(span.items, config)
-                    });
-                }
-            });
-            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match(/(\n*)([^]*)/);
-            var trailNewlines = trailNewlinesMatch && trailNewlinesMatch[1];
-            if (trailNewlinesMatch) {
-                runs.last.text = trailNewlinesMatch[2].reversed;
+            if ($assert === _.assertions.assert) {
+                $assertThrows(function () {
+                    $fail;
+                });
             }
-            var newline = {};
-            var lines = _.pluck.with('items', _.reject.with(_.property('label'), _.partition3.with(_.equals(newline), _.scatter(runs, function (run, i, emit) {
-                _.each(run.text.split('\n'), function (line, i, arr) {
-                    emit(_.extended(run, { text: line }));
-                    if (i !== arr.lastIndex) {
-                        emit(newline);
+        }, function () {
+            var assertImpl = function (positive) {
+                return function (__) {
+                    var args = [].splice.call(arguments, 0);
+                    if (args.length === 1) {
+                        if (positive && args[0] !== true) {
+                            _.assertionFailed({ notMatching: args });
+                        }
+                    } else if (positive && _.allEqual(args) !== true) {
+                        _.assertionFailed({ notMatching: args });
                     }
-                });
-            }))));
-            var totalText = _.pluck(runs, 'text').join('');
-            var where = config.where || log.impl.walkStack($callStack) || {};
-            var indentation = (config.indentPattern || '\t').repeats(config.indent);
-            writeBackend({
-                lines: lines,
-                config: config,
-                color: config.color,
-                when: new Date().toISOString(),
-                args: _.reject(args, _.isTypeOf.$(log.Config)),
-                indentation: indentation,
-                indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
-                text: totalText,
-                codeLocation: config.location && log.impl.location(where) || '',
-                trailNewlines: trailNewlines || '',
-                where: config.location && where || undefined
+                    return true;
+                };
+            };
+            $overrideUnderscore('matches', function (matches) {
+                return function (a) {
+                    return _.isObject(a) ? matches(a) : function (b) {
+                        return a === b;
+                    };
+                };
             });
-            return _.find(args, _.not(_.isTypeOf.$(log.Config)));
-        })),
-        walkStack: function (stack) {
-            return _.find(stack.clean.offset($platform.Browser ? 1 : 2), function (entry) {
-                return entry.fileShort.indexOf('base/log.js') < 0;
-            }) || stack[0];
-        },
-        defaultWriteBackend: function (params) {
-            var codeLocation = params.codeLocation;
-            if ($platform.NodeJS) {
-                var lines = _.map(params.lines, function (line) {
-                    return params.indentation + _.map(line, function (run) {
-                        return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
-                    }).join('');
-                }).join('\n');
-                if (log.timestampEnabled) {
-                    lines = log.color('dark').shell + _.bullet(log.impl.timestamp(params.when) + ' ', log.color('none').shell + lines);
-                }
-                console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
-            } else {
-                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat([
-                    log.timestampEnabled ? '%c' + log.impl.timestamp(params.when) + '%c' : '',
-                    _.map(params.lines, function (line, i) {
-                        return params.indentation + _.reduce2('', line, function (s, run) {
-                            return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
+            _.extend(_, _.assertions = {
+                assert: assertImpl(true),
+                assertNot: assertImpl(false),
+                assertCPS: function (fn, args, then) {
+                    var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
+                    fn(function () {
+                        $assert([].splice.call(arguments, 0), requiredResult);
+                        if (then) {
+                            then();
+                            return true;
+                        }
+                    });
+                },
+                assertNotCalled: function (context) {
+                    var inContext = true;
+                    context(function () {
+                        if (inContext) {
+                            $fail;
+                        }
+                    });
+                    inContext = false;
+                },
+                assertEveryCalledOnce: function (fn, then) {
+                    return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
+                },
+                assertEveryCalled: function (fn_, then) {
+                    var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async;
+                    once = _.hasTags ? $once.is(fn_) : fn_.once;
+                    var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
+                    var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
+                        var parts = arg.trim().match(/^(.+)__(\d+)$/);
+                        var num = parts && parseInt(parts[2], 10);
+                        return _.isFinite(num) ? num || false : true;
+                    });
+                    var status = _.times(fn.length, _.constant(false));
+                    var callbacks = _.times(fn.length, function (i) {
+                        return function () {
+                            status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
+                            if (async && _.isEqual(status, contracts))
+                                then();
+                        };
+                    });
+                    fn.apply(null, callbacks);
+                    if (!async) {
+                        _.assert(status, contracts);
+                        if (then) {
+                            then();
+                        }
+                    }
+                },
+                assertCalledWithArguments: function (argsPattern, generateCalls) {
+                    return _.assert(_.arr(generateCalls), argsPattern);
+                },
+                assertCallOrder: function (fn) {
+                    var callIndex = 0;
+                    var callbacks = _.times(fn.length, function (i) {
+                        return function () {
+                            arguments.callee.callIndex = callIndex++;
+                        };
+                    });
+                    fn.apply(null, callbacks);
+                    return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
+                },
+                assertMatches: function (value, pattern) {
+                    try {
+                        return _.assert(_.matches.apply(null, _.rest(arguments))(value));
+                    } catch (e) {
+                        throw _.isAssertionError(e) ? _.extend(e, {
+                            notMatching: [
+                                value,
+                                pattern
+                            ]
+                        }) : e;
+                    }
+                },
+                assertNotMatches: function (value, pattern) {
+                    try {
+                        return _.assert(!_.matches.apply(null, _.rest(arguments))(value));
+                    } catch (e) {
+                        throw _.isAssertionError(e) ? _.extend(e, {
+                            notMatching: [
+                                value,
+                                pattern
+                            ]
+                        }) : e;
+                    }
+                },
+                assertType: function (value, contract) {
+                    return _.assert(_.decideType(value), contract);
+                },
+                assertTypeMatches: function (value, contract) {
+                    return _.isEmpty(mismatches = _.typeMismatches(contract, value)) ? true : _.assertionFailed({
+                        message: 'provided value type not matches required contract',
+                        asColumns: true,
+                        notMatching: [
+                            { provided: value },
+                            { required: contract },
+                            { mismatches: mismatches }
+                        ]
+                    });
+                },
+                assertFails: function (what) {
+                    return _.assertThrows.call(this, what, _.isAssertionError);
+                },
+                assertThrows: function (what, errorPattern) {
+                    var e = undefined, thrown = false;
+                    try {
+                        what.call(this);
+                    } catch (__) {
+                        e = __;
+                        thrown = true;
+                    }
+                    _.assert.call(this, thrown);
+                    if (arguments.length > 1) {
+                        _.assertMatches.call(this, e, errorPattern);
+                    }
+                },
+                assertNotThrows: function (what) {
+                    return _.assertEveryCalled(function (ok) {
+                        what();
+                        ok();
+                    });
+                },
+                assertArguments: function (args, callee, name) {
+                    var fn = (callee || args.callee).toString();
+                    var match = fn.match(/.*function[^\(]\(([^\)]+)\)/);
+                    if (match) {
+                        var valuesPassed = _.asArray(args);
+                        var valuesNeeded = _.map(match[1].split(','), function (_s) {
+                            var s = _s.trim()[0] === '_' ? _s.replace(/_/g, ' ').trim() : undefined;
+                            var n = parseInt(s, 10);
+                            return _.isFinite(n) ? n : s;
                         });
-                    }).join('\n'),
-                    codeLocation ? '%c' + codeLocation : ''
-                ].nonempty.join(' '), (log.timestampEnabled ? [
-                    'color:rgba(0,0,0,0.4)',
-                    'color:black'
-                ] : []).concat(_.scatter(params.lines, function (line, i, emit) {
-                    _.each(line, function (run) {
-                        if (run.text && run.config.color) {
-                            emit(run.config.color.css);
+                        var zap = _.zipWith([
+                            valuesNeeded,
+                            valuesPassed
+                        ], function (a, b) {
+                            return a === undefined ? true : a === b;
+                        });
+                        if (!_.every(zap)) {
+                            _.assertionFailed({
+                                notMatching: _.nonempty([
+                                    [
+                                        name,
+                                        fn
+                                    ].join(': '),
+                                    valuesNeeded,
+                                    valuesPassed
+                                ])
+                            });
                         }
-                    });
-                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
-            }
-        },
-        timestamp: function (x) {
-            return x;
-        },
-        location: function (where) {
-            return _.quoteWith('()', _.nonempty([
-                where.calleeShort,
-                _.nonempty([
-                    where.fileName,
-                    where.line
-                ]).join(':')
-            ]).join(' @ '));
-        },
-        stringifyArguments: function (args, cfg) {
-            return _.map(args, function (arg) {
-                var x = log.impl.stringify(arg, cfg);
-                return cfg.maxArgLength ? x.limitedTo(cfg.maxArgLength) : x;
-            }).join(' ');
-        },
-        stringify: function (what, cfg) {
-            cfg = cfg || {};
-            if (_.isTypeOf(Error, what)) {
-                var str = log.impl.stringifyError(what);
-                if (what.originalError) {
-                    return str + '\n\n' + log.impl.stringify(what.originalError);
-                } else {
-                    return str;
+                    }
+                },
+                fail: function () {
+                    _.assertionFailed();
+                },
+                fails: _.constant(function () {
+                    _.assertionFailed();
+                }),
+                stub: function () {
+                    _.assertionFailed();
                 }
-            } else if (_.isTypeOf(CallStack, what)) {
-                return log.impl.stringifyCallStack(what);
-            } else if (typeof what === 'object') {
-                if (_.isArray(what) && what.length > 1 && _.isObject(what[0]) && cfg.table) {
-                    return log.asTable(what);
-                } else {
-                    return _.stringify(what, cfg);
+            });
+            _.extend(_, {
+                assertionError: function (additionalInfo) {
+                    return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
+                },
+                assertionFailed: function (additionalInfo) {
+                    throw _.extend(_.assertionError(additionalInfo), { stack: _.rest(new Error().stack.split('\n'), 3).join('\n') });
+                },
+                isAssertionError: function (e) {
+                    return e && e.assertion === true;
                 }
-            } else if (typeof what === 'string') {
-                return what;
-            } else {
-                return _.stringify(what);
+            });
+            _.extend(_, {
+                allEqual: function (values) {
+                    return _.reduce(values, function (prevEqual, x) {
+                        return prevEqual && _.isEqual(values[0], x);
+                    }, true);
+                }
+            });
+            _.each(_.keys(_.assertions), function (name) {
+                $global.define('$' + name, _[name], { configurable: true });
+            });
+            for (var k in _.assertions) {
+                $global['$' + k] = 1;
             }
-        },
-        stringifyError: function (e) {
-            try {
-                var stack = CallStack.fromErrorWithAsync(e).offset(e.stackOffset || 0).clean;
-                var why = (e.message || '').replace(/\r|\n/g, '').trimmed.limitedTo(120);
-                return '[EXCEPTION] ' + why + '\n\n' + (e.notMatching && _.map(_.coerceToArray(e.notMatching || []), log.impl.stringify.then(_.prepends('\t'))).join('\n') + '\n\n' || '') + log.impl.stringifyCallStack(stack) + '\n';
-            } catch (sub) {
-                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n';
-            }
-        },
-        stringifyCallStack: function (stack) {
-            return log.columns(stack.map(function (entry) {
-                return [
-                    '\t' + 'at ' + entry.calleeShort.first(30),
-                    _.nonempty([
-                        entry.fileShort,
-                        ':',
-                        entry.line
-                    ]).join(''),
-                    (entry.source || '').first(80)
-                ];
-            })).join('\n');
-        }
-    }
-});
-(function () {
-    var write = log.impl.write;
-    _.extend(log, log.printAPI = _.object(_.concat([
-        [
-            'newline',
-            write.$(log.config({ location: false }), '')
-        ],
-        [
-            'write',
-            write
-        ]
-    ], _.flat(_.map([
-        'red failure error e',
-        'blue info i',
-        'darkBlue minor m',
-        'orange warning warn w',
-        'green success ok g',
-        'darkGreen dg',
-        'pink notice alert p',
-        'boldPink pp',
-        'dark hint d',
-        'boldGreen gg',
-        'bright b',
-        'boldRed bloody bad ee',
-        'darkPink dp',
-        'brown br',
-        'darkOrange wtf',
-        'boldOrange ww',
-        'darkRed er',
-        'boldBlue ii'
-    ], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
-        return [
-            name,
-            write.$(log.config({
-                location: i !== 0,
-                color: log.color(names.first),
-                stackOffset: 2
-            }))
-        ];
-    })))))));
-}());
-logs = _.mapWith(_.callsTo.compose(_.callsWith(log.stackOffset(1))), log.printAPI);
-_.extend(log, {
-    asTable: function (arrayOfObjects) {
-        var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
-        var lines = log.columns([columnsDef].concat(_.map(arrayOfObjects, function (object) {
-            return columnsDef.map(_.propertyOf(object));
-        })), {
-            maxTotalWidth: 120,
-            minColumnWidths: columnsDef.map(_.property('length'))
+            $assert;
         });
-        return [
-            lines[0],
-            log.thinLine[0].repeats(lines[0].length),
-            _.rest(lines)
-        ].flat.join('\n');
     },
-    columns: function (rows, cfg_) {
-        if (rows.length === 0) {
-            return [];
-        } else {
-            var rowsToStr = rows.map(_.map.tails2(function (col) {
-                return _.asString(col).split('\n')[0];
-            }));
-            var columnWidths = rowsToStr.map(_.map.tails2(_.property('length')));
-            var maxWidths = columnWidths.zip(_.largest);
-            var cfg = cfg_ || {
-                minColumnWidths: maxWidths,
-                maxTotalWidth: 0
+    function (module, exports) {
+        _.deferTest([
+            'stdlib',
+            'asArray'
+        ], function () {
+            (function (a, b) {
+                var args = _.asArray(arguments);
+                $assert(_.isArray(args));
+                $assert(args.length === 2);
+                $assert(args[0] === a);
+                $assert(args[1] === b);
+            }(42, 43));
+            $assert(_.asArray(42), [42]);
+            var foo = {
+                0: 'foo',
+                length: 1
             };
-            var totalWidth = _.reduce(maxWidths, _.sum, 0);
-            var relativeWidths = _.map(maxWidths, _.muls(1 / totalWidth));
-            var excessWidth = Math.max(0, totalWidth - cfg.maxTotalWidth);
-            var computedWidths = _.map(maxWidths, function (w, i) {
-                return Math.max(cfg.minColumnWidths[i], Math.floor(w - excessWidth * relativeWidths[i]));
+            $assert(_.asArray(foo), ['foo']);
+            $assert(foo, {
+                0: 'foo',
+                length: 1
             });
-            var restWidths = columnWidths.map(function (widths) {
-                return [
-                    computedWidths,
-                    widths
-                ].zip(_.subtract);
+        }, function () {
+            _.extend(_, {
+                asArray: function (x) {
+                    return x.length !== undefined ? [].slice.call(x, 0) : [x];
+                }
             });
-            return [
-                rowsToStr,
-                restWidths
-            ].zip(_.zap.tails(function (str, w) {
-                return w >= 0 ? str + ' '.repeats(w) : _.initial(str, -w).join('');
-            }).then(_.joinsWith('  ')));
-        }
-    }
-});
-if ($platform.NodeJS) {
-    module.exports = log;
-}
-;
-_.defineTagKeyword('shouldFail');
-_.defineTagKeyword('async');
-_.defineTagKeyword('assertion');
-Testosterone = $singleton({
-    prototypeTests: [],
-    isRunning: $property(function () {
-        return this.currentAssertion !== undefined;
-    }),
-    constructor: function () {
-        _.each(_.assertions, function (fn, name) {
-            this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
-                what.call(this);
-            }) : fn);
-        }, this);
-        (function (register) {
-            $prototype.macro('$test', register);
-            $prototype.macro('$tests', register);
-        }(this.$(function (def, value, name) {
-            this.prototypeTests.push({
-                proto: def.constructor,
-                tests: value
+        });
+        _.deferTest('argcount tracking', function () {
+            var none = function () {
+            };
+            var one = function (a) {
+            };
+            var three = function (a, b, c) {
+            };
+            var many = $restArg(function () {
             });
-            def.$tests = $static($property($constant(_.isStrictlyObject(value) && value || _.object([[
-                    'test',
-                    value
-                ]]))));
-            return def;
-        })));
-        this.run = this.$(this.run);
+            $assert(_.noArgs(none) === true);
+            $assert(_.hasArgs(none) === false);
+            $assert(_.numArgs(three) === 3);
+            $assert(_.hasArgs(three) === true);
+            $assert(_.restArg(many) === true);
+            $assert(_.noArgs(many) === false);
+            $assert(_.oneArg(one) === true);
+            var sameAsThree = _.withSameArgs(three, function () {
+            });
+            var oneArgLess = _.withArgs(_.numArgs(three) - 1, _.restArg(three), function () {
+            });
+            $assert([
+                _.numArgs(sameAsThree),
+                _.restArg(sameAsThree)
+            ], [
+                3,
+                false
+            ]);
+            $assert([
+                _.numArgs(oneArgLess),
+                _.restArg(oneArgLess)
+            ], [
+                2,
+                false
+            ]);
+        }, function () {
+            _.extend(_, {
+                numArgs: function (fn) {
+                    return fn._ac === undefined ? fn.length : fn._ac;
+                },
+                restArg: function (fn) {
+                    return fn._ra || false;
+                },
+                noArgs: function (fn) {
+                    return _.numArgs(fn) === 0 && !fn._ra;
+                },
+                hasArgs: function (fn) {
+                    return _.numArgs(fn) > 0 && !fn._ra;
+                },
+                oneArg: function (fn) {
+                    return _.numArgs(fn) === 1 && !fn._ra;
+                },
+                withRestArg: $restArg = function (fn) {
+                    Object.defineProperty(fn, '_ra', {
+                        enumerable: false,
+                        writable: true,
+                        value: true
+                    });
+                    return fn;
+                },
+                withArgs: function (numArgs, restArg, fn) {
+                    if (numArgs !== undefined) {
+                        Object.defineProperty(fn, '_ac', {
+                            enumerable: false,
+                            writable: true,
+                            value: numArgs
+                        });
+                    }
+                    if (restArg !== undefined) {
+                        Object.defineProperty(fn, '_ra', {
+                            enumerable: false,
+                            writable: true,
+                            value: restArg
+                        });
+                    }
+                    return fn;
+                },
+                withSameArgs: function (other, fn) {
+                    return _.withArgs(_.numArgs(other), _.restArg(other), fn);
+                }
+            });
+        });
+        $overrideUnderscore('memoize', function (memoize) {
+            return function (fn) {
+                return _.withSameArgs(fn, memoize(fn));
+            };
+        });
+        $overrideUnderscore('partial', function (partial) {
+            return $restArg(function (fn) {
+                return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 1)), fn._ra, partial.apply(this, arguments));
+            });
+        });
+        $overrideUnderscore('bind', function (bind) {
+            return $restArg(function (fn, this_) {
+                return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 2)), fn._ra, bind.apply(this, arguments));
+            });
+        });
     },
-    run: _.interlocked(function (cfg_) {
-        var defaults = {
-            suites: [],
-            silent: true,
-            verbose: false,
-            timeout: 2000,
-            filter: _.identity,
-            testStarted: function (test) {
-            },
-            testComplete: function (test) {
+    function (module, exports) {
+        _.debugEcho = function () {
+            return [this].concat(_.asArray(arguments));
+        };
+        _.call = function (fn, this_, args) {
+            return fn.apply(this_, _.rest(arguments, 2));
+        };
+        _.arity = function (N, fn) {
+            return function () {
+                return fn.apply(this, _.first(arguments, N));
+            };
+        };
+        _.arity0 = function (fn) {
+            return function () {
+                return fn.call(this);
+            };
+        };
+        _.arity1 = function (fn) {
+            return function (a) {
+                return fn.call(this, a);
+            };
+        };
+        _.arity2 = function (fn) {
+            return function (a, b) {
+                return fn.call(this, a, b);
+            };
+        };
+        _.arity3 = function (fn) {
+            return function (a, b, c) {
+                return fn.call(this, a, b, c);
+            };
+        };
+        _.arityFn = function (N) {
+            return _['arity' + N];
+        };
+        _.tails = $restArg(function (fn) {
+            var tailArgs = _.rest(arguments);
+            return function () {
+                return fn.apply(this, _.asArray(arguments).concat(tailArgs));
+            };
+        });
+        _.tails2 = $restArg(function (fn) {
+            var tailArgs = _.rest(arguments);
+            return function (a) {
+                return fn.apply(this, [a].concat(tailArgs));
+            };
+        });
+        _.tails3 = $restArg(function (fn) {
+            var tailArgs = _.rest(arguments);
+            return function (a, b) {
+                return fn.apply(this, [
+                    a,
+                    b
+                ].concat(tailArgs));
+            };
+        });
+        _.deferTest([
+            'function',
+            'calls / tails'
+        ], function () {
+            var fn = _.debugEcho;
+            var foo42_ = _.callsWith('foo', 42);
+            var _foo42 = _.tailsWith('foo', 42);
+            var foo42_fn = foo42_(fn);
+            var fn_foo42 = _foo42(fn);
+            var _fn = _.callsTo(fn);
+            var fn_ = _.tailsTo(fn);
+            var fn_bar24 = fn_('bar', 24);
+            var bar24_fn = _fn('bar', 24);
+            $assert(foo42_fn.call('lol', 777), [
+                'lol',
+                'foo',
+                42,
+                777
+            ]);
+            $assert(bar24_fn.call('lol', 777), [
+                'lol',
+                'bar',
+                24,
+                777
+            ]);
+            $assert(fn_foo42.call('lol', 777), [
+                'lol',
+                777,
+                'foo',
+                42
+            ]);
+            $assert(fn_bar24.call('lol', 777), [
+                'lol',
+                777,
+                'bar',
+                24
+            ]);
+            $assertEveryCalledOnce(function (mkay) {
+                _.argumentPrependingWrapper(fn, function (fn) {
+                    $assert(fn(777), [
+                        'lol',
+                        777,
+                        'foo',
+                        42
+                    ]);
+                    mkay();
+                }).call('lol', 'foo', 42);
+            });
+        }, function () {
+            _.callsTo = function (fn) {
+                return $restArg(function () {
+                    return _.callsWith.apply(null, arguments)(fn);
+                });
+            };
+            _.tailsTo = function (fn, then) {
+                return $restArg(function () {
+                    return _.tailsWith.apply(null, arguments)(fn);
+                });
+            };
+            _.callsWith = $restArg(function () {
+                var args = _.asArray(arguments);
+                return function (fn) {
+                    return _.withSameArgs(fn, function () {
+                        return fn.apply(this, args.concat(_.asArray(arguments)));
+                    });
+                };
+            });
+            _.tailsWith = $restArg(function () {
+                var args = _.asArray(arguments);
+                return function (fn) {
+                    return _.withSameArgs(fn, function () {
+                        return fn.apply(this, _.asArray(arguments).concat(args));
+                    });
+                };
+            });
+            _.argumentAppendingWrapper = function (fn, then) {
+                return _.withSameArgs(fn, function () {
+                    var this_ = this, args = _.asArray(arguments);
+                    return then(function () {
+                        return fn.apply(this_, args.concat(_.asArray(arguments)));
+                    });
+                });
+            };
+            _.argumentPrependingWrapper = function (fn, then) {
+                return _.withSameArgs(fn, function () {
+                    var this_ = this, args = _.asArray(arguments);
+                    return then(function () {
+                        return fn.apply(this_, _.asArray(arguments).concat(args));
+                    });
+                });
+            };
+        });
+        _.new = $restArg(function (Constructor, a, b, c, d) {
+            switch (arguments.length) {
+            case 1:
+                return new Constructor();
+            case 2:
+                return new Constructor(a);
+            case 3:
+                return new Constructor(a, b);
+            case 4:
+                return new Constructor(a, b, c);
+            case 5:
+                return new Constructor(a, b, c, d);
+            default:
+                _.notImplemented();
+            }
+        });
+        _.flipN = function (fn) {
+            return $restArg(function () {
+                return fn.apply(this, _.asArray(arguments).reverse());
+            });
+        };
+        _.flip = function (fn) {
+            if (_.restArg(fn)) {
+                return _.flipN(fn);
+            } else {
+                switch (_.numArgs(fn)) {
+                case 0:
+                case 1:
+                    return fn;
+                case 2:
+                    return _.flip2(fn);
+                case 3:
+                    return _.flip3(fn);
+                default:
+                    throw new Error('flip: unsupported arity');
+                }
             }
         };
-        var cfg = this.runConfig = _.extend(defaults, cfg_);
-        var suitesIsArray = _.isArray(cfg.suites);
-        var suites = _.map(cfg.suites, this.$(function (suite, name) {
-            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto);
-        }));
-        var result = (cfg.codebase === false ? __([]) : this.collectPrototypeTests()).then(this.$(function (prototypeTests) {
-            var baseTests = cfg.codebase === false ? [] : this.collectTests();
-            var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
-            var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
-            this.runningTests = _.map(selectTests, function (test, i) {
-                return _.extend(test, {
-                    indent: cfg.indent,
-                    index: i
-                });
+        _.flip2 = function (fn) {
+            return function (a, b) {
+                return fn.call(this, b, a);
+            };
+        };
+        _.flip3 = function (fn) {
+            return function (a, b, c) {
+                return fn.call(this, c, b, a);
+            };
+        };
+        _.or = function (a, b) {
+            return function () {
+                return a.apply(this, arguments) || b.apply(this, arguments);
+            };
+        }, _.and = function (a, b) {
+            return function () {
+                return a.apply(this, arguments) && b.apply(this, arguments);
+            };
+        }, _.not = function (x) {
+            return function () {
+                return !x.apply(this, arguments);
+            };
+        };
+        _.deferTest([
+            'function',
+            'Y combinator'
+        ], function () {
+            var countTo5 = _.Y(function (self) {
+                return function (n) {
+                    return n >= 5 ? n : self(n + 1);
+                };
             });
-            _.each(this.runningTests, function (t) {
-                if (!(t.routine instanceof Function)) {
-                    log.ee(t.suite, t.name, '\u2013 test routine is not a function:', t.routine);
-                    throw new Error();
+            $assert(countTo5(0), 5);
+        }, function () {
+            _.extend(_, {
+                Y: function (eatSelf) {
+                    var self = eatSelf(function () {
+                        return self.apply(this, arguments);
+                    });
+                    return self;
                 }
             });
-            this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
-            return __.each(this.runningTests, this.$(this.runTest)).then(this.$(function () {
-                _.assert(cfg.done !== true);
-                cfg.done = true;
-                this.printLog(cfg);
-                this.failedTests = _.filter(this.runningTests, _.property('failed'));
-                this.failed = this.failedTests.length > 0;
-                return !this.failed;
-            }));
-        }));
-        return result.catch(function (e) {
-            log.margin();
-            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
-            throw e;
         });
-    }),
-    onException: function (e) {
-        if (this.currentAssertion)
-            this.currentAssertion.onException(e);
-        else
-            throw e;
-    },
-    defineAssertions: function (assertions) {
-        _.each(assertions, function (fn, name) {
-            this.defineAssertion(name, fn);
-        }, this);
-    },
-    runTest: function (test, i) {
-        var self = this, runConfig = this.runConfig;
-        log.impl.configStack = [];
-        return __.then(runConfig.testStarted(test), function () {
-            test.verbose = runConfig.verbose;
-            test.timeout = runConfig.timeout;
-            test.startTime = Date.now();
-            return test.run().then(function () {
-                test.time = Date.now() - test.startTime;
-                return runConfig.testComplete(test);
-            });
+        (function () {
+            _.hyperOperator = function (N, operator, diCaprioPredicate, nonTrivial) {
+                var arity = _.arityFn(N) || _.identity;
+                var weNeedToGoDeeper = (diCaprioPredicate || _.goDeeperWhenFirstArgumentIsGood)(N, nonTrivial || _.isNonTrivial);
+                return function () {
+                    var subOperator = _.last(arguments);
+                    return _.Y(function (hyperOperator_) {
+                        var hyperOperator = _.tails(operator, arity(hyperOperator_));
+                        return function () {
+                            return (weNeedToGoDeeper(arguments) ? hyperOperator : subOperator).apply(this, arguments);
+                        };
+                    }).apply(this, _.initial(arguments));
+                };
+            };
+            _.goDeeperWhenFirstArgumentIsGood = function (N, canGoDeeper) {
+                return function (args) {
+                    return args.length > 0 ? canGoDeeper(args[0]) : false;
+                };
+            };
+            _.goDeeperAlwaysIfPossible = function (N, canGoDeeper) {
+                if (N === 0) {
+                    return _.constant(false);
+                } else if (N === 1) {
+                    return function (args) {
+                        return canGoDeeper(args[0]);
+                    };
+                } else if (N === 2) {
+                    return function (args) {
+                        return canGoDeeper(args[0]) || canGoDeeper(args[1]);
+                    };
+                } else {
+                    return function (args) {
+                        return _.some(_.asArray(args), canGoDeeper);
+                    };
+                }
+            };
+            _.goDeeperOnlyWhenNessesary = function (N, canGoDeeper) {
+                if (N === 0) {
+                    return _.constant(false);
+                } else if (N === 1) {
+                    return function (args) {
+                        return canGoDeeper(args[0]);
+                    };
+                } else if (N === 2) {
+                    return function (args) {
+                        return canGoDeeper(args[0]) && canGoDeeper(args[1]);
+                    };
+                } else {
+                    return function (args) {
+                        return _.every(_.asArray(args), canGoDeeper);
+                    };
+                }
+            };
+            _.isTrivial = function (x) {
+                return _.isEmpty(x) || _.isString(x) || _.isNumber(x) || !(_.isStrictlyObject(x) || _.isArray(x)) || _.isPrototypeInstance(x) || _.isMeta(x);
+            };
+            _.isMeta = _.constant(false);
+            _.isNonTrivial = _.not(_.isTrivial);
+            _.binary = 2;
+            _.unary = 1;
+        }());
+        _.deferTest([
+            'function',
+            'higherOrder'
+        ], function () {
+            var file = [];
+            var write = function (x) {
+                file.push(x);
+            };
+            var writes = _.higherOrder(write);
+            _.times(3, writes('foo'));
+            $assert(file, [
+                'foo',
+                'foo',
+                'foo'
+            ]);
+        }, function () {
+            _.higherOrder = _.callsTo;
         });
-    },
-    collectTests: function () {
-        return _.map(_.tests, this.$(function (suite, name) {
-            return this.testSuite(name, suite);
-        }));
-    },
-    collectPrototypeTests: function () {
-        var self = this;
-        return __.map(this.prototypeTests, function (def, then) {
-            return def.proto.$meta.promise.then(function (meta) {
-                return self.testSuite(meta.name, def.tests, undefined, def.proto);
-            });
+        _.deferTest([
+            'function',
+            'eval/evals'
+        ], function () {
+            var cfg = {
+                value1: 42,
+                value2: function () {
+                    return 42;
+                },
+                value3: _.property('number')
+            };
+            var eval = _.evals({ number: 42 });
+            $assert(_.eval(cfg.value1), _.eval(cfg.value2), eval(cfg.value3), 42);
+        }, function () {
+            _.eval = function (x) {
+                return _.isFunction(x) ? x.call(this) : x;
+            };
+            _.evals = function (__args__) {
+                var arguments_ = arguments;
+                return function (x) {
+                    return _.isFunction(x) ? x.apply(this, arguments_) : x;
+                };
+            };
         });
-    },
-    testSuite: function (name, tests, context, proto) {
-        return {
-            name: name || '',
-            tests: _(_.pairs(typeof tests === 'function' && _.object([[
-                    name,
-                    tests
-                ]]) || tests)).map(function (keyValue) {
-                var test = new Test({
-                    proto: proto,
-                    name: keyValue[0],
-                    routine: keyValue[1],
-                    suite: name,
-                    context: context
+        _.method = function (name) {
+            var args = _.rest(arguments);
+            return function (obj) {
+                return obj[name].apply(obj, args);
+            };
+        };
+        _.asFreeFunction = function (fn) {
+            return function (this_, restArg) {
+                return fn.apply(this_, _.rest(arguments));
+            };
+        };
+        _.asMethod = function (fn) {
+            return function () {
+                return fn.apply(undefined, [this].concat(_.asArray(arguments)));
+            };
+        };
+        _.deferTest([
+            'function',
+            'once'
+        ], function () {
+            $assertEveryCalledOnce(function (mkay) {
+                var f = _.once(function () {
+                    mkay();
                 });
-                test.complete(function () {
-                    if (!(test.hasLog = test.logCalls.length > 0)) {
-                        if (test.failed) {
-                            log.red('FAIL');
-                        } else if (test.verbose) {
-                            log.green('PASS');
+                f();
+                f();
+            });
+        }, function () {
+            _.once = function (fn) {
+                var called = false;
+                return function () {
+                    if (!called) {
+                        called = true;
+                        return fn.apply(this, arguments);
+                    }
+                };
+            };
+        });
+        _.deferTest([
+            'function',
+            'withTimeout'
+        ], function (testDone) {
+            _.withTimeout({
+                maxTime: 10,
+                expired: function () {
+                    $fail;
+                }
+            }, function (done) {
+                done();
+            });
+            _.withTimeout({
+                maxTime: 10,
+                expired: function (then) {
+                    testDone();
+                }
+            }, function (done) {
+                _.delay(done, 20);
+            }, function () {
+                $fail;
+            });
+        }, function () {
+            _.withTimeout = function (cfg, what, then) {
+                var expired = false;
+                var timeout = setTimeout(function () {
+                    expired = true;
+                    if (cfg.expired) {
+                        cfg.expired(then);
+                    }
+                }, cfg.maxTime);
+                what(function () {
+                    if (!expired) {
+                        clearTimeout(timeout);
+                        if (then) {
+                            then.apply(this, arguments);
                         }
                     }
                 });
-                return test;
-            })
-        };
+            };
+        });
+        _.deferTest([
+            'function',
+            'sequence / then'
+        ], function () {
+            var context = { foo: 'bar' };
+            var makeCookies = function (from) {
+                $assert(this === context);
+                return 'cookies from ' + from;
+            };
+            var eatCookies = function (cookies) {
+                $assert(this === context);
+                return 'nice ' + cookies;
+            };
+            var lifeProcess = makeCookies.then ? makeCookies.then(eatCookies) : _.then(makeCookies, eatCookies);
+            var anotherWay = _.sequence(makeCookies, eatCookies);
+            var wayAnother = _.sequence([
+                makeCookies,
+                eatCookies
+            ]);
+            $assert(lifeProcess.call(context, 'shit'), 'nice cookies from shit');
+            $assert(anotherWay.call(context, 'shit'), 'nice cookies from shit');
+            $assert(wayAnother.call(context, 'shit'), 'nice cookies from shit');
+            $assert(_.sequence([]).call(context, 'foo'), 'foo');
+            var plusBar = _.then(function (x) {
+                return Promise.resolve(x);
+            }, function (x) {
+                return x + 'bar';
+            });
+            return plusBar('foo').then(function (x) {
+                $assert(x, 'foobar');
+            });
+        }, function () {
+            _.sequence = function (arg) {
+                var chain = _.isArray(arg) ? arg : _.asArray(arguments);
+                var length = chain.length;
+                return length === 0 ? _.identity : function (x) {
+                    for (var i = 0; i < length; i++) {
+                        x = chain[i].call(this, x);
+                    }
+                    return x;
+                };
+            };
+            _.seq = _.sequence;
+            _.then = function (fn1, fn2) {
+                return function (args) {
+                    var r = fn1.apply(this, arguments);
+                    return r instanceof Promise ? r.then(fn2.bind(this)) : fn2.call(this, r);
+                };
+            };
+        });
     },
-    defineAssertion: function (name, def) {
-        var self = this;
-        _.deleteKeyword(name);
-        _.defineKeyword(name, Tags.modify(def, function (fn) {
-            return _.withSameArgs(fn, function () {
-                var loc = $callStack.safeLocation($platform.Browser && !$platform.Chrome ? 0 : 1);
-                if (!self.currentAssertion) {
-                    return fn.apply(self, arguments);
-                } else {
-                    return self.currentAssertion.babyAssertion(name, def, fn, arguments, loc);
+    function (module, exports) {
+        _.asString = function (what) {
+            return what + '';
+        };
+        _.typeOf = function (what) {
+            return typeof what;
+        };
+        _.instanceOf = function (what) {
+            return function (x) {
+                return x instanceof what;
+            };
+        };
+        _.count = function (what) {
+            return what.length;
+        };
+        _.array = _.tuple = function () {
+            return _.asArray(arguments);
+        };
+        _.cons = function (head, tail) {
+            return [head].concat(tail || []);
+        };
+        _.atIndex = function (n) {
+            return function (arr) {
+                return arr[n];
+            };
+        };
+        _.takesFirst = _.higherOrder(_.first);
+        _.takesLast = _.higherOrder(_.last);
+        _.applies = function (fn, this_, args) {
+            return function () {
+                return fn.apply(this_, args);
+            };
+        };
+        _.prepends = function (what) {
+            return function (to) {
+                return what + to;
+            };
+        };
+        _.appends = function (what) {
+            return function (to) {
+                return to + what;
+            };
+        };
+        _.join = function (arr, s) {
+            return arr.join(s);
+        };
+        _.joinWith = _.flip2(_.join);
+        _.joinsWith = _.higherOrder(_.joinWith);
+        _.split = function (s, del) {
+            return s.split(del);
+        };
+        _.splitWith = _.flip2(_.split);
+        _.splitsWith = _.higherOrder(_.splitWith);
+        _.sum = function (a, b) {
+            return (a || 0) + (b || 0);
+        };
+        _.subtract = function (a, b) {
+            return (a || 0) - (b || 0);
+        };
+        _.mul = function (a, b) {
+            return (a || 0) * (b || 0);
+        };
+        _.equal = function (a, b) {
+            return a === b;
+        };
+        _.sums = _.plus = _.higherOrder(_.sum);
+        _.subtracts = _.minus = _.higherOrder(_.subtract);
+        _.muls = _.higherOrder(_.mul);
+        _.equals = _.higherOrder(_.equal);
+        _.less = function (a, b) {
+            return a < b;
+        };
+        _.lessOrEqual = function (a, b) {
+            return a <= b;
+        };
+        _.greater = function (a, b) {
+            return a > b;
+        };
+        _.greaterOrEqual = function (a, b) {
+            return a >= b;
+        };
+        _.isNegative = function (a) {
+            return a < 0;
+        };
+        _.largest = function (a, b) {
+            if (isNaN(a) && isNaN(b)) {
+                return NaN;
+            } else if (isNaN(a)) {
+                return b;
+            } else if (isNaN(b)) {
+                return a;
+            } else {
+                return Math.max(a, b);
+            }
+        };
+        _.notZero = function (x) {
+            return x !== 0;
+        };
+        _.propertyOf = function (obj) {
+            return function (prop) {
+                return obj[prop];
+            };
+        };
+        _.oneOf = $restArg(function () {
+            return _.propertyOf(_.index(_.asArray(arguments)));
+        });
+    },
+    function (module, exports) {
+        _.isInstanceofSyntaxAvailable = function () {
+            var e = new Error();
+            try {
+                return e instanceof Error;
+            } catch (e) {
+                return false;
+            }
+        };
+        _.isTypeOf_ES4 = function (constructor, what) {
+            while (what) {
+                if (what.constructor === constructor) {
+                    return true;
+                }
+                what = what.constructor.$base;
+            }
+            return false;
+        };
+        _.isTypeOf_ES5 = function (constructor, what) {
+            return what instanceof constructor;
+        };
+        _.isTypeOf = _.isInstanceofSyntaxAvailable() ? _.isTypeOf_ES5 : _.isTypeOf_ES4;
+        _.isPrototypeInstance = function (x) {
+            return x && x.constructor && _.isPrototypeConstructor(x.constructor);
+        };
+        _.isPrototypeConstructor = function (x) {
+            return x && x.$definition !== undefined || false;
+        };
+        _.coerceToNaN = function (x) {
+            return _.isFinite(x) ? x : Number.NaN;
+        };
+        _.coerceToArray = function (x) {
+            return x === undefined ? [] : _.isArray(x) ? x : [x];
+        };
+        _.coerceToFunction = function (x) {
+            return _.isFunction(x) ? x : _.constant(x);
+        };
+        _.isArrayLike = function (x) {
+            return x instanceof Array || $platform.Browser && x instanceof NodeList;
+        };
+        _.deferTest([
+            'type',
+            'isArray'
+        ], function () {
+            var CustomArray = $extends(Array, {
+                method: function () {
+                    return 42;
                 }
             });
-        }));
-    },
-    printLog: function (cfg) {
-        if (!cfg.supressLog) {
-            var loggedTests = _.filter(this.runningTests, function (test) {
-                return test.failed || !cfg.silent && test.hasLog;
-            });
-            var failedTests = _.filter(this.runningTests, _.property('failed'));
-            _.invoke(cfg.verbose ? this.runningTests : loggedTests, 'printLog');
-            if (failedTests.length) {
-                log.orange('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck(failedTests, 'name').join(', '), '\n\n');
-            } else if (cfg.silent !== true) {
-                log.green('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n');
-            }
-        }
-    }
-});
-Test = $prototype({
-    constructor: function (cfg) {
-        _.defaults(this, cfg, {
-            name: '<< UNNAMED FOR UNKNOWN REASON >>',
-            failed: false,
-            routine: undefined,
-            verbose: false,
-            depth: 1,
-            indent: 0,
-            failedAssertions: [],
-            context: this,
-            complete: _.extend(_.barrier(), { context: this })
+            $assert(_.isArray(new CustomArray()));
+        }, function () {
+            _.isArray = function (x) {
+                return x instanceof Array;
+            };
         });
-        this.babyAssertion = _.interlocked(this.babyAssertion);
-    },
-    finalize: function () {
-        this.babyAssertion.wait(this.$(function () {
-            if (this.canFail && this.failedAssertions.length) {
-                this.failed = true;
+        _.deferTest([
+            'type',
+            'matches(regex)'
+        ], function () {
+            var test = function (a, pattern) {
+                $assert(_.match(a, pattern));
+                $assert(_.matches(pattern)(a));
+                $assertMatches(a, pattern);
+            };
+            $assertFails(function () {
+                test({
+                    foo: [
+                        1,
+                        2
+                    ],
+                    bar: 2
+                }, {
+                    foo: [3],
+                    bar: 2
+                });
+                test({ bar: { foo: 'foo' } }, { bar: { foo: /[0-9]+/ } });
+                test({}, { foo: 1 });
+            });
+            $assertFails(function () {
+                test({ foo: 1 }, undefined);
+                test('.DS_Store', /.+\.js/);
+            });
+            test({
+                foo: [
+                    1,
+                    2
+                ],
+                bar: 2
+            }, { foo: [2] });
+            test({
+                bar: {
+                    foo: '123',
+                    qux: 1
+                }
+            }, { bar: { foo: /[0-9]+/ } });
+            test({ foo: 1 }, {});
+        }, function () {
+            _.mixin({
+                matches: function (pattern) {
+                    return arguments.length === 0 && _.constant(true) || _.tails2(_.match, pattern);
+                },
+                match: function (a, ptrn) {
+                    return a === ptrn || _.isArray(a) && _.isArray(ptrn) && _.arrayMatch(a, ptrn) || _.isObject(a) && _.isObject(ptrn) && _.objectMatch(a, ptrn) || _.isTypeOf(RegExp, ptrn) && _.isString(a) && a.match(ptrn) !== null;
+                },
+                arrayMatch: function (a, pattern) {
+                    return _.every(pattern, _.propertyOf(_.index(a)));
+                },
+                objectMatch: function (a, pattern) {
+                    return _.reduce(_.pairs(pattern), function (result, kv) {
+                        return result && _.match(a[kv[0]], kv[1]);
+                    }, true);
+                }
+            });
+        });
+        _.deferTest([
+            'type',
+            'isScalar'
+        ], function () {
+            $assert(_.every([
+                42,
+                'foo',
+                null,
+                undefined,
+                true
+            ], _.isScalar));
+            $assert(_.every([
+                /foo/,
+                new Date(),
+                {},
+                []
+            ], _.not(_.isScalar)));
+        }, function () {
+            _.isScalar = function (v) {
+                return v === undefined || v === null || v && v.constructor && (v.constructor === String || v.constructor === Number || v.constructor === Boolean);
+            };
+        });
+        _.deferTest([
+            'type',
+            'POD'
+        ], function () {
+            $assert(_.every([
+                [],
+                {},
+                42,
+                'foo',
+                null,
+                undefined,
+                true
+            ].map(_.isPOD)));
+            $assert(_.every([
+                /foo/,
+                new Date()
+            ].map(_.isNonPOD)));
+        }, function () {
+            _.isNonPOD = function (v) {
+                return v && v.constructor && v.constructor !== Object && v.constructor !== Array && v.constructor !== String && v.constructor !== Number && v.constructor !== Boolean;
+            };
+            _.isPOD = function (v) {
+                return !_.isNonPOD(v);
+            };
+        });
+        _.deferTest([
+            'type',
+            'numbers'
+        ], function () {
+            $assert(_.every(_.map([
+                0,
+                1,
+                -7,
+                200003,
+                12344567788
+            ], _.arity1(_.not(_.isDecimal)))));
+            $assert(_.every(_.map([
+                0.1,
+                -0.001,
+                0.0001,
+                -0.000001,
+                0.000001
+            ], _.arity1(_.isDecimal))));
+            $assert(_.isDecimal(0.003, 0.01), false);
+        }, function () {
+            if (typeof Number.EPSILON === 'undefined') {
+                Object.defineProperty(Number, 'EPSILON', {
+                    enumerable: true,
+                    get: _.constant(2.220446049250313e-16)
+                });
             }
-            this.complete(true);
-        }));
+            _.isDecimal = function (x, tolerance) {
+                if (!_.isNumber(x) || _.isNaN(x)) {
+                    return false;
+                } else {
+                    return Math.abs(Math.floor(x) - x) > (tolerance || Number.EPSILON);
+                }
+            };
+        });
+        _.deferTest([
+            'type',
+            'empty-centric routines'
+        ], function () {
+            $assert(_.coerceToObject({ foo: 42 }), { foo: 42 });
+            $assert(_.coerceToObject([
+                1,
+                2,
+                3
+            ]), [
+                1,
+                2,
+                3
+            ]);
+            $assert(_.coerceToObject(42), {});
+            $assert(_.coerceToObject(undefined), {});
+            $assert(_.coerceToEmpty(42), undefined);
+            $assert(_.coerceToEmpty([42]), []);
+            $assert(_.coerceToEmpty({ foo: 42 }), {});
+            $assert([
+                _.isNonemptyString('foo'),
+                _.isNonemptyString(''),
+                _.isNonemptyString([])
+            ], [
+                true,
+                false,
+                false
+            ]);
+            $assert(_.isEmptyArray([]), true);
+            $assert(_.isEmptyArray([
+                1,
+                2,
+                3
+            ]), false);
+            $assert(_.isEmptyArray(undefined), false);
+            $assert(_.isEmptyArray(null), false);
+            $assert(_.isEmptyArray(''), false);
+            $assert(_.isEmptyObject({}), true);
+            $assert(_.isEmptyObject([]), false);
+            $assert(_.isEmptyObject({ foo: 1 }), false);
+            $assert(_.isEmptyObject(undefined), false);
+            $assert(_.isEmptyObject(null), false);
+            $assert(_.isEmptyObject(''), false);
+            $assert(_.isEmptyObject(0), false);
+            $assert(_.isEmptyObject(false), false);
+            $assert(_.isEmpty(0), false);
+            $assert(_.isEmpty(false), false);
+            $assert(_.isEmpty(/.+\.js/), false);
+            $assert(_.isEmpty(null), true);
+            $assert(_.isEmpty({}), true);
+            $assert(_.isEmpty([]), true);
+            $assert(_.isNonempty('foo'), true);
+            $assert(_.coerceToUndefined(undefined), undefined);
+            $assert(_.coerceToUndefined({}), undefined);
+            $assert(_.coerceToUndefined([]), undefined);
+            $assert(_.coerceToUndefined(''), undefined);
+            $assert(_.coerceToUndefined(null), undefined);
+            $assert(_.coerceToUndefined(0), 0);
+            $assert(_.coerceToUndefined(Math.NaN), undefined);
+            $assert(_.coerceToUndefined(false), false);
+            $assert(_.coerceToUndefined({ foo: 1 }), { foo: 1 });
+            $assert(_.coerceToUndefined([
+                1,
+                2
+            ]), [
+                1,
+                2
+            ]);
+        }, function () {
+            _.extend(_, {
+                isEmpty: function (obj) {
+                    return _.coerceToUndefined(obj) === undefined;
+                },
+                isNonempty: function (obj) {
+                    return _.coerceToUndefined(obj) !== undefined;
+                },
+                isEmptyObject: function (v) {
+                    return !_.isArray(v) && !_.isFunction(v) && _.isObject(v) && _.keys(v).length === 0;
+                },
+                isStrictlyObject: function (v) {
+                    return v && typeof v === 'object' ? true : false;
+                },
+                isEmptyArray: function (v) {
+                    return _.isArray(v) && v.length === 0;
+                },
+                isNonemptyString: function (v) {
+                    return typeof v === 'string' && v.length > 0;
+                },
+                coerceToObject: function (x) {
+                    return _.isStrictlyObject(x) ? x : {};
+                },
+                coerceToEmpty: function (x) {
+                    if (_.isArray(x)) {
+                        return [];
+                    } else if (_.isStrictlyObject(x)) {
+                        return {};
+                    } else {
+                        return undefined;
+                    }
+                },
+                coerceToUndefined: function (v) {
+                    return v === undefined || v === null || v === Math.NaN || v === '' || _.isPOD(v) && (_.isEmptyObject(v) || v.length === 0) ? undefined : v;
+                }
+            });
+        });
     },
-    babyAssertion: function (name, def, fn, args, loc) {
-        var self = this;
-        var assertion = new Test({
-            mother: this,
-            name: name,
-            shouldFail: def.$shouldFail || this.shouldFail,
-            depth: this.depth + 1,
-            location: loc,
-            context: this.context,
-            timeout: this.timeout / 2,
-            verbose: this.verbose,
-            silent: this.silent,
-            routine: Tags.modify(def, function (fn) {
-                return function (done) {
-                    if ($async.is(args[0]) || $async.is(def)) {
-                        _.cps.apply(fn, self.context, args, function (args, then) {
-                            if (then) {
-                                then.apply(this, args);
+    function (module, exports) {
+        _.hasStdlib = true;
+        _.deferTest([
+            'stdlib',
+            'throwsError'
+        ], function () {
+            $assertThrows(_.throws('foo'), 'foo');
+            $assertThrows(_.throwsError('неуловимый Джо'), _.matches({ message: 'неуловимый Джо' }));
+            $assertThrows(_.throwsError(new Error('неуловимый Джо')), _.matches({ message: 'неуловимый Джо' }));
+        }, function () {
+            _.throwsError = _.higherOrder(_.throwError = function (msg) {
+                throw msg instanceof Error ? msg : new Error(msg);
+            });
+            _.throws = _.higherOrder(_.throw = function (msg) {
+                throw msg;
+            });
+            _.overrideThis = _.throwsError('override this');
+            _.notImplemented = _.throwsError('not implemented');
+        });
+        _.deferTest([
+            'stdlib',
+            'values2'
+        ], function () {
+            $assert(_.values2(undefined), []);
+            $assert(_.values2(_.identity), [_.identity]);
+            $assert(_.values2('foo'), ['foo']);
+            $assert(_.values2([
+                'foo',
+                'bar'
+            ]), [
+                'foo',
+                'bar'
+            ]);
+            $assert(_.values2({
+                f: 'foo',
+                b: 'bar'
+            }), [
+                'foo',
+                'bar'
+            ]);
+        }, function () {
+            _.mixin({
+                values2: function (x) {
+                    if (_.isArrayLike(x)) {
+                        return x;
+                    } else if (_.isStrictlyObject(x)) {
+                        return _.values(x);
+                    } else if (_.isEmpty(x)) {
+                        return [];
+                    } else {
+                        return [x];
+                    }
+                }
+            });
+        });
+        _.deferTest([
+            'stdlib',
+            'map2'
+        ], function () {
+            var plusBar = _.appends('bar');
+            $assert(_.map2('foo', plusBar), 'foobar');
+            $assert(_.map2(['foo'], plusBar), ['foobar']);
+            $assert(_.map2({ foo: 'foo' }, plusBar), { foo: 'foobar' });
+            $assert(Array.from(_.map2(new Set([
+                'foo',
+                'bar'
+            ]), plusBar).values()), [
+                'foobar',
+                'barbar'
+            ]);
+            $assert(_.mapWith(plusBar, { foo: 'foo' }), { foo: 'foobar' });
+        }, function () {
+            _.mixin({
+                map2: function (value, fn, context) {
+                    return _.isArrayLike(value) ? _.map(value, fn, context) : value instanceof Set ? _.mapSet(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
+                }
+            });
+            _.mapSet = function (set, fn, ctx) {
+                var out = new Set();
+                for (var x of set) {
+                    out.add(fn.call(ctx, x));
+                }
+                return out;
+            };
+            _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
+        });
+        _.pluck2 = function (x, prop) {
+            return _.map2(x, _.property(prop));
+        };
+        _.deferTest([
+            'stdlib',
+            'scatter/obj/arr'
+        ], function () {
+            $assert(undefined, _.scatter([], _.noop));
+            $assert([
+                1,
+                10,
+                2,
+                20,
+                3,
+                30
+            ], _.scatter([
+                1,
+                2,
+                3
+            ], function (x, i, return_) {
+                return_(x);
+                return_(x * 10);
+            }));
+            $assert({
+                'b': 0,
+                'a': 1,
+                'r': 2
+            }, _.scatter('bar', function (x, i, return_) {
+                _.each(x.split(''), _.flip(return_));
+            }));
+            $assert(_.obj(_.noop), _.arr(_.noop), undefined);
+            $assert(_.obj(function (emit) {
+                emit(42, 'foo');
+                emit(43, 'bar');
+            }), {
+                foo: 42,
+                bar: 43
+            });
+            $assert(_.arr(function (emit) {
+                emit(42);
+                emit(43, 44);
+            }), [
+                42,
+                [
+                    43,
+                    44
+                ]
+            ]);
+        }, function () {
+            _.mixin({
+                scatter: function (obj, elem) {
+                    var result = undefined;
+                    _.map2(obj, function (x, i) {
+                        elem(x, i, function (v, k) {
+                            if (arguments.length < 2) {
+                                (result = result || []).push(v);
+                            } else {
+                                (result = result || {})[k] = v;
                             }
-                            done();
+                        });
+                    });
+                    return result;
+                }
+            });
+            _.obj = function (emitItems) {
+                var x = undefined;
+                emitItems(function (v, k) {
+                    (x = x || {})[k] = v;
+                });
+                return x;
+            };
+            _.arr = function (emitItems) {
+                var x = undefined;
+                emitItems(function (v) {
+                    (x = x || []).push(arguments.length < 2 ? v : _.asArray(arguments));
+                });
+                return x;
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'mapKeys'
+        ], function () {
+            $assert(_.mapKeys({
+                'foo': [
+                    1,
+                    2,
+                    { 'gay': 3 }
+                ]
+            }, _.appends('bar')), {
+                'foobar': [
+                    1,
+                    2,
+                    { 'gaybar': 3 }
+                ]
+            });
+        }, function () {
+            _.mapKeys = function (x, fn) {
+                if (_.isArrayLike(x)) {
+                    return _.map(x, _.tails2(_.mapKeys, fn));
+                } else if (_.isStrictlyObject(x)) {
+                    return _.object(_.map(_.pairs(x), function (kv) {
+                        return [
+                            fn(kv[0]),
+                            _.mapKeys(kv[1], fn)
+                        ];
+                    }));
+                } else {
+                    return x;
+                }
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'mapMap'
+        ], function () {
+            $assert(_.mapMap(7, _.typeOf), 'number');
+            $assert(_.mapMap([7], _.typeOf), ['number']);
+            $assert(_.mapMap({
+                foo: 7,
+                bar: [
+                    'foo',
+                    { bar: undefined }
+                ]
+            }, _.typeOf), {
+                foo: 'number',
+                bar: [
+                    'string',
+                    { bar: 'undefined' }
+                ]
+            });
+        }, function () {
+            _.mapMap = _.hyperOperator(_.unary, _.map2);
+        });
+        _.deferTest([
+            'stdlib',
+            'hyperMap'
+        ], function () {
+            var complexObject = {
+                garply: { bar: { baz: 5 } },
+                frobni: { foo: [{ bar: { baz: 5 } }] }
+            };
+            var barBazSubstructure = _.matches({ bar: { baz: 5 } });
+            var transformedObject = _.hyperMap(complexObject, function (x) {
+                if (barBazSubstructure(x)) {
+                    return 'pwned!';
+                }
+            });
+            $assert(transformedObject, {
+                garply: 'pwned!',
+                frobni: { foo: ['pwned!'] }
+            });
+        }, function () {
+            _.hyperMap = function (data, op) {
+                return _.hyperOperator(_.unary, function (expr, f) {
+                    return op(expr) || _.map2(expr, f);
+                })(data, _.identity);
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'pairs2'
+        ], function () {
+            $assert(_.pairs2(undefined), [[
+                    undefined,
+                    undefined
+                ]]);
+            $assert(_.pairs2(_.identity), [[
+                    undefined,
+                    _.identity
+                ]]);
+            $assert(_.pairs2('foo'), [[
+                    undefined,
+                    'foo'
+                ]]);
+            $assert(_.pairs2([
+                'foo',
+                'bar'
+            ]), [
+                [
+                    0,
+                    'foo'
+                ],
+                [
+                    1,
+                    'bar'
+                ]
+            ]);
+            $assert(_.pairs2({
+                0: 'foo',
+                1: 'bar'
+            }), [
+                [
+                    '0',
+                    'foo'
+                ],
+                [
+                    '1',
+                    'bar'
+                ]
+            ]);
+        }, function () {
+            _.pairs2 = function (x) {
+                return _.scatter(x, function (x, i, return_) {
+                    return_([
+                        i,
+                        x
+                    ]);
+                });
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'filter 2.0'
+        ], function () {
+            var foo = _.equals('foo');
+            $assert(_.filter2('foo', foo), 'foo');
+            $assert(_.filter2(['foo'], foo), ['foo']);
+            $assert(_.filter2({ f: 'foo' }, foo), { f: 'foo' });
+            $assert(_.filter2('foo', _.not(foo)), undefined);
+            $assert(_.filter2(['foo'], _.not(foo)), []);
+            $assert(_.filter2({ f: 'foo' }, _.not(foo)), {});
+            $assert(_.filter2('foo', _.constant('bar')), 'bar');
+            $assert(_.filter2(['foo'], _.constant('bar')), ['bar']);
+            $assert(_.filter2({ f: 'foo' }, _.constant('bar')), { f: 'bar' });
+            $assert(_.filterFilter({
+                foo: 'foo',
+                bar: [
+                    7,
+                    'foo',
+                    { bar: 'foo' }
+                ]
+            }, _.not(_.equals('foo'))), {
+                bar: [
+                    7,
+                    {}
+                ]
+            });
+        }, function () {
+            _.reject2 = function (value, op) {
+                return _.filter2(value, _.not(op));
+            };
+            _.filter2 = function (value, op) {
+                if (_.isArrayLike(value)) {
+                    var result = [];
+                    for (var i = 0, n = value.length; i < n; i++) {
+                        var v = value[i], opSays = op(v, i);
+                        if (opSays === true) {
+                            result.push(v);
+                        } else if (opSays !== false) {
+                            result.push(opSays);
+                        }
+                    }
+                    return result;
+                } else if (_.isStrictlyObject(value)) {
+                    var result = {};
+                    _.each(Object.keys(value), function (key) {
+                        var v = value[key], opSays = op(v, key);
+                        if (opSays === true) {
+                            result[key] = v;
+                        } else if (opSays !== false) {
+                            result[key] = opSays;
+                        }
+                    });
+                    return result;
+                } else {
+                    var opSays = op(value);
+                    if (opSays === true) {
+                        return value;
+                    } else if (opSays !== false) {
+                        return opSays;
+                    } else {
+                        return undefined;
+                    }
+                }
+            };
+            _.filterFilter = _.hyperOperator(_.unary, _.filter2);
+            _.hyperFilter = function (data, op) {
+                return _.hyperOperator(_.unary, function (expr, f) {
+                    var x = op(expr);
+                    return x === true && _.filter2(expr, f) || x;
+                })(data, _.identity);
+            };
+            _.hyperReject = function (data, op) {
+                return _.hyperFilter(data, function (x) {
+                    var opa = op(x);
+                    return _.isBoolean(opa) ? !opa : opa;
+                });
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'each 2.0'
+        ], function () {
+            var test = function (input) {
+                var output = [];
+                _.each2(input, function (x, i, n) {
+                    output.push([
+                        x,
+                        i,
+                        n
+                    ]);
+                });
+                return output;
+            };
+            $assert(test('foo'), [[
+                    'foo',
+                    undefined,
+                    1
+                ]]);
+            $assert(test([
+                'foo',
+                'bar'
+            ]), [
+                [
+                    'foo',
+                    0,
+                    2
+                ],
+                [
+                    'bar',
+                    1,
+                    2
+                ]
+            ]);
+            $assert(test({
+                'f': 'oo',
+                'b': 'ar'
+            }), [
+                [
+                    'oo',
+                    'f',
+                    2
+                ],
+                [
+                    'ar',
+                    'b',
+                    2
+                ]
+            ]);
+        }, function () {
+            _.each2 = function (x, f) {
+                if (_.isArrayLike(x)) {
+                    for (var i = 0, n = x.length; i < n; i++)
+                        f(x[i], i, n);
+                } else if (_.isStrictlyObject(x)) {
+                    var k = Object.keys(x);
+                    for (var ki, i = 0, n = k.length; i < n; i++)
+                        f(x[ki = k[i]], ki, n);
+                } else {
+                    f(x, undefined, 1);
+                }
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'reduce 2.0'
+        ], function () {
+            $assert(_.reduce2(3, [
+                7,
+                9
+            ], _.sum), 19);
+            $assert(_.reduce2([
+                3,
+                7,
+                9
+            ], _.sum), 19);
+            $assert(_.reduce2({
+                a: 3,
+                b: 7,
+                c: 9
+            }, _.sum), 19);
+            $assert(_.reduce2(3 + 7 + 9, _.sum), 19);
+            $assert(_.reduce2([1], _.sum), 1);
+            $assert(_.reduce2([], _.sum), undefined);
+            $assert(1 + 20 + 3 + 4 + 5, _.reduceReduce([
+                [
+                    [1],
+                    20
+                ],
+                [
+                    3,
+                    [
+                        4,
+                        5
+                    ]
+                ]
+            ], function (a, b) {
+                return _.isNumber(a) && _.isNumber(b) ? a + b : b;
+            }));
+        }, function () {
+            _.reduce2 = function (_1, _2, _3) {
+                var no_left = arguments.length < 3;
+                var left = _1, rights = _2, op = _3;
+                if (no_left) {
+                    left = undefined;
+                    rights = _1;
+                    op = _2;
+                }
+                _.each2(rights, function (right, i) {
+                    left = no_left ? right : op(left, right);
+                    no_left = false;
+                });
+                return left;
+            };
+            _.reduceReduce = function (_1, _2, _3) {
+                var initial = _1, value = _2, op = _3;
+                if (arguments.length < 3) {
+                    initial = {};
+                    value = _1;
+                    op = _2;
+                }
+                return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(initial, value, op);
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'concat2'
+        ], function () {
+            $assert(_.concat([
+                1,
+                2
+            ], [3], [
+                4,
+                5
+            ]), [
+                1,
+                2,
+                3,
+                4,
+                5
+            ]);
+            $assert(_.concat({ foo: 1 }, { bar: 2 }), {
+                foo: 1,
+                bar: 2
+            });
+            $assert(_.concat([
+                { foo: 1 },
+                { bar: 2 }
+            ]), {
+                foo: 1,
+                bar: 2
+            });
+            $assert(_.concat(1, 2, 3), 6);
+        }, function () {
+            _.concat = function (a, b) {
+                var first, rest;
+                if (arguments.length === 1) {
+                    first = a[0];
+                    rest = _.rest(a);
+                } else {
+                    first = a;
+                    rest = _.rest(arguments);
+                }
+                return _.isArrayLike(first) ? first.concat.apply(first, rest) : _.reduce2(first, rest, function (a, b) {
+                    if (_.isObject(a) && _.isObject(b)) {
+                        return _.extend({}, a, b);
+                    } else {
+                        return a + b;
+                    }
+                });
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'zip2'
+        ], function () {
+            $assert(_.zip2([
+                'f',
+                'o',
+                'o'
+            ], _.concat), 'foo');
+            $assert(_.zip2([
+                [
+                    'f',
+                    'b'
+                ],
+                [
+                    'o',
+                    'a'
+                ],
+                [
+                    'o',
+                    'r'
+                ]
+            ], _.concat), [
+                'foo',
+                'bar'
+            ]);
+            $assert(_.zip2([
+                {
+                    foo: 'f',
+                    bar: 'b'
+                },
+                {
+                    foo: 'o',
+                    bar: 'a'
+                },
+                {
+                    foo: 'o',
+                    bar: 'r'
+                }
+            ], _.concat), {
+                foo: 'foo',
+                bar: 'bar'
+            });
+            $assert(_.zip2({
+                foo: 'f',
+                bar: 'b'
+            }, {
+                foo: 'o',
+                bar: 'a'
+            }, {
+                foo: 'o',
+                bar: 'r'
+            }, _.concat), {
+                foo: 'foo',
+                bar: 'bar'
+            });
+            $assert(_.zip2(undefined, _.concat), undefined);
+            $assert(_.zip2(5, _.concat), 5);
+            $assert(_.zip2([], _.concat), []);
+            $assert(_.zip2(['foo'], _.concat), 'foo');
+            $assert(_.zipObjectsWith([
+                { name: 'string' },
+                { born: 123 }
+            ], _.array), {
+                name: [
+                    'string',
+                    undefined
+                ],
+                born: [
+                    undefined,
+                    123
+                ]
+            });
+            $assert([3], _.zipSetsWith([
+                new Set([
+                    2,
+                    3
+                ]),
+                new Set([
+                    3,
+                    4
+                ])
+            ], function (a, b) {
+                return a && b;
+            }).asArray);
+        }, function () {
+            _.mixin({
+                zipSetsWith: function (sets, fn) {
+                    return _.reduce(_.rest(sets), function (memo, obj) {
+                        _.each(_.union(obj && Array.from(obj.values()) || [], memo && Array.from(memo.values()) || []), function (k) {
+                            var zipped = fn(memo && memo.has(k) ? k : undefined, obj && obj.has(k) ? k : undefined);
+                            if (zipped === undefined) {
+                                memo.delete(k);
+                            } else {
+                                memo.add(zipped);
+                            }
+                        });
+                        return memo;
+                    }, new Set(sets[0]));
+                },
+                zipObjectsWith: function (objects, fn) {
+                    return _.reduce(_.rest(objects), function (memo, obj) {
+                        _.each(_.union(_.keys(obj), _.keys(memo)), function (k) {
+                            var zipped = fn(memo && memo[k], obj && obj[k]);
+                            if (zipped === undefined) {
+                                delete memo[k];
+                            } else {
+                                memo[k] = zipped;
+                            }
+                        });
+                        return memo;
+                    }, _.clone(objects[0]));
+                },
+                zip2: function (rows_, fn_) {
+                    var rows = arguments.length === 2 ? rows_ : _.initial(arguments);
+                    var fn = arguments.length === 2 ? fn_ : _.last(arguments);
+                    if (!_.isArrayLike(rows) || rows.length === 0) {
+                        return rows;
+                    } else {
+                        if (_.isArrayLike(rows[0])) {
+                            return _.zipWith(rows, fn);
+                        } else if (rows[0] instanceof Set) {
+                            return _.zipSetsWith(rows, fn);
+                        } else if (_.isStrictlyObject(rows[0])) {
+                            return _.zipObjectsWith(rows, fn);
+                        } else {
+                            return _.reduce2(rows, fn);
+                        }
+                    }
+                }
+            });
+        });
+        _.deferTest([
+            'stdlib',
+            'zipZip'
+        ], function () {
+            $assert(_.zipZip({ phones: [{ number: 'number' }] }, { phones: [{ number: 333 }] }, _.array), {
+                phones: [{
+                        number: [
+                            'number',
+                            333
+                        ]
+                    }]
+            });
+            $assert(_.zipZip([
+                {
+                    foo: 7,
+                    bar: [
+                        'foo',
+                        { bar: undefined }
+                    ]
+                },
+                {
+                    foo: 'number',
+                    bar: [
+                        'string',
+                        { bar: 'undefined' }
+                    ]
+                }
+            ], _.array), {
+                foo: [
+                    7,
+                    'number'
+                ],
+                bar: [
+                    [
+                        'foo',
+                        'string'
+                    ],
+                    {
+                        bar: [
+                            undefined,
+                            'undefined'
+                        ]
+                    }
+                ]
+            });
+        }, function () {
+            _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
+        });
+        _.deferTest([
+            'stdlib',
+            'extend 2.0'
+        ], function () {
+            [
+                function () {
+                    var input = {
+                        foo: 1,
+                        bar: 1
+                    };
+                    var plus = {
+                        foo: 42,
+                        qux: 1
+                    };
+                    var gives = {
+                        foo: 42,
+                        qux: 1,
+                        bar: 1
+                    };
+                    $assert(_.extendWith(plus, input), gives);
+                }(),
+                function () {
+                    var input = [
+                        { bar: 1 },
+                        {}
+                    ];
+                    var plus = _.extendsWith({ foo: 42 });
+                    var gives = [
+                        {
+                            bar: 1,
+                            foo: 42
+                        },
+                        { foo: 42 }
+                    ];
+                    $assert(_.map(input, _.arity1(plus)), gives);
+                }(),
+                function () {
+                    var input = {
+                        foo: 1,
+                        bar: { qux: 1 }
+                    };
+                    var plus = {
+                        foo: 42,
+                        bar: { baz: 1 }
+                    };
+                    var gives = {
+                        foo: 42,
+                        bar: {
+                            baz: 1,
+                            qux: 1
+                        }
+                    };
+                    $assert(_.extend2(input, plus), gives);
+                }(),
+                function () {
+                    var input = {
+                        foo: 1,
+                        bar: { qux: 1 }
+                    };
+                    var plus = {
+                        foo: 42,
+                        bar: { baz: 1 }
+                    };
+                    var gives = {
+                        foo: 42,
+                        bar: {
+                            baz: 1,
+                            qux: 1
+                        }
+                    };
+                    $assert(_.extendedDeep(input, plus), gives);
+                    $assert(_.extendedDeep({ foo: new Set([7]) }, {}).foo instanceof Set);
+                    $assert(Array.from(_.extendedDeep({
+                        foo: new Set([
+                            1,
+                            2
+                        ])
+                    }, {
+                        foo: new Set([
+                            2,
+                            3
+                        ])
+                    }).foo.values()), [
+                        1,
+                        2,
+                        3
+                    ]);
+                }(),
+                function () {
+                    var x = { foo: 1 };
+                    $assert(_.extended(x, { bar: 1 }), {
+                        foo: 1,
+                        bar: 1
+                    });
+                    $assert(x, { foo: 1 });
+                }()
+            ];
+        }, function () {
+            _.extend = $restArg(_.extend);
+            _.extended = $restArg(function () {
+                return _.extend.apply(this, [{}].concat(_.asArray(arguments)));
+            });
+            _.extendWith = _.flip(_.extend);
+            _.extendsWith = _.flip(_.partial(_.partial, _.flip(_.extend)));
+            _.extendedDeep = _.tails3(_.zipZip, function (a, b) {
+                return b === undefined ? a : b;
+            });
+            _.extend2 = $restArg(function (what) {
+                return _.extend(what, _.reduceRight(arguments, function (right, left) {
+                    return _.object(_.map(_.union(_.keys(left), _.keys(right)), function (key) {
+                        var lvalue = left[key];
+                        return [
+                            key,
+                            key in right ? typeof lvalue === 'object' ? _.extend(lvalue, right[key]) : right[key] : lvalue
+                        ];
+                    }));
+                }, {}));
+            });
+        });
+        _.deferTest([
+            'stdlib',
+            'findFind'
+        ], function () {
+            var obj = {
+                x: 1,
+                y: { z: 2 }
+            };
+            $assert(_.findFind({
+                foo: 1,
+                bar: [
+                    1,
+                    2,
+                    3
+                ]
+            }, _.constant(false)), false);
+            $assert(_.findFind({
+                foo: 1,
+                bar: [
+                    1,
+                    2,
+                    3
+                ]
+            }, _.equals(2)), 2);
+            $assert(_.findFind({ foo: { bar: obj } }, _.equals(obj)), obj);
+        }, function () {
+            _.find2 = function (value, pred) {
+                if (_.isArrayLike(value)) {
+                    for (var i = 0, n = value.length; i < n; i++) {
+                        var x = pred(value[i], i, value);
+                        if (typeof x !== 'boolean') {
+                            return x;
+                        } else if (x === true) {
+                            return value[i];
+                        }
+                    }
+                } else if (_.isStrictlyObject(value)) {
+                    for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
+                        var k = ks[i];
+                        var x = pred(value[k], k, value);
+                        if (typeof x !== 'boolean') {
+                            return x;
+                        } else if (x === true) {
+                            return value[k];
+                        }
+                    }
+                }
+            };
+            _.findFind = function (obj, pred_) {
+                return _.hyperOperator(_.unary, function (value, pred) {
+                    if (_.isArrayLike(value)) {
+                        for (var i = 0, n = value.length; i < n; i++) {
+                            var x = pred(value[i]);
+                            if (typeof x !== 'boolean') {
+                                return x;
+                            } else if (x === true) {
+                                return value[i];
+                            }
+                        }
+                    } else if (_.isStrictlyObject(value)) {
+                        for (var i = 0, ks = Object.keys(value), n = ks.length; i < n; i++) {
+                            var k = ks[i];
+                            var x = pred(value[k]);
+                            if (typeof x !== 'boolean') {
+                                return x;
+                            } else if (x === true) {
+                                return value[k];
+                            }
+                        }
+                    }
+                    var x = pred_(value);
+                    if (typeof x !== 'boolean') {
+                        return x;
+                    } else if (x === true) {
+                        return value;
+                    }
+                    return false;
+                })(obj, pred_);
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'nonempty'
+        ], function () {
+            var obj = {
+                blank: {},
+                empty: [],
+                one: 1,
+                none: undefined,
+                nil: null,
+                clear: '',
+                zero: 0,
+                no: false
+            };
+            var arr = [
+                {},
+                [],
+                1,
+                undefined,
+                null,
+                '',
+                0,
+                false
+            ];
+            $assert(_.nonempty(obj), {
+                one: 1,
+                zero: 0,
+                no: false
+            });
+            $assert(_.nonempty(arr), [
+                1,
+                0,
+                false
+            ]);
+            $assert(_.nonempty(null), undefined);
+            $assert(_.nonempty(''), undefined);
+        }, function () {
+            _.nonempty = function (obj) {
+                return _.filter2(obj, _.isNonempty);
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'cloneDeep'
+        ], function () {
+            var Proto = $prototype({});
+            var obj = {
+                a: [{ b: { c: 'd' } }],
+                b: {},
+                c: new Proto()
+            };
+            var copy = _.cloneDeep(obj);
+            $assert(obj !== copy);
+            $assert(obj.a !== copy.a);
+            $assert(obj.b !== copy.b);
+            $assert(obj.c === copy.c);
+            $assert(obj, copy);
+            $assert(_.cloneDeep({ foo: new Set() }).foo instanceof Set);
+            $assert(Array.from(_.cloneDeep({
+                foo: new Set([
+                    1,
+                    2,
+                    3
+                ])
+            }).foo.values()), [
+                1,
+                2,
+                3
+            ]);
+        }, function () {
+            _.extend(_, {
+                clone: function (x) {
+                    return x instanceof Set ? new Set(x) : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
+                },
+                cloneDeep: _.tails2(_.mapMap, function (value) {
+                    return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
+                })
+            });
+        });
+        _.deferTest([
+            'stdlib',
+            'diff'
+        ], function () {
+            $assert(_.diff('foo', 'foo'), undefined);
+            $assert(_.diff('foo', 'bar'), 'bar');
+            $assert(_.diff({
+                a: 1,
+                b: 2,
+                c: 3
+            }, {
+                a: 1,
+                b: 3,
+                d: 4
+            }), {
+                b: 3,
+                d: 4
+            });
+            $assert(_.diff([
+                1,
+                2,
+                3
+            ], [
+                1,
+                2,
+                3
+            ]), undefined);
+            $assert(_.diff([
+                1,
+                'foo',
+                2
+            ], [
+                1,
+                2,
+                3
+            ]), [
+                2,
+                3
+            ]);
+        }, function () {
+            _.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
+                return _.coerceToUndefined(_.nonempty(_.zip2(a, b, pred)));
+            });
+            _.diff = _.tails3(_.hyperMatch, function (a, b) {
+                return $atom.unwrap(a) === $atom.unwrap(b) || a === $any || b === $any ? undefined : b;
+            });
+        });
+        _.deferTest([
+            'stdlib',
+            'undiff'
+        ], function () {
+            $assert(_.undiff('foo', 'foo'), 'foo');
+            $assert(_.undiff('foo', 'bar'), undefined);
+            $assert(_.undiff({
+                a: 1,
+                b: 2,
+                c: 3
+            }, {
+                a: 1,
+                b: 3,
+                d: 4
+            }), { a: 1 });
+            $assert(_.undiff([
+                1,
+                2,
+                3
+            ], [
+                1,
+                2,
+                3
+            ]), [
+                1,
+                2,
+                3
+            ]);
+            $assert(_.undiff([
+                1,
+                2
+            ], [
+                1,
+                3
+            ]), [
+                1,
+                undefined
+            ]);
+            $assert(_.undiff([
+                1,
+                2
+            ], [
+                0,
+                2
+            ]), [
+                undefined,
+                2
+            ]);
+        }, function () {
+            _.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
+                return _.coerceToUndefined(_.zip2(a, b, pred));
+            });
+            _.undiff = _.tails3(_.hyperMatch, function (a, b) {
+                return $atom.unwrap(a) === $atom.unwrap(b) || a === $any || b === $any ? b : undefined;
+            });
+        });
+        _.deferTest([
+            'stdlib',
+            'index'
+        ], function () {
+            $assert(_.index([
+                'foo',
+                'bar'
+            ]), {
+                foo: true,
+                bar: true
+            });
+        }, function () {
+            _.extend(_, {
+                index: function (list) {
+                    var result = {};
+                    for (var i = 0, n = list.length; i < n; i++) {
+                        result[list[i]] = true;
+                    }
+                    return result;
+                }
+            });
+        });
+        _.deferTest([
+            'stdlib',
+            'quote'
+        ], function () {
+            $assert(_.quote('qux'), 'qux');
+            $assert(_.quote('qux', '[]'), '[qux]');
+            $assert(_.quote('qux', '/'), '/qux/');
+            $assert(_.quote('qux', '{  }'), '{ qux }');
+            $assert(_.quote('qux', '</>'), '</qux>');
+            $assert(_.quoteWith('[]', 'qux'), '[qux]');
+        }, function () {
+            _.quote = function (s, pattern_) {
+                var pattern = pattern_ || '';
+                var splitAt = Math.floor(pattern.length / 2 + pattern.length % 2);
+                var before = pattern.slice(0, splitAt);
+                var after = pattern.slice(splitAt) || before;
+                return before + s + after;
+            };
+            _.quoteWith = _.flip2(_.quote);
+            _.quotesWith = _.higherOrder(_.quoteWith);
+        });
+        _.deferTest([
+            'stdlib',
+            'partition2'
+        ], function () {
+            $assert(_.partition2([
+                'a',
+                'b',
+                'c',
+                undefined,
+                undefined,
+                42
+            ], _.isNonempty), [
+                [
+                    'a',
+                    'b',
+                    'c'
+                ],
+                [
+                    undefined,
+                    undefined
+                ],
+                [42]
+            ]);
+            $assert(_.partition3([
+                'a',
+                'b',
+                'c',
+                undefined,
+                undefined,
+                42
+            ], _.typeOf), [
+                {
+                    label: 'string',
+                    items: [
+                        'a',
+                        'b',
+                        'c'
+                    ]
+                },
+                {
+                    label: 'undefined',
+                    items: [
+                        undefined,
+                        undefined
+                    ]
+                },
+                {
+                    label: 'number',
+                    items: [42]
+                }
+            ]);
+        }, function () {
+            _.partition2 = function (arr, pred) {
+                return _.pluck(_.partition3(arr, pred), 'items');
+            };
+            _.partition3 = function (arr_, pred) {
+                var arr = arr_ || [];
+                var spans = [], span = {
+                        label: undefined,
+                        items: [arr.first]
+                    };
+                _.each(arr, function (x) {
+                    var label = pred(x);
+                    if (span.label != label && span.items.length) {
+                        spans.push(span = {
+                            label: label,
+                            items: [x]
                         });
                     } else {
-                        try {
-                            fn.apply(self.context, args);
-                            done();
-                        } catch (e) {
-                            assertion.onException(e);
+                        span.items.push(x);
+                    }
+                });
+                return span.length && spans.push(span), spans;
+            };
+        });
+        _.deferTest([
+            'stdlib',
+            'longestCommonSubstring'
+        ], function () {
+            $assert('foo', _.longestCommonSubstring('foo', 'ffooa'));
+        }, function () {
+            var indexMap = function (list) {
+                var map = {};
+                _.each(list, function (each, i) {
+                    map[each] = map[each] || [];
+                    map[each].push(i);
+                });
+                return map;
+            };
+            _.longestCommonSubstring = function (a, b) {
+                var where = _.indexOfLongestCommonSubstring(a, b);
+                return where.length ? a.substr(where.a, where.length) : undefined;
+            };
+            _.indexOfLongestCommonSubstring = function (a, b) {
+                var result = {
+                    a: 0,
+                    b: 0,
+                    length: 0
+                };
+                var indexMapBefore = indexMap(a);
+                var previousOverlap = [];
+                _.each(b, function (eachAfter, indexAfter) {
+                    var overlapLength;
+                    var overlap = [];
+                    var indexesBefore = indexMapBefore[eachAfter] || [];
+                    _.each(indexesBefore, function (indexBefore) {
+                        overlapLength = (indexBefore && previousOverlap[indexBefore - 1] || 0) + 1;
+                        if (overlapLength > result.length) {
+                            result.length = overlapLength;
+                            result.a = indexBefore - overlapLength + 1;
+                            result.b = indexAfter - overlapLength + 1;
+                        }
+                        overlap[indexBefore] = overlapLength;
+                    });
+                    previousOverlap = overlap;
+                });
+                return result;
+            };
+        });
+        _.key = function (fn) {
+            return function (value, key) {
+                return fn(key);
+            };
+        };
+        _.filterKeys = function (arr, predicate) {
+            return _.filter(arr, function (v, k) {
+                return predicate(k);
+            });
+        };
+        _.rejectKeys = function (arr, predicate) {
+            return _.reject(arr, function (v, k) {
+                return predicate(k);
+            });
+        };
+        _.pickKeys = function (obj, predicate) {
+            return _.pick(obj, function (v, k) {
+                return predicate(k);
+            });
+        };
+        _.omitKeys = function (obj, predicate) {
+            return _.omit(obj, function (v, k) {
+                return predicate(k);
+            });
+        };
+    },
+    function (module, exports) {
+        _.deferTest('properties', function () {
+            var obj = {};
+            _.defineProperty(obj, 'fourtyTwo', 42);
+            _.defineProperty(obj, 'fourtyTwo_too', function () {
+                return 42;
+            });
+            _.defineProperty(obj, 'fourtyTwo_orDie', function (x) {
+                $assert(x == 42);
+                return 42;
+            });
+            _.defineProperty(obj, 'fourtyTwo_eitherWay', {
+                configurable: true,
+                get: function () {
+                    return 42;
+                },
+                set: function (x) {
+                    $assert(x == 42);
+                }
+            });
+            $assert(42, obj.fourtyTwo, obj.fourtyTwo_too, obj.fourtyTwo_orDie(42), obj.fourtyTwo_eitherWay = 42);
+            delete obj.fourtyTwo_eitherWay;
+            $assert(obj.fourtyTwo_eitherWay === undefined);
+            delete obj.fourtyTwo;
+            $assert(obj.fourtyTwo === 42);
+            _.defineHiddenProperty(obj, 'hiddenAndDangerous', 42);
+            $assert(_.keys(obj).indexOf('hiddenAndDangerous') < 0);
+            $assertEveryCalledOnce(function (mkay) {
+                _.defineMemoizedProperty(obj, '_42', function () {
+                    mkay();
+                    return 42;
+                });
+                $assert(obj._42, obj._42, obj._42, 42);
+            });
+        }, function () {
+            _.extend(_, {
+                defineProperty: function (targetObject, name, def, defaultCfg) {
+                    if (_.isObject(targetObject) && targetObject.hasOwnProperty(name)) {
+                        throw new Error('_.defineProperty: targetObject already has property ' + name);
+                    } else {
+                        Object.defineProperty(targetObject, name, _.extend({ enumerable: true }, defaultCfg, _.coerceToPropertyDefinition(def, name)));
+                    }
+                },
+                defineHiddenProperty: function (targetObject, name, def, defaultCfg) {
+                    return _.defineProperty(targetObject, name, def, _.extend({ enumerable: false }, defaultCfg));
+                },
+                defineMemoizedProperty: function (targetObject, name, def_, defaultCfg) {
+                    var def = _.coerceToPropertyDefinition(def_, name);
+                    return _.defineProperty(targetObject, name, _.extend({}, def, { get: _.memoizeToThis('_' + name, def.get) }), defaultCfg);
+                },
+                defineProperties: function (targetObject, properties) {
+                    _.each(properties, _.defineProperty.partial(targetObject).flip2);
+                },
+                memoizedState: function (obj) {
+                    return _.filter2(obj, function (v, k) {
+                        return k[0] === '_' && !_.isFunction(v);
+                    });
+                },
+                memoizeToThis: function (name, fn) {
+                    return function () {
+                        var memo = this[name];
+                        return memo !== undefined ? memo : this[name] = fn.call(this);
+                    };
+                },
+                coerceToPropertyDefinition: function (value_, name) {
+                    var value = value_ || {};
+                    var actualValue = typeof Tags === 'undefined' ? value_ : Tags.unwrap(value_);
+                    return !value.$constant && !value.$get && _.isPropertyDefinition(actualValue) && actualValue || (value.$get || !value.$constant && _.isFunction(actualValue) && _.noArgs(actualValue)) && {
+                        get: actualValue,
+                        set: _.throwsError('cannot change ' + (name || 'property') + ' (as it\'s an accessor function)')
+                    } || !value.$get && {
+                        get: _.constant(actualValue),
+                        set: _.throwsError('cannot change ' + (name || 'property') + ' (as it\'s sealed to ' + actualValue + ')')
+                    } || _.throwsError('coerceToPropertyDefinition: crazy input, unable to match')();
+                },
+                isPropertyDefinition: function (obj) {
+                    return _.isObject(obj) && (_.isFunction(obj.get) || _.isFunction(obj.set));
+                },
+                ownProperties: function (obj) {
+                    return obj && _.pickKeys(obj, obj.hasOwnProperty.bind(obj)) || {};
+                }
+            });
+        });
+    },
+    function (module, exports) {
+        _.hasTags = true;
+        _.deferTest('keywords', function () {
+            if ($global['$fourtyTwo'] === undefined) {
+                _.defineKeyword('fourtyTwo', 42);
+                _.defineKeyword('fourtyTwo_too', function () {
+                    return 42;
+                });
+                _.defineKeyword('fourtyTwo_orDie', function (x) {
+                    $assert(x == 42);
+                    return 42;
+                });
+                _.defineTagKeyword('foo');
+                _.defineTagKeyword('bar');
+                _.defineTagKeyword('qux');
+                $assert(_.isTagKeyword('qux'));
+                _.defineModifierKeyword('plusOne', function (x) {
+                    return x + 1;
+                });
+            }
+            $assert(42, $fourtyTwo, $fourtyTwo_too, $fourtyTwo_orDie(42));
+            $assert($foo(42).$foo, true);
+            $assert($bar(null).$bar, true);
+            $assert($foo(42).$bar, undefined);
+            $assert($foo($bar(42)), $bar($foo($foo(42))));
+            $assert($foo.is($foo(42)), true);
+            $assert($foo.is($bar(42)), false);
+            $assert($foo.is(42), false);
+            var test = {
+                fourtyOne: $bar($foo(41)),
+                fourtyTwo: $foo($bar(42)),
+                notTagged: 40
+            };
+            $assert($untag(42), Tags.unwrap(42), Tags.unwrap(test.fourtyTwo), 42);
+            $assert(Tags.unwrapAll(test), {
+                fourtyTwo: 42,
+                fourtyOne: 41,
+                notTagged: 40
+            });
+            $assert($foo.matches($foo()));
+            $assert($foo.matches(test.fourtyOne));
+            $assert($foo.matches(42) === false);
+            $assert({
+                fourtyOne: 41,
+                fourtyTwo: 42
+            }, Tags.unwrapAll(_.pick(test, _.and($foo.matches, $bar.matches))));
+            $assert({ notTagged: 40 }, Tags.unwrapAll(_.omit(test, $foo.matches)));
+            $assert(43, Tags.modify(42, function (subject) {
+                return subject + 1;
+            }));
+            $assert($foo(43), Tags.modify($foo(42), _.constant(43)));
+            $assert($foo($bar(43)), Tags.modify($foo(42), function (subject) {
+                return $bar(subject + 1);
+            }));
+            $assert($plusOne(41), 42);
+            $assert($plusOne($foo($bar(41))), $foo($bar(42)));
+            $assert(Tags.add('qux', 42).$qux);
+            $assert(Tags.add('qux', test.fourtyTwo).$qux);
+            $assert(Tags.hasSubject($foo()), false);
+            $assert(Tags.hasSubject($foo(42)), true);
+            $assert($qux([
+                8,
+                9,
+                $foo($bar(10))
+            ]), Tags.map($qux([
+                1,
+                2,
+                $foo($bar(3))
+            ]), _.sums(7)));
+            $assertMatches([
+                'foo',
+                'bar',
+                'qux'
+            ], _.arr(function (iter) {
+                Tags.each(test.fourtyTwo, iter);
+            }));
+            $assert($foo({ some: 'params' }, 42).$foo, { some: 'params' });
+            $assert(Tags.extend($foo(7), $bar(8)), $foo($bar(7)));
+            $assert(Tags.extend($foo(7), 8), $foo(7));
+            $assert(Tags.extend(7, $foo(8)), $foo(7));
+            $assert(Tags.extend(7, 8), 7);
+            $assert(Tags.omit(7, '$foo'), 7);
+            $assert(Tags.omit($foo($bar(7)), '$foo', '$bar'), 7);
+            $assert(Tags.omit($foo($bar(7)), '$foo'), $bar(7));
+        }, function () {
+            Tags = _.extend2(function (subject, keys) {
+                if (subject !== undefined) {
+                    this.subject = subject;
+                }
+                if (keys !== undefined) {
+                    _.extend(this, keys);
+                }
+            }, {
+                $definition: {},
+                prototype: {
+                    add: function (name, additionalData) {
+                        return this[_.keyword(name)] = additionalData || true, this;
+                    },
+                    clone: function (newSubject) {
+                        return _.extend(new Tags(newSubject || this.subject), _.pick(this, _.keyIsKeyword));
+                    },
+                    modify: function (changesFn) {
+                        this.subject = changesFn(this.subject);
+                        if (_.isTypeOf(Tags, this.subject)) {
+                            return _.extend(this.subject, _.pick(this, _.keyIsKeyword));
+                        } else {
+                            return this;
+                        }
+                    },
+                    extend: function (other) {
+                        return _.isTypeOf(Tags, other) ? _.extend(this, _.pick(other, _.keyIsKeyword)) : this;
+                    }
+                },
+                omit: $restArg(function (what, ___) {
+                    if (_.isTypeOf(Tags, what)) {
+                        var keysToOmit = _.index(_.rest(arguments));
+                        var keysLeft = _.pick(what, function (v, k) {
+                            return _.isKeyword(k) && !(k in keysToOmit);
+                        });
+                        return !_.isEmptyObject(keysLeft) ? new Tags(what.subject, keysLeft) : what.subject;
+                    } else {
+                        return what;
+                    }
+                }),
+                clone: function (what, newSubject) {
+                    return _.isTypeOf(Tags, what) ? what.clone(newSubject) : newSubject || what;
+                },
+                extend: function (what, other) {
+                    return _.isTypeOf(Tags, what) ? what.clone().extend(other) : _.isTypeOf(Tags, other) ? Tags.wrap(what).extend(other) : what;
+                },
+                get: function (def) {
+                    return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
+                },
+                each: function (def, accept) {
+                    if (_.isTypeOf(Tags, def)) {
+                        _.each(def, function (v, k) {
+                            if (k[0] === '$') {
+                                accept(k.slice(1));
+                            }
+                        });
+                    }
+                },
+                hasSubject: function (def) {
+                    return _.isTypeOf(Tags, def) && 'subject' in def;
+                },
+                matches: function (name) {
+                    return function (obj) {
+                        return obj && obj[_.keyword(name)] !== undefined;
+                    };
+                },
+                unwrapAll: function (definition) {
+                    return _.map2(definition, Tags.unwrap);
+                },
+                unwrap: function (what) {
+                    return _.isTypeOf(Tags, what) ? what.subject : what;
+                },
+                wrap: function (what) {
+                    return _.isTypeOf(Tags, what) ? what : arguments.length === 0 ? new Tags() : new Tags(what);
+                },
+                modify: function (what, changesFn) {
+                    return _.isTypeOf(Tags, what) ? what.clone().modify(changesFn) : changesFn(what);
+                },
+                map: function (obj, op) {
+                    return Tags.modify(obj, function (obj) {
+                        return _.map2(obj, function (t, k) {
+                            return Tags.modify(t, function (v) {
+                                return op(v, k, _.isTypeOf(Tags, t) ? t : undefined);
+                            });
+                        });
+                    });
+                },
+                add: function (name, toWhat, additionalData) {
+                    return Tags.wrap.apply(null, _.rest(arguments, 1)).add(name, additionalData);
+                }
+            });
+            _.keyword = function (name) {
+                return '$' + name;
+            };
+            _.isKeyword = function (key) {
+                return key[0] == '$';
+            };
+            _.keywordName = function (x) {
+                return _.isKeyword(x) ? x.slice(1) : x;
+            };
+            _.keywords = function (obj) {
+                return _.pick(obj, _.keyIsKeyword);
+            };
+            _.tagKeywords = {};
+            _.isTagKeyword = function (k) {
+                return _.keywordName(k) in _.tagKeywords;
+            };
+            _.keyIsKeyword = function (value, key) {
+                return _.isKeyword(key[0]);
+            };
+            _.defineKeyword = function (name, value) {
+                _.defineProperty($global, _.keyword(name), value);
+            };
+            _.defineKeyword('untag', Tags.unwrap);
+            _.defineTagKeyword = function (k, fn) {
+                fn = _.isFunction(fn) && fn || _.identity;
+                if (!(_.keyword(k) in $global)) {
+                    _.defineKeyword(k, Tags.add('constant', _.extendWith({ matches: Tags.matches(k) }, fn(function (a, b) {
+                        if (arguments.length < 2) {
+                            return Tags.add(k, a);
+                        } else {
+                            return Tags.add(k, b, a);
+                        }
+                    }))));
+                    _.tagKeywords[k] = true;
+                }
+                var kk = _.keyword(k);
+                return _.extend($global[kk], {
+                    is: function (x) {
+                        return _.isTypeOf(Tags, x) && kk in x || false;
+                    },
+                    isNot: function (x) {
+                        return !(_.isTypeOf(Tags, x) && kk in x) || false;
+                    },
+                    unwrap: function (x) {
+                        return $atom.matches(x) === true ? Tags.unwrap(x) : x;
+                    }
+                });
+            };
+            _([
+                'constant',
+                'get',
+                'once',
+                'async'
+            ]).each(_.defineTagKeyword);
+            _.defineModifierKeyword = function (name, fn) {
+                _.defineKeyword(name, function (val) {
+                    return Tags.modify(val, fn);
+                });
+            };
+            _.deleteKeyword = function (name) {
+                delete $global[_.keyword(name)];
+            };
+        });
+    },
+    function (module, exports) {
+        _.hasTypeMatch = true;
+        _.defineTagKeyword('required');
+        _.defineTagKeyword('atom');
+        _.defineKeyword('any', _.identity);
+        _.deferTest([
+            'type',
+            'type matching'
+        ], function () {
+            $assert(_.omitTypeMismatches({
+                '*': $any,
+                foo: $required('number'),
+                bar: $required('number')
+            }, {
+                baz: 'x',
+                foo: 42,
+                bar: 'foo'
+            }), {});
+            $assert(_.omitTypeMismatches({ foo: { '*': $any } }, {
+                foo: {
+                    bar: 42,
+                    baz: 'qux'
+                }
+            }), {
+                foo: {
+                    bar: 42,
+                    baz: 'qux'
+                }
+            });
+            $assert(_.omitTypeMismatches({
+                foo: {
+                    bar: $required(42),
+                    '*': $any
+                }
+            }, {
+                foo: {
+                    bar: 'foo',
+                    baz: 'qux'
+                }
+            }), {});
+            $assert(_.omitTypeMismatches([{
+                    foo: $required('number'),
+                    bar: 'number'
+                }], [
+                {
+                    foo: 42,
+                    bar: 42
+                },
+                { foo: 24 },
+                { bar: 42 }
+            ]), [
+                {
+                    foo: 42,
+                    bar: 42
+                },
+                { foo: 24 }
+            ]);
+            $assert(_.omitTypeMismatches({ '*': 'number' }, {
+                foo: 42,
+                bar: 42
+            }), {
+                foo: 42,
+                bar: 42
+            });
+            $assert(_.omitTypeMismatches({ foo: $any }, { foo: 0 }), { foo: 0 });
+            $assert(_.decideType([]), []);
+            $assert(_.decideType(42), 'number');
+            $assert(_.decideType(_.identity), 'function');
+            $assert(_.decideType([
+                { foo: 1 },
+                { foo: 2 }
+            ]), [{ foo: 'number' }]);
+            $assert(_.decideType([
+                { foo: 1 },
+                { bar: 2 }
+            ]), []);
+            $assert(_.decideType({
+                foo: { bar: 1 },
+                foo: { baz: [] }
+            }), {
+                foo: { bar: 'number' },
+                foo: { baz: [] }
+            });
+            $assert(_.decideType({
+                foo: { bar: 1 },
+                foo: { bar: 2 }
+            }), { foo: { bar: 'number' } });
+            $assert(_.decideType({
+                foo: { bar: 1 },
+                bar: { bar: 2 }
+            }), { '*': { bar: 'number' } });
+            if (_.hasOOP) {
+                var Type = $prototype();
+                $assert(_.decideType({ x: new Type() }), { x: Type });
+            }
+        }, function () {
+            _.isMeta = function (x) {
+                return x === $any || $atom.is(x) === true || $required.is(x) === true;
+            };
+            var zip = function (type, value, pred) {
+                var required = Tags.unwrapAll(_.filter2(type, $required.matches));
+                var match = _.nonempty(_.zip2(Tags.unwrapAll(type), value, pred));
+                if (_.isEmpty(required)) {
+                    return match;
+                } else {
+                    var requiredMatch = _.nonempty(_.zip2(required, value, pred));
+                    var allSatisfied = _.values2(required).length === _.values2(requiredMatch).length;
+                    return allSatisfied ? match : _.coerceToEmpty(value);
+                }
+            };
+            var hyperMatch = _.hyperOperator(_.binary, function (type_, value, pred) {
+                var type = Tags.unwrap(type_);
+                if (_.isArray(type)) {
+                    if (_.isArray(value)) {
+                        return zip(_.times(value.length, _.constant(type[0])), value, pred);
+                    } else {
+                        return undefined;
+                    }
+                } else if (_.isStrictlyObject(type) && type['*']) {
+                    if (_.isStrictlyObject(value)) {
+                        return zip(_.extend(_.map2(value, _.constant(type['*'])), _.omit(type, '*')), value, pred);
+                    } else {
+                        return undefined;
+                    }
+                } else {
+                    return zip(type_, value, pred);
+                }
+            });
+            var typeMatchesValue = function (c, v) {
+                var contract = Tags.unwrap(c);
+                return contract === $any || contract === undefined && v === undefined || _.isFunction(contract) && (_.isPrototypeConstructor(contract) ? _.isTypeOf(contract, v) : contract(v) === true) || typeof v === contract || v === contract;
+            };
+            _.mismatches = function (op, contract, value) {
+                return hyperMatch(contract, value, function (contract, v) {
+                    return op(contract, v) ? undefined : contract;
+                });
+            };
+            _.omitMismatches = function (op, contract, value) {
+                return hyperMatch(contract, value, function (contract, v) {
+                    return op(contract, v) ? v : undefined;
+                });
+            };
+            _.typeMismatches = _.partial(_.mismatches, typeMatchesValue);
+            _.omitTypeMismatches = _.partial(_.omitMismatches, typeMatchesValue);
+            _.valueMismatches = _.partial(_.mismatches, function (a, b) {
+                return a === $any || b === $any || a === b;
+            });
+            var unifyType = function (value) {
+                if (_.isArray(value)) {
+                    return _.nonempty([_.reduce(_.rest(value), function (a, b) {
+                            return _.undiff(a, b);
+                        }, _.first(value) || undefined)]);
+                } else if (_.isStrictlyObject(value)) {
+                    var pairs = _.pairs(value);
+                    var unite = _.map(_.reduce(_.rest(pairs), function (a, b) {
+                        return _.undiff(a, b);
+                    }, _.first(pairs) || [
+                        undefined,
+                        undefined
+                    ]), _.nonempty);
+                    return _.isEmpty(unite) || _.isEmpty(unite[1]) ? value : _.object([[
+                            unite[0] || '*',
+                            unite[1]
+                        ]]);
+                } else {
+                    return value;
+                }
+            };
+            _.decideType = function (value) {
+                var operator = _.hyperOperator(_.unary, function (value, pred) {
+                    if (value && value.constructor && value.constructor.$definition) {
+                        return value.constructor;
+                    }
+                    return unifyType(_.map2(value, pred));
+                });
+                return operator(value, function (value) {
+                    if (_.isPrototypeInstance(value)) {
+                        return value.constructor;
+                    } else {
+                        return _.isEmptyArray(value) ? value : typeof value;
+                    }
+                });
+            };
+        });
+    },
+    function (module, exports) {
+        _.json = function (arg) {
+            if (typeof arg === 'string') {
+                try {
+                    return JSON.parse(arg);
+                } catch (e) {
+                    return {};
+                }
+            } else {
+                return JSON.stringify(arg);
+            }
+        };
+        _.deferTest([
+            'type',
+            'stringify'
+        ], function () {
+            if (_.hasTags) {
+                var complex = {
+                    foo: $constant($get({ foo: 7 }, 1)),
+                    nil: null,
+                    nope: undefined,
+                    fn: _.identity,
+                    bar: [{
+                            baz: 'garply',
+                            qux: [
+                                1,
+                                2,
+                                3
+                            ]
+                        }]
+                };
+                complex.bar[0].bar = complex.bar;
+                var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }';
+                var Proto = $prototype({});
+                $assert(_.stringify(Proto), $platform.NodeJS ? 'Proto ()' : '<prototype>');
+                $assert(_.stringify(undefined), 'undefined');
+                $assert(_.stringify(123), '123');
+                $assert(_.stringify(complex, { pretty: false }), renders);
+            }
+            $assert(_.pretty({
+                array: [
+                    'foo',
+                    'bar',
+                    'baz'
+                ],
+                more: 'qux',
+                evenMore: 42
+            }), [
+                '{    array: [ "foo",',
+                '              "bar",',
+                '              "baz"  ],',
+                '      more:   "qux",',
+                '  evenMore:    42       }'
+            ].join('\n'));
+            var obj = {};
+            $assert(_.stringify([
+                obj,
+                obj,
+                obj
+            ]), '[{  }, <ref:1>, <ref:1>]');
+            $assert(_.stringify({ foo: 1 }, {
+                json: true,
+                pretty: true
+            }), '{ "foo": 1 }');
+        }, function () {
+            _.alignStringsRight = function (strings) {
+                var lengths = strings.map(_.count);
+                var max = _.max(lengths);
+                return [
+                    lengths,
+                    strings
+                ].zip(function (ln, str) {
+                    return ' '.repeats(max - ln) + str;
+                });
+            };
+            _.bullet = function (bullet, str) {
+                var indent = ' '.repeats(bullet.length);
+                return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
+                    return i === 0 ? bullet + line : indent + line;
+                }));
+            };
+            _.stringifyOneLine = function (x, cfg) {
+                return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
+            };
+            _.pretty = function (x, cfg) {
+                return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
+            };
+            _.stringify = function (x, cfg) {
+                cfg = cfg || {};
+                var measured = _.stringifyImpl(x, [], [], 0, cfg);
+                return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
+            };
+            _.stringifyPrototype = function (x) {
+                if ($platform.NodeJS && x.$meta) {
+                    var name = '';
+                    x.$meta(function (values) {
+                        name = values.name;
+                    });
+                    return name && name + ' ()';
+                } else
+                    return '<prototype>';
+            };
+            _.builtInTypes = {
+                'Event': { target: $any },
+                'MutationEvent': {
+                    target: $any,
+                    attrName: $any,
+                    prevValue: $any
+                },
+                'Range': {
+                    startContainer: $any,
+                    startOffset: $any,
+                    endContainer: $any,
+                    endOffset: $any
+                },
+                'ClientRect': {
+                    left: $any,
+                    top: $any,
+                    right: $any,
+                    bottom: $any,
+                    width: $any,
+                    height: $any
+                }
+            };
+            _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
+                var customFormat = cfg.formatter && cfg.formatter(x);
+                if (customFormat) {
+                    return customFormat;
+                }
+                if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
+                    x = _.asArray(x);
+                }
+                if (x === $global) {
+                    return '$global';
+                } else if (parents.indexOf(x) >= 0) {
+                    return cfg.pure ? undefined : '<cyclic>';
+                } else if (siblings.indexOf(x) >= 0) {
+                    return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
+                } else if (x === undefined) {
+                    return 'undefined';
+                } else if (x === null) {
+                    return 'null';
+                } else if (_.isFunction(x)) {
+                    return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
+                } else if (typeof x === 'string') {
+                    return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 60));
+                } else if (_.isTypeOf(Tags, x)) {
+                    return _.reduce(Tags.get(x), function (memo, value, tag) {
+                        return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
+                    }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
+                } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
+                    return x.toString();
+                } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
+                    var builtInValue = _.find2(_.builtInTypes, function (schema, name) {
+                        return $global[name] && x instanceof $global[name] && name + ' ' + _.stringifyOneLine(_.omitTypeMismatches(schema, x)) || false;
+                    });
+                    if (builtInValue) {
+                        return builtInValue;
+                    } else {
+                        if (x instanceof Set) {
+                            x = x.asArray;
+                        }
+                        var isArray = _.isArray(x);
+                        var pretty = cfg.pretty || false;
+                        if ($platform.Browser) {
+                            if (_.isTypeOf(Element, x)) {
+                                return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
+                            } else if (_.isTypeOf(Text, x)) {
+                                return '@' + x.wholeText.limitedTo(20);
+                            }
+                        }
+                        if (x.toJSON) {
+                            return _.quoteWith('"', x.toJSON());
+                        }
+                        if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 60))) {
+                            return isArray ? '<array[' + x.length + ']>' : '<object>';
+                        }
+                        var parentsPlusX = parents.concat([x]);
+                        siblings.push(x);
+                        var values = _.pairs(x);
+                        var oneLine = !pretty || values.length < 2;
+                        var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
+                        var quoteKeys = cfg.json ? '""' : '';
+                        if (pretty) {
+                            values = _.values(x);
+                            var printedKeys = _.alignStringsRight(_.keys(x).map(_.quotesWith(quoteKeys).then(_.appends(': '))));
+                            var printedValues = values.map(impl);
+                            var leftPaddings = printedValues.map(function (x, i) {
+                                return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
+                            });
+                            var maxLeftPadding = _.max(leftPaddings);
+                            var indentedValues = [
+                                leftPaddings,
+                                printedValues
+                            ].zip(function (padding, x) {
+                                return ' '.repeats(maxLeftPadding - padding) + x;
+                            });
+                            var internals = isArray ? indentedValues : [
+                                printedKeys,
+                                indentedValues
+                            ].zip(_.bullet);
+                            var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
+                            var lines = printed.split('\n');
+                            return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
+                        }
+                        return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
+                            return (isArray ? '' : kv[0].quote(quoteKeys) + ': ') + impl(kv[1]);
+                        })));
+                    }
+                } else if (_.isDecimal(x) && cfg.precision > 0) {
+                    return _.toFixed(x, cfg.precision);
+                } else {
+                    return x + '';
+                }
+            };
+        });
+        _.toFixed = function (x, precision) {
+            return x && x.toFixed && x.toFixed(precision) || undefined;
+        };
+        _.toFixed2 = function (x) {
+            return _.toFixed(x, 2);
+        };
+        _.toFixed3 = function (x) {
+            return _.toFixed(x, 3);
+        };
+    },
+    function (module, exports) {
+        _.deferTest([
+            'Array',
+            'squash'
+        ], function () {
+            $assert([
+                [
+                    'all',
+                    'your',
+                    'to',
+                    'us'
+                ],
+                [
+                    'your',
+                    'belong',
+                    'us'
+                ],
+                [
+                    'base',
+                    'belong',
+                    'to'
+                ],
+                [
+                    'your',
+                    'base'
+                ]
+            ].squash(), [
+                'all',
+                'your',
+                'base',
+                'belong',
+                'to',
+                'us'
+            ]);
+        }, function () {
+            Array.prototype.squash = function (cfg) {
+                cfg = cfg || {};
+                var key = cfg.key || _.identity, sort = cfg.sort || undefined;
+                var head = {
+                    key: null,
+                    next: {},
+                    depth: {}
+                };
+                var nodes = {};
+                _.each(this, function (arr) {
+                    for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
+                        var item = arr[i];
+                        var k = key(item);
+                        node = nodes[k] || (nodes[k] = {
+                            key: k,
+                            item: item,
+                            next: {},
+                            depth: {}
+                        });
+                        if (prev) {
+                            prev.next[k] = node;
+                            prev.depth[k] = 0;
+                        }
+                    }
+                });
+                var decyclize = function (visited, node, prev, depth) {
+                    depth = depth || 0;
+                    visited[node.key] = true;
+                    node.next = _.filter2(_.values(node.next), function (next) {
+                        if (next.key in visited) {
+                            return false;
+                        } else {
+                            next = decyclize(visited, next, node);
+                            depth = Math.max(depth, node.depth[next.key]);
+                            return next;
+                        }
+                    });
+                    if (prev) {
+                        prev.depth[node.key] = Math.max(prev.depth[node.key] || 0, depth + 1);
+                    }
+                    delete visited[node.key];
+                    return node;
+                };
+                var ordered = function (a, b) {
+                    return a === b || _.some(a.next, function (aa) {
+                        return ordered(aa, b);
+                    });
+                };
+                var flatten = function (node) {
+                    if (!node)
+                        return [];
+                    var next = (node.next || []).sort(function (a, b) {
+                        return (node.depth[a.key] || 0) < (node.depth[b.key] || 0);
+                    });
+                    if (false) {
+                        log.gg(node.key);
+                        log.pp(next.map(function (next) {
+                            return next.key + ' ' + node.depth[next.key];
+                        }));
+                    }
+                    return [node].concat(flatten(_.reduce(next, function (a, b) {
+                        if (a === b) {
+                            return a;
+                        } else if (ordered(b, a)) {
+                            b.next.push(a);
+                            return b;
+                        } else {
+                            a.next.push(b);
+                            return a;
+                        }
+                    })));
+                };
+                return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
+            };
+        });
+        _.deferTest([
+            'DAG',
+            'squash'
+        ], function () {
+            var modules = {
+                'tier1': { requires: [] },
+                'tier11': { requires: ['tier1'] },
+                'tier2': { requires: ['tier0'] },
+                'tier111': {
+                    requires: [
+                        'tier12',
+                        'tier100'
+                    ]
+                },
+                'tier12': {
+                    requires: [
+                        'tier0',
+                        'tier11',
+                        'tier2'
+                    ]
+                },
+                'tier100': { requires: ['tier10'] },
+                'tier0': { requires: [] },
+                'tier10': {
+                    requires: [
+                        'tier0',
+                        'tier2'
+                    ]
+                },
+                'root': {
+                    requires: [
+                        'tier2',
+                        'tier111'
+                    ]
+                }
+            };
+            $assert(DAG.squash('root', {
+                nodes: function (x) {
+                    return modules[x].requires;
+                }
+            }), [
+                'tier0',
+                'tier1',
+                'tier11',
+                'tier2',
+                'tier12',
+                'tier10',
+                'tier100',
+                'tier111'
+            ]);
+        }, function () {
+            DAG = function (cfg) {
+                this.cfg = cfg || {}, this.nodes = cfg.nodes || _.noop;
+            }, DAG.prototype.each = function (N, fn, prev, visited) {
+                visited = visited || new Set();
+                if (!visited.has(N)) {
+                    visited.add(N);
+                    var self = this, nodes = this.nodes(N) || [], stop = fn.call(this, N, {
+                            nodes: nodes,
+                            prev: prev,
+                            visited: visited
+                        });
+                    if (stop !== true) {
+                        nodes.forEach(function (NN) {
+                            self.each(NN, fn, N, visited);
+                        });
+                    }
+                }
+                ;
+                return visited;
+            }, DAG.prototype.edges = function (N) {
+                var edges = [];
+                this.each(N, function (N, context) {
+                    context.nodes.concat(N).reduce(function (A, B) {
+                        edges.push([
+                            A,
+                            B
+                        ]);
+                        return B;
+                    });
+                });
+                return edges;
+            }, DAG.prototype.squash = function (node0) {
+                return this.edges(node0).squash(this.cfg).remove(node0);
+            };
+            DAG.squash = function (node0, cfg) {
+                return new DAG(cfg).squash(node0);
+            };
+        });
+    },
+    function (module, exports) {
+        _.cps = function () {
+            return _.cps.sequence.apply(null, arguments);
+        };
+        _.deferTest([
+            'cps',
+            'apply'
+        ], function () {
+        }, function () {
+            _.cps.apply = function (fn, this_, args_, then) {
+                var args = _.asArray(args_);
+                var lastArgN = _.numArgs(fn) - 1;
+                var thenArg = args[lastArgN];
+                args[lastArgN] = function () {
+                    then.call(this, arguments, thenArg);
+                };
+                return fn.apply(this_, args);
+            };
+        });
+        _.deferTest([
+            'cps',
+            'each'
+        ], function () {
+            var data = [
+                'foo',
+                'bar',
+                'baz'
+            ];
+            var currentIndex = 0;
+            _.cps.each(data, function (item, itemIndex, then, complete, arrayWeTraverse) {
+                $assert(item === data[itemIndex]);
+                $assert(itemIndex === currentIndex++);
+                $assert(arrayWeTraverse === data);
+                $assert(_.isFunction(then));
+                $assert(_.isFunction(complete));
+                then();
+            }, function () {
+                $assert(currentIndex === data.length);
+            });
+            var data2 = [];
+            _.cps.each(data, function (item, then) {
+                data2.push(item);
+                then();
+            }, function () {
+                $assert(data, data2);
+            });
+            var data3 = [];
+            _.cps.each(data, function (item, i, then, break_) {
+                data3.push(item);
+                break_();
+            }, function () {
+                $assert(data3, ['foo']);
+            });
+            $assertEveryCalled(function (items__3, final__1) {
+                var data2 = {
+                    'foo': 1,
+                    'bar': 2,
+                    'baz': 3
+                };
+                _.cps.each(data2, function (item, name, then) {
+                    $assert(item === data2[name]);
+                    items__3();
+                    then();
+                }, function () {
+                    final__1();
+                });
+            });
+            $assertEveryCalled(function (items__1, final__1) {
+                _.cps.each('foo', function (item, name, then) {
+                    $assert([
+                        item,
+                        name
+                    ], [
+                        'foo',
+                        undefined
+                    ]);
+                    items__1();
+                    then();
+                }, function () {
+                    final__1();
+                });
+            });
+            $assertEveryCalled(function (final__1) {
+                _.cps.each(undefined, function () {
+                    $fail;
+                }, function () {
+                    final__1();
+                });
+            });
+        }, function () {
+            _.extend(_.cps, {
+                each: function (obj, elem_, complete_, index_, length_, keys_) {
+                    var complete = complete_ || _.noop;
+                    var elem = function (x, k, next) {
+                        if (_.numArgs(elem_) === 2) {
+                            elem_(x, next, complete, obj);
+                        } else {
+                            elem_(x, k, next, complete, obj);
+                        }
+                    };
+                    if (_.isEmpty(obj)) {
+                        complete();
+                    } else if (_.isScalar(obj)) {
+                        elem(obj, undefined, complete);
+                    } else {
+                        var index = index_ || 0;
+                        var keys = index === 0 ? obj.length === undefined ? _.keys(obj) : undefined : keys_;
+                        var length = index === 0 ? keys ? keys.length : obj.length : length_;
+                        if (index >= (length || 0)) {
+                            complete();
+                        } else {
+                            var key = keys ? keys[index] : index;
+                            elem(obj[key], key, arguments.callee.bind(this, obj, elem_, complete_, index + 1, length, keys));
+                        }
+                    }
+                }
+            });
+        });
+        _.deferTest([
+            'cps',
+            'map'
+        ], function () {
+            _.cps.map([
+                7,
+                6,
+                5
+            ], function (x, then) {
+                then(x + 1);
+            }, function (result) {
+                $assert(result, [
+                    8,
+                    7,
+                    6
+                ]);
+            });
+            _.cps.map([
+                7,
+                6,
+                5
+            ], function (x, i, then) {
+                then(x + 1);
+            }, function (result) {
+                $assert(result, [
+                    8,
+                    7,
+                    6
+                ]);
+            });
+        }, function () {
+            _.extend(_.cps, {
+                map: function (obj, iter, complete) {
+                    var result = _.isArray(obj) ? [] : {};
+                    _.cps.each(obj, _.numArgs(iter) == 2 ? function (x, i, next) {
+                        iter(x, function (y) {
+                            result[i] = y;
+                            next();
+                        });
+                    } : function (x, i, next) {
+                        iter(x, i, function (y) {
+                            result[i] = y;
+                            next();
+                        });
+                    }, function () {
+                        complete(result);
+                    });
+                }
+            });
+        });
+        _.deferTest([
+            'cps',
+            'find'
+        ], function () {
+            _.cps.find([
+                7,
+                6,
+                5
+            ], function (x, then) {
+                then(x % 3 === 0);
+            }, function (x, key) {
+                $assert([
+                    x,
+                    key
+                ], [
+                    6,
+                    1
+                ]);
+            });
+            _.cps.find({
+                foo: 7,
+                bar: 6,
+                baz: 5
+            }, function (x, key, then) {
+                then(key === 'baz');
+            }, function (x, key) {
+                $assert([
+                    x,
+                    key
+                ], [
+                    5,
+                    'baz'
+                ]);
+            });
+            _.cps.find([
+                7,
+                6,
+                5
+            ], function (x, then) {
+                then(x % 3 === 0 ? 'yeah' : false);
+            }, function (x, key) {
+                $assert([
+                    x,
+                    key
+                ], [
+                    'yeah',
+                    1
+                ]);
+            });
+            _.cps.find([
+                7,
+                6,
+                5
+            ], function (x, key, then) {
+                then(false);
+            }, function (x) {
+                $assert(x, undefined);
+            });
+        }, function () {
+            _.extend(_.cps, {
+                find: function (obj, pred, complete) {
+                    var passKey = _.numArgs(pred) !== 2;
+                    _.cps.each(obj, function (x, key, next, complete) {
+                        var take = function (match) {
+                            if (match === false) {
+                                next();
+                            } else {
+                                complete(match === true ? x : match, key);
+                            }
+                        };
+                        if (passKey) {
+                            pred(x, key, take);
+                        } else {
+                            pred(x, take);
+                        }
+                    }, complete);
+                }
+            });
+        });
+        _.deferTest([
+            'cps',
+            'memoize'
+        ], function () {
+            $assertEveryCalledOnce(function (noMoreThanOne) {
+                var plusOne = _.cps.memoize(function (x, then) {
+                    noMoreThanOne();
+                    then(x + 1);
+                });
+                plusOne(2, function (x) {
+                    $assert(x === 3);
+                });
+                plusOne(2, function (x) {
+                    $assert(x === 3);
+                });
+            });
+        }, function () {
+            _.extend(_.cps, {
+                memoize: function (fn) {
+                    return _.barrier ? _.cps._betterMemoize(fn) : _.cps._poorMemoize(fn);
+                },
+                _poorMemoize: function (fn) {
+                    var cache = {};
+                    return function (value, then) {
+                        if (value in cache) {
+                            then(cache[value]);
+                        } else {
+                            fn.call(this, value, function (result) {
+                                then(cache[value] = result);
+                            });
+                        }
+                    };
+                },
+                _betterMemoize: function (fn) {
+                    var cache = {};
+                    switch (_.numArgs(fn)) {
+                    case 1:
+                        return function (then) {
+                            if (!cache.already) {
+                                fn.call(this, cache = _.barrier());
+                            }
+                            cache(then);
+                        };
+                    case 2:
+                        cache = {};
+                        return function (value, then) {
+                            if (!(value in cache)) {
+                                fn.call(this, value, cache[value] = _.barrier());
+                            }
+                            cache[value](then);
+                        };
+                    default:
+                        throw new Error('_.cps.memoize: unsupported number of arguments');
+                    }
+                }
+            });
+        });
+        _.deferTest([
+            'cps',
+            'reduce'
+        ], function () {
+            $assertEveryCalled(function (mkay__2) {
+                var input = [
+                    1,
+                    2,
+                    3
+                ];
+                var sums = function (a, b, then) {
+                    then(a + b);
+                };
+                var check = function (result) {
+                    $assert(result === 6);
+                    mkay__2();
+                };
+                _.cps.reduce(input, sums, check);
+                _.cps.reduce([], sums, check, 6);
+            });
+        }, function () {
+            var reduce = function (array, op, then, memo, index) {
+                if (!array || index >= (array.length || 0)) {
+                    then(memo);
+                } else {
+                    op(memo, array[index], function (result) {
+                        reduce(array, op, then, result, index + 1);
+                    });
+                }
+            };
+            _.cps.reduce = function (array, op, then, memo) {
+                if (arguments.length < 4) {
+                    reduce(array, op, then, array[0], 1);
+                } else {
+                    reduce(array, op, then, memo, 0);
+                }
+            };
+        });
+        _.deferTest([
+            'cps',
+            'noop, identity, constant'
+        ], function () {
+            $assertEveryCalled(function (noop, identity, const1, const2) {
+                _.cps.noop(1, 2, 3, function () {
+                    $assert(arguments.length === 0);
+                    noop();
+                });
+                _.cps.identity(1, 2, 3, function () {
+                    $assert([
+                        1,
+                        2,
+                        3
+                    ], _.asArray(arguments));
+                    identity();
+                });
+                _.cps.constant(3)(function (_3) {
+                    $assert(_3 === 3);
+                    const1();
+                });
+                _.cps.constant(1, 2)(function (_1, _2) {
+                    $assert(_1 === 1);
+                    $assert(_2 === 2);
+                    const2();
+                });
+            });
+        }, function () {
+            _.extend(_.cps, {
+                noop: $restArg(function () {
+                    return _.last(arguments).call(this);
+                }),
+                identity: $restArg(function () {
+                    var args = _.initial(arguments), then = _.last(arguments);
+                    if (then) {
+                        return then.apply(this, args);
+                    }
+                }),
+                constant: $restArg(function () {
+                    var args = arguments;
+                    return function () {
+                        return _.last(arguments).apply(this, args);
+                    };
+                })
+            });
+        });
+        _.deferTest([
+            'cps',
+            'arity / resultArity'
+        ], function () {
+            var returnMyArgs = _.cps.identity;
+            var put123 = function (fn) {
+                return _.partial(fn, 1, 2, 3);
+            };
+            $assertCPS(put123(returnMyArgs), [
+                1,
+                2,
+                3
+            ]);
+            $assertCPS(put123(_.cps.arity2(returnMyArgs)), [
+                1,
+                2
+            ]);
+            $assertCPS(put123(_.cps.arity1(returnMyArgs)), [1]);
+            $assertCPS(put123(_.cps.arity0(returnMyArgs)));
+            var return123 = function (then) {
+                then(1, 2, 3);
+            };
+            $assertCPS(return123, [
+                1,
+                2,
+                3
+            ]);
+            $assertCPS(_.cps.resultArity2(return123), [
+                1,
+                2
+            ]);
+            $assertCPS(_.cps.resultArity1(return123), [1]);
+            $assertCPS(_.cps.resultArity0(return123));
+        }, function () {
+            _.cps.arity0 = function (fn) {
+                return function () {
+                    fn.call(this, _.last(arguments));
+                };
+            };
+            _.cps.arity1 = function (fn) {
+                return function () {
+                    fn.call(this, arguments[0], _.last(arguments));
+                };
+            };
+            _.cps.arity2 = function (fn) {
+                return function () {
+                    fn.call(this, arguments[0], arguments[1], _.last(arguments));
+                };
+            };
+            _.cps.transformResult = function (operator, fn) {
+                return function (args) {
+                    fn.apply(this, _.initial(arguments).concat(operator(_.last(arguments))));
+                };
+            };
+            _.cps.resultArity2 = _.partial(_.cps.transformResult, _.arity2);
+            _.cps.resultArity1 = _.partial(_.cps.transformResult, _.arity1);
+            _.cps.resultArity0 = _.partial(_.cps.transformResult, _.arity0);
+        });
+        _.deferTest([
+            'cps',
+            'sequence / compose'
+        ], function () {
+            $assertEveryCalled(function (mkay__4) {
+                var makeCookies = function (whatCookies, then) {
+                    then('cookies ' + whatCookies);
+                };
+                var eatCookies = function (cookies, then) {
+                    then('nice ' + cookies);
+                };
+                var check = function (result) {
+                    $assert(result, 'nice cookies from shit');
+                    mkay__4();
+                };
+                _.cps.sequence(makeCookies, eatCookies, check)('from shit');
+                _.cps.sequence([
+                    makeCookies,
+                    eatCookies,
+                    check
+                ])('from shit');
+                _.cps(makeCookies, eatCookies, check)('from shit');
+                _.cps.compose(check, eatCookies, makeCookies)('from shit');
+            });
+        }, function () {
+            _.cps.sequence = $restArg(function (arr) {
+                var functions = _.isArray(arr) && arr || _.asArray(arguments);
+                return _.reduceRight(functions, function (a, b) {
+                    return function () {
+                        return b.apply(this, _.asArray(arguments).concat(a));
+                    };
+                }, _.cps.identity);
+            });
+            _.cps.compose = $restArg(function (arr) {
+                var functions = _.isArray(arr) && arr || _.asArray(arguments);
+                return _.cps.sequence(functions.slice().reverse());
+            });
+        });
+        _.deferTest([
+            'cps',
+            'trySequence'
+        ], function () {
+            var testErr = new Error();
+            $assertEveryCalledOnce(function (mkay) {
+                _.cps.trySequence([
+                    _.cps.constant('foo'),
+                    _.appends('bar').asContinuation
+                ], function (result) {
+                    $assert(result, 'foobar');
+                    mkay();
+                });
+            });
+            $assertEveryCalledOnce(function (mkay) {
+                _.cps.trySequence([
+                    function () {
+                        throw testErr;
+                    },
+                    function () {
+                        $fail;
+                    }
+                ], function (result) {
+                    $assert(result === testErr);
+                    mkay();
+                });
+            });
+            $assertEveryCalledOnce(function (mkay) {
+                _.cps.trySequence([
+                    function (then) {
+                        then(testErr);
+                    },
+                    function () {
+                        $fail;
+                    }
+                ], function (result) {
+                    $assert(result === testErr);
+                    mkay();
+                });
+            });
+            $assertEveryCalledOnce(function (mkay) {
+                _.cps.trySequence([
+                    function (then) {
+                        then(testErr);
+                    },
+                    function () {
+                        $fail;
+                    }
+                ], function (result) {
+                    $fail;
+                }, function (err) {
+                    $assert(err === testErr);
+                    mkay();
+                });
+            });
+        }, function () {
+            _.cps.trySequence = function (functions, then, err) {
+                _.reduceRight(functions, function (a, b) {
+                    return function (e) {
+                        if (_.isTypeOf(Error, e)) {
+                            return (err || then)(e);
+                        } else {
+                            try {
+                                return b.apply(this, _.asArray(arguments).concat(a));
+                            } catch (e) {
+                                return (err || then)(e);
+                            }
+                        }
+                    };
+                }, then)();
+            };
+        });
+    },
+    function (module, exports) {
+        _([
+            'method',
+            'property',
+            'flipped',
+            'forceOverride'
+        ]).each(_.defineTagKeyword);
+        $extensionMethods = function (Type, methods) {
+            _.each(methods, function (tags, name) {
+                var fn = Tags.unwrap(tags);
+                if (!(name in _)) {
+                    _[name] = _[name] || fn;
+                }
+                if (!tags.$method && (tags.$property || _.oneArg(fn))) {
+                    if (!(name in Type.prototype) || tags.$forceOverride) {
+                        _.defineHiddenProperty(Type.prototype, name, function () {
+                            return fn(this);
+                        });
+                    }
+                } else if (!tags.$property) {
+                    if (!(name in Type.prototype) || tags.$forceOverride) {
+                        Type.prototype[name] = _.asMethod(tags.$flipped ? _.flip(fn) : fn);
+                    }
+                } else {
+                    throw new Error('$extensionMethods: crazy input, unable to match');
+                }
+            });
+        };
+    },
+    function (module, exports) {
+        _.tests.Function = {
+            '$ for partial application': function () {
+                var sum = function (a, b) {
+                    return a + b;
+                };
+                $assert(sum.$('foo')('bar'), 'foobar');
+                $assert(sum.$$('foo')('bar'), 'barfoo');
+            },
+            'Fn.callsWith': function () {
+                $assert(42, function (a, b, c) {
+                    $assert([
+                        a,
+                        b,
+                        c
+                    ], [
+                        1,
+                        2,
+                        3
+                    ]);
+                    return 42;
+                }.callsWith(1, 2)(3));
+            },
+            'asContinuation': function () {
+                $assertEveryCalled(function (mkay__2) {
+                    var twoPlusTwo = function () {
+                        return 2 + 2;
+                    };
+                    var shouldBeFour = function (result) {
+                        $assert(result == 4);
+                        mkay__2();
+                    };
+                    twoPlusTwo.asContinuation(shouldBeFour);
+                    _.asContinuation(twoPlusTwo)(shouldBeFour);
+                });
+            },
+            'postpone': function (testDone) {
+                $assertEveryCalledOnce($async(function (mkay1, mkay2) {
+                    var testSecondCall = false;
+                    var callMeLater = function () {
+                        if (testSecondCall) {
+                            mkay2();
+                            testDone();
+                        } else {
+                            mkay1();
+                            testSecondCall = true;
+                            callMeLater.postpone();
+                        }
+                    };
+                    callMeLater.postpone();
+                    callMeLater.postpone();
+                }));
+            },
+            'postponed': function (testDone) {
+                $assertEveryCalledOnce($async(function (mkay) {
+                    (function (_42) {
+                        $assert(this, 'foo');
+                        $assert(42, _42);
+                        mkay();
+                    }.postponed.call('foo', 42));
+                }), testDone);
+            },
+            'postponed args': function (done) {
+                var xs = [];
+                var f = function (x) {
+                    xs.push(x);
+                };
+                f.postponed(42);
+                f.postponed(43);
+                _.delay(function () {
+                    $assert(xs, [43]);
+                    done();
+                }, 1);
+            },
+            'delayed': function (testDone) {
+                var eat42 = function (_42, then) {
+                    $assert(_42, 42);
+                    then();
+                };
+                var eat42_after5ms = eat42.delayed(5);
+                $assertEveryCalledOnce($async(function (mkay) {
+                    eat42_after5ms(42, function () {
+                        mkay();
+                    });
+                }), testDone);
+            }
+        };
+        $extensionMethods(Function, {
+            $: $method(_.partial),
+            $$: $method(_.tails),
+            bind: _.bind,
+            partial: _.partial,
+            calls: _.bind,
+            tails: _.tails,
+            tails2: _.tails2,
+            tails3: _.tails3,
+            applies: _.applies,
+            compose: _.compose,
+            then: _.then,
+            flip: _.flip,
+            with: _.flipN,
+            flip2: _.flip2,
+            flip3: _.flip3,
+            asFreeFunction: _.asFreeFunction,
+            asMethod: _.asMethod,
+            callsWith: _.callsTo,
+            tailsWith: _.tailsTo,
+            higherOrder: _.higherOrder,
+            returns: function (fn, returns) {
+                return function () {
+                    fn.apply(this, arguments);
+                    return returns;
+                };
+            },
+            asContinuation: function (f) {
+                return $restArg(function () {
+                    _.last(arguments)(f.apply(this, _.initial(arguments)));
+                });
+            },
+            wraps: function (f, w) {
+                f._wrapped = _.withSameArgs(f, w);
+                return f;
+            },
+            wrapped: function (f) {
+                return f._wrapped || f;
+            },
+            original: function (f) {
+                while (f && f._wrapped) {
+                    f = f._wrapped;
+                }
+                return f;
+            },
+            arity0: _.arity0,
+            arity1: _.arity1,
+            arity2: _.arity2,
+            arity3: _.arity3,
+            or: _.or,
+            and: _.and,
+            not: _.not,
+            new: _.higherOrder(_.new),
+            each: function (fn, obj) {
+                return _.each2(obj, fn);
+            },
+            map: function (fn, obj) {
+                return _.map2(obj, fn);
+            },
+            oneShot: function (fn) {
+                var called = false;
+                return function () {
+                    if (!called) {
+                        called = true;
+                        return fn.apply(this, arguments);
+                    }
+                };
+            },
+            memoized: _.memoize,
+            throttled: _.throttle,
+            debounced: function (func, wait, immediate) {
+                var timestamp, timeout, result, args, context;
+                var later = function () {
+                    var last = Date.now() - timestamp;
+                    if (last < wait && last > 0) {
+                        timeout = setTimeout(later, wait - last);
+                    } else {
+                        timeout = null;
+                        if (!immediate) {
+                            result = func.apply(context, args);
+                            if (!timeout) {
+                                context = args = null;
+                            }
                         }
                     }
                 };
-            })
-        });
-        return assertion.run().finally(function (e, x) {
-            Testosterone.currentAssertion = self;
-            if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
-                return assertion.location.sourceReady.promise.then(function (src) {
-                    log.red(log.config({
-                        location: assertion.location,
-                        where: assertion.location
-                    }), src);
-                    assertion.evalLogCalls();
-                    return src;
-                });
+                var debouncedFn = function () {
+                    context = this;
+                    args = arguments;
+                    timestamp = Date.now();
+                    var callNow = immediate && !timeout;
+                    if (!timeout) {
+                        timeout = setTimeout(later, wait);
+                    }
+                    if (callNow) {
+                        result = func.apply(context, args);
+                        context = args = null;
+                    }
+                    return result;
+                };
+                debouncedFn.cancel = function () {
+                    if (timeout) {
+                        clearTimeout(timeout);
+                        timeout = null;
+                    }
+                };
+                debouncedFn.callImmediately = function () {
+                    debouncedFn.cancel();
+                    func.apply(context, args);
+                };
+                return debouncedFn;
+            },
+            postpone: $method(function (fn) {
+                fn.postponed.apply(null, arguments);
+            }),
+            postponed: function (fn) {
+                return function () {
+                    var shouldPostpone = !fn._postponed;
+                    fn._postponed = _.asArray(arguments);
+                    fn._postponedThis = this;
+                    if (shouldPostpone) {
+                        _.delay(function () {
+                            var args_ = fn._postponed;
+                            var this_ = fn._postponedThis;
+                            fn._postponed = undefined;
+                            fn._postponedThis = undefined;
+                            fn.apply(this_, args_);
+                        });
+                    }
+                };
+            },
+            delay: _.delay,
+            delayed: function (fn, time) {
+                return function () {
+                    var args = arguments, context = this;
+                    _.delay(function () {
+                        fn.apply(context, args);
+                    }, time);
+                };
             }
-        }).then(function (src) {
-            if (assertion.failed && self.canFail) {
-                self.failedAssertions.push(assertion);
+        });
+        _.tests.Function.catches = function () {
+            $assert('yo', _.constant('yo').catches($fails)(), _.identity.catches($fails)('yo'), _.throwsError('xx').catches('yo')());
+            $assertThrows(function () {
+                _.constant('yo').catches(function () {
+                    $assert('catch handler shoudnt work on passed continuations');
+                }, _.throwsError('xx'))();
+            });
+            $assert(function (x) {
+                throw x;
+            }.catches(_.appends('+error_case'), _.appends('+no_error_case'), _.appends('+finally'))('foo'), 'foo+error_case+finally');
+            $assertMatches(_.throwError.catches()('yo'), { message: 'yo' });
+            $assert(_.catches(_.throwsError(42), $assertMatches.$({ message: 42 }).returns('yo'))(), 'yo');
+            $assertCPS(_.constant('yo').catches($fails), 'yo');
+        };
+        $extensionMethods(Function, {
+            catch_: function (fn, catch_, then, finally_) {
+                return fn.catches(catch_, then)();
+            },
+            catches: function (fn, catch_, then, finally_) {
+                var args = arguments.length;
+                catch_ = args > 1 ? _.coerceToFunction(catch_) : _.identity;
+                then = args > 2 ? _.coerceToFunction(then) : _.identity;
+                finally_ = args > 3 ? _.coerceToFunction(finally_) : _.identity;
+                return function () {
+                    var result = undefined, catched = false;
+                    try {
+                        result = fn.apply(this, arguments);
+                    } catch (e) {
+                        result = catch_(e);
+                        catched = true;
+                    }
+                    if (!catched) {
+                        result = then(result);
+                    }
+                    return finally_(result);
+                };
             }
         });
     },
-    canFail: $property(function () {
-        return !this.failed && !this.shouldFail;
-    }),
-    fail: function () {
-        this.failed = true;
-        this.finalize();
-    },
-    assertionStack: $property(function () {
-        var result = [], a = this;
-        do {
-            result.push(a);
-            a = a.mother;
-        } while (a);
-        return result;
-    }),
-    onException: function (e) {
-        if (this.canFail || this.verbose) {
-            if (_.isAssertionError(e)) {
-                if ('notMatching' in e) {
-                    var notMatching = _.coerceToArray(e.notMatching);
-                    if (e.asColumns) {
-                        log.orange(log.columns(_.map(notMatching, function (obj) {
-                            return [
-                                '\t\u2022 ' + _.keys(obj)[0],
-                                _.stringify(_.values(obj)[0])
-                            ];
-                        })).join('\n'));
-                    } else {
-                        var cases = _.map(notMatching, log.impl.stringify.arity1.then(_.bullet.$('\t\u2022 ')));
-                        var common = _.reduce2(cases, _.longestCommonSubstring) || '';
-                        if (common.length < 4) {
-                            common = undefined;
+    function (module, exports) {
+        _.deferTest('Array extensions', function () {
+            var arr = [
+                1,
+                3,
+                2,
+                3,
+                3,
+                4,
+                3
+            ];
+            $assert([
+                arr.first,
+                arr.second,
+                arr.top,
+                arr.last
+            ], [
+                1,
+                3,
+                3,
+                3
+            ]);
+            $assert(arr.rest, [
+                3,
+                2,
+                3,
+                3,
+                4,
+                3
+            ]);
+            $assert(arr.take(4), [
+                1,
+                3,
+                2,
+                3
+            ]);
+            $assert([
+                arr.contains(4),
+                arr.contains(9)
+            ], [
+                true,
+                false
+            ]);
+            $assert(arr.lastIndex, 6);
+            $assert(arr.copy, arr);
+            $assert(arr.copy !== arr);
+            $assert(arr.remove(3), [
+                1,
+                2,
+                4
+            ]);
+            $assert(arr, [
+                1,
+                2,
+                4
+            ]);
+            $assert(arr.removeAll(), []);
+            $assert(arr, []);
+            $assert([
+                'a',
+                'b',
+                'c'
+            ].removeAt(1), [
+                'a',
+                'c'
+            ]);
+            $assert([
+                'a',
+                'c'
+            ].insertAt('b', 1), [
+                'a',
+                'b',
+                'c'
+            ]);
+            $assert([
+                0,
+                1,
+                2
+            ].itemAtWrappedIndex(4) === 1);
+            arr = [
+                1,
+                2,
+                3
+            ];
+            $assert(arr.reversed, [
+                3,
+                2,
+                1
+            ]);
+            $assert(arr, [
+                1,
+                2,
+                3
+            ]);
+            $assert([
+                [1],
+                [
+                    [2],
+                    3
+                ],
+                4
+            ].flat, [
+                1,
+                [2],
+                3,
+                4
+            ]);
+            $assert([
+                [
+                    1,
+                    2,
+                    3
+                ],
+                [
+                    4,
+                    5,
+                    6
+                ]
+            ].zip(_.sum), [
+                5,
+                7,
+                9
+            ]);
+            $assert(_.zap([
+                1,
+                2,
+                3
+            ], [
+                4,
+                5,
+                6
+            ], _.sum), [
+                5,
+                7,
+                9
+            ]);
+            $assert([
+                'a',
+                'b',
+                'c'
+            ].swap(1, 2), [
+                'a',
+                'c',
+                'b'
+            ]);
+            $assert([1].random === 1);
+            $assert([].random === undefined);
+            $assert([
+                { foo: 'bar' },
+                { foo: 'qux' }
+            ].pluck('foo'), [
+                'bar',
+                'qux'
+            ]);
+            $assert([
+                [
+                    'foo',
+                    'bar'
+                ].join(),
+                [
+                    'foo',
+                    'bar'
+                ].join('.'),
+                [
+                    'foo',
+                    'bar'
+                ].join(777),
+                ['foo'].join(777),
+                ['bar'].join('.')
+            ], [
+                'foobar',
+                'foo.bar',
+                [
+                    'foo',
+                    777,
+                    'bar'
+                ],
+                'foo',
+                'bar'
+            ]);
+        }, function () {
+            $extensionMethods(Array, {
+                each: _.each,
+                map: _.map,
+                fold: _.reduce2,
+                reduce: _.reduce,
+                reduceRight: _.reduceRight,
+                zip: _.zipWith,
+                groupBy: _.groupBy,
+                indexBy: _.indexBy,
+                find: _.find,
+                filter: _.filter,
+                reject: _.reject,
+                flat: _.flatten.tails2(true),
+                object: _.object,
+                shuffle: _.shuffle,
+                nonempty: _.nonempty,
+                pluck: $method(_.pluck),
+                without: $method(_.without),
+                join: function (strJoin) {
+                    return $forceOverride(function (arr, delim) {
+                        delim = arguments.length < 2 ? '' : delim;
+                        if (_.isString(delim)) {
+                            return strJoin.call(arr, delim);
+                        } else {
+                            return _.reduce2(arr, function (a, b) {
+                                return [a].concat([
+                                    delim,
+                                    b
+                                ]);
+                            });
                         }
-                        _.each(cases, function (what) {
-                            if (common) {
-                                var where = what.indexOf(common);
-                                log.write(log.color.orange, what.substr(0, where), log.color.dark, common, log.color.orange, what.substr(where + common.length));
+                    });
+                }(Array.prototype.join),
+                contains: function (arr, item) {
+                    return arr.indexOf(item) >= 0;
+                },
+                top: function (arr) {
+                    return arr[arr.length - 1];
+                },
+                first: function (arr) {
+                    return arr[0];
+                },
+                second: function (arr) {
+                    return arr[1];
+                },
+                rest: function (arr) {
+                    return _.rest(arr);
+                },
+                last: function (arr) {
+                    return arr[arr.length - 1];
+                },
+                take: function (arr, n) {
+                    return arr.slice(0, n);
+                },
+                lastN: $method(_.last),
+                before: function (arr, x) {
+                    var i = arr.indexOf(x);
+                    return i < 0 ? arr : arr.slice(0, i - 1);
+                },
+                after: function (arr, x) {
+                    var i = arr.indexOf(x);
+                    return i < 0 ? arr : arr.slice(i + 1);
+                },
+                isEmpty: function (arr) {
+                    return arr.length === 0;
+                },
+                notEmpty: function (arr) {
+                    return arr.length > 0;
+                },
+                lastIndex: function (arr) {
+                    return arr.length - 1;
+                },
+                random: function (arr) {
+                    return arr[_.random(0, arr.lastIndex)];
+                },
+                copy: function (arr) {
+                    return arr.slice(0);
+                },
+                removeAll: $method(function (arr) {
+                    return arr.splice(0, arr.length), arr;
+                }),
+                remove: function (arr, item) {
+                    var i;
+                    while ((i = arr.indexOf(item)) !== -1) {
+                        arr.splice(i, 1);
+                    }
+                    return arr;
+                },
+                removeAt: function (arr, index) {
+                    arr.splice(index, 1);
+                    return arr;
+                },
+                insertAt: function (arr, item, index) {
+                    arr.splice(index, 0, item);
+                    return arr;
+                },
+                itemAtWrappedIndex: function (arr, i) {
+                    return arr[i % arr.length];
+                },
+                reversed: function (arr) {
+                    return arr.slice().reverse();
+                },
+                swap: $method(function (arr, indexA, indexB) {
+                    var a = arr[indexA], b = arr[indexB];
+                    arr[indexA] = b;
+                    arr[indexB] = a;
+                    return arr;
+                })
+            });
+            _.zap = function (firstArg) {
+                var zippo = _.last(arguments);
+                return _.reduce(_.rest(_.initial(arguments)), function (memo, row) {
+                    return _.times(Math.max(memo.length, row.length), function (i) {
+                        return zippo(memo[i], row[i]);
+                    });
+                }, firstArg);
+            };
+        });
+    },
+    function (module, exports) {
+        _.deferTest('String extensions', function () {
+            $assert('ж'.repeats(0) === '');
+            $assert('ж'.repeats(4) === 'жжжж');
+            $assert('жопа'.first(2) === 'жо');
+            $assert('жопа'.reversed === 'апож');
+            $assert('жопа'.capitalized === 'Жопа');
+            $assert('  жопа  '.trimmed === 'жопа');
+            $assert('<жопа>'.escaped === '&lt;жопа&gt;');
+            $assert('па'.prepend('жо'), 'жо'.append('па'), 'жопа');
+            $assert([
+                'жопа'.contains('опа'),
+                'жопа'.contains('апож')
+            ], [
+                true,
+                false
+            ]);
+            $assert([
+                'жопа'.startsWith('ж'),
+                'жопа'.startsWith('жо'),
+                'жопа'.startsWith('о')
+            ], [
+                true,
+                true,
+                false
+            ]);
+            $assert([
+                'жопа'.endsWith('а'),
+                'жопа'.endsWith('па'),
+                'жопа'.endsWith('ж')
+            ], [
+                true,
+                true,
+                false
+            ]);
+            $assert([
+                _.map([
+                    1,
+                    2,
+                    3
+                ], _.prepends('foo')),
+                _.map([
+                    1,
+                    2,
+                    3
+                ], _.appends('bar'))
+            ].zip(_.append), [
+                'foo11bar',
+                'foo22bar',
+                'foo33bar'
+            ]);
+            $assert('}|{О/7A с Py4K()Й ololo 321321'.latinAlphanumericValue, '7APy4Kololo321321');
+            $assert('}|{О/7A с Py4K()Й ololo 321321'.alphanumericValue, 'О7AсPy4KЙololo321321');
+            $assert('+7(965)412-63-21'.numericValue, '79654126321');
+            $assert('+7(965)412-63-21'.integerValue, 79654126321);
+            $assert('foo'.integerValue, undefined);
+            $assert('0'.integerValue, 0);
+            $assert('123'.parsedInt, 123);
+            $assert('foo'.parsedInt, undefined);
+            $assert('0'.parsedInt, 0);
+            $assert('foo'.hash, 101574);
+            $assert('Пися Камушкинъ'.transliterate, 'pisyakamushkin');
+            $assert('qux'.quote(''), 'qux');
+            $assert('qux'.quote('"'), '"qux"');
+            $assert('qux'.quote('[]'), '[qux]');
+            $assert('qux'.quote('/'), '/qux/');
+            $assert('qux'.quote('{  }'), '{ qux }');
+            $assert('qux'.quote('</>'), '</qux>');
+            $assert(_.isTypeOf(Uint8Array, 'foo'.bytes));
+            $assert(_.asArray('foo'.bytes), [
+                102,
+                111,
+                111
+            ]);
+            $assert([
+                'foobar'.limitedTo(6),
+                'tooloong'.limitedTo(6),
+                ''.limitedTo(0)
+            ], [
+                'foobar',
+                'toolo\u2026',
+                ''
+            ]);
+            $assert('жоп'.pad(5), 'жоп  ');
+            $assert('жоп'.pad(5, '\u2192'), 'жоп\u2192\u2192');
+            $assert('foo'.pluck([
+                { foo: 10 },
+                { foo: 11 }
+            ]), [
+                10,
+                11
+            ]);
+            $assert('foo'.pluck({
+                a: { foo: 10 },
+                b: { foo: 11 }
+            }), {
+                a: 10,
+                b: 11
+            });
+        }, function () {
+            $extensionMethods(String, {
+                quote: _.quote,
+                pluck: function (s, arr) {
+                    return _.pluck2(arr, s);
+                },
+                contains: function (s, other) {
+                    return s.indexOf(other) >= 0;
+                },
+                startsWith: function (s, x) {
+                    return x.length === 1 ? s[0] === x : s.substring(0, x.length) === x;
+                },
+                endsWith: function (s, x) {
+                    return x.length === 1 ? s[s.length - 1] === x : s.substring(s.length - x.length) === x;
+                },
+                pad: function (s, len, filler) {
+                    return s += (filler || ' ').repeats(Math.max(0, len - s.length));
+                },
+                cut: function (s, from) {
+                    return s.substring(0, from - 1) + s.substring(from, s.length);
+                },
+                insert: function (s, position, what) {
+                    return s.substring(0, position) + what + s.substring(position, s.length);
+                },
+                lowercase: function (s) {
+                    return s.toLowerCase();
+                },
+                uppercase: function (s) {
+                    return s.toUpperCase();
+                },
+                trimmed: function (s) {
+                    return s.trim();
+                },
+                limitedTo: function (s, n) {
+                    return s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026');
+                },
+                escaped: function (s) {
+                    return _.escape(s);
+                },
+                repeats: function (s, n) {
+                    return _.times(n, _.constant(s)).join('');
+                },
+                prepend: function (s, other) {
+                    return other + s;
+                },
+                append: function (s, other) {
+                    return s + other;
+                },
+                first: function (s, n) {
+                    return _.first(s, n).join('');
+                },
+                last: function (s, n) {
+                    return _.last(s, n).join('');
+                },
+                reversed: function (s) {
+                    return s.split('').reverse().join('');
+                },
+                capitalized: function (s) {
+                    return s.charAt(0).toUpperCase() + s.slice(1);
+                },
+                decapitalized: function (s) {
+                    return s.charAt(0).toLowerCase() + s.slice(1);
+                },
+                latinAlphanumericValue: function (s) {
+                    return s.replace(/[^a-z0-9]/gi, '');
+                },
+                alphanumericValue: function (s) {
+                    return s.replace(unicode_hack(/[^0-9\p{L}|^0-9\p{N}|^0-9\p{Pc}|^0-9\p{M}]/g), '');
+                },
+                numericValue: function (s) {
+                    return s.replace(/[^0-9]/g, '');
+                },
+                integerValue: function (s) {
+                    return s.numericValue.parsedInt;
+                },
+                parsedInt: function (s) {
+                    var result = parseInt(s, 10);
+                    return _.isFinite(result) ? result : undefined;
+                },
+                bytes: function (s) {
+                    var bytes = new Uint8Array(s.length);
+                    for (var i = 0; i < s.length; ++i) {
+                        bytes[i] = s.charCodeAt(i);
+                    }
+                    return bytes;
+                },
+                hash: function (s) {
+                    var hash = 0, i, chr, len;
+                    if (s.length === 0) {
+                        return hash;
+                    }
+                    for (i = 0, len = s.length; i < len; i++) {
+                        chr = s.charCodeAt(i);
+                        hash = (hash << 5) - hash + chr;
+                        hash |= 0;
+                    }
+                    return hash;
+                },
+                transliterate: function () {
+                    var table = _.extend({
+                        'а': 'a',
+                        'б': 'b',
+                        'в': 'v',
+                        'г': 'g',
+                        'д': 'd',
+                        'е': 'e',
+                        'ё': 'yo',
+                        'ж': 'zh',
+                        'з': 'z',
+                        'и': 'i',
+                        'й': 'y',
+                        'к': 'k',
+                        'л': 'l',
+                        'м': 'm',
+                        'н': 'n',
+                        'о': 'o',
+                        'п': 'p',
+                        'р': 'r',
+                        'с': 's',
+                        'т': 't',
+                        'у': 'u',
+                        'ф': 'ph',
+                        'х': 'h',
+                        'ц': 'ts',
+                        'ч': 'ch',
+                        'ш': 'sh',
+                        'щ': 'sch',
+                        'ь': '',
+                        'ъ': '',
+                        'ы': 'y',
+                        'э': 'e',
+                        'ю': 'yu',
+                        'я': 'ya'
+                    }, _.object(_.map('_-1234567890qwertyuiopasdfghjklzxcvbnm', function (x) {
+                        return [
+                            x,
+                            x
+                        ];
+                    })));
+                    return function (s) {
+                        var result = '';
+                        var source = (s || '').toLowerCase();
+                        for (var i = 0, n = source.length; i < n; i++) {
+                            var c = source[i];
+                            var x = table[c] || '';
+                            result += x;
+                        }
+                        return result;
+                    };
+                }()
+            });
+        });
+        _.extend(String, {
+            randomHex: function (length) {
+                if (length === undefined) {
+                    length = _.random(1, 32);
+                }
+                var string = '';
+                for (var i = 0; i < length; i++) {
+                    string += Math.floor(Math.random() * 16).toString(16);
+                }
+                return string;
+            },
+            leadingZero: function (n) {
+                return n < 10 ? '0' + n : n.toString();
+            }
+        });
+        _.deferTest(['identifier naming style interpolation'], function () {
+            $assert(_.camelCaseToLoDashes('flyingBurritoOption'), 'flying_burrito_option');
+            $assert(_.camelCaseToDashes('flyingBurritoOption'), 'flying-burrito-option');
+            $assert(_.dashesToCamelCase('flying-burrito-option'), 'flyingBurritoOption');
+            $assert(_.loDashesToCamelCase('flying_burrito_option'), 'flyingBurritoOption');
+        }, function () {
+            _.camelCaseToDashes = function (x) {
+                return x.replace(/[a-z][A-Z]/g, function (x) {
+                    return x[0] + '-' + x[1].lowercase;
+                });
+            };
+            _.camelCaseToLoDashes = function (x) {
+                return x.replace(/[a-z][A-Z]/g, function (x) {
+                    return x[0] + '_' + x[1].lowercase;
+                });
+            };
+            _.dashesToCamelCase = function (x) {
+                return x.replace(/(-.)/g, function (x) {
+                    return x[1].uppercase;
+                });
+            };
+        });
+        _.loDashesToCamelCase = function (x) {
+            return x.replace(/(_.)/g, function (x) {
+                return x[1].uppercase;
+            });
+        };
+    },
+    function (module, exports) {
+        _.deferTest('bindable', function () {
+            var obj = {
+                plusOne: function (x) {
+                    return x + 1;
+                },
+                innocentMethod: function (x) {
+                    return x;
+                }
+            };
+            $assertEveryCalled(function (before__1, after__1, intercept__2, secondIntercept__1, bindable__1, infixBefore__1) {
+                _.onBefore(obj, 'plusOne', function (x) {
+                    before__1();
+                    $assert(x === 7);
+                });
+                _.onAfter(obj, 'plusOne', function (x, result) {
+                    after__1();
+                    $assert([
+                        x,
+                        result
+                    ], [
+                        7,
+                        8
+                    ]);
+                });
+                $assert(obj.plusOne(7), 8);
+                _.intercept(obj, 'innocentMethod', function (x, method) {
+                    intercept__2();
+                    return method(x + 1) * 2;
+                });
+                $assert(obj.innocentMethod(42), (42 + 1) * 2);
+                _.intercept(obj, 'innocentMethod', function (x, method) {
+                    secondIntercept__1();
+                    $assert(method(x), (42 + 1) * 2);
+                    return 'hard boiled shit';
+                });
+                $assert(obj.innocentMethod(42), 'hard boiled shit');
+                var method = _.bindable(function (x) {
+                    bindable__1();
+                    $assert(x === 42);
+                });
+                method.onBefore(function (x) {
+                    infixBefore__1();
+                    $assert(x === 42);
+                });
+                method(42);
+            });
+            var obj2 = {
+                plusOne: function (x) {
+                    return x + 1;
+                }
+            };
+            $assertEveryCalledOnce(function (beforeCalled, afterCalled) {
+                var before = function (x) {
+                    beforeCalled();
+                    $assert(x === 7);
+                };
+                var after = function (x, result) {
+                    afterCalled();
+                    $assert([
+                        x,
+                        result
+                    ], [
+                        7,
+                        8
+                    ]);
+                };
+                _.times(2, function () {
+                    _.onceBefore(obj, 'plusOne', before);
+                    _.onceAfter(obj, 'plusOne', after);
+                });
+                $assert(obj.plusOne(7), 8);
+                $assert(obj.plusOne(7), 8);
+            });
+            $assertEveryCalled(function (afterCalled__1, shouldNotCall__0) {
+                var method = _.bindable(function () {
+                });
+                method.onBefore(shouldNotCall__0);
+                method.onAfter(afterCalled__1);
+                method.off(shouldNotCall__0);
+                method();
+                method.onBefore(shouldNotCall__0);
+                method.onAfter(shouldNotCall__0);
+                method.off();
+                method();
+            });
+        }, function () {
+            var hooks = [
+                'onceBefore',
+                'onceAfter',
+                'onBefore',
+                'onAfter',
+                'intercept'
+            ];
+            var hooksShort = [
+                'onceBefore',
+                'onceAfter',
+                'before',
+                'after',
+                'intercept'
+            ];
+            var copyHooks = function (from, to) {
+                _.extend(to, _.map2(_.pick(from, hooks), _.clone));
+            };
+            var makeBindable = function (obj, targetMethod) {
+                var method = obj[targetMethod];
+                return _.isBindable(method) ? method : obj[targetMethod] = _.bindable(method);
+            };
+            var hookProc = function (name) {
+                return function (obj, targetMethod, delegate) {
+                    var bindable = makeBindable(obj, targetMethod);
+                    return bindable[name].call(bindable, delegate);
+                };
+            };
+            var mixin = function (method, context) {
+                if (typeof method !== 'function') {
+                    throw new Error('method should be a function');
+                }
+                return _.extend({}, method, {
+                    _bindable: true,
+                    impl: method,
+                    _wrapped: method,
+                    context: context,
+                    off: function (delegate) {
+                        _.each(hooks, function (hook) {
+                            if (delegate) {
+                                this['_' + hook].remove(delegate);
                             } else {
-                                log.orange(what);
+                                this['_' + hook].removeAll();
+                            }
+                        }, this);
+                        return this;
+                    }
+                }, _.object(_.map(hooks, function (name) {
+                    var queueName = '_' + name;
+                    var once = name.indexOf('once') >= 0;
+                    return [
+                        name,
+                        function (fn) {
+                            if (!_.isBindable(this)) {
+                                throw new Error('wrong this');
+                            }
+                            var queue = this[queueName];
+                            if (!once || queue.indexOf(fn) < 0) {
+                                this[queueName].push(fn);
+                            }
+                            return this;
+                        }
+                    ];
+                })), _.object(_.map(hooks, function (name) {
+                    return [
+                        '_' + name,
+                        []
+                    ];
+                })));
+            };
+            _.extend(_, _.mapObject(_.invert(hooks), hookProc.flip2), {
+                unbind: function (obj, targetMethod, delegate) {
+                    var method = obj[targetMethod];
+                    if (method && method.off) {
+                        method.off(delegate);
+                    }
+                },
+                isBindable: function (fn) {
+                    return fn && fn._bindable ? true : false;
+                },
+                bindable: _.extendWith({
+                    hooks: hooks,
+                    hooksShort: hooksShort
+                }, function (method, context) {
+                    return _.withSameArgs(method, _.extendWith(mixin(method, context), function () {
+                        var wrapper = arguments.callee;
+                        var onceBefore = wrapper._onceBefore;
+                        var onceAfter = wrapper._onceAfter;
+                        var before = wrapper._onBefore;
+                        var after = wrapper._onAfter;
+                        var intercept = wrapper._intercept;
+                        var this_ = context || this;
+                        var i, ni = undefined;
+                        if (onceBefore.length) {
+                            for (i = 0, ni = onceBefore.length; i < ni; i++) {
+                                onceBefore[i].apply(this_, arguments);
+                            }
+                            onceBefore.removeAll();
+                        }
+                        for (i = 0, ni = before.length; i < ni; i++) {
+                            before[i].apply(this_, arguments);
+                        }
+                        var result = (intercept.length ? _.cps.compose([method].concat(intercept)) : method).apply(this_, arguments);
+                        if (after.length || onceAfter.length) {
+                            var args = _.asArray(arguments).concat(result);
+                            for (i = 0, ni = after.length; i < ni; i++) {
+                                after[i].apply(this_, args);
+                            }
+                            if (onceAfter.length) {
+                                var arr = onceAfter.copy;
+                                onceAfter.removeAll();
+                                for (i = 0, ni = arr.length; i < ni; i++) {
+                                    arr[i].apply(this_, args);
+                                }
+                            }
+                        }
+                        return result;
+                    }));
+                })
+            });
+        });
+    },
+    function (module, exports) {
+        _.tests.stream = {
+            'triggerOnce': function () {
+                $assertEveryCalledOnce(function (mkay) {
+                    var t = _.triggerOnce();
+                    var f = function (_321) {
+                        $assert(_321 === 321);
+                        mkay();
+                    };
+                    t(f);
+                    t(f);
+                    t(321);
+                    t(123);
+                });
+            },
+            'observable': function () {
+                var initedWithValue = _.observable(555);
+                $assert(initedWithValue.value, 555);
+                $assertEveryCalledOnce(function (mkay) {
+                    var valueChanged = _.observable();
+                    valueChanged(999);
+                    valueChanged(function (_999) {
+                        $assert(_999, 999);
+                        mkay();
+                    });
+                });
+                $assertEveryCalled(function (mkay__3) {
+                    var valueChanged = _.observable();
+                    valueChanged(mkay__3);
+                    valueChanged(123);
+                    valueChanged(345);
+                    valueChanged(567);
+                });
+                $assertEveryCalledOnce(function (mkay) {
+                    var valueChanged = _.observable();
+                    valueChanged(function (_111) {
+                        $assert(111, _111);
+                        mkay();
+                    });
+                    valueChanged(111);
+                    valueChanged(111);
+                });
+                $assertEveryCalledOnce(function (mkay) {
+                    var valueChanged = _.observable(444);
+                    valueChanged(function (_666, _444) {
+                        if (_444) {
+                            $assert([
+                                _666,
+                                _444
+                            ], [
+                                666,
+                                444
+                            ]);
+                            mkay();
+                        }
+                    });
+                    valueChanged(666);
+                });
+            },
+            'observable.when': function () {
+                $assertEveryCalledOnce(function (mkay) {
+                    var value = _.observable(234);
+                    value.when(234, function () {
+                        mkay();
+                    });
+                });
+                $assertEveryCalledOnce(function (mkay) {
+                    var value = _.observable();
+                    value.when(_.equals(432), function () {
+                        mkay();
+                    });
+                    value(432);
+                    value(234);
+                });
+                $assertNotCalled(function (mkay) {
+                    var value = _.observable();
+                    value.when(_.equals(432), function () {
+                        mkay();
+                    });
+                    value(7);
+                });
+            },
+            'once': function () {
+                $assertEveryCalledOnce(function (mkay) {
+                    var whenSomething = _.trigger();
+                    whenSomething.once(mkay);
+                    whenSomething.once(mkay);
+                    whenSomething();
+                    whenSomething();
+                });
+            },
+            '_.gatherChanges': function () {
+                var valueA = _.observable(), valueB = _.observable(), changes = [];
+                _.gatherChanges(valueA, valueB, function (a, b) {
+                    changes.push([
+                        a,
+                        b
+                    ]);
+                });
+                valueA(123);
+                valueB(777);
+                $assert(changes, [
+                    [
+                        123,
+                        undefined
+                    ],
+                    [
+                        123,
+                        777
+                    ]
+                ]);
+            },
+            'context': function () {
+                var trigger = _.extend(_.trigger(), { context: 42 });
+                trigger(function () {
+                    $assert(this, 42);
+                });
+                trigger();
+            },
+            '_.off (bound)': function () {
+                var react = function () {
+                    $fail;
+                };
+                var act = _.trigger(react);
+                _.off(react);
+                act();
+            },
+            '_.off (stream)': function () {
+                var fail = function () {
+                    $fail;
+                };
+                var act = _.trigger(fail);
+                _.off(act);
+                act();
+            },
+            '_.barrier (defaultListener)': function () {
+                $assertEveryCalled(function (mkay) {
+                    _.barrier(function () {
+                        mkay();
+                    })();
+                });
+            },
+            'all shit': function () {
+                var obj = {
+                    somethingReady: _.barrier(),
+                    whenSomething: _.trigger()
+                };
+                $assertEveryCalled(function (mkay1__2, mkay2__2) {
+                    obj.whenSomething(mkay1__2);
+                    obj.whenSomething(mkay2__2);
+                    obj.whenSomething();
+                    obj.whenSomething();
+                });
+                $assertEveryCalledOnce(function (shouldCall) {
+                    var whenSomething = _.trigger();
+                    var shouldBeCalled = function () {
+                            shouldCall();
+                        }, shouldNotBeCalled = function () {
+                            $fail;
+                        };
+                    whenSomething(shouldBeCalled);
+                    whenSomething(shouldNotBeCalled);
+                    whenSomething.off(shouldNotBeCalled);
+                    whenSomething();
+                });
+                $assertEveryCalledOnce(function (mkay1, mkay2) {
+                    obj.somethingReady(function (x) {
+                        $assert(x === 'foo');
+                        obj.somethingReady(x);
+                        mkay1();
+                    });
+                    obj.somethingReady(function (x) {
+                        $assert(x === 'foo');
+                        mkay2();
+                    });
+                    obj.somethingReady('foo');
+                });
+                obj.somethingReady('bar');
+                var t1 = _.triggerOnce(), t2 = _.triggerOnce(), t3 = _.triggerOnce(), t4 = _.triggerOnce();
+                _.allTriggered([
+                    t1,
+                    t2
+                ], function () {
+                    $fail;
+                });
+                t1();
+                $assertEveryCalledOnce(function (mkay) {
+                    _.allTriggered([
+                        t3,
+                        t4
+                    ], mkay);
+                    t3();
+                    t4();
+                });
+            },
+            'call order consistency': function (done) {
+                var abc = '';
+                var put = function (x) {
+                    return _.barrier(function () {
+                        abc += x;
+                    });
+                };
+                var a = put('a'), b = put('b'), c = put('c');
+                var barr = _.barrier();
+                barr(a)(function () {
+                    barr.postpones = true;
+                    barr(c);
+                    barr.postpones = false;
+                })(b);
+                barr(true);
+                _.allTriggered([
+                    a,
+                    b,
+                    c
+                ], function () {
+                    $assert(abc, 'abc');
+                    done();
+                });
+            },
+            '_.barrier reset': function () {
+                var b = _.barrier();
+                b('not_42');
+                b.reset();
+                $assertEveryCalledOnce(function (mkay) {
+                    b(function (value) {
+                        mkay();
+                        $assert(value, 42);
+                    });
+                    b(42);
+                });
+            },
+            '_.barrier (value)': function () {
+                $assertEveryCalledOnce(function (mkay) {
+                    var willBe42 = _.barrier(42);
+                    $assert(willBe42.already);
+                    willBe42(function (_42) {
+                        $assert(_42, 42);
+                        mkay();
+                    });
+                });
+            },
+            'observable.item': function () {
+                var items = _.observable({
+                    foo: 7,
+                    bar: 8
+                });
+                var foo = items.item('foo');
+                var bar = items.item('bar');
+                $assert(foo, items.item('foo'));
+                $assert(foo.value, 7);
+                $assert(bar.value, 8);
+                foo(77);
+                $assert(foo.value, 77);
+                $assert(items.value, {
+                    foo: 77,
+                    bar: 8
+                });
+                items({ bar: 88 });
+                $assert(foo.value, undefined);
+                $assert(bar.value, 88);
+                $assert(items.value, { bar: 88 });
+            }
+        };
+        _.extend(_, {
+            gatherChanges: function (observables_) {
+                var observables = _.isArray(observables_) ? observables_ : _.initial(arguments);
+                var accept = _.last(arguments);
+                var gather = function (value) {
+                    accept.apply(this, _.pluck(observables, 'value'));
+                };
+                _.each(observables, function (read) {
+                    read(gather);
+                });
+            },
+            allTriggered: function (triggers, then) {
+                var triggered = [];
+                if (triggers.length > 0) {
+                    _.each(triggers, function (t) {
+                        t(function () {
+                            triggered = _.union(triggered, [t]);
+                            if (then && triggered.length === triggers.length) {
+                                then();
+                                then = undefined;
+                            }
+                        });
+                    });
+                } else {
+                    then();
+                }
+            },
+            observableRef: function (value) {
+                return _.extend(_.observable.apply(this, arguments), { trackReference: true });
+            },
+            observable: function (value) {
+                var stream = _.stream({
+                    isObservable: true,
+                    hasValue: arguments.length > 0,
+                    value: _.isFunction(value) ? undefined : value,
+                    read: function (schedule) {
+                        return function (returnResult) {
+                            if (stream.hasValue) {
+                                returnResult.call(this, stream.value);
+                            }
+                            schedule.call(this, returnResult);
+                        };
+                    },
+                    write: function (returnResult) {
+                        return function (value) {
+                            if (stream.beforeWrite) {
+                                value = stream.beforeWrite(value);
+                            }
+                            if (!stream.hasValue || !(stream.trackReference ? stream.value === value : _.isEqual(stream.value, value))) {
+                                var prevValue = stream.value;
+                                var hadValue = stream.hasValue;
+                                stream.hasValue = true;
+                                stream.value = value;
+                                if (hadValue) {
+                                    returnResult.call(this, false, stream.value, prevValue);
+                                } else {
+                                    returnResult.call(this, false, stream.value);
+                                }
+                            }
+                        };
+                    }
+                });
+                if (arguments.length) {
+                    stream.apply(this, arguments);
+                }
+                return _.extend(stream, {
+                    force: function (value) {
+                        stream.hasValue = false;
+                        stream(value || stream.value);
+                    },
+                    then: function (fn) {
+                        var next = _.observable();
+                        next.beforeWrite = fn;
+                        stream(function (x) {
+                            next.write(x);
+                        });
+                        return next;
+                    },
+                    toggle: function () {
+                        return stream(!stream.value);
+                    },
+                    tie: function (other) {
+                        stream(other);
+                        other(stream);
+                        return stream;
+                    },
+                    item: function (id) {
+                        var all = stream.itemObservables || (stream.itemObservables = {});
+                        var item = all[id];
+                        if (!item) {
+                            item = all[id] = _.observable((stream.value && stream.value)[id]);
+                            item(function (x) {
+                                var oldValue = stream.value && stream.value[x];
+                                if (oldValue !== x) {
+                                    (stream.value || (stream.value = {}))[id] = x;
+                                    stream.force();
+                                }
+                            });
+                            stream(function (items) {
+                                item.write(items[id]);
+                            });
+                        }
+                        return item;
+                    },
+                    when: function (match, then) {
+                        var matchFn = _.isFunction(match) ? match : _.equals(match), alreadyCalled = false;
+                        stream(function (val) {
+                            if (matchFn(val)) {
+                                if (!alreadyCalled) {
+                                    alreadyCalled = true;
+                                    stream.off(arguments.callee);
+                                    then.apply(this, arguments);
+                                } else {
+                                }
                             }
                         });
                     }
+                });
+            },
+            barrier: function (defaultValue) {
+                var defaultListener = undefined;
+                if (_.isFunction(defaultValue)) {
+                    defaultListener = defaultValue;
+                    defaultValue = undefined;
                 }
-            } else {
-                if (this.depth > 1) {
-                    log.newline();
-                }
-                log.write(e);
-            }
-            log.newline();
-        }
-        if (this.canFail) {
-            this.fail();
-        } else {
-            this.finalize();
-        }
-    },
-    run: function () {
-        var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
-        return new Channel(this.$(function (then) {
-            this.shouldFail = $shouldFail.is(this.routine);
-            this.failed = false;
-            this.hasLog = false;
-            this.logCalls = [];
-            this.failureLocations = {};
-            _.withTimeout({
-                maxTime: self.timeout,
-                expired: function () {
-                    if (self.canFail) {
-                        log.ee('TIMEOUT EXPIRED');
-                        self.fail();
+                var barrier = _.stream({
+                    already: defaultValue !== undefined,
+                    value: defaultValue,
+                    reset: function () {
+                        barrier.already = false;
+                        delete barrier.value;
+                    },
+                    write: function (returnResult) {
+                        return function (value) {
+                            if (!barrier.already) {
+                                barrier.already = true;
+                                barrier.value = value;
+                            }
+                            returnResult.call(this, true, barrier.value);
+                        };
+                    },
+                    read: function (schedule) {
+                        return function (returnResult) {
+                            if (barrier.already) {
+                                (barrier.postpones || barrier.commitingReads ? returnResult.postponed : returnResult).call(this, barrier.value);
+                            } else {
+                                schedule.call(this, returnResult);
+                            }
+                        };
                     }
+                });
+                if (defaultListener) {
+                    barrier(defaultListener);
                 }
-            }, self.complete);
-            _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
-            log.withWriteBackend(_.extendWith({ indent: 1 }, function (x) {
-                self.logCalls.push(x);
-            }), function (doneWithLogging) {
-                self.complete(doneWithLogging.arity0);
-                if (then) {
-                    self.complete(then);
-                }
-                if (routine.length > 0) {
-                    routine.call(self.context, self.$(self.finalize));
-                } else {
-                    var result = undefined;
-                    try {
-                        result = routine.call(self.context);
-                    } catch (e) {
-                        self.onException(e);
+                _.defineProperty(barrier, 'promise', function () {
+                    return new Promise(function (resolve) {
+                        barrier(resolve);
+                    });
+                });
+                return barrier;
+            },
+            triggerOnce: $restArg(function () {
+                var stream = _.stream({
+                    read: function (schedule) {
+                        return function (listener) {
+                            if (stream.queue.indexOf(listener) < 0) {
+                                schedule.call(this, listener);
+                            }
+                        };
+                    },
+                    write: function (writes) {
+                        return writes.partial(true);
                     }
-                    if (_.isArrayLike(result) && result[0] instanceof Promise) {
-                        result = __.all(result);
+                }).apply(this, arguments);
+                return stream;
+            }),
+            trigger: $restArg(function () {
+                return _.stream({
+                    read: _.identity,
+                    write: function (writes) {
+                        return writes.partial(false);
                     }
-                    if (result instanceof Promise) {
-                        result.then(function (x) {
-                            self.finalize();
-                        }.postponed, function (e) {
-                            self.onException(e);
-                        });
+                }).apply(this, arguments);
+            }),
+            off: function (fn, what) {
+                if (fn.queue) {
+                    if (arguments.length === 1) {
+                        fn.queue.off();
                     } else {
-                        self.finalize();
+                        fn.queue.off(what);
+                    }
+                }
+                if (fn.queuedBy) {
+                    _.each(fn.queuedBy, function (queue) {
+                        queue.remove(fn);
+                    });
+                    delete fn.queuedBy;
+                }
+            },
+            stream: function (cfg_) {
+                var cfg = cfg_ || {};
+                var queue = _.extend([], {
+                    off: function (fn) {
+                        if (this.length) {
+                            if (arguments.length === 0) {
+                                _.each(this, function (fn) {
+                                    fn.queuedBy.remove(this);
+                                }, this);
+                                this.removeAll();
+                            } else {
+                                if (fn.queuedBy) {
+                                    fn.queuedBy.remove(this);
+                                    this.remove(fn);
+                                }
+                            }
+                        }
+                    }
+                });
+                var self = undefined;
+                var scheduleRead = function (fn) {
+                    if (queue.indexOf(fn) < 0) {
+                        if (fn.queuedBy) {
+                            fn.queuedBy.push(queue);
+                        } else {
+                            fn.queuedBy = [queue];
+                        }
+                        queue.push(fn);
+                    }
+                };
+                var commitPendingReads = function (flush, __args__) {
+                    var args = _.rest(arguments), context = self.context || this, schedule = queue.copy;
+                    if (flush) {
+                        queue.off();
+                    }
+                    self.commitingReads = true;
+                    for (var i = 0, n = schedule.length; i < n; i++) {
+                        (self.postpones ? schedule[i].postponed : schedule[i]).apply(context, args);
+                    }
+                    delete self.commitingReads;
+                };
+                var write = cfg.write(commitPendingReads);
+                var read = cfg.read(scheduleRead);
+                var frontEnd = function (fn) {
+                    if (_.isFunction(fn)) {
+                        read.call(this, fn);
+                    } else {
+                        write.apply(this, arguments);
+                    }
+                    return arguments.callee;
+                };
+                var once = function (then) {
+                    if (!_.find(queue, function (f) {
+                            return f.onceWrapped_ === then;
+                        })) {
+                        read(_.extend(function (v) {
+                            _.off(self, arguments.callee);
+                            then(v);
+                        }, { onceWrapped_: then }));
+                    }
+                };
+                return self = _.extend($restArg(frontEnd), cfg, {
+                    queue: queue,
+                    once: once,
+                    off: _.off.asMethod,
+                    read: read,
+                    write: write,
+                    postpone: function () {
+                        this.postponed.apply(self.context, arguments);
+                    }
+                });
+            }
+        });
+        _.deferTest([
+            'stream',
+            'observable.map'
+        ], function () {
+            var foo = _.observable('foo'), bar = _.observable('bar');
+            var fooBar = _.observable.map([
+                foo,
+                bar
+            ], _.appends('42'));
+            var results = [];
+            fooBar(function (value) {
+                results.push(value.copy);
+            });
+            $assert(results, [[
+                    'foo42',
+                    'bar42'
+                ]]);
+            foo('qux');
+            bar('zap');
+            $assert(results, [
+                [
+                    'foo42',
+                    'bar42'
+                ],
+                [
+                    'qux42',
+                    'bar42'
+                ],
+                [
+                    'qux42',
+                    'zap42'
+                ]
+            ]);
+            _.observable.map({ 'foo': _.observable('bar') })(function (obj) {
+                $assert({ 'foo': 'bar' }, obj);
+            });
+        }, function () {
+            _.observable.map = function (obj, fn) {
+                fn = fn || _.identity;
+                var value = _.isArray(obj) ? new Array(obj.length) : {};
+                var result = _.observable(value);
+                _.each(obj, function (read, i) {
+                    read(function (x) {
+                        value[i] = fn(x, i);
+                        result.force(value);
+                    });
+                });
+                return result;
+            };
+            _.observable.all = _.observable.map;
+        });
+    },
+    function (module, exports) {
+        _.hasOOP = true;
+        _.deferTest('OOP', {
+            '$prototype / $extends': function () {
+                var Foo = $prototype({
+                    method: function () {
+                        return 'foo.method';
+                    },
+                    staticMethod: $static(function () {
+                        return 'Foo.staticMethod';
+                    }),
+                    property: $property(function () {
+                        return 'foo.property';
+                    }),
+                    staticProperty: $static($property(function () {
+                        return 'Foo.staticProperty';
+                    })),
+                    $static: {
+                        $property: {
+                            one: 1,
+                            two: 2,
+                            three: 3
+                        }
+                    },
+                    $property: {
+                        static42: $static(42),
+                        just42: 42,
+                        just42_too: function () {
+                            return 42;
+                        },
+                        fullBlown: {
+                            enumerable: false,
+                            configurable: true,
+                            get: function () {
+                                return 42;
+                            },
+                            set: function (x) {
+                                $stub;
+                            }
+                        }
+                    }
+                });
+                var Bar = $extends(Foo, $final({
+                    staticMethod: $static(function () {
+                        return 'Bar.staticMethod';
+                    }),
+                    method: function () {
+                        return 'bar.method';
+                    }
+                }));
+                var foo = new Foo();
+                var fuu = new Foo({
+                    method: function () {
+                        return 'fuu.method';
+                    }
+                });
+                var bar = new Bar({ hi: 'there' });
+                $assert(bar.hi === 'there');
+                $assert(fuu.method() === 'fuu.method');
+                $assert([
+                    foo.just42,
+                    bar.just42
+                ], [
+                    42,
+                    42
+                ]);
+                $assert([
+                    Foo.static42,
+                    Bar.static42
+                ], [
+                    42,
+                    undefined
+                ]);
+                $assert([
+                    foo.method(),
+                    bar.method()
+                ], [
+                    'foo.method',
+                    'bar.method'
+                ]);
+                $assert([
+                    Foo.staticMethod(),
+                    Bar.staticMethod()
+                ], [
+                    'Foo.staticMethod',
+                    'Bar.staticMethod'
+                ]);
+                $assert([
+                    foo.property,
+                    foo.staticProperty
+                ], [
+                    'foo.property',
+                    undefined
+                ]);
+                $assert([
+                    Foo.staticProperty,
+                    Foo.property
+                ], [
+                    'Foo.staticProperty',
+                    undefined
+                ]);
+                $assertThrows(function () {
+                    foo.just42 = 43;
+                }, _.matches({ message: 'cannot change just42 (as it\'s sealed to 42)' }));
+            },
+            '$final': function () {
+                $assertThrows(function () {
+                    var A = $prototype({
+                        constructor: $final(function () {
+                        })
+                    });
+                    var B = $extends(A, {
+                        constructor: function () {
+                        }
+                    });
+                }, _.matches({ message: 'Cannot override $final constructor' }));
+                $assertThrows(function () {
+                    var A = $prototype($final({}));
+                    var B = $extends(A);
+                }, _.matches({ message: 'Cannot derive from $final-marked prototype' }));
+            },
+            '$alias': function () {
+                var foo = new ($prototype({
+                    error: function () {
+                        return 'foo.error';
+                    },
+                    failure: $alias('error'),
+                    crash: $alias('error'),
+                    finalCrash: $final($alias('crash'))
+                }))();
+                var def = foo.constructor.$definition;
+                $assert(foo.finalCrash, foo.crash, foo.failure, foo.error);
+                $assert(def.finalCrash.$final);
+                $assertNot(def.crash.$final);
+                $assertNot(def.error.$final);
+                var size = new ($prototype({
+                    w: $alias($property('x')),
+                    h: $alias($property('y'))
+                }))();
+                $assert([
+                    size.x = 42,
+                    size.y = 24
+                ], [
+                    size.w,
+                    size.h
+                ], [
+                    42,
+                    24
+                ]);
+            },
+            '$constructor': function () {
+                $assertEveryCalledOnce(function (mkay) {
+                    var foo = new ($prototype({
+                        $constructor: function () {
+                            mkay();
+                        }
+                    }))();
+                });
+            },
+            'RTTI': function () {
+                var Foo = $prototype({ $static: { noop: _.noop } }), Bar = $extends(Foo);
+                var foo = new Foo(), bar = new Bar();
+                $assert(foo.constructor === Foo);
+                $assert(bar.constructor === Bar);
+                $assert(_.isTypeOf(Function, foo.constructor.noop));
+                $assert(_.isTypeOf(Tags, foo.constructor.$definition.noop));
+                $assert(Foo.isTypeOf(foo));
+                $assert(!Bar.isTypeOf(foo));
+                $assert(Bar.isTypeOf(bar));
+                $assert(Foo.isTypeOf(bar));
+                $assert(foo.isInstanceOf(Foo));
+                $assert(!foo.isInstanceOf(Bar));
+                $assert(bar.isInstanceOf(Bar));
+                $assert(bar.isInstanceOf(Foo));
+                $assert(_.isTypeOf_ES5(Bar, bar));
+                $assert(_.isTypeOf_ES5(Foo, bar));
+                $assert(_.isTypeOf_ES4(Bar, bar));
+                $assert(_.isTypeOf_ES4(Foo, bar));
+            },
+            'isConstructor': function () {
+                var Proto = $prototype(), dummy = function () {
+                    };
+                $assert($prototype.isConstructor(Proto), true);
+                $assert($prototype.isConstructor(dummy), false);
+                $assert($prototype.isConstructor(null), false);
+                $assert([
+                    Proto,
+                    dummy
+                ].map($prototype.isConstructor), [
+                    true,
+                    false
+                ]);
+            },
+            'inheritanceChain': function () {
+                var A = $prototype();
+                var B = $extends(A);
+                var C = $extends(B);
+                $assert($prototype.inheritanceChain(C), [
+                    C,
+                    B,
+                    A
+                ]);
+            },
+            'defines': function () {
+                var A = $prototype({
+                    toString: function () {
+                    }
+                });
+                var B = $extends(A);
+                var C = $prototype();
+                $assert([
+                    $prototype.defines(B, 'toString'),
+                    $prototype.defines(C, 'toString')
+                ], [
+                    true,
+                    false
+                ]);
+            },
+            'two-argument syntax of $prototype': function () {
+                var A = $prototype();
+                var B = $prototype(A, {});
+                $assert(B.$base === A.prototype);
+            },
+            'value contracts for arguments': function () {
+                var Proto = $prototype($testArguments({
+                    frobnicate: function (_777, _foo_bar_baz, unaffected) {
+                    },
+                    noMistake: function () {
+                    }
+                }));
+                var obj = new Proto();
+                $assertFails(function () {
+                    obj.frobnicate(999, 'not right');
+                });
+                obj.frobnicate(777, 'foo bar baz');
+                obj.noMistake();
+            },
+            '$membersByTag': function () {
+                var foo = $static($property(1)), bar = $property(2);
+                $assertMatches($prototype({
+                    foo: foo,
+                    bar: bar
+                }).$membersByTag, {
+                    'static': { 'foo': foo },
+                    'property': {
+                        'foo': foo,
+                        'bar': bar
+                    }
+                });
+            },
+            'tags on definition': function () {
+                $assertMatches($prototype($static($final({}))), {
+                    $static: true,
+                    $final: true
+                });
+            },
+            '$mixin': function () {
+                var Type = $prototype();
+                $mixin(Type, {
+                    twentyFour: $static($property(24)),
+                    fourtyTwo: $property(42)
+                });
+                $assert([
+                    Type.twentyFour,
+                    new Type().fourtyTwo
+                ], [
+                    24,
+                    42
+                ]);
+            }
+        }, function () {
+            _([
+                'property',
+                'static',
+                'final',
+                'alias',
+                'memoized',
+                'private',
+                'builtin',
+                'hidden',
+                'testArguments'
+            ]).each(_.defineTagKeyword);
+            $prototype = function (arg1, arg2) {
+                return $prototype.impl.compile.apply($prototype.impl, arguments.length > 1 ? _.asArray(arguments).reverse() : arguments);
+            };
+            $extends = function (base, def) {
+                return $prototype(base, def || {});
+            };
+            $mixin = function (constructor, def) {
+                return $prototype.impl.compileMixin(_.extend(def, { constructor: constructor }));
+            };
+            _.extend($prototype, {
+                isConstructor: function (what) {
+                    return _.isPrototypeConstructor(what);
+                },
+                macro: function (arg, fn) {
+                    if (arguments.length === 1) {
+                        $prototype.impl.alwaysTriggeredMacros.push(arg);
+                    } else {
+                        $prototype.impl.memberNameTriggeredMacros[arg] = fn;
+                    }
+                },
+                macroTag: function (name, fn) {
+                    _.defineTagKeyword(name);
+                    $prototype.impl.tagTriggeredMacros[_.keyword(name)] = fn;
+                },
+                each: function (visitor) {
+                    var namespace = $global;
+                    for (var k in namespace) {
+                        if (!_.isKeyword(k)) {
+                            var value = namespace[k];
+                            if ($prototype.isConstructor(value)) {
+                                visitor(value, k);
+                            }
+                        }
+                    }
+                },
+                defines: function (constructor, member) {
+                    return _.find($prototype.inheritanceChain(constructor), function (supa) {
+                        return supa.$definition && supa.$definition.hasOwnProperty(member) || false;
+                    }) ? true : false;
+                },
+                inheritanceChain: function (def) {
+                    var chain = [];
+                    while (def) {
+                        chain.push(def);
+                        def = def.$base && def.$base.constructor;
+                    }
+                    return chain;
+                },
+                wrapMethods: function (def, op) {
+                    return Tags.map(def, function (fn, k, t) {
+                        return _.isFunction(fn) ? op(fn, k, t).wraps(fn) : fn;
+                    });
+                },
+                impl: {
+                    alwaysTriggeredMacros: [],
+                    memberNameTriggeredMacros: {},
+                    tagTriggeredMacros: {},
+                    compile: function (def, base) {
+                        var impl = base && base.$impl || this;
+                        return $untag(impl.sequence(def, base).call(impl, def || {}).constructor);
+                    },
+                    sequence: function (def, base) {
+                        return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.contributeTraits(base), this.evalPrototypeSpecificMacros(base), this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
+                    },
+                    compileMixin: function (def) {
+                        return _.sequence(this.flatten, this.contributeTraits(), this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
+                    },
+                    flatten: function (def) {
+                        var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
+                        var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
+                            return _.map(this.flatten(membersDef), function (member, memberName) {
+                                return [
+                                    memberName,
+                                    $global[keyword](member)
+                                ];
+                            });
+                        }, this), true));
+                        var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
+                        return _.extend(memberDefinitions, mergedKeywordGroups);
+                    },
+                    evalAlwaysTriggeredMacros: function (base) {
+                        return function (def) {
+                            var macros = $prototype.impl.alwaysTriggeredMacros;
+                            for (var i = 0, n = macros.length; i < n; i++) {
+                                def = macros[i](def, base) || def;
+                            }
+                            return def;
+                        };
+                    },
+                    evalMemberTriggeredMacros: function (base) {
+                        return function (def) {
+                            var names = $prototype.impl.memberNameTriggeredMacros, tags = $prototype.impl.tagTriggeredMacros;
+                            _.each(def, function (value, name) {
+                                if (names.hasOwnProperty(name)) {
+                                    def = names[name](def, value, name, base) || def;
+                                }
+                                _.each(_.keys(value), function (tag) {
+                                    if (tags.hasOwnProperty(tag)) {
+                                        def = tags[tag](def, value, name, base) || def;
+                                    }
+                                });
+                            });
+                            return def;
+                        };
+                    },
+                    evalPrototypeSpecificMacros: function (base) {
+                        return function (def) {
+                            if (!def.isTraitOf) {
+                                var macroTags = $untag(def.$macroTags || base && base.$definition && base.$definition.$macroTags);
+                                if (macroTags) {
+                                    this.applyMacroTags(macroTags, def);
+                                }
+                            }
+                            return def;
+                        };
+                    },
+                    applyMacroTags: function (macroTags, def) {
+                        _.each(def, function (memberDef, memberName) {
+                            _.each(macroTags, function (macroFn, tagName) {
+                                memberDef = def[memberName];
+                                if (_.isObject(memberDef) && _.keyword(tagName) in memberDef) {
+                                    def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
+                                }
+                            }, this);
+                        }, this);
+                        return def;
+                    },
+                    generateCustomCompilerImpl: function (base) {
+                        return function (def) {
+                            if (def.$impl) {
+                                def.$impl = _.extend(Object.create(base && base.$impl || this), def.$impl);
+                                def.$impl = $static($builtin($property(def.$impl)));
+                            } else if (base && base.$impl) {
+                                def.$impl = $static($builtin($property(base.$impl)));
+                            }
+                            return def;
+                        };
+                    },
+                    generateArgumentContractsIfNeeded: function (def) {
+                        return def.$testArguments ? $prototype.wrapMethods(def, function (fn, name) {
+                            return function () {
+                                var args = _.asArray(arguments);
+                                $assertArguments(args.copy, fn.original, name);
+                                return fn.apply(this, args);
+                            };
+                        }) : def;
+                    },
+                    contributeTraits: function (base) {
+                        return function (def) {
+                            if (def.$traits) {
+                                var traits = def.$traits;
+                                this.mergeTraitsMembers(def, traits, base);
+                                def.$traits = $static($builtin($property(traits)));
+                                def.hasTrait = $static($builtin(function (Constructor) {
+                                    return traits.indexOf(Constructor) >= 0;
+                                }));
+                            }
+                            return def;
+                        };
+                    },
+                    mergeTraitsMembers: function (def, traits, base) {
+                        _.each(traits, function (trait) {
+                            _.defaults(def, _.omit(trait.$definition, _.or($builtin.matches, _.key(_.equals('constructor')))));
+                        });
+                    },
+                    extendWithTags: function (def) {
+                        return _.extendWith($untag(def), _.mapObject(Tags.get(def), $static.arity1));
+                    },
+                    callStaticConstructor: function (def) {
+                        if (!def.isTraitOf) {
+                            _.each($untag(def.$traits), function (T) {
+                                if (T.$definition.$constructor) {
+                                    $untag(T.$definition.$constructor).call(def);
+                                }
+                            });
+                            if (def.$constructor) {
+                                $untag(def.$constructor).call(def);
+                            }
+                        }
+                        return def;
+                    },
+                    generateConstructor: function (base) {
+                        return function (def) {
+                            return _.extend(def, {
+                                constructor: Tags.modify(def.hasOwnProperty('constructor') ? def.constructor : this.defaultConstructor(base), function (fn) {
+                                    if (base) {
+                                        fn.prototype = Object.create(base.prototype);
+                                        fn.prototype.constructor = fn;
+                                    }
+                                    return fn;
+                                })
+                            });
+                        };
+                    },
+                    generateBuiltInMembers: function (base) {
+                        return function (def) {
+                            if (def.$constructor) {
+                                def.$constructor = $builtin($static(def.$constructor));
+                            }
+                            return _.defaults(def, {
+                                $base: $builtin($static($property(_.constant(base && base.prototype)))),
+                                $definition: $builtin($static($property(_.constant(_.extend({}, base && base.$definition, def))))),
+                                isTypeOf: $builtin($static(_.partial(_.isTypeOf, $untag(def.constructor)))),
+                                isInstanceOf: $builtin(function (constructor) {
+                                    return _.isTypeOf(constructor, this);
+                                }),
+                                $: $builtin($prototype.impl.$)
+                            });
+                        };
+                    },
+                    $: function (fn) {
+                        return _.$.apply(null, [this].concat(_.asArray(arguments)));
+                    },
+                    defaultConstructor: function (base) {
+                        return base ? function () {
+                            base.prototype.constructor.apply(this, arguments);
+                        } : function (cfg) {
+                            _.extend(this, cfg || {});
+                        };
+                    },
+                    defineStaticMembers: function (def) {
+                        this.defineMembers($untag(def.constructor), _.pick(def, $static.matches));
+                        return def;
+                    },
+                    defineInstanceMembers: function (def) {
+                        this.defineMembers($untag(def.constructor).prototype, _.omit(def, $static.matches));
+                        return def;
+                    },
+                    defineMembers: function (targetObject, def) {
+                        _.each(def, function (value, key) {
+                            if (key !== 'constructor' && def.hasOwnProperty(key)) {
+                                this.defineMember(targetObject, value, key);
+                            }
+                        }, this);
+                    },
+                    defineMember: function (targetObject, def, key) {
+                        if (def && def.$property) {
+                            if (def.$memoized) {
+                                _.defineMemoizedProperty(targetObject, key, def);
+                            } else {
+                                _.defineProperty(targetObject, key, def, def.$hidden ? { enumerable: false } : {});
+                            }
+                        } else {
+                            var what = $untag(def);
+                            targetObject[key] = what;
+                        }
+                    },
+                    ensureFinalContracts: function (base) {
+                        return function (def) {
+                            if (base) {
+                                if (base.$final) {
+                                    throw new Error('Cannot derive from $final-marked prototype');
+                                }
+                                if (base.$definition) {
+                                    var invalidMembers = _.intersection(_.keys(_.pick(base.$definition, $final.matches)), _.keys(def));
+                                    if (invalidMembers.length) {
+                                        throw new Error('Cannot override $final ' + invalidMembers.join(', '));
+                                    }
+                                }
+                            }
+                            return def;
+                        };
+                    },
+                    expandAliases: function (def) {
+                        _.each(def, function (v, k) {
+                            def[k] = this.resolveMember(def, k, v)[1];
+                        }, this);
+                        return def;
+                    },
+                    resolveMember: function (def, name, member) {
+                        member = member || def[name];
+                        if ($alias.is(member)) {
+                            var ref = this.resolveMember(def, $untag(member));
+                            var refName = ref[0];
+                            var refValue = ref[1];
+                            return [
+                                refName,
+                                $property.is(member) ? $property({
+                                    get: function () {
+                                        return this[refName];
+                                    },
+                                    set: function (x) {
+                                        this[refName] = x;
+                                    }
+                                }) : Tags.extend(refValue, Tags.omit(member, '$alias'))
+                            ];
+                        } else {
+                            return [
+                                name,
+                                member
+                            ];
+                        }
+                    },
+                    groupMembersByTagForFastEnumeration: function (def) {
+                        var membersByTag = {};
+                        _.each(def, function (m, name) {
+                            Tags.each(m, function (tag) {
+                                (membersByTag[tag] = membersByTag[tag] || {})[name] = m;
+                            });
+                        });
+                        def.$membersByTag = $static($builtin($property(membersByTag)));
+                        return def;
+                    },
+                    isTagKeywordGroup: function (value_, key) {
+                        var value = $untag(value_);
+                        return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
+                    },
+                    modifyMember: function (member, newValue) {
+                        return $property.is(member) && Tags.modify(member, function (value) {
+                            return _.extend(value, _.map2(_.pick(value, 'get', 'set'), newValue));
+                        }) || _.isFunction($untag(member)) && Tags.modify(member, newValue) || member;
                     }
                 }
             });
+        });
+        _.deferTest([
+            'OOP',
+            '$traits'
+        ], function () {
+            var Closeable = $trait({
+                close: function () {
+                }
+            });
+            var Movable = $trait({
+                move: function () {
+                }
+            });
+            var Enumerable = $trait({
+                each: function (iter) {
+                },
+                length: $property(function () {
+                    return 0;
+                })
+            });
+            var JustCloseable = $prototype({ $traits: [Closeable] });
+            var MovableEnumerable = $prototype({
+                $traits: [
+                    Movable,
+                    Enumerable
+                ],
+                move: function () {
+                }
+            });
+            var movableEnumerable = new MovableEnumerable();
+            $assert(movableEnumerable.move === MovableEnumerable.prototype.move);
+            $assertThrows(function () {
+                new Closeable();
+            }, _.matches({ message: 'Traits are not instantiable (what for?)' }));
+            $assertTypeMatches(movableEnumerable, {
+                move: 'function',
+                each: 'function',
+                length: 'number'
+            });
+            $assert([
+                movableEnumerable.isInstanceOf(Movable),
+                movableEnumerable.isInstanceOf(Enumerable),
+                movableEnumerable.isInstanceOf(Closeable)
+            ], [
+                true,
+                true,
+                false
+            ]);
+            $assert(Movable.isTypeOf(movableEnumerable));
+            $assert(Movable.isTraitOf(movableEnumerable));
+            $assert(MovableEnumerable.hasTrait(Enumerable));
+            $assertMatches(MovableEnumerable, {
+                $traits: [
+                    Movable,
+                    Enumerable
+                ]
+            });
+            $assertMatches(JustCloseable, { $traits: [Closeable] });
+            $assertCallOrder(function (t1_constructed, t2_constructed, proto_constructed) {
+                var T1, T2;
+                $assertNotCalled(function (not_now) {
+                    T1 = $trait({
+                        $constructor: function () {
+                            not_now();
+                            t1_constructed();
+                        }
+                    });
+                    T2 = $trait({
+                        $constructor: function () {
+                            not_now();
+                            t2_constructed();
+                        }
+                    });
+                });
+                var Proto = $prototype({
+                    $traits: [
+                        T1,
+                        T2
+                    ],
+                    $constructor: function () {
+                        proto_constructed();
+                    }
+                });
+            });
+        }, function () {
+            _.isTraitOf = function (Trait, instance) {
+                var constructor = instance && instance.constructor;
+                return constructor && constructor.hasTrait && constructor.hasTrait(Trait) || false;
+            };
+            _.isTypeOf = _.or(_.isTypeOf, _.isTraitOf);
+            $trait = function (arg1, arg2) {
+                var constructor = undefined;
+                var def = _.extend(arguments.length > 1 ? arg2 : arg1, {
+                    constructor: _.throwsError('Traits are not instantiable (what for?)'),
+                    isTraitOf: $static($builtin(function (instance) {
+                        return _.isTraitOf(constructor, instance);
+                    }))
+                });
+                return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
+            };
+        });
+        $prototype.macro('$macroTags', function (def, value, name) {
+            _.each($untag(value), function (v, k) {
+                _.defineTagKeyword(k);
+            });
+        });
+        _.$ = function (this_, fn) {
+            var arguments_ = _.rest(arguments, 2);
+            var result = arguments_.length ? _.bind.apply(undefined, [
+                fn,
+                this_
+            ].concat(_.rest(arguments, 2))) : _.withSameArgs(fn, function () {
+                return fn.apply(this_, arguments);
+            });
+            return result;
+        };
+        if (typeof jQuery !== 'undefined') {
+            jQuery.fn.extend({
+                $: function () {
+                    return _.$.apply(null, [this].concat(_.asArray(arguments)));
+                }
+            });
+        }
+        _.deferTest([
+            'OOP',
+            '$const'
+        ], function () {
+            var A = $prototype({
+                $const: {
+                    foo: 'foo',
+                    bar: 'bar'
+                },
+                qux: $const('qux'),
+                zap: $const('zap')
+            });
+            $assert([
+                A.foo,
+                A.bar,
+                A.qux,
+                A.zap
+            ], [
+                'foo',
+                'bar',
+                'qux',
+                'zap'
+            ]);
+            $assertThrows(function () {
+                A.foo = 'bar ';
+            });
+        }, function () {
+            _.defineKeyword('const', function (x) {
+                return $static($property(x));
+            });
+        });
+        _.deferTest([
+            'OOP',
+            '$callableAsFreeFunction'
+        ], function () {
+            var X = $prototype({
+                foo: $callableAsFreeFunction($property(function () {
+                    $assert(this._42, 42);
+                    return 42;
+                }))
+            });
+            x = new X({ _42: 42 });
+            $assert(x.foo, X.foo(x), 42);
+        }, function () {
+            _.defineTagKeyword('callableAsFreeFunction');
+            $prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
+                def.constructor[name] = $untag(value).asFreeFunction;
+                return def;
+            });
+        });
+        _.deferTest([
+            'OOP',
+            '$callableAsMethod'
+        ], function () {
+            var X = $prototype({
+                foo: $callableAsMethod(function (this_, _42) {
+                    $assert(this_._42, _42, 42);
+                    return 42;
+                })
+            });
+            x = new X({ _42: 42 });
+            $assert(x.foo(42), X.foo(x, 42), 42);
+        }, function () {
+            _.defineTagKeyword('callableAsMethod');
+            $prototype.macroTag('callableAsMethod', function (def, value, name) {
+                def[name] = Tags.modify(value, _.asMethod);
+                def.constructor[name] = $untag(value);
+                return def;
+            });
+        });
+        _.deferTest([
+            'OOP',
+            '$singleton'
+        ], function () {
+            $assertEveryCalledOnce(function (baseConstructor, derivedConstructor) {
+                var Base = $prototype({ method: _.constant(42) });
+                var Simple = $singleton({
+                    constructor: function () {
+                        baseConstructor();
+                    },
+                    method: function () {
+                        return 42;
+                    }
+                });
+                var Derived = $singleton(Base, {
+                    constructor: function () {
+                        derivedConstructor();
+                        Base.prototype.constructor.apply(this, arguments);
+                    }
+                });
+                $assert(Simple.method(), Derived.method(), 42);
+            });
+            var Outside = $singleton({
+                Inside: $prototype({
+                    foo: function () {
+                    }
+                })
+            });
+            $assertTypeMatches(new Outside.Inside().foo, 'function');
+        }, function () {
+            $singleton = function (arg1, arg2) {
+                return new ($prototype.apply(null, arguments))();
+            };
+        });
+    },
+    function (module, exports) {
+        _.deferTest('Set extensions', function () {
+            var set = new Set([
+                1,
+                2,
+                3
+            ]);
+            $assert(set.copy !== set);
+            $assert(set.asArray, set.copy.asArray, [
+                1,
+                2,
+                3
+            ]);
+            $assert(set.extend(new Set([
+                4,
+                5
+            ])).asArray, [
+                1,
+                2,
+                3,
+                4,
+                5
+            ]);
+            $assert(set.extended(new Set([
+                6,
+                7
+            ])).asArray, [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+            ]);
+            $assert(set.asArray, [
+                1,
+                2,
+                3,
+                4,
+                5
+            ]);
+            $assert(_.reject([
+                7,
+                2,
+                3,
+                8
+            ], [
+                2,
+                3
+            ].asSet.matches), [
+                7,
+                8
+            ]);
+        }, function () {
+            $mixin(Array, {
+                asSet: $property(function () {
+                    return new Set(this);
+                })
+            });
+            $mixin(Set, {
+                copy: $property(function () {
+                    return new Set(this);
+                }),
+                asArray: $property(function () {
+                    return Array.from(this.values());
+                }),
+                matches: $property(function () {
+                    var self = this;
+                    return function (x) {
+                        return self.has(x);
+                    };
+                }),
+                extend: function (b) {
+                    for (var x of b) {
+                        this.add(x);
+                    }
+                    ;
+                    return this;
+                },
+                extended: function (b) {
+                    return this.copy.extend(b);
+                }
+            });
+        });
+    },
+    function (module, exports) {
+        _.tests['Promise+'] = {
+            promisify: function () {
+                var fs = {
+                    42: 42,
+                    dontTouchMe: function () {
+                        $assert(arguments.length === 0);
+                        return 42;
+                    },
+                    dontTouchMe2: function () {
+                        $assert(arguments.length === 0);
+                        return 42;
+                    },
+                    readFileSync: function () {
+                        $assert(arguments.length === 0);
+                        return 42;
+                    },
+                    readFile: function (path, callback) {
+                        $assert(this === fs);
+                        if (path) {
+                            callback(null, 'contents of ' + path);
+                        } else {
+                            callback('path empty');
+                        }
+                    }
+                };
+                fsAsync = Function.promisifyAll(fs, {
+                    except: _.endsWith.$$('Sync').or([
+                        'dontTouchMe',
+                        'dontTouchMe2'
+                    ].asSet.matches)
+                });
+                $assert(fsAsync.dontTouchMe(), fsAsync.dontTouchMe2(), fsAsync.readFileSync(), fsAsync['42'], 42);
+                return __.all([
+                    fsAsync.readFile(null).assertRejected('path empty'),
+                    fsAsync.readFile('foo').assert('contents of foo')
+                ]);
+            },
+            __: function () {
+                var adds = function (a, b) {
+                    return function (x, y) {
+                        return [
+                            x + a,
+                            y + b
+                        ];
+                    };
+                };
+                return [
+                    __(123).assert(123),
+                    __(Promise.resolve(123)).assert(123),
+                    __(function () {
+                        return 123;
+                    }).assert(123),
+                    __(function () {
+                        throw 123;
+                    }).assertRejected(123),
+                    __(adds('foo', 'bar'), 123, 456).assert([
+                        '123foo',
+                        '456bar'
+                    ])
+                ];
+            },
+            first: function () {
+                return [
+                    Promise.firstResolved([
+                        Promise.reject(123),
+                        Promise.resolve(456)
+                    ]).assert(456),
+                    Promise.firstResolved([
+                        Promise.reject(123),
+                        Promise.reject(456)
+                    ]).assertRejected(null),
+                    Promise.firstResolved([]).assertRejected(null)
+                ];
+            },
+            all: function () {
+                return [
+                    __.all([
+                        123,
+                        456
+                    ]).assert([
+                        123,
+                        456
+                    ]),
+                    __.all([
+                        _.constant(123),
+                        _.constant(456)
+                    ]).assert([
+                        123,
+                        456
+                    ]),
+                    __.all([
+                        Promise.resolve(123),
+                        Promise.resolve(456)
+                    ]).assert([
+                        123,
+                        456
+                    ])
+                ];
+            },
+            seq: function () {
+                $assert(__.seq(123), 123);
+                $assert(__.seq([
+                    123,
+                    333
+                ]), 333);
+                $assert(__.seq([
+                    123,
+                    _.constant(333)
+                ]), 333);
+                return [
+                    __.seq([
+                        Promise.resolve(123),
+                        Promise.resolve(333)
+                    ]).assert(333),
+                    __.seq([
+                        123,
+                        __.constant(333)
+                    ]).assert(333),
+                    __.seq([
+                        123,
+                        __.rejects('foo')
+                    ]).assertRejected('foo'),
+                    __.seq([
+                        123,
+                        __.delays(0),
+                        _.appends('bar')
+                    ]).assert('123bar')
+                ];
+            },
+            map: function () {
+                return [
+                    __.map(111, _.appends('bar')).assert('111bar'),
+                    __.map([222], _.appends('bar')).assert(['222bar']),
+                    __.map(__(333), _.appends('bar')).assert('333bar'),
+                    __.map({ foo: 444 }, _.appends('bar')).assert({ foo: '444bar' }),
+                    __.map({ foo: 555 }, __.constant('bar')).assert({ foo: 'bar' }),
+                    __.map([
+                        'a',
+                        'b',
+                        'c',
+                        'd',
+                        'e'
+                    ], function (x, i) {
+                        return Promise.resolve([
+                            i,
+                            x
+                        ]).delay(10 - i);
+                    }).assert([
+                        [
+                            0,
+                            'a'
+                        ],
+                        [
+                            1,
+                            'b'
+                        ],
+                        [
+                            2,
+                            'c'
+                        ],
+                        [
+                            3,
+                            'd'
+                        ],
+                        [
+                            4,
+                            'e'
+                        ]
+                    ])
+                ];
+            },
+            filter: function () {
+                return [
+                    __.filter(123, _.constant(456)).assert(456),
+                    __.filter([
+                        'foo',
+                        456
+                    ], _.isString).assert(['foo']),
+                    __.filter([
+                        'foo',
+                        456
+                    ], __.constant('baz')).assert([
+                        'baz',
+                        'baz'
+                    ]),
+                    __.filter({
+                        foo: 123,
+                        bar: '456'
+                    }, _.isNumber).assert({ foo: 123 })
+                ];
+            },
+            each: function () {
+                var pairs = function (input) {
+                    var pairs = [];
+                    return __.each(input, function (x, i) {
+                        pairs.push([
+                            x,
+                            i
+                        ]);
+                    }).then(_.constant(pairs));
+                };
+                return [
+                    pairs().assert([]),
+                    pairs(undefined).assert([]),
+                    pairs(42).assert([[
+                            42,
+                            undefined
+                        ]]),
+                    pairs([
+                        42,
+                        48
+                    ]).assert([
+                        [
+                            42,
+                            0
+                        ],
+                        [
+                            48,
+                            1
+                        ]
+                    ]),
+                    pairs({
+                        0: 42,
+                        1: 48
+                    }).assert([
+                        [
+                            42,
+                            '0'
+                        ],
+                        [
+                            48,
+                            '1'
+                        ]
+                    ]),
+                    __.each([
+                        1,
+                        2
+                    ], function (x, i) {
+                        if (i > 0)
+                            $fail;
+                        return Promise.reject('foo');
+                    }).assertRejected('foo')
+                ];
+            }
+        };
+        TimeoutError = $extends(Error, { message: 'timeout expired' });
+        __ = Promise.eval = function (x) {
+            var this_ = this, args = _.rest(arguments);
+            return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
+                resolve(x.apply(this_, args));
+            }) : Promise.resolve(x);
+        };
+        Promise.coerce = function (x) {
+            return x instanceof Promise ? x : Promise.resolve(x);
+        };
+        __.noop = function () {
+            return Promise.resolve();
+        };
+        __.eternity = new Promise(function () {
+        });
+        __.identity = function (x) {
+            return Promise.resolve(x);
+        };
+        __.constant = function (x) {
+            return function () {
+                return Promise.resolve(x);
+            };
+        };
+        __.reject = function (e) {
+            return Promise.reject(e);
+        };
+        __.rejects = function (e) {
+            return function () {
+                return Promise.reject(e);
+            };
+        };
+        __.then = function (a, b) {
+            b = _.coerceToFunction(b);
+            try {
+                var x = a instanceof Function ? a() : a;
+                return x instanceof Promise ? x.then(b) : b(x);
+            } catch (e) {
+                return Promise.reject(e);
+            }
+        };
+        __.delay = function (ms) {
+            return __.delays(ms)();
+        };
+        __.delays = function (ms) {
+            return function (x) {
+                return new Promise(function (return_) {
+                    setTimeout(function () {
+                        return_(x);
+                    }, ms || 0);
+                });
+            };
+        };
+        $mixin(Promise, {
+            delay: function (ms) {
+                return this.then(__.delays(ms));
+            },
+            timeout: function (ms) {
+                return this.race(__.delay(ms).reject(new TimeoutError()));
+            },
+            now: $property(function () {
+                return this.timeout(0);
+            })
+        });
+        $mixin(Array, {
+            race: $property(function () {
+                return Promise.race(this);
+            })
+        });
+        $mixin(Promise, {
+            race: function (other) {
+                return [
+                    this,
+                    other
+                ].race;
+            },
+            firstResolved: $static(function (arr) {
+                return new Promise(function (resolve, reject) {
+                    var todo = arr && arr.length;
+                    if (!todo) {
+                        reject(null);
+                    } else {
+                        _.each(arr, function (x) {
+                            Promise.coerce(x).then(function (x) {
+                                todo--;
+                                if (resolve) {
+                                    resolve(x);
+                                    resolve = undefined;
+                                }
+                            }).catch(function () {
+                                todo--;
+                                if (!todo) {
+                                    reject(null);
+                                }
+                            });
+                        });
+                    }
+                });
+            }),
+            reject: function (e) {
+                return this.then(_.throwsError(e));
+            },
+            chain: function (fn) {
+                return this.then(function (x) {
+                    fn(x);
+                    return x;
+                });
+            },
+            done: function (fn) {
+                return this.then(function (x) {
+                    fn(null, x);
+                    return x;
+                }, function (e) {
+                    fn(e, null);
+                    throw e;
+                });
+            },
+            finally: function (fn) {
+                return this.then(function (x) {
+                    return fn(null, x);
+                }, function (e) {
+                    return fn(e, null);
+                });
+            },
+            log: $property(function () {
+                return this.then(log, log.then(_.throwsError));
+            }),
+            alert: $property(function () {
+                return this.done(alert2, alert2.then(_.throwsError));
+            }),
+            panic: $property(function () {
+                return this.catch(function (e) {
+                    if (_.globalUncaughtExceptionHandler) {
+                        _.globalUncaughtExceptionHandler(e);
+                    }
+                    throw e;
+                });
+            }),
+            assert: function (desired) {
+                return this.then(function (x) {
+                    $assert(x, desired);
+                    return x;
+                });
+            },
+            assertTypeMatches: function (desired) {
+                return this.then(function (x) {
+                    $assertTypeMatches(x, desired);
+                    return x;
+                });
+            },
+            assertRejected: function (desired) {
+                var check = arguments.length > 0;
+                return this.catch(function (x) {
+                    if (check) {
+                        $assert(x, desired);
+                    }
+                    return x;
+                });
+            }
+        });
+        _.deferTest([
+            'Promise+',
+            '_.scatter with pooling'
+        ], function () {
+            var data = _.times(21, function (i) {
+                return 'item_' + i;
+            });
+            var numItems = 0;
+            var processedItems = [];
+            var op = function (item, i) {
+                numItems++;
+                $assert(!processedItems.contains(item));
+                return __.delay(_.random(2)).then(function () {
+                    processedItems.push(item);
+                    return item;
+                });
+            };
+            return __.scatter(data, op, { maxConcurrency: 5 }).then(function () {
+                $assert(_.difference(data, processedItems).isEmpty);
+            });
+        }, function () {
+            var TaskPool = $prototype({
+                constructor: function (cfg) {
+                    this.maxTime = cfg && cfg.maxTime;
+                    this.pending = [];
+                    if (this.maxConcurrency = cfg && cfg.maxConcurrency) {
+                        this.numActive = 0;
+                        this.queue = [];
+                    }
+                },
+                run: function (task) {
+                    var self = this;
+                    if (this.numActive >= this.maxConcurrency) {
+                        return new Promise(function (resolve) {
+                            self.queue.push(function () {
+                                return self.run(task).then(resolve);
+                            });
+                        });
+                    } else {
+                        var p = __(task);
+                        if (this.maxTime !== undefined) {
+                            p = p.timeout(this.maxTime);
+                        }
+                        if (this.maxConcurrency !== undefined) {
+                            self.numActive++;
+                            p = p.then(function (x) {
+                                self.numActive--;
+                                return self.queue.length && self.numActive < self.maxConcurrency ? self.queue.shift()().then(_.constant(x)) : x;
+                            });
+                        }
+                        this.pending.push(p);
+                        return p;
+                    }
+                },
+                all: $property(function () {
+                    return Promise.all(this.pending);
+                })
+            });
+            __.scatter = function (x, fn, cfg) {
+                return __.then(x, function (x) {
+                    if (_.isStrictlyObject(x)) {
+                        var result = _.coerceToEmpty(x), tasks = new TaskPool(cfg);
+                        _.each2(x, function (v, k) {
+                            tasks.run(fn.$(v, k, x)).then(function (vk) {
+                                if (vk) {
+                                    result[vk[1]] = vk[0];
+                                }
+                            });
+                        });
+                        return tasks.all.then(_.constant(result));
+                    } else {
+                        return __(fn, x, undefined, x).then(function (vk) {
+                            return vk[0];
+                        });
+                    }
+                });
+            };
+        });
+        __.map = function (x, fn, cfg) {
+            return __.scatter(x, function (v, k, x) {
+                return __.then(fn.$(v, k, x), function (x) {
+                    return [
+                        x,
+                        k
+                    ];
+                });
+            }, cfg);
+        };
+        __.filter = function (x, fn, cfg) {
+            return __.scatter(x, function (v, k, x) {
+                return __.then(fn.$(v, k, x), function (decision) {
+                    return decision === false ? undefined : decision === true ? [
+                        v,
+                        k
+                    ] : [
+                        decision,
+                        k
+                    ];
+                });
+            }, cfg);
+        };
+        __.each = function (obj, fn) {
+            return __.then(obj, function (obj) {
+                return new Promise(function (complete, whoops) {
+                    _.cps.each(obj, function (x, i, then) {
+                        Promise.coerce(fn(x, i)).then(then).catch(whoops);
+                    }, complete);
+                });
+            });
+        };
+        __.seq = function (arr) {
+            return _.reduce2(arr, __.then);
+        };
+        __.all = function (arr) {
+            return Promise.all(_.map(arr, __));
+        };
+        __.race = function (arr) {
+            return Promise.race(_.map(arr, __));
+        };
+        $mixin(Function, {
+            promisifyAll: $static(function (obj, cfg) {
+                var cfg = cfg || {}, except = cfg.except || _.noop;
+                if (except instanceof Array) {
+                    except = except.asSet.matches;
+                }
+                var result = {};
+                for (var k in obj) {
+                    var x = obj[k];
+                    if (x instanceof Function) {
+                        var fn = x.bind(obj);
+                        result[k] = except(k) ? fn : fn.promisify;
+                    } else {
+                        result[k] = x;
+                    }
+                }
+                return result;
+            }),
+            promisify: $hidden($property(function () {
+                var f = this;
+                return function () {
+                    var self = this, args = arguments;
+                    return new Promise(function (resolve, reject) {
+                        f.apply(self, _.asArray(args).concat(function (err, what) {
+                            if (err) {
+                                reject(err);
+                            }
+                            resolve(what);
+                        }));
+                    });
+                };
+            }))
+        });
+    },
+    function (module, exports) {
+        'use strict';
+        _.tests['Channel'] = {
+            'is promise': () => {
+                $assert(new Channel() instanceof Promise);
+            },
+            'resolve from constructor + then + chanining': done => {
+                new Channel(resolve => {
+                    resolve(123);
+                }).then(x => {
+                    $assert(x, 123);
+                    return 456;
+                }, () => {
+                    $fail;
+                }).then(y => {
+                    $assert(y, 456);
+                    done();
+                });
+            },
+            'reject from constructor': done => {
+                new Channel((resolve, reject) => {
+                    reject(123);
+                }).then(() => {
+                    $fail;
+                }, x => {
+                    $assert(x, 123);
+                    done();
+                });
+            },
+            'throw from constructor + .catch + chanining': done => {
+                new Channel((resolve, reject) => {
+                    throw 'foo';
+                }).then(() => {
+                    $fail;
+                }).catch(x => {
+                    $assert(x, 'foo');
+                    return 'bar';
+                }).then(y => {
+                    $assert(y, 'bar');
+                    done();
+                }, () => {
+                    $fail;
+                });
+            },
+            'throw from .then': done => {
+                new Channel(123).then(x => {
+                    throw x + 1;
+                }).catch(x => {
+                    $assert(x, 124);
+                    done();
+                });
+            },
+            'pending state': () => {
+                $assert('pending', new Channel().then(() => $fail).state);
+            },
+            'new Channel (const)': () => new Channel(123).assert(123),
+            'recognized by tests as Promise': () => Channel.resolve(123).assert(123),
+            'accepted by Promise.all': () => Promise.all([
+                Channel.resolve(123).assert(123),
+                Channel.reject(456).assertRejected(456)
+            ]).assert([
+                123,
+                456
+            ]),
+            'returning channel from then + .resolve': () => {
+                var x = Channel.resolve(123), y = undefined, calls = [];
+                x.then(() => y = new Channel(456)).then(x => calls.push(x));
+                y.resolve(789);
+                $assert(calls, [
+                    456,
+                    789
+                ]);
+            },
+            '$channel for $prototype': () => {
+                var Model = $prototype({ numPersons: $channel() });
+                var View = $prototype({ label: $channel() });
+                $assert($channel.is(Model.$definition.numPersons));
+                var model = new Model({ numPersons: 10 }), view = new View();
+                $assert(model.numPersons.value, 10);
+                $assert(view.label.state, 'pending');
+                view.label = model.numPersons.then(x => x + ' persons');
+                $assert(view.label !== model.numPersons);
+                $assert(view.label.value, '10 persons');
+                model.numPersons = 11;
+                $assert(view.label.value, '11 persons');
+            },
+            '$channel(const)': () => {
+                $assert($singleton({ count: $channel(7) }).count.value, 7);
+            }
+        };
+        $global.Channel = $extends(Promise, {
+            constructor: function (fn, transducers, before) {
+                this.after = [];
+                this.state = 'pending';
+                this.value = undefined;
+                this.transducers = {
+                    resolve: transducers && transducers.resolve || (x => x),
+                    reject: transducers && transducers.reject || (e => {
+                        throw e;
+                    })
+                };
+                if (fn instanceof Function) {
+                    try {
+                        fn.call(this, this.$(this.resolve), this.$(this.reject));
+                    } catch (e) {
+                        this.reject(e);
+                    }
+                } else if (fn !== undefined) {
+                    this.resolve(fn);
+                }
+            },
+            $private: {
+                _resolve: function (x) {
+                    this.state = 'resolved';
+                    this.value = x;
+                    this.after.forEach(c => c.resolve(x));
+                },
+                _reject: function (e) {
+                    this.state = 'rejected';
+                    this.value = e;
+                    this.after.forEach(c => c.reject(e));
+                }
+            },
+            resolve: function (x, transducer) {
+                try {
+                    x = (transducer || this.transducers.resolve)(x);
+                    if (x instanceof Promise) {
+                        x.then(x => this._resolve(x), e => this._reject(e));
+                    } else {
+                        this._resolve(x);
+                    }
+                } catch (e) {
+                    this._reject(e);
+                }
+            },
+            reject: function (e) {
+                return this.resolve(e, this.transducers.reject);
+            },
+            then: function (resolve, reject) {
+                var c = new Channel(undefined, {
+                    resolve: resolve,
+                    reject: reject
+                }, this);
+                this.after.push(c);
+                if (this.state === 'resolved') {
+                    c.resolve(this.value);
+                } else if (this.state === 'rejected') {
+                    c.reject(this.value);
+                }
+                return c;
+            },
+            catch: function (fn) {
+                return this.then(undefined, fn);
+            }
+        });
+        Channel.all = arr => new Channel(resolve => {
+            var complete = new Set(), value = new Array(arr.length);
+            arr.forEach((c, i) => {
+                c.then(x => {
+                    value[i] = x;
+                    if (complete.length === value.length) {
+                        resolve(value);
+                    } else {
+                        complete.add(i);
+                    }
+                });
+            });
+        });
+        Channel.resolve = x => new Channel(resolve => resolve(x));
+        Channel.reject = e => new Channel((resolve, reject) => reject(e));
+        $prototype.macroTag('channel', (def, value, name) => {
+            var memberName = '_' + name;
+            var initialValue = $untag(value);
+            def[name] = Tags.modify(value, () => $property({
+                get: function () {
+                    return this[memberName] || (this[memberName] = new Channel(initialValue));
+                },
+                set: function (x) {
+                    this[name].resolve(x);
+                }
+            }));
+        });
+    },
+    function (module, exports) {
+        _.tests.parse = {
+            fileName: function () {
+                $assert(Parse.fileName('блабла'), 'блабла');
+                $assert(Parse.fileName('блабла.jpg'), 'блабла');
+                $assert(Parse.fileName('c:\\блабла/path/path2/блабла.jpg'), 'блабла');
+            }
+        };
+        Parse = {
+            keyCodeAsString: function (key) {
+                return String.fromCharCode(96 <= key && key <= 105 ? key - 48 : key);
+            },
+            fileName: function (path) {
+                return _.first(_.last(path.split(/\\|\//)).split('.'));
+            }
+        };
+    },
+    function (module, exports) {
+        Sort = {
+            Ascending: 1,
+            Descending: -1,
+            strings: function (a, b) {
+                a = $.trim(a).toLowerCase();
+                b = $.trim(b).toLowerCase();
+                if (a.length == 0 && b.length > 0) {
+                    return 1;
+                } else if (a.length > 0 && b.length == 0) {
+                    return -1;
+                } else {
+                    return a == b ? 0 : a < b ? -1 : 1;
+                }
+            },
+            numbers: function (a, b) {
+                if (isNaN(a) && isNaN(b)) {
+                    return 0;
+                } else if (isNaN(a)) {
+                    return -1;
+                } else if (isNaN(b)) {
+                    return 1;
+                } else {
+                    return a < b ? -1 : a > b ? 1 : 0;
+                }
+            },
+            generic: function (a, b) {
+                if (!a && !b) {
+                    return 0;
+                } else if (!a) {
+                    return -1;
+                } else if (!b) {
+                    return 1;
+                } else {
+                    return a < b ? -1 : a > b ? 1 : 0;
+                }
+            },
+            inverse: function (sort) {
+                return function (a, b) {
+                    return -sort(a, b);
+                };
+            },
+            field: function (name, sort, order) {
+                return function (a, b) {
+                    return sort(a[name], b[name]) * order;
+                };
+            }
+        };
+    },
+    function (module, exports) {
+        _.tests.concurrency = {
+            'scope': function (testDone) {
+                var releases = [], acquires = [], count = 10;
+                var method = $scope(function (release, id, then) {
+                    acquires.push(id);
+                    _.delay(function () {
+                        release(function () {
+                            releases.push(id);
+                            if (then)
+                                then();
+                        });
+                    }, 10);
+                });
+                method(42, function () {
+                    $assert(count + 1, acquires.length, releases.length);
+                    $assert(acquires, releases.reversed);
+                    testDone();
+                });
+                _.times(count, function () {
+                    method(_.random(1000));
+                });
+            },
+            'interlocked': function () {
+                var isNowRunning = false;
+                var op = _.interlocked(function (item, i) {
+                    $assert(!isNowRunning);
+                    isNowRunning = true;
+                    return __.delay(_.random(2)).then(function () {
+                        isNowRunning = false;
+                    });
+                });
+                return __.scatter(_.times(15, String.randomHex), op, { maxConcurrency: 10 });
+            }
+        };
+        Lock = $prototype({
+            acquire: function (then) {
+                this.wait(this.$(function () {
+                    if (!this.waitQueue) {
+                        this.waitQueue = [];
+                    }
+                    then();
+                }));
+            },
+            acquired: function () {
+                return this.waitQueue !== undefined;
+            },
+            wait: function (then) {
+                if (this.acquired()) {
+                    this.waitQueue.push(then);
+                } else {
+                    then();
+                }
+            },
+            release: function () {
+                if (this.waitQueue.length) {
+                    var queueFirst = _.first(this.waitQueue);
+                    this.waitQueue = _.rest(this.waitQueue);
+                    queueFirst();
+                } else
+                    delete this.waitQueue;
+            }
+        });
+        _.interlocked = function (fn) {
+            var lock = new Lock(), fn = $untag(fn);
+            return _.extendWith({
+                lock: lock,
+                wait: lock.$(lock.wait)
+            }, function () {
+                var this_ = this, args_ = arguments;
+                return new Promise(function (resolve) {
+                    lock.acquire(function () {
+                        __.then(fn.apply(this_, args_), function (x) {
+                            lock.release();
+                            resolve(x);
+                        });
+                    });
+                });
+            });
+        };
+        _.defineKeyword('scope', function (fn) {
+            var releaseStack = undefined;
+            return _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
+                var released = { when: undefined };
+                (releaseStack = releaseStack || []).push(released);
+                fn(function (then) {
+                    if (released.when)
+                        throw new Error('$scope: release called twice');
+                    released.when = then;
+                    while (releaseStack && releaseStack.last && releaseStack.last.when) {
+                        var trigger = releaseStack.last.when;
+                        if ((releaseStack = _.initial(releaseStack)).isEmpty) {
+                            releaseStack = undefined;
+                        }
+                        trigger();
+                    }
+                });
+            });
+        });
+        if ($platform.NodeJS) {
+            module.exports = _;
+        }
+    },
+    function (module, exports) {
+        Math.clamp = _.clamp = function (n, min, max) {
+            return Math.max(min, Math.min(max, n));
+        };
+        Math.lerp = _.lerp = function (t, min, max) {
+            return min + (max - min) * t;
+        };
+        Math.rescale = _.rescale = function (v, from, to, opts) {
+            var unit = (v - from[0]) / (from[1] - from[0]);
+            return _.lerp(opts && opts.clamp ? _.clamp(unit, 0, 1) : unit, to[0], to[1]);
+        };
+        Math.rescaleClamped = _.rescaleClamped = function (v, from, to) {
+            return _.rescale(v, from, to, { clamp: true });
+        };
+        Math.sqr = _.sqr = function (x) {
+            return x * x;
+        };
+        if (!Math.sign) {
+            Math.sign = function (x) {
+                return x < 0 ? -1 : x > 0 ? 1 : 0;
+            };
+        }
+        Intersect = {
+            rayCircle: function (origin, d, center, r) {
+                var f = origin.sub(center);
+                var a = d.dot(d);
+                var b = 2 * f.dot(d);
+                var c = f.dot(f) - r * r;
+                var discriminant = b * b - 4 * a * c;
+                if (discriminant < 0) {
+                    return undefined;
+                } else {
+                    discriminant = Math.sqrt(discriminant);
+                    var t1 = (-b - discriminant) / (2 * a);
+                    var t2 = (-b + discriminant) / (2 * a);
+                    if (t1 >= 0 && t1 <= 1) {
+                        return {
+                            time: t1,
+                            where: origin.add(d.scale(t1))
+                        };
+                    }
+                    if (t2 >= 0 && t2 <= 1) {
+                        return {
+                            time: t2,
+                            where: origin.add(d.scale(t2)),
+                            insideOut: true
+                        };
+                    }
+                    return undefined;
+                }
+            }
+        };
+        Vec2 = $prototype({
+            $static: {
+                xx: function (x) {
+                    return new Vec2(x, x);
+                },
+                xy: function (x, y) {
+                    return new Vec2(x, y);
+                },
+                x: function (x) {
+                    return new Vec2(x, 0);
+                },
+                y: function (y) {
+                    return new Vec2(0, y);
+                },
+                zero: $property(function () {
+                    return new Vec2(0, 0);
+                }),
+                unit: $property(function () {
+                    return new Vec2(1, 1);
+                }),
+                one: $alias('unit'),
+                lt: $alias('fromLT'),
+                wh: $alias('fromWH'),
+                fromLT: function (lt) {
+                    return lt && new Vec2(lt.left, lt.top);
+                },
+                fromWH: function (wh) {
+                    return wh && new Vec2(wh.width, wh.height);
+                },
+                fromLeftTop: $alias('fromLT'),
+                fromWidthHeight: $alias('fromWH'),
+                lerp: function (t, a, b) {
+                    return new Vec2(_.lerp(t, a.x, b.x), _.lerp(t, a.y, b.y));
+                },
+                clamp: function (n, a, b) {
+                    return new Vec2(_.clamp(n.x, a.x, b.x), _.clamp(n.y, a.y, b.y));
+                }
+            },
+            constructor: function (x, y) {
+                if (arguments.length === 1) {
+                    if (_.isNumber(x)) {
+                        this.x = this.y = x;
+                    } else {
+                        this.x = x.x;
+                        this.y = x.y;
+                    }
+                } else {
+                    this.x = x;
+                    this.y = y;
+                }
+            },
+            w: $alias($property('x')),
+            h: $alias($property('y')),
+            width: $alias($property('x')),
+            height: $alias($property('y')),
+            length: $property(function () {
+                return Math.sqrt(this.lengthSquared);
+            }),
+            lengthSquared: $property(function () {
+                return this.x * this.x + this.y * this.y;
+            }),
+            distance: function (pt) {
+                return this.sub(pt).length;
+            },
+            aspect: $property(function () {
+                return this.x / this.y;
+            }),
+            add: function (a, b) {
+                if (b === undefined) {
+                    return typeof a === 'number' ? new Vec2(this.x + a, this.y + a) : new Vec2(this.x + a.x, this.y + a.y);
+                } else {
+                    return new Vec2(this.x + a, this.y + b);
+                }
+            },
+            aspect: $property(function () {
+                return this.w / this.h;
+            }),
+            dot: function (other) {
+                return this.x * other.x + this.y * other.y;
+            },
+            sub: function (other) {
+                return new Vec2(this.x - other.x, this.y - other.y);
+            },
+            scale: function (tx, ty) {
+                return new Vec2(this.x * tx, this.y * (ty === undefined ? tx : ty));
+            },
+            mul: function (other) {
+                return new Vec2(this.x * other.x, this.y * other.y);
+            },
+            divide: function (other) {
+                return new Vec2(this.x / other.x, this.y / other.y);
+            },
+            normal: $property(function () {
+                return this.scale(1 / this.length);
+            }),
+            perp: $property(function () {
+                return new Vec2(this.y, -this.x);
+            }),
+            half: $property(function () {
+                return new Vec2(this.x * 0.5, this.y * 0.5);
+            }),
+            inverse: $property(function () {
+                return new Vec2(-this.x, -this.y);
+            }),
+            asArray: $property(function () {
+                return [
+                    this.x,
+                    this.y
+                ];
+            }),
+            asLeftTop: $property(function () {
+                return {
+                    left: this.x,
+                    top: this.y
+                };
+            }),
+            asLeftTopMargin: $property(function () {
+                return {
+                    marginLeft: this.x,
+                    marginTop: this.y
+                };
+            }),
+            asWidthHeight: $property(function () {
+                return {
+                    width: this.x,
+                    height: this.y
+                };
+            }),
+            asTranslate: $property(function () {
+                return 'translate(' + this.x + ' ' + this.y + ')';
+            }),
+            separatedWith: function (sep) {
+                return this.x + sep + this.y;
+            },
+            floor: $property(function () {
+                return new Vec2(Math.floor(this.x), Math.floor(this.y));
+            }),
+            sum: $static(function (arr) {
+                return _.reduce(_.isArray(arr) && arr || _.asArray(arguments), function (memo, v) {
+                    return memo.add(v || Vec2.zero);
+                }, Vec2.zero);
+            }),
+            toString: function () {
+                return '{' + this.x + ',' + this.y + '}';
+            },
+            projectOnCircle: function (center, r) {
+                return center.add(this.sub(center).normal.scale(r));
+            },
+            projectOnLineSegment: function (v, w) {
+                var wv = w.sub(v);
+                var l2 = wv.lengthSquared;
+                if (l2 == 0)
+                    return v;
+                var t = this.sub(v).dot(wv) / l2;
+                if (t < 0)
+                    return v;
+                if (t > 1)
+                    return w;
+                return v.add(wv.scale(t));
+            },
+            projectOnRay: function (origin, dir) {
+                var l2 = dir.lengthSquared;
+                if (l2 == 0)
+                    return 0;
+                return this.sub(origin).dot(dir) / l2;
+            }
+        });
+        Bezier = {
+            cubic: function (t, p0, p1, p2, p3) {
+                var cube = t * t * t;
+                var square = t * t;
+                var ax = 3 * (p1.x - p0.x);
+                var ay = 3 * (p1.y - p0.y);
+                var bx = 3 * (p2.x - p1.x) - ax;
+                var by = 3 * (p2.y - p1.y) - ay;
+                var cx = p3.x - p0.x - ax - bx;
+                var cy = p3.y - p0.y - ay - by;
+                var x = cx * cube + bx * square + ax * t + p0.x;
+                var y = cy * cube + by * square + ay * t + p0.y;
+                return new Vec2(x, y);
+            },
+            cubic1D: function (t, a, b, c, d) {
+                return Bezier.cubic(t, Vec2.zero, new Vec2(a, b), new Vec2(c, d), Vec2.one).y;
+            },
+            make: {
+                cubic: function (a, b, c, d) {
+                    return function (t) {
+                        return Bezier.cubic(t, a, b, c, d);
+                    };
+                },
+                cubic1D: function (a, b, c, d) {
+                    return function (t) {
+                        return Bezier.cubic1D(t, a, b, c, d);
+                    };
+                }
+            }
+        };
+        BBox = $prototype({
+            $static: {
+                zero: $property(function () {
+                    return new BBox(0, 0, 0, 0);
+                }),
+                unit: $property(function () {
+                    return new BBox(0, 0, 1, 1);
+                }),
+                rect: $property(function (sideSize) {
+                    return new BBox(0, 0, sideSize, sideSize);
+                }),
+                fromLeftTopAndSize: function (pt, size) {
+                    return BBox.fromLTWH({
+                        left: pt.x,
+                        top: pt.y,
+                        width: size.x,
+                        height: size.y
+                    });
+                },
+                fromLTWH: function (l, t, w, h) {
+                    if (arguments.length === 1) {
+                        return l && BBox.fromLTWH(l.left, l.top, l.width, l.height);
+                    } else {
+                        return new BBox(l + w / 2, t + h / 2, w, h);
+                    }
+                },
+                fromLTRB: function (l, t, r, b) {
+                    if (arguments.length === 1) {
+                        return l && BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
+                    } else {
+                        return new BBox(_.lerp(0.5, l, r), _.lerp(0.5, t, b), r - l, b - t);
+                    }
+                },
+                fromSizeAndCenter: function (size, center) {
+                    return new BBox(center.x - size.x / 2, center.y - size.y / 2, size.x, size.y);
+                },
+                fromSize: function (a, b) {
+                    if (b) {
+                        return new BBox(-a / 2, -b / 2, a, b);
+                    } else {
+                        return new BBox(-a.x / 2, -a.y / 2, a.x, a.y);
+                    }
+                },
+                fromPoints: function (pts) {
+                    var l = Number.MAX_VALUE, t = Number.MAX_VALUE, r = Number.MIN_VALUE, b = Number.MIN_VALUE;
+                    _.each(pts, function (pt) {
+                        l = Math.min(pt.x, l);
+                        t = Math.min(pt.y, t);
+                        r = Math.max(pt.x, r);
+                        b = Math.max(pt.y, b);
+                    });
+                    return BBox.fromLTRB(l, t, r, b);
+                }
+            },
+            constructor: function (x, y, w, h) {
+                if (arguments.length == 4) {
+                    this.x = x;
+                    this.y = y;
+                    this.width = w;
+                    this.height = h;
+                } else {
+                    _.extend(this, x);
+                }
+            },
+            classifyPoint: function (pt) {
+                var sides = _.extend(pt.x > this.right ? { right: true } : {}, pt.x < this.left ? { left: true } : {}, pt.y > this.bottom ? { bottom: true } : {}, pt.y < this.top ? { top: true } : {});
+                return _.extend(sides, !sides.left && !sides.right && !sides.bottom && !sides.top ? { inside: true } : {});
+            },
+            classifyRay: function (origin, delta, cornerRadius) {
+                var half = this.size.half;
+                var farTime, farTimeX, farTimeY, nearTime, nearTimeX, nearTimeY, scaleX, scaleY, signX, signY;
+                scaleX = 1 / delta.x;
+                scaleY = 1 / delta.y;
+                signX = Math.sign(scaleX);
+                signY = Math.sign(scaleY);
+                nearTimeX = (this.x - signX * half.x - origin.x) * scaleX;
+                nearTimeY = (this.y - signY * half.y - origin.y) * scaleY;
+                farTimeX = (this.x + signX * half.x - origin.x) * scaleX;
+                farTimeY = (this.y + signY * half.y - origin.y) * scaleY;
+                if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+                    return undefined;
+                }
+                nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+                farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+                if (nearTime >= 1 || farTime <= 0) {
+                    return undefined;
+                }
+                var hit = { time: _.clamp(nearTime, 0, 1) };
+                if (nearTimeX > nearTimeY) {
+                    hit.normal = new Vec2(-signX, 0);
+                } else {
+                    hit.normal = new Vec2(0, -signY);
+                }
+                hit.delta = delta.scale(hit.time);
+                hit.where = origin.add(hit.delta);
+                if (cornerRadius) {
+                    var inner = this.grow(-cornerRadius);
+                    if (hit.where.x > inner.right) {
+                        if (hit.where.y < inner.top) {
+                            hit = Intersect.rayCircle(origin, delta, inner.rightTop, cornerRadius);
+                        } else if (hit.where.y > inner.bottom) {
+                            hit = Intersect.rayCircle(origin, delta, inner.rightBottom, cornerRadius);
+                        }
+                    } else if (hit.where.x < inner.left) {
+                        if (hit.where.y < inner.top) {
+                            hit = Intersect.rayCircle(origin, delta, inner.leftTop, cornerRadius);
+                        } else if (hit.where.y > inner.bottom) {
+                            hit = Intersect.rayCircle(origin, delta, inner.leftBottom, cornerRadius);
+                        }
+                    }
+                    if (hit && hit.insideOut) {
+                        hit.where = origin;
+                    }
+                }
+                return hit;
+            },
+            nearestPointTo: function (pt, cornerRadius) {
+                var r = cornerRadius || 0;
+                var a = new Vec2(this.left, this.top), b = new Vec2(this.right, this.top), c = new Vec2(this.right, this.bottom), d = new Vec2(this.left, this.bottom);
+                var pts = [
+                    pt.projectOnLineSegment(a.add(r, 0), b.add(-r, 0)),
+                    pt.projectOnLineSegment(b.add(0, r), c.add(0, -r)),
+                    pt.projectOnLineSegment(c.add(-r, 0), d.add(r, 0)),
+                    pt.projectOnLineSegment(d.add(0, -r), a.add(0, r)),
+                    pt.projectOnCircle(a.add(r, r), r),
+                    pt.projectOnCircle(b.add(-r, r), r),
+                    pt.projectOnCircle(c.add(-r, -r), r),
+                    pt.projectOnCircle(d.add(r, -r), r)
+                ];
+                return _.min(pts, function (test) {
+                    return pt.sub(test).length;
+                });
+            },
+            xywh: $property(function () {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+            }),
+            ltwh: $property(function () {
+                return {
+                    left: this.left,
+                    top: this.top,
+                    width: this.width,
+                    height: this.height
+                };
+            }),
+            union: function (other) {
+                return BBox.fromLTRB(Math.min(this.left, other.left), Math.min(this.top, other.top), Math.max(this.right, other.right), Math.max(this.bottom, other.bottom));
+            },
+            centerIn: function (other) {
+                return new BBox(other.x, other.y, this.width, this.height);
+            },
+            clone: $property(function () {
+                return new BBox(this.x, this.y, this.width, this.height);
+            }),
+            floor: $property(function () {
+                return new BBox.fromLTRB(Math.floor(this.left), Math.floor(this.top), Math.floor(this.right), Math.floor(this.bottom));
+            }),
+            css: $property(function () {
+                return {
+                    left: this.left + 'px',
+                    top: this.top + 'px',
+                    width: this.width + 'px',
+                    height: this.height + 'px'
+                };
+            }),
+            leftTop: $property(function () {
+                return new Vec2(this.left, this.top);
+            }),
+            leftBottom: $property(function () {
+                return new Vec2(this.left, this.bottom);
+            }),
+            rightBottom: $property(function () {
+                return new Vec2(this.right, this.bottom);
+            }),
+            rightTop: $property(function () {
+                return new Vec2(this.right, this.top);
+            }),
+            left: $property(function () {
+                return this.x - this.width / 2;
+            }),
+            right: $property(function () {
+                return this.x + this.width / 2;
+            }),
+            top: $property(function () {
+                return this.y - this.height / 2;
+            }),
+            bottom: $property(function () {
+                return this.y + this.height / 2;
+            }),
+            center: $property(function () {
+                return new Vec2(this.x, this.y);
+            }),
+            extent: $alias('size'),
+            size: $property(function () {
+                return new Vec2(this.width, this.height);
+            }),
+            offset: function (amount) {
+                return new BBox(this.x + amount.x, this.y + amount.y, this.width, this.height);
+            },
+            newWidth: function (width) {
+                return new BBox(this.x - (width - this.width) / 2, this.y, width, this.height);
+            },
+            grow: function (amount) {
+                return new BBox(this.x, this.y, this.width + amount * 2, this.height + amount * 2);
+            },
+            shrink: function (amount) {
+                return this.grow(-amount);
+            },
+            mul: function (z) {
+                return new BBox(this.x * z, this.y * z, this.width * z, this.height * z);
+            },
+            area: $property(function () {
+                return Math.abs(this.width * this.height);
+            }),
+            intersects: function (other) {
+                return !(this.right < other.left || this.left > other.right || this.bottom < other.top || this.top > other.bottom);
+            },
+            toString: function () {
+                return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
+            }
+        });
+        Transform = $prototype({
+            $static: {
+                identity: $property(function () {
+                    return new Transform();
+                }),
+                svgMatrix: function (m) {
+                    return new Transform([
+                        [
+                            m.a,
+                            m.c,
+                            m.e
+                        ],
+                        [
+                            m.b,
+                            m.d,
+                            m.f
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]);
+                },
+                translation: function (v) {
+                    return new Transform([
+                        [
+                            1,
+                            0,
+                            v.x
+                        ],
+                        [
+                            0,
+                            1,
+                            v.y
+                        ],
+                        [
+                            0,
+                            0,
+                            1
+                        ]
+                    ]);
+                }
+            },
+            constructor: function (components) {
+                this.components = components || [
+                    [
+                        1,
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        1,
+                        0
+                    ],
+                    [
+                        0,
+                        0,
+                        1
+                    ]
+                ];
+            },
+            multiply: function (m) {
+                var result = [
+                    [
+                        0,
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        0,
+                        0
+                    ]
+                ];
+                var i, j, k, a = this.components, b = m.components;
+                for (i = 0; i < 3; i++) {
+                    for (j = 0; j < 3; j++) {
+                        for (k = 0; k < 3; k++) {
+                            result[i][j] += a[i][k] * b[k][j];
+                        }
+                    }
+                }
+                return new Transform(result);
+            },
+            translate: function (v) {
+                return this.multiply(Transform.translation(v));
+            },
+            scale: function (s) {
+                return this.multiply(new Transform([
+                    [
+                        s,
+                        0,
+                        0
+                    ],
+                    [
+                        0,
+                        s,
+                        0
+                    ],
+                    [
+                        0,
+                        0,
+                        1
+                    ]
+                ]));
+            },
+            inverse: $property($memoized(function () {
+                var m = this.components;
+                var id = 1 / (m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]));
+                return new Transform([
+                    [
+                        (m[1][1] * m[2][2] - m[2][1] * m[1][2]) * id,
+                        -(m[0][1] * m[2][2] - m[0][2] * m[2][1]) * id,
+                        (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * id
+                    ],
+                    [
+                        (m[1][0] * m[2][2] - m[1][2] * m[2][0]) * id,
+                        (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * id,
+                        -(m[0][0] * m[1][2] - m[1][0] * m[0][2]) * id
+                    ],
+                    [
+                        (m[1][0] * m[2][1] - m[2][0] * m[1][1]) * id,
+                        -(m[0][0] * m[2][1] - m[2][0] * m[0][1]) * id,
+                        (m[0][0] * m[1][1] - m[1][0] * m[0][1]) * id
+                    ]
+                ]);
+            })),
+            unproject: function (v) {
+                var m = this.components;
+                return new Vec2(v.x * m[0][0] + v.y * m[0][1] + m[0][2], v.x * m[1][0] + v.y * m[1][1] + m[1][2]);
+            },
+            project: function (v) {
+                return this.inverse.unproject(v);
+            }
+        });
+        _.rng = function (seed, from, to) {
+            var m_w = seed;
+            var m_z = 987654321;
+            var mask = 4294967295;
+            return function () {
+                m_z = 36969 * (m_z & 65535) + (m_z >> 16) & mask;
+                m_w = 18000 * (m_w & 65535) + (m_w >> 16) & mask;
+                var result = (m_z << 16) + m_w & mask;
+                result /= 4294967296;
+                result += 0.5;
+                if (from === undefined && to === undefined) {
+                    return result;
+                } else {
+                    return Math.round(from + result * (to - from));
+                }
+            };
+        };
+        _.equalDistribution = function (value, n) {
+            var average = value / n;
+            var realLeft = 0;
+            return _.times(n, function () {
+                var left = Math.round(realLeft);
+                var right = Math.round(realLeft += average);
+                var rough = Math.floor(right - left);
+                return rough;
+            });
+        };
+        _.ptInRect = function (pt, rect) {
+            return pt.x >= rect.left && pt.y >= rect.top && pt.x < rect.right && pt.y < rect.bottom;
+        };
+        _.hue2CSS = function (H, a) {
+            return _.RGB2CSS(_.hue2RGB(H), a);
+        };
+        _.HSL2CSS = function (hsl, a) {
+            return _.RGB2CSS(_.HSL2RGB(hsl), a);
+        };
+        _.HSL2RGB = function (hsl) {
+            var h = hsl[0], s = hsl[1], l = hsl[2];
+            var rgb = _.hue2RGB(h);
+            var c = (1 - Math.abs(2 * l - 1)) * s;
+            return [
+                (rgb[0] - 0.5) * c + l,
+                (rgb[1] - 0.5) * c + l,
+                (rgb[2] - 0.5) * c + l
+            ];
+        };
+        _.hue2RGB = function (hue) {
+            return [
+                Math.max(0, Math.min(1, Math.abs(hue * 6 - 3) - 1)),
+                Math.max(0, Math.min(1, 2 - Math.abs(hue * 6 - 2))),
+                Math.max(0, Math.min(1, 2 - Math.abs(hue * 6 - 4)))
+            ];
+        };
+        _.RGB2CSS = function (rgb, a) {
+            return 'rgba(' + Math.round(rgb[0] * 255) + ',' + Math.round(rgb[1] * 255) + ',' + Math.round(rgb[2] * 255) + ',' + (a === undefined ? rgb[3] === undefined ? 1 : rgb[3] : a) + ')';
+        };
+        _.RGB2HSL = function (rgb, a_) {
+            var r = rgb[0], g = rgb[1], b = rgb[2], a = a_ === undefined ? rgb[3] : a_;
+            var max = Math.max(r, g, b), min = Math.min(r, g, b);
+            var h, s, l = (max + min) / 2;
+            if (max == min) {
+                h = s = 0;
+            } else {
+                var d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+                case g:
+                    h = (b - r) / d + 2;
+                    break;
+                case b:
+                    h = (r - g) / d + 4;
+                    break;
+                }
+                h /= 6;
+            }
+            return a === undefined ? [
+                h,
+                s,
+                l
+            ] : [
+                h,
+                s,
+                l,
+                a
+            ];
+        };
+        _.extend(Math, function (decimalAdjust) {
+            return {
+                roundTo: function (value, precision) {
+                    return value - value % precision;
+                },
+                round10: function (value, exp) {
+                    return decimalAdjust('round', value, exp);
+                },
+                floor10: function (value, exp) {
+                    return decimalAdjust('floor', value, exp);
+                },
+                ceil10: function (value, exp) {
+                    return decimalAdjust('ceil', value, exp);
+                }
+            };
+        }(function (type, value, exp) {
+            if (typeof exp === 'undefined' || +exp === 0) {
+                return Math[type](value);
+            }
+            value = +value;
+            exp = +exp;
+            if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+                return NaN;
+            }
+            value = value.toString().split('e');
+            value = Math[type](+(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp)));
+            value = value.toString().split('e');
+            return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
         }));
     },
-    printLog: function () {
-        var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
-        log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([
-            suiteName,
-            this.name
-        ]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
-        this.evalLogCalls();
-    },
-    evalLogCalls: function () {
-        _.each(this.logCalls, log.writeBackend().arity1);
-    }
-});
-_.defineTagKeyword('allowsRecursion');
-_.limitRecursion = function (max, fn, name) {
-    if (!fn) {
-        fn = max;
-        max = 0;
-    }
-    var depth = -1;
-    var reported = false;
-    return function () {
-        if (!reported) {
-            if (depth > max) {
-                reported = true;
-                throw _.extendWith({
-                    notMatching: _.map(arguments, function (arg, i) {
-                        return 'arg' + (i + 1) + ': ' + _.stringify(arg);
-                    })
-                }, new Error(name + ': max recursion depth reached (' + max + ')'));
-            } else {
-                var result = (++depth, fn.apply(this, arguments));
-                depth--;
-                return result;
-            }
-        }
-    };
-};
-Testosterone.ValidatesRecursion = $trait({
-    $test: function () {
-        var test = new ($component({
-            $traits: [Testosterone.ValidatesRecursion],
-            foo: function () {
-            },
-            bar: function () {
-                this.bar();
-            },
-            baz: $allowsRecursion({ max: 2 }, function () {
-                this.baz();
-            }),
-            qux: $allowsRecursion(function () {
-                if (!this.quxCalled) {
-                    this.quxCalled = true;
-                    this.qux();
-                }
-            })
-        }))();
-        test.foo();
-        $assertThrows(test.bar, { message: 'bar: max recursion depth reached (0)' });
-        test.bar();
-        $assertThrows(test.baz, { message: 'baz: max recursion depth reached (2)' });
-        test.qux();
-    },
-    $constructor: function () {
-        _.each(this, function (member, name) {
-            if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
-                this[name] = Tags.modify(member, function (fn) {
-                    return _.limitRecursion(member && member.$allowsRecursion && member.$allowsRecursion.max || 0, fn, name);
+    function (module, exports) {
+        _.tests.component = {
+            'constructor([cfg, ][then])': function () {
+                $assertNotCalled(function (mkay) {
+                    var Compo = $component({});
+                    $assertMatches(new Compo({ foo: 42 }), { foo: 42 });
                 });
-            }
-        }, this);
-    }
-});
-(function () {
-    var colors = _.keys(_.omit(log.color, 'none'));
-    colors.each(_.defineTagKeyword);
-    _.defineTagKeyword('verbose');
-    Testosterone.LogsMethodCalls = $trait({
-        $test: $platform.Browser ? function () {
-        } : function (testDone) {
-            var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
-            var Compo = $extends(Proto, {
-                foo: $log($pink($verbose(function (_42) {
-                    $assert(_42, 42);
-                    return 24;
-                })))
-            });
-            var compo = new Compo();
-            var testContext = this;
-            Compo.$meta(function () {
-                $assert(compo.foo(42), 24);
-                $assert(_.pluck(testContext.logCalls, 'text'), [
-                    'Compo.foo (42)',
-                    '\u2192 24',
-                    ''
+            },
+            'init': function () {
+                $assertEveryCalledOnce(function (mkay) {
+                    $singleton(Component, {
+                        init: function () {
+                            mkay();
+                        }
+                    });
+                });
+            },
+            'no constructor overriding': function () {
+                $assertThrows(function () {
+                    $singleton(Component, {
+                        constructor: function () {
+                        }
+                    });
+                });
+            },
+            'manual init()': function () {
+                $assertNotCalled(function (fail) {
+                    var Compo = $component({
+                        init: function () {
+                            fail();
+                        }
+                    });
+                    var compo = new Compo({ init: false });
+                    $assert(typeof compo.init, 'function');
+                });
+            },
+            'initialized (barrier)': function () {
+                var Compo = $component({
+                    init: function () {
+                    }
+                });
+                var compo = new Compo({ init: false });
+                $assert(!compo.initialized.already);
+                $assertEveryCalledOnce(function (mkay) {
+                    compo.initialized(function () {
+                        mkay();
+                    });
+                    compo.init();
+                });
+            },
+            'thiscall for methods': function () {
+                $assertEveryCalledOnce(function (prototypeMethod, instanceMethod) {
+                    var instance = null;
+                    var Compo = new $component({
+                        prototypeMethod: function () {
+                            $assert(this === instance);
+                            prototypeMethod();
+                        }
+                    });
+                    instance = new Compo({
+                        instanceMethod: function () {
+                            $assert(this === instance);
+                            instanceMethod();
+                        }
+                    });
+                    instance.prototypeMethod.call(null);
+                    instance.instanceMethod.call(null);
+                });
+            },
+            'pluggable init with $traits': function () {
+                var A, B, C, D;
+                var A = $trait({
+                    beforeInit: function () {
+                        A = true;
+                        return Promise.resolve();
+                    },
+                    afterInit: function () {
+                        B = true;
+                        return Promise.resolve();
+                    }
+                });
+                var B = $trait({
+                    beforeInit: function () {
+                        C = true;
+                    },
+                    afterInit: function () {
+                        D = true;
+                    }
+                });
+                var C = $component({
+                    $traits: [
+                        B,
+                        A
+                    ]
+                });
+                return new C().initialized.promise.then(function () {
+                    $assert(A, B, C, D, true);
+                });
+            },
+            '$defaults basic': function () {
+                var Compo = $component({ $defaults: { foo: 42 } });
+                $assert($untag(Compo.$definition.$defaults), { foo: 42 });
+                $assert(Compo.$defaults, { foo: 42 });
+                var Compo2 = $component({
+                    $traits: [$trait({ $defaults: { foo: 11 } })],
+                    $defaults: {}
+                });
+                $assert($untag(Compo2.$definition.$defaults), { foo: 11 });
+                $assert(Compo2.$defaults, { foo: 11 });
+            },
+            '$defaults': function () {
+                var Trait = $trait({
+                    $defaults: {
+                        pff: 'pff',
+                        inner: { fromTrait: 1 }
+                    }
+                });
+                var Base = $component({
+                    $defaults: {
+                        foo: 12,
+                        qux: 'override me',
+                        inner: { fromBase: 1 }
+                    }
+                });
+                var Derived = $extends(Base, {
+                    $traits: [Trait],
+                    $defaults: {
+                        bar: 34,
+                        qux: 'overriden',
+                        inner: { fromDerived: 1 }
+                    }
+                });
+                $assert(new Derived().inner !== new Derived().inner);
+                $assertMatches(new Derived({ pff: 'overriden from cfg' }), {
+                    pff: 'overriden from cfg',
+                    foo: 12,
+                    bar: 34,
+                    qux: 'overriden',
+                    inner: {
+                        fromTrait: 1,
+                        fromBase: 1,
+                        fromDerived: 1
+                    }
+                });
+            },
+            '$defaults cloning semantics': function () {
+                var set = new Set([
+                    1,
+                    2,
+                    3
                 ]);
-                $assert(testContext.logCalls[0].color === log.color('pink'));
-                testDone();
-            });
-        },
-        $macroTags: {
-            log: function (def, member, name) {
-                var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
-                var meta = {};
-                var color = _.find2(colors, function (color) {
-                    return log.color(member['$' + color] && color) || false;
+                var S = $component({
+                    $defaults: {
+                        foo: set,
+                        bar: new Set()
+                    }
                 });
-                var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
-                $untag(def.$meta)(function (x) {
-                    meta = x;
+                var s = new S();
+                $assert(s.foo instanceof Set, s.bar instanceof Set, true);
+                $assert(s.foo !== set);
+            },
+            '$requires': function () {
+                var SomeType = $prototype();
+                var CompoThatRequires = $component({
+                    $requires: {
+                        foo: SomeType,
+                        ffu: {
+                            a: 'number',
+                            b: 'string'
+                        },
+                        bar: 'number',
+                        qux: ['number'],
+                        baz: _.not(_.isEmpty)
+                    }
                 });
-                return $prototype.impl.modifyMember(member, function (fn, name_) {
-                    return function () {
-                        var this_ = this, arguments_ = _.asArray(arguments);
-                        var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, _.stringifyOneLine.arity1))) || this.desc || '';
-                        var args_dump = _.map(arguments_, _.stringifyOneLine.arity1).join(', ').quote('()');
-                        log.write(log.config({
-                            color: color,
-                            location: true,
-                            where: member.$verbose ? undefined : { calleeShort: meta.name }
-                        }), _.nonempty([
-                            this_dump,
-                            name,
-                            name_
-                        ]).join('.'), args_dump);
-                        return log.withConfig({
-                            indent: 1,
-                            color: color,
-                            protoName: meta.name
-                        }, function () {
-                            var numWritesBefore = log.impl.numWrites;
-                            var result = fn.apply(this_, arguments_);
-                            if (result !== undefined) {
-                                log.write('\u2192', _.stringifyOneLine(result));
+                var DerivedCompoThatRequiresMore = $extends(CompoThatRequires, { $requires: { more: 'string' } });
+                $assertFails(function () {
+                    new CompoThatRequires({ baz: {} });
+                });
+                $assertFails(function () {
+                    new DerivedCompoThatRequiresMore({ more: 'hey how about other requirements' });
+                });
+                new DerivedCompoThatRequiresMore({
+                    foo: new SomeType(),
+                    bar: 42,
+                    qux: [
+                        1,
+                        2,
+                        3
+                    ],
+                    more: 'blah blah',
+                    ffu: {
+                        a: 1,
+                        b: '2'
+                    },
+                    baz: 'blahblah'
+                });
+            },
+            '$bindable': function () {
+                $assertEveryCalledOnce(function (method, before, after) {
+                    var compo = $singleton(Component, {
+                        method: $bindable(function (x) {
+                            method();
+                            return 42;
+                        })
+                    });
+                    compo.method.onBefore(function (_5) {
+                        before();
+                        $assert(this === compo);
+                        $assert(_5, 5);
+                    });
+                    compo.method.onAfter(function (_5, _result) {
+                        after();
+                        $assert(this === compo);
+                        $assert(_5, 5);
+                        $assert(_result, 42);
+                    });
+                    $assert(compo.method(5), 42);
+                });
+            },
+            '$trigger': function () {
+                $assertEveryCalled(function (mkay__2) {
+                    var compo = $singleton(Component, { mouseMoved: $trigger() });
+                    compo.mouseMoved(function (x, y) {
+                        $assert([
+                            x,
+                            y
+                        ], [
+                            7,
+                            12
+                        ]);
+                        mkay__2();
+                    });
+                    compo.mouseMoved(7, 12);
+                    compo.mouseMoved(7, 12);
+                });
+            },
+            'init streams from config': function () {
+                $assertEveryCalled(function (atDefinition, atInit) {
+                    var Compo = $component({
+                        mouseMoved: $trigger(atDefinition),
+                        init: function () {
+                            this.mouseMoved();
+                        }
+                    });
+                    new Compo({ mouseMoved: atInit });
+                });
+            },
+            '$triggerOnce': function () {
+                var compo = $singleton(Component, { somthingHappened: $triggerOnce() });
+                $assertEveryCalled(function (first, second) {
+                    compo.somthingHappened(function (what) {
+                        $assert(what, 'somthin');
+                        first();
+                    });
+                    compo.somthingHappened(function (what) {
+                        $assert(what, 'somthin');
+                        second();
+                    });
+                    compo.somthingHappened('somthin');
+                });
+            },
+            '$barrier': function () {
+                $assertEveryCalled(function (early, lately) {
+                    var compo = $singleton(Component, { hasMessage: $barrier() });
+                    compo.hasMessage(function (_msg) {
+                        $assert(_msg, 'mkay');
+                        early();
+                    });
+                    compo.hasMessage('mkay');
+                    compo.hasMessage(function (_msg) {
+                        $assert(_msg, 'mkay');
+                        lately();
+                    });
+                });
+            },
+            '$observableProperty': function () {
+                $assertEveryCalled(function (fromConstructor, fromConfig, fromLateBoundListener, fromDefinition, fromListenerOnlyVariant) {
+                    var Compo = $component({
+                        color: $observableProperty(),
+                        smell: $observableProperty(),
+                        shape: $observableProperty('round', function (now) {
+                            $assert(now, 'round');
+                            fromDefinition();
+                        }),
+                        size: $observableProperty(function (x) {
+                            $assert(x, 42);
+                            fromListenerOnlyVariant();
+                        }),
+                        init: function () {
+                            this.colorChange(function (now, was) {
+                                if (was) {
+                                    fromConstructor();
+                                    $assert([
+                                        now,
+                                        was
+                                    ], [
+                                        'green',
+                                        'blue'
+                                    ]);
+                                }
+                            });
+                        }
+                    });
+                    var compo = new Compo({
+                        color: 'blue',
+                        size: 42,
+                        colorChange: function (now, was) {
+                            if (was) {
+                                fromConfig();
+                                $assert([
+                                    now,
+                                    was
+                                ], [
+                                    'green',
+                                    'blue'
+                                ]);
                             }
-                            if (log.currentConfig().indent < 2 && log.impl.numWrites - numWritesBefore > 0) {
-                                log.newline();
-                            }
-                            return result;
+                        }
+                    });
+                    compo.smellChange(function (now, was) {
+                        fromLateBoundListener();
+                        $assert(compo.smell, now, 'bad');
+                        $assert(undefined, was);
+                    });
+                    compo.color = 'green';
+                    compo.smell = 'bad';
+                });
+            },
+            '$observableProperty (Prototype)': function () {
+                var Compo = $component({
+                    position: $observableProperty(Vec2.zero),
+                    init: function () {
+                        this.positionChange(function (v) {
+                            $assertTypeMatches(v, Vec2);
+                            $assert(v.y, 42);
                         });
+                    }
+                });
+                var compo = new Compo({
+                    position: {
+                        x: 10,
+                        y: 42
+                    }
+                });
+                compo.position = {
+                    x: 20,
+                    y: 42
+                };
+            },
+            'binding to streams with traits': function () {
+                _.defineTagKeyword('dummy');
+                $assertEveryCalled(function (mkay1, mkay2) {
+                    var this_ = undefined;
+                    var Trait = $trait({ somethingHappened: $trigger() });
+                    var Other = $trait({
+                        somethingHappened: $dummy(function (_42) {
+                            $assert(this, this_);
+                            $assert(_42, 42);
+                            mkay1();
+                        })
+                    });
+                    var Compo = $component({
+                        $traits: [
+                            Trait,
+                            Other
+                        ],
+                        somethingHappened: function (_42) {
+                            $assert(this, this_);
+                            $assert(_42, 42);
+                            mkay2();
+                        }
+                    });
+                    this_ = new Compo();
+                    this_.somethingHappened(42);
+                });
+            },
+            'binding to bindables with traits': function () {
+                $assertCallOrder(function (beforeCalled, interceptCalled, bindableCalled, afterCalled) {
+                    var this_ = undefined;
+                    var Trait = $trait({
+                        doSomething: $bindable(function (x) {
+                            $assert(this, this_);
+                            bindableCalled();
+                        })
+                    });
+                    var Other = $trait({
+                        beforeDoSomething: function (_42) {
+                            $assert(this, this_);
+                            $assert(_42, 42);
+                            beforeCalled();
+                        },
+                        interceptDoSomething: function (_42, impl) {
+                            interceptCalled();
+                            $assert(this, this_);
+                            return impl(_42);
+                        }
+                    });
+                    var Compo = $component({
+                        $traits: [
+                            Trait,
+                            Other
+                        ],
+                        afterDoSomething: function (_42) {
+                            $assert(this, this_);
+                            $assert(_42, 42);
+                            afterCalled();
+                        }
+                    });
+                    this_ = new Compo();
+                    this_.doSomething(42);
+                });
+            },
+            'binding to observable properties with traits': function () {
+                $assertEveryCalled(function (one, two) {
+                    var this_ = undefined;
+                    var Trait = $trait({ someValue: $observableProperty(42) });
+                    var Other = $trait({
+                        someValue: function (_42) {
+                            one();
+                        }
+                    });
+                    var Compo = $component({
+                        $traits: [
+                            Trait,
+                            Other
+                        ],
+                        someValue: function (_42) {
+                            two();
+                        }
+                    });
+                    this_ = new Compo();
+                    $assert(_.isFunction(this_.someValueChange));
+                    this_.someValue = 33;
+                });
+            },
+            'hierarchy management': function () {
+                $assertEveryCalled(function (mkay__9) {
+                    var Compo = $extends(Component, {
+                        init: function () {
+                            mkay__9();
+                        },
+                        destroy: function () {
+                            mkay__9();
+                        }
+                    });
+                    var parent = new Compo().attach(new Compo().attach(new Compo()));
+                    var parrot = new Compo().attachTo(parent).attachTo(parent);
+                    $assert(parrot.attachedTo === parent);
+                    $assert(parrot.detach().attachedTo === undefined);
+                    var carrot = new Compo();
+                    parent.attach(carrot);
+                    parent.attach(carrot);
+                    parent.destroy();
+                });
+            },
+            'thiscall for streams': function () {
+                var compo = $singleton(Component, { trig: $trigger() });
+                compo.trig(function () {
+                    $assert(this === compo);
+                });
+                compo.trig.call({});
+            },
+            '$defaults can set $observableProperty': function () {
+                var compo = $singleton(Component, {
+                    twentyFour: $observableProperty(42),
+                    $defaults: { twentyFour: 24 }
+                });
+                $assertEveryCalledOnce(function (mkay) {
+                    compo.twentyFourChange(function (val) {
+                        $assert(val, 24);
+                        mkay();
+                    });
+                });
+            },
+            'defer init with $defaults': function () {
+                var compo = $singleton(Component, {
+                    $defaults: { init: false },
+                    init: function () {
+                    }
+                });
+                compo.init();
+            },
+            'stream members should be available at property setters when inited from config': function () {
+                var compo = new ($component({
+                    ready: $barrier(),
+                    value: $property({
+                        set: function (_42) {
+                            $assertTypeMatches(this.ready, 'function');
+                        }
+                    })
+                }))({ value: 42 });
+            },
+            'observableProperty.force (regression)': function () {
+                $assertEveryCalled(function (mkay__2) {
+                    var compo = $singleton(Component, { prop: $observableProperty() });
+                    compo.prop = 42;
+                    compo.propChange(function (value) {
+                        $assert(value, 42);
+                        $assert(this === compo);
+                        mkay__2();
+                    });
+                    compo.propChange.force();
+                });
+            },
+            'two-argument $observableProperty syntax': function () {
+                $assertEveryCalled(function (mkay) {
+                    var compo = $singleton(Component, {
+                        prop: $observableProperty(42, function (value) {
+                            mkay();
+                            if (compo) {
+                                $assert(this === compo);
+                                $assert(value === compo.prop);
+                            }
+                        })
+                    });
+                    compo.prop = 43;
+                });
+            },
+            'two-argument $observable': function () {
+                $assertEveryCalled(function (mkay) {
+                    $assert('foo', $singleton(Component, {
+                        foo: $observable('foo', function (x) {
+                            $assert(x, 'foo');
+                            mkay();
+                        })
+                    }).foo.value);
+                });
+            },
+            'destroyAll()': function () {
+                $assertEveryCalled(function (destroyed__2) {
+                    var Compo = $extends(Component, {
+                        destroy: function () {
+                            destroyed__2();
+                        }
+                    });
+                    var parent = new Compo().attach(new Compo()).attach(new Compo());
+                    $assert(parent.attached.length === 2);
+                    parent.destroyAll();
+                    parent.destroyAll();
+                    $assert(parent.attached.length === 0);
+                });
+            },
+            'random $nonce generation': function () {
+                var X = $prototype();
+                $assert(_.isString(X.$nonce));
+            },
+            '$macroTags for component-specific macros': function () {
+                var Trait = $trait({
+                    $macroTags: {
+                        add_2: function (def, fn, name) {
+                            return Tags.modify(fn, function (fn) {
+                                return fn.then(_.sum.$(2));
+                            });
+                        }
+                    }
+                });
+                var Base = $component({
+                    $macroTags: {
+                        add_20: function (def, fn, name) {
+                            return Tags.modify(fn, function (fn) {
+                                return fn.then(_.sum.$(20));
+                            });
+                        }
+                    }
+                });
+                var Compo = $extends(Base, {
+                    $traits: [Trait],
+                    $macroTags: {
+                        dummy: function () {
+                        }
+                    },
+                    testValue: $static($add_2($add_20(_.constant(20))))
+                });
+                $assert(42, Compo.testValue());
+                $assertMatches(_.keys(Compo.$macroTags), [
+                    'dummy',
+                    'add_2',
+                    'add_20'
+                ]);
+                _.each(_.keys(Compo.$macroTags), _.deleteKeyword);
+            },
+            '$raw for performance-critical methods (disables thiscall proxy)': function () {
+                var compo = new ($component({
+                    method: function (this_) {
+                        $assert(this_ === this);
+                    },
+                    rawMethod: $raw(function (this_) {
+                        $assert(this_ !== this);
+                    })
+                }))();
+                var method = compo.method;
+                method(compo);
+                var rawMethod = compo.rawMethod;
+                rawMethod(compo);
+            },
+            'two-way $observable binding': function () {
+                var Compo = $component({ x: $observable('foo') });
+                var x = _.observable('bar');
+                var compo = new Compo({ x: x });
+                $assert(compo.x !== x);
+                $assert(compo.x.value, x.value, 'bar');
+                compo.x(42);
+                $assert(x.value, 42);
+                x('lol');
+                $assert(compo.x.value, 'lol');
+                compo.destroy();
+                $assert(compo.x.queue, []);
+                compo.x('yo');
+                $assert(x.value, 'lol');
+                x('oy');
+                $assert(compo.x.value, 'yo');
+            },
+            'unbinding (simple)': function () {
+                var somethingHappened = _.trigger();
+                var compo = $singleton(Component, {
+                    fail: function () {
+                        $fail;
+                    }
+                });
+                somethingHappened(compo.fail);
+                compo.destroy();
+                somethingHappened();
+            },
+            '(regression) undefined was allowed as trait': function () {
+                $assertThrows(function () {
+                    var Compo = $component({ $traits: [undefined] });
+                }, { message: 'invalid $traits value' });
+            },
+            '(regression) undefined members fail': function () {
+                var Compo = $component({ yoba: undefined });
+                $assert('yoba' in Compo.prototype);
+            },
+            '(regression) $defaults with $traits fail': function () {
+                var Compo = $component({
+                    $traits: [$trait({ $defaults: { x: 1 } })],
+                    $defaults: {
+                        a: {},
+                        b: [],
+                        c: 0
+                    }
+                });
+                $assert(Compo.$defaults, {
+                    x: 1,
+                    a: {},
+                    b: [],
+                    c: 0
+                });
+            },
+            '(regression) $defaults with $traits fail #2': function () {
+                var Compo = $component({ $traits: [$trait({ $defaults: { x: 1 } })] });
+                $assert(Compo.$defaults, { x: 1 });
+            },
+            '(regression) method overriding broken': function () {
+                var Compo = $component({
+                    method: function () {
+                        $fail;
+                    }
+                });
+                var compo = new Compo({
+                    value: 42,
+                    method: function () {
+                        return this.value;
+                    }
+                });
+                $assert(compo.method(), 42);
+            },
+            '(regression) $observableProperty (false)': function () {
+                $assertEveryCalledOnce(function (mkay) {
+                    $singleton(Component, {
+                        foo: $observableProperty(false),
+                        init: function () {
+                            this.fooChange(mkay);
+                        }
+                    });
+                });
+            },
+            '(regression) was not able to define inner compos at singleton compos': function () {
+                var Foo = $singleton(Component, { InnerCompo: $component({ foo: $observableProperty() }) });
+                var Bar = $extends(Foo.InnerCompo, { bar: $observableProperty() });
+                var bar = new Bar();
+                $assertTypeMatches(bar, {
+                    fooChange: 'function',
+                    barChange: 'function'
+                });
+            },
+            '(regression) undefined at definition': function () {
+                $singleton(Component, { fail: undefined });
+            },
+            '(regression) properties were evaluated before init': function () {
+                $singleton(Component, {
+                    fail: $property(function () {
+                        $fail;
+                    })
+                });
+            },
+            '(regression) misinterpretation of definition': function () {
+                $singleton(Component, {
+                    get: function () {
+                        $fail;
+                    }
+                });
+            },
+            '(regression) alias incorrectly worked with destroy': function () {
+                var test = $singleton(Component, {
+                    destroy: function () {
+                        mkay();
+                    },
+                    close: $alias('destroy')
+                });
+                $assert(test.close, test.destroy);
+            }
+        };
+        _.defineKeyword('component', function (definition) {
+            return $extends(Component, definition);
+        });
+        _([
+            'extendable',
+            'trigger',
+            'triggerOnce',
+            'barrier',
+            'bindable',
+            'memoize',
+            'interlocked',
+            'memoizeCPS',
+            'debounce',
+            'throttle',
+            'overrideThis',
+            'listener',
+            'postpones',
+            'reference',
+            'raw',
+            'binds',
+            'observes'
+        ]).each(_.defineTagKeyword);
+        (function () {
+            var impl = function (impl) {
+                return function (x, fn) {
+                    return _.isFunction(x) && arguments.length === 1 ? impl(x, fn) : impl(fn, x);
+                };
+            };
+            _.defineTagKeyword('observableProperty', impl);
+            _.defineTagKeyword('observable', impl);
+        }());
+        _.defineKeyword('observableRef', function (x) {
+            return $observableProperty($reference(x));
+        });
+        $prototype.macro('$depends', function (def, value, name) {
+            def.$depends = $builtin($const(_.coerceToArray(value)));
+            return def;
+        });
+        $prototype.macroTag('extendable', function (def, value, name) {
+            def[name] = $builtin($const(value));
+            return def;
+        });
+        $prototype.macro(function (def) {
+            def.$nonce = $static($builtin($property(String.randomHex(32))));
+            return def;
+        });
+        Component = $prototype({
+            $defaults: $extendable({}),
+            $requires: $extendable({}),
+            $macroTags: $extendable({}),
+            $impl: {
+                sequence: function (def, base) {
+                    return _.sequence(this.extendWithTags, this.flatten, this.generateCustomCompilerImpl(base), this.generateArgumentContractsIfNeeded, this.ensureFinalContracts(base), this.generateConstructor(base), this.evalAlwaysTriggeredMacros(base), this.evalMemberTriggeredMacros(base), this.expandTraitsDependencies, this.mergeExtendables(base), this.contributeTraits(base), this.mergeStreams, this.mergeBindables, this.generateBuiltInMembers(base), this.callStaticConstructor, this.expandAliases, this.groupMembersByTagForFastEnumeration, this.defineStaticMembers, this.defineInstanceMembers);
+                },
+                expandTraitsDependencies: function (def) {
+                    if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
+                        def.$traits = DAG.squash(def, {
+                            nodes: function (def) {
+                                return $untag(def.$depends);
+                            },
+                            key: function (def) {
+                                return $untag(def.$nonce);
+                            }
+                        });
+                    }
+                    ;
+                    return def;
+                },
+                mergeExtendables: function (base) {
+                    return function (def) {
+                        _.each(base.$definition, function (value, name) {
+                            if (value && value.$extendable) {
+                                def[name] = Tags.modify(value, function (value) {
+                                    value = _.extendedDeep(value, $untag(def[name] || {}));
+                                    _.each($untag(def.$traits), function (trait) {
+                                        if (!trait) {
+                                            log.e(def.$traits);
+                                            throw new Error('invalid $traits value');
+                                        }
+                                        var traitVal = trait.$definition[name];
+                                        if (traitVal) {
+                                            value = _.extendedDeep($untag(traitVal), value);
+                                        }
+                                    });
+                                    return value;
+                                });
+                            }
+                        });
+                        return def;
                     };
+                },
+                mergeTraitsMembers: function (def, traits) {
+                    var pool = {}, bindables = {}, streams = {};
+                    var macroTags = $untag(def.$macroTags);
+                    var definitions = _.pluck(traits, '$definition').concat(_.clone(def));
+                    _.each(definitions, function (traitDef) {
+                        _.each(macroTags && this.applyMacroTags(macroTags, _.extend(_.clone(traitDef), { constructor: def.constructor })) || traitDef, function (member, name) {
+                            if ($builtin.isNot(member) && $builtin.isNot(def[name]) && name !== 'constructor') {
+                                if ($bindable.is(member)) {
+                                    bindables[name] = member;
+                                }
+                                if (Component.isStreamDefinition(member)) {
+                                    streams[name] = member;
+                                }
+                                (pool[name] || (pool[name] = [])).push(member);
+                                def[name] = member;
+                            }
+                        });
+                    }, this);
+                    def.__bindables = bindables;
+                    def.__streams = streams;
+                    def.__membersByName = pool;
+                },
+                mergeStreams: function (def) {
+                    var pool = def.__membersByName;
+                    _.each(def.__streams, function (stream, name) {
+                        var clonedStream = def[name] = Tags.clone(stream);
+                        clonedStream.listeners = [];
+                        _.each(pool[name], function (member) {
+                            if (member !== stream) {
+                                clonedStream.listeners.push($untag(member));
+                            }
+                        });
+                    });
+                    return def;
+                },
+                mergeBindables: function (def) {
+                    var pool = def.__membersByName;
+                    _.each(def.__bindables, function (member, name) {
+                        var bound = _.filter2(_.bindable.hooks, function (hook, i) {
+                            var bound = pool[_.bindable.hooksShort[i] + name.capitalized];
+                            return bound ? [
+                                hook,
+                                bound
+                            ] : false;
+                        });
+                        if (bound.length) {
+                            var hooks = {};
+                            _.each(bound, function (kv) {
+                                _.each(kv[1], function (fn) {
+                                    fn = $untag(fn);
+                                    if (_.isFunction(fn)) {
+                                        var k = '_' + kv[0];
+                                        (hooks[k] || (hooks[k] = [])).push(fn);
+                                    }
+                                });
+                            });
+                            def[name] = $bindable({ hooks: hooks }, Tags.clone(member));
+                        }
+                    }, this);
+                    return def;
+                }
+            },
+            isStreamDefinition: $static(function (def) {
+                return _.isObject(def) && (def.$trigger || def.$triggerOnce || def.$barrier || def.$observable || def.$observableProperty);
+            }),
+            mapMethods: function () {
+                var iterator = _.last(arguments), predicate = arguments.length === 1 ? _.constant(true) : arguments[0];
+                var methods = [];
+                for (var k in this) {
+                    var def = this.constructor.$definition[k];
+                    if (!(def && def.$property)) {
+                        var fn = this[k];
+                        if (_.isFunction(fn) && !_.isPrototypeConstructor(fn) && predicate(def)) {
+                            this[k] = iterator.call(this, fn, k, def) || fn;
+                        }
+                    }
+                }
+            },
+            enumMethods: function (_1, _2) {
+                if (arguments.length === 2) {
+                    this.mapMethods(_1, _2.returns(undefined));
+                } else {
+                    this.mapMethods(_1.returns(undefined));
+                }
+            },
+            constructor: $final(function (arg1, arg2) {
+                this.parent_ = undefined;
+                this.children_ = [];
+                var cfg = this.cfg = typeof arg1 === 'object' ? arg1 : {}, componentDefinition = this.constructor.$definition;
+                if (this.constructor.$defaults) {
+                    cfg = this.cfg = _.extend(_.cloneDeep(this.constructor.$defaults), cfg);
+                }
+                this.mapMethods(function (fn, name, def) {
+                    if (name !== '$' && name !== 'init' && !(def && def.$raw)) {
+                        return this.$(fn);
+                    }
+                });
+                _.onBefore(this, 'destroy', this._beforeDestroy);
+                _.onAfter(this, 'destroy', this._afterDestroy);
+                var initialStreamListeners = [];
+                var excludeFromCfg = { init: true };
+                _.each(componentDefinition, function (def, name) {
+                    if (def !== undefined) {
+                        if (def.$observableProperty) {
+                            var definitionValue = def.subject;
+                            var defaultValue = name in cfg ? cfg[name] : definitionValue;
+                            var streamName = name + 'Change';
+                            var observable = excludeFromCfg[streamName] = this[streamName] = _.observable();
+                            observable.context = this;
+                            observable.postpones = def.$postpones;
+                            if (_.isPrototypeInstance(definitionValue)) {
+                                var constructor = definitionValue.constructor;
+                                observable.beforeWrite = function (value) {
+                                    return constructor.isTypeOf(value) ? value : new constructor(value);
+                                };
+                            }
+                            if (def.$reference) {
+                                observable.trackReference = true;
+                            }
+                            _.defineProperty(this, name, {
+                                get: function () {
+                                    return observable.value;
+                                },
+                                set: function (x) {
+                                    observable.write.call(this, x);
+                                }
+                            });
+                            if (def.listeners) {
+                                _.each(def.listeners, function (value) {
+                                    initialStreamListeners.push([
+                                        observable,
+                                        value
+                                    ]);
+                                });
+                            }
+                            if (_.isFunction(def.$observableProperty)) {
+                                initialStreamListeners.push([
+                                    observable,
+                                    def.$observableProperty
+                                ]);
+                            }
+                            if (defaultValue !== undefined) {
+                                observable(defaultValue);
+                            }
+                        } else if (Component.isStreamDefinition(def)) {
+                            var stream = excludeFromCfg[name] = this[name] = _.extend((def.$trigger ? _.trigger : def.$triggerOnce ? _.triggerOnce : def.$observable ? _.observable : def.$barrier ? _.barrier : undefined)(def.subject), {
+                                context: this,
+                                postpones: def.$postpones
+                            });
+                            if (def.$reference) {
+                                observable.trackReference = true;
+                            }
+                            if (def.listeners) {
+                                _.each(def.listeners, function (value) {
+                                    initialStreamListeners.push([
+                                        stream,
+                                        value
+                                    ]);
+                                });
+                            }
+                            if (_.isFunction(def.$observable)) {
+                                initialStreamListeners.push([
+                                    stream,
+                                    def.$observable
+                                ]);
+                            }
+                            var defaultListener = cfg[name];
+                            if (defaultListener) {
+                                if (def.$observable && defaultListener.isObservable) {
+                                    defaultListener.tie(stream);
+                                } else {
+                                    initialStreamListeners.push([
+                                        stream,
+                                        defaultListener
+                                    ]);
+                                }
+                            }
+                        }
+                        if (def.$listener) {
+                            this[name].queuedBy = [];
+                        }
+                        if (def.$interlocked) {
+                            this[name] = _.interlocked(this[name]);
+                        }
+                        if (def.$bindable) {
+                            this[name] = _.extend(_.bindable(this[name], this), _.map2(def.$bindable.hooks || {}, _.mapsWith(this.$.bind(this).arity1)));
+                        }
+                        if (def.$debounce) {
+                            var fn = this[name], opts = _.coerceToObject(def.$debounce);
+                            this[name] = fn.debounced(opts.wait || 500, opts.immediate);
+                        }
+                        if (def.$throttle) {
+                            var fn = this[name], opts = _.coerceToObject(def.$throttle);
+                            this[name] = _.throttle(fn, opts.wait || 500, opts);
+                        }
+                        if (def.$memoize) {
+                            this[name] = _.memoize(this[name]);
+                        } else if (def.$memoizeCPS) {
+                            this[name] = _.cps.memoize(this[name]);
+                        }
+                    }
+                }, this);
+                var init = this.init;
+                this.init = this._beforeInit.then(init.then(this._afterInit)).bind(this);
+                _.each(cfg, function (value, name) {
+                    if (!(name in excludeFromCfg)) {
+                        this[name] = _.isFunction(value) ? this.$(value) : value;
+                    }
+                }, this);
+                _.each(componentDefinition, function (def, name) {
+                    if (def && def.$alias && !def.$raw) {
+                        this[name] = this[$untag(def)];
+                    }
+                }, this);
+                if (_.hasAsserts) {
+                    _.each(this.constructor.$requires, function (contract, name) {
+                        $assertTypeMatches(_.object([[
+                                name,
+                                this[name]
+                            ]]), _.object([[
+                                name,
+                                contract
+                            ]]));
+                    }, this);
+                }
+                _.each(initialStreamListeners, function (v) {
+                    v[0].call(this, v[1]);
+                }, this);
+                if (!(cfg.init === false || this.constructor.$defaults && this.constructor.$defaults.init === false)) {
+                    var result = this.init();
+                    if (result instanceof Promise) {
+                        result.panic;
+                    }
+                }
+            }),
+            callChainMethod: function (name) {
+                var self = this;
+                return __.seq(_.filter2(this.constructor.$traits || [], function (Trait) {
+                    var method = Trait.prototype[name];
+                    return method && method.bind(self) || false;
+                }));
+            },
+            _beforeInit: function () {
+                if (this.initialized.already) {
+                    throw new Error('Component: I am already initialized. Probably you\'re doing it wrong.');
+                }
+                return this.callChainMethod('beforeInit');
+            },
+            init: function () {
+            },
+            _afterInit: function () {
+                var cfg = this.cfg, self = this;
+                return __.then(this.callChainMethod.$('afterInit'), function () {
+                    self.initialized(true);
+                    self.alive(true);
+                    _.each(self.constructor.$definition, function (def, name) {
+                        if (def && def.$observableProperty) {
+                            name += 'Change';
+                            var defaultListener = cfg[name];
+                            if (defaultListener) {
+                                self[name](defaultListener);
+                            }
+                        }
+                    });
+                    return true;
+                });
+            },
+            initialized: $barrier(),
+            alive: $observable(false),
+            _beforeDestroy: function () {
+                if (this.destroyed_) {
+                    throw new Error('Component: I am already destroyed. Probably you\'re doing it wrong.');
+                }
+                if (this.destroying_) {
+                    throw new Error('Component: Recursive destroy() call detected. Probably you\'re doing it wrong.');
+                }
+                this.destroying_ = true;
+                _.each(this.constructor.$traits, function (Trait) {
+                    if (Trait.prototype.beforeDestroy) {
+                        Trait.prototype.beforeDestroy.call(this);
+                    }
+                }, this);
+                this.alive(false);
+                this.enumMethods(_.off.arity1);
+                _.each(this.children_, _.method('destroy'));
+                this.children_ = [];
+            },
+            destroy: function () {
+            },
+            _afterDestroy: function () {
+                _.each(this.constructor.$traits, function (Trait) {
+                    if (Trait.prototype.destroy) {
+                        Trait.prototype.destroy.call(this);
+                    }
+                    if (Trait.prototype.afterDestroy) {
+                        Trait.prototype.afterDestroy.call(this);
+                    }
+                }, this);
+                delete this.destroying_;
+                this.parent_ = undefined;
+                this.destroyed_ = true;
+            },
+            attachedTo: $property(function () {
+                return this.parent_;
+            }),
+            attachTo: function (p) {
+                if (p === this) {
+                    throw new Error('smells like time-travel paradox.. how else can I be parent of myself?');
+                }
+                if (this.parent_ !== p) {
+                    if (this.parent_ !== undefined) {
+                        this.parent_.children_.remove(this);
+                    }
+                    if ((this.parent_ = p) !== undefined) {
+                        this.parent_.children_.push(this);
+                    }
+                }
+                return this;
+            },
+            detach: function () {
+                return this.attachTo(undefined);
+            },
+            attached: $property(function () {
+                return this.children_;
+            }),
+            attach: function (c) {
+                _.invoke(_.coerceToArray(c), 'attachTo', this);
+                return this;
+            },
+            detachAll: function () {
+                _.each(this.children_, function (c) {
+                    c.parent_ = undefined;
+                });
+                this.children_ = [];
+                return this;
+            },
+            destroyAll: function () {
+                _.each(this.children_, function (c) {
+                    c.parent_ = undefined;
+                    c.destroy();
+                });
+                this.children_ = [];
+                return this;
+            }
+        });
+    },
+    function (module, exports) {
+        R = $singleton({
+            $test: function () {
+                var $assertExpr = function (a, b) {
+                    $assert(a, _.quote(b.str, '//'));
+                };
+                $assertExpr('/[^\\s]*/', $r.anyOf.except.space.$);
+                $assertExpr('/\\[.*\\]|[\\s]/', $r.anything.inBrackets.or.oneOf.space.$);
+                var expr = $r.expr('before', $r.anything.text('$print').something).then($r.expr('argument', $r.someOf.except.text(',)')).inParentheses.then($r.expr('tail', $r.anything))).$;
+                $assertExpr('/(.*\\$print.+)\\(([^,\\)]+)\\)(.*)/', expr);
+                $assert(expr.parse(' var x = $print (blabla) // lalala '), {
+                    before: ' var x = $print ',
+                    argument: 'blabla',
+                    tail: ' // lalala '
+                });
+                $assert([
+                    [
+                        '[^',
+                        '\\s',
+                        ']'
+                    ],
+                    '*'
+                ], R.anyOf(R.except(R.space)));
+            },
+            constructor: function () {
+                this.reduce = _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible, _.isNonTrivial.and(_.not(this.isSubexpr)));
+                this.initDSL();
+            },
+            expr: function (expr, subexprs) {
+                subexprs = subexprs || [];
+                return new R.Expr(R.reduce('', expr, function (memo, s) {
+                    if (R.isSubexpr(s)) {
+                        subexprs.push(s);
+                        return memo + R.expr(R.root(s.value), subexprs).str;
+                    } else {
+                        return memo + s;
+                    }
+                }), subexprs);
+            },
+            Expr: $prototype({
+                constructor: function (str, subexprs) {
+                    this.rx = new RegExp();
+                    this.rx.compile(str);
+                    this.str = str;
+                    this.subexprs = subexprs;
+                },
+                parse: function (str) {
+                    var match = str.match(this.rx);
+                    return match && _.extend.apply(null, _.zipWith([
+                        _.rest(match),
+                        this.subexprs
+                    ], function (match, subexpr) {
+                        return _.object([[
+                                subexpr.name,
+                                match
+                            ]]);
+                    })) || {};
+                }
+            }),
+            metacharacters: $property(_.index('\\^$.|?*+()[{')),
+            escape: function (s) {
+                return _.map(s, function (x) {
+                    return R.metacharacters[x] ? '\\' + x : x;
+                }).join('');
+            },
+            text: $alias('escape'),
+            subexpr: function (name, s) {
+                return {
+                    name: name,
+                    value: [
+                        '(',
+                        s,
+                        ')'
+                    ]
+                };
+            },
+            maybe: function (s) {
+                return [
+                    s,
+                    '?'
+                ];
+            },
+            anyOf: function (s) {
+                return [
+                    s,
+                    '*'
+                ];
+            },
+            someOf: function (s) {
+                return [
+                    s,
+                    '+'
+                ];
+            },
+            oneOf: function (s) {
+                return [
+                    '[',
+                    s,
+                    ']'
+                ];
+            },
+            except: function (s) {
+                return [
+                    '[^',
+                    s,
+                    ']'
+                ];
+            },
+            or: function (a, b) {
+                return [
+                    a,
+                    '|',
+                    b
+                ];
+            },
+            begin: $property('^'),
+            end: $property('$'),
+            space: $property('\\s'),
+            maybeSpaces: $property('\\s*'),
+            spaces: $property('\\s+'),
+            anything: $property('.*'),
+            something: $property('.+'),
+            comma: $property(','),
+            parentheses: function (s) {
+                return [
+                    '\\(',
+                    s,
+                    '\\)'
+                ];
+            },
+            brackets: function (s) {
+                return [
+                    '\\[',
+                    s,
+                    '\\]'
+                ];
+            },
+            isSubexpr: function (s) {
+                return _.isStrictlyObject(s) && !_.isArray(s) ? true : false;
+            },
+            root: function (r) {
+                return r && r.$$ ? r.$$ : r;
+            },
+            initDSL: function () {
+                _.defineKeyword('r', function () {
+                    return $$r([]);
+                });
+                _.defineKeyword('$r', function (cursor) {
+                    var shift = function (x) {
+                        cursor.push(x);
+                        return cursor.forward;
+                    };
+                    _.defineHiddenProperty(cursor, 'then', function (x) {
+                        cursor.push(R.root(x));
+                        return cursor;
+                    });
+                    _.defineHiddenProperty(cursor, 'text', function (x) {
+                        cursor.push(R.text(x));
+                        return cursor;
+                    });
+                    _.defineHiddenProperty(cursor, 'expr', function (x, s) {
+                        cursor.push(R.subexpr(x, R.root(s)));
+                        return cursor;
+                    });
+                    _.defineHiddenProperty(cursor, 'forward', function () {
+                        return cursor.next || ((cursor.next = $r).prev = cursor).next;
+                    });
+                    _.each([
+                        'maybe',
+                        'anyOf',
+                        'someOf',
+                        'oneOf',
+                        'except'
+                    ], function (key) {
+                        _.defineHiddenProperty(cursor, key, function () {
+                            return shift(R[key](cursor.forward));
+                        });
+                    });
+                    _.each([
+                        'parentheses',
+                        'brackets'
+                    ], function (key) {
+                        _.defineHiddenProperty(cursor, 'in' + key.capitalized, function () {
+                            return cursor.$$.prev = $$r(R[key](cursor.$$));
+                        });
+                    });
+                    _.each(['or'], function (key) {
+                        _.defineHiddenProperty(cursor, key, function () {
+                            var next = $r;
+                            return (next.prev = cursor.$$.prev = $$r(R[key](cursor.$$, next))).next = next;
+                        });
+                    });
+                    _.each([
+                        'begin',
+                        'end',
+                        'space',
+                        'anything',
+                        'something'
+                    ], function (key) {
+                        _.defineHiddenProperty(cursor, key, function () {
+                            return shift([
+                                R[key],
+                                cursor.forward
+                            ]);
+                        });
+                    });
+                    _.defineHiddenProperty(cursor, '$$', function () {
+                        var root = cursor;
+                        while (root.prev) {
+                            root = root.prev;
+                        }
+                        return root;
+                    });
+                    _.defineHiddenProperty(cursor, '$', function () {
+                        return R.expr(cursor.$$);
+                    });
+                    return cursor;
                 });
             }
-        }
-    });
-}());
-if ($platform.NodeJS) {
-    module.exports = Testosterone;
-}
-;
-'use strict';
-(function () {
-    $mixin(Promise, {
-        shouldBe: function (x) {
-            return this.then(function (y) {
-                if (x !== y) {
-                    throw new AndrogeneError();
-                }
-            });
-        },
-        shouldFail: $property(function () {
-            return this.then(function () {
-                throw new AndrogeneError();
-            }, function () {
-            });
-        })
-    });
-    var AndrogeneError = class extends Error {
-        constructor(msg) {
-            super(msg || 'assertion failed');
-        }
-    };
-    var OriginalPromise = Promise;
-    $global.AndrogeneProcessContext = $prototype({
-        current: undefined,
-        constructor: function () {
-            this.eventLog = [];
-            this.where = new Error();
-            this.state = 'pending';
-            if ((this.parent = AndrogeneProcessContext.current) !== undefined) {
-                this.parent.eventLog.push(this);
-                this.env = this.parent.env;
-            }
-        },
-        root: $property(function () {
-            return this.parent && this.parent.root || this;
-        }),
-        push: $static(function (context) {
-            var prev = AndrogeneProcessContext.current;
-            AndrogeneProcessContext.current = context;
-            var PrevPromise = Promise;
-            Promise = AndrogenePromise;
-            var logHook = function () {
-                context.eventLog.push([log.config({ where: $callStack.safeLocation(5) })].concat(_.initial(arguments)));
-                return _.find(arguments, _.not(_.instanceOf(log.Config)));
-            };
-            log.impl.write.intercept(logHook);
-            return function () {
-                AndrogeneProcessContext.current = prev;
-                Promise = PrevPromise;
-                log.impl.write.off(logHook);
-            };
-        }),
-        within: function (fn) {
-            var self = this;
-            return function () {
-                var pop = AndrogeneProcessContext.push(self);
-                try {
-                    var x = fn.apply(this, arguments);
-                    pop();
-                    return x;
-                } catch (e) {
-                    pop();
+        });
+    },
+    function (module, exports, __webpack_require__) {
+        (function () {
+            _.hasUncaught = true;
+            var reThrownTag = ' [re-thrown by a hook]';
+            var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
+                var chain = arguments.callee.chain;
+                arguments.callee.chain = _.reject(chain, _.property('catchesOnce'));
+                if (chain.length) {
+                    for (var i = 0, n = chain.length; i < n; i++) {
+                        try {
+                            chain[i](e);
+                            break;
+                        } catch (newE) {
+                            console.log(newE);
+                            if (i === n - 1) {
+                                newE.message += reThrownTag;
+                                throw newE;
+                            } else {
+                                if (newE && typeof newE === 'object') {
+                                    newE.originalError = e;
+                                }
+                                e = newE;
+                            }
+                        }
+                    }
+                } else {
+                    e.message += reThrownTag;
                     throw e;
                 }
             };
-        },
-        numEvents: $memoized($property(function () {
-            return _.reduce2({
-                log: 0,
-                errors: 0
-            }, this.eventLog, function (sum, e) {
-                var n = e instanceof AndrogeneProcessContext ? e.numEvents : e instanceof Error ? { errors: 1 } : { log: 1 };
-                sum.all = (sum.errors += n.errors || 0) + (sum.log += n.log || 0);
-                return sum;
-            });
-        })),
-        printLog: function (state) {
-            state = state || {};
-            if (state.verbose || this.numEvents.all > 0) {
-                this.printWhere(state);
-                this.printEvents(state);
-            }
-        },
-        printWhere: function (state) {
-            var indent = state && state.indent || 0;
-            var color = log.color[{
-                'fulfilled': 'green',
-                'pending': 'orange',
-                'rejected': 'red',
-                '': 'purple'
-            }[this.state || '']];
-            log.margin();
-            for (var loc of CallStack.fromError(this.where).offset(3).clean.reject(x => x.native).reversed) {
-                log.write(color, log.config({
-                    indent: indent,
-                    location: true,
-                    where: loc
-                }), '\xB7', loc.source.trimmed);
-            }
-            log.margin();
-        },
-        printEvents: function (state) {
-            var state = state || {}, indent = state.indent || 0, visited = state.visited || new Set();
-            if (state.verbose || this.numEvents.all > 0) {
-                log.margin();
-                for (var e of this.eventLog) {
-                    if (e instanceof AndrogeneProcessContext) {
-                        if (e.eventLog.length) {
-                            e.printLog({
-                                indent: indent + 1,
-                                visited: visited,
-                                verbose: state.verbose
-                            });
-                        }
-                    } else if (e instanceof Error) {
-                        if (!visited.has(e)) {
-                            visited.add(e);
-                            log.boldRed(log.indent(indent + 1), e);
-                        }
-                    } else {
-                        log.write.apply(null, [log.indent(indent + 1)].concat(e));
-                    }
+            _.withUncaughtExceptionHandler = function (handler, context_) {
+                var context = context_ || _.identity;
+                if (context_) {
+                    handler.catchesOnce = true;
                 }
-                log.margin();
-            }
-            return this.numEvents;
-        }
-    });
-    AndrogeneProcessContext.within = function (fn) {
-        return AndrogeneProcessContext.current && AndrogeneProcessContext.current.within(fn) || fn;
-    };
-    $global.AndrogenePromise = class extends Promise {
-        constructor(fn) {
-            if (AndrogenePromise.constructing === true) {
-                super(fn);
-            } else {
-                var processContext = new AndrogeneProcessContext();
-                var resolve, reject;
-                super(function (resolve_, reject_) {
-                    resolve = resolve_;
-                    reject = function (e) {
-                        processContext.eventLog.push(e);
-                        reject_(e);
-                    };
+                globalUncaughtExceptionHandler.chain.unshift(handler);
+                context(function () {
+                    globalUncaughtExceptionHandler.chain.remove(handler);
                 });
-                this.processContext = processContext;
-                try {
-                    processContext.within(fn)(resolve, reject);
-                } catch (e) {
-                    reject(e);
-                }
-                AndrogenePromise.constructing = true;
-                super.then(function (x) {
-                    processContext.state = 'fulfilled';
-                }, function (x) {
-                    processContext.state = 'rejected';
-                });
-                delete AndrogenePromise.constructing;
-            }
-        }
-        then(resolve, reject) {
-            var next = this.processContext.within(OriginalPromise.prototype.then, 2).apply(this, _.map(arguments, function (fn) {
-                return fn && function (x) {
-                    return next.processContext.within(fn, -3)(x);
-                };
-            }));
-            return next;
-        }
-        disarmAndrogene() {
-            return new OriginalPromise(OriginalPromise.prototype.then.bind(this));
-        }
-        static race(promises) {
-            return OriginalPromise.race(promises);
-        }
-        static eval(x) {
-            return x instanceof AndrogenePromise ? x : x instanceof Function ? new AndrogenePromise(function (resolve) {
-                resolve(x());
-            }) : AndrogenePromise.resolve(x);
-        }
-    };
-    var assertion = function (fn) {
-        return function () {
-            return AndrogenePromise.eval(fn);
-        };
-    };
-    var assert = assertion(function (a, b) {
-        if (a !== b) {
-            throw new AndrogeneError();
-        }
-    });
-    var assertEveryCalled = assertion(function (acceptCallbacks) {
-        var promises = [], callbacks = [];
-        for (var i = 0, n = acceptCallbacks.length; i < n; i++) {
-            promises.push(new Promise(function (resolve) {
-                callbacks.push(resolve.$(true));
-            }));
-        }
-        acceptCallbacks.apply(this, callbacks);
-        return Promise.all(promises);
-    });
-    var test = assertion(function () {
-        return __('foo').then(_.appends('bar')).shouldBe('foobr');
-    });
-    var chainTest = assertion(function () {
-        return new Promise(function (resolve) {
-            log.i('example log message #1');
-            new Promise(function (resolve) {
-                log.i('example log message #2');
-                resolve();
-            }).then(function () {
-                log.i('example log message #3');
-                resolve();
-            });
-        }).then(function () {
-            log.i('example log message #4');
-            some_undefined_function();
-        });
-    });
-    var treeLogTest = assertion(function () {
-        var b = new Promise(function (resolve) {
-            log.i('A');
-            resolve('A');
-        }).then(function (_A) {
-            log.i('B');
-            return 'B';
-        });
-        return new Promise(function (resolve) {
-            log.i('C');
-            resolve('C');
-        }).then(function (_С) {
-            log.i('D');
-            return b.then(function (_D) {
-                log.i('E');
-                return 'E';
-            });
-        }).then(function (_E) {
-            log.i('F');
-            return 'F';
-        });
-    });
-    var raceTest = assertion(function () {
-        return __('foo').then(_.appends('bar')).delay(500).log.then(function () {
-            dasdsad();
-        }).timeout(600);
-    });
-    var throwTest = assertion(function () {
-        throw new Error('yo');
-    });
-    var thenFunctionTest = assertion(function () {
-        return Promise.resolve().then(function () {
-            return function () {
             };
-        }).then(function (x) {
-            console.log(x);
-        });
-    });
-    var eachTest = assertion(function () {
-        return __.each([
-            1,
-            2,
-            3
-        ], function (x) {
-            log.i(x);
-        });
-    });
-}());
-;
-(function () {
-    var fnNameExpr = $r.expr('how', $r.text('before').or.text('after')).expr('name', $r.anything).$;
-    var tryBind = function (target, methodName, bind, boundMethod) {
-        var method = target[methodName];
-        if (method && _.isFunction(method)) {
-            bind(target, methodName, boundMethod);
-        }
-    };
-    _.defineKeyword('aspect', function (ofWhat, cfg) {
-        var aspectDef = Tags.unwrap(_.sequence($prototype.impl.extendWithTags, $prototype.impl.flatten, $prototype.impl.generateArgumentContractsIfNeeded, $prototype.impl.contributeTraits({}), $prototype.impl.expandAliases).call($prototype.impl, cfg));
-        var motherDef = ofWhat.constructor && ofWhat.constructor.$definition;
-        if (motherDef) {
-            (motherDef.$aspects = motherDef.$aspects || []).push(aspectDef);
-        }
-        _.each(aspectDef, function (value, name) {
-            if (aspectDef.hasOwnProperty(name) && _.isFunction(value)) {
-                var parsed = fnNameExpr.parse(name);
-                var originalName = parsed.name && parsed.name.decapitalized || name;
-                var bindTool = parsed.how && _['on' + parsed.how.capitalized] || _.intercept;
-                if (bindTool) {
-                    tryBind(ofWhat, originalName, bindTool, value);
-                    tryBind(ofWhat.prototype, originalName, bindTool, value);
-                }
-            }
-        });
-        if (ofWhat.aspectAdded) {
-            ofWhat.aspectAdded(aspectDef);
-        }
-        return aspectDef;
-    });
-}());
-Http = $singleton(Component, {
-    $traits: [HttpMethods = $trait({
-            get: function (path, cfg) {
-                return this.request('GET', path, cfg);
-            },
-            post: function (path, cfg) {
-                return this.request('POST', path, cfg);
-            },
-            loadFile: function (path, cfg) {
-                return this.request('GET', path, { responseType: 'arraybuffer' });
-            },
-            uploadFile: function (path, file, cfg) {
-                return this.post(path, _.extend2({
-                    data: file,
-                    headers: {
-                        'Content-Type': 'binary/octet-stream',
-                        'X-File-Name': Parse.fileName(file.name || 'file').transliterate || 'file',
-                        'X-File-Size': file.size,
-                        'X-File-Type': file.type
-                    }
-                }, cfg));
-            }
-        })],
-    request: function (type, path, cfg_) {
-        var cfg = cfg_ || {};
-        var abort = undefined;
-        var p = new Promise(function (resolve, reject) {
-            if ($platform.Browser) {
-                var prePath = cfg.protocol || cfg.hostname || cfg.port ? (cfg.protocol || window.location.protocol) + '//' + (cfg.hostname || window.location.hostname) + ':' + (cfg.port || window.location.port) : '';
-                var xhr = new XMLHttpRequest();
-                xhr.open(type, prePath + path, true);
-                if (cfg.responseType)
-                    xhr.responseType = cfg.responseType;
-                _.each(cfg.headers, function (value, key) {
-                    xhr.setRequestHeader(key, value);
-                });
-                if (cfg.progress) {
-                    xhr.onprogress = Http.progressCallbackWithSimulation(cfg.progress);
-                }
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-                        if (cfg.progress) {
-                            cfg.progress(1);
-                        }
-                        var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
-                        if (xhr.status === 200) {
-                            resolve(response);
+            globalUncaughtExceptionHandler.chain = [];
+            switch ($platform.engine) {
+            case 'node':
+                __webpack_require__(34).on('uncaughtException', globalUncaughtExceptionHandler);
+                break;
+            case 'browser':
+                window.addEventListener('error', function (e) {
+                    if (e.message.indexOf(reThrownTag) < 0) {
+                        if (e.error) {
+                            globalUncaughtExceptionHandler(e.error);
                         } else {
-                            reject(_.extend(new Error(xhr.statusText), {
-                                httpResponse: response,
-                                httpStatus: xhr.status
+                            globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
+                                stub: true,
+                                stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno
                             }));
                         }
                     }
-                };
-                abort = function () {
-                    xhr.abort();
-                    reject('aborted');
-                };
-                if (cfg.data) {
-                    xhr.send(cfg.data);
-                } else {
-                    xhr.send();
-                }
-            } else {
-                reject('not implemented');
+                });
             }
-        });
-        return _.extend(p, { abort: abort });
+        }());
     },
-    progressCallbackWithSimulation: function (progress) {
-        var simulated = 0;
-        progress(0);
-        return function (e) {
-            if (e.lengthComputable) {
-                progress(e.loaded / e.total);
+    function (module, exports) {
+        var process = module.exports = {};
+        var queue = [];
+        var draining = false;
+        var currentQueue;
+        var queueIndex = -1;
+        function cleanUpNextTick() {
+            draining = false;
+            if (currentQueue.length) {
+                queue = currentQueue.concat(queue);
             } else {
-                progress(simulated = (simulated += 0.1) > 1 ? 0 : simulated);
+                queueIndex = -1;
+            }
+            if (queue.length) {
+                drainQueue();
+            }
+        }
+        function drainQueue() {
+            if (draining) {
+                return;
+            }
+            var timeout = setTimeout(cleanUpNextTick);
+            draining = true;
+            var len = queue.length;
+            while (len) {
+                currentQueue = queue;
+                queue = [];
+                while (++queueIndex < len) {
+                    if (currentQueue) {
+                        currentQueue[queueIndex].run();
+                    }
+                }
+                queueIndex = -1;
+                len = queue.length;
+            }
+            currentQueue = null;
+            draining = false;
+            clearTimeout(timeout);
+        }
+        process.nextTick = function (fun) {
+            var args = new Array(arguments.length - 1);
+            if (arguments.length > 1) {
+                for (var i = 1; i < arguments.length; i++) {
+                    args[i - 1] = arguments[i];
+                }
+            }
+            queue.push(new Item(fun, args));
+            if (queue.length === 1 && !draining) {
+                setTimeout(drainQueue, 0);
             }
         };
-    }
-});
-JSONAPI = $singleton(Component, {
-    $traits: [HttpMethods],
-    request: function (type, path, cfg) {
-        var cfg = _.extend2({
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Content-Type': 'application/json; charset=utf-8'
-            }
-        }, cfg);
-        if (cfg.what) {
-            cfg.data = JSON.stringify(cfg.what);
+        function Item(fun, array) {
+            this.fun = fun;
+            this.array = array;
         }
-        var stackBeforeCall = _.hasReflection && $callStack.offset((cfg.stackOffset || 0) + 1).asArray;
-        return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
-            if (response) {
-                return JSON.parse(response);
-            } else if (e) {
-                if (e.httpResponse) {
-                    return JSON.parse(e.httpResponse);
-                } else {
-                    throw e;
-                }
-            } else {
-                throw new Error('empty response');
-            }
-        }).then(function (response) {
-            if (response.success) {
-                return response.value;
-            } else {
-                if (response.parsedStack) {
-                    throw _.extend(new Error('SERVER: ' + response.error), {
-                        remote: true,
-                        parsedStack: response.parsedStack.concat(stackBeforeCall || [])
+        Item.prototype.run = function () {
+            this.fun.apply(null, this.array);
+        };
+        process.title = 'browser';
+        process.browser = true;
+        process.env = {};
+        process.argv = [];
+        process.version = '';
+        process.versions = {};
+        function noop() {
+        }
+        process.on = noop;
+        process.addListener = noop;
+        process.once = noop;
+        process.off = noop;
+        process.removeListener = noop;
+        process.removeAllListeners = noop;
+        process.emit = noop;
+        process.binding = function (name) {
+            throw new Error('process.binding is not supported');
+        };
+        process.cwd = function () {
+            return '/';
+        };
+        process.chdir = function (dir) {
+            throw new Error('process.chdir is not supported');
+        };
+        process.umask = function () {
+            return 0;
+        };
+    },
+    function (module, exports, __webpack_require__) {
+        (function (__filename) {
+            _.hasReflection = true;
+            _.tests.reflection = {
+                'file paths': function () {
+                    $assert($sourcePath.length > 0);
+                    $assert($uselessPath.length > 0);
+                },
+                'readSource': function () {
+                    var uselessJS = $uselessPath + $uselessFile;
+                    SourceFiles.read(uselessJS, function (text) {
+                        $assert(text.length > 0);
                     });
-                } else {
-                    throw new Error(response.error);
+                    SourceFiles.line(uselessJS, 0, function (line) {
+                        $assert(line.length > 0);
+                    });
+                },
+                'CallStack from error': function () {
+                    try {
+                        throw new Error('oh fock');
+                    } catch (e) {
+                        $assertTypeMatches(CallStack.fromError(e), CallStack);
+                    }
+                },
+                '$callStack': function (testDone) {
+                    var stack = $callStack;
+                    $assert(_.isArray(stack));
+                    $assertTypeMatches(stack[0], {
+                        callee: 'string',
+                        calleeShort: 'string',
+                        file: 'string',
+                        fileName: 'string',
+                        fileShort: 'string',
+                        thirdParty: 'boolean',
+                        index: 'boolean',
+                        'native': 'boolean',
+                        line: 'number',
+                        column: 'number',
+                        source: 'string',
+                        sourceReady: 'function'
+                    });
+                    $assert(_.isTypeOf(CallStack, stack));
+                    $assert(_.isTypeOf(CallStack, stack.clean));
+                    $assert(_.isTypeOf(CallStack, stack.offset(2)));
+                    $assert(_.isTypeOf(CallStack, stack.filter(_.identity)));
+                    $assert(_.isTypeOf(CallStack, stack.reject(_.identity)));
+                    $assertEveryCalled($async(function (sourceReady, sourcesReady, safeLocationReady) {
+                        stack[0].sourceReady(function (src) {
+                            $assert(typeof src, 'string');
+                            sourceReady();
+                        });
+                        stack.sourcesReady(function () {
+                            _.each(stack, function (entry) {
+                                $assert(typeof entry.source, 'string');
+                            });
+                            sourcesReady();
+                        });
+                        stack.safeLocation(7777).sourceReady(function (line) {
+                            $assert('??? WRONG LOCATION ???', line);
+                            safeLocationReady();
+                        });
+                    }), testDone);
+                },
+                'Prototype.$meta': function (done) {
+                    var Dummy = $prototype();
+                    Dummy.$meta(function (meta) {
+                        $assertMatches(meta, {
+                            name: 'Dummy',
+                            type: 'prototype'
+                        });
+                        done();
+                    });
+                },
+                'Trait.$meta': function (done) {
+                    var Dummy = $trait();
+                    Dummy.$meta(function (meta) {
+                        $assertMatches(meta, {
+                            name: 'Dummy',
+                            type: 'trait'
+                        });
+                        done();
+                    });
+                }
+            };
+            _.defineKeyword('callStack', function () {
+                return CallStack.fromRawString(CallStack.currentAsRawString).offset($platform.NodeJS ? 1 : 0);
+            });
+            _.defineKeyword('currentFile', function () {
+                return (CallStack.rawStringToArray(CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file;
+            });
+            _.defineKeyword('uselessPath', _.memoize(function () {
+                return _.initial(__filename.split('/'), $platform.NodeJS ? 2 : 1).join('/') + '/';
+            }));
+            _.defineKeyword('sourcePath', _.memoize(function () {
+                var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
+                return local ? local + '/' : $uselessPath;
+            }));
+            if ($platform.Browser) {
+                _.defineProperty(window, '__filename', function () {
+                    return $currentFile;
+                });
+            }
+            SourceFiles = $singleton(Component, {
+                line: function (file, line, then) {
+                    SourceFiles.read(file, function (data) {
+                        then((data.split('\n')[line] || '').trimmed);
+                    });
+                },
+                read: $memoizeCPS(function (file, then) {
+                    if (file.indexOf('<') < 0) {
+                        try {
+                            if ($platform.NodeJS) {
+                                then(__webpack_require__(!function webpackMissingModule() {
+                                    var e = new Error('Cannot find module "fs"');
+                                    e.code = 'MODULE_NOT_FOUND';
+                                    throw e;
+                                }()).readFileSync(file, { encoding: 'utf8' }) || '');
+                            } else {
+                                var xhr = new XMLHttpRequest();
+                                xhr.open('GET', file, true);
+                                xhr.onreadystatechange = function () {
+                                    if (xhr.readyState == 4) {
+                                        then(xhr.responseText);
+                                    }
+                                };
+                                xhr.send(null);
+                            }
+                        } catch (e) {
+                            then('');
+                        }
+                    } else {
+                        then('');
+                    }
+                }),
+                write: function (file, text, then) {
+                    if ($platform.NodeJS) {
+                        this.read(file, function (prevText) {
+                            var fs = __webpack_require__(!function webpackMissingModule() {
+                                    var e = new Error('Cannot find module "fs"');
+                                    e.code = 'MODULE_NOT_FOUND';
+                                    throw e;
+                                }()), opts = { encoding: 'utf8' };
+                            try {
+                                fs.mkdirSync(file + '.backups');
+                            } catch (e) {
+                            }
+                            fs.writeFileSync(file + '.backups/' + Date.now(), prevText, opts);
+                            fs.writeFileSync(file, text, opts);
+                            then();
+                        });
+                    } else {
+                        JSONAPI.post('source/' + file, _.extend2({}, this.apiConfig, { what: { text: text } })).then(function () {
+                            log.ok(file, '\u2014 successfully saved');
+                            if (then) {
+                                then();
+                            }
+                        });
+                    }
+                }
+            });
+            CallStack = $extends(Array, {
+                current: $static($property(function () {
+                    return CallStack.fromRawString(CallStack.currentAsRawString).offset(1);
+                })),
+                fromError: $static(function (e) {
+                    if (e && e.parsedStack) {
+                        return CallStack.fromParsedArray(e.parsedStack).offset(e.stackOffset || 0);
+                    } else if (e && e.stack) {
+                        return CallStack.fromRawString(e.stack).offset(e.stackOffset || 0);
+                    } else {
+                        return CallStack.fromParsedArray([]);
+                    }
+                }),
+                fromErrorWithAsync: $static(function (e) {
+                    var stackEntries = CallStack.fromError(e), asyncContext = e.asyncContext;
+                    while (asyncContext) {
+                        stackEntries = stackEntries.concat(CallStack.fromRawString(asyncContext.stack));
+                        asyncContext = asyncContext.asyncContext;
+                    }
+                    return stackEntries.mergeDuplicateLines;
+                }),
+                locationEquals: $static(function (a, b) {
+                    return a.file === b.file && a.line === b.line && a.column === b.column;
+                }),
+                safeLocation: function (n) {
+                    return this[n] || {
+                        callee: '',
+                        calleeShort: '',
+                        file: '',
+                        fileName: '',
+                        fileShort: '',
+                        thirdParty: false,
+                        source: '??? WRONG LOCATION ???',
+                        sourceReady: _.barrier('??? WRONG LOCATION ???')
+                    };
+                },
+                mergeDuplicateLines: $property(function () {
+                    return CallStack.fromParsedArray(_.map(_.partition2(this, function (e) {
+                        return e.file + e.line;
+                    }), function (group) {
+                        return _.reduce(_.rest(group), function (memo, entry) {
+                            memo.callee = (memo.callee || '<anonymous>') + ' \u2192 ' + (entry.callee || '<anonymous>');
+                            memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' \u2192 ' + (entry.calleeShort || '<anonymous>');
+                            return memo;
+                        }, _.clone(group[0]));
+                    }));
+                }),
+                clean: $property(function () {
+                    var clean = this.mergeDuplicateLines.reject(function (e, i) {
+                        return (e.thirdParty || e.hide) && i !== 0;
+                    });
+                    return clean.length === 0 ? this : clean;
+                }),
+                asArray: $property(function () {
+                    return _.asArray(this);
+                }),
+                offset: function (N) {
+                    return N && CallStack.fromParsedArray(_.rest(this, N)) || this;
+                },
+                initial: function (N) {
+                    return N && CallStack.fromParsedArray(_.initial(this, N)) || this;
+                },
+                concat: function (stack) {
+                    return CallStack.fromParsedArray(this.asArray.concat(stack.asArray));
+                },
+                filter: function (fn) {
+                    return CallStack.fromParsedArray(_.filter(this, fn));
+                },
+                reject: function (fn) {
+                    return CallStack.fromParsedArray(_.reject(this, fn));
+                },
+                reversed: $property(function () {
+                    return CallStack.fromParsedArray(_.reversed(this));
+                }),
+                sourcesReady: function (then) {
+                    return _.allTriggered(_.pluck(this, 'sourceReady'), then);
+                },
+                constructor: function (arr) {
+                    Array.prototype.constructor.call(this);
+                    _.each(arr, function (entry) {
+                        if (!entry.sourceReady) {
+                            entry.sourceReady = _.barrier();
+                            SourceFiles.line((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
+                                entry.hide = src.contains('// @hide');
+                                entry.sourceReady(entry.source = src.replace('// @hide', ''));
+                            });
+                        }
+                        this.push(entry);
+                    }, this);
+                },
+                fromParsedArray: $static(function (arr) {
+                    return new CallStack(arr);
+                }),
+                currentAsRawString: $static($property(function () {
+                    var cut = $platform.Browser ? 3 : 2;
+                    return _.rest((new Error().stack || '').split('\n'), cut).join('\n');
+                })),
+                shortenPath: $static(function (path) {
+                    var relative = path.replace($uselessPath, '').replace($sourcePath, '');
+                    return relative !== path ? relative.replace(/^node_modules\//, '') : path.split('/').last;
+                }),
+                isThirdParty: $static(_.bindable(function (file) {
+                    var local = file.replace($sourcePath, '');
+                    return $platform.NodeJS && file[0] !== '/' || local.indexOf('/node_modules/') >= 0 || file.indexOf('/node_modules/') >= 0 && !local || local.indexOf('underscore') >= 0 || local.indexOf('jquery') >= 0;
+                })),
+                fromRawString: $static(_.sequence(function (rawString) {
+                    return CallStack.rawStringToArray(rawString);
+                }, function (array) {
+                    return _.map(array, function (entry) {
+                        return _.extend(entry, {
+                            calleeShort: _.last(entry.callee.split('.')),
+                            fileName: _.last(entry.file.split('/')),
+                            fileShort: CallStack.shortenPath(entry.file),
+                            thirdParty: CallStack.isThirdParty(entry.file) && !entry.index
+                        });
+                    });
+                }, function (parsedArrayWithSourceLines) {
+                    return CallStack.fromParsedArray(parsedArrayWithSourceLines);
+                })),
+                rawStringToArray: $static(function (rawString) {
+                    var lines = (rawString || '').split('\n');
+                    return _.filter2(lines, function (line) {
+                        line = line.trimmed;
+                        var callee, fileLineColumn = [], native_ = false;
+                        var planA = undefined, planB = undefined;
+                        if ((planA = line.match(/at (.+) \((.+)\)/)) || (planA = line.match(/(.*)@(.*)/))) {
+                            callee = planA[1];
+                            native_ = planA[2] === 'native';
+                            fileLineColumn = _.rest(planA[2].match(/(.*):(.+):(.+)/) || []);
+                        } else if (planB = line.match(/^(at\s+)*(.+):([0-9]+):([0-9]+)/)) {
+                            fileLineColumn = _.rest(planB, 2);
+                        } else {
+                            return false;
+                        }
+                        if ((callee || '').indexOf('__supressErrorReporting') >= 0) {
+                            return false;
+                        }
+                        return {
+                            beforeParse: line,
+                            callee: callee || '',
+                            index: $platform.Browser && fileLineColumn[0] === window.location.href,
+                            'native': native_,
+                            file: fileLineColumn[0] || '',
+                            line: (fileLineColumn[1] || '').integerValue,
+                            column: (fileLineColumn[2] || '').integerValue
+                        };
+                    });
+                })
+            });
+            $prototype.impl.findMeta = function (stack) {
+                return function (then) {
+                    _.cps.find(CallStack.fromRawString(stack).reversed, function (entry, found) {
+                        entry.sourceReady(function (text) {
+                            var match = (text || '').match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/);
+                            found(match && {
+                                name: match[1],
+                                type: match[2],
+                                file: entry.fileShort
+                            } || false);
+                        });
+                    }, function (found) {
+                        then(found || {});
+                    });
+                };
+            };
+            $prototype.macro(function (def, base) {
+                if (!def.$meta) {
+                    var findMeta = _.cps.memoize($prototype.impl.findMeta(CallStack.currentAsRawString));
+                    _.defineMemoizedProperty(findMeta, 'promise', function () {
+                        return new Promise(findMeta);
+                    });
+                    def.$meta = $static(findMeta);
+                }
+                return def;
+            });
+        }.call(exports, '/index.js'));
+    },
+    function (module, exports) {
+        _.hasLog = true;
+        _.tests.log = {
+            basic: function () {
+                log('log (x)');
+                log.green('log.green');
+                log.boldGreen('log.boldGreen');
+                log.darkGreen('log.darkGreen');
+                log.blue('log.blue');
+                log.boldBlue('log.boldBlue');
+                log.darkBlue('log.darkBlue');
+                log.orange('log.orange');
+                log.boldOrange('log.boldOrange');
+                log.darkOrange('log.darkOrange');
+                log.red('log.red');
+                log.boldRed('log.boldRed');
+                log.darkRed('log.darkRed');
+                log.pink('log.pink');
+                log.boldPink('log.boldPink');
+                log.darkPink('log.darkPink');
+                log.margin();
+                log.margin();
+                log.bright('log.bright');
+                log.dark('log.dark');
+                log.margin();
+                log.success('log.success');
+                log.ok('log.ok');
+                log.g('log.g');
+                log.gg('log.gg');
+                log.info('log.info');
+                log.i('log.i');
+                log.ii('log.ii');
+                log.warning('log.warning');
+                log.warn('log.warn');
+                log.w('log.w');
+                log.ww('log.ww');
+                log.error('log.error');
+                log.e('log.e');
+                log.ee('log.ee');
+                $assert(log('log (x) === x'), 'log (x) === x');
+                log.info(log.stackOffset(2), 'log.info (log.config ({ stackOffset: 2 }), ...)');
+                log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
+                log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
+                log.write(log.boldLine);
+                log.write(log.thinLine);
+                log.write(log.line);
+                log.write(log.indent(1), [
+                    'You can set indentation',
+                    'that is nicely handled',
+                    'in case of multiline text'
+                ].join('\n'));
+                log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
+                log.orange(log.config({
+                    indent: 2,
+                    table: true
+                }), [
+                    {
+                        field: 'line',
+                        matches: false,
+                        valueType: 'string',
+                        contractType: 'number'
+                    },
+                    {
+                        field: 'column',
+                        matches: true,
+                        valueType: 'string',
+                        contractType: 'number'
+                    }
+                ]);
+                log.write('\nObject:', {
+                    foo: 1,
+                    bar: 2,
+                    qux: 3
+                });
+                log.write('Array:', [
+                    1,
+                    2,
+                    3
+                ]);
+                log.write('Function:', _.identity);
+                log.write('Complex object:', {
+                    foo: 1,
+                    bar: {
+                        qux: [
+                            1,
+                            2,
+                            3
+                        ],
+                        garply: _.identity
+                    }
+                }, '\n\n');
+                log.withConfig(log.indent(1), function () {
+                    log.pink('Config stack + scopes + higher order API test:');
+                    _.each([
+                        5,
+                        6,
+                        7
+                    ], logs.pink(log.indent(1), 'item = ', log.color.blue));
+                });
+                $assert(log(42), 42);
+            }
+        };
+        _.extend(log = function () {
+            return log.write.apply(this, [log.config({
+                    location: true,
+                    stackOffset: 1
+                })].concat(_.asArray(arguments)));
+        }, {
+            Config: $prototype(),
+            config: function (cfg) {
+                return new log.Config(cfg);
+            }
+        });
+        _.extend(log, {
+            indent: function (n) {
+                return log.config({ indent: n });
+            },
+            stackOffset: function (n) {
+                return log.config({ stackOffset: n });
+            },
+            where: function (wat) {
+                return log.config({
+                    location: true,
+                    where: wat || undefined
+                });
+            },
+            color: _.extend(function (x) {
+                return (log.color[x] || {}).color;
+            }, _.object(_.map([
+                [
+                    'none',
+                    '0m',
+                    ''
+                ],
+                [
+                    'red',
+                    '31m',
+                    'color:crimson'
+                ],
+                [
+                    'boldRed',
+                    [
+                        '31m',
+                        '1m'
+                    ],
+                    'color:crimson;font-weight:bold'
+                ],
+                [
+                    'darkRed',
+                    [
+                        '31m',
+                        '2m'
+                    ],
+                    'color:crimson'
+                ],
+                [
+                    'blue',
+                    '36m',
+                    'color:royalblue'
+                ],
+                [
+                    'boldBlue',
+                    [
+                        '36m',
+                        '1m'
+                    ],
+                    'color:royalblue;font-weight:bold;'
+                ],
+                [
+                    'darkBlue',
+                    [
+                        '36m',
+                        '2m'
+                    ],
+                    'color:rgba(65,105,225,0.5)'
+                ],
+                [
+                    'boldOrange',
+                    [
+                        '33m',
+                        '1m'
+                    ],
+                    'color:saddlebrown;font-weight:bold;'
+                ],
+                [
+                    'darkOrange',
+                    [
+                        '33m',
+                        '2m'
+                    ],
+                    'color:saddlebrown'
+                ],
+                [
+                    'orange',
+                    '33m',
+                    'color:saddlebrown'
+                ],
+                [
+                    'brown',
+                    [
+                        '33m',
+                        '2m'
+                    ],
+                    'color:saddlebrown'
+                ],
+                [
+                    'green',
+                    '32m',
+                    'color:forestgreen'
+                ],
+                [
+                    'boldGreen',
+                    [
+                        '32m',
+                        '1m'
+                    ],
+                    'color:forestgreen;font-weight:bold'
+                ],
+                [
+                    'darkGreen',
+                    [
+                        '32m',
+                        '2m'
+                    ],
+                    'color:forestgreen;opacity:0.5'
+                ],
+                [
+                    'pink',
+                    '35m',
+                    'color:magenta'
+                ],
+                [
+                    'boldPink',
+                    [
+                        '35m',
+                        '1m'
+                    ],
+                    'color:magenta;font-weight:bold;'
+                ],
+                [
+                    'darkPink',
+                    [
+                        '35m',
+                        '2m'
+                    ],
+                    'color:magenta'
+                ],
+                [
+                    'black',
+                    '0m',
+                    'color:black'
+                ],
+                [
+                    'bright',
+                    [
+                        '0m',
+                        '1m'
+                    ],
+                    'color:rgba(0,0,0);font-weight:bold'
+                ],
+                [
+                    'dark',
+                    [
+                        '0m',
+                        '2m'
+                    ],
+                    'color:rgba(0,0,0,0.25)'
+                ]
+            ], function (def) {
+                return [
+                    def[0],
+                    log.config({
+                        color: {
+                            shell: _.coerceToArray(_.map2(def[1], _.prepends('\x1B['))).join(),
+                            css: def[2]
+                        }
+                    })
+                ];
+            }))),
+            boldLine: '======================================',
+            line: '--------------------------------------',
+            thinLine: '......................................',
+            timestampEnabled: false,
+            withWriteBackend: $scope(function (release, backend, contextFn, done) {
+                var prev = log.writeBackend.value;
+                log.writeBackend.value = backend;
+                contextFn(function (then) {
+                    release(function () {
+                        log.writeBackend.value = prev;
+                        if (then)
+                            then();
+                        if (done)
+                            done();
+                    });
+                });
+            }),
+            writeUsingDefaultBackend: function () {
+                var args = arguments;
+                log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
+                    log.write.apply(null, args);
+                    done();
+                });
+            },
+            writeBackend: function () {
+                return arguments.callee.value || log.impl.defaultWriteBackend;
+            },
+            withConfig: function (config, what) {
+                log.impl.configStack.push(log.impl.configure([
+                    { stackOffset: -1 },
+                    config
+                ]));
+                var result = what();
+                log.impl.configStack.pop();
+                return result;
+            },
+            currentConfig: function () {
+                return log.impl.configure(log.impl.configStack);
+            },
+            margin: function () {
+                var lastWrite = undefined;
+                return function () {
+                    if (lastWrite !== log.impl.numWrites)
+                        log.newline();
+                    lastWrite = log.impl.numWrites;
+                };
+            }(),
+            impl: {
+                configStack: [],
+                numWrites: 0,
+                configure: function (configs) {
+                    return _.reduce2({
+                        stackOffset: 0,
+                        indent: 0
+                    }, _.nonempty(configs), function (memo, cfg) {
+                        return _.extend(memo, _.nonempty(cfg), {
+                            indent: memo.indent + (cfg.indent || 0),
+                            stackOffset: memo.stackOffset + (cfg.stackOffset || 0)
+                        });
+                    });
+                },
+                write: $restArg(_.bindable(function () {
+                    var writeBackend = log.writeBackend();
+                    log.impl.numWrites++;
+                    var args = _.asArray(arguments);
+                    var config = log.impl.configure([{
+                            stackOffset: $platform.NodeJS ? 1 : 3,
+                            indent: writeBackend.indent || 0
+                        }].concat(log.impl.configStack));
+                    var runs = _.reduce2([], _.partition3(args, _.isTypeOf.$(log.Config)), function (runs, span) {
+                        if (span.label === true) {
+                            config = log.impl.configure([config].concat(span.items));
+                            return runs;
+                        } else {
+                            return runs.concat({
+                                config: config,
+                                text: log.impl.stringifyArguments(span.items, config)
+                            });
+                        }
+                    });
+                    var trailNewlinesMatch = runs.last && runs.last.text.reversed.match(/(\n*)([^]*)/);
+                    var trailNewlines = trailNewlinesMatch && trailNewlinesMatch[1];
+                    if (trailNewlinesMatch) {
+                        runs.last.text = trailNewlinesMatch[2].reversed;
+                    }
+                    var newline = {};
+                    var lines = _.pluck.with('items', _.reject.with(_.property('label'), _.partition3.with(_.equals(newline), _.scatter(runs, function (run, i, emit) {
+                        _.each(run.text.split('\n'), function (line, i, arr) {
+                            emit(_.extended(run, { text: line }));
+                            if (i !== arr.lastIndex) {
+                                emit(newline);
+                            }
+                        });
+                    }))));
+                    var totalText = _.pluck(runs, 'text').join('');
+                    var where = config.where || log.impl.walkStack($callStack) || {};
+                    var indentation = (config.indentPattern || '\t').repeats(config.indent);
+                    writeBackend({
+                        lines: lines,
+                        config: config,
+                        color: config.color,
+                        when: new Date().toISOString(),
+                        args: _.reject(args, _.isTypeOf.$(log.Config)),
+                        indentation: indentation,
+                        indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
+                        text: totalText,
+                        codeLocation: config.location && log.impl.location(where) || '',
+                        trailNewlines: trailNewlines || '',
+                        where: config.location && where || undefined
+                    });
+                    return _.find(args, _.not(_.isTypeOf.$(log.Config)));
+                })),
+                walkStack: function (stack) {
+                    return _.find(stack.clean.offset($platform.Browser ? 1 : 2), function (entry) {
+                        return entry.fileShort.indexOf('base/log.js') < 0;
+                    }) || stack[0];
+                },
+                defaultWriteBackend: function (params) {
+                    var codeLocation = params.codeLocation;
+                    if ($platform.NodeJS) {
+                        var lines = _.map(params.lines, function (line) {
+                            return params.indentation + _.map(line, function (run) {
+                                return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
+                            }).join('');
+                        }).join('\n');
+                        if (log.timestampEnabled) {
+                            lines = log.color('dark').shell + _.bullet(log.impl.timestamp(params.when) + ' ', log.color('none').shell + lines);
+                        }
+                        console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
+                    } else {
+                        console.log.apply(console, _.reject.with(_.equals(undefined), [].concat([
+                            log.timestampEnabled ? '%c' + log.impl.timestamp(params.when) + '%c' : '',
+                            _.map(params.lines, function (line, i) {
+                                return params.indentation + _.reduce2('', line, function (s, run) {
+                                    return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
+                                });
+                            }).join('\n'),
+                            codeLocation ? '%c' + codeLocation : ''
+                        ].nonempty.join(' '), (log.timestampEnabled ? [
+                            'color:rgba(0,0,0,0.4)',
+                            'color:black'
+                        ] : []).concat(_.scatter(params.lines, function (line, i, emit) {
+                            _.each(line, function (run) {
+                                if (run.text && run.config.color) {
+                                    emit(run.config.color.css);
+                                }
+                            });
+                        }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
+                    }
+                },
+                timestamp: function (x) {
+                    return x;
+                },
+                location: function (where) {
+                    return _.quoteWith('()', _.nonempty([
+                        where.calleeShort,
+                        _.nonempty([
+                            where.fileName,
+                            where.line
+                        ]).join(':')
+                    ]).join(' @ '));
+                },
+                stringifyArguments: function (args, cfg) {
+                    return _.map(args, function (arg) {
+                        var x = log.impl.stringify(arg, cfg);
+                        return cfg.maxArgLength ? x.limitedTo(cfg.maxArgLength) : x;
+                    }).join(' ');
+                },
+                stringify: function (what, cfg) {
+                    cfg = cfg || {};
+                    if (_.isTypeOf(Error, what)) {
+                        var str = log.impl.stringifyError(what);
+                        if (what.originalError) {
+                            return str + '\n\n' + log.impl.stringify(what.originalError);
+                        } else {
+                            return str;
+                        }
+                    } else if (_.isTypeOf(CallStack, what)) {
+                        return log.impl.stringifyCallStack(what);
+                    } else if (typeof what === 'object') {
+                        if (_.isArray(what) && what.length > 1 && _.isObject(what[0]) && cfg.table) {
+                            return log.asTable(what);
+                        } else {
+                            return _.stringify(what, cfg);
+                        }
+                    } else if (typeof what === 'string') {
+                        return what;
+                    } else {
+                        return _.stringify(what);
+                    }
+                },
+                stringifyError: function (e) {
+                    try {
+                        var stack = CallStack.fromErrorWithAsync(e).offset(e.stackOffset || 0).clean;
+                        var why = (e.message || '').replace(/\r|\n/g, '').trimmed.limitedTo(120);
+                        return '[EXCEPTION] ' + why + '\n\n' + (e.notMatching && _.map(_.coerceToArray(e.notMatching || []), log.impl.stringify.then(_.prepends('\t'))).join('\n') + '\n\n' || '') + log.impl.stringifyCallStack(stack) + '\n';
+                    } catch (sub) {
+                        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n';
+                    }
+                },
+                stringifyCallStack: function (stack) {
+                    return log.columns(stack.map(function (entry) {
+                        return [
+                            '\t' + 'at ' + entry.calleeShort.first(30),
+                            _.nonempty([
+                                entry.fileShort,
+                                ':',
+                                entry.line
+                            ]).join(''),
+                            (entry.source || '').first(80)
+                        ];
+                    })).join('\n');
                 }
             }
         });
+        (function () {
+            var write = log.impl.write;
+            _.extend(log, log.printAPI = _.object(_.concat([
+                [
+                    'newline',
+                    write.$(log.config({ location: false }), '')
+                ],
+                [
+                    'write',
+                    write
+                ]
+            ], _.flat(_.map([
+                'red failure error e',
+                'blue info i',
+                'darkBlue minor m',
+                'orange warning warn w',
+                'green success ok g',
+                'darkGreen dg',
+                'pink notice alert p',
+                'boldPink pp',
+                'dark hint d',
+                'boldGreen gg',
+                'bright b',
+                'boldRed bloody bad ee',
+                'darkPink dp',
+                'brown br',
+                'darkOrange wtf',
+                'boldOrange ww',
+                'darkRed er',
+                'boldBlue ii'
+            ], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
+                return [
+                    name,
+                    write.$(log.config({
+                        location: i !== 0,
+                        color: log.color(names.first),
+                        stackOffset: 2
+                    }))
+                ];
+            })))))));
+        }());
+        logs = _.mapWith(_.callsTo.compose(_.callsWith(log.stackOffset(1))), log.printAPI);
+        _.extend(log, {
+            asTable: function (arrayOfObjects) {
+                var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
+                var lines = log.columns([columnsDef].concat(_.map(arrayOfObjects, function (object) {
+                    return columnsDef.map(_.propertyOf(object));
+                })), {
+                    maxTotalWidth: 120,
+                    minColumnWidths: columnsDef.map(_.property('length'))
+                });
+                return [
+                    lines[0],
+                    log.thinLine[0].repeats(lines[0].length),
+                    _.rest(lines)
+                ].flat.join('\n');
+            },
+            columns: function (rows, cfg_) {
+                if (rows.length === 0) {
+                    return [];
+                } else {
+                    var rowsToStr = rows.map(_.map.tails2(function (col) {
+                        return _.asString(col).split('\n')[0];
+                    }));
+                    var columnWidths = rowsToStr.map(_.map.tails2(_.property('length')));
+                    var maxWidths = columnWidths.zip(_.largest);
+                    var cfg = cfg_ || {
+                        minColumnWidths: maxWidths,
+                        maxTotalWidth: 0
+                    };
+                    var totalWidth = _.reduce(maxWidths, _.sum, 0);
+                    var relativeWidths = _.map(maxWidths, _.muls(1 / totalWidth));
+                    var excessWidth = Math.max(0, totalWidth - cfg.maxTotalWidth);
+                    var computedWidths = _.map(maxWidths, function (w, i) {
+                        return Math.max(cfg.minColumnWidths[i], Math.floor(w - excessWidth * relativeWidths[i]));
+                    });
+                    var restWidths = columnWidths.map(function (widths) {
+                        return [
+                            computedWidths,
+                            widths
+                        ].zip(_.subtract);
+                    });
+                    return [
+                        rowsToStr,
+                        restWidths
+                    ].zip(_.zap.tails(function (str, w) {
+                        return w >= 0 ? str + ' '.repeats(w) : _.initial(str, -w).join('');
+                    }).then(_.joinsWith('  ')));
+                }
+            }
+        });
+        if ($platform.NodeJS) {
+            module.exports = log;
+        }
+    },
+    function (module, exports) {
+        _.defineTagKeyword('shouldFail');
+        _.defineTagKeyword('async');
+        _.tests.Testosterone = {
+            'async': function (done) {
+                _.delay(function () {
+                    done();
+                });
+            },
+            '$tests': function () {
+                DummyPrototypeWithTest = $prototype({
+                    $test: function () {
+                    }
+                });
+                DummyPrototypeWithTests = $prototype({
+                    $tests: {
+                        dummy: function () {
+                        }
+                    }
+                });
+                $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
+                $assertThrows(function () {
+                    DummyPrototypeWithTests.$tests = 42;
+                });
+                $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [
+                    DummyPrototypeWithTest.$tests,
+                    DummyPrototypeWithTests.$tests
+                ]);
+            }
+        };
+        _.defineTagKeyword('assertion');
+        Testosterone = $singleton({
+            prototypeTests: [],
+            isRunning: $property(function () {
+                return this.currentAssertion !== undefined;
+            }),
+            constructor: function () {
+                _.each(_.assertions, function (fn, name) {
+                    this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
+                        what.call(this);
+                    }) : fn);
+                }, this);
+                (function (register) {
+                    $prototype.macro('$test', register);
+                    $prototype.macro('$tests', register);
+                }(this.$(function (def, value, name) {
+                    this.prototypeTests.push({
+                        proto: def.constructor,
+                        tests: value
+                    });
+                    def.$tests = $static($property($constant(_.isStrictlyObject(value) && value || _.object([[
+                            'test',
+                            value
+                        ]]))));
+                    return def;
+                })));
+                this.run = this.$(this.run);
+            },
+            run: _.interlocked(function (cfg_) {
+                var defaults = {
+                    suites: [],
+                    silent: true,
+                    verbose: false,
+                    timeout: 2000,
+                    filter: _.identity,
+                    testStarted: function (test) {
+                    },
+                    testComplete: function (test) {
+                    }
+                };
+                var cfg = this.runConfig = _.extend(defaults, cfg_);
+                var suitesIsArray = _.isArray(cfg.suites);
+                var suites = _.map(cfg.suites, this.$(function (suite, name) {
+                    return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto);
+                }));
+                var result = (cfg.codebase === false ? __([]) : this.collectPrototypeTests()).then(this.$(function (prototypeTests) {
+                    var baseTests = cfg.codebase === false ? [] : this.collectTests();
+                    var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
+                    var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
+                    this.runningTests = _.map(selectTests, function (test, i) {
+                        return _.extend(test, {
+                            indent: cfg.indent,
+                            index: i
+                        });
+                    });
+                    _.each(this.runningTests, function (t) {
+                        if (!(t.routine instanceof Function)) {
+                            log.ee(t.suite, t.name, '\u2013 test routine is not a function:', t.routine);
+                            throw new Error();
+                        }
+                    });
+                    this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
+                    return __.each(this.runningTests, this.$(this.runTest)).then(this.$(function () {
+                        _.assert(cfg.done !== true);
+                        cfg.done = true;
+                        this.printLog(cfg);
+                        this.failedTests = _.filter(this.runningTests, _.property('failed'));
+                        this.failed = this.failedTests.length > 0;
+                        return !this.failed;
+                    }));
+                }));
+                return result.catch(function (e) {
+                    log.margin();
+                    log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
+                    throw e;
+                });
+            }),
+            onException: function (e) {
+                if (this.currentAssertion)
+                    this.currentAssertion.onException(e);
+                else
+                    throw e;
+            },
+            defineAssertions: function (assertions) {
+                _.each(assertions, function (fn, name) {
+                    this.defineAssertion(name, fn);
+                }, this);
+            },
+            runTest: function (test, i) {
+                var self = this, runConfig = this.runConfig;
+                log.impl.configStack = [];
+                return __.then(runConfig.testStarted(test), function () {
+                    test.verbose = runConfig.verbose;
+                    test.timeout = runConfig.timeout;
+                    test.startTime = Date.now();
+                    return test.run().then(function () {
+                        test.time = Date.now() - test.startTime;
+                        return runConfig.testComplete(test);
+                    });
+                });
+            },
+            collectTests: function () {
+                return _.map(_.tests, this.$(function (suite, name) {
+                    return this.testSuite(name, suite);
+                }));
+            },
+            collectPrototypeTests: function () {
+                var self = this;
+                return __.map(this.prototypeTests, function (def, then) {
+                    return def.proto.$meta.promise.then(function (meta) {
+                        return self.testSuite(meta.name, def.tests, undefined, def.proto);
+                    });
+                });
+            },
+            testSuite: function (name, tests, context, proto) {
+                return {
+                    name: name || '',
+                    tests: _(_.pairs(typeof tests === 'function' && _.object([[
+                            name,
+                            tests
+                        ]]) || tests)).map(function (keyValue) {
+                        var test = new Test({
+                            proto: proto,
+                            name: keyValue[0],
+                            routine: keyValue[1],
+                            suite: name,
+                            context: context
+                        });
+                        test.complete(function () {
+                            if (!(test.hasLog = test.logCalls.length > 0)) {
+                                if (test.failed) {
+                                    log.red('FAIL');
+                                } else if (test.verbose) {
+                                    log.green('PASS');
+                                }
+                            }
+                        });
+                        return test;
+                    })
+                };
+            },
+            defineAssertion: function (name, def) {
+                var self = this;
+                _.deleteKeyword(name);
+                _.defineKeyword(name, Tags.modify(def, function (fn) {
+                    return _.withSameArgs(fn, function () {
+                        var loc = $callStack.safeLocation($platform.Browser && !$platform.Chrome ? 0 : 1);
+                        if (!self.currentAssertion) {
+                            return fn.apply(self, arguments);
+                        } else {
+                            return self.currentAssertion.babyAssertion(name, def, fn, arguments, loc);
+                        }
+                    });
+                }));
+            },
+            printLog: function (cfg) {
+                if (!cfg.supressLog) {
+                    var loggedTests = _.filter(this.runningTests, function (test) {
+                        return test.failed || !cfg.silent && test.hasLog;
+                    });
+                    var failedTests = _.filter(this.runningTests, _.property('failed'));
+                    _.invoke(cfg.verbose ? this.runningTests : loggedTests, 'printLog');
+                    if (failedTests.length) {
+                        log.orange('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck(failedTests, 'name').join(', '), '\n\n');
+                    } else if (cfg.silent !== true) {
+                        log.green('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n');
+                    }
+                }
+            }
+        });
+        Test = $prototype({
+            constructor: function (cfg) {
+                _.defaults(this, cfg, {
+                    name: '<< UNNAMED FOR UNKNOWN REASON >>',
+                    failed: false,
+                    routine: undefined,
+                    verbose: false,
+                    depth: 1,
+                    indent: 0,
+                    failedAssertions: [],
+                    context: this,
+                    complete: _.extend(_.barrier(), { context: this })
+                });
+                this.babyAssertion = _.interlocked(this.babyAssertion);
+            },
+            finalize: function () {
+                this.babyAssertion.wait(this.$(function () {
+                    if (this.canFail && this.failedAssertions.length) {
+                        this.failed = true;
+                    }
+                    this.complete(true);
+                }));
+            },
+            babyAssertion: function (name, def, fn, args, loc) {
+                var self = this;
+                var assertion = new Test({
+                    mother: this,
+                    name: name,
+                    shouldFail: def.$shouldFail || this.shouldFail,
+                    depth: this.depth + 1,
+                    location: loc,
+                    context: this.context,
+                    timeout: this.timeout / 2,
+                    verbose: this.verbose,
+                    silent: this.silent,
+                    routine: Tags.modify(def, function (fn) {
+                        return function (done) {
+                            if ($async.is(args[0]) || $async.is(def)) {
+                                _.cps.apply(fn, self.context, args, function (args, then) {
+                                    if (then) {
+                                        then.apply(this, args);
+                                    }
+                                    done();
+                                });
+                            } else {
+                                try {
+                                    fn.apply(self.context, args);
+                                    done();
+                                } catch (e) {
+                                    assertion.onException(e);
+                                }
+                            }
+                        };
+                    })
+                });
+                return assertion.run().finally(function (e, x) {
+                    Testosterone.currentAssertion = self;
+                    if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
+                        return assertion.location.sourceReady.promise.then(function (src) {
+                            log.red(log.config({
+                                location: assertion.location,
+                                where: assertion.location
+                            }), src);
+                            assertion.evalLogCalls();
+                            return src;
+                        });
+                    }
+                }).then(function (src) {
+                    if (assertion.failed && self.canFail) {
+                        self.failedAssertions.push(assertion);
+                    }
+                });
+            },
+            canFail: $property(function () {
+                return !this.failed && !this.shouldFail;
+            }),
+            fail: function () {
+                this.failed = true;
+                this.finalize();
+            },
+            assertionStack: $property(function () {
+                var result = [], a = this;
+                do {
+                    result.push(a);
+                    a = a.mother;
+                } while (a);
+                return result;
+            }),
+            onException: function (e) {
+                if (this.canFail || this.verbose) {
+                    if (_.isAssertionError(e)) {
+                        if ('notMatching' in e) {
+                            var notMatching = _.coerceToArray(e.notMatching);
+                            if (e.asColumns) {
+                                log.orange(log.columns(_.map(notMatching, function (obj) {
+                                    return [
+                                        '\t\u2022 ' + _.keys(obj)[0],
+                                        _.stringify(_.values(obj)[0])
+                                    ];
+                                })).join('\n'));
+                            } else {
+                                var cases = _.map(notMatching, log.impl.stringify.arity1.then(_.bullet.$('\t\u2022 ')));
+                                var common = _.reduce2(cases, _.longestCommonSubstring) || '';
+                                if (common.length < 4) {
+                                    common = undefined;
+                                }
+                                _.each(cases, function (what) {
+                                    if (common) {
+                                        var where = what.indexOf(common);
+                                        log.write(log.color.orange, what.substr(0, where), log.color.dark, common, log.color.orange, what.substr(where + common.length));
+                                    } else {
+                                        log.orange(what);
+                                    }
+                                });
+                            }
+                        }
+                    } else {
+                        if (this.depth > 1) {
+                            log.newline();
+                        }
+                        log.write(e);
+                    }
+                    log.newline();
+                }
+                if (this.canFail) {
+                    this.fail();
+                } else {
+                    this.finalize();
+                }
+            },
+            run: function () {
+                var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
+                return new Channel(this.$(function (then) {
+                    this.shouldFail = $shouldFail.is(this.routine);
+                    this.failed = false;
+                    this.hasLog = false;
+                    this.logCalls = [];
+                    this.failureLocations = {};
+                    _.withTimeout({
+                        maxTime: self.timeout,
+                        expired: function () {
+                            if (self.canFail) {
+                                log.ee('TIMEOUT EXPIRED');
+                                self.fail();
+                            }
+                        }
+                    }, self.complete);
+                    _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
+                    log.withWriteBackend(_.extendWith({ indent: 1 }, function (x) {
+                        self.logCalls.push(x);
+                    }), function (doneWithLogging) {
+                        self.complete(doneWithLogging.arity0);
+                        if (then) {
+                            self.complete(then);
+                        }
+                        if (routine.length > 0) {
+                            routine.call(self.context, self.$(self.finalize));
+                        } else {
+                            var result = undefined;
+                            try {
+                                result = routine.call(self.context);
+                            } catch (e) {
+                                self.onException(e);
+                            }
+                            if (_.isArrayLike(result) && result[0] instanceof Promise) {
+                                result = __.all(result);
+                            }
+                            if (result instanceof Promise) {
+                                result.then(function (x) {
+                                    self.finalize();
+                                }.postponed, function (e) {
+                                    self.onException(e);
+                                });
+                            } else {
+                                self.finalize();
+                            }
+                        }
+                    });
+                }));
+            },
+            printLog: function () {
+                var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
+                log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([
+                    suiteName,
+                    this.name
+                ]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
+                this.evalLogCalls();
+            },
+            evalLogCalls: function () {
+                _.each(this.logCalls, log.writeBackend().arity1);
+            }
+        });
+        _.defineTagKeyword('allowsRecursion');
+        _.limitRecursion = function (max, fn, name) {
+            if (!fn) {
+                fn = max;
+                max = 0;
+            }
+            var depth = -1;
+            var reported = false;
+            return function () {
+                if (!reported) {
+                    if (depth > max) {
+                        reported = true;
+                        throw _.extendWith({
+                            notMatching: _.map(arguments, function (arg, i) {
+                                return 'arg' + (i + 1) + ': ' + _.stringify(arg);
+                            })
+                        }, new Error(name + ': max recursion depth reached (' + max + ')'));
+                    } else {
+                        var result = (++depth, fn.apply(this, arguments));
+                        depth--;
+                        return result;
+                    }
+                }
+            };
+        };
+        Testosterone.ValidatesRecursion = $trait({
+            $test: function () {
+                var test = new ($component({
+                    $traits: [Testosterone.ValidatesRecursion],
+                    foo: function () {
+                    },
+                    bar: function () {
+                        this.bar();
+                    },
+                    baz: $allowsRecursion({ max: 2 }, function () {
+                        this.baz();
+                    }),
+                    qux: $allowsRecursion(function () {
+                        if (!this.quxCalled) {
+                            this.quxCalled = true;
+                            this.qux();
+                        }
+                    })
+                }))();
+                test.foo();
+                $assertThrows(test.bar, { message: 'bar: max recursion depth reached (0)' });
+                test.bar();
+                $assertThrows(test.baz, { message: 'baz: max recursion depth reached (2)' });
+                test.qux();
+            },
+            $constructor: function () {
+                _.each(this, function (member, name) {
+                    if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
+                        this[name] = Tags.modify(member, function (fn) {
+                            return _.limitRecursion(member && member.$allowsRecursion && member.$allowsRecursion.max || 0, fn, name);
+                        });
+                    }
+                }, this);
+            }
+        });
+        (function () {
+            var colors = _.keys(_.omit(log.color, 'none'));
+            colors.each(_.defineTagKeyword);
+            _.defineTagKeyword('verbose');
+            Testosterone.LogsMethodCalls = $trait({
+                $test: $platform.Browser ? function () {
+                } : function (testDone) {
+                    var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
+                    var Compo = $extends(Proto, {
+                        foo: $log($pink($verbose(function (_42) {
+                            $assert(_42, 42);
+                            return 24;
+                        })))
+                    });
+                    var compo = new Compo();
+                    var testContext = this;
+                    Compo.$meta(function () {
+                        $assert(compo.foo(42), 24);
+                        $assert(_.pluck(testContext.logCalls, 'text'), [
+                            'Compo.foo (42)',
+                            '\u2192 24',
+                            ''
+                        ]);
+                        $assert(testContext.logCalls[0].color === log.color('pink'));
+                        testDone();
+                    });
+                },
+                $macroTags: {
+                    log: function (def, member, name) {
+                        var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
+                        var meta = {};
+                        var color = _.find2(colors, function (color) {
+                            return log.color(member['$' + color] && color) || false;
+                        });
+                        var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
+                        $untag(def.$meta)(function (x) {
+                            meta = x;
+                        });
+                        return $prototype.impl.modifyMember(member, function (fn, name_) {
+                            return function () {
+                                var this_ = this, arguments_ = _.asArray(arguments);
+                                var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, _.stringifyOneLine.arity1))) || this.desc || '';
+                                var args_dump = _.map(arguments_, _.stringifyOneLine.arity1).join(', ').quote('()');
+                                log.write(log.config({
+                                    color: color,
+                                    location: true,
+                                    where: member.$verbose ? undefined : { calleeShort: meta.name }
+                                }), _.nonempty([
+                                    this_dump,
+                                    name,
+                                    name_
+                                ]).join('.'), args_dump);
+                                return log.withConfig({
+                                    indent: 1,
+                                    color: color,
+                                    protoName: meta.name
+                                }, function () {
+                                    var numWritesBefore = log.impl.numWrites;
+                                    var result = fn.apply(this_, arguments_);
+                                    if (result !== undefined) {
+                                        log.write('\u2192', _.stringifyOneLine(result));
+                                    }
+                                    if (log.currentConfig().indent < 2 && log.impl.numWrites - numWritesBefore > 0) {
+                                        log.newline();
+                                    }
+                                    return result;
+                                });
+                            };
+                        });
+                    }
+                }
+            });
+        }());
+        if ($platform.NodeJS) {
+            module.exports = Testosterone;
+        }
+    },
+    function (module, exports) {
+        'use strict';
+        (function () {
+            $mixin(Promise, {
+                shouldBe: function (x) {
+                    return this.then(function (y) {
+                        if (x !== y) {
+                            throw new AndrogeneError();
+                        }
+                    });
+                },
+                shouldFail: $property(function () {
+                    return this.then(function () {
+                        throw new AndrogeneError();
+                    }, function () {
+                    });
+                })
+            });
+            var AndrogeneError = class extends Error {
+                constructor(msg) {
+                    super(msg || 'assertion failed');
+                }
+            };
+            var OriginalPromise = Promise;
+            $global.AndrogeneProcessContext = $prototype({
+                current: undefined,
+                constructor: function () {
+                    this.eventLog = [];
+                    this.where = new Error();
+                    this.state = 'pending';
+                    if ((this.parent = AndrogeneProcessContext.current) !== undefined) {
+                        this.parent.eventLog.push(this);
+                        this.env = this.parent.env;
+                    }
+                },
+                root: $property(function () {
+                    return this.parent && this.parent.root || this;
+                }),
+                push: $static(function (context) {
+                    var prev = AndrogeneProcessContext.current;
+                    AndrogeneProcessContext.current = context;
+                    var PrevPromise = Promise;
+                    Promise = AndrogenePromise;
+                    var logHook = function () {
+                        context.eventLog.push([log.config({ where: $callStack.safeLocation(5) })].concat(_.initial(arguments)));
+                        return _.find(arguments, _.not(_.instanceOf(log.Config)));
+                    };
+                    log.impl.write.intercept(logHook);
+                    return function () {
+                        AndrogeneProcessContext.current = prev;
+                        Promise = PrevPromise;
+                        log.impl.write.off(logHook);
+                    };
+                }),
+                within: function (fn) {
+                    var self = this;
+                    return function () {
+                        var pop = AndrogeneProcessContext.push(self);
+                        try {
+                            var x = fn.apply(this, arguments);
+                            pop();
+                            return x;
+                        } catch (e) {
+                            pop();
+                            throw e;
+                        }
+                    };
+                },
+                numEvents: $memoized($property(function () {
+                    return _.reduce2({
+                        log: 0,
+                        errors: 0
+                    }, this.eventLog, function (sum, e) {
+                        var n = e instanceof AndrogeneProcessContext ? e.numEvents : e instanceof Error ? { errors: 1 } : { log: 1 };
+                        sum.all = (sum.errors += n.errors || 0) + (sum.log += n.log || 0);
+                        return sum;
+                    });
+                })),
+                printLog: function (state) {
+                    state = state || {};
+                    if (state.verbose || this.numEvents.all > 0) {
+                        this.printWhere(state);
+                        this.printEvents(state);
+                    }
+                },
+                printWhere: function (state) {
+                    var indent = state && state.indent || 0;
+                    var color = log.color[{
+                        'fulfilled': 'green',
+                        'pending': 'orange',
+                        'rejected': 'red',
+                        '': 'purple'
+                    }[this.state || '']];
+                    log.margin();
+                    for (var loc of CallStack.fromError(this.where).offset(3).clean.reject(x => x.native).reversed) {
+                        log.write(color, log.config({
+                            indent: indent,
+                            location: true,
+                            where: loc
+                        }), '\xB7', loc.source.trimmed);
+                    }
+                    log.margin();
+                },
+                printEvents: function (state) {
+                    var state = state || {}, indent = state.indent || 0, visited = state.visited || new Set();
+                    if (state.verbose || this.numEvents.all > 0) {
+                        log.margin();
+                        for (var e of this.eventLog) {
+                            if (e instanceof AndrogeneProcessContext) {
+                                if (e.eventLog.length) {
+                                    e.printLog({
+                                        indent: indent + 1,
+                                        visited: visited,
+                                        verbose: state.verbose
+                                    });
+                                }
+                            } else if (e instanceof Error) {
+                                if (!visited.has(e)) {
+                                    visited.add(e);
+                                    log.boldRed(log.indent(indent + 1), e);
+                                }
+                            } else {
+                                log.write.apply(null, [log.indent(indent + 1)].concat(e));
+                            }
+                        }
+                        log.margin();
+                    }
+                    return this.numEvents;
+                }
+            });
+            AndrogeneProcessContext.within = function (fn) {
+                return AndrogeneProcessContext.current && AndrogeneProcessContext.current.within(fn) || fn;
+            };
+            $global.AndrogenePromise = class extends Promise {
+                constructor(fn) {
+                    if (AndrogenePromise.constructing === true) {
+                        super(fn);
+                    } else {
+                        var processContext = new AndrogeneProcessContext();
+                        var resolve, reject;
+                        super(function (resolve_, reject_) {
+                            resolve = resolve_;
+                            reject = function (e) {
+                                processContext.eventLog.push(e);
+                                reject_(e);
+                            };
+                        });
+                        this.processContext = processContext;
+                        try {
+                            processContext.within(fn)(resolve, reject);
+                        } catch (e) {
+                            reject(e);
+                        }
+                        AndrogenePromise.constructing = true;
+                        super.then(function (x) {
+                            processContext.state = 'fulfilled';
+                        }, function (x) {
+                            processContext.state = 'rejected';
+                        });
+                        delete AndrogenePromise.constructing;
+                    }
+                }
+                then(resolve, reject) {
+                    var next = this.processContext.within(OriginalPromise.prototype.then, 2).apply(this, _.map(arguments, function (fn) {
+                        return fn && function (x) {
+                            return next.processContext.within(fn, -3)(x);
+                        };
+                    }));
+                    return next;
+                }
+                disarmAndrogene() {
+                    return new OriginalPromise(OriginalPromise.prototype.then.bind(this));
+                }
+                static race(promises) {
+                    return OriginalPromise.race(promises);
+                }
+                static eval(x) {
+                    return x instanceof AndrogenePromise ? x : x instanceof Function ? new AndrogenePromise(function (resolve) {
+                        resolve(x());
+                    }) : AndrogenePromise.resolve(x);
+                }
+            };
+            var assertion = function (fn) {
+                return function () {
+                    return AndrogenePromise.eval(fn);
+                };
+            };
+            var assert = assertion(function (a, b) {
+                if (a !== b) {
+                    throw new AndrogeneError();
+                }
+            });
+            var assertEveryCalled = assertion(function (acceptCallbacks) {
+                var promises = [], callbacks = [];
+                for (var i = 0, n = acceptCallbacks.length; i < n; i++) {
+                    promises.push(new Promise(function (resolve) {
+                        callbacks.push(resolve.$(true));
+                    }));
+                }
+                acceptCallbacks.apply(this, callbacks);
+                return Promise.all(promises);
+            });
+            var test = assertion(function () {
+                return __('foo').then(_.appends('bar')).shouldBe('foobr');
+            });
+            var chainTest = assertion(function () {
+                return new Promise(function (resolve) {
+                    log.i('example log message #1');
+                    new Promise(function (resolve) {
+                        log.i('example log message #2');
+                        resolve();
+                    }).then(function () {
+                        log.i('example log message #3');
+                        resolve();
+                    });
+                }).then(function () {
+                    log.i('example log message #4');
+                    some_undefined_function();
+                });
+            });
+            var treeLogTest = assertion(function () {
+                var b = new Promise(function (resolve) {
+                    log.i('A');
+                    resolve('A');
+                }).then(function (_A) {
+                    log.i('B');
+                    return 'B';
+                });
+                return new Promise(function (resolve) {
+                    log.i('C');
+                    resolve('C');
+                }).then(function (_С) {
+                    log.i('D');
+                    return b.then(function (_D) {
+                        log.i('E');
+                        return 'E';
+                    });
+                }).then(function (_E) {
+                    log.i('F');
+                    return 'F';
+                });
+            });
+            var raceTest = assertion(function () {
+                return __('foo').then(_.appends('bar')).delay(500).log.then(function () {
+                    dasdsad();
+                }).timeout(600);
+            });
+            var throwTest = assertion(function () {
+                throw new Error('yo');
+            });
+            var thenFunctionTest = assertion(function () {
+                return Promise.resolve().then(function () {
+                    return function () {
+                    };
+                }).then(function (x) {
+                    console.log(x);
+                });
+            });
+            var eachTest = assertion(function () {
+                return __.each([
+                    1,
+                    2,
+                    3
+                ], function (x) {
+                    log.i(x);
+                });
+            });
+        }());
+    },
+    function (module, exports) {
+        _.tests.AOP = {
+            'basics': function () {
+                var callLog = [];
+                var Thing = $prototype($testArguments({
+                    create: function (_777) {
+                        callLog.push([
+                            this,
+                            'Thing.create'
+                        ]);
+                    },
+                    display: function (_foobar, _778) {
+                        callLog.push([
+                            this,
+                            'Thing.display'
+                        ]);
+                    },
+                    destroy: function () {
+                        callLog.push([
+                            this,
+                            'Thing.destroy'
+                        ]);
+                        return 456;
+                    }
+                }));
+                var NewFlavorOfThing = $aspect(Thing, $testArguments({
+                    beforeCreate: function (_777) {
+                        callLog.push([
+                            this,
+                            'NewFlavorOfThing.beforeCreate'
+                        ]);
+                    },
+                    display: function (_foo, _123, originalMethod) {
+                        callLog.push([
+                            this,
+                            'NewFlavorOfThing.display'
+                        ]);
+                        return originalMethod.call(this, _foo + 'bar', 778);
+                    },
+                    afterDestroy: function (_456) {
+                        callLog.push([
+                            this,
+                            'NewFlavorOfThing.afterDestroy'
+                        ]);
+                    }
+                }));
+                var demo = new Thing();
+                demo.create(777);
+                demo.display('foo', 123);
+                demo.destroy();
+                $assert(callLog, [
+                    [
+                        demo,
+                        'NewFlavorOfThing.beforeCreate'
+                    ],
+                    [
+                        demo,
+                        'Thing.create'
+                    ],
+                    [
+                        demo,
+                        'NewFlavorOfThing.display'
+                    ],
+                    [
+                        demo,
+                        'Thing.display'
+                    ],
+                    [
+                        demo,
+                        'Thing.destroy'
+                    ],
+                    [
+                        demo,
+                        'NewFlavorOfThing.afterDestroy'
+                    ]
+                ]);
+            }
+        };
+        (function () {
+            var fnNameExpr = $r.expr('how', $r.text('before').or.text('after')).expr('name', $r.anything).$;
+            var tryBind = function (target, methodName, bind, boundMethod) {
+                var method = target[methodName];
+                if (method && _.isFunction(method)) {
+                    bind(target, methodName, boundMethod);
+                }
+            };
+            _.defineKeyword('aspect', function (ofWhat, cfg) {
+                var aspectDef = Tags.unwrap(_.sequence($prototype.impl.extendWithTags, $prototype.impl.flatten, $prototype.impl.generateArgumentContractsIfNeeded, $prototype.impl.contributeTraits({}), $prototype.impl.expandAliases).call($prototype.impl, cfg));
+                var motherDef = ofWhat.constructor && ofWhat.constructor.$definition;
+                if (motherDef) {
+                    (motherDef.$aspects = motherDef.$aspects || []).push(aspectDef);
+                }
+                _.each(aspectDef, function (value, name) {
+                    if (aspectDef.hasOwnProperty(name) && _.isFunction(value)) {
+                        var parsed = fnNameExpr.parse(name);
+                        var originalName = parsed.name && parsed.name.decapitalized || name;
+                        var bindTool = parsed.how && _['on' + parsed.how.capitalized] || _.intercept;
+                        if (bindTool) {
+                            tryBind(ofWhat, originalName, bindTool, value);
+                            tryBind(ofWhat.prototype, originalName, bindTool, value);
+                        }
+                    }
+                });
+                if (ofWhat.aspectAdded) {
+                    ofWhat.aspectAdded(aspectDef);
+                }
+                return aspectDef;
+            });
+        }());
+    },
+    function (module, exports) {
+        Http = $singleton(Component, {
+            $traits: [HttpMethods = $trait({
+                    get: function (path, cfg) {
+                        return this.request('GET', path, cfg);
+                    },
+                    post: function (path, cfg) {
+                        return this.request('POST', path, cfg);
+                    },
+                    loadFile: function (path, cfg) {
+                        return this.request('GET', path, { responseType: 'arraybuffer' });
+                    },
+                    uploadFile: function (path, file, cfg) {
+                        return this.post(path, _.extend2({
+                            data: file,
+                            headers: {
+                                'Content-Type': 'binary/octet-stream',
+                                'X-File-Name': Parse.fileName(file.name || 'file').transliterate || 'file',
+                                'X-File-Size': file.size,
+                                'X-File-Type': file.type
+                            }
+                        }, cfg));
+                    }
+                })],
+            request: function (type, path, cfg_) {
+                var cfg = cfg_ || {};
+                var abort = undefined;
+                var p = new Promise(function (resolve, reject) {
+                    if ($platform.Browser) {
+                        var prePath = cfg.protocol || cfg.hostname || cfg.port ? (cfg.protocol || window.location.protocol) + '//' + (cfg.hostname || window.location.hostname) + ':' + (cfg.port || window.location.port) : '';
+                        var xhr = new XMLHttpRequest();
+                        xhr.open(type, prePath + path, true);
+                        if (cfg.responseType)
+                            xhr.responseType = cfg.responseType;
+                        _.each(cfg.headers, function (value, key) {
+                            xhr.setRequestHeader(key, value);
+                        });
+                        if (cfg.progress) {
+                            xhr.onprogress = Http.progressCallbackWithSimulation(cfg.progress);
+                        }
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState === 4) {
+                                if (cfg.progress) {
+                                    cfg.progress(1);
+                                }
+                                var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
+                                if (xhr.status === 200) {
+                                    resolve(response);
+                                } else {
+                                    reject(_.extend(new Error(xhr.statusText), {
+                                        httpResponse: response,
+                                        httpStatus: xhr.status
+                                    }));
+                                }
+                            }
+                        };
+                        abort = function () {
+                            xhr.abort();
+                            reject('aborted');
+                        };
+                        if (cfg.data) {
+                            xhr.send(cfg.data);
+                        } else {
+                            xhr.send();
+                        }
+                    } else {
+                        reject('not implemented');
+                    }
+                });
+                return _.extend(p, { abort: abort });
+            },
+            progressCallbackWithSimulation: function (progress) {
+                var simulated = 0;
+                progress(0);
+                return function (e) {
+                    if (e.lengthComputable) {
+                        progress(e.loaded / e.total);
+                    } else {
+                        progress(simulated = (simulated += 0.1) > 1 ? 0 : simulated);
+                    }
+                };
+            }
+        });
+        JSONAPI = $singleton(Component, {
+            $traits: [HttpMethods],
+            request: function (type, path, cfg) {
+                var cfg = _.extend2({
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Content-Type': 'application/json; charset=utf-8'
+                    }
+                }, cfg);
+                if (cfg.what) {
+                    cfg.data = JSON.stringify(cfg.what);
+                }
+                var stackBeforeCall = _.hasReflection && $callStack.offset((cfg.stackOffset || 0) + 1).asArray;
+                return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
+                    if (response) {
+                        return JSON.parse(response);
+                    } else if (e) {
+                        if (e.httpResponse) {
+                            return JSON.parse(e.httpResponse);
+                        } else {
+                            throw e;
+                        }
+                    } else {
+                        throw new Error('empty response');
+                    }
+                }).then(function (response) {
+                    if (response.success) {
+                        return response.value;
+                    } else {
+                        if (response.parsedStack) {
+                            throw _.extend(new Error('SERVER: ' + response.error), {
+                                remote: true,
+                                parsedStack: response.parsedStack.concat(stackBeforeCall || [])
+                            });
+                        } else {
+                            throw new Error(response.error);
+                        }
+                    }
+                });
+            }
+        });
     }
-});
-if ($platform.NodeJS) {
-    module.exports = _;
-}
+]));

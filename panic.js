@@ -1,5 +1,5 @@
-$include ('./useless.client')
+require ('./useless.client')
 
 $uselessFile = 'panic.js'
 
-$include ('./useless.devtools')
+require ('./useless.devtools')
