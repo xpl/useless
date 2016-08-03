@@ -81,214 +81,7 @@
                 }
             }
         });
-        _.deferTest('assert.js bootstrap', function () {
-            $assert(true);
-            $assert(_.assert === _.assertions.assert);
-            $assertNot(false);
-            $assertNot(5);
-            $assert(2 + 2, 2 * 2, 4);
-            $assert({
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            }, {
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            });
-            $assert({
-                foo: { bar: 1 },
-                baz: 2
-            }, {
-                baz: 2,
-                foo: { bar: 1 }
-            });
-            $assertNot(2 + 2, 5);
-            $assertMatches({
-                foo: 1,
-                bar: 2
-            }, { foo: 1 });
-            if (_.hasStdlib) {
-                $assertMatches({
-                    foo: [
-                        1,
-                        2
-                    ],
-                    bar: 3
-                }, { foo: [1] });
-            }
-            if (_.hasStdlib) {
-                $assertMatches('123', /[0-9]+/);
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches(42, 'number');
-                $assertFails(function () {
-                    $assertTypeMatches('foo', 'number');
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches([
-                    1,
-                    2
-                ], []);
-                $assertTypeMatches([], []);
-                $assertTypeMatches([
-                    1,
-                    2,
-                    3
-                ], ['number']);
-                $assertTypeMatches([], ['number']);
-                $assertFails(function () {
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        3
-                    ], ['string']);
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        'foo'
-                    ], ['number']);
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches({
-                    foo: 42,
-                    bar: {
-                        even: 4,
-                        many: [
-                            'foo',
-                            'bar'
-                        ]
-                    }
-                }, {
-                    foo: 'number',
-                    qux: 'undefined',
-                    bar: {
-                        even: function (n) {
-                            return n % 2 === 0;
-                        },
-                        many: ['string']
-                    }
-                });
-            }
-            if (_.hasOOP) {
-                var Foo = $prototype(), Bar = $prototype();
-                $assertTypeMatches({
-                    foo: new Foo(),
-                    bar: new Bar()
-                }, {
-                    foo: Foo,
-                    bar: Bar
-                });
-                $assertFails(function () {
-                    $assertTypeMatches(new Bar(), Foo);
-                });
-            }
-            ;
-            if (_.hasStdlib) {
-                var testF = function (_777, _foo_bar_baz, notInvolved) {
-                    $assertArguments(arguments);
-                };
-                testF(777, 'foo bar baz');
-                $assertFails(function () {
-                    testF(777, 42);
-                });
-            }
-            $assertThrows(function () {
-                throw 42;
-            });
-            $assertNotThrows(function () {
-            });
-            $assertThrows(function () {
-                throw 42;
-            }, 42);
-            $assertThrows(function () {
-                throw new Error('42');
-            }, _.matches({ message: '42' }));
-            $assertFails(function () {
-                $assertThrows(function () {
-                    throw 42;
-                }, 24);
-                $assertThrows(function () {
-                    throw new Error('42');
-                }, _.matches({ message: '24' }));
-            });
-            $assertEveryCalled(function (a, b, c) {
-                a();
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalledOnce(function (a, b, c) {
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalled(function (x__3) {
-                x__3();
-                x__3();
-                x__3();
-            });
-            if (_.hasStdlib) {
-                $assertCalledWithArguments([
-                    'foo',
-                    [
-                        'foo',
-                        'bar'
-                    ]
-                ], function (fn) {
-                    fn('foo');
-                    fn('foo', 'bar');
-                });
-            }
-            $assertCPS(function (then) {
-                then('foo', 'bar');
-            }, [
-                'foo',
-                'bar'
-            ]);
-            $assertCPS(function (then) {
-                then('foo');
-            }, 'foo');
-            $assertCPS(function (then) {
-                then();
-            });
-            $assertFails(function () {
-                $fail;
-                $stub;
-                $assert('not true');
-                $assert({
-                    foo: 1,
-                    bar: 2
-                }, { foo: 1 });
-                $assert([
-                    1,
-                    2,
-                    3,
-                    4
-                ], [
-                    1,
-                    2,
-                    3
-                ]);
-                $assert(['foo'], {
-                    0: 'foo',
-                    length: 1
-                });
-                $assertFails(function () {
-                });
-            });
-            if ($assert === _.assertions.assert) {
-                $assertThrows(function () {
-                    $fail;
-                });
-            }
-        }, function () {
+        (function () {
             var assertImpl = function (positive) {
                 return function (__) {
                     var args = [].splice.call(arguments, 0);
@@ -497,7 +290,7 @@
                 $global['$' + k] = 1;
             }
             $assert;
-        });
+        }());
     },
     function (module, exports, __webpack_require__) {
         (function () {
@@ -562,46 +355,11 @@
     },
     function (module, exports) {
         var process = module.exports = {};
-        var cachedSetTimeout;
-        var cachedClearTimeout;
-        (function () {
-            try {
-                cachedSetTimeout = setTimeout;
-            } catch (e) {
-                cachedSetTimeout = function () {
-                    throw new Error('setTimeout is not defined');
-                };
-            }
-            try {
-                cachedClearTimeout = clearTimeout;
-            } catch (e) {
-                cachedClearTimeout = function () {
-                    throw new Error('clearTimeout is not defined');
-                };
-            }
-        }());
-        function runTimeout(fun) {
-            if (cachedSetTimeout === setTimeout) {
-                return setTimeout(fun, 0);
-            } else {
-                return cachedSetTimeout.call(null, fun, 0);
-            }
-        }
-        function runClearTimeout(marker) {
-            if (cachedClearTimeout === clearTimeout) {
-                clearTimeout(marker);
-            } else {
-                cachedClearTimeout.call(null, marker);
-            }
-        }
         var queue = [];
         var draining = false;
         var currentQueue;
         var queueIndex = -1;
         function cleanUpNextTick() {
-            if (!draining || !currentQueue) {
-                return;
-            }
             draining = false;
             if (currentQueue.length) {
                 queue = currentQueue.concat(queue);
@@ -616,7 +374,7 @@
             if (draining) {
                 return;
             }
-            var timeout = runTimeout(cleanUpNextTick);
+            var timeout = setTimeout(cleanUpNextTick);
             draining = true;
             var len = queue.length;
             while (len) {
@@ -632,7 +390,7 @@
             }
             currentQueue = null;
             draining = false;
-            runClearTimeout(timeout);
+            clearTimeout(timeout);
         }
         process.nextTick = function (fun) {
             var args = new Array(arguments.length - 1);
@@ -643,7 +401,7 @@
             }
             queue.push(new Item(fun, args));
             if (queue.length === 1 && !draining) {
-                runTimeout(drainQueue);
+                setTimeout(drainQueue, 0);
             }
         };
         function Item(fun, array) {
@@ -1071,106 +829,7 @@
     },
     function (module, exports) {
         _.hasLog = true;
-        _.tests.log = {
-            basic: function () {
-                log('log (x)');
-                log.green('log.green');
-                log.boldGreen('log.boldGreen');
-                log.darkGreen('log.darkGreen');
-                log.blue('log.blue');
-                log.boldBlue('log.boldBlue');
-                log.darkBlue('log.darkBlue');
-                log.orange('log.orange');
-                log.boldOrange('log.boldOrange');
-                log.darkOrange('log.darkOrange');
-                log.red('log.red');
-                log.boldRed('log.boldRed');
-                log.darkRed('log.darkRed');
-                log.pink('log.pink');
-                log.boldPink('log.boldPink');
-                log.darkPink('log.darkPink');
-                log.margin();
-                log.margin();
-                log.bright('log.bright');
-                log.dark('log.dark');
-                log.margin();
-                log.success('log.success');
-                log.ok('log.ok');
-                log.g('log.g');
-                log.gg('log.gg');
-                log.info('log.info');
-                log.i('log.i');
-                log.ii('log.ii');
-                log.warning('log.warning');
-                log.warn('log.warn');
-                log.w('log.w');
-                log.ww('log.ww');
-                log.error('log.error');
-                log.e('log.e');
-                log.ee('log.ee');
-                $assert(log('log (x) === x'), 'log (x) === x');
-                log.info(log.stackOffset(2), 'log.info (log.config ({ stackOffset: 2 }), ...)');
-                log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
-                log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
-                log.write(log.boldLine);
-                log.write(log.thinLine);
-                log.write(log.line);
-                log.write(log.indent(1), [
-                    'You can set indentation',
-                    'that is nicely handled',
-                    'in case of multiline text'
-                ].join('\n'));
-                log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
-                log.orange(log.config({
-                    indent: 2,
-                    table: true
-                }), [
-                    {
-                        field: 'line',
-                        matches: false,
-                        valueType: 'string',
-                        contractType: 'number'
-                    },
-                    {
-                        field: 'column',
-                        matches: true,
-                        valueType: 'string',
-                        contractType: 'number'
-                    }
-                ]);
-                log.write('\nObject:', {
-                    foo: 1,
-                    bar: 2,
-                    qux: 3
-                });
-                log.write('Array:', [
-                    1,
-                    2,
-                    3
-                ]);
-                log.write('Function:', _.identity);
-                log.write('Complex object:', {
-                    foo: 1,
-                    bar: {
-                        qux: [
-                            1,
-                            2,
-                            3
-                        ],
-                        garply: _.identity
-                    }
-                }, '\n\n');
-                log.withConfig(log.indent(1), function () {
-                    log.pink('Config stack + scopes + higher order API test:');
-                    _.each([
-                        5,
-                        6,
-                        7
-                    ], logs.pink(log.indent(1), 'item = ', log.color.blue));
-                });
-                $assert(log(42), 42);
-            }
-        };
+        ;
         _.extend(log = function () {
             return log.write.apply(this, [log.config({
                     location: true,
@@ -1661,33 +1320,7 @@
     function (module, exports) {
         _.defineTagKeyword('shouldFail');
         _.defineTagKeyword('async');
-        _.tests.Testosterone = {
-            'async': function (done) {
-                _.delay(function () {
-                    done();
-                });
-            },
-            '$tests': function () {
-                DummyPrototypeWithTest = $prototype({
-                    $test: function () {
-                    }
-                });
-                DummyPrototypeWithTests = $prototype({
-                    $tests: {
-                        dummy: function () {
-                        }
-                    }
-                });
-                $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
-                $assertThrows(function () {
-                    DummyPrototypeWithTests.$tests = 42;
-                });
-                $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [
-                    DummyPrototypeWithTest.$tests,
-                    DummyPrototypeWithTests.$tests
-                ]);
-            }
-        };
+        ;
         _.defineTagKeyword('assertion');
         Testosterone = $singleton({
             prototypeTests: [],

@@ -1507,69 +1507,14 @@
         }()));
     },
     function (module, exports) {
-        _.deferTest([
-            'stdlib',
-            'asArray'
-        ], function () {
-            (function (a, b) {
-                var args = _.asArray(arguments);
-                $assert(_.isArray(args));
-                $assert(args.length === 2);
-                $assert(args[0] === a);
-                $assert(args[1] === b);
-            }(42, 43));
-            $assert(_.asArray(42), [42]);
-            var foo = {
-                0: 'foo',
-                length: 1
-            };
-            $assert(_.asArray(foo), ['foo']);
-            $assert(foo, {
-                0: 'foo',
-                length: 1
-            });
-        }, function () {
+        {
             _.extend(_, {
                 asArray: function (x) {
                     return x.length !== undefined ? [].slice.call(x, 0) : [x];
                 }
             });
-        });
-        _.deferTest('argcount tracking', function () {
-            var none = function () {
-            };
-            var one = function (a) {
-            };
-            var three = function (a, b, c) {
-            };
-            var many = $restArg(function () {
-            });
-            $assert(_.noArgs(none) === true);
-            $assert(_.hasArgs(none) === false);
-            $assert(_.numArgs(three) === 3);
-            $assert(_.hasArgs(three) === true);
-            $assert(_.restArg(many) === true);
-            $assert(_.noArgs(many) === false);
-            $assert(_.oneArg(one) === true);
-            var sameAsThree = _.withSameArgs(three, function () {
-            });
-            var oneArgLess = _.withArgs(_.numArgs(three) - 1, _.restArg(three), function () {
-            });
-            $assert([
-                _.numArgs(sameAsThree),
-                _.restArg(sameAsThree)
-            ], [
-                3,
-                false
-            ]);
-            $assert([
-                _.numArgs(oneArgLess),
-                _.restArg(oneArgLess)
-            ], [
-                2,
-                false
-            ]);
-        }, function () {
+        }
+        {
             _.extend(_, {
                 numArgs: function (fn) {
                     return fn._ac === undefined ? fn.length : fn._ac;
@@ -1615,7 +1560,7 @@
                     return _.withArgs(_.numArgs(other), _.restArg(other), fn);
                 }
             });
-        });
+        }
         $overrideUnderscore('memoize', function (memoize) {
             return function (fn) {
                 return _.withSameArgs(fn, memoize(fn));
@@ -1688,55 +1633,7 @@
                 ].concat(tailArgs));
             };
         });
-        _.deferTest([
-            'function',
-            'calls / tails'
-        ], function () {
-            var fn = _.debugEcho;
-            var foo42_ = _.callsWith('foo', 42);
-            var _foo42 = _.tailsWith('foo', 42);
-            var foo42_fn = foo42_(fn);
-            var fn_foo42 = _foo42(fn);
-            var _fn = _.callsTo(fn);
-            var fn_ = _.tailsTo(fn);
-            var fn_bar24 = fn_('bar', 24);
-            var bar24_fn = _fn('bar', 24);
-            $assert(foo42_fn.call('lol', 777), [
-                'lol',
-                'foo',
-                42,
-                777
-            ]);
-            $assert(bar24_fn.call('lol', 777), [
-                'lol',
-                'bar',
-                24,
-                777
-            ]);
-            $assert(fn_foo42.call('lol', 777), [
-                'lol',
-                777,
-                'foo',
-                42
-            ]);
-            $assert(fn_bar24.call('lol', 777), [
-                'lol',
-                777,
-                'bar',
-                24
-            ]);
-            $assertEveryCalledOnce(function (mkay) {
-                _.argumentPrependingWrapper(fn, function (fn) {
-                    $assert(fn(777), [
-                        'lol',
-                        777,
-                        'foo',
-                        42
-                    ]);
-                    mkay();
-                }).call('lol', 'foo', 42);
-            });
-        }, function () {
+        {
             _.callsTo = function (fn) {
                 return $restArg(function () {
                     return _.callsWith.apply(null, arguments)(fn);
@@ -1779,7 +1676,7 @@
                     });
                 });
             };
-        });
+        }
         _.new = $restArg(function (Constructor, a, b, c, d) {
             switch (arguments.length) {
             case 1:
@@ -1841,17 +1738,7 @@
                 return !x.apply(this, arguments);
             };
         };
-        _.deferTest([
-            'function',
-            'Y combinator'
-        ], function () {
-            var countTo5 = _.Y(function (self) {
-                return function (n) {
-                    return n >= 5 ? n : self(n + 1);
-                };
-            });
-            $assert(countTo5(0), 5);
-        }, function () {
+        {
             _.extend(_, {
                 Y: function (eatSelf) {
                     var self = eatSelf(function () {
@@ -1860,7 +1747,7 @@
                     return self;
                 }
             });
-        });
+        }
         (function () {
             _.hyperOperator = function (N, operator, diCaprioPredicate, nonTrivial) {
                 var arity = _.arityFn(N) || _.identity;
@@ -1922,38 +1809,10 @@
             _.binary = 2;
             _.unary = 1;
         }());
-        _.deferTest([
-            'function',
-            'higherOrder'
-        ], function () {
-            var file = [];
-            var write = function (x) {
-                file.push(x);
-            };
-            var writes = _.higherOrder(write);
-            _.times(3, writes('foo'));
-            $assert(file, [
-                'foo',
-                'foo',
-                'foo'
-            ]);
-        }, function () {
+        {
             _.higherOrder = _.callsTo;
-        });
-        _.deferTest([
-            'function',
-            'eval/evals'
-        ], function () {
-            var cfg = {
-                value1: 42,
-                value2: function () {
-                    return 42;
-                },
-                value3: _.property('number')
-            };
-            var eval = _.evals({ number: 42 });
-            $assert(_.eval(cfg.value1), _.eval(cfg.value2), eval(cfg.value3), 42);
-        }, function () {
+        }
+        {
             _.eval = function (x) {
                 return _.isFunction(x) ? x.call(this) : x;
             };
@@ -1963,7 +1822,7 @@
                     return _.isFunction(x) ? x.apply(this, arguments_) : x;
                 };
             };
-        });
+        }
         _.method = function (name) {
             var args = _.rest(arguments);
             return function (obj) {
@@ -1980,18 +1839,7 @@
                 return fn.apply(undefined, [this].concat(_.asArray(arguments)));
             };
         };
-        _.deferTest([
-            'function',
-            'once'
-        ], function () {
-            $assertEveryCalledOnce(function (mkay) {
-                var f = _.once(function () {
-                    mkay();
-                });
-                f();
-                f();
-            });
-        }, function () {
+        {
             _.once = function (fn) {
                 var called = false;
                 return function () {
@@ -2001,30 +1849,8 @@
                     }
                 };
             };
-        });
-        _.deferTest([
-            'function',
-            'withTimeout'
-        ], function (testDone) {
-            _.withTimeout({
-                maxTime: 10,
-                expired: function () {
-                    $fail;
-                }
-            }, function (done) {
-                done();
-            });
-            _.withTimeout({
-                maxTime: 10,
-                expired: function (then) {
-                    testDone();
-                }
-            }, function (done) {
-                _.delay(done, 20);
-            }, function () {
-                $fail;
-            });
-        }, function () {
+        }
+        {
             _.withTimeout = function (cfg, what, then) {
                 var expired = false;
                 var timeout = setTimeout(function () {
@@ -2042,39 +1868,8 @@
                     }
                 });
             };
-        });
-        _.deferTest([
-            'function',
-            'sequence / then'
-        ], function () {
-            var context = { foo: 'bar' };
-            var makeCookies = function (from) {
-                $assert(this === context);
-                return 'cookies from ' + from;
-            };
-            var eatCookies = function (cookies) {
-                $assert(this === context);
-                return 'nice ' + cookies;
-            };
-            var lifeProcess = makeCookies.then ? makeCookies.then(eatCookies) : _.then(makeCookies, eatCookies);
-            var anotherWay = _.sequence(makeCookies, eatCookies);
-            var wayAnother = _.sequence([
-                makeCookies,
-                eatCookies
-            ]);
-            $assert(lifeProcess.call(context, 'shit'), 'nice cookies from shit');
-            $assert(anotherWay.call(context, 'shit'), 'nice cookies from shit');
-            $assert(wayAnother.call(context, 'shit'), 'nice cookies from shit');
-            $assert(_.sequence([]).call(context, 'foo'), 'foo');
-            var plusBar = _.then(function (x) {
-                return Promise.resolve(x);
-            }, function (x) {
-                return x + 'bar';
-            });
-            return plusBar('foo').then(function (x) {
-                $assert(x, 'foobar');
-            });
-        }, function () {
+        }
+        {
             _.sequence = function (arg) {
                 var chain = _.isArray(arg) ? arg : _.asArray(arguments);
                 var length = chain.length;
@@ -2092,7 +1887,7 @@
                     return r instanceof Promise ? r.then(fn2.bind(this)) : fn2.call(this, r);
                 };
             };
-        });
+        }
     },
     function (module, exports) {
         _.asString = function (what) {
@@ -2241,63 +2036,12 @@
         _.isArrayLike = function (x) {
             return x instanceof Array || $platform.Browser && x instanceof NodeList;
         };
-        _.deferTest([
-            'type',
-            'isArray'
-        ], function () {
-            var CustomArray = $extends(Array, {
-                method: function () {
-                    return 42;
-                }
-            });
-            $assert(_.isArray(new CustomArray()));
-        }, function () {
+        {
             _.isArray = function (x) {
                 return x instanceof Array;
             };
-        });
-        _.deferTest([
-            'type',
-            'matches(regex)'
-        ], function () {
-            var test = function (a, pattern) {
-                $assert(_.match(a, pattern));
-                $assert(_.matches(pattern)(a));
-                $assertMatches(a, pattern);
-            };
-            $assertFails(function () {
-                test({
-                    foo: [
-                        1,
-                        2
-                    ],
-                    bar: 2
-                }, {
-                    foo: [3],
-                    bar: 2
-                });
-                test({ bar: { foo: 'foo' } }, { bar: { foo: /[0-9]+/ } });
-                test({}, { foo: 1 });
-            });
-            $assertFails(function () {
-                test({ foo: 1 }, undefined);
-                test('.DS_Store', /.+\.js/);
-            });
-            test({
-                foo: [
-                    1,
-                    2
-                ],
-                bar: 2
-            }, { foo: [2] });
-            test({
-                bar: {
-                    foo: '123',
-                    qux: 1
-                }
-            }, { bar: { foo: /[0-9]+/ } });
-            test({ foo: 1 }, {});
-        }, function () {
+        }
+        {
             _.mixin({
                 matches: function (pattern) {
                     return arguments.length === 0 && _.constant(true) || _.tails2(_.match, pattern);
@@ -2314,74 +2058,21 @@
                     }, true);
                 }
             });
-        });
-        _.deferTest([
-            'type',
-            'isScalar'
-        ], function () {
-            $assert(_.every([
-                42,
-                'foo',
-                null,
-                undefined,
-                true
-            ], _.isScalar));
-            $assert(_.every([
-                /foo/,
-                new Date(),
-                {},
-                []
-            ], _.not(_.isScalar)));
-        }, function () {
+        }
+        {
             _.isScalar = function (v) {
                 return v === undefined || v === null || v && v.constructor && (v.constructor === String || v.constructor === Number || v.constructor === Boolean);
             };
-        });
-        _.deferTest([
-            'type',
-            'POD'
-        ], function () {
-            $assert(_.every([
-                [],
-                {},
-                42,
-                'foo',
-                null,
-                undefined,
-                true
-            ].map(_.isPOD)));
-            $assert(_.every([
-                /foo/,
-                new Date()
-            ].map(_.isNonPOD)));
-        }, function () {
+        }
+        {
             _.isNonPOD = function (v) {
                 return v && v.constructor && v.constructor !== Object && v.constructor !== Array && v.constructor !== String && v.constructor !== Number && v.constructor !== Boolean;
             };
             _.isPOD = function (v) {
                 return !_.isNonPOD(v);
             };
-        });
-        _.deferTest([
-            'type',
-            'numbers'
-        ], function () {
-            $assert(_.every(_.map([
-                0,
-                1,
-                -7,
-                200003,
-                12344567788
-            ], _.arity1(_.not(_.isDecimal)))));
-            $assert(_.every(_.map([
-                0.1,
-                -0.001,
-                0.0001,
-                -0.000001,
-                0.000001
-            ], _.arity1(_.isDecimal))));
-            $assert(_.isDecimal(0.003, 0.01), false);
-        }, function () {
+        }
+        {
             if (typeof Number.EPSILON === 'undefined') {
                 Object.defineProperty(Number, 'EPSILON', {
                     enumerable: true,
@@ -2395,76 +2086,8 @@
                     return Math.abs(Math.floor(x) - x) > (tolerance || Number.EPSILON);
                 }
             };
-        });
-        _.deferTest([
-            'type',
-            'empty-centric routines'
-        ], function () {
-            $assert(_.coerceToObject({ foo: 42 }), { foo: 42 });
-            $assert(_.coerceToObject([
-                1,
-                2,
-                3
-            ]), [
-                1,
-                2,
-                3
-            ]);
-            $assert(_.coerceToObject(42), {});
-            $assert(_.coerceToObject(undefined), {});
-            $assert(_.coerceToEmpty(42), undefined);
-            $assert(_.coerceToEmpty([42]), []);
-            $assert(_.coerceToEmpty({ foo: 42 }), {});
-            $assert([
-                _.isNonemptyString('foo'),
-                _.isNonemptyString(''),
-                _.isNonemptyString([])
-            ], [
-                true,
-                false,
-                false
-            ]);
-            $assert(_.isEmptyArray([]), true);
-            $assert(_.isEmptyArray([
-                1,
-                2,
-                3
-            ]), false);
-            $assert(_.isEmptyArray(undefined), false);
-            $assert(_.isEmptyArray(null), false);
-            $assert(_.isEmptyArray(''), false);
-            $assert(_.isEmptyObject({}), true);
-            $assert(_.isEmptyObject([]), false);
-            $assert(_.isEmptyObject({ foo: 1 }), false);
-            $assert(_.isEmptyObject(undefined), false);
-            $assert(_.isEmptyObject(null), false);
-            $assert(_.isEmptyObject(''), false);
-            $assert(_.isEmptyObject(0), false);
-            $assert(_.isEmptyObject(false), false);
-            $assert(_.isEmpty(0), false);
-            $assert(_.isEmpty(false), false);
-            $assert(_.isEmpty(/.+\.js/), false);
-            $assert(_.isEmpty(null), true);
-            $assert(_.isEmpty({}), true);
-            $assert(_.isEmpty([]), true);
-            $assert(_.isNonempty('foo'), true);
-            $assert(_.coerceToUndefined(undefined), undefined);
-            $assert(_.coerceToUndefined({}), undefined);
-            $assert(_.coerceToUndefined([]), undefined);
-            $assert(_.coerceToUndefined(''), undefined);
-            $assert(_.coerceToUndefined(null), undefined);
-            $assert(_.coerceToUndefined(0), 0);
-            $assert(_.coerceToUndefined(Math.NaN), undefined);
-            $assert(_.coerceToUndefined(false), false);
-            $assert(_.coerceToUndefined({ foo: 1 }), { foo: 1 });
-            $assert(_.coerceToUndefined([
-                1,
-                2
-            ]), [
-                1,
-                2
-            ]);
-        }, function () {
+        }
+        {
             _.extend(_, {
                 isEmpty: function (obj) {
                     return _.coerceToUndefined(obj) === undefined;
@@ -2500,18 +2123,11 @@
                     return v === undefined || v === null || v === Math.NaN || v === '' || _.isPOD(v) && (_.isEmptyObject(v) || v.length === 0) ? undefined : v;
                 }
             });
-        });
+        }
     },
     function (module, exports) {
         _.hasStdlib = true;
-        _.deferTest([
-            'stdlib',
-            'throwsError'
-        ], function () {
-            $assertThrows(_.throws('foo'), 'foo');
-            $assertThrows(_.throwsError('неуловимый Джо'), _.matches({ message: 'неуловимый Джо' }));
-            $assertThrows(_.throwsError(new Error('неуловимый Джо')), _.matches({ message: 'неуловимый Джо' }));
-        }, function () {
+        {
             _.throwsError = _.higherOrder(_.throwError = function (msg) {
                 throw msg instanceof Error ? msg : new Error(msg);
             });
@@ -2520,29 +2136,8 @@
             });
             _.overrideThis = _.throwsError('override this');
             _.notImplemented = _.throwsError('not implemented');
-        });
-        _.deferTest([
-            'stdlib',
-            'values2'
-        ], function () {
-            $assert(_.values2(undefined), []);
-            $assert(_.values2(_.identity), [_.identity]);
-            $assert(_.values2('foo'), ['foo']);
-            $assert(_.values2([
-                'foo',
-                'bar'
-            ]), [
-                'foo',
-                'bar'
-            ]);
-            $assert(_.values2({
-                f: 'foo',
-                b: 'bar'
-            }), [
-                'foo',
-                'bar'
-            ]);
-        }, function () {
+        }
+        {
             _.mixin({
                 values2: function (x) {
                     if (_.isArrayLike(x)) {
@@ -2556,24 +2151,8 @@
                     }
                 }
             });
-        });
-        _.deferTest([
-            'stdlib',
-            'map2'
-        ], function () {
-            var plusBar = _.appends('bar');
-            $assert(_.map2('foo', plusBar), 'foobar');
-            $assert(_.map2(['foo'], plusBar), ['foobar']);
-            $assert(_.map2({ foo: 'foo' }, plusBar), { foo: 'foobar' });
-            $assert(Array.from(_.map2(new Set([
-                'foo',
-                'bar'
-            ]), plusBar).values()), [
-                'foobar',
-                'barbar'
-            ]);
-            $assert(_.mapWith(plusBar, { foo: 'foo' }), { foo: 'foobar' });
-        }, function () {
+        }
+        {
             _.mixin({
                 map2: function (value, fn, context) {
                     return _.isArrayLike(value) ? _.map(value, fn, context) : value instanceof Set ? _.mapSet(value, fn, context) : _.isStrictlyObject(value) ? _.mapObject(value, fn, context) : fn.call(context, value);
@@ -2587,56 +2166,11 @@
                 return out;
             };
             _.mapsWith = _.higherOrder(_.mapWith = _.flip2(_.map2));
-        });
+        }
         _.pluck2 = function (x, prop) {
             return _.map2(x, _.property(prop));
         };
-        _.deferTest([
-            'stdlib',
-            'scatter/obj/arr'
-        ], function () {
-            $assert(undefined, _.scatter([], _.noop));
-            $assert([
-                1,
-                10,
-                2,
-                20,
-                3,
-                30
-            ], _.scatter([
-                1,
-                2,
-                3
-            ], function (x, i, return_) {
-                return_(x);
-                return_(x * 10);
-            }));
-            $assert({
-                'b': 0,
-                'a': 1,
-                'r': 2
-            }, _.scatter('bar', function (x, i, return_) {
-                _.each(x.split(''), _.flip(return_));
-            }));
-            $assert(_.obj(_.noop), _.arr(_.noop), undefined);
-            $assert(_.obj(function (emit) {
-                emit(42, 'foo');
-                emit(43, 'bar');
-            }), {
-                foo: 42,
-                bar: 43
-            });
-            $assert(_.arr(function (emit) {
-                emit(42);
-                emit(43, 44);
-            }), [
-                42,
-                [
-                    43,
-                    44
-                ]
-            ]);
-        }, function () {
+        {
             _.mixin({
                 scatter: function (obj, elem) {
                     var result = undefined;
@@ -2666,25 +2200,8 @@
                 });
                 return x;
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'mapKeys'
-        ], function () {
-            $assert(_.mapKeys({
-                'foo': [
-                    1,
-                    2,
-                    { 'gay': 3 }
-                ]
-            }, _.appends('bar')), {
-                'foobar': [
-                    1,
-                    2,
-                    { 'gaybar': 3 }
-                ]
-            });
-        }, function () {
+        }
+        {
             _.mapKeys = function (x, fn) {
                 if (_.isArrayLike(x)) {
                     return _.map(x, _.tails2(_.mapKeys, fn));
@@ -2699,97 +2216,18 @@
                     return x;
                 }
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'mapMap'
-        ], function () {
-            $assert(_.mapMap(7, _.typeOf), 'number');
-            $assert(_.mapMap([7], _.typeOf), ['number']);
-            $assert(_.mapMap({
-                foo: 7,
-                bar: [
-                    'foo',
-                    { bar: undefined }
-                ]
-            }, _.typeOf), {
-                foo: 'number',
-                bar: [
-                    'string',
-                    { bar: 'undefined' }
-                ]
-            });
-        }, function () {
+        }
+        {
             _.mapMap = _.hyperOperator(_.unary, _.map2);
-        });
-        _.deferTest([
-            'stdlib',
-            'hyperMap'
-        ], function () {
-            var complexObject = {
-                garply: { bar: { baz: 5 } },
-                frobni: { foo: [{ bar: { baz: 5 } }] }
-            };
-            var barBazSubstructure = _.matches({ bar: { baz: 5 } });
-            var transformedObject = _.hyperMap(complexObject, function (x) {
-                if (barBazSubstructure(x)) {
-                    return 'pwned!';
-                }
-            });
-            $assert(transformedObject, {
-                garply: 'pwned!',
-                frobni: { foo: ['pwned!'] }
-            });
-        }, function () {
+        }
+        {
             _.hyperMap = function (data, op) {
                 return _.hyperOperator(_.unary, function (expr, f) {
                     return op(expr) || _.map2(expr, f);
                 })(data, _.identity);
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'pairs2'
-        ], function () {
-            $assert(_.pairs2(undefined), [[
-                    undefined,
-                    undefined
-                ]]);
-            $assert(_.pairs2(_.identity), [[
-                    undefined,
-                    _.identity
-                ]]);
-            $assert(_.pairs2('foo'), [[
-                    undefined,
-                    'foo'
-                ]]);
-            $assert(_.pairs2([
-                'foo',
-                'bar'
-            ]), [
-                [
-                    0,
-                    'foo'
-                ],
-                [
-                    1,
-                    'bar'
-                ]
-            ]);
-            $assert(_.pairs2({
-                0: 'foo',
-                1: 'bar'
-            }), [
-                [
-                    '0',
-                    'foo'
-                ],
-                [
-                    '1',
-                    'bar'
-                ]
-            ]);
-        }, function () {
+        }
+        {
             _.pairs2 = function (x) {
                 return _.scatter(x, function (x, i, return_) {
                     return_([
@@ -2798,35 +2236,8 @@
                     ]);
                 });
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'filter 2.0'
-        ], function () {
-            var foo = _.equals('foo');
-            $assert(_.filter2('foo', foo), 'foo');
-            $assert(_.filter2(['foo'], foo), ['foo']);
-            $assert(_.filter2({ f: 'foo' }, foo), { f: 'foo' });
-            $assert(_.filter2('foo', _.not(foo)), undefined);
-            $assert(_.filter2(['foo'], _.not(foo)), []);
-            $assert(_.filter2({ f: 'foo' }, _.not(foo)), {});
-            $assert(_.filter2('foo', _.constant('bar')), 'bar');
-            $assert(_.filter2(['foo'], _.constant('bar')), ['bar']);
-            $assert(_.filter2({ f: 'foo' }, _.constant('bar')), { f: 'bar' });
-            $assert(_.filterFilter({
-                foo: 'foo',
-                bar: [
-                    7,
-                    'foo',
-                    { bar: 'foo' }
-                ]
-            }, _.not(_.equals('foo'))), {
-                bar: [
-                    7,
-                    {}
-                ]
-            });
-        }, function () {
+        }
+        {
             _.reject2 = function (value, op) {
                 return _.filter2(value, _.not(op));
             };
@@ -2877,58 +2288,8 @@
                     return _.isBoolean(opa) ? !opa : opa;
                 });
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'each 2.0'
-        ], function () {
-            var test = function (input) {
-                var output = [];
-                _.each2(input, function (x, i, n) {
-                    output.push([
-                        x,
-                        i,
-                        n
-                    ]);
-                });
-                return output;
-            };
-            $assert(test('foo'), [[
-                    'foo',
-                    undefined,
-                    1
-                ]]);
-            $assert(test([
-                'foo',
-                'bar'
-            ]), [
-                [
-                    'foo',
-                    0,
-                    2
-                ],
-                [
-                    'bar',
-                    1,
-                    2
-                ]
-            ]);
-            $assert(test({
-                'f': 'oo',
-                'b': 'ar'
-            }), [
-                [
-                    'oo',
-                    'f',
-                    2
-                ],
-                [
-                    'ar',
-                    'b',
-                    2
-                ]
-            ]);
-        }, function () {
+        }
+        {
             _.each2 = function (x, f) {
                 if (_.isArrayLike(x)) {
                     for (var i = 0, n = x.length; i < n; i++)
@@ -2941,44 +2302,8 @@
                     f(x, undefined, 1);
                 }
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'reduce 2.0'
-        ], function () {
-            $assert(_.reduce2(3, [
-                7,
-                9
-            ], _.sum), 19);
-            $assert(_.reduce2([
-                3,
-                7,
-                9
-            ], _.sum), 19);
-            $assert(_.reduce2({
-                a: 3,
-                b: 7,
-                c: 9
-            }, _.sum), 19);
-            $assert(_.reduce2(3 + 7 + 9, _.sum), 19);
-            $assert(_.reduce2([1], _.sum), 1);
-            $assert(_.reduce2([], _.sum), undefined);
-            $assert(1 + 20 + 3 + 4 + 5, _.reduceReduce([
-                [
-                    [1],
-                    20
-                ],
-                [
-                    3,
-                    [
-                        4,
-                        5
-                    ]
-                ]
-            ], function (a, b) {
-                return _.isNumber(a) && _.isNumber(b) ? a + b : b;
-            }));
-        }, function () {
+        }
+        {
             _.reduce2 = function (_1, _2, _3) {
                 var no_left = arguments.length < 3;
                 var left = _1, rights = _2, op = _3;
@@ -3002,37 +2327,8 @@
                 }
                 return _.hyperOperator(_.binary, _.reduce2, _.goDeeperAlwaysIfPossible)(initial, value, op);
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'concat2'
-        ], function () {
-            $assert(_.concat([
-                1,
-                2
-            ], [3], [
-                4,
-                5
-            ]), [
-                1,
-                2,
-                3,
-                4,
-                5
-            ]);
-            $assert(_.concat({ foo: 1 }, { bar: 2 }), {
-                foo: 1,
-                bar: 2
-            });
-            $assert(_.concat([
-                { foo: 1 },
-                { bar: 2 }
-            ]), {
-                foo: 1,
-                bar: 2
-            });
-            $assert(_.concat(1, 2, 3), 6);
-        }, function () {
+        }
+        {
             _.concat = function (a, b) {
                 var first, rest;
                 if (arguments.length === 1) {
@@ -3050,93 +2346,8 @@
                     }
                 });
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'zip2'
-        ], function () {
-            $assert(_.zip2([
-                'f',
-                'o',
-                'o'
-            ], _.concat), 'foo');
-            $assert(_.zip2([
-                [
-                    'f',
-                    'b'
-                ],
-                [
-                    'o',
-                    'a'
-                ],
-                [
-                    'o',
-                    'r'
-                ]
-            ], _.concat), [
-                'foo',
-                'bar'
-            ]);
-            $assert(_.zip2([
-                {
-                    foo: 'f',
-                    bar: 'b'
-                },
-                {
-                    foo: 'o',
-                    bar: 'a'
-                },
-                {
-                    foo: 'o',
-                    bar: 'r'
-                }
-            ], _.concat), {
-                foo: 'foo',
-                bar: 'bar'
-            });
-            $assert(_.zip2({
-                foo: 'f',
-                bar: 'b'
-            }, {
-                foo: 'o',
-                bar: 'a'
-            }, {
-                foo: 'o',
-                bar: 'r'
-            }, _.concat), {
-                foo: 'foo',
-                bar: 'bar'
-            });
-            $assert(_.zip2(undefined, _.concat), undefined);
-            $assert(_.zip2(5, _.concat), 5);
-            $assert(_.zip2([], _.concat), []);
-            $assert(_.zip2(['foo'], _.concat), 'foo');
-            $assert(_.zipObjectsWith([
-                { name: 'string' },
-                { born: 123 }
-            ], _.array), {
-                name: [
-                    'string',
-                    undefined
-                ],
-                born: [
-                    undefined,
-                    123
-                ]
-            });
-            $assert([3], _.zipSetsWith([
-                new Set([
-                    2,
-                    3
-                ]),
-                new Set([
-                    3,
-                    4
-                ])
-            ], function (a, b) {
-                return a && b;
-            }).asArray);
-        }, function () {
+        }
+        {
             _.mixin({
                 zipSetsWith: function (sets, fn) {
                     return _.reduce(_.rest(sets), function (memo, obj) {
@@ -3182,153 +2393,11 @@
                     }
                 }
             });
-        });
-        _.deferTest([
-            'stdlib',
-            'zipZip'
-        ], function () {
-            $assert(_.zipZip({ phones: [{ number: 'number' }] }, { phones: [{ number: 333 }] }, _.array), {
-                phones: [{
-                        number: [
-                            'number',
-                            333
-                        ]
-                    }]
-            });
-            $assert(_.zipZip([
-                {
-                    foo: 7,
-                    bar: [
-                        'foo',
-                        { bar: undefined }
-                    ]
-                },
-                {
-                    foo: 'number',
-                    bar: [
-                        'string',
-                        { bar: 'undefined' }
-                    ]
-                }
-            ], _.array), {
-                foo: [
-                    7,
-                    'number'
-                ],
-                bar: [
-                    [
-                        'foo',
-                        'string'
-                    ],
-                    {
-                        bar: [
-                            undefined,
-                            'undefined'
-                        ]
-                    }
-                ]
-            });
-        }, function () {
+        }
+        {
             _.mixin({ zipZip: _.hyperOperator(_.binary, _.zip2) });
-        });
-        _.deferTest([
-            'stdlib',
-            'extend 2.0'
-        ], function () {
-            [
-                function () {
-                    var input = {
-                        foo: 1,
-                        bar: 1
-                    };
-                    var plus = {
-                        foo: 42,
-                        qux: 1
-                    };
-                    var gives = {
-                        foo: 42,
-                        qux: 1,
-                        bar: 1
-                    };
-                    $assert(_.extendWith(plus, input), gives);
-                }(),
-                function () {
-                    var input = [
-                        { bar: 1 },
-                        {}
-                    ];
-                    var plus = _.extendsWith({ foo: 42 });
-                    var gives = [
-                        {
-                            bar: 1,
-                            foo: 42
-                        },
-                        { foo: 42 }
-                    ];
-                    $assert(_.map(input, _.arity1(plus)), gives);
-                }(),
-                function () {
-                    var input = {
-                        foo: 1,
-                        bar: { qux: 1 }
-                    };
-                    var plus = {
-                        foo: 42,
-                        bar: { baz: 1 }
-                    };
-                    var gives = {
-                        foo: 42,
-                        bar: {
-                            baz: 1,
-                            qux: 1
-                        }
-                    };
-                    $assert(_.extend2(input, plus), gives);
-                }(),
-                function () {
-                    var input = {
-                        foo: 1,
-                        bar: { qux: 1 }
-                    };
-                    var plus = {
-                        foo: 42,
-                        bar: { baz: 1 }
-                    };
-                    var gives = {
-                        foo: 42,
-                        bar: {
-                            baz: 1,
-                            qux: 1
-                        }
-                    };
-                    $assert(_.extendedDeep(input, plus), gives);
-                    $assert(_.extendedDeep({ foo: new Set([7]) }, {}).foo instanceof Set);
-                    $assert(Array.from(_.extendedDeep({
-                        foo: new Set([
-                            1,
-                            2
-                        ])
-                    }, {
-                        foo: new Set([
-                            2,
-                            3
-                        ])
-                    }).foo.values()), [
-                        1,
-                        2,
-                        3
-                    ]);
-                }(),
-                function () {
-                    var x = { foo: 1 };
-                    $assert(_.extended(x, { bar: 1 }), {
-                        foo: 1,
-                        bar: 1
-                    });
-                    $assert(x, { foo: 1 });
-                }()
-            ];
-        }, function () {
+        }
+        {
             _.extend = $restArg(_.extend);
             _.extended = $restArg(function () {
                 return _.extend.apply(this, [{}].concat(_.asArray(arguments)));
@@ -3349,33 +2418,8 @@
                     }));
                 }, {}));
             });
-        });
-        _.deferTest([
-            'stdlib',
-            'findFind'
-        ], function () {
-            var obj = {
-                x: 1,
-                y: { z: 2 }
-            };
-            $assert(_.findFind({
-                foo: 1,
-                bar: [
-                    1,
-                    2,
-                    3
-                ]
-            }, _.constant(false)), false);
-            $assert(_.findFind({
-                foo: 1,
-                bar: [
-                    1,
-                    2,
-                    3
-                ]
-            }, _.equals(2)), 2);
-            $assert(_.findFind({ foo: { bar: obj } }, _.equals(obj)), obj);
-        }, function () {
+        }
+        {
             _.find2 = function (value, pred) {
                 if (_.isArrayLike(value)) {
                     for (var i = 0, n = value.length; i < n; i++) {
@@ -3429,77 +2473,13 @@
                     return false;
                 })(obj, pred_);
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'nonempty'
-        ], function () {
-            var obj = {
-                blank: {},
-                empty: [],
-                one: 1,
-                none: undefined,
-                nil: null,
-                clear: '',
-                zero: 0,
-                no: false
-            };
-            var arr = [
-                {},
-                [],
-                1,
-                undefined,
-                null,
-                '',
-                0,
-                false
-            ];
-            $assert(_.nonempty(obj), {
-                one: 1,
-                zero: 0,
-                no: false
-            });
-            $assert(_.nonempty(arr), [
-                1,
-                0,
-                false
-            ]);
-            $assert(_.nonempty(null), undefined);
-            $assert(_.nonempty(''), undefined);
-        }, function () {
+        }
+        {
             _.nonempty = function (obj) {
                 return _.filter2(obj, _.isNonempty);
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'cloneDeep'
-        ], function () {
-            var Proto = $prototype({});
-            var obj = {
-                a: [{ b: { c: 'd' } }],
-                b: {},
-                c: new Proto()
-            };
-            var copy = _.cloneDeep(obj);
-            $assert(obj !== copy);
-            $assert(obj.a !== copy.a);
-            $assert(obj.b !== copy.b);
-            $assert(obj.c === copy.c);
-            $assert(obj, copy);
-            $assert(_.cloneDeep({ foo: new Set() }).foo instanceof Set);
-            $assert(Array.from(_.cloneDeep({
-                foo: new Set([
-                    1,
-                    2,
-                    3
-                ])
-            }).foo.values()), [
-                1,
-                2,
-                3
-            ]);
-        }, function () {
+        }
+        {
             _.extend(_, {
                 clone: function (x) {
                     return x instanceof Set ? new Set(x) : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
@@ -3508,122 +2488,24 @@
                     return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
                 })
             });
-        });
-        _.deferTest([
-            'stdlib',
-            'diff'
-        ], function () {
-            $assert(_.diff('foo', 'foo'), undefined);
-            $assert(_.diff('foo', 'bar'), 'bar');
-            $assert(_.diff({
-                a: 1,
-                b: 2,
-                c: 3
-            }, {
-                a: 1,
-                b: 3,
-                d: 4
-            }), {
-                b: 3,
-                d: 4
-            });
-            $assert(_.diff([
-                1,
-                2,
-                3
-            ], [
-                1,
-                2,
-                3
-            ]), undefined);
-            $assert(_.diff([
-                1,
-                'foo',
-                2
-            ], [
-                1,
-                2,
-                3
-            ]), [
-                2,
-                3
-            ]);
-        }, function () {
+        }
+        {
             _.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
                 return _.coerceToUndefined(_.nonempty(_.zip2(a, b, pred)));
             });
             _.diff = _.tails3(_.hyperMatch, function (a, b) {
                 return $atom.unwrap(a) === $atom.unwrap(b) || a === $any || b === $any ? undefined : b;
             });
-        });
-        _.deferTest([
-            'stdlib',
-            'undiff'
-        ], function () {
-            $assert(_.undiff('foo', 'foo'), 'foo');
-            $assert(_.undiff('foo', 'bar'), undefined);
-            $assert(_.undiff({
-                a: 1,
-                b: 2,
-                c: 3
-            }, {
-                a: 1,
-                b: 3,
-                d: 4
-            }), { a: 1 });
-            $assert(_.undiff([
-                1,
-                2,
-                3
-            ], [
-                1,
-                2,
-                3
-            ]), [
-                1,
-                2,
-                3
-            ]);
-            $assert(_.undiff([
-                1,
-                2
-            ], [
-                1,
-                3
-            ]), [
-                1,
-                undefined
-            ]);
-            $assert(_.undiff([
-                1,
-                2
-            ], [
-                0,
-                2
-            ]), [
-                undefined,
-                2
-            ]);
-        }, function () {
+        }
+        {
             _.hyperMatch = _.hyperOperator(_.binary, function (a, b, pred) {
                 return _.coerceToUndefined(_.zip2(a, b, pred));
             });
             _.undiff = _.tails3(_.hyperMatch, function (a, b) {
                 return $atom.unwrap(a) === $atom.unwrap(b) || a === $any || b === $any ? b : undefined;
             });
-        });
-        _.deferTest([
-            'stdlib',
-            'index'
-        ], function () {
-            $assert(_.index([
-                'foo',
-                'bar'
-            ]), {
-                foo: true,
-                bar: true
-            });
-        }, function () {
+        }
+        {
             _.extend(_, {
                 index: function (list) {
                     var result = {};
@@ -3633,18 +2515,8 @@
                     return result;
                 }
             });
-        });
-        _.deferTest([
-            'stdlib',
-            'quote'
-        ], function () {
-            $assert(_.quote('qux'), 'qux');
-            $assert(_.quote('qux', '[]'), '[qux]');
-            $assert(_.quote('qux', '/'), '/qux/');
-            $assert(_.quote('qux', '{  }'), '{ qux }');
-            $assert(_.quote('qux', '</>'), '</qux>');
-            $assert(_.quoteWith('[]', 'qux'), '[qux]');
-        }, function () {
+        }
+        {
             _.quote = function (s, pattern_) {
                 var pattern = pattern_ || '';
                 var splitAt = Math.floor(pattern.length / 2 + pattern.length % 2);
@@ -3654,59 +2526,8 @@
             };
             _.quoteWith = _.flip2(_.quote);
             _.quotesWith = _.higherOrder(_.quoteWith);
-        });
-        _.deferTest([
-            'stdlib',
-            'partition2'
-        ], function () {
-            $assert(_.partition2([
-                'a',
-                'b',
-                'c',
-                undefined,
-                undefined,
-                42
-            ], _.isNonempty), [
-                [
-                    'a',
-                    'b',
-                    'c'
-                ],
-                [
-                    undefined,
-                    undefined
-                ],
-                [42]
-            ]);
-            $assert(_.partition3([
-                'a',
-                'b',
-                'c',
-                undefined,
-                undefined,
-                42
-            ], _.typeOf), [
-                {
-                    label: 'string',
-                    items: [
-                        'a',
-                        'b',
-                        'c'
-                    ]
-                },
-                {
-                    label: 'undefined',
-                    items: [
-                        undefined,
-                        undefined
-                    ]
-                },
-                {
-                    label: 'number',
-                    items: [42]
-                }
-            ]);
-        }, function () {
+        }
+        {
             _.partition2 = function (arr, pred) {
                 return _.pluck(_.partition3(arr, pred), 'items');
             };
@@ -3729,13 +2550,8 @@
                 });
                 return span.length && spans.push(span), spans;
             };
-        });
-        _.deferTest([
-            'stdlib',
-            'longestCommonSubstring'
-        ], function () {
-            $assert('foo', _.longestCommonSubstring('foo', 'ffooa'));
-        }, function () {
+        }
+        (function () {
             var indexMap = function (list) {
                 var map = {};
                 _.each(list, function (each, i) {
@@ -3773,7 +2589,7 @@
                 });
                 return result;
             };
-        });
+        }());
         _.key = function (fn) {
             return function (value, key) {
                 return fn(key);
@@ -3801,40 +2617,7 @@
         };
     },
     function (module, exports) {
-        _.deferTest('properties', function () {
-            var obj = {};
-            _.defineProperty(obj, 'fourtyTwo', 42);
-            _.defineProperty(obj, 'fourtyTwo_too', function () {
-                return 42;
-            });
-            _.defineProperty(obj, 'fourtyTwo_orDie', function (x) {
-                $assert(x == 42);
-                return 42;
-            });
-            _.defineProperty(obj, 'fourtyTwo_eitherWay', {
-                configurable: true,
-                get: function () {
-                    return 42;
-                },
-                set: function (x) {
-                    $assert(x == 42);
-                }
-            });
-            $assert(42, obj.fourtyTwo, obj.fourtyTwo_too, obj.fourtyTwo_orDie(42), obj.fourtyTwo_eitherWay = 42);
-            delete obj.fourtyTwo_eitherWay;
-            $assert(obj.fourtyTwo_eitherWay === undefined);
-            delete obj.fourtyTwo;
-            $assert(obj.fourtyTwo === 42);
-            _.defineHiddenProperty(obj, 'hiddenAndDangerous', 42);
-            $assert(_.keys(obj).indexOf('hiddenAndDangerous') < 0);
-            $assertEveryCalledOnce(function (mkay) {
-                _.defineMemoizedProperty(obj, '_42', function () {
-                    mkay();
-                    return 42;
-                });
-                $assert(obj._42, obj._42, obj._42, 42);
-            });
-        }, function () {
+        {
             _.extend(_, {
                 defineProperty: function (targetObject, name, def, defaultCfg) {
                     if (_.isObject(targetObject) && targetObject.hasOwnProperty(name)) {
@@ -3882,93 +2665,11 @@
                     return obj && _.pickKeys(obj, obj.hasOwnProperty.bind(obj)) || {};
                 }
             });
-        });
+        }
     },
     function (module, exports) {
         _.hasTags = true;
-        _.deferTest('keywords', function () {
-            if ($global['$fourtyTwo'] === undefined) {
-                _.defineKeyword('fourtyTwo', 42);
-                _.defineKeyword('fourtyTwo_too', function () {
-                    return 42;
-                });
-                _.defineKeyword('fourtyTwo_orDie', function (x) {
-                    $assert(x == 42);
-                    return 42;
-                });
-                _.defineTagKeyword('foo');
-                _.defineTagKeyword('bar');
-                _.defineTagKeyword('qux');
-                $assert(_.isTagKeyword('qux'));
-                _.defineModifierKeyword('plusOne', function (x) {
-                    return x + 1;
-                });
-            }
-            $assert(42, $fourtyTwo, $fourtyTwo_too, $fourtyTwo_orDie(42));
-            $assert($foo(42).$foo, true);
-            $assert($bar(null).$bar, true);
-            $assert($foo(42).$bar, undefined);
-            $assert($foo($bar(42)), $bar($foo($foo(42))));
-            $assert($foo.is($foo(42)), true);
-            $assert($foo.is($bar(42)), false);
-            $assert($foo.is(42), false);
-            var test = {
-                fourtyOne: $bar($foo(41)),
-                fourtyTwo: $foo($bar(42)),
-                notTagged: 40
-            };
-            $assert($untag(42), Tags.unwrap(42), Tags.unwrap(test.fourtyTwo), 42);
-            $assert(Tags.unwrapAll(test), {
-                fourtyTwo: 42,
-                fourtyOne: 41,
-                notTagged: 40
-            });
-            $assert($foo.matches($foo()));
-            $assert($foo.matches(test.fourtyOne));
-            $assert($foo.matches(42) === false);
-            $assert({
-                fourtyOne: 41,
-                fourtyTwo: 42
-            }, Tags.unwrapAll(_.pick(test, _.and($foo.matches, $bar.matches))));
-            $assert({ notTagged: 40 }, Tags.unwrapAll(_.omit(test, $foo.matches)));
-            $assert(43, Tags.modify(42, function (subject) {
-                return subject + 1;
-            }));
-            $assert($foo(43), Tags.modify($foo(42), _.constant(43)));
-            $assert($foo($bar(43)), Tags.modify($foo(42), function (subject) {
-                return $bar(subject + 1);
-            }));
-            $assert($plusOne(41), 42);
-            $assert($plusOne($foo($bar(41))), $foo($bar(42)));
-            $assert(Tags.add('qux', 42).$qux);
-            $assert(Tags.add('qux', test.fourtyTwo).$qux);
-            $assert(Tags.hasSubject($foo()), false);
-            $assert(Tags.hasSubject($foo(42)), true);
-            $assert($qux([
-                8,
-                9,
-                $foo($bar(10))
-            ]), Tags.map($qux([
-                1,
-                2,
-                $foo($bar(3))
-            ]), _.sums(7)));
-            $assertMatches([
-                'foo',
-                'bar',
-                'qux'
-            ], _.arr(function (iter) {
-                Tags.each(test.fourtyTwo, iter);
-            }));
-            $assert($foo({ some: 'params' }, 42).$foo, { some: 'params' });
-            $assert(Tags.extend($foo(7), $bar(8)), $foo($bar(7)));
-            $assert(Tags.extend($foo(7), 8), $foo(7));
-            $assert(Tags.extend(7, $foo(8)), $foo(7));
-            $assert(Tags.extend(7, 8), 7);
-            $assert(Tags.omit(7, '$foo'), 7);
-            $assert(Tags.omit($foo($bar(7)), '$foo', '$bar'), 7);
-            $assert(Tags.omit($foo($bar(7)), '$foo'), $bar(7));
-        }, function () {
+        {
             Tags = _.extend2(function (subject, keys) {
                 if (subject !== undefined) {
                     this.subject = subject;
@@ -4121,104 +2822,14 @@
             _.deleteKeyword = function (name) {
                 delete $global[_.keyword(name)];
             };
-        });
+        }
     },
     function (module, exports) {
         _.hasTypeMatch = true;
         _.defineTagKeyword('required');
         _.defineTagKeyword('atom');
         _.defineKeyword('any', _.identity);
-        _.deferTest([
-            'type',
-            'type matching'
-        ], function () {
-            $assert(_.omitTypeMismatches({
-                '*': $any,
-                foo: $required('number'),
-                bar: $required('number')
-            }, {
-                baz: 'x',
-                foo: 42,
-                bar: 'foo'
-            }), {});
-            $assert(_.omitTypeMismatches({ foo: { '*': $any } }, {
-                foo: {
-                    bar: 42,
-                    baz: 'qux'
-                }
-            }), {
-                foo: {
-                    bar: 42,
-                    baz: 'qux'
-                }
-            });
-            $assert(_.omitTypeMismatches({
-                foo: {
-                    bar: $required(42),
-                    '*': $any
-                }
-            }, {
-                foo: {
-                    bar: 'foo',
-                    baz: 'qux'
-                }
-            }), {});
-            $assert(_.omitTypeMismatches([{
-                    foo: $required('number'),
-                    bar: 'number'
-                }], [
-                {
-                    foo: 42,
-                    bar: 42
-                },
-                { foo: 24 },
-                { bar: 42 }
-            ]), [
-                {
-                    foo: 42,
-                    bar: 42
-                },
-                { foo: 24 }
-            ]);
-            $assert(_.omitTypeMismatches({ '*': 'number' }, {
-                foo: 42,
-                bar: 42
-            }), {
-                foo: 42,
-                bar: 42
-            });
-            $assert(_.omitTypeMismatches({ foo: $any }, { foo: 0 }), { foo: 0 });
-            $assert(_.decideType([]), []);
-            $assert(_.decideType(42), 'number');
-            $assert(_.decideType(_.identity), 'function');
-            $assert(_.decideType([
-                { foo: 1 },
-                { foo: 2 }
-            ]), [{ foo: 'number' }]);
-            $assert(_.decideType([
-                { foo: 1 },
-                { bar: 2 }
-            ]), []);
-            $assert(_.decideType({
-                foo: { bar: 1 },
-                foo: { baz: [] }
-            }), {
-                foo: { bar: 'number' },
-                foo: { baz: [] }
-            });
-            $assert(_.decideType({
-                foo: { bar: 1 },
-                foo: { bar: 2 }
-            }), { foo: { bar: 'number' } });
-            $assert(_.decideType({
-                foo: { bar: 1 },
-                bar: { bar: 2 }
-            }), { '*': { bar: 'number' } });
-            if (_.hasOOP) {
-                var Type = $prototype();
-                $assert(_.decideType({ x: new Type() }), { x: Type });
-            }
-        }, function () {
+        (function () {
             _.isMeta = function (x) {
                 return x === $any || $atom.is(x) === true || $required.is(x) === true;
             };
@@ -4306,7 +2917,7 @@
                     }
                 });
             };
-        });
+        }());
     },
     function (module, exports) {
         _.json = function (arg) {
@@ -4320,59 +2931,7 @@
                 return JSON.stringify(arg);
             }
         };
-        _.deferTest([
-            'type',
-            'stringify'
-        ], function () {
-            if (_.hasTags) {
-                var complex = {
-                    foo: $constant($get({ foo: 7 }, 1)),
-                    nil: null,
-                    nope: undefined,
-                    fn: _.identity,
-                    bar: [{
-                            baz: 'garply',
-                            qux: [
-                                1,
-                                2,
-                                3
-                            ]
-                        }]
-                };
-                complex.bar[0].bar = complex.bar;
-                var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }';
-                var Proto = $prototype({});
-                $assert(_.stringify(Proto), $platform.NodeJS ? 'Proto ()' : '<prototype>');
-                $assert(_.stringify(undefined), 'undefined');
-                $assert(_.stringify(123), '123');
-                $assert(_.stringify(complex, { pretty: false }), renders);
-            }
-            $assert(_.pretty({
-                array: [
-                    'foo',
-                    'bar',
-                    'baz'
-                ],
-                more: 'qux',
-                evenMore: 42
-            }), [
-                '{    array: [ "foo",',
-                '              "bar",',
-                '              "baz"  ],',
-                '      more:   "qux",',
-                '  evenMore:    42       }'
-            ].join('\n'));
-            var obj = {};
-            $assert(_.stringify([
-                obj,
-                obj,
-                obj
-            ]), '[{  }, <ref:1>, <ref:1>]');
-            $assert(_.stringify({ foo: 1 }, {
-                json: true,
-                pretty: true
-            }), '{ "foo": 1 }');
-        }, function () {
+        {
             _.alignStringsRight = function (strings) {
                 var lengths = strings.map(_.count);
                 var max = _.max(lengths);
@@ -4523,7 +3082,7 @@
                     return x + '';
                 }
             };
-        });
+        }
         _.toFixed = function (x, precision) {
             return x && x.toFixed && x.toFixed(precision) || undefined;
         };
@@ -4535,40 +3094,7 @@
         };
     },
     function (module, exports) {
-        _.deferTest([
-            'Array',
-            'squash'
-        ], function () {
-            $assert([
-                [
-                    'all',
-                    'your',
-                    'to',
-                    'us'
-                ],
-                [
-                    'your',
-                    'belong',
-                    'us'
-                ],
-                [
-                    'base',
-                    'belong',
-                    'to'
-                ],
-                [
-                    'your',
-                    'base'
-                ]
-            ].squash(), [
-                'all',
-                'your',
-                'base',
-                'belong',
-                'to',
-                'us'
-            ]);
-        }, function () {
+        {
             Array.prototype.squash = function (cfg) {
                 cfg = cfg || {};
                 var key = cfg.key || _.identity, sort = cfg.sort || undefined;
@@ -4643,58 +3169,8 @@
                 };
                 return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
             };
-        });
-        _.deferTest([
-            'DAG',
-            'squash'
-        ], function () {
-            var modules = {
-                'tier1': { requires: [] },
-                'tier11': { requires: ['tier1'] },
-                'tier2': { requires: ['tier0'] },
-                'tier111': {
-                    requires: [
-                        'tier12',
-                        'tier100'
-                    ]
-                },
-                'tier12': {
-                    requires: [
-                        'tier0',
-                        'tier11',
-                        'tier2'
-                    ]
-                },
-                'tier100': { requires: ['tier10'] },
-                'tier0': { requires: [] },
-                'tier10': {
-                    requires: [
-                        'tier0',
-                        'tier2'
-                    ]
-                },
-                'root': {
-                    requires: [
-                        'tier2',
-                        'tier111'
-                    ]
-                }
-            };
-            $assert(DAG.squash('root', {
-                nodes: function (x) {
-                    return modules[x].requires;
-                }
-            }), [
-                'tier0',
-                'tier1',
-                'tier11',
-                'tier2',
-                'tier12',
-                'tier10',
-                'tier100',
-                'tier111'
-            ]);
-        }, function () {
+        }
+        {
             DAG = function (cfg) {
                 this.cfg = cfg || {}, this.nodes = cfg.nodes || _.noop;
             }, DAG.prototype.each = function (N, fn, prev, visited) {
@@ -4732,17 +3208,13 @@
             DAG.squash = function (node0, cfg) {
                 return new DAG(cfg).squash(node0);
             };
-        });
+        }
     },
     function (module, exports) {
         _.cps = function () {
             return _.cps.sequence.apply(null, arguments);
         };
-        _.deferTest([
-            'cps',
-            'apply'
-        ], function () {
-        }, function () {
+        {
             _.cps.apply = function (fn, this_, args_, then) {
                 var args = _.asArray(args_);
                 var lastArgN = _.numArgs(fn) - 1;
@@ -4752,78 +3224,8 @@
                 };
                 return fn.apply(this_, args);
             };
-        });
-        _.deferTest([
-            'cps',
-            'each'
-        ], function () {
-            var data = [
-                'foo',
-                'bar',
-                'baz'
-            ];
-            var currentIndex = 0;
-            _.cps.each(data, function (item, itemIndex, then, complete, arrayWeTraverse) {
-                $assert(item === data[itemIndex]);
-                $assert(itemIndex === currentIndex++);
-                $assert(arrayWeTraverse === data);
-                $assert(_.isFunction(then));
-                $assert(_.isFunction(complete));
-                then();
-            }, function () {
-                $assert(currentIndex === data.length);
-            });
-            var data2 = [];
-            _.cps.each(data, function (item, then) {
-                data2.push(item);
-                then();
-            }, function () {
-                $assert(data, data2);
-            });
-            var data3 = [];
-            _.cps.each(data, function (item, i, then, break_) {
-                data3.push(item);
-                break_();
-            }, function () {
-                $assert(data3, ['foo']);
-            });
-            $assertEveryCalled(function (items__3, final__1) {
-                var data2 = {
-                    'foo': 1,
-                    'bar': 2,
-                    'baz': 3
-                };
-                _.cps.each(data2, function (item, name, then) {
-                    $assert(item === data2[name]);
-                    items__3();
-                    then();
-                }, function () {
-                    final__1();
-                });
-            });
-            $assertEveryCalled(function (items__1, final__1) {
-                _.cps.each('foo', function (item, name, then) {
-                    $assert([
-                        item,
-                        name
-                    ], [
-                        'foo',
-                        undefined
-                    ]);
-                    items__1();
-                    then();
-                }, function () {
-                    final__1();
-                });
-            });
-            $assertEveryCalled(function (final__1) {
-                _.cps.each(undefined, function () {
-                    $fail;
-                }, function () {
-                    final__1();
-                });
-            });
-        }, function () {
+        }
+        {
             _.extend(_.cps, {
                 each: function (obj, elem_, complete_, index_, length_, keys_) {
                     var complete = complete_ || _.noop;
@@ -4851,38 +3253,8 @@
                     }
                 }
             });
-        });
-        _.deferTest([
-            'cps',
-            'map'
-        ], function () {
-            _.cps.map([
-                7,
-                6,
-                5
-            ], function (x, then) {
-                then(x + 1);
-            }, function (result) {
-                $assert(result, [
-                    8,
-                    7,
-                    6
-                ]);
-            });
-            _.cps.map([
-                7,
-                6,
-                5
-            ], function (x, i, then) {
-                then(x + 1);
-            }, function (result) {
-                $assert(result, [
-                    8,
-                    7,
-                    6
-                ]);
-            });
-        }, function () {
+        }
+        {
             _.extend(_.cps, {
                 map: function (obj, iter, complete) {
                     var result = _.isArray(obj) ? [] : {};
@@ -4901,66 +3273,8 @@
                     });
                 }
             });
-        });
-        _.deferTest([
-            'cps',
-            'find'
-        ], function () {
-            _.cps.find([
-                7,
-                6,
-                5
-            ], function (x, then) {
-                then(x % 3 === 0);
-            }, function (x, key) {
-                $assert([
-                    x,
-                    key
-                ], [
-                    6,
-                    1
-                ]);
-            });
-            _.cps.find({
-                foo: 7,
-                bar: 6,
-                baz: 5
-            }, function (x, key, then) {
-                then(key === 'baz');
-            }, function (x, key) {
-                $assert([
-                    x,
-                    key
-                ], [
-                    5,
-                    'baz'
-                ]);
-            });
-            _.cps.find([
-                7,
-                6,
-                5
-            ], function (x, then) {
-                then(x % 3 === 0 ? 'yeah' : false);
-            }, function (x, key) {
-                $assert([
-                    x,
-                    key
-                ], [
-                    'yeah',
-                    1
-                ]);
-            });
-            _.cps.find([
-                7,
-                6,
-                5
-            ], function (x, key, then) {
-                then(false);
-            }, function (x) {
-                $assert(x, undefined);
-            });
-        }, function () {
+        }
+        {
             _.extend(_.cps, {
                 find: function (obj, pred, complete) {
                     var passKey = _.numArgs(pred) !== 2;
@@ -4980,24 +3294,8 @@
                     }, complete);
                 }
             });
-        });
-        _.deferTest([
-            'cps',
-            'memoize'
-        ], function () {
-            $assertEveryCalledOnce(function (noMoreThanOne) {
-                var plusOne = _.cps.memoize(function (x, then) {
-                    noMoreThanOne();
-                    then(x + 1);
-                });
-                plusOne(2, function (x) {
-                    $assert(x === 3);
-                });
-                plusOne(2, function (x) {
-                    $assert(x === 3);
-                });
-            });
-        }, function () {
+        }
+        {
             _.extend(_.cps, {
                 memoize: function (fn) {
                     return _.barrier ? _.cps._betterMemoize(fn) : _.cps._poorMemoize(fn);
@@ -5037,28 +3335,8 @@
                     }
                 }
             });
-        });
-        _.deferTest([
-            'cps',
-            'reduce'
-        ], function () {
-            $assertEveryCalled(function (mkay__2) {
-                var input = [
-                    1,
-                    2,
-                    3
-                ];
-                var sums = function (a, b, then) {
-                    then(a + b);
-                };
-                var check = function (result) {
-                    $assert(result === 6);
-                    mkay__2();
-                };
-                _.cps.reduce(input, sums, check);
-                _.cps.reduce([], sums, check, 6);
-            });
-        }, function () {
+        }
+        (function () {
             var reduce = function (array, op, then, memo, index) {
                 if (!array || index >= (array.length || 0)) {
                     then(memo);
@@ -5075,35 +3353,8 @@
                     reduce(array, op, then, memo, 0);
                 }
             };
-        });
-        _.deferTest([
-            'cps',
-            'noop, identity, constant'
-        ], function () {
-            $assertEveryCalled(function (noop, identity, const1, const2) {
-                _.cps.noop(1, 2, 3, function () {
-                    $assert(arguments.length === 0);
-                    noop();
-                });
-                _.cps.identity(1, 2, 3, function () {
-                    $assert([
-                        1,
-                        2,
-                        3
-                    ], _.asArray(arguments));
-                    identity();
-                });
-                _.cps.constant(3)(function (_3) {
-                    $assert(_3 === 3);
-                    const1();
-                });
-                _.cps.constant(1, 2)(function (_1, _2) {
-                    $assert(_1 === 1);
-                    $assert(_2 === 2);
-                    const2();
-                });
-            });
-        }, function () {
+        }());
+        {
             _.extend(_.cps, {
                 noop: $restArg(function () {
                     return _.last(arguments).call(this);
@@ -5121,41 +3372,8 @@
                     };
                 })
             });
-        });
-        _.deferTest([
-            'cps',
-            'arity / resultArity'
-        ], function () {
-            var returnMyArgs = _.cps.identity;
-            var put123 = function (fn) {
-                return _.partial(fn, 1, 2, 3);
-            };
-            $assertCPS(put123(returnMyArgs), [
-                1,
-                2,
-                3
-            ]);
-            $assertCPS(put123(_.cps.arity2(returnMyArgs)), [
-                1,
-                2
-            ]);
-            $assertCPS(put123(_.cps.arity1(returnMyArgs)), [1]);
-            $assertCPS(put123(_.cps.arity0(returnMyArgs)));
-            var return123 = function (then) {
-                then(1, 2, 3);
-            };
-            $assertCPS(return123, [
-                1,
-                2,
-                3
-            ]);
-            $assertCPS(_.cps.resultArity2(return123), [
-                1,
-                2
-            ]);
-            $assertCPS(_.cps.resultArity1(return123), [1]);
-            $assertCPS(_.cps.resultArity0(return123));
-        }, function () {
+        }
+        {
             _.cps.arity0 = function (fn) {
                 return function () {
                     fn.call(this, _.last(arguments));
@@ -5179,32 +3397,8 @@
             _.cps.resultArity2 = _.partial(_.cps.transformResult, _.arity2);
             _.cps.resultArity1 = _.partial(_.cps.transformResult, _.arity1);
             _.cps.resultArity0 = _.partial(_.cps.transformResult, _.arity0);
-        });
-        _.deferTest([
-            'cps',
-            'sequence / compose'
-        ], function () {
-            $assertEveryCalled(function (mkay__4) {
-                var makeCookies = function (whatCookies, then) {
-                    then('cookies ' + whatCookies);
-                };
-                var eatCookies = function (cookies, then) {
-                    then('nice ' + cookies);
-                };
-                var check = function (result) {
-                    $assert(result, 'nice cookies from shit');
-                    mkay__4();
-                };
-                _.cps.sequence(makeCookies, eatCookies, check)('from shit');
-                _.cps.sequence([
-                    makeCookies,
-                    eatCookies,
-                    check
-                ])('from shit');
-                _.cps(makeCookies, eatCookies, check)('from shit');
-                _.cps.compose(check, eatCookies, makeCookies)('from shit');
-            });
-        }, function () {
+        }
+        {
             _.cps.sequence = $restArg(function (arr) {
                 var functions = _.isArray(arr) && arr || _.asArray(arguments);
                 return _.reduceRight(functions, function (a, b) {
@@ -5217,63 +3411,8 @@
                 var functions = _.isArray(arr) && arr || _.asArray(arguments);
                 return _.cps.sequence(functions.slice().reverse());
             });
-        });
-        _.deferTest([
-            'cps',
-            'trySequence'
-        ], function () {
-            var testErr = new Error();
-            $assertEveryCalledOnce(function (mkay) {
-                _.cps.trySequence([
-                    _.cps.constant('foo'),
-                    _.appends('bar').asContinuation
-                ], function (result) {
-                    $assert(result, 'foobar');
-                    mkay();
-                });
-            });
-            $assertEveryCalledOnce(function (mkay) {
-                _.cps.trySequence([
-                    function () {
-                        throw testErr;
-                    },
-                    function () {
-                        $fail;
-                    }
-                ], function (result) {
-                    $assert(result === testErr);
-                    mkay();
-                });
-            });
-            $assertEveryCalledOnce(function (mkay) {
-                _.cps.trySequence([
-                    function (then) {
-                        then(testErr);
-                    },
-                    function () {
-                        $fail;
-                    }
-                ], function (result) {
-                    $assert(result === testErr);
-                    mkay();
-                });
-            });
-            $assertEveryCalledOnce(function (mkay) {
-                _.cps.trySequence([
-                    function (then) {
-                        then(testErr);
-                    },
-                    function () {
-                        $fail;
-                    }
-                ], function (result) {
-                    $fail;
-                }, function (err) {
-                    $assert(err === testErr);
-                    mkay();
-                });
-            });
-        }, function () {
+        }
+        {
             _.cps.trySequence = function (functions, then, err) {
                 _.reduceRight(functions, function (a, b) {
                     return function (e) {
@@ -5289,7 +3428,7 @@
                     };
                 }, then)();
             };
-        });
+        }
     },
     function (module, exports) {
         _([
@@ -5321,92 +3460,7 @@
         };
     },
     function (module, exports) {
-        _.tests.Function = {
-            '$ for partial application': function () {
-                var sum = function (a, b) {
-                    return a + b;
-                };
-                $assert(sum.$('foo')('bar'), 'foobar');
-                $assert(sum.$$('foo')('bar'), 'barfoo');
-            },
-            'Fn.callsWith': function () {
-                $assert(42, function (a, b, c) {
-                    $assert([
-                        a,
-                        b,
-                        c
-                    ], [
-                        1,
-                        2,
-                        3
-                    ]);
-                    return 42;
-                }.callsWith(1, 2)(3));
-            },
-            'asContinuation': function () {
-                $assertEveryCalled(function (mkay__2) {
-                    var twoPlusTwo = function () {
-                        return 2 + 2;
-                    };
-                    var shouldBeFour = function (result) {
-                        $assert(result == 4);
-                        mkay__2();
-                    };
-                    twoPlusTwo.asContinuation(shouldBeFour);
-                    _.asContinuation(twoPlusTwo)(shouldBeFour);
-                });
-            },
-            'postpone': function (testDone) {
-                $assertEveryCalledOnce($async(function (mkay1, mkay2) {
-                    var testSecondCall = false;
-                    var callMeLater = function () {
-                        if (testSecondCall) {
-                            mkay2();
-                            testDone();
-                        } else {
-                            mkay1();
-                            testSecondCall = true;
-                            callMeLater.postpone();
-                        }
-                    };
-                    callMeLater.postpone();
-                    callMeLater.postpone();
-                }));
-            },
-            'postponed': function (testDone) {
-                $assertEveryCalledOnce($async(function (mkay) {
-                    (function (_42) {
-                        $assert(this, 'foo');
-                        $assert(42, _42);
-                        mkay();
-                    }.postponed.call('foo', 42));
-                }), testDone);
-            },
-            'postponed args': function (done) {
-                var xs = [];
-                var f = function (x) {
-                    xs.push(x);
-                };
-                f.postponed(42);
-                f.postponed(43);
-                _.delay(function () {
-                    $assert(xs, [43]);
-                    done();
-                }, 1);
-            },
-            'delayed': function (testDone) {
-                var eat42 = function (_42, then) {
-                    $assert(_42, 42);
-                    then();
-                };
-                var eat42_after5ms = eat42.delayed(5);
-                $assertEveryCalledOnce($async(function (mkay) {
-                    eat42_after5ms(42, function () {
-                        mkay();
-                    });
-                }), testDone);
-            }
-        };
+        ;
         $extensionMethods(Function, {
             $: $method(_.partial),
             $$: $method(_.tails),
@@ -5548,20 +3602,7 @@
                 };
             }
         });
-        _.tests.Function.catches = function () {
-            $assert('yo', _.constant('yo').catches($fails)(), _.identity.catches($fails)('yo'), _.throwsError('xx').catches('yo')());
-            $assertThrows(function () {
-                _.constant('yo').catches(function () {
-                    $assert('catch handler shoudnt work on passed continuations');
-                }, _.throwsError('xx'))();
-            });
-            $assert(function (x) {
-                throw x;
-            }.catches(_.appends('+error_case'), _.appends('+no_error_case'), _.appends('+finally'))('foo'), 'foo+error_case+finally');
-            $assertMatches(_.throwError.catches()('yo'), { message: 'yo' });
-            $assert(_.catches(_.throwsError(42), $assertMatches.$({ message: 42 }).returns('yo'))(), 'yo');
-            $assertCPS(_.constant('yo').catches($fails), 'yo');
-        };
+        ;
         $extensionMethods(Function, {
             catch_: function (fn, catch_, then, finally_) {
                 return fn.catches(catch_, then)();
@@ -5588,186 +3629,7 @@
         });
     },
     function (module, exports) {
-        _.deferTest('Array extensions', function () {
-            var arr = [
-                1,
-                3,
-                2,
-                3,
-                3,
-                4,
-                3
-            ];
-            $assert([
-                arr.first,
-                arr.second,
-                arr.top,
-                arr.last
-            ], [
-                1,
-                3,
-                3,
-                3
-            ]);
-            $assert(arr.rest, [
-                3,
-                2,
-                3,
-                3,
-                4,
-                3
-            ]);
-            $assert(arr.take(4), [
-                1,
-                3,
-                2,
-                3
-            ]);
-            $assert([
-                arr.contains(4),
-                arr.contains(9)
-            ], [
-                true,
-                false
-            ]);
-            $assert(arr.lastIndex, 6);
-            $assert(arr.copy, arr);
-            $assert(arr.copy !== arr);
-            $assert(arr.remove(3), [
-                1,
-                2,
-                4
-            ]);
-            $assert(arr, [
-                1,
-                2,
-                4
-            ]);
-            $assert(arr.removeAll(), []);
-            $assert(arr, []);
-            $assert([
-                'a',
-                'b',
-                'c'
-            ].removeAt(1), [
-                'a',
-                'c'
-            ]);
-            $assert([
-                'a',
-                'c'
-            ].insertAt('b', 1), [
-                'a',
-                'b',
-                'c'
-            ]);
-            $assert([
-                0,
-                1,
-                2
-            ].itemAtWrappedIndex(4) === 1);
-            arr = [
-                1,
-                2,
-                3
-            ];
-            $assert(arr.reversed, [
-                3,
-                2,
-                1
-            ]);
-            $assert(arr, [
-                1,
-                2,
-                3
-            ]);
-            $assert([
-                [1],
-                [
-                    [2],
-                    3
-                ],
-                4
-            ].flat, [
-                1,
-                [2],
-                3,
-                4
-            ]);
-            $assert([
-                [
-                    1,
-                    2,
-                    3
-                ],
-                [
-                    4,
-                    5,
-                    6
-                ]
-            ].zip(_.sum), [
-                5,
-                7,
-                9
-            ]);
-            $assert(_.zap([
-                1,
-                2,
-                3
-            ], [
-                4,
-                5,
-                6
-            ], _.sum), [
-                5,
-                7,
-                9
-            ]);
-            $assert([
-                'a',
-                'b',
-                'c'
-            ].swap(1, 2), [
-                'a',
-                'c',
-                'b'
-            ]);
-            $assert([1].random === 1);
-            $assert([].random === undefined);
-            $assert([
-                { foo: 'bar' },
-                { foo: 'qux' }
-            ].pluck('foo'), [
-                'bar',
-                'qux'
-            ]);
-            $assert([
-                [
-                    'foo',
-                    'bar'
-                ].join(),
-                [
-                    'foo',
-                    'bar'
-                ].join('.'),
-                [
-                    'foo',
-                    'bar'
-                ].join(777),
-                ['foo'].join(777),
-                ['bar'].join('.')
-            ], [
-                'foobar',
-                'foo.bar',
-                [
-                    'foo',
-                    777,
-                    'bar'
-                ],
-                'foo',
-                'bar'
-            ]);
-        }, function () {
+        {
             $extensionMethods(Array, {
                 each: _.each,
                 map: _.map,
@@ -5885,110 +3747,17 @@
                     });
                 }, firstArg);
             };
-        });
+        }
     },
     function (module, exports) {
-        _.deferTest('String extensions', function () {
-            $assert('ж'.repeats(0) === '');
-            $assert('ж'.repeats(4) === 'жжжж');
-            $assert('жопа'.first(2) === 'жо');
-            $assert('жопа'.reversed === 'апож');
-            $assert('жопа'.capitalized === 'Жопа');
-            $assert('  жопа  '.trimmed === 'жопа');
-            $assert('<жопа>'.escaped === '&lt;жопа&gt;');
-            $assert('па'.prepend('жо'), 'жо'.append('па'), 'жопа');
-            $assert([
-                'жопа'.contains('опа'),
-                'жопа'.contains('апож')
-            ], [
-                true,
-                false
-            ]);
-            $assert([
-                'жопа'.startsWith('ж'),
-                'жопа'.startsWith('жо'),
-                'жопа'.startsWith('о')
-            ], [
-                true,
-                true,
-                false
-            ]);
-            $assert([
-                'жопа'.endsWith('а'),
-                'жопа'.endsWith('па'),
-                'жопа'.endsWith('ж')
-            ], [
-                true,
-                true,
-                false
-            ]);
-            $assert([
-                _.map([
-                    1,
-                    2,
-                    3
-                ], _.prepends('foo')),
-                _.map([
-                    1,
-                    2,
-                    3
-                ], _.appends('bar'))
-            ].zip(_.append), [
-                'foo11bar',
-                'foo22bar',
-                'foo33bar'
-            ]);
-            $assert('}|{О/7A с Py4K()Й ololo 321321'.latinAlphanumericValue, '7APy4Kololo321321');
-            $assert('}|{О/7A с Py4K()Й ololo 321321'.alphanumericValue, 'О7AсPy4KЙololo321321');
-            $assert('+7(965)412-63-21'.numericValue, '79654126321');
-            $assert('+7(965)412-63-21'.integerValue, 79654126321);
-            $assert('foo'.integerValue, undefined);
-            $assert('0'.integerValue, 0);
-            $assert('123'.parsedInt, 123);
-            $assert('foo'.parsedInt, undefined);
-            $assert('0'.parsedInt, 0);
-            $assert('foo'.hash, 101574);
-            $assert('Пися Камушкинъ'.transliterate, 'pisyakamushkin');
-            $assert('qux'.quote(''), 'qux');
-            $assert('qux'.quote('"'), '"qux"');
-            $assert('qux'.quote('[]'), '[qux]');
-            $assert('qux'.quote('/'), '/qux/');
-            $assert('qux'.quote('{  }'), '{ qux }');
-            $assert('qux'.quote('</>'), '</qux>');
-            $assert(_.isTypeOf(Uint8Array, 'foo'.bytes));
-            $assert(_.asArray('foo'.bytes), [
-                102,
-                111,
-                111
-            ]);
-            $assert([
-                'foobar'.limitedTo(6),
-                'tooloong'.limitedTo(6),
-                ''.limitedTo(0)
-            ], [
-                'foobar',
-                'toolo\u2026',
-                ''
-            ]);
-            $assert('жоп'.pad(5), 'жоп  ');
-            $assert('жоп'.pad(5, '\u2192'), 'жоп\u2192\u2192');
-            $assert('foo'.pluck([
-                { foo: 10 },
-                { foo: 11 }
-            ]), [
-                10,
-                11
-            ]);
-            $assert('foo'.pluck({
-                a: { foo: 10 },
-                b: { foo: 11 }
-            }), {
-                a: 10,
-                b: 11
-            });
-        }, function () {
+        {
             $extensionMethods(String, {
                 quote: _.quote,
+                concatPath: function (a, b) {
+                    var a_endsWithSlash = a[a.length - 1] === '/';
+                    var b_startsWithSlash = b[0] === '/';
+                    return a + (a_endsWithSlash || b_startsWithSlash ? '' : '/') + (a_endsWithSlash && b_startsWithSlash ? b.substring(1) : b);
+                },
                 pluck: function (s, arr) {
                     return _.pluck2(arr, s);
                 },
@@ -6137,7 +3906,7 @@
                     };
                 }()
             });
-        });
+        }
         _.extend(String, {
             randomHex: function (length) {
                 if (length === undefined) {
@@ -6153,12 +3922,7 @@
                 return n < 10 ? '0' + n : n.toString();
             }
         });
-        _.deferTest(['identifier naming style interpolation'], function () {
-            $assert(_.camelCaseToLoDashes('flyingBurritoOption'), 'flying_burrito_option');
-            $assert(_.camelCaseToDashes('flyingBurritoOption'), 'flying-burrito-option');
-            $assert(_.dashesToCamelCase('flying-burrito-option'), 'flyingBurritoOption');
-            $assert(_.loDashesToCamelCase('flying_burrito_option'), 'flyingBurritoOption');
-        }, function () {
+        {
             _.camelCaseToDashes = function (x) {
                 return x.replace(/[a-z][A-Z]/g, function (x) {
                     return x[0] + '-' + x[1].lowercase;
@@ -6174,7 +3938,7 @@
                     return x[1].uppercase;
                 });
             };
-        });
+        }
         _.loDashesToCamelCase = function (x) {
             return x.replace(/(_.)/g, function (x) {
                 return x[1].uppercase;
@@ -6182,92 +3946,7 @@
         };
     },
     function (module, exports) {
-        _.deferTest('bindable', function () {
-            var obj = {
-                plusOne: function (x) {
-                    return x + 1;
-                },
-                innocentMethod: function (x) {
-                    return x;
-                }
-            };
-            $assertEveryCalled(function (before__1, after__1, intercept__2, secondIntercept__1, bindable__1, infixBefore__1) {
-                _.onBefore(obj, 'plusOne', function (x) {
-                    before__1();
-                    $assert(x === 7);
-                });
-                _.onAfter(obj, 'plusOne', function (x, result) {
-                    after__1();
-                    $assert([
-                        x,
-                        result
-                    ], [
-                        7,
-                        8
-                    ]);
-                });
-                $assert(obj.plusOne(7), 8);
-                _.intercept(obj, 'innocentMethod', function (x, method) {
-                    intercept__2();
-                    return method(x + 1) * 2;
-                });
-                $assert(obj.innocentMethod(42), (42 + 1) * 2);
-                _.intercept(obj, 'innocentMethod', function (x, method) {
-                    secondIntercept__1();
-                    $assert(method(x), (42 + 1) * 2);
-                    return 'hard boiled shit';
-                });
-                $assert(obj.innocentMethod(42), 'hard boiled shit');
-                var method = _.bindable(function (x) {
-                    bindable__1();
-                    $assert(x === 42);
-                });
-                method.onBefore(function (x) {
-                    infixBefore__1();
-                    $assert(x === 42);
-                });
-                method(42);
-            });
-            var obj2 = {
-                plusOne: function (x) {
-                    return x + 1;
-                }
-            };
-            $assertEveryCalledOnce(function (beforeCalled, afterCalled) {
-                var before = function (x) {
-                    beforeCalled();
-                    $assert(x === 7);
-                };
-                var after = function (x, result) {
-                    afterCalled();
-                    $assert([
-                        x,
-                        result
-                    ], [
-                        7,
-                        8
-                    ]);
-                };
-                _.times(2, function () {
-                    _.onceBefore(obj, 'plusOne', before);
-                    _.onceAfter(obj, 'plusOne', after);
-                });
-                $assert(obj.plusOne(7), 8);
-                $assert(obj.plusOne(7), 8);
-            });
-            $assertEveryCalled(function (afterCalled__1, shouldNotCall__0) {
-                var method = _.bindable(function () {
-                });
-                method.onBefore(shouldNotCall__0);
-                method.onAfter(afterCalled__1);
-                method.off(shouldNotCall__0);
-                method();
-                method.onBefore(shouldNotCall__0);
-                method.onAfter(shouldNotCall__0);
-                method.off();
-                method();
-            });
-        }, function () {
+        (function () {
             var hooks = [
                 'onceBefore',
                 'onceAfter',
@@ -6387,271 +4066,10 @@
                     }));
                 })
             });
-        });
+        }());
     },
     function (module, exports) {
-        _.tests.stream = {
-            'triggerOnce': function () {
-                $assertEveryCalledOnce(function (mkay) {
-                    var t = _.triggerOnce();
-                    var f = function (_321) {
-                        $assert(_321 === 321);
-                        mkay();
-                    };
-                    t(f);
-                    t(f);
-                    t(321);
-                    t(123);
-                });
-            },
-            'observable': function () {
-                var initedWithValue = _.observable(555);
-                $assert(initedWithValue.value, 555);
-                $assertEveryCalledOnce(function (mkay) {
-                    var valueChanged = _.observable();
-                    valueChanged(999);
-                    valueChanged(function (_999) {
-                        $assert(_999, 999);
-                        mkay();
-                    });
-                });
-                $assertEveryCalled(function (mkay__3) {
-                    var valueChanged = _.observable();
-                    valueChanged(mkay__3);
-                    valueChanged(123);
-                    valueChanged(345);
-                    valueChanged(567);
-                });
-                $assertEveryCalledOnce(function (mkay) {
-                    var valueChanged = _.observable();
-                    valueChanged(function (_111) {
-                        $assert(111, _111);
-                        mkay();
-                    });
-                    valueChanged(111);
-                    valueChanged(111);
-                });
-                $assertEveryCalledOnce(function (mkay) {
-                    var valueChanged = _.observable(444);
-                    valueChanged(function (_666, _444) {
-                        if (_444) {
-                            $assert([
-                                _666,
-                                _444
-                            ], [
-                                666,
-                                444
-                            ]);
-                            mkay();
-                        }
-                    });
-                    valueChanged(666);
-                });
-            },
-            'observable.when': function () {
-                $assertEveryCalledOnce(function (mkay) {
-                    var value = _.observable(234);
-                    value.when(234, function () {
-                        mkay();
-                    });
-                });
-                $assertEveryCalledOnce(function (mkay) {
-                    var value = _.observable();
-                    value.when(_.equals(432), function () {
-                        mkay();
-                    });
-                    value(432);
-                    value(234);
-                });
-                $assertNotCalled(function (mkay) {
-                    var value = _.observable();
-                    value.when(_.equals(432), function () {
-                        mkay();
-                    });
-                    value(7);
-                });
-            },
-            'once': function () {
-                $assertEveryCalledOnce(function (mkay) {
-                    var whenSomething = _.trigger();
-                    whenSomething.once(mkay);
-                    whenSomething.once(mkay);
-                    whenSomething();
-                    whenSomething();
-                });
-            },
-            '_.gatherChanges': function () {
-                var valueA = _.observable(), valueB = _.observable(), changes = [];
-                _.gatherChanges(valueA, valueB, function (a, b) {
-                    changes.push([
-                        a,
-                        b
-                    ]);
-                });
-                valueA(123);
-                valueB(777);
-                $assert(changes, [
-                    [
-                        123,
-                        undefined
-                    ],
-                    [
-                        123,
-                        777
-                    ]
-                ]);
-            },
-            'context': function () {
-                var trigger = _.extend(_.trigger(), { context: 42 });
-                trigger(function () {
-                    $assert(this, 42);
-                });
-                trigger();
-            },
-            '_.off (bound)': function () {
-                var react = function () {
-                    $fail;
-                };
-                var act = _.trigger(react);
-                _.off(react);
-                act();
-            },
-            '_.off (stream)': function () {
-                var fail = function () {
-                    $fail;
-                };
-                var act = _.trigger(fail);
-                _.off(act);
-                act();
-            },
-            '_.barrier (defaultListener)': function () {
-                $assertEveryCalled(function (mkay) {
-                    _.barrier(function () {
-                        mkay();
-                    })();
-                });
-            },
-            'all shit': function () {
-                var obj = {
-                    somethingReady: _.barrier(),
-                    whenSomething: _.trigger()
-                };
-                $assertEveryCalled(function (mkay1__2, mkay2__2) {
-                    obj.whenSomething(mkay1__2);
-                    obj.whenSomething(mkay2__2);
-                    obj.whenSomething();
-                    obj.whenSomething();
-                });
-                $assertEveryCalledOnce(function (shouldCall) {
-                    var whenSomething = _.trigger();
-                    var shouldBeCalled = function () {
-                            shouldCall();
-                        }, shouldNotBeCalled = function () {
-                            $fail;
-                        };
-                    whenSomething(shouldBeCalled);
-                    whenSomething(shouldNotBeCalled);
-                    whenSomething.off(shouldNotBeCalled);
-                    whenSomething();
-                });
-                $assertEveryCalledOnce(function (mkay1, mkay2) {
-                    obj.somethingReady(function (x) {
-                        $assert(x === 'foo');
-                        obj.somethingReady(x);
-                        mkay1();
-                    });
-                    obj.somethingReady(function (x) {
-                        $assert(x === 'foo');
-                        mkay2();
-                    });
-                    obj.somethingReady('foo');
-                });
-                obj.somethingReady('bar');
-                var t1 = _.triggerOnce(), t2 = _.triggerOnce(), t3 = _.triggerOnce(), t4 = _.triggerOnce();
-                _.allTriggered([
-                    t1,
-                    t2
-                ], function () {
-                    $fail;
-                });
-                t1();
-                $assertEveryCalledOnce(function (mkay) {
-                    _.allTriggered([
-                        t3,
-                        t4
-                    ], mkay);
-                    t3();
-                    t4();
-                });
-            },
-            'call order consistency': function (done) {
-                var abc = '';
-                var put = function (x) {
-                    return _.barrier(function () {
-                        abc += x;
-                    });
-                };
-                var a = put('a'), b = put('b'), c = put('c');
-                var barr = _.barrier();
-                barr(a)(function () {
-                    barr.postpones = true;
-                    barr(c);
-                    barr.postpones = false;
-                })(b);
-                barr(true);
-                _.allTriggered([
-                    a,
-                    b,
-                    c
-                ], function () {
-                    $assert(abc, 'abc');
-                    done();
-                });
-            },
-            '_.barrier reset': function () {
-                var b = _.barrier();
-                b('not_42');
-                b.reset();
-                $assertEveryCalledOnce(function (mkay) {
-                    b(function (value) {
-                        mkay();
-                        $assert(value, 42);
-                    });
-                    b(42);
-                });
-            },
-            '_.barrier (value)': function () {
-                $assertEveryCalledOnce(function (mkay) {
-                    var willBe42 = _.barrier(42);
-                    $assert(willBe42.already);
-                    willBe42(function (_42) {
-                        $assert(_42, 42);
-                        mkay();
-                    });
-                });
-            },
-            'observable.item': function () {
-                var items = _.observable({
-                    foo: 7,
-                    bar: 8
-                });
-                var foo = items.item('foo');
-                var bar = items.item('bar');
-                $assert(foo, items.item('foo'));
-                $assert(foo.value, 7);
-                $assert(bar.value, 8);
-                foo(77);
-                $assert(foo.value, 77);
-                $assert(items.value, {
-                    foo: 77,
-                    bar: 8
-                });
-                items({ bar: 88 });
-                $assert(foo.value, undefined);
-                $assert(bar.value, 88);
-                $assert(items.value, { bar: 88 });
-            }
-        };
+        ;
         _.extend(_, {
             gatherChanges: function (observables_) {
                 var observables = _.isArray(observables_) ? observables_ : _.initial(arguments);
@@ -6924,43 +4342,7 @@
                 });
             }
         });
-        _.deferTest([
-            'stream',
-            'observable.map'
-        ], function () {
-            var foo = _.observable('foo'), bar = _.observable('bar');
-            var fooBar = _.observable.map([
-                foo,
-                bar
-            ], _.appends('42'));
-            var results = [];
-            fooBar(function (value) {
-                results.push(value.copy);
-            });
-            $assert(results, [[
-                    'foo42',
-                    'bar42'
-                ]]);
-            foo('qux');
-            bar('zap');
-            $assert(results, [
-                [
-                    'foo42',
-                    'bar42'
-                ],
-                [
-                    'qux42',
-                    'bar42'
-                ],
-                [
-                    'qux42',
-                    'zap42'
-                ]
-            ]);
-            _.observable.map({ 'foo': _.observable('bar') })(function (obj) {
-                $assert({ 'foo': 'bar' }, obj);
-            });
-        }, function () {
+        {
             _.observable.map = function (obj, fn) {
                 fn = fn || _.identity;
                 var value = _.isArray(obj) ? new Array(obj.length) : {};
@@ -6974,279 +4356,11 @@
                 return result;
             };
             _.observable.all = _.observable.map;
-        });
+        }
     },
     function (module, exports) {
         _.hasOOP = true;
-        _.deferTest('OOP', {
-            '$prototype / $extends': function () {
-                var Foo = $prototype({
-                    method: function () {
-                        return 'foo.method';
-                    },
-                    staticMethod: $static(function () {
-                        return 'Foo.staticMethod';
-                    }),
-                    property: $property(function () {
-                        return 'foo.property';
-                    }),
-                    staticProperty: $static($property(function () {
-                        return 'Foo.staticProperty';
-                    })),
-                    $static: {
-                        $property: {
-                            one: 1,
-                            two: 2,
-                            three: 3
-                        }
-                    },
-                    $property: {
-                        static42: $static(42),
-                        just42: 42,
-                        just42_too: function () {
-                            return 42;
-                        },
-                        fullBlown: {
-                            enumerable: false,
-                            configurable: true,
-                            get: function () {
-                                return 42;
-                            },
-                            set: function (x) {
-                                $stub;
-                            }
-                        }
-                    }
-                });
-                var Bar = $extends(Foo, $final({
-                    staticMethod: $static(function () {
-                        return 'Bar.staticMethod';
-                    }),
-                    method: function () {
-                        return 'bar.method';
-                    }
-                }));
-                var foo = new Foo();
-                var fuu = new Foo({
-                    method: function () {
-                        return 'fuu.method';
-                    }
-                });
-                var bar = new Bar({ hi: 'there' });
-                $assert(bar.hi === 'there');
-                $assert(fuu.method() === 'fuu.method');
-                $assert([
-                    foo.just42,
-                    bar.just42
-                ], [
-                    42,
-                    42
-                ]);
-                $assert([
-                    Foo.static42,
-                    Bar.static42
-                ], [
-                    42,
-                    undefined
-                ]);
-                $assert([
-                    foo.method(),
-                    bar.method()
-                ], [
-                    'foo.method',
-                    'bar.method'
-                ]);
-                $assert([
-                    Foo.staticMethod(),
-                    Bar.staticMethod()
-                ], [
-                    'Foo.staticMethod',
-                    'Bar.staticMethod'
-                ]);
-                $assert([
-                    foo.property,
-                    foo.staticProperty
-                ], [
-                    'foo.property',
-                    undefined
-                ]);
-                $assert([
-                    Foo.staticProperty,
-                    Foo.property
-                ], [
-                    'Foo.staticProperty',
-                    undefined
-                ]);
-                $assertThrows(function () {
-                    foo.just42 = 43;
-                }, _.matches({ message: 'cannot change just42 (as it\'s sealed to 42)' }));
-            },
-            '$final': function () {
-                $assertThrows(function () {
-                    var A = $prototype({
-                        constructor: $final(function () {
-                        })
-                    });
-                    var B = $extends(A, {
-                        constructor: function () {
-                        }
-                    });
-                }, _.matches({ message: 'Cannot override $final constructor' }));
-                $assertThrows(function () {
-                    var A = $prototype($final({}));
-                    var B = $extends(A);
-                }, _.matches({ message: 'Cannot derive from $final-marked prototype' }));
-            },
-            '$alias': function () {
-                var foo = new ($prototype({
-                    error: function () {
-                        return 'foo.error';
-                    },
-                    failure: $alias('error'),
-                    crash: $alias('error'),
-                    finalCrash: $final($alias('crash'))
-                }))();
-                var def = foo.constructor.$definition;
-                $assert(foo.finalCrash, foo.crash, foo.failure, foo.error);
-                $assert(def.finalCrash.$final);
-                $assertNot(def.crash.$final);
-                $assertNot(def.error.$final);
-                var size = new ($prototype({
-                    w: $alias($property('x')),
-                    h: $alias($property('y'))
-                }))();
-                $assert([
-                    size.x = 42,
-                    size.y = 24
-                ], [
-                    size.w,
-                    size.h
-                ], [
-                    42,
-                    24
-                ]);
-            },
-            '$constructor': function () {
-                $assertEveryCalledOnce(function (mkay) {
-                    var foo = new ($prototype({
-                        $constructor: function () {
-                            mkay();
-                        }
-                    }))();
-                });
-            },
-            'RTTI': function () {
-                var Foo = $prototype({ $static: { noop: _.noop } }), Bar = $extends(Foo);
-                var foo = new Foo(), bar = new Bar();
-                $assert(foo.constructor === Foo);
-                $assert(bar.constructor === Bar);
-                $assert(_.isTypeOf(Function, foo.constructor.noop));
-                $assert(_.isTypeOf(Tags, foo.constructor.$definition.noop));
-                $assert(Foo.isTypeOf(foo));
-                $assert(!Bar.isTypeOf(foo));
-                $assert(Bar.isTypeOf(bar));
-                $assert(Foo.isTypeOf(bar));
-                $assert(foo.isInstanceOf(Foo));
-                $assert(!foo.isInstanceOf(Bar));
-                $assert(bar.isInstanceOf(Bar));
-                $assert(bar.isInstanceOf(Foo));
-                $assert(_.isTypeOf_ES5(Bar, bar));
-                $assert(_.isTypeOf_ES5(Foo, bar));
-                $assert(_.isTypeOf_ES4(Bar, bar));
-                $assert(_.isTypeOf_ES4(Foo, bar));
-            },
-            'isConstructor': function () {
-                var Proto = $prototype(), dummy = function () {
-                    };
-                $assert($prototype.isConstructor(Proto), true);
-                $assert($prototype.isConstructor(dummy), false);
-                $assert($prototype.isConstructor(null), false);
-                $assert([
-                    Proto,
-                    dummy
-                ].map($prototype.isConstructor), [
-                    true,
-                    false
-                ]);
-            },
-            'inheritanceChain': function () {
-                var A = $prototype();
-                var B = $extends(A);
-                var C = $extends(B);
-                $assert($prototype.inheritanceChain(C), [
-                    C,
-                    B,
-                    A
-                ]);
-            },
-            'defines': function () {
-                var A = $prototype({
-                    toString: function () {
-                    }
-                });
-                var B = $extends(A);
-                var C = $prototype();
-                $assert([
-                    $prototype.defines(B, 'toString'),
-                    $prototype.defines(C, 'toString')
-                ], [
-                    true,
-                    false
-                ]);
-            },
-            'two-argument syntax of $prototype': function () {
-                var A = $prototype();
-                var B = $prototype(A, {});
-                $assert(B.$base === A.prototype);
-            },
-            'value contracts for arguments': function () {
-                var Proto = $prototype($testArguments({
-                    frobnicate: function (_777, _foo_bar_baz, unaffected) {
-                    },
-                    noMistake: function () {
-                    }
-                }));
-                var obj = new Proto();
-                $assertFails(function () {
-                    obj.frobnicate(999, 'not right');
-                });
-                obj.frobnicate(777, 'foo bar baz');
-                obj.noMistake();
-            },
-            '$membersByTag': function () {
-                var foo = $static($property(1)), bar = $property(2);
-                $assertMatches($prototype({
-                    foo: foo,
-                    bar: bar
-                }).$membersByTag, {
-                    'static': { 'foo': foo },
-                    'property': {
-                        'foo': foo,
-                        'bar': bar
-                    }
-                });
-            },
-            'tags on definition': function () {
-                $assertMatches($prototype($static($final({}))), {
-                    $static: true,
-                    $final: true
-                });
-            },
-            '$mixin': function () {
-                var Type = $prototype();
-                $mixin(Type, {
-                    twentyFour: $static($property(24)),
-                    fourtyTwo: $property(42)
-                });
-                $assert([
-                    Type.twentyFour,
-                    new Type().fourtyTwo
-                ], [
-                    24,
-                    42
-                ]);
-            }
-        }, function () {
+        {
             _([
                 'property',
                 'static',
@@ -7572,91 +4686,8 @@
                     }
                 }
             });
-        });
-        _.deferTest([
-            'OOP',
-            '$traits'
-        ], function () {
-            var Closeable = $trait({
-                close: function () {
-                }
-            });
-            var Movable = $trait({
-                move: function () {
-                }
-            });
-            var Enumerable = $trait({
-                each: function (iter) {
-                },
-                length: $property(function () {
-                    return 0;
-                })
-            });
-            var JustCloseable = $prototype({ $traits: [Closeable] });
-            var MovableEnumerable = $prototype({
-                $traits: [
-                    Movable,
-                    Enumerable
-                ],
-                move: function () {
-                }
-            });
-            var movableEnumerable = new MovableEnumerable();
-            $assert(movableEnumerable.move === MovableEnumerable.prototype.move);
-            $assertThrows(function () {
-                new Closeable();
-            }, _.matches({ message: 'Traits are not instantiable (what for?)' }));
-            $assertTypeMatches(movableEnumerable, {
-                move: 'function',
-                each: 'function',
-                length: 'number'
-            });
-            $assert([
-                movableEnumerable.isInstanceOf(Movable),
-                movableEnumerable.isInstanceOf(Enumerable),
-                movableEnumerable.isInstanceOf(Closeable)
-            ], [
-                true,
-                true,
-                false
-            ]);
-            $assert(Movable.isTypeOf(movableEnumerable));
-            $assert(Movable.isTraitOf(movableEnumerable));
-            $assert(MovableEnumerable.hasTrait(Enumerable));
-            $assertMatches(MovableEnumerable, {
-                $traits: [
-                    Movable,
-                    Enumerable
-                ]
-            });
-            $assertMatches(JustCloseable, { $traits: [Closeable] });
-            $assertCallOrder(function (t1_constructed, t2_constructed, proto_constructed) {
-                var T1, T2;
-                $assertNotCalled(function (not_now) {
-                    T1 = $trait({
-                        $constructor: function () {
-                            not_now();
-                            t1_constructed();
-                        }
-                    });
-                    T2 = $trait({
-                        $constructor: function () {
-                            not_now();
-                            t2_constructed();
-                        }
-                    });
-                });
-                var Proto = $prototype({
-                    $traits: [
-                        T1,
-                        T2
-                    ],
-                    $constructor: function () {
-                        proto_constructed();
-                    }
-                });
-            });
-        }, function () {
+        }
+        {
             _.isTraitOf = function (Trait, instance) {
                 var constructor = instance && instance.constructor;
                 return constructor && constructor.hasTrait && constructor.hasTrait(Trait) || false;
@@ -7672,7 +4703,7 @@
                 });
                 return constructor = $prototype.impl.compile(def, arguments.length > 1 ? arg1 : arg2);
             };
-        });
+        }
         $prototype.macro('$macroTags', function (def, value, name) {
             _.each($untag(value), function (v, k) {
                 _.defineTagKeyword(k);
@@ -7688,110 +4719,31 @@
             });
             return result;
         };
-        _.deferTest([
-            'OOP',
-            '$const'
-        ], function () {
-            var A = $prototype({
-                $const: {
-                    foo: 'foo',
-                    bar: 'bar'
-                },
-                qux: $const('qux'),
-                zap: $const('zap')
-            });
-            $assert([
-                A.foo,
-                A.bar,
-                A.qux,
-                A.zap
-            ], [
-                'foo',
-                'bar',
-                'qux',
-                'zap'
-            ]);
-            $assertThrows(function () {
-                A.foo = 'bar ';
-            });
-        }, function () {
+        {
             _.defineKeyword('const', function (x) {
                 return $static($property(x));
             });
-        });
-        _.deferTest([
-            'OOP',
-            '$callableAsFreeFunction'
-        ], function () {
-            var X = $prototype({
-                foo: $callableAsFreeFunction($property(function () {
-                    $assert(this._42, 42);
-                    return 42;
-                }))
-            });
-            x = new X({ _42: 42 });
-            $assert(x.foo, X.foo(x), 42);
-        }, function () {
+        }
+        {
             _.defineTagKeyword('callableAsFreeFunction');
             $prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
                 def.constructor[name] = $untag(value).asFreeFunction;
                 return def;
             });
-        });
-        _.deferTest([
-            'OOP',
-            '$callableAsMethod'
-        ], function () {
-            var X = $prototype({
-                foo: $callableAsMethod(function (this_, _42) {
-                    $assert(this_._42, _42, 42);
-                    return 42;
-                })
-            });
-            x = new X({ _42: 42 });
-            $assert(x.foo(42), X.foo(x, 42), 42);
-        }, function () {
+        }
+        {
             _.defineTagKeyword('callableAsMethod');
             $prototype.macroTag('callableAsMethod', function (def, value, name) {
                 def[name] = Tags.modify(value, _.asMethod);
                 def.constructor[name] = $untag(value);
                 return def;
             });
-        });
-        _.deferTest([
-            'OOP',
-            '$singleton'
-        ], function () {
-            $assertEveryCalledOnce(function (baseConstructor, derivedConstructor) {
-                var Base = $prototype({ method: _.constant(42) });
-                var Simple = $singleton({
-                    constructor: function () {
-                        baseConstructor();
-                    },
-                    method: function () {
-                        return 42;
-                    }
-                });
-                var Derived = $singleton(Base, {
-                    constructor: function () {
-                        derivedConstructor();
-                        Base.prototype.constructor.apply(this, arguments);
-                    }
-                });
-                $assert(Simple.method(), Derived.method(), 42);
-            });
-            var Outside = $singleton({
-                Inside: $prototype({
-                    foo: function () {
-                    }
-                })
-            });
-            $assertTypeMatches(new Outside.Inside().foo, 'function');
-        }, function () {
+        }
+        {
             $singleton = function (arg1, arg2) {
                 return new ($prototype.apply(null, arguments))();
             };
-        });
+        }
     },
     function (module, exports) {
         Math.clamp = _.clamp = function (n, min, max) {
@@ -8529,13 +5481,7 @@
         }));
     },
     function (module, exports) {
-        _.tests.parse = {
-            fileName: function () {
-                $assert(Parse.fileName('блабла'), 'блабла');
-                $assert(Parse.fileName('блабла.jpg'), 'блабла');
-                $assert(Parse.fileName('c:\\блабла/path/path2/блабла.jpg'), 'блабла');
-            }
-        };
+        ;
         Parse = {
             keyCodeAsString: function (key) {
                 return String.fromCharCode(96 <= key && key <= 105 ? key - 48 : key);
@@ -8595,40 +5541,7 @@
         };
     },
     function (module, exports) {
-        _.tests.concurrency = {
-            'scope': function (testDone) {
-                var releases = [], acquires = [], count = 10;
-                var method = $scope(function (release, id, then) {
-                    acquires.push(id);
-                    _.delay(function () {
-                        release(function () {
-                            releases.push(id);
-                            if (then)
-                                then();
-                        });
-                    }, 10);
-                });
-                method(42, function () {
-                    $assert(count + 1, acquires.length, releases.length);
-                    $assert(acquires, releases.reversed);
-                    testDone();
-                });
-                _.times(count, function () {
-                    method(_.random(1000));
-                });
-            },
-            'interlocked': function () {
-                var isNowRunning = false;
-                var op = _.interlocked(function (item, i) {
-                    $assert(!isNowRunning);
-                    isNowRunning = true;
-                    return __.delay(_.random(2)).then(function () {
-                        isNowRunning = false;
-                    });
-                });
-                return __.scatter(_.times(15, String.randomHex), op, { maxConcurrency: 10 });
-            }
-        };
+        ;
         Lock = $prototype({
             acquire: function (then) {
                 this.wait(this.$(function () {
@@ -8698,718 +5611,7 @@
         }
     },
     function (module, exports) {
-        _.tests.component = {
-            'constructor([cfg, ][then])': function () {
-                $assertNotCalled(function (mkay) {
-                    var Compo = $component({});
-                    $assertMatches(new Compo({ foo: 42 }), { foo: 42 });
-                });
-            },
-            'init': function () {
-                $assertEveryCalledOnce(function (mkay) {
-                    $singleton(Component, {
-                        init: function () {
-                            mkay();
-                        }
-                    });
-                });
-            },
-            'no constructor overriding': function () {
-                $assertThrows(function () {
-                    $singleton(Component, {
-                        constructor: function () {
-                        }
-                    });
-                });
-            },
-            'manual init()': function () {
-                $assertNotCalled(function (fail) {
-                    var Compo = $component({
-                        init: function () {
-                            fail();
-                        }
-                    });
-                    var compo = new Compo({ init: false });
-                    $assert(typeof compo.init, 'function');
-                });
-            },
-            'initialized (barrier)': function () {
-                var Compo = $component({
-                    init: function () {
-                    }
-                });
-                var compo = new Compo({ init: false });
-                $assert(!compo.initialized.already);
-                $assertEveryCalledOnce(function (mkay) {
-                    compo.initialized(function () {
-                        mkay();
-                    });
-                    compo.init();
-                });
-            },
-            'thiscall for methods': function () {
-                $assertEveryCalledOnce(function (prototypeMethod, instanceMethod) {
-                    var instance = null;
-                    var Compo = new $component({
-                        prototypeMethod: function () {
-                            $assert(this === instance);
-                            prototypeMethod();
-                        }
-                    });
-                    instance = new Compo({
-                        instanceMethod: function () {
-                            $assert(this === instance);
-                            instanceMethod();
-                        }
-                    });
-                    instance.prototypeMethod.call(null);
-                    instance.instanceMethod.call(null);
-                });
-            },
-            'pluggable init with $traits': function () {
-                var A, B, C, D;
-                var A = $trait({
-                    beforeInit: function () {
-                        A = true;
-                        return Promise.resolve();
-                    },
-                    afterInit: function () {
-                        B = true;
-                        return Promise.resolve();
-                    }
-                });
-                var B = $trait({
-                    beforeInit: function () {
-                        C = true;
-                    },
-                    afterInit: function () {
-                        D = true;
-                    }
-                });
-                var C = $component({
-                    $traits: [
-                        B,
-                        A
-                    ]
-                });
-                return new C().initialized.promise.then(function () {
-                    $assert(A, B, C, D, true);
-                });
-            },
-            '$defaults basic': function () {
-                var Compo = $component({ $defaults: { foo: 42 } });
-                $assert($untag(Compo.$definition.$defaults), { foo: 42 });
-                $assert(Compo.$defaults, { foo: 42 });
-                var Compo2 = $component({
-                    $traits: [$trait({ $defaults: { foo: 11 } })],
-                    $defaults: {}
-                });
-                $assert($untag(Compo2.$definition.$defaults), { foo: 11 });
-                $assert(Compo2.$defaults, { foo: 11 });
-            },
-            '$defaults': function () {
-                var Trait = $trait({
-                    $defaults: {
-                        pff: 'pff',
-                        inner: { fromTrait: 1 }
-                    }
-                });
-                var Base = $component({
-                    $defaults: {
-                        foo: 12,
-                        qux: 'override me',
-                        inner: { fromBase: 1 }
-                    }
-                });
-                var Derived = $extends(Base, {
-                    $traits: [Trait],
-                    $defaults: {
-                        bar: 34,
-                        qux: 'overriden',
-                        inner: { fromDerived: 1 }
-                    }
-                });
-                $assert(new Derived().inner !== new Derived().inner);
-                $assertMatches(new Derived({ pff: 'overriden from cfg' }), {
-                    pff: 'overriden from cfg',
-                    foo: 12,
-                    bar: 34,
-                    qux: 'overriden',
-                    inner: {
-                        fromTrait: 1,
-                        fromBase: 1,
-                        fromDerived: 1
-                    }
-                });
-            },
-            '$defaults cloning semantics': function () {
-                var set = new Set([
-                    1,
-                    2,
-                    3
-                ]);
-                var S = $component({
-                    $defaults: {
-                        foo: set,
-                        bar: new Set()
-                    }
-                });
-                var s = new S();
-                $assert(s.foo instanceof Set, s.bar instanceof Set, true);
-                $assert(s.foo !== set);
-            },
-            '$requires': function () {
-                var SomeType = $prototype();
-                var CompoThatRequires = $component({
-                    $requires: {
-                        foo: SomeType,
-                        ffu: {
-                            a: 'number',
-                            b: 'string'
-                        },
-                        bar: 'number',
-                        qux: ['number'],
-                        baz: _.not(_.isEmpty)
-                    }
-                });
-                var DerivedCompoThatRequiresMore = $extends(CompoThatRequires, { $requires: { more: 'string' } });
-                $assertFails(function () {
-                    new CompoThatRequires({ baz: {} });
-                });
-                $assertFails(function () {
-                    new DerivedCompoThatRequiresMore({ more: 'hey how about other requirements' });
-                });
-                new DerivedCompoThatRequiresMore({
-                    foo: new SomeType(),
-                    bar: 42,
-                    qux: [
-                        1,
-                        2,
-                        3
-                    ],
-                    more: 'blah blah',
-                    ffu: {
-                        a: 1,
-                        b: '2'
-                    },
-                    baz: 'blahblah'
-                });
-            },
-            '$bindable': function () {
-                $assertEveryCalledOnce(function (method, before, after) {
-                    var compo = $singleton(Component, {
-                        method: $bindable(function (x) {
-                            method();
-                            return 42;
-                        })
-                    });
-                    compo.method.onBefore(function (_5) {
-                        before();
-                        $assert(this === compo);
-                        $assert(_5, 5);
-                    });
-                    compo.method.onAfter(function (_5, _result) {
-                        after();
-                        $assert(this === compo);
-                        $assert(_5, 5);
-                        $assert(_result, 42);
-                    });
-                    $assert(compo.method(5), 42);
-                });
-            },
-            '$trigger': function () {
-                $assertEveryCalled(function (mkay__2) {
-                    var compo = $singleton(Component, { mouseMoved: $trigger() });
-                    compo.mouseMoved(function (x, y) {
-                        $assert([
-                            x,
-                            y
-                        ], [
-                            7,
-                            12
-                        ]);
-                        mkay__2();
-                    });
-                    compo.mouseMoved(7, 12);
-                    compo.mouseMoved(7, 12);
-                });
-            },
-            'init streams from config': function () {
-                $assertEveryCalled(function (atDefinition, atInit) {
-                    var Compo = $component({
-                        mouseMoved: $trigger(atDefinition),
-                        init: function () {
-                            this.mouseMoved();
-                        }
-                    });
-                    new Compo({ mouseMoved: atInit });
-                });
-            },
-            '$triggerOnce': function () {
-                var compo = $singleton(Component, { somthingHappened: $triggerOnce() });
-                $assertEveryCalled(function (first, second) {
-                    compo.somthingHappened(function (what) {
-                        $assert(what, 'somthin');
-                        first();
-                    });
-                    compo.somthingHappened(function (what) {
-                        $assert(what, 'somthin');
-                        second();
-                    });
-                    compo.somthingHappened('somthin');
-                });
-            },
-            '$barrier': function () {
-                $assertEveryCalled(function (early, lately) {
-                    var compo = $singleton(Component, { hasMessage: $barrier() });
-                    compo.hasMessage(function (_msg) {
-                        $assert(_msg, 'mkay');
-                        early();
-                    });
-                    compo.hasMessage('mkay');
-                    compo.hasMessage(function (_msg) {
-                        $assert(_msg, 'mkay');
-                        lately();
-                    });
-                });
-            },
-            '$observableProperty': function () {
-                $assertEveryCalled(function (fromConstructor, fromConfig, fromLateBoundListener, fromDefinition, fromListenerOnlyVariant) {
-                    var Compo = $component({
-                        color: $observableProperty(),
-                        smell: $observableProperty(),
-                        shape: $observableProperty('round', function (now) {
-                            $assert(now, 'round');
-                            fromDefinition();
-                        }),
-                        size: $observableProperty(function (x) {
-                            $assert(x, 42);
-                            fromListenerOnlyVariant();
-                        }),
-                        init: function () {
-                            this.colorChange(function (now, was) {
-                                if (was) {
-                                    fromConstructor();
-                                    $assert([
-                                        now,
-                                        was
-                                    ], [
-                                        'green',
-                                        'blue'
-                                    ]);
-                                }
-                            });
-                        }
-                    });
-                    var compo = new Compo({
-                        color: 'blue',
-                        size: 42,
-                        colorChange: function (now, was) {
-                            if (was) {
-                                fromConfig();
-                                $assert([
-                                    now,
-                                    was
-                                ], [
-                                    'green',
-                                    'blue'
-                                ]);
-                            }
-                        }
-                    });
-                    compo.smellChange(function (now, was) {
-                        fromLateBoundListener();
-                        $assert(compo.smell, now, 'bad');
-                        $assert(undefined, was);
-                    });
-                    compo.color = 'green';
-                    compo.smell = 'bad';
-                });
-            },
-            '$observableProperty (Prototype)': function () {
-                var Compo = $component({
-                    position: $observableProperty(Vec2.zero),
-                    init: function () {
-                        this.positionChange(function (v) {
-                            $assertTypeMatches(v, Vec2);
-                            $assert(v.y, 42);
-                        });
-                    }
-                });
-                var compo = new Compo({
-                    position: {
-                        x: 10,
-                        y: 42
-                    }
-                });
-                compo.position = {
-                    x: 20,
-                    y: 42
-                };
-            },
-            'binding to streams with traits': function () {
-                _.defineTagKeyword('dummy');
-                $assertEveryCalled(function (mkay1, mkay2) {
-                    var this_ = undefined;
-                    var Trait = $trait({ somethingHappened: $trigger() });
-                    var Other = $trait({
-                        somethingHappened: $dummy(function (_42) {
-                            $assert(this, this_);
-                            $assert(_42, 42);
-                            mkay1();
-                        })
-                    });
-                    var Compo = $component({
-                        $traits: [
-                            Trait,
-                            Other
-                        ],
-                        somethingHappened: function (_42) {
-                            $assert(this, this_);
-                            $assert(_42, 42);
-                            mkay2();
-                        }
-                    });
-                    this_ = new Compo();
-                    this_.somethingHappened(42);
-                });
-            },
-            'binding to bindables with traits': function () {
-                $assertCallOrder(function (beforeCalled, interceptCalled, bindableCalled, afterCalled) {
-                    var this_ = undefined;
-                    var Trait = $trait({
-                        doSomething: $bindable(function (x) {
-                            $assert(this, this_);
-                            bindableCalled();
-                        })
-                    });
-                    var Other = $trait({
-                        beforeDoSomething: function (_42) {
-                            $assert(this, this_);
-                            $assert(_42, 42);
-                            beforeCalled();
-                        },
-                        interceptDoSomething: function (_42, impl) {
-                            interceptCalled();
-                            $assert(this, this_);
-                            return impl(_42);
-                        }
-                    });
-                    var Compo = $component({
-                        $traits: [
-                            Trait,
-                            Other
-                        ],
-                        afterDoSomething: function (_42) {
-                            $assert(this, this_);
-                            $assert(_42, 42);
-                            afterCalled();
-                        }
-                    });
-                    this_ = new Compo();
-                    this_.doSomething(42);
-                });
-            },
-            'binding to observable properties with traits': function () {
-                $assertEveryCalled(function (one, two) {
-                    var this_ = undefined;
-                    var Trait = $trait({ someValue: $observableProperty(42) });
-                    var Other = $trait({
-                        someValue: function (_42) {
-                            one();
-                        }
-                    });
-                    var Compo = $component({
-                        $traits: [
-                            Trait,
-                            Other
-                        ],
-                        someValue: function (_42) {
-                            two();
-                        }
-                    });
-                    this_ = new Compo();
-                    $assert(_.isFunction(this_.someValueChange));
-                    this_.someValue = 33;
-                });
-            },
-            'hierarchy management': function () {
-                $assertEveryCalled(function (mkay__9) {
-                    var Compo = $extends(Component, {
-                        init: function () {
-                            mkay__9();
-                        },
-                        destroy: function () {
-                            mkay__9();
-                        }
-                    });
-                    var parent = new Compo().attach(new Compo().attach(new Compo()));
-                    var parrot = new Compo().attachTo(parent).attachTo(parent);
-                    $assert(parrot.attachedTo === parent);
-                    $assert(parrot.detach().attachedTo === undefined);
-                    var carrot = new Compo();
-                    parent.attach(carrot);
-                    parent.attach(carrot);
-                    parent.destroy();
-                });
-            },
-            'thiscall for streams': function () {
-                var compo = $singleton(Component, { trig: $trigger() });
-                compo.trig(function () {
-                    $assert(this === compo);
-                });
-                compo.trig.call({});
-            },
-            '$defaults can set $observableProperty': function () {
-                var compo = $singleton(Component, {
-                    twentyFour: $observableProperty(42),
-                    $defaults: { twentyFour: 24 }
-                });
-                $assertEveryCalledOnce(function (mkay) {
-                    compo.twentyFourChange(function (val) {
-                        $assert(val, 24);
-                        mkay();
-                    });
-                });
-            },
-            'defer init with $defaults': function () {
-                var compo = $singleton(Component, {
-                    $defaults: { init: false },
-                    init: function () {
-                    }
-                });
-                compo.init();
-            },
-            'stream members should be available at property setters when inited from config': function () {
-                var compo = new ($component({
-                    ready: $barrier(),
-                    value: $property({
-                        set: function (_42) {
-                            $assertTypeMatches(this.ready, 'function');
-                        }
-                    })
-                }))({ value: 42 });
-            },
-            'observableProperty.force (regression)': function () {
-                $assertEveryCalled(function (mkay__2) {
-                    var compo = $singleton(Component, { prop: $observableProperty() });
-                    compo.prop = 42;
-                    compo.propChange(function (value) {
-                        $assert(value, 42);
-                        $assert(this === compo);
-                        mkay__2();
-                    });
-                    compo.propChange.force();
-                });
-            },
-            'two-argument $observableProperty syntax': function () {
-                $assertEveryCalled(function (mkay) {
-                    var compo = $singleton(Component, {
-                        prop: $observableProperty(42, function (value) {
-                            mkay();
-                            if (compo) {
-                                $assert(this === compo);
-                                $assert(value === compo.prop);
-                            }
-                        })
-                    });
-                    compo.prop = 43;
-                });
-            },
-            'two-argument $observable': function () {
-                $assertEveryCalled(function (mkay) {
-                    $assert('foo', $singleton(Component, {
-                        foo: $observable('foo', function (x) {
-                            $assert(x, 'foo');
-                            mkay();
-                        })
-                    }).foo.value);
-                });
-            },
-            'destroyAll()': function () {
-                $assertEveryCalled(function (destroyed__2) {
-                    var Compo = $extends(Component, {
-                        destroy: function () {
-                            destroyed__2();
-                        }
-                    });
-                    var parent = new Compo().attach(new Compo()).attach(new Compo());
-                    $assert(parent.attached.length === 2);
-                    parent.destroyAll();
-                    parent.destroyAll();
-                    $assert(parent.attached.length === 0);
-                });
-            },
-            'random $nonce generation': function () {
-                var X = $prototype();
-                $assert(_.isString(X.$nonce));
-            },
-            '$macroTags for component-specific macros': function () {
-                var Trait = $trait({
-                    $macroTags: {
-                        add_2: function (def, fn, name) {
-                            return Tags.modify(fn, function (fn) {
-                                return fn.then(_.sum.$(2));
-                            });
-                        }
-                    }
-                });
-                var Base = $component({
-                    $macroTags: {
-                        add_20: function (def, fn, name) {
-                            return Tags.modify(fn, function (fn) {
-                                return fn.then(_.sum.$(20));
-                            });
-                        }
-                    }
-                });
-                var Compo = $extends(Base, {
-                    $traits: [Trait],
-                    $macroTags: {
-                        dummy: function () {
-                        }
-                    },
-                    testValue: $static($add_2($add_20(_.constant(20))))
-                });
-                $assert(42, Compo.testValue());
-                $assertMatches(_.keys(Compo.$macroTags), [
-                    'dummy',
-                    'add_2',
-                    'add_20'
-                ]);
-                _.each(_.keys(Compo.$macroTags), _.deleteKeyword);
-            },
-            '$raw for performance-critical methods (disables thiscall proxy)': function () {
-                var compo = new ($component({
-                    method: function (this_) {
-                        $assert(this_ === this);
-                    },
-                    rawMethod: $raw(function (this_) {
-                        $assert(this_ !== this);
-                    })
-                }))();
-                var method = compo.method;
-                method(compo);
-                var rawMethod = compo.rawMethod;
-                rawMethod(compo);
-            },
-            'two-way $observable binding': function () {
-                var Compo = $component({ x: $observable('foo') });
-                var x = _.observable('bar');
-                var compo = new Compo({ x: x });
-                $assert(compo.x !== x);
-                $assert(compo.x.value, x.value, 'bar');
-                compo.x(42);
-                $assert(x.value, 42);
-                x('lol');
-                $assert(compo.x.value, 'lol');
-                compo.destroy();
-                $assert(compo.x.queue, []);
-                compo.x('yo');
-                $assert(x.value, 'lol');
-                x('oy');
-                $assert(compo.x.value, 'yo');
-            },
-            'unbinding (simple)': function () {
-                var somethingHappened = _.trigger();
-                var compo = $singleton(Component, {
-                    fail: function () {
-                        $fail;
-                    }
-                });
-                somethingHappened(compo.fail);
-                compo.destroy();
-                somethingHappened();
-            },
-            '(regression) undefined was allowed as trait': function () {
-                $assertThrows(function () {
-                    var Compo = $component({ $traits: [undefined] });
-                }, { message: 'invalid $traits value' });
-            },
-            '(regression) undefined members fail': function () {
-                var Compo = $component({ yoba: undefined });
-                $assert('yoba' in Compo.prototype);
-            },
-            '(regression) $defaults with $traits fail': function () {
-                var Compo = $component({
-                    $traits: [$trait({ $defaults: { x: 1 } })],
-                    $defaults: {
-                        a: {},
-                        b: [],
-                        c: 0
-                    }
-                });
-                $assert(Compo.$defaults, {
-                    x: 1,
-                    a: {},
-                    b: [],
-                    c: 0
-                });
-            },
-            '(regression) $defaults with $traits fail #2': function () {
-                var Compo = $component({ $traits: [$trait({ $defaults: { x: 1 } })] });
-                $assert(Compo.$defaults, { x: 1 });
-            },
-            '(regression) method overriding broken': function () {
-                var Compo = $component({
-                    method: function () {
-                        $fail;
-                    }
-                });
-                var compo = new Compo({
-                    value: 42,
-                    method: function () {
-                        return this.value;
-                    }
-                });
-                $assert(compo.method(), 42);
-            },
-            '(regression) $observableProperty (false)': function () {
-                $assertEveryCalledOnce(function (mkay) {
-                    $singleton(Component, {
-                        foo: $observableProperty(false),
-                        init: function () {
-                            this.fooChange(mkay);
-                        }
-                    });
-                });
-            },
-            '(regression) was not able to define inner compos at singleton compos': function () {
-                var Foo = $singleton(Component, { InnerCompo: $component({ foo: $observableProperty() }) });
-                var Bar = $extends(Foo.InnerCompo, { bar: $observableProperty() });
-                var bar = new Bar();
-                $assertTypeMatches(bar, {
-                    fooChange: 'function',
-                    barChange: 'function'
-                });
-            },
-            '(regression) undefined at definition': function () {
-                $singleton(Component, { fail: undefined });
-            },
-            '(regression) properties were evaluated before init': function () {
-                $singleton(Component, {
-                    fail: $property(function () {
-                        $fail;
-                    })
-                });
-            },
-            '(regression) misinterpretation of definition': function () {
-                $singleton(Component, {
-                    get: function () {
-                        $fail;
-                    }
-                });
-            },
-            '(regression) alias incorrectly worked with destroy': function () {
-                var test = $singleton(Component, {
-                    destroy: function () {
-                        mkay();
-                    },
-                    close: $alias('destroy')
-                });
-                $assert(test.close, test.destroy);
-            }
-        };
+        ;
         _.defineKeyword('component', function (definition) {
             return $extends(Component, definition);
         });
@@ -10069,83 +6271,7 @@
         });
     },
     function (module, exports) {
-        _.tests.AOP = {
-            'basics': function () {
-                var callLog = [];
-                var Thing = $prototype($testArguments({
-                    create: function (_777) {
-                        callLog.push([
-                            this,
-                            'Thing.create'
-                        ]);
-                    },
-                    display: function (_foobar, _778) {
-                        callLog.push([
-                            this,
-                            'Thing.display'
-                        ]);
-                    },
-                    destroy: function () {
-                        callLog.push([
-                            this,
-                            'Thing.destroy'
-                        ]);
-                        return 456;
-                    }
-                }));
-                var NewFlavorOfThing = $aspect(Thing, $testArguments({
-                    beforeCreate: function (_777) {
-                        callLog.push([
-                            this,
-                            'NewFlavorOfThing.beforeCreate'
-                        ]);
-                    },
-                    display: function (_foo, _123, originalMethod) {
-                        callLog.push([
-                            this,
-                            'NewFlavorOfThing.display'
-                        ]);
-                        return originalMethod.call(this, _foo + 'bar', 778);
-                    },
-                    afterDestroy: function (_456) {
-                        callLog.push([
-                            this,
-                            'NewFlavorOfThing.afterDestroy'
-                        ]);
-                    }
-                }));
-                var demo = new Thing();
-                demo.create(777);
-                demo.display('foo', 123);
-                demo.destroy();
-                $assert(callLog, [
-                    [
-                        demo,
-                        'NewFlavorOfThing.beforeCreate'
-                    ],
-                    [
-                        demo,
-                        'Thing.create'
-                    ],
-                    [
-                        demo,
-                        'NewFlavorOfThing.display'
-                    ],
-                    [
-                        demo,
-                        'Thing.display'
-                    ],
-                    [
-                        demo,
-                        'Thing.destroy'
-                    ],
-                    [
-                        demo,
-                        'NewFlavorOfThing.afterDestroy'
-                    ]
-                ]);
-            }
-        };
+        ;
         (function () {
             var fnNameExpr = $r.expr('how', $r.text('before').or.text('after')).expr('name', $r.anything).$;
             var tryBind = function (target, methodName, bind, boundMethod) {
@@ -10179,251 +6305,7 @@
         }());
     },
     function (module, exports) {
-        _.tests['Promise+'] = {
-            promisify: function () {
-                var fs = {
-                    42: 42,
-                    dontTouchMe: function () {
-                        $assert(arguments.length === 0);
-                        return 42;
-                    },
-                    dontTouchMe2: function () {
-                        $assert(arguments.length === 0);
-                        return 42;
-                    },
-                    readFileSync: function () {
-                        $assert(arguments.length === 0);
-                        return 42;
-                    },
-                    readFile: function (path, callback) {
-                        $assert(this === fs);
-                        if (path) {
-                            callback(null, 'contents of ' + path);
-                        } else {
-                            callback('path empty');
-                        }
-                    }
-                };
-                fsAsync = Function.promisifyAll(fs, {
-                    except: _.endsWith.$$('Sync').or([
-                        'dontTouchMe',
-                        'dontTouchMe2'
-                    ].asSet.matches)
-                });
-                $assert(fsAsync.dontTouchMe(), fsAsync.dontTouchMe2(), fsAsync.readFileSync(), fsAsync['42'], 42);
-                return __.all([
-                    fsAsync.readFile(null).assertRejected('path empty'),
-                    fsAsync.readFile('foo').assert('contents of foo')
-                ]);
-            },
-            __: function () {
-                var adds = function (a, b) {
-                    return function (x, y) {
-                        return [
-                            x + a,
-                            y + b
-                        ];
-                    };
-                };
-                return [
-                    __(123).assert(123),
-                    __(Promise.resolve(123)).assert(123),
-                    __(function () {
-                        return 123;
-                    }).assert(123),
-                    __(function () {
-                        throw 123;
-                    }).assertRejected(123),
-                    __(adds('foo', 'bar'), 123, 456).assert([
-                        '123foo',
-                        '456bar'
-                    ])
-                ];
-            },
-            first: function () {
-                return [
-                    Promise.firstResolved([
-                        Promise.reject(123),
-                        Promise.resolve(456)
-                    ]).assert(456),
-                    Promise.firstResolved([
-                        Promise.reject(123),
-                        Promise.reject(456)
-                    ]).assertRejected(null),
-                    Promise.firstResolved([]).assertRejected(null)
-                ];
-            },
-            all: function () {
-                return [
-                    __.all([
-                        123,
-                        456
-                    ]).assert([
-                        123,
-                        456
-                    ]),
-                    __.all([
-                        _.constant(123),
-                        _.constant(456)
-                    ]).assert([
-                        123,
-                        456
-                    ]),
-                    __.all([
-                        Promise.resolve(123),
-                        Promise.resolve(456)
-                    ]).assert([
-                        123,
-                        456
-                    ])
-                ];
-            },
-            seq: function () {
-                $assert(__.seq(123), 123);
-                $assert(__.seq([
-                    123,
-                    333
-                ]), 333);
-                $assert(__.seq([
-                    123,
-                    _.constant(333)
-                ]), 333);
-                return [
-                    __.seq([
-                        Promise.resolve(123),
-                        Promise.resolve(333)
-                    ]).assert(333),
-                    __.seq([
-                        123,
-                        __.constant(333)
-                    ]).assert(333),
-                    __.seq([
-                        123,
-                        __.rejects('foo')
-                    ]).assertRejected('foo'),
-                    __.seq([
-                        123,
-                        __.delays(0),
-                        _.appends('bar')
-                    ]).assert('123bar')
-                ];
-            },
-            map: function () {
-                return [
-                    __.map(111, _.appends('bar')).assert('111bar'),
-                    __.map([222], _.appends('bar')).assert(['222bar']),
-                    __.map(__(333), _.appends('bar')).assert('333bar'),
-                    __.map({ foo: 444 }, _.appends('bar')).assert({ foo: '444bar' }),
-                    __.map({ foo: 555 }, __.constant('bar')).assert({ foo: 'bar' }),
-                    __.map([
-                        'a',
-                        'b',
-                        'c',
-                        'd',
-                        'e'
-                    ], function (x, i) {
-                        return Promise.resolve([
-                            i,
-                            x
-                        ]).delay(10 - i);
-                    }).assert([
-                        [
-                            0,
-                            'a'
-                        ],
-                        [
-                            1,
-                            'b'
-                        ],
-                        [
-                            2,
-                            'c'
-                        ],
-                        [
-                            3,
-                            'd'
-                        ],
-                        [
-                            4,
-                            'e'
-                        ]
-                    ])
-                ];
-            },
-            filter: function () {
-                return [
-                    __.filter(123, _.constant(456)).assert(456),
-                    __.filter([
-                        'foo',
-                        456
-                    ], _.isString).assert(['foo']),
-                    __.filter([
-                        'foo',
-                        456
-                    ], __.constant('baz')).assert([
-                        'baz',
-                        'baz'
-                    ]),
-                    __.filter({
-                        foo: 123,
-                        bar: '456'
-                    }, _.isNumber).assert({ foo: 123 })
-                ];
-            },
-            each: function () {
-                var pairs = function (input) {
-                    var pairs = [];
-                    return __.each(input, function (x, i) {
-                        pairs.push([
-                            x,
-                            i
-                        ]);
-                    }).then(_.constant(pairs));
-                };
-                return [
-                    pairs().assert([]),
-                    pairs(undefined).assert([]),
-                    pairs(42).assert([[
-                            42,
-                            undefined
-                        ]]),
-                    pairs([
-                        42,
-                        48
-                    ]).assert([
-                        [
-                            42,
-                            0
-                        ],
-                        [
-                            48,
-                            1
-                        ]
-                    ]),
-                    pairs({
-                        0: 42,
-                        1: 48
-                    }).assert([
-                        [
-                            42,
-                            '0'
-                        ],
-                        [
-                            48,
-                            '1'
-                        ]
-                    ]),
-                    __.each([
-                        1,
-                        2
-                    ], function (x, i) {
-                        if (i > 0)
-                            $fail;
-                        return Promise.reject('foo');
-                    }).assertRejected('foo')
-                ];
-            }
-        };
+        ;
         TimeoutError = $extends(Error, { message: 'timeout expired' });
         __ = Promise.eval = function (x) {
             var this_ = this, args = _.rest(arguments);
@@ -10583,27 +6465,7 @@
                 });
             }
         });
-        _.deferTest([
-            'Promise+',
-            '_.scatter with pooling'
-        ], function () {
-            var data = _.times(21, function (i) {
-                return 'item_' + i;
-            });
-            var numItems = 0;
-            var processedItems = [];
-            var op = function (item, i) {
-                numItems++;
-                $assert(!processedItems.contains(item));
-                return __.delay(_.random(2)).then(function () {
-                    processedItems.push(item);
-                    return item;
-                });
-            };
-            return __.scatter(data, op, { maxConcurrency: 5 }).then(function () {
-                $assert(_.difference(data, processedItems).isEmpty);
-            });
-        }, function () {
+        (function () {
             var TaskPool = $prototype({
                 constructor: function (cfg) {
                     this.maxTime = cfg && cfg.maxTime;
@@ -10660,7 +6522,7 @@
                     }
                 });
             };
-        });
+        }());
         __.map = function (x, fn, cfg) {
             return __.scatter(x, function (v, k, x) {
                 return __.then(fn.$(v, k, x), function (x) {
@@ -10738,94 +6600,7 @@
     },
     function (module, exports) {
         'use strict';
-        _.tests['Channel'] = {
-            'is promise': () => {
-                $assert(new Channel() instanceof Promise);
-            },
-            'resolve from constructor + then + chanining': done => {
-                new Channel(resolve => {
-                    resolve(123);
-                }).then(x => {
-                    $assert(x, 123);
-                    return 456;
-                }, () => {
-                    $fail;
-                }).then(y => {
-                    $assert(y, 456);
-                    done();
-                });
-            },
-            'reject from constructor': done => {
-                new Channel((resolve, reject) => {
-                    reject(123);
-                }).then(() => {
-                    $fail;
-                }, x => {
-                    $assert(x, 123);
-                    done();
-                });
-            },
-            'throw from constructor + .catch + chanining': done => {
-                new Channel((resolve, reject) => {
-                    throw 'foo';
-                }).then(() => {
-                    $fail;
-                }).catch(x => {
-                    $assert(x, 'foo');
-                    return 'bar';
-                }).then(y => {
-                    $assert(y, 'bar');
-                    done();
-                }, () => {
-                    $fail;
-                });
-            },
-            'throw from .then': done => {
-                new Channel(123).then(x => {
-                    throw x + 1;
-                }).catch(x => {
-                    $assert(x, 124);
-                    done();
-                });
-            },
-            'pending state': () => {
-                $assert('pending', new Channel().then(() => $fail).state);
-            },
-            'new Channel (const)': () => new Channel(123).assert(123),
-            'recognized by tests as Promise': () => Channel.resolve(123).assert(123),
-            'accepted by Promise.all': () => Promise.all([
-                Channel.resolve(123).assert(123),
-                Channel.reject(456).assertRejected(456)
-            ]).assert([
-                123,
-                456
-            ]),
-            'returning channel from then + .resolve': () => {
-                var x = Channel.resolve(123), y = undefined, calls = [];
-                x.then(() => y = new Channel(456)).then(x => calls.push(x));
-                y.resolve(789);
-                $assert(calls, [
-                    456,
-                    789
-                ]);
-            },
-            '$channel for $prototype': () => {
-                var Model = $prototype({ numPersons: $channel() });
-                var View = $prototype({ label: $channel() });
-                $assert($channel.is(Model.$definition.numPersons));
-                var model = new Model({ numPersons: 10 }), view = new View();
-                $assert(model.numPersons.value, 10);
-                $assert(view.label.state, 'pending');
-                view.label = model.numPersons.then(x => x + ' persons');
-                $assert(view.label !== model.numPersons);
-                $assert(view.label.value, '10 persons');
-                model.numPersons = 11;
-                $assert(view.label.value, '11 persons');
-            },
-            '$channel(const)': () => {
-                $assert($singleton({ count: $channel(7) }).count.value, 7);
-            }
-        };
+        ;
         $global.Channel = $extends(Promise, {
             constructor: function (fn, transducers, before) {
                 this.after = [];
@@ -11511,100 +7286,7 @@
         }());
     },
     function (module, exports) {
-        _.tests['DOMReference + DOMEvents'] = {
-            'DOMReference + DOMEvents basics': function () {
-                $assertEveryCalled(function (changeCalled, reactToFocusEventsCalled, reactToWindowResizeCalled, domReadyCalled) {
-                    var textarea = new ($component({
-                        $traits: [
-                            DOMReference,
-                            DOMEvents
-                        ],
-                        init: function () {
-                            this.domReady(N.textarea.insertMeAfter(document.body.lastChild));
-                        },
-                        change: $on(function (e) {
-                            changeCalled();
-                        }),
-                        shouldNotCall: $on('input', function () {
-                            $fail;
-                        }),
-                        reactToFocusEvents: $on('focus blur', function (e) {
-                            reactToFocusEventsCalled();
-                        }),
-                        reactToWindowResize: $on({
-                            what: 'resize',
-                            target: window
-                        }, function () {
-                            reactToWindowResizeCalled();
-                        })
-                    }))();
-                    var dom = textarea.dom;
-                    $assert(textarea.dom instanceof Node);
-                    textarea.domReady(function (dom) {
-                        $assert(dom instanceof Node);
-                        domReadyCalled();
-                    });
-                    textarea.dispatchEvent('change');
-                    textarea.dispatchEvent('blur');
-                    var e = document.createEvent('Event');
-                    e.initEvent('resize', true, true);
-                    window.dispatchEvent(e);
-                    $assert(textarea.constructor.DOMEventListeners, [
-                        {
-                            e: 'change',
-                            fn: 'change'
-                        },
-                        {
-                            e: 'input',
-                            fn: 'shouldNotCall'
-                        },
-                        {
-                            e: 'focus',
-                            fn: 'reactToFocusEvents'
-                        },
-                        {
-                            e: 'blur',
-                            fn: 'reactToFocusEvents'
-                        },
-                        {
-                            e: 'resize',
-                            fn: 'reactToWindowResize',
-                            target: window
-                        }
-                    ]);
-                    textarea.destroy();
-                    textarea.dispatchEvent('input');
-                    $assert(!dom.isAttachedToDocument);
-                    $assert(textarea.dom, undefined);
-                });
-            },
-            'Blocking event propagation in $traits with e.stopImmediatePropagation': function () {
-                $assertEveryCalled(function (blockChangeEventCalled) {
-                    var textarea = new ($component({
-                        $traits: [
-                            DOMReference,
-                            DOMEvents,
-                            $trait({
-                                blockChangeEvent: $on('change', function (e) {
-                                    blockChangeEventCalled();
-                                    e.stopImmediatePropagation();
-                                })
-                            }),
-                            $trait({
-                                shouldNotCall: $on('change', function (e) {
-                                    $fail;
-                                })
-                            })
-                        ],
-                        init: function () {
-                            this.domReady(N.textarea.insertMeAfter(document.body.lastChild));
-                        }
-                    }))();
-                    textarea.dispatchEvent('change');
-                    textarea.destroy();
-                });
-            }
-        };
+        ;
         DOMReference = $trait({
             domReady: $barrier(function (dom) {
                 this.dom = dom;
@@ -11821,214 +7503,7 @@
                 }
             }
         });
-        _.deferTest('assert.js bootstrap', function () {
-            $assert(true);
-            $assert(_.assert === _.assertions.assert);
-            $assertNot(false);
-            $assertNot(5);
-            $assert(2 + 2, 2 * 2, 4);
-            $assert({
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            }, {
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            });
-            $assert({
-                foo: { bar: 1 },
-                baz: 2
-            }, {
-                baz: 2,
-                foo: { bar: 1 }
-            });
-            $assertNot(2 + 2, 5);
-            $assertMatches({
-                foo: 1,
-                bar: 2
-            }, { foo: 1 });
-            if (_.hasStdlib) {
-                $assertMatches({
-                    foo: [
-                        1,
-                        2
-                    ],
-                    bar: 3
-                }, { foo: [1] });
-            }
-            if (_.hasStdlib) {
-                $assertMatches('123', /[0-9]+/);
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches(42, 'number');
-                $assertFails(function () {
-                    $assertTypeMatches('foo', 'number');
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches([
-                    1,
-                    2
-                ], []);
-                $assertTypeMatches([], []);
-                $assertTypeMatches([
-                    1,
-                    2,
-                    3
-                ], ['number']);
-                $assertTypeMatches([], ['number']);
-                $assertFails(function () {
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        3
-                    ], ['string']);
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        'foo'
-                    ], ['number']);
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches({
-                    foo: 42,
-                    bar: {
-                        even: 4,
-                        many: [
-                            'foo',
-                            'bar'
-                        ]
-                    }
-                }, {
-                    foo: 'number',
-                    qux: 'undefined',
-                    bar: {
-                        even: function (n) {
-                            return n % 2 === 0;
-                        },
-                        many: ['string']
-                    }
-                });
-            }
-            if (_.hasOOP) {
-                var Foo = $prototype(), Bar = $prototype();
-                $assertTypeMatches({
-                    foo: new Foo(),
-                    bar: new Bar()
-                }, {
-                    foo: Foo,
-                    bar: Bar
-                });
-                $assertFails(function () {
-                    $assertTypeMatches(new Bar(), Foo);
-                });
-            }
-            ;
-            if (_.hasStdlib) {
-                var testF = function (_777, _foo_bar_baz, notInvolved) {
-                    $assertArguments(arguments);
-                };
-                testF(777, 'foo bar baz');
-                $assertFails(function () {
-                    testF(777, 42);
-                });
-            }
-            $assertThrows(function () {
-                throw 42;
-            });
-            $assertNotThrows(function () {
-            });
-            $assertThrows(function () {
-                throw 42;
-            }, 42);
-            $assertThrows(function () {
-                throw new Error('42');
-            }, _.matches({ message: '42' }));
-            $assertFails(function () {
-                $assertThrows(function () {
-                    throw 42;
-                }, 24);
-                $assertThrows(function () {
-                    throw new Error('42');
-                }, _.matches({ message: '24' }));
-            });
-            $assertEveryCalled(function (a, b, c) {
-                a();
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalledOnce(function (a, b, c) {
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalled(function (x__3) {
-                x__3();
-                x__3();
-                x__3();
-            });
-            if (_.hasStdlib) {
-                $assertCalledWithArguments([
-                    'foo',
-                    [
-                        'foo',
-                        'bar'
-                    ]
-                ], function (fn) {
-                    fn('foo');
-                    fn('foo', 'bar');
-                });
-            }
-            $assertCPS(function (then) {
-                then('foo', 'bar');
-            }, [
-                'foo',
-                'bar'
-            ]);
-            $assertCPS(function (then) {
-                then('foo');
-            }, 'foo');
-            $assertCPS(function (then) {
-                then();
-            });
-            $assertFails(function () {
-                $fail;
-                $stub;
-                $assert('not true');
-                $assert({
-                    foo: 1,
-                    bar: 2
-                }, { foo: 1 });
-                $assert([
-                    1,
-                    2,
-                    3,
-                    4
-                ], [
-                    1,
-                    2,
-                    3
-                ]);
-                $assert(['foo'], {
-                    0: 'foo',
-                    length: 1
-                });
-                $assertFails(function () {
-                });
-            });
-            if ($assert === _.assertions.assert) {
-                $assertThrows(function () {
-                    $fail;
-                });
-            }
-        }, function () {
+        (function () {
             var assertImpl = function (positive) {
                 return function (__) {
                     var args = [].splice.call(arguments, 0);
@@ -12237,7 +7712,7 @@
                 $global['$' + k] = 1;
             }
             $assert;
-        });
+        }());
     },
     function (module, exports, __webpack_require__) {
         (function () {
@@ -12302,46 +7777,11 @@
     },
     function (module, exports) {
         var process = module.exports = {};
-        var cachedSetTimeout;
-        var cachedClearTimeout;
-        (function () {
-            try {
-                cachedSetTimeout = setTimeout;
-            } catch (e) {
-                cachedSetTimeout = function () {
-                    throw new Error('setTimeout is not defined');
-                };
-            }
-            try {
-                cachedClearTimeout = clearTimeout;
-            } catch (e) {
-                cachedClearTimeout = function () {
-                    throw new Error('clearTimeout is not defined');
-                };
-            }
-        }());
-        function runTimeout(fun) {
-            if (cachedSetTimeout === setTimeout) {
-                return setTimeout(fun, 0);
-            } else {
-                return cachedSetTimeout.call(null, fun, 0);
-            }
-        }
-        function runClearTimeout(marker) {
-            if (cachedClearTimeout === clearTimeout) {
-                clearTimeout(marker);
-            } else {
-                cachedClearTimeout.call(null, marker);
-            }
-        }
         var queue = [];
         var draining = false;
         var currentQueue;
         var queueIndex = -1;
         function cleanUpNextTick() {
-            if (!draining || !currentQueue) {
-                return;
-            }
             draining = false;
             if (currentQueue.length) {
                 queue = currentQueue.concat(queue);
@@ -12356,7 +7796,7 @@
             if (draining) {
                 return;
             }
-            var timeout = runTimeout(cleanUpNextTick);
+            var timeout = setTimeout(cleanUpNextTick);
             draining = true;
             var len = queue.length;
             while (len) {
@@ -12372,7 +7812,7 @@
             }
             currentQueue = null;
             draining = false;
-            runClearTimeout(timeout);
+            clearTimeout(timeout);
         }
         process.nextTick = function (fun) {
             var args = new Array(arguments.length - 1);
@@ -12383,7 +7823,7 @@
             }
             queue.push(new Item(fun, args));
             if (queue.length === 1 && !draining) {
-                runTimeout(drainQueue);
+                setTimeout(drainQueue, 0);
             }
         };
         function Item(fun, array) {
@@ -12811,106 +8251,7 @@
     },
     function (module, exports) {
         _.hasLog = true;
-        _.tests.log = {
-            basic: function () {
-                log('log (x)');
-                log.green('log.green');
-                log.boldGreen('log.boldGreen');
-                log.darkGreen('log.darkGreen');
-                log.blue('log.blue');
-                log.boldBlue('log.boldBlue');
-                log.darkBlue('log.darkBlue');
-                log.orange('log.orange');
-                log.boldOrange('log.boldOrange');
-                log.darkOrange('log.darkOrange');
-                log.red('log.red');
-                log.boldRed('log.boldRed');
-                log.darkRed('log.darkRed');
-                log.pink('log.pink');
-                log.boldPink('log.boldPink');
-                log.darkPink('log.darkPink');
-                log.margin();
-                log.margin();
-                log.bright('log.bright');
-                log.dark('log.dark');
-                log.margin();
-                log.success('log.success');
-                log.ok('log.ok');
-                log.g('log.g');
-                log.gg('log.gg');
-                log.info('log.info');
-                log.i('log.i');
-                log.ii('log.ii');
-                log.warning('log.warning');
-                log.warn('log.warn');
-                log.w('log.w');
-                log.ww('log.ww');
-                log.error('log.error');
-                log.e('log.e');
-                log.ee('log.ee');
-                $assert(log('log (x) === x'), 'log (x) === x');
-                log.info(log.stackOffset(2), 'log.info (log.config ({ stackOffset: 2 }), ...)');
-                log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
-                log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
-                log.write(log.boldLine);
-                log.write(log.thinLine);
-                log.write(log.line);
-                log.write(log.indent(1), [
-                    'You can set indentation',
-                    'that is nicely handled',
-                    'in case of multiline text'
-                ].join('\n'));
-                log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
-                log.orange(log.config({
-                    indent: 2,
-                    table: true
-                }), [
-                    {
-                        field: 'line',
-                        matches: false,
-                        valueType: 'string',
-                        contractType: 'number'
-                    },
-                    {
-                        field: 'column',
-                        matches: true,
-                        valueType: 'string',
-                        contractType: 'number'
-                    }
-                ]);
-                log.write('\nObject:', {
-                    foo: 1,
-                    bar: 2,
-                    qux: 3
-                });
-                log.write('Array:', [
-                    1,
-                    2,
-                    3
-                ]);
-                log.write('Function:', _.identity);
-                log.write('Complex object:', {
-                    foo: 1,
-                    bar: {
-                        qux: [
-                            1,
-                            2,
-                            3
-                        ],
-                        garply: _.identity
-                    }
-                }, '\n\n');
-                log.withConfig(log.indent(1), function () {
-                    log.pink('Config stack + scopes + higher order API test:');
-                    _.each([
-                        5,
-                        6,
-                        7
-                    ], logs.pink(log.indent(1), 'item = ', log.color.blue));
-                });
-                $assert(log(42), 42);
-            }
-        };
+        ;
         _.extend(log = function () {
             return log.write.apply(this, [log.config({
                     location: true,
@@ -13401,33 +8742,7 @@
     function (module, exports) {
         _.defineTagKeyword('shouldFail');
         _.defineTagKeyword('async');
-        _.tests.Testosterone = {
-            'async': function (done) {
-                _.delay(function () {
-                    done();
-                });
-            },
-            '$tests': function () {
-                DummyPrototypeWithTest = $prototype({
-                    $test: function () {
-                    }
-                });
-                DummyPrototypeWithTests = $prototype({
-                    $tests: {
-                        dummy: function () {
-                        }
-                    }
-                });
-                $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
-                $assertThrows(function () {
-                    DummyPrototypeWithTests.$tests = 42;
-                });
-                $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [
-                    DummyPrototypeWithTest.$tests,
-                    DummyPrototypeWithTests.$tests
-                ]);
-            }
-        };
+        ;
         _.defineTagKeyword('assertion');
         Testosterone = $singleton({
             prototypeTests: [],

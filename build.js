@@ -63,89 +63,68 @@ BuildApp = $singleton (Component, {
 
     stripCommentsAndTests: function (src, name, path) { log.hint ('Stripping tests...')
 
-        var testExpr = function (fnName) {
-            return { expression: {
-                            callee:    {
-                                object:   { name: "_"  },
-                                property: { name: fnName }  } } } }
+        var testExpr = fnName => { return { expression: {
+                                                callee:    {
+                                                    object:   { name: "_" },
+                                                    property: { name: fnName } } } } },
 
-        var matchesTestsDefExpr = _.matches ({ expression:  {
+            matchesTestsDefExpr = _.matches ({ expression:  {
                                                     operator: "=",
                                                     left:     {
                                                         object:   {
                                                             object:   { name: "_"  },
-                                                            property: { name: "tests"  }  }  } } })
+                                                            property: { name: "tests"  }  }  } } }),
 
-        var matchesTestsDefExpr2 = _.matches ({ expression:  {
+            matchesTestsDefExpr2 = _.matches ({ expression:  {
                                                     operator: "=",
                                                     left:     {
                                                         object:   {
                                                             object:   { object:   { name: "_"  },
                                                                         property: { name: "tests"  } },
-                                                            property: {}  }  } } })
+                                                            property: {}  }  } } }),
 
-        var matchesTest = _.matches (testExpr ('deferTest')).or (
-                          _.matches (testExpr ('withTest')))
+            matchesTest = _.matches (testExpr ('deferTest')).or (
+                          _.matches (testExpr ('withTest'))),
 
-        var matchesHasModuleEqualsTrue = _.matches ({
-            expression: {
-                operator: "=",
-                left:     {
-                    object:   {
-                        name: "_"  },
-                    property: { }  },
-                right:    {
-                    value: true, raw:   "true"  }  }  })
+            hasVarDeclarations = body => (_.find (body, _.matches ({ type: 'VariableDeclaration' })) || false)
 
-        var hasModules = {}
+        var sourceAST = esprima.parse (src, { raw: true, tokens: true, range: true, loc: true })
 
-        var matchesIfHasModule = _.matches ({
-            type:       "IfStatement",
-            test:       {
-                object:   {
-                    name: "_"  },
-                property: {
-                    name: /^has.+/  }  } })
+        _.each (sourceAST.body[0].expression.arguments[0].elements, scope => {
 
-        var hasVarDeclarations = function (body) {
-            return _.find (body, _.matches ({ type: 'VariableDeclaration' })) || false }
+            scope.body.body = _.map (scope.body.body, expr => {
 
-        var stripped = {
-            type: 'Program',
-            body: _.flatten (_.filter2 (esprima.parse (src, { raw: true, tokens: true, range: true }).body,
-                function (expr) {
+            /*  _.withTest or _.deferTest   */
 
-                    if (matchesHasModuleEqualsTrue (expr)) { var module = expr.expression.left.property.name
-                        log.write ('+', module.match (/^has(.+)/)[1])
-                        hasModules[module] = true
-                        return true }
+                if (matchesTestsDefExpr  (expr) ||
+                    matchesTestsDefExpr2 (expr)) { return { "type": "EmptyStatement" } }
 
-                    else if (matchesIfHasModule (expr)) { return hasModules[expr.test.property.name] ? expr : false }
+            /*  _.tests.foo = { ... } or _.tests['foo'] = { ... }    */
 
-                    else if (matchesTestsDefExpr (expr) ||
-                             matchesTestsDefExpr2 (expr)) { return false }
+                else if (matchesTest (expr)) {
 
-                    else if (matchesTest (expr)) {
+                    var fn = expr.expression.arguments[2]
 
-                        var fn = expr.expression.arguments[2]
-
-                        if (hasVarDeclarations (fn.body.body)) {
-                            return {
-                                type: "ExpressionStatement",
-                                expression: { type: "CallExpression", callee: fn, arguments: [] }  } }
-                        else {
-                            return fn.body.body } }
+                    if (hasVarDeclarations (fn.body.body)) {
+                        return {
+                            type: "ExpressionStatement",
+                            expression: { type: "CallExpression", callee: fn, arguments: [] }  } }
 
                     else {
-                        return true } })) }
+                        return fn.body } }
 
-        var output = escodegen.generate (stripped)
+                else {
+                    return expr } }) })
+
+        var output = escodegen.generate (sourceAST, { sourceMap: true, sourceMapWithCode: true })
 
         if (path) {
             this.writeCompiled (name + '.stripped.js', path,
-                '/*    AUTO GENERATED from ' + name + '.js (stripped unit tests and comments) */\n\n' + output) }
+                '/*    AUTO GENERATED from ' + name + '.js (stripped unit tests and comments) */\n\n' + output.code)
 
-        return output },
+            /*this.writeCompiled (name + '.stripped.js.map', path, output.map.toString ())*/  }
+
+        return output.code },
 
     compileWithGoogle: function (src) { log.info ('Calling Google Closure compiler...')
 

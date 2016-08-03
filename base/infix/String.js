@@ -93,9 +93,22 @@ _.deferTest ('String extensions', function () {
     $assert ('foo'.pluck ([    { foo: 10 },    { foo: 11 } ]), [    10,    11 ])
     $assert ('foo'.pluck ({ a: { foo: 10 }, b: { foo: 11 } }), { a: 10, b: 11 })
 
+    $assert ('foo/'.concatPath ('/bar'),
+             'foo' .concatPath ('/bar'),
+             'foo/'.concatPath ( 'bar'),
+             'foo' .concatPath ( 'bar'), 'foo/bar')
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
+
+    concatPath: function (a, b) {
+
+                    var a_endsWithSlash = (a[a.length - 1] === '/')
+                    var b_startsWithSlash = (b[0] === '/')
+
+                    return a + ((a_endsWithSlash || b_startsWithSlash) ? '' : '/') +
+                               ((a_endsWithSlash && b_startsWithSlash) ? b.substring (1) : b) },
 
     pluck: function (s, arr) {
                 return _.pluck2 (arr, s) },
