@@ -21,7 +21,7 @@
 }([
     function (module, exports, __webpack_require__) {
         $uselessFile = 'useless.client.js';
-        __webpack_require__(1);
+        _ = __webpack_require__(1);
         _ = function () {
             _.mixin({
                 zipWith: function (rows, zippo) {

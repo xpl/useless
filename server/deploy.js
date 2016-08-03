@@ -17,7 +17,7 @@ var fs              = require ('fs'),
 
     /*  Self deployment protocol
      */
-    beforeInit: function () { return __.map (this.buildScripts, this.buildScript) } })
+    beforeInit: function () { this.buildScripts.each (this.buildScript) } })
 
 
 

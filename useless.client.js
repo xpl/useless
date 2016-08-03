@@ -6,7 +6,7 @@ $uselessFile = 'useless.client.js'
 /* -------------------------------------------------------------------
    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-   require ('underscore')
+_ = require ('underscore')
 
 /*  Bootstrap code (couple of absolutely urgent fixes to underscore.js)
     ======================================================================== */

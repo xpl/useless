@@ -6,14 +6,7 @@ $uselessFile = 'useless.js'
 /* -------------------------------------------------------------------
    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-
-/*  As we do not run macro processor on server scripts, $include reduces to
-    built-in require (if running in Node.js environment)
-    ======================================================================== */
-
-if (typeof require !== 'undefined') {
-    _ = require ('underscore')
-    $include = require }
+_ = require ('underscore')
 
 
 /*  Bootstrap code (couple of absolutely urgent fixes to underscore.js)
@@ -40,94 +33,94 @@ _ = (function () {
 /*  Third party (free-licensed)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-    $include ('./base/3rd/Base64')        // Base64 encoder/decoder
+    require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
+    require ('./base/3rd/Base64')        // Base64 encoder/decoder
 
 
 /*  Basics of basics
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/tier0/platform')    // platform abstraction layer
-    $include ('./base/tier0/assert')      // $assert syntax
-    $include ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)
-    $include ('./base/tier0/function')    // function-centric utilities
-    $include ('./base/tier0/busybox')     // a vocabulary for functional expressions that process real stuff
-    $include ('./base/tier0/type')        // type system extensions
-    $include ('./base/tier0/stdlib')      // consider it as underscore 2.0
-    $include ('./base/tier0/properties')  // properties 2.0
-    $include ('./base/tier0/keywords')    // metaprogramming utility
-    $include ('./base/tier0/typeMatch')   // advanced type system extensions
-    $include ('./base/tier0/stringify')   // configurable object printer
-    $include ('./base/tier0/squash')      // dependency list / tree squashing algorithms
+    require ('./base/tier0/platform')    // platform abstraction layer
+    require ('./base/tier0/assert')      // $assert syntax
+    require ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)
+    require ('./base/tier0/function')    // function-centric utilities
+    require ('./base/tier0/busybox')     // a vocabulary for functional expressions that process real stuff
+    require ('./base/tier0/type')        // type system extensions
+    require ('./base/tier0/stdlib')      // consider it as underscore 2.0
+    require ('./base/tier0/properties')  // properties 2.0
+    require ('./base/tier0/keywords')    // metaprogramming utility
+    require ('./base/tier0/typeMatch')   // advanced type system extensions
+    require ('./base/tier0/stringify')   // configurable object printer
+    require ('./base/tier0/squash')      // dependency list / tree squashing algorithms
 
 
 /*  Delivers continuation-passing style notation to various common things
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/CPS')
+    require ('./base/CPS')
 
 
 /*  Provides infix notation for stdlib utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/infix/extensionMethods')    // bootstrap
-    $include ('./base/infix/Function')            // extends Function
-    $include ('./base/infix/Array')               // extends Array
-    $include ('./base/infix/String')              // extends String
+    require ('./base/infix/extensionMethods')    // bootstrap
+    require ('./base/infix/Function')            // extends Function
+    require ('./base/infix/Array')               // extends Array
+    require ('./base/infix/String')              // extends String
 
 
 /*  Dynamic code binding toolbox
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
-    $include ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
+    require ('./base/dynamic/bindable')          // for ad-hoc dependency injection in any object's method
+    require ('./base/dynamic/stream')            // a generalization of Event (multicast model for function calls)
 
 
 
 /*  OOP paradigm
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/OOP')
+    require ('./base/OOP')
 
 
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/infix/Set')
-    $include ('./base/Promise+')
-    $include ('./base/Channel')
-    $include ('./base/Parse')           // clumsy parsing utils
-    $include ('./base/Sort')            // sort utils
-    $include ('./base/concurrency')     // concurrency utility
-    $include ('./base/math')            // math utility
-    $include ('./base/component')       // component facility
-    $include ('./base/Rx')              // regular expressions helper
+    require ('./base/infix/Set')
+    require ('./base/Promise+')
+    require ('./base/Channel')
+    require ('./base/Parse')           // clumsy parsing utils
+    require ('./base/Sort')            // sort utils
+    require ('./base/concurrency')     // concurrency utility
+    require ('./base/math')            // math utility
+    require ('./base/component')       // component facility
+    require ('./base/Rx')              // regular expressions helper
 
 
 /*  Developer tools
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/uncaught')        // uncaught exception facility
-    $include ('./base/reflection')      // callstack access + source code access
-    $include ('./base/log')             // logging facility
-    $include ('./base/Testosterone')    // unit test shell
-    $include ('./base/Androgene')       // a "promising" evolution of Testosterone.js (SKETCH)
+    require ('./base/uncaught')        // uncaught exception facility
+    require ('./base/reflection')      // callstack access + source code access
+    require ('./base/log')             // logging facility
+    require ('./base/Testosterone')    // unit test shell
+    require ('./base/Androgene')       // a "promising" evolution of Testosterone.js (SKETCH)
 
 
 /*  Experimental stuff
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/AOP')
+    require ('./base/AOP')
 
 
 /*  Networking
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $include ('./base/http')
+    require ('./base/http')
 
 
 /*  ==================================================================== */
 
-    if ($platform.NodeJS) { // Should strip it from client with conditional macro in future...
+    if ($platform.NodeJS) {
         module.exports = _ }
 
