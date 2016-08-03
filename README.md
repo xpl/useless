@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Build system now utilizes **webpack** for squashing `require` imports. All external dependencies (e.g. underscore) now embedded in `useless.client.js` — no need to link them separately.
+
 - Component methods `init / beforeInit / afterInit` now support Promise interface for asynchronous initialization. Old callback-passing style is gone.
 
 - A [wiki entry explaining on the new __ namespace](https://github.com/xpl/useless/wiki/Promise) (brought by [Promise+](https://github.com/xpl/useless/blob/master/base/Promise%2B.js)). It contains a pack of highly abstract data-processing algorithms that can handle any type of data (arrays, objects, scalars) and any kind of operator function (either sync or async).
