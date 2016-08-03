@@ -90,8 +90,6 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 /*  Browser-related code
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    require ('jquery')
-    require ('./client/jQueryPlus')
     require ('./client/node+')
     require ('./client/DOMReference')
     require ('./client/anim')

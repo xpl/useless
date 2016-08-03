@@ -48,7 +48,7 @@
 	
 	$uselessFile = 'panic.js'
 	
-	__webpack_require__ (39)
+	__webpack_require__ (37)
 
 /***/ },
 /* 1 */
@@ -149,8 +149,6 @@
 	    __webpack_require__ (34)
 	    __webpack_require__ (35)
 	    __webpack_require__ (36)
-	    __webpack_require__ (37)
-	    __webpack_require__ (38)
 	
 
 
@@ -7163,13 +7161,6 @@
 	        return result }
 	
 	
-	/*  Adds this.$ to jQuery objects (to enforce code style consistency)
-	    ======================================================================== */
-	
-	    if (typeof jQuery !== 'undefined') {
-	        jQuery.fn.extend ({ $: function () { return _.$.apply (null, [this].concat (_.asArray (arguments))) } })}
-	
-	
 	/*  $const (xxx) as convenient alias for $static ($property (xxx))
 	    ======================================================================== */
 	 
@@ -10301,6 +10292,2933 @@
 
 /***/ },
 /* 34 */
+/***/ function(module, exports) {
+
+	(function () { var is = function (tag) { return function () { return this.tagName === tag } }
+	
+	/*  Constructors
+	    ======================================================================== */
+	
+	/*  N (tag)                                                                  */
+	
+	    N = function (tag, children) {
+	            var n = document.createElement (tag.uppercase)
+	                return children ? n.append (children) : n }
+	
+	/*  N.text                                                                   */
+	
+	    N.text = function (text) {
+	                return document.createTextNode (text) }
+	
+	/*  N.span / N.div ...                                                       */
+	
+	    _.each (['br', 'p', 'div', 'em', 'a', 'b', 'i', 'u', 's', 'strong', 'span',
+	             'sup', 'sub', 'button', 'iframe', 'pre', 'img', 'video', 'source',
+	             'h1', 'h2', 'h3', 'h4', 'h5', 'textarea', 'input', 'style'],
+	
+	             function (tag) {
+	
+	                var TAG = tag.uppercase
+	
+	                _.defineProperty (N, tag, function () {
+	                                            return document.createElement (TAG) }) })
+	
+	
+	/*  Querying                                                                 */
+	
+	    N.all = document.querySelectorAll.bind (document)
+	    N.one = document.querySelector.bind (document)
+	
+	
+	/*  Node+
+	    ======================================================================== */
+	
+	    $mixin (Node, {
+	
+	        $: $prototype.impl.$,    // brings this.$ semantics from $prototype
+	
+	        
+	    /*  Various predicates
+	        ------------------
+	
+	        New $callableAsFreeFunction tag means that its subject will be available
+	        as context-free (static) version along with instance method. For example,
+	        following two calls are equivalent:
+	
+	            console.log (document.body.isLinebreak)
+	            console.log (Node.isLinebreak (document.body))
+	
+	        Having dual calling convention for common predicates is super useful, as
+	        you can use them in functional data-crunching expressions, where free
+	        functions are far more suitable than instance methods.
+	
+	        It was inspired by $extensionMethods from Useless, where it carries the
+	        exact same semantics for member definitions. Those definitions served
+	        a very limited purpose of merging Underscore functions to built-in types,
+	        so a more generic tool needed.
+	        
+	        ======================================================================== */
+	
+	        $callableAsFreeFunction: {
+	
+	            $property: {
+	
+	                isElement: function () { return (this.nodeType === Node.ELEMENT_NODE) },
+	                isText:    function () { return (this.nodeType === Node.TEXT_NODE) },
+	
+	                isLinebreak: is ('BR'),
+	                isDiv:       is ('DIV'),
+	                isParagraph: is ('P'),
+	                isHyperlink: is ('A'),
+	
+	                isAttachedToDocument: function () {
+	                    return this.matchUpwards (_.equals (document.body)) ? true : false },
+	
+	                /*  TODO: make use of native .isContentEditable
+	                 */
+	                forbidsEditing: function () {
+	                    return (this.nodeType === Node.ELEMENT_NODE) &&
+	                           (this.getAttribute ('contenteditable') === 'false') } } },
+	
+	
+	    /*  Up/outside means
+	        ======================================================================== */
+	
+	        grandParentNode: $property (function () { return this.parentNode && this.parentNode.parentNode }),
+	
+	        isFirstInParent: $property (function () { return this.parentNode && (this.parentNode.firstChild === this) }),
+	        isLastInParent:  $property (function () { return this.parentNode && (this.parentNode.lastChild  === this) }),
+	
+	        removeFromParent: $callableAsFreeFunction (function () { this.parentNode.removeChild (this); return this }),
+	
+	        outerLeftBoundaryIn: function (container) { var n = this
+	            while (n.grandParentNode && (n.parentNode !== container) && n.isFirstInParent) { n = n.parentNode }
+	            return n },
+	
+	        outerRightBoundaryIn: function (container) { var n = this
+	            while (n.grandParentNode && (n.parentNode !== container) && n.isLastInParent) { n = n.parentNode }
+	            return n },
+	
+	        matchUpwards: function (pred) { var n = this
+	                   while (n && !pred (n)) { n = n.parentNode }
+	                                     return n },
+	
+	        isLeftmostNodeIn: function (parent) {
+	                             return parent && ((this.matchUpwards (function (n) {
+	                                                                     return (n === parent) ||
+	                                                                            !n.isFirstInParent })) === parent) },
+	
+	        isRightmostNodeIn: function (parent) {
+	                             return parent && ((this.matchUpwards (function (n) {
+	                                                                     return (n === parent) ||
+	                                                                            !n.isLastInParent })) === parent) },
+	
+	    /*  Down/inside means
+	        ======================================================================== */
+	
+	        hasChildren: $property (function () { return   this.hasChildNodes () }),
+	        noChildren:  $property (function () { return !(this.hasChildNodes ()) }),
+	        numChildren: $property (function () { return   this.childNodes.length }),
+	
+	        length: $property (function () { return (this.childNodes ? this.childNodes.length :
+	                                                (this.nodeValue  ? this.nodeValue .length  : 0)) }),
+	
+	        /*  If you modify childNodes while iterating it, you'll get into problem.
+	            Use following method to safely do so.
+	         */
+	        safeEnumChildren: function (fn, context) {
+	                                _.each (this.childNodesArray, fn, context || this); return this },
+	
+	        /*  childNodes is not really an array, so to get Array instance, use this helper
+	         */
+	        childNodesArray: $property (function () {
+	                                        return _.asArray (this.childNodes) }),
+	
+	        add:    $alias ('appendChildren'),
+	        append: $alias ('appendChildren'),
+	
+	        appendChildren: function (arg1, arg2) {
+	                            for (var arr = (arg2 === undefined ? _.coerceToArray (arg1) : arguments), i = 0, len = arr.length; i < len; i++) {
+	                                var n = arr[i]
+	                                this.appendChild (_.isString (n) ? document.createTextNode (n) : n) }
+	                            return this },
+	
+	        removeChildren: function (nodes) {
+	                            for (var arr = _.coerceToArray (nodes), i = 0, len = arr.length; i < len; i++) {
+	                                this.removeChild (arr[i]) }
+	                            return this },
+	
+	        removeAllChildren: function () {
+	                                return this.removeChildren (this.childNodesArray) },
+	
+	        walkTree: function (cfg, accept) { accept = (arguments.length === 1) ? cfg : accept
+	
+	                    var walker = document.createTreeWalker (this,   (cfg && cfg.what) || NodeFilter.SHOW_ALL,
+	                                                                    (cfg && cfg.filter) || null,
+	                                                                    (cfg && cfg.entityReferenceExpansion) || null)
+	
+	                    while ((node = walker.nextNode ())) { accept (node) } },
+	
+	        firstInnermostChild: $callableAsMethod ($property (function (n) { while (n && n.firstChild) { n = n.firstChild } return n })),
+	
+	        /*  foo<b>123</b>bar    →   <b>.unwrapChildren  →   foo123bar
+	         */
+	        unwrapChildren: $callableAsFreeFunction (function () {      this.insertAfterMe (this.childNodesArray)
+	                                                       var parent = this.parentNode
+	                                                           parent.removeChild (this)
+	                                                    return parent }),
+	
+	    /*  Sideways means
+	        ======================================================================== */
+	
+	        prevSiblings: $property (function ()  { var r = [],     n = this.previousSibling
+	                                    while (n) {     r.push (n); n =    n.previousSibling } return r.reversed }),
+	
+	        nextNextSibling: $property (function () {
+	            return (this.nextSibling && this.nextSibling.nextSibling) }),
+	
+	        nextOutermostSibling: $callableAsMethod ($property (function ( n) {
+	                                                                while (n && !n.nextSibling) { n = n.parentNode  } // walk upwards until has next sibling
+	                                                                   if (n)                   { n = n.nextSibling } // take next sibling
+	                                                                return n })),
+	
+	        nextInnermostSibling: $callableAsMethod ($property (function (n) {
+	                                                                return Node.firstInnermostChild (
+	                                                                        Node.nextOutermostSibling (this)) })),
+	
+	        appendTo: function (ref) {
+	            ref.appendChild (this); return this },
+	
+	        prependTo: function (ref) {
+	            ref.insertBefore (this, ref.firstChild); return this },
+	
+	        replaceWith: function (what) { this.insertBeforeMe (what).removeFromParent () },
+	
+	        insertMeBefore: function (ref) {
+	            ref.parentNode.insertBefore (this, ref); return this },
+	
+	        insertMeAfter: function (ref) {
+	            ref.parentNode.insertBefore (this, ref.nextSibling); return this },
+	
+	        insertBeforeMe: function (nodes) { var parent = this.parentNode
+	                                           var me     = this
+	
+	            _.each (_.coerceToArray (nodes).reversed, function (n) { parent.insertBefore (n, me) }); return this },
+	
+	        insertAfterMe: function (nodes) { var parent = this.parentNode
+	                                          var next   = this.nextSibling
+	
+	            _.each (_.coerceToArray (nodes).reversed, function (n) { parent.insertBefore (n, next) }); return this },
+	
+	
+	    /*  Events
+	        ======================================================================== */
+	
+	        on:   function (e, fn) { this.addEventListener (e, fn); return this },
+	        once: function (e) {
+	                    var node = this, finalize, finalized = false
+	                    var p = new Promise (function (resolve) {
+	                                            node.addEventListener (e, finalize =
+	                                                function (e) {
+	                                                    if (!finalized) {
+	                                                        finalized = true
+	                                                        node.removeEventListener (e, finalize)
+	                                                        resolve (e) } }) })
+	                    p.finalize = finalize
+	                    return p },
+	
+	        touched: function (fn) {
+	                    return this.on ($platform.touch ? 'touchstart' : 'click', fn) },
+	
+	    /*  Properties
+	        ======================================================================== */
+	
+	        extend: function (props) { return _.extend (this, props) },
+	
+	
+	    /*  Attributes
+	        ======================================================================== */
+	
+	        cls: function (x) { this.className = x; return this },
+	        css: function (x) { _.extend (this.style, x); return this; },
+	
+	        hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
+	
+	        toggleAttribute: function (name, value) { var arg1 = arguments.length < 2
+	
+	                                    if (arg1) {
+	                                        value = !this.hasAttribute (name) }
+	
+	                                     if (value) { this.setAttribute    (name, value) }
+	                                           else { this.removeAttribute (name) }
+	
+	                                    return arg1 ? value : this },
+	
+	        toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
+	        setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
+	
+	        intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
+	
+	        attr: $alias ('setAttributes'),
+	
+	        removeAttr: function (name) { this.removeAttribute (name); return this },
+	
+	
+	    /*  Splitting
+	        ======================================================================== */
+	
+	        splitSubtreeBefore: function (node) { // returns right (remaining) subtree
+	            if (!node || (node.parentNode === this)) {
+	                return node }
+	            else {
+	                return this.splitSubtreeBefore (
+	                                    !node.previousSibling // if first node in parent, nothing to split – simply proceed to parent
+	                                        ? node.parentNode
+	                                        : document.createElement  (node.parentNode.tagName)
+	                                                  .insertMeBefore (node.parentNode)
+	                                                  .appendChildren (node.prevSiblings)
+	                                                  .nextSibling) } },
+	
+	        splitSubtreeAt: function (location) { var n = location.node, i = location.offset
+	            return (i > 0) ? (location.node.isText ?
+	                                this.splitSubtreeBefore (N.text (n.nodeValue.substr (i)).insertMeAfter (_.extend (n, { nodeValue: n.nodeValue.substr (0, i) }))) :
+	                                this.splitSubtreeBefore (n.childNodes[i])) :
+	                                this.splitSubtreeBefore (n) },
+	
+	
+	    /*  innerHTML/innerText
+	        ======================================================================== */
+	
+	        html: function (x) { this.innerHTML = x; return this },
+	        text: function (x) { this.innerText = x; return this },
+	
+	
+	    /*  Animation
+	        ======================================================================== */
+	
+	        attributeUntil: function (attr, promise) {
+	                                                                     this.   setAttribute (attr, true)
+	                      return promise.done (this.$ (function (e, x) { this.removeAttribute (attr) })) },
+	
+	        busyUntil: function (promise) { return this.attributeUntil ('busy', promise) },
+	
+	        onceAnimationEnd: $property (function () {
+	            return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
+	
+	        onceTransitionEnd: $property (function () {
+	            return this.once ($platform.WebKit ? 'webkitTransitionEnd' : 'transitionend') }),
+	
+	        animateWithAttribute: function (attr) {
+	
+	        /*  If already animating with this attribute — return previously allocated promise    */
+	
+	            if (this.hasAttribute (attr) && this._onceAnimationEnd) {
+	                return this._onceAnimationEnd }
+	
+	        /*  If already animating — finalize the existing promise */
+	
+	            if (this._onceAnimationEnd) {
+	                this._onceAnimationEnd.finalize () }
+	
+	        /*  Allocate new promise    */
+	
+	            this.setAttribute (attr, true)
+	
+	            this._onceAnimationEnd = this.onceAnimationEnd
+	
+	            return this._onceAnimationEnd.then (this.$ (function () {
+	                    this.removeAttribute (attr)
+	                    this.getBoundingClientRect () // forces layout recalc, otherwise new animation (if set in callback) may not start
+	                    this._onceAnimationEnd = undefined })) },
+	
+	        animatedWithAttribute: function (attr) {
+	                                    this.animateWithAttribute (attr); return this },
+	
+	        //transitionWithAttribute: function (attr) { this.setAttribute (attr, true)
+	        //     return this.onceTransitionEnd.then ( this.removeAttribute.bind (this, attr)).delay () }
+	    })
+	
+	
+	/*  ========================================================================= */
+	
+	    $mixin (Element, {
+	
+	    /*  Selectors   */
+	
+	        all: Element.prototype.querySelectorAll,
+	        one: Element.prototype.querySelector,
+	
+	
+	    /*  New Safari (as seen in technology preview) defines its own Element.append
+	        method, which gets into conflict with our previously-defined Node.append
+	        So will explicitly overrride it.    */
+	
+	        append: Node.prototype.append,
+	
+	
+	    /*  Metrics
+	        ======================================================================== */
+	
+	        clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
+	              bbox: $property (function () { return this.clientBBox.offset (document.bbox.leftTop) }),
+	
+	        setWidthHeight: function (v) {
+	                            this.style.width = v.x + 'px'
+	                            this.style.height = v.y + 'px'
+	                            return this },
+	
+	        setTransform: function (x) { this.transform = x; return this },
+	
+	        transform: $property ({
+	
+	            get: function () {
+	                    var components = (this.css ('transform') || '').match (/^matrix\((.+\))$/)
+	                    if (components) {
+	                        var m = components[1].split (',').map (parseFloat)
+	                        return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }
+	                    else {
+	                        return Transform.identity } },
+	
+	            /*  Example value: { translate: new Vec2 (a, b),  scale: new Vec2 (x, y), rotate: 180 }
+	             */
+	            set: function (cfg) {
+	                this.style.transform = (_.isStrictlyObject (cfg) && (
+	                                            (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
+	                                            (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
+	                                            (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
+	
+	    /*  Experimental FRP stuff
+	        ======================================================================== */
+	
+	        reads: function (stream, fn) { // DEPRECATED
+	                    stream (this.$ (function (x) { x = (fn || _.identity).call (this, x)
+	                        this.removeAllChildren ()
+	                        this.add (x instanceof Node ? x : (x + '')) }))
+	                    return this },
+	
+	        $toggleAttribute: function (name, value) {
+	                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
+	
+	        $add: function (nodes) { // TODO: make it default .add impl (but keep .appendChildren intact)
+	
+	                if (nodes instanceof Promise) {
+	                    var placeholder = document.createElement ('PROMISE')
+	                        this.appendChild (placeholder)
+	                        nodes.then (function (nodes) {
+	                            placeholder.replaceWith (nodes) }).panic }
+	                else {
+	                    this.add (nodes) }
+	
+	                return this }
+	    })
+	
+	/*  ========================================================================= */
+	
+	    $mixin (HTMLInputElement, {
+	
+	        $value: $property (function () {
+	
+	                            if (!this._observableValue) {
+	                                 this._observableValue = _.observable (this.value)
+	                                 this._observableValue.context = this
+	                                 this.on ('input', this.$ (function () {
+	                                     this._observableValue (this.value) })) }
+	
+	                            return this._observableValue })
+	
+	    })
+	
+	/*  ========================================================================= */
+	
+	    $mixin (Image, {
+	        
+	        fetch: $static (function (url) {
+	                            return new Promise (function (resolve, reject) {
+	                                                _.extend (new Image (), {
+	                                                                src: url,
+	                                                             onload: function ()  { resolve (this) },
+	                                                            onerror: function (e) { reject (e) } }) }) }) })
+	
+	
+	/*  document.clientBBox
+	    ======================================================================== */
+	
+	    _.defineProperties (document, {
+	
+	                            bbox: function () {
+	                                    return this.clientBBox.offset (Vec2.y (document.body.scrollTop)) },
+	                                    
+	                            clientBBox: function () {
+	                                            return BBox.fromLTWH (0, 0,
+	                                                            window.innerWidth  || document.documentElement.clientWidth,
+	                                                            window.innerHeight || document.documentElement.clientHeight) } })
+	
+	/*  document.ready
+	    ======================================================================== */
+	
+	    document.on ('DOMContentLoaded', document.ready = _.barrier ())
+	
+	
+	/*  ======================================================================== */
+	
+	_.tests.NodePlus = {
+	
+	    'tree splitting': function () {
+	
+	        Testosterone.defineAssertions ({
+	            assertSplitAtBr: function (html, desiredResult) {   var node = N.div.html (html)
+	                                                                    node.splitSubtreeBefore (node.one ('br'))
+	                                                                    return _.assert (node.innerHTML, desiredResult) } })
+	        $assertSplitAtBr ('<b><br>foo</b>', '<b><br>foo</b>')
+	        $assertSplitAtBr ('<b>foo<br></b>', '<b>foo</b><b><br></b>')
+	        $assertSplitAtBr ('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>') },
+	
+	    /*'animateWithAttribute': function () {
+	
+	        var style =
+	
+	            N.style.text (
+	                '@keyframes slide-to-right {' +
+	                    '0%   { transform: translate(0,0); opacity: 1; }' +
+	                    '100% { transform: translate(100%,0); opacity: 0; } }' +
+	
+	                '[slide-to-right] { animation: slide-to-right 1s ease-in-out; }' +
+	                '[slide-from-right] { animation: slide-to-right 1s ease-in-out; animation-direction: reverse; }'
+	
+	            ).appendTo (document.body)
+	
+	        var div =
+	            N.div.css ({
+	                position: 'fixed', left: '0px', top: '0px', width: '100px', height: '100px', background: 'red' }).appendTo (document.body)
+	
+	        div.animateWithAttribute ('slide-to-right').then (function () {
+	            div.style.background = 'blue'
+	            div.animateWithAttribute ('slide-from-right').then (function () {
+	                div.style.background = 'green' }) })
+	    }*/
+	
+	}
+	
+	/*  ======================================================================== */
+	
+	}) ()
+	
+	
+	
+	
+	
+	
+
+
+/***/ },
+/* 35 */
+/***/ function(module, exports) {
+
+	/*  How-to / spec / test
+	    ============================================================================ */
+	
+	_.tests['DOMReference + DOMEvents'] = {
+	
+	    'DOMReference + DOMEvents basics': function () {
+	
+	        $assertEveryCalled (function (changeCalled, reactToFocusEventsCalled, reactToWindowResizeCalled, domReadyCalled) {
+	
+	            /*  Example component that owns a DOM reference and listens to events
+	                ---------------------------------------------------------------- */
+	
+	            var textarea = new ($component ({
+	
+	                $traits: [DOMReference,
+	                          DOMEvents],
+	
+	            /*  That's how you initialize DOMReference using $barrier (see the big
+	                comment below for the example on how to access the stored reference,
+	                and why/when you will need that domReady thing).
+	                ---------------------------------------------------------------- */
+	
+	                init: function () { this.domReady (
+	                                            N.textarea
+	                                             .insertMeAfter (document.body.lastChild)) },
+	
+	            /*  That's how you bind to events (simplest way)
+	                ---------------------------------------------------------------- */
+	
+	                change: $on (function (e) { changeCalled () }),
+	
+	            /*  Binding with custom method name
+	                ---------------------------------------------------------------- */
+	
+	                shouldNotCall: $on ('input', function () { $fail }),
+	
+	            /*  Multiple events
+	                ---------------------------------------------------------------- */
+	
+	                reactToFocusEvents: $on ('focus blur', function (e) { reactToFocusEventsCalled () }),
+	
+	            /*  Binding to 'window' or 'document' events
+	                ---------------------------------------------------------------- */
+	
+	                reactToWindowResize: $on ({ what: 'resize', target: window }, function () { reactToWindowResizeCalled () }) })) ()
+	
+	
+	        /*  That's how you access DOM if you're 100% sure it's initialized
+	            -------------------------------------------------------------------- */
+	
+	            var dom    = textarea.dom
+	                $assert (textarea.dom instanceof Node)
+	
+	
+	        /*  Often you stumble upon a situation when your code tries to access
+	            something that is not initialized yet (e.g. a DOM tree).
+	
+	            Even if you 'fix' that by rearranging the call order, you cannot
+	            always rely on predictable outcome of that method: as components get
+	            more complex, you need to look forward for more reliable control
+	            mechanisms... at least, more reliable than shuffling init calls
+	            randomly to see if it 'solves' the problem.
+	
+	            Normally, it solved by introducing some well-known concurrent
+	            programming techniques - like a barrier, in this case. By simply
+	            encapsulating all unsafe DOM accesses to the barrier context,
+	            you enforce the expected call order automagically™, paying a
+	            minuscule runtime overhead for that.
+	            -------------------------------------------------------------------- */
+	
+	            textarea.domReady (function (dom) { $assert (dom instanceof Node); domReadyCalled () })
+	
+	
+	        /*  That's how you dispatch events programmatically
+	            TODO: configuration
+	            -------------------------------------------------------------------- */
+	
+	            textarea.dispatchEvent ('change')
+	            textarea.dispatchEvent ('blur')
+	
+	            /*  Dispatch window.resize
+	             */
+	                              var e = document.createEvent ('Event')
+	                                  e.initEvent ('resize', true, true)
+	            window.dispatchEvent (e)
+	
+	
+	        /*  That's how you enumerate listeners bound with $on 
+	            -------------------------------------------------------------------- */
+	
+	            $assert (textarea.constructor.DOMEventListeners,
+	
+	                     [{ e: 'change', fn: 'change' },
+	                      { e: 'input',  fn: 'shouldNotCall' },
+	                      { e: 'focus',  fn: 'reactToFocusEvents' },
+	                      { e: 'blur',   fn: 'reactToFocusEvents' },
+	                      { e: 'resize', fn: 'reactToWindowResize', target: window }])
+	
+	
+	        /*  Deinitialization semantics
+	            -------------------------------------------------------------------- */
+	        
+	            textarea.destroy ()
+	
+	            textarea.dispatchEvent ('input')    /*  destroy () removes event listeners, so our .shouldNotCall listener shouldn't get called */
+	            $assert (!dom.isAttachedToDocument) /*  destroy () removes node from document */
+	            $assert (textarea.dom, undefined)   /*  destroy () sets .dom to undefined     */ }) },
+	
+	
+	/*  Listeners defined in traits are bound in order of appearance, so you can
+	    utilize built-in e.stopImmediatePropagation () semantics for the flow control.
+	    -------------------------------------------------------------------- */
+	
+	    'Blocking event propagation in $traits with e.stopImmediatePropagation': function () {
+	
+	        $assertEveryCalled (function (blockChangeEventCalled) {
+	
+	            var textarea = new ($component ({
+	
+	                    $traits: [DOMReference,
+	                              DOMEvents,
+	                              $trait ({ blockChangeEvent: $on ('change', function (e) { blockChangeEventCalled (); e.stopImmediatePropagation () }) }),
+	                              $trait ({ shouldNotCall:    $on ('change', function (e) { $fail }) }) ],
+	
+	                    init: function () { this.domReady (
+	                                            N.textarea.insertMeAfter (document.body.lastChild)) } })) ()
+	
+	                textarea.dispatchEvent ('change')
+	                textarea.destroy () }) } }
+	
+	
+	/*  Impl.
+	    ======================================================================== */
+	
+	DOMReference = $trait ({
+	
+	        domReady: $barrier (function (dom) {
+	                                 this.dom = dom
+	                                 this.el = jQuery (this.dom) }),
+	
+	    afterDestroy: function () {  if (this.dom) {
+	                                     this.dom.removeFromParent ()
+	                                     this.dom = undefined
+	                                     this.el  = undefined }
+	                                 this.domReady.reset () } })
+	
+	/*  ======================================================================== */
+	
+	DOMReferenceWeak = $trait ({
+	    
+	    domReady: $barrier (function (dom) { this.dom = dom }),
+	    afterDestroy:       function ()    { this.dom = undefined } })
+	
+	
+	/*  ======================================================================== */
+	
+	DOMEvents = $trait ({
+	
+	    /*  TODO: configuration
+	     */
+	    dispatchEvent: function (type) {
+	                        this.domReady (function (dom) { var e = document.createEvent ('Event')
+	                                                            e.initEvent (type, true /* bubbles */, true /* cancellable */)
+	                                         dom.dispatchEvent (e) }) },            
+	    /*  $on syntax
+	     */
+	    $macroTags: {
+	
+	        on: function (def, method, methodName) {        var DOMEventListeners = (def.constructor.DOMEventListeners ||
+	                                                                                (def.constructor.DOMEventListeners = []))
+	                var on_def = method.$on
+	                    on_def = (_.isString (on_def) ? { fn: methodName, e: on_def } :
+	                             (_.isObject (on_def) ? { fn: methodName, e: on_def.what, target: on_def.target } :
+	                                                    { fn: methodName, e: methodName }))
+	
+	                _.each (on_def.e.split (' '), function (e) { DOMEventListeners.push (_.defaults ({ e: e }, on_def)) }) } },
+	
+	    /*  Bindings
+	     */
+	    domReady: function (dom) {
+	                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
+	                                                                (on_def.target || dom).addEventListener (
+	                                                                                                on_def.e,
+	                                                                                           this[on_def.fn]) }, this) },
+	
+	    beforeDestroy: function () {
+	        this.domReady (function (dom) {
+	                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
+	                                                                (on_def.target || dom).removeEventListener (
+	                                                                                                on_def.e,
+	                                                                                           this[on_def.fn]) }, this) }) } })
+	
+	/*  ======================================================================== */
+	
+	HideOnEscape = $trait ({
+	
+	    hideOnEscape: $on ({ what: 'keydown', target: document }, function (e) {
+	                                                                if (e.keyCode === 27) {
+	                                                                    this.destroy ()
+	                                                                    e.preventDefault () } })
+	})
+	
+	/*  ======================================================================== */
+	
+	
+
+
+/***/ },
+/* 36 */
+/***/ function(module, exports) {
+
+	/*  Animation tools
+	 */
+	
+	InertialValue = $component ({
+	
+	    $defaults: { duration:  0.2,
+	                 easing:   'linear' },
+	
+	    animating: $observableProperty (false),
+	    target:    $observableProperty (/* scalar or vector */),
+	    current:   $observableProperty (),
+	
+	    init: function (cfg) {
+	
+	        this.easing  = (_.isNumber (this.target) ? Easing.scalar : Easing.vector)[this.easing]
+	
+	        this.targetChange (function (value) {
+	
+	            if (this.animating === false) {
+	                this.start     = this.value
+	                this.current   = this.target = value
+	                this.startTime = Date.now ()
+	                this.step () }
+	
+	            else {
+	                this.start      = this.current
+	                this.startTime  = this.lastTime     } })  },
+	
+	    step: function () {
+	
+	        var now    = Date.now ()
+	        var travel = Math.min (1.0, ((this.lastTime = now) - this.startTime) / (this.duration * 1000.0))
+	        if (travel < 1.0) {
+	
+	             var animated  = this.easing (this.start, this.target, travel)
+	            this.animating = true
+	            this.current   = animated
+	
+	            window.requestAnimationFrame (this.step) }
+	
+	        else {
+	            this.current   = this.target
+	            this.animating = false          } } })
+	
+	
+	/*  Easing functions (1D an 2D)
+	 */
+	
+	Easing = {
+	
+	    scalar: {
+	
+	        linear: function (a, b, t) {
+	            return a + (b - a) * t },
+	
+	        in: function (a, b, t) {
+	            return a + (b - a) * Math.pow (t, 2) },
+	
+	        out: function (a, b, t) {
+	            return b - (b - a) * Math.pow (1.0 - t, 2) },
+	
+	        inOut: function (a, b, t) {
+	            var c = b - a
+	            if (t < 0.5) {
+	                return a + (c * (Math.pow (t * 2.0, 2) * 0.5)) }
+	            else {
+	                return b - (c * (Math.pow (2.0 - (t * 2.0), 2) * 0.5)) } } },
+	
+	    vector: {
+	
+	        linear: function (a, b, t) {
+	            console.log (t)
+	            return a.add (b.sub (a).scale (t)) },
+	
+	        inOut: function (a, b, t) { var c = b.sub (a)
+	            if (t < 0.5) {
+	                return a.add (c.scale (Math.pow (t * 2.0, 2) * 0.5)) }
+	            else {
+	                return b.sub (c.scale (Math.pow (2.0 - (t * 2.0), 2) * 0.5)) } },
+	
+	        in: function (a, b, t) {
+	            return a.add (b.sub (a).scale (Math.pow (t, 2))) },
+	
+	        out: function (a, b, t) {
+	            return b.sub (b.sub (a).scale (Math.pow (1.0 - t, 2))) } } }
+
+/***/ },
+/* 37 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__ (38)
+	__webpack_require__ (39)
+	__webpack_require__ (41)
+	__webpack_require__ (42)
+	__webpack_require__ (43)
+	__webpack_require__ (44)
+	__webpack_require__ (45)
+	
+	jQuery = __webpack_require__ (46)
+	
+	__webpack_require__ (47)
+	
+	__webpack_require__ (48)
+	__webpack_require__ (49)
+	__webpack_require__ (50)
+	__webpack_require__ (54)
+	
+	/*  ======================================================================== */
+	
+	document.ready (function () {
+		
+		Panic.init ()
+	
+		CallStack.isThirdParty.intercept (function (file, originalImpl) {
+		    return (file.indexOf ('underscore') >= 0) ||
+		           (file.indexOf ('jquery') >= 0)     ||
+		           (file.indexOf ('useless') >= 0)    ||
+		           (file.indexOf ('mootools') >= 0) })
+	})
+
+/***/ },
+/* 38 */
+/***/ function(module, exports) {
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	------------------------------------------------------------------------
+	
+	Unit tests (bootstrap code)
+	
+	------------------------------------------------------------------------
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	
+	_.hasAsserts = true
+	
+	_.extend (_, {
+	
+	/*  a namespace where you put tests (for enumeration purposes)
+	    ======================================================================== */
+	
+	    tests: {},
+	
+	/*  A degenerate case of a test shell. We use it to bootstrap most critical
+	    useless.js internals, where real shell (Testosterone.js) is not available,
+	    as it itself depends on these utility. It takes test and test's subject as
+	    arguments (test before code, embodying test-driven philosophy) and executes
+	    test immediately, throwing exception if anything fails - which is simply
+	    the default behavior of $assert. So expect no advanced error reporting
+	    and no controlled execution by using this API.
+	    ======================================================================== */
+	
+	    withTest:   function (name, test, defineSubject) {
+	                    defineSubject ()
+	                    _.runTest (name, test)
+	                    _.publishToTestsNamespace (name, test) },
+	
+	/*  Publishes to _.tests namespace, but does not run
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    deferTest:  function (name, test, defineSubject) {
+	                    defineSubject ()
+	                    _.publishToTestsNamespace (name, test) },
+	
+	    /*  INTERNALS (you won't need that)
+	        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	        runTest:    function (name, test) {
+	                        try {
+	                            if (_.isFunction (test)) {                               test () }
+	                                                else { _.each (test, function (fn) { fn () }) } }
+	                        catch (e) {
+	                            if (_.isAssertionError (e)) { var printedName = ((_.isArray (name) && name) || [name]).join ('.')
+	                                                          console.log (printedName + ':', e.message, '\n' + _.times (printedName.length, _.constant ('~')).join ('') + '\n')
+	                                                         _.each (e.notMatching, function (x) { console.log ('  •', x) }) }
+	                            throw e } },
+	
+	        publishToTestsNamespace: function (name, test) {
+	                        if (_.isArray (name)) { // [suite, name] case
+	                            (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test }
+	                        else {
+	                            _.tests[name] = test } } })
+	        
+	/*  TEST ITSELF
+	    ======================================================================== */
+	
+	_.withTest ('assert.js bootstrap', function () {
+	
+	/*  One-argument $assert (requires its argument to be strictly 'true')
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assert (true)
+	
+	    $assert (                       // public front end, may be replaced by environment)
+	        _.assert ===                // member of _ namespace (original implementation, do not mess with that)
+	        _.assertions.assert)        // member of _.assertions (for enumeration purposes)
+	
+	    $assertNot (false)
+	    $assertNot (5)                  // NB: assertNot means 'assert not true', hence this will pass
+	
+	/*  Multi-argument assert (requires its arguments be strictly equal to each other)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assert (2 + 2, 2 * 2, 4)                    // any number of arguments
+	    $assert ({ foo: [1,2,3] }, { foo: [1,2,3] }) // compares objects (deep match)
+	    $assert ({ foo: { bar: 1 }, baz: 2 },        // ignores order of properties
+	             { baz: 2, foo: { bar: 1 } })
+	
+	    $assertNot (2 + 2, 5)
+	
+	/*  Nonstrict matching (a wrapup over _.matches)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assertMatches ({ foo: 1, bar: 2 },
+	                    { foo: 1 })
+	
+	/*  Nonstrict matching against complex objects (stdlib.js feature)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if (_.hasStdlib) { $assertMatches ( { foo: [1,2], bar: 3 },
+	                                        { foo: [1] }) }
+	
+	/*  Regex matching (stdlib.js feature)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if (_.hasStdlib) { $assertMatches ('123', /[0-9]+/) }
+	
+	
+	/*  Type matching (plain)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if (_.hasStdlib) {  $assertTypeMatches (42, 'number')
+	                        $assertFails (function () {
+	                            $assertTypeMatches ('foo', 'number') }) }
+	
+	/*  Type matching (array type)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if (_.hasStdlib) {  $assertTypeMatches ([1,2],   [])
+	                        $assertTypeMatches ([],      [])
+	                        $assertTypeMatches ([1,2,3], ['number'])
+	                        $assertTypeMatches ([],      ['number'])
+	                        $assertFails (function () {
+	                            $assertTypeMatches ([1,2,3],     ['string'])
+	                            $assertTypeMatches ([1,2,'foo'], ['number']) }) }
+	
+	/*  Type matching (deep)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if (_.hasStdlib) {  $assertTypeMatches ({
+	
+	                            /*  Input object */
+	
+	                                foo: 42,
+	                                bar: {
+	                                    even: 4,
+	                                    many: ['foo','bar'] } }, {
+	
+	                            /*  Type contract */
+	
+	                                foo: 'number',      // simple type check
+	                                qux: 'undefined',   // nonexisting match 'undefined' 
+	                                bar: {                                              // breakdown of complex object 
+	                                    even: function (n) { return (n % 2) === 0 },    // custom contract predicate    
+	                                    many: ['string'] } }) }                         // array contract (here, 'array of strings')
+	
+	/*  Type matching ($prototype)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if (_.hasOOP) { var Foo = $prototype (),
+	                        Bar = $prototype ()
+	
+	        $assertTypeMatches ({ foo: new Foo (),
+	                              bar: new Bar () },
+	
+	                            { foo: Foo,
+	                              bar: Bar })
+	
+	        $assertFails (function () {
+	            $assertTypeMatches (new Bar (), Foo) }) };
+	
+	
+	/*  Argument contracts
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	if (_.hasStdlib) {
+	
+	    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertArguments (arguments) }
+	
+	                    testF (777, 'foo bar baz')
+	
+	    $assertFails (function () { testF (777, 42) }) }
+	
+	/*  Ensuring throw (and no throw)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assertThrows (function () { throw 42 })
+	    $assertNotThrows (function () {})
+	
+	/*  Ensuring throw (strict version)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assertThrows (     function () { throw 42 }, 42) // accepts either plain value or predicate
+	    $assertThrows (     function () { throw new Error ('42') }, _.matches ({ message: '42' }))
+	
+	    $assertFails (function () {
+	        $assertThrows ( function () { throw 42 }, 24)
+	        $assertThrows ( function () { throw new Error ('42') }, _.matches ({ message: '24' })) })
+	
+	/*  Ensuring execution
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assertEveryCalled     (function (a, b, c) { a (); a (); b (); c () })
+	    $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
+	    $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
+	
+	    /*$assertFails (function () {
+	        $assertEveryCalled     (function (a, b, c) { a (); b () })
+	        $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
+	        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
+	
+	
+	/*  TODO:   1) add CPS support
+	            2) replace $assertCPS with this
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if (_.hasStdlib) {
+	
+	            $assertCalledWithArguments (   ['foo',
+	                                           ['foo', 'bar']], function (fn) {
+	
+	                                        fn ('foo')
+	                                        fn ('foo', 'bar') }) }
+	
+	
+	/*  Ensuring CPS routine result (DEPRECATED)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assertCPS (function (then) { then ('foo', 'bar') }, ['foo', 'bar'])
+	    $assertCPS (function (then) { then ('foo') }, 'foo')
+	    $assertCPS (function (then) { then () })
+	
+	
+	/*  Ensuring assertion failure
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    $assertFails (function () {
+	        $fail                                           // simplest way to generate assertion
+	        $stub                                           // to mark code stubs (throws error)
+	        $assert ('not true')                            // remember that assert is more strict than JavaScript if clauses
+	        $assert ({ foo: 1, bar: 2 }, { foo: 1 })        // not be confused with _.matches behavior (use $assertMatches for that)
+	        $assert ([1,2,3,4], [1,2,3])                    // same for arrays
+	        $assert (['foo'], { 0: 'foo', length: 1 })      // array-like objects not gonna pass (regression test)
+	        $assertFails (function () {}) })                // $assertFails fails if passed code don't
+	
+	/*  Default fail behavior (never depend on that, as it's environment-dependent)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    if ($assert === _.assertions.assert) {
+	        $assertThrows (function () { $fail }) }
+	
+	
+	/*  IMPLEMENTATION
+	    ======================================================================== */
+	
+	}, function () {
+	
+	    var assertImpl = function (positive) {
+	                        return function (__) {  var args = [].splice.call (arguments, 0)
+	
+	                                                if (args.length === 1) {
+	                                                    if (positive && (args[0] !== true)) {
+	                                                        _.assertionFailed ({ notMatching: args }) } }
+	
+	                                                else if (positive && (_.allEqual (args) !== true)) {
+	                                                    _.assertionFailed ({ notMatching: args }) }
+	
+	                                                return true } }
+	
+	    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
+	     */
+	    $overrideUnderscore ('matches', function (matches) {
+	        return function (a) {
+	            return _.isObject (a) ? matches (a) : function (b) { return a === b } } })
+	
+	    _.extend (_, _.assertions = {
+	
+	        assert:    assertImpl (true),
+	        assertNot: assertImpl (false),
+	
+	        assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
+	            fn (function () {
+	                $assert ([].splice.call (arguments, 0), requiredResult)
+	                if (then) { then (); return true; } }) },
+	
+	        assertNotCalled: function (context) {
+	            var inContext = true; context (function () { if (inContext) { $fail } }); inContext = false },
+	
+	        assertEveryCalledOnce: function (fn, then) {
+	            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
+	
+	        assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
+	                                                      async = _.hasTags ? $async.is (fn_) : fn_.async
+	                                                      once  = _.hasTags ? $once.is (fn_)  : fn_.once
+	
+	            var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
+	            var contracts = once ? _.times (fn.length, _.constant (1)) :
+	                                   _.map (match[1].split (','), function (arg) {
+	                                                                    var parts = (arg.trim ().match (/^(.+)__(\d+)$/))
+	                                                                    var num = (parts && parseInt (parts[2], 10))
+	                                                                    return _.isFinite (num) ? (num || false) : true })
+	            var status    = _.times (fn.length, _.constant (false))
+	            var callbacks = _.times (fn.length, function (i) {
+	                                                    return function () {
+	                                                        status[i] =
+	                                                            _.isNumber (contracts[i]) ?
+	                                                                ((status[i] || 0) + 1) : true
+	                                                        if (async && _.isEqual (status, contracts))
+	                                                            then () } })
+	            fn.apply (null, callbacks)
+	
+	            if (!async)   { _.assert (status, contracts)
+	                if (then) { then () } } },
+	
+	        assertCalledWithArguments: function (argsPattern, generateCalls) {
+	                                        return _.assert (_.arr (generateCalls), argsPattern) },
+	
+	        assertCallOrder: function (fn) {
+	            var callIndex = 0
+	            var callbacks = _.times (fn.length, function (i) { return function () { arguments.callee.callIndex = callIndex++ } })
+	            fn.apply (null, callbacks)
+	            return _.assert (_.pluck (callbacks, 'callIndex'), _.times (callbacks.length, _.identity.arity1)) },
+	
+	        assertMatches: function (value, pattern) {
+	            try {       return _.assert (_.matches.apply (null, _.rest (arguments)) (value)) }
+	            catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
+	
+	        assertNotMatches: function (value, pattern) {
+	            try {       return _.assert (!_.matches.apply (null, _.rest (arguments)) (value)) }
+	            catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
+	
+	        assertType: function (value, contract) {
+	            return _.assert (_.decideType (value), contract) },
+	
+	        assertTypeMatches: function (value, contract) { 
+	                                return _.isEmpty (mismatches = _.typeMismatches (contract, value))
+	                                    ? true
+	                                    : _.assertionFailed ({
+	                                        message: 'provided value type not matches required contract',
+	                                        asColumns: true,
+	                                        notMatching: [
+	                                            { provided: value },
+	                                            { required: contract },
+	                                            { mismatches: mismatches }] }) },
+	
+	        assertFails: function (what) {
+	            return _.assertThrows.call (this, what, _.isAssertionError) },
+	
+	        assertThrows: function (what, errorPattern) {
+	                            var e = undefined, thrown = false
+	                                try         { what.call (this) }
+	                                catch (__)  { e = __; thrown = true }
+	
+	                            _.assert.call (this, thrown)
+	
+	                            if (arguments.length > 1) {
+	                                _.assertMatches.call (this, e, errorPattern) } },
+	
+	        assertNotThrows: function (what) {
+	            return _.assertEveryCalled (function (ok) { what (); ok () }) },
+	
+	        assertArguments: function (args, callee, name) {
+	            var fn    = (callee || args.callee).toString ()
+	            var match = fn.match (/.*function[^\(]\(([^\)]+)\)/)
+	            if (match) {
+	                var valuesPassed   = _.asArray (args);
+	                var valuesNeeded   = _.map (match[1].split (','),
+	                                            function (_s) {
+	                                                var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
+	                                                var n = parseInt (s, 10)
+	                                                return _.isFinite (n) ? n : s })
+	
+	                var zap = _.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
+	                                return (a === undefined) ? true : (a === b) })
+	
+	                if (!_.every (zap)) {
+	                    _.assertionFailed ({ notMatching: _.nonempty ([[name, fn].join (': '), valuesNeeded, valuesPassed]) }) } } },
+	
+	        fail: function () {
+	                _.assertionFailed () },
+	
+	        fails: _.constant (function () {    // higher order version
+	                _.assertionFailed () }),
+	
+	        stub: function () {
+	                _.assertionFailed () } })
+	
+	
+	    /*  DEFAULT FAILURE IMPL.
+	        ---------------------
+	        We do not subclass Error, because _.isTypeOf currently does not support
+	        inhertitance (UPDATE: now does) and it would cause troubles in test shell
+	        and logging facility. Thus a subclass is defined that way.
+	        ======================================================================== */
+	
+	    _.extend (_, {
+	
+	        assertionError: function (additionalInfo) {
+	                            return _.extend (new Error (
+	                                (additionalInfo && additionalInfo.message) || 'assertion failed'), additionalInfo, { assertion: true }) },
+	
+	        assertionFailed: function (additionalInfo) {
+	                            throw _.extend (_.assertionError (additionalInfo), {
+	                                        stack: _.rest ((new Error ()).stack.split ('\n'), 3).join ('\n') }) },
+	
+	        isAssertionError: function (e) {        
+	                            return e && (e.assertion === true) } })
+	
+	
+	    /*  $assert helper
+	        ======================================================================== */
+	
+	    _.extend (_, {
+	
+	        allEqual: function (values) {
+	                            return _.reduce (values, function (prevEqual, x) {
+	                                return prevEqual && _.isEqual (values[0], x) }, true) } })
+	
+	    /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
+	        thus configurable=true)
+	        ======================================================================== */
+	
+	    _.each (_.keys (_.assertions), function (name) {
+	        $global.define ('$' + name, _[name], { configurable: true }) })
+	
+	    for (var k in _.assertions) {
+	        $global['$' + k] = 1
+	    }
+	
+	    $assert
+	
+	})
+	
+	
+	
+	
+
+
+/***/ },
+/* 39 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*  Uncaught exception handling facility
+	    ======================================================================== */
+	
+	(function () {
+	
+	    _.hasUncaught = true
+	
+	    var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
+	
+	    var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
+	
+	        var chain = arguments.callee.chain
+	                    arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
+	
+	        if (chain.length) {
+	            for (var i = 0, n = chain.length; i < n; i++) {
+	                try {
+	                    chain[i] (e)
+	                    break }
+	                catch (newE) {
+	                    console.log (newE)
+	                    if (i === n - 1) {
+	                        newE.message += reThrownTag
+	                        throw newE }
+	                    else {
+	                        if (newE && (typeof newE === 'object')) { newE.originalError = e }
+	                        e = newE } } } }
+	        else {
+	            e.message += reThrownTag
+	            throw e } }
+	
+	    _.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity
+	
+	        if (context_) {
+	            handler.catchesOnce = true }
+	
+	                               globalUncaughtExceptionHandler.chain.unshift (handler)
+	        context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
+	
+	    globalUncaughtExceptionHandler.chain = []
+	
+	    switch ($platform.engine) {
+	        case 'node':
+	            __webpack_require__ (40).on ('uncaughtException', globalUncaughtExceptionHandler); break;
+	
+	        case 'browser':
+	            window.addEventListener ('error', function (e) {
+	
+	                if (e.message.indexOf (reThrownTag) < 0) { // if not already processed by async hooks
+	
+	                    if (e.error) {
+	                        globalUncaughtExceptionHandler (e.error) }
+	
+	                    else { // emulate missing .error (that's Safari)
+	                        globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
+	                            stub: true,
+	                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } }) }
+	}) ()
+
+/***/ },
+/* 40 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+	
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+	
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+	
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+	
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+	
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+	
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+	
+	function noop() {}
+	
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+	
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+	
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 41 */
+/***/ function(module, exports) {
+
+	/*  Provides call stack persistence across async call boundaries.
+	    ======================================================================== */
+	
+	(function () {
+	
+	    if ($platform.Browser) {
+	
+	        _.hasUncaughtAsync = true
+	
+	        var globalAsyncContext = undefined
+	
+	        var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
+	
+	            var override = function (obj) {
+	
+	                obj.addEventListener    = genAddEventListener    (obj.addEventListener)
+	                obj.removeEventListener = genRemoveEventListener (obj.removeEventListener) }
+	
+	            if (window.EventTarget) {
+	                override (window.EventTarget.prototype) }
+	
+	            else {
+	                override (Node.prototype)
+	                override (XMLHttpRequest.prototype) } }
+	
+	        var asyncHook = function (originalImpl, callbackArgumentIndex) {
+	            return __supressErrorReporting = function () {
+	
+	                    var asyncContext = {
+	                        name: name,
+	                        stack: (new Error ()).stack,
+	                        asyncContext: globalAsyncContext }
+	
+	                    var args = _.asArray (arguments)
+	                    var fn   = args[callbackArgumentIndex]
+	
+	                    if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
+	
+	                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
+	
+	                        globalAsyncContext = asyncContext
+	
+	                        try       { return fn.apply (this, arguments) }
+	                        catch (e) { _.globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
+	
+	                    return originalImpl.apply (this, args) } }
+	
+	        window.setTimeout = asyncHook (window.setTimeout, 0)
+	
+	        /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
+	         */ 
+	        listenEventListeners (
+	            function (addEventListener) { return asyncHook (addEventListener, 1) },
+	            function (removeEventListener) {
+	                return function (name, fn, bubble, untrusted) {
+	                   return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } }) }
+	
+	}) ()
+
+/***/ },
+/* 42 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(__filename) {/*  Self-awareness module
+	    ======================================================================== */
+	
+	_.hasReflection = true
+	
+	_.tests.reflection = {
+	
+	    'file paths': function () {
+	        $assert ($sourcePath .length > 0)
+	        $assert ($uselessPath.length > 0) },
+	
+	    'readSource': function () { var uselessJS = $uselessPath + $uselessFile
+	
+	        SourceFiles.read (uselessJS, function (text) {
+	            $assert (text.length > 0) })
+	
+	        SourceFiles.line (uselessJS, 0, function (line) {
+	            $assert (line.length > 0) }) },
+	
+	    'CallStack from error': function () {
+	        try {
+	            throw new Error ('oh fock') }
+	        catch (e) {
+	            $assertTypeMatches (CallStack.fromError (e), CallStack) } },
+	
+	    '$callStack': function (testDone) {
+	
+	        /*  That's how you access call stack at current location
+	         */
+	        var stack = $callStack
+	
+	        /*  It is an array of entries...
+	         */
+	        $assert (_.isArray (stack))
+	
+	        /*  ...each having following members
+	         */
+	        $assertTypeMatches (stack[0], {
+	            callee:         'string',       // function name
+	            calleeShort:    'string',       // short function name (only the last part of dot-sequence)
+	            file:           'string',       // full path to source file at which call occurred
+	            fileName:       'string',       // name only (with extension)
+	            fileShort:      'string',       // path relative to $sourcePath
+	            thirdParty:     'boolean',      // denotes whether the call location occured at 3rd party library
+	            index:          'boolean',      // denotes whether the call location occured at index page
+	           'native':        'boolean',      // denotes whether the call location occured in native impl.
+	            line:           'number',       // line number
+	            column:         'number',       // character number
+	            source:         'string',       // source code (may be not ready right away)
+	            sourceReady:    'function' })   // a barrier, opened when source is loaded (see dynamic/stream.js on how-to use)
+	
+	        /*  $callStack is CallStack instance, providing some helpful utility:
+	         */
+	        $assert (_.isTypeOf (CallStack, stack))
+	
+	        /*  1. clean CallStack (with 3rdparty calls stripped)
+	         */
+	        $assert (_.isTypeOf (CallStack, stack.clean))
+	
+	        /*  2. shifted by some N (useful for error reporting, to strip error reporter calls)
+	         */
+	        $assert (_.isTypeOf (CallStack, stack.offset (2)))
+	
+	        /*  3. filter and reject semantics supported, returning CallStack instances
+	         */
+	        $assert (_.isTypeOf (CallStack, stack.filter (_.identity)))
+	        $assert (_.isTypeOf (CallStack, stack.reject (_.identity)))
+	
+	        $assertEveryCalled ($async (function (sourceReady, sourcesReady, safeLocationReady) {
+	
+	            /*  4. source code access, either per entry..
+	             */
+	            stack[0].sourceReady (function (src) {               // sourceReady is barrier, i.e. if ready, called immediately
+	                $assert (typeof src, 'string'); sourceReady () })
+	
+	            /*  5. ..or for all stack
+	             */
+	            stack.sourcesReady (function () {                     // sourcesReady is barrier, i.e. if ready, called immediately
+	                _.each (stack, function (entry) {
+	                    $assert (typeof entry.source, 'string') }); sourcesReady () })
+	
+	            /*  Safe location querying
+	             */
+	            stack.safeLocation (7777).sourceReady (function (line) {
+	                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) },
+	
+	    'Prototype.$meta': function (done) {
+	        var Dummy = $prototype ()
+	
+	        Dummy.$meta (function (meta) {
+	            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
+	            done () }) },
+	
+	    'Trait.$meta': function (done) {
+	        var Dummy = $trait ()
+	        Dummy.$meta (function (meta) {
+	            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
+	            done () }) }
+	}
+	
+	
+	/*  Custom syntax (defined in a way that avoids cross-dependency loops)
+	 */
+	_.defineKeyword ('callStack',   function () {
+	    return CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0) })
+	
+	_.defineKeyword ('currentFile', function () {
+	    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file })
+	
+	_.defineKeyword ('uselessPath', _.memoize (function () {
+	    return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
+	
+	_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+	    return local ? (local + '/') : $uselessPath }))
+	
+	
+	/*  Port __filename for browsers
+	 */
+	if ($platform.Browser) {
+	    _.defineProperty (window, '__filename', function () { return $currentFile }) }
+	
+	
+	/*  Source code access (cross-platform)
+	 */
+	SourceFiles = $singleton (Component, {
+	
+	    /*apiConfig: {
+	        port:      1338,
+	        hostname: 'locahost',
+	        protocol: 'http:' },*/
+	
+	    line: function (file, line, then) {
+	        SourceFiles.read (file, function (data) {
+	            then ((data.split ('\n')[line] || '').trimmed) }) },
+	
+	    read: $memoizeCPS (function (file, then) {
+	        if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
+	            try {
+	                if ($platform.NodeJS) {
+	                    then (__webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).readFileSync (file, { encoding: 'utf8' }) || '') }
+	                else {
+	                    /*  Return response body regardless of status code
+	                     */
+	                    var xhr = new XMLHttpRequest ()
+	                    xhr.open ('GET', file, true)
+	                    xhr.onreadystatechange = function () { if (xhr.readyState == 4) { then (xhr.responseText) } }
+	                    xhr.send (null) } }
+	            catch (e) {
+	                then ('') } }
+	        else {
+	            then ('') } }),
+	
+	    write: function (file, text, then) {
+	
+	        if ($platform.NodeJS) {
+	
+	            this.read (file, function (prevText) { // save previous version at <file>.backups/<date>
+	
+	                var fs   = __webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())),
+	                    opts = { encoding: 'utf8' }
+	
+	          try { fs.mkdirSync     (file + '.backups') } catch (e) {}
+	                fs.writeFileSync (file + '.backups/' + Date.now (), prevText, opts)
+	                fs.writeFileSync (file,                             text,     opts)
+	
+	                then () }) }
+	            
+	        else {
+	            JSONAPI
+	                .post ('source/' + file, _.extend2 ({}, this.apiConfig, { what: { text: text } }))
+	                .then (function () {
+	                    log.ok (file, '— successfully saved')
+	                    if (then) {
+	                        then () } }) }} })
+	
+	
+	/*  Callstack API
+	 */
+	CallStack = $extends (Array, {
+	
+	    current: $static ($property (function () {
+	        return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
+	
+	    fromError: $static (function (e) {
+	        if (e && e.parsedStack) {
+	            return CallStack.fromParsedArray (e.parsedStack).offset (e.stackOffset || 0) }
+	        else if (e && e.stack) {
+	            return CallStack.fromRawString (e.stack).offset (e.stackOffset || 0) }
+	        else {
+	            return CallStack.fromParsedArray ([]) } }),
+	
+	    fromErrorWithAsync: $static (function (e) {
+	        var stackEntries = CallStack.fromError (e),
+	            asyncContext = e.asyncContext
+	
+	        while (asyncContext) {
+	            stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
+	            asyncContext = asyncContext.asyncContext }
+	
+	        return stackEntries.mergeDuplicateLines }),
+	
+	    locationEquals: $static (function (a, b) {
+	        return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
+	
+	    safeLocation: function (n) {
+	        return this[n] || {
+	            callee: '', calleeShort: '', file: '',
+	            fileName: '', fileShort: '', thirdParty:    false,
+	            source: '??? WRONG LOCATION ???',
+	            sourceReady: _.barrier ('??? WRONG LOCATION ???') } },
+	
+	    mergeDuplicateLines: $property (function () {
+	        return CallStack.fromParsedArray (
+	            _.map (_.partition2 (this, function (e) { return e.file + e.line }),
+	                    function (group) {
+	                        return _.reduce (_.rest (group), function (memo, entry) {
+	                            memo.callee      = (memo.callee      || '<anonymous>') + ' → ' + (entry.callee      || '<anonymous>')
+	                            memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>')
+	                            return memo }, _.clone (group[0])) })) }),
+	
+	    clean: $property (function () {
+	        var clean = this.mergeDuplicateLines.reject (function (e, i) { return (e.thirdParty || e.hide) && (i !== 0) })
+	        return (clean.length === 0) ? this : clean }),
+	
+	    asArray: $property (function () {
+	        return _.asArray (this) }),
+	
+	    offset: function (N) {
+	        return (N && CallStack.fromParsedArray (_.rest (this, N))) || this },
+	
+	    initial: function (N) {
+	        return (N && CallStack.fromParsedArray (_.initial (this, N))) || this },
+	
+	    concat: function (stack) {
+	        return CallStack.fromParsedArray (this.asArray.concat (stack.asArray)) },
+	
+	    filter: function (fn) {
+	        return CallStack.fromParsedArray (_.filter (this, fn)) },
+	
+	    reject: function (fn) {
+	        return CallStack.fromParsedArray (_.reject (this, fn)) },
+	
+	    reversed: $property (function () {
+	        return CallStack.fromParsedArray (_.reversed (this)) }),
+	
+	    sourcesReady: function (then) {
+	        return _.allTriggered (_.pluck (this, 'sourceReady'), then) },
+	
+	    /*  Internal impl.
+	     */
+	    constructor: function (arr) { Array.prototype.constructor.call (this)
+	
+	        _.each (arr, function (entry) {
+	            if (!entry.sourceReady) {
+	                 entry.sourceReady = _.barrier ()
+	                 SourceFiles.line ((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
+	                    entry.hide = src.contains ('// @hide')
+	                    entry.sourceReady (entry.source = src.replace ('// @hide', '')) }) }
+	
+	            this.push (entry) }, this) },
+	
+	    fromParsedArray: $static (function (arr) {
+	        return new CallStack (arr) }),
+	
+	    currentAsRawString: $static ($property (function () {
+	        var cut = $platform.Browser ? 3 : 2
+	        return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
+	
+	    shortenPath: $static (function (path) {
+	                    var relative = path.replace ($uselessPath, '')
+	                                       .replace ($sourcePath,  '')
+	                    return (relative !== path)
+	                        ? relative.replace (/^node_modules\//, '')
+	                        : path.split ('/').last }), // extract last part of /-separated sequence
+	
+	    isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
+	                    return ($platform.NodeJS && (file[0] !== '/')) || // from Node source
+	                           (local.indexOf ('/node_modules/') >= 0) ||
+	                           (file.indexOf  ('/node_modules/') >= 0 && !local) ||
+	                           (local.indexOf ('underscore') >= 0) ||
+	                           (local.indexOf ('jquery') >= 0) })),
+	
+	    fromRawString: $static (_.sequence (
+	        function (rawString) {
+	            return CallStack.rawStringToArray (rawString) },
+	
+	        function (array) {
+	            return _.map (array, function (entry) {
+	                return _.extend (entry, {
+	                            calleeShort:    _.last (entry.callee.split ('.')),
+	                            fileName:       _.last (entry.file.split ('/')),
+	                            fileShort:      CallStack.shortenPath (entry.file),
+	                            thirdParty:     CallStack.isThirdParty (entry.file) && !entry.index }) }) },
+	
+	        function (parsedArrayWithSourceLines) { return CallStack.fromParsedArray (parsedArrayWithSourceLines) })),
+	
+	    rawStringToArray: $static (function (rawString) { var lines = (rawString || '').split ('\n')
+	
+	        return _.filter2 (lines, function (line) { line = line.trimmed
+	
+	            var callee, fileLineColumn = [], native_ = false
+	            var planA = undefined, planB = undefined
+	
+	            if ((planA = line.match (/at (.+) \((.+)\)/)) ||
+	                (planA = line.match (/(.*)@(.*)/))) {
+	
+	                callee         =         planA[1]
+	                native_        =        (planA[2] === 'native')
+	                fileLineColumn = _.rest (planA[2].match (/(.*):(.+):(.+)/) || []) }
+	
+	            else if ((planB = line.match (/^(at\s+)*(.+):([0-9]+):([0-9]+)/) )) {
+	                fileLineColumn = _.rest (planB, 2) }
+	
+	            else {
+	                return false } // filter this shit out
+	
+	            if ((callee || '').indexOf ('__supressErrorReporting') >= 0) {
+	                return false }
+	
+	            return {
+	                beforeParse: line,
+	                callee:      callee || '',
+	                index:       $platform.Browser && (fileLineColumn[0] === window.location.href),
+	               'native':     native_,
+	                file:        fileLineColumn[0] || '',
+	                line:       (fileLineColumn[1] || '').integerValue,
+	                column:     (fileLineColumn[2] || '').integerValue } }) }) })
+	
+	/*  Reflection for $prototypes
+	 */
+	$prototype.impl.findMeta = function (stack) {
+	
+	    return function (then) {
+	
+	        _.cps.find (CallStack.fromRawString (stack).reversed,
+	
+	                    function (entry, found) {
+	                        entry.sourceReady (function (text) { var match = (text || '').match (
+	                                                                             /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
+	                            found ((match && {
+	                                name: match[1],
+	                                type: match[2],
+	                                file: entry.fileShort }) || false) }) },
+	
+	                    function (found) {
+	                        then (found || {}) }) } }
+	
+	$prototype.macro (function (def, base) {
+	
+	    if (!def.$meta) {
+	
+	        var findMeta = _.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))
+	
+	        _.defineMemoizedProperty (findMeta, 'promise', function () {
+	              return new Promise (findMeta) })
+	
+	        def.$meta = $static (findMeta) }
+	
+	    return def })
+	
+	
+	
+	
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
+
+/***/ },
+/* 43 */
+/***/ function(module, exports) {
+
+	_.hasLog = true
+	
+	_.tests.log = {
+	
+	    basic: function () {
+	
+	        log         ('log (x)')         //  Basic API
+	
+	        log.green      ('log.green')       //  Use for plain colored output.
+	        log.boldGreen  ('log.boldGreen')
+	        log.darkGreen  ('log.darkGreen')
+	        log.blue       ('log.blue')
+	        log.boldBlue   ('log.boldBlue')
+	        log.darkBlue   ('log.darkBlue')
+	        log.orange     ('log.orange')
+	        log.boldOrange ('log.boldOrange')
+	        log.darkOrange ('log.darkOrange')
+	        log.red        ('log.red')         //  ..for more colors, see the implementation below
+	        log.boldRed    ('log.boldRed')
+	        log.darkRed    ('log.darkRed')
+	        log.pink       ('log.pink')
+	        log.boldPink   ('log.boldPink')
+	        log.darkPink   ('log.darkPink')
+	
+	        log.margin ()
+	        log.margin ()  // collapses
+	
+	        log.bright ('log.bright')
+	        log.dark   ('log.dark')
+	
+	        log.margin ()
+	
+	        log.success ('log.success')     //  Use for quality production logging (logging that lasts).
+	        log.ok      ('log.ok')
+	        log.g       ('log.g')
+	        log.gg      ('log.gg')
+	        log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
+	        log.i       ('log.i')
+	        log.ii      ('log.ii')
+	        log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
+	        log.warn    ('log.warn')
+	        log.w       ('log.w')
+	        log.ww      ('log.ww')        
+	        log.error   ('log.error')
+	        log.e       ('log.e')
+	        log.ee      ('log.ee')
+	
+	        $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
+	                                                            // (as it returns it first argument, like in _.identity)
+	
+	        log.info    (log.stackOffset (2), 'log.info (log.config ({ stackOffset: 2 }), ...)')
+	
+	        log.write   ('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace')
+	
+	        log.write (                     'Multi',
+	                    log.color.red,      'Colored',
+	                    log.color.green,    'Output',
+	                    log.color.blue,     'For',
+	                    log.color.orange,   'The',
+	                    log.color.pink,     'Fucking',
+	                    log.color.none,     'Win')
+	
+	        log.write   (log.boldLine)  //  ASCII art <hr>
+	        log.write   (log.thinLine)
+	        log.write   (log.line)
+	
+	        log.write   (log.indent (1),
+	                     ['You can set indentation',
+	                      'that is nicely handled',
+	                      'in case of multiline text'].join ('\n'))
+	
+	        log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
+	        log.orange  (log.config ({ indent: 2, table: true }), [
+	            { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
+	            { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
+	
+	        log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
+	        log.write ('Array:', [1, 2, 3])                             //  Arrays too
+	        log.write ('Function:', _.identity)                         //  Prints code of a function
+	
+	        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n');
+	
+	        log.withConfig (log.indent (1), function () {
+	            log.pink ('Config stack + scopes + higher order API test:')
+	            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
+	
+	        $assert (log (42), 42) } }
+	
+	_.extend (
+	
+	    /*  Basic API
+	     */
+	    log = function () {
+	        return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
+	
+	    Config: $prototype (),
+	
+	    /*  Could be passed as any argument to any write function.
+	     */
+	    config: function (cfg) {
+	        return new log.Config (cfg) } })
+	
+	
+	_.extend (log, {
+	
+	    /*  Shortcut for common cases
+	     */
+	    indent: function (n) {
+	        return log.config ({ indent: n }) },
+	
+	    stackOffset: function (n) {
+	        return log.config ({ stackOffset: n }) },
+	
+	    where: function (wat) {
+	        return log.config ({ location: true, where: wat || undefined }) },
+	
+	    color: _.extend (function (x) { return (log.color[x] || {}).color },
+	
+	        _.object (
+	        _.map  ([['none',        '0m',           ''],
+	                 ['red',         '31m',          'color:crimson'],
+	                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
+	                 ['darkRed',    ['31m', '2m'],   'color:crimson'],
+	                 ['blue',        '36m',          'color:royalblue'],
+	                 ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
+	                 ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
+	                 ['boldOrange', ['33m', '1m'],   'color:saddlebrown;font-weight:bold;'],
+	                 ['darkOrange', ['33m', '2m'],   'color:saddlebrown'],
+	                 ['orange',      '33m',          'color:saddlebrown'],
+	                 ['brown',      ['33m', '2m'],   'color:saddlebrown'],
+	                 ['green',       '32m',          'color:forestgreen'],
+	                 ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
+	                 ['darkGreen',  ['32m', '2m'],   'color:forestgreen;opacity:0.5'],
+	                 ['pink',        '35m',          'color:magenta'],
+	                 ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
+	                 ['darkPink',   ['35m', '2m'],   'color:magenta'],
+	                 ['black',       '0m',           'color:black'],
+	                 ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
+	                 ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
+	
+	             function (def) {
+	                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
+	
+	    /*  Need one? Take! I have plenty of them!
+	     */
+	    boldLine:   '======================================',
+	    line:       '--------------------------------------',
+	    thinLine:   '......................................',
+	
+	    /*  Set to true to precede each log message with date and time (useful for server side logs).
+	     */
+	    timestampEnabled: false,
+	
+	    /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
+	     */
+	    withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
+	                                                                                        log.writeBackend.value = backend
+	        contextFn (function /* release */ (then) { // @hide
+	                     release (function () {                                             log.writeBackend.value = prev
+	                        if (then) then ()
+	                        if (done) done () }) }) }),  
+	
+	    /*  For writing with forced default backend
+	     */
+	    writeUsingDefaultBackend: function (/* arguments */) { var args = arguments
+	        log.withWriteBackend (
+	            log.impl.defaultWriteBackend,
+	            function (done) {
+	                log.write.apply (null, args); done () }) },
+	
+	    writeBackend: function () {
+	        return arguments.callee.value || log.impl.defaultWriteBackend },
+	
+	    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
+	                     var result = what (); log.impl.configStack.pop ();
+	                  return result },
+	
+	    currentConfig: function () { return log.impl.configure (log.impl.configStack) },
+	
+	    /*  Use instead of 'log.newline ()' for collapsing newlines
+	     */
+	    margin: (function () {
+	                var lastWrite = undefined
+	                return function () {
+	                    if (lastWrite !== log.impl.numWrites)
+	                        log.newline ()
+	                        lastWrite   = log.impl.numWrites } }) (),
+	
+	    /*  Internals
+	     */
+	    impl: {
+	
+	        configStack: [],
+	        numWrites: 0,
+	
+	        configure: function (configs) {
+	            return _.reduce2 (
+	                { stackOffset: 0, indent: 0 },
+	                _.nonempty (configs), function (memo, cfg) {
+	                                        return _.extend (memo, _.nonempty (cfg), {
+	                                            indent:      memo.indent      + (cfg.indent || 0),
+	                                            stackOffset: memo.stackOffset + (cfg.stackOffset || 0) }) }) },
+	
+	        /*  Nuts & guts
+	         */
+	        write: $restArg (_.bindable (function () { var writeBackend = log.writeBackend ()
+	
+	            log.impl.numWrites++
+	
+	            var args   = _.asArray (arguments)
+	            var config = log.impl.configure ([{ stackOffset: $platform.NodeJS ? 1 : 3,
+	                                                indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
+	
+	            var runs = _.reduce2 (
+	
+	                /*  Initial memo
+	                 */
+	                [],
+	                
+	                /*  Arguments split by configs
+	                 */
+	                _.partition3 (args, _.isTypeOf.$ (log.Config)),
+	                
+	                /*  Gather function
+	                 */
+	                function (runs, span) {
+	                    if (span.label === true) { config = log.impl.configure ([config].concat (span.items))
+	                                               return runs }
+	                                        else { return runs.concat ({ config: config,
+	                                                                     text: log.impl.stringifyArguments (span.items, config) }) } })
+	
+	            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match (/(\n*)([^]*)/)
+	            var trailNewlines = (trailNewlinesMatch && trailNewlinesMatch[1]) // dumb way to select trailing newlines (i'm no good at regex)
+	            if (trailNewlinesMatch) {
+	                runs.last.text = trailNewlinesMatch[2].reversed }
+	
+	
+	            /*  Split by linebreaks
+	             */
+	            var newline = {}
+	            var lines = _.pluck.with ('items',
+	                            _.reject.with (_.property ('label'),
+	                                _.partition3.with (_.equals (newline),
+	                                    _.scatter (runs, function (run, i, emit) {
+	                                                        _.each (run.text.split ('\n'), function (line, i, arr) {
+	                                                                                            emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
+	                                                                                            emit (newline) } }) }))))
+	
+	            var totalText       = _.pluck (runs, 'text').join ('')
+	            var where           = config.where || log.impl.walkStack ($callStack) || {}
+	            var indentation     = (config.indentPattern || '\t').repeats (config.indent)
+	
+	            writeBackend ({
+	                lines:         lines,
+	                config:        config,
+	                color:         config.color,
+	                when:          (new Date ()).toISOString (),
+	                args:          _.reject (args, _.isTypeOf.$ (log.Config)),
+	                indentation:   indentation,
+	                indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
+	                                                 _.joinsWith (''),
+	                                                 _.prepends (indentation))).join ('\n'),
+	                text:          totalText,
+	                codeLocation:  (config.location && log.impl.location (where)) || '',
+	                trailNewlines: trailNewlines || '',
+	                where:         (config.location && where) || undefined })
+	
+	            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
+	
+	        walkStack: function (stack) {
+	            return _.find (stack.clean.offset ($platform.Browser ? 1 : 2),
+	                        function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
+	
+	        defaultWriteBackend: function (params) {
+	
+	            var codeLocation = params.codeLocation
+	
+	            if ($platform.NodeJS) {
+	
+	                var lines = _.map (params.lines, function (line) {
+	                                                    return params.indentation + _.map (line, function (run) {
+	                                                        return (run.config.color
+	                                                                    ? (run.config.color.shell + run.text + '\u001b[0m')
+	                                                                    : (                         run.text)) }).join ('') }).join ('\n')
+	
+	                if (log.timestampEnabled) {
+	                    lines = log.color ('dark').shell + _.bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
+	
+	                console.log (lines,
+	                             log.color ('dark').shell + codeLocation + '\u001b[0m',
+	                             params.trailNewlines) }
+	
+	            else {
+	                console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
+	
+	                /*  Text   */
+	
+	                    [(log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + '%c') : '')
+	
+	                        , _.map (params.lines, function (line, i) {
+	                                                return params.indentation + _.reduce2 ('', line, function (s, run) {
+	                                                    return s + (run.text && ((run.config.color ? '%c' : '') +
+	                                                        run.text) || '') }) }).join ('\n')
+	
+	                        , (codeLocation ? ('%c' + codeLocation) : '')].nonempty.join (' '),
+	
+	                /*  Colors */
+	
+	                    (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)', 'color:black'] : [])
+	
+	                        .concat ((_.scatter (params.lines, function (line, i, emit) {
+	                            _.each (line, function (run) {
+	                                if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []))
+	
+	                        .concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+	
+	                    params.trailNewlines))) } },
+	
+	        /*  Formats timestamp preceding log messages
+	         */
+	        timestamp: function (x) {
+	        	           return x },
+	
+	        /*  Formats that "function @ source.js:321" thing
+	         */
+	        location: function (where) {
+	            return _.quoteWith ('()', _.nonempty ([where.calleeShort,
+	                                      _.nonempty ([where.fileName,
+	                                                   where.line]).join (':')]).join (' @ ')) },
+	
+	
+	        /*  This could be re-used by outer code for turning arbitrary argument lists into string
+	         */
+	        stringifyArguments: function (args, cfg) {
+	            return _.map (args, function (arg) {
+	                var x = log.impl.stringify (arg, cfg)
+	                return (cfg.maxArgLength ? x.limitedTo (cfg.maxArgLength) : x) }).join (' ') },
+	
+	        /*  Smart object stringifier
+	         */
+	        stringify: function (what, cfg) { cfg = cfg || {}
+	            if (_.isTypeOf (Error, what)) {
+	                var str = log.impl.stringifyError (what)
+	                if (what.originalError) {
+	                    return str + '\n\n' + log.impl.stringify (what.originalError) }
+	                else {
+	                    return str } }
+	
+	            else if (_.isTypeOf (CallStack, what)) {
+	                return log.impl.stringifyCallStack (what) }
+	
+	            else if (typeof what === 'object') {
+	                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
+	                    return log.asTable (what) }
+	                else {
+	                    return _.stringify (what, cfg) } }
+	                    
+	            else if (typeof what === 'string') {
+	                return what }
+	
+	            else {
+	                return _.stringify (what) } },
+	        
+	        stringifyError: function (e) {
+	            try {       
+	                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
+	                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
+	
+	                return ('[EXCEPTION] ' + why + '\n\n') +
+	                    (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
+	                                        log.impl.stringify.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+	                    log.impl.stringifyCallStack (stack) + '\n' }
+	            catch (sub) {
+	                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
+	                    '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
+	
+	        stringifyCallStack: function (stack) {
+	            return log.columns (stack.map (
+	                function (entry) { return [
+	                    '\t' + 'at ' + entry.calleeShort.first (30),
+	                    _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
+	                    (entry.source || '').first (80)] })).join ('\n') } } })
+	
+	
+	/*  Printing API
+	 */
+	;(function () {                                                var write = log.impl.write
+	   _.extend (log,
+	             log.printAPI =
+	                    _.object (
+	                    _.concat (            [[            'newline', write.$ (log.config ({ location: false }), '') ],
+	                                           [              'write', write                                                          ]],
+	                            _.flat (_.map (['red failure error e',
+	                                                    'blue info i',
+	                                               'darkBlue minor m',
+	                                          'orange warning warn w',
+	                                             'green success ok g',
+	                                                   'darkGreen dg',
+	                                            'pink notice alert p',
+	                                                    'boldPink pp',
+	                                                    'dark hint d',
+	                                                   'boldGreen gg',
+	                                                       'bright b',
+	                                          'boldRed bloody bad ee',
+	                                                    'darkPink dp',
+	                                                       'brown br',
+	                                                 'darkOrange wtf',
+	                                                  'boldOrange ww',
+	                                                     'darkRed er',
+	                                                    'boldBlue ii' ],
+	                                                    _.splitsWith  (' ').then (
+	                                                      _.mapsWith  (
+	                                                  function (name,                                   i,                         names      )  {
+	                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first), stackOffset: 2 })) ] })))))))
+	
+	}) ()
+	
+	
+	/*  Higher order API
+	 */
+	logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
+	
+	
+	/*  Experimental formatting shit.
+	 */
+	_.extend (log, {
+	
+	    asTable: function (arrayOfObjects) {
+	        var columnsDef  = arrayOfObjects.map (_.keys.arity1).reduce (_.union.arity2, []) // makes ['col1', 'col2', 'col3'] by unifying objects keys
+	        var lines       = log.columns ( [columnsDef].concat (
+	                                            _.map (arrayOfObjects, function (object) {
+	                                                                        return columnsDef.map (_.propertyOf (object)) })), {
+	                                        maxTotalWidth: 120,
+	                                        minColumnWidths: columnsDef.map (_.property ('length')) })
+	
+	        return [lines[0], log.thinLine[0].repeats (lines[0].length), _.rest (lines)].flat.join ('\n') },
+	
+	    /*  Layout algorithm for ASCII sheets (v 2.0)
+	     */
+	    columns: function (rows, cfg_) {
+	        if (rows.length === 0) {
+	            return [] }
+	        else {
+	            
+	            /*  convert column data to string, taking first line
+	             */
+	            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return _.asString (col).split ('\n')[0] }))
+	
+	            /*  compute column widths (per row) and max widths (per column)
+	             */
+	            var columnWidths    = rowsToStr.map (_.map.tails2 (_.property ('length')))
+	            var maxWidths       = columnWidths.zip (_.largest)
+	
+	            /*  default config
+	             */
+	            var cfg             = cfg_ || { minColumnWidths: maxWidths, maxTotalWidth: 0 }
+	
+	            /*  project desired column widths, taking maxTotalWidth and minColumnWidths in account
+	             */
+	            var totalWidth      = _.reduce (maxWidths, _.sum, 0)
+	            var relativeWidths  = _.map (maxWidths, _.muls (1.0 / totalWidth))
+	            var excessWidth     = Math.max (0, totalWidth - cfg.maxTotalWidth)
+	            var computedWidths  = _.map (maxWidths, function (w, i) {
+	                                                        return Math.max (cfg.minColumnWidths[i], Math.floor (w - excessWidth * relativeWidths[i])) })
+	
+	            /*  this is how many symbols we should pad or cut (per column)
+	             */
+	            var restWidths      = columnWidths.map (function (widths) { return [computedWidths, widths].zip (_.subtract) })
+	
+	            /*  perform final composition
+	             */
+	            return [rowsToStr, restWidths].zip (
+	                 _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
+	                 .then (_.joinsWith ('  ')) ) } }
+	})
+	
+	if ($platform.NodeJS) {
+	    module.exports = log }
+	
+	
+
+
+/***/ },
+/* 44 */
+/***/ function(module, exports) {
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	------------------------------------------------------------------------
+	
+	Testosterone is a cross-platform unit test shell. Features:
+	
+	    - asynchronous tests
+	    - asynchronous assertions
+	    - log handling (log.xxx calls are scheduled to current test log)
+	    - exception handling (uncaught exceptions are nicely handled)
+	
+	------------------------------------------------------------------------
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	
+	/*  A contract for test routines that says that test should fail and it's the behavior expected
+	 */
+	_.defineTagKeyword ('shouldFail')
+	
+	
+	/*  A contract for custom assertions, says that assertion is asynchronous.
+	 */
+	_.defineTagKeyword ('async')
+	
+	
+	/*  This is test suite for tests framework itself.
+	
+	    As you can see, tests are defined as _.tests.xxx. So, if you have module called 'foo',
+	    place tests for that module in _.tests.foo — it will be picked up by tests framework
+	    automagically ©
+	 */
+	_.tests.Testosterone = {
+	
+	    /*  3.  To write asynchronous tests, define second argument in your test routine, which
+	            is 'done' callback. The framework will look into argument count of your routine,
+	            and if second argument is there, your routine will be considered as asynchronous,
+	            i.e. not completing until 'done' is explicitly triggered.
+	     */
+	    'async': function (done) {
+	        _.delay (function () {
+	            done () }) },
+	
+	
+	    /*  4.  Use $tests to define unit tests on prototypes (works only on stuff in global namespace)
+	     */
+	    '$tests': function () {
+	
+	        DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
+	        DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
+	
+	        /*  $test/$tests renders to static immutable property $tests
+	         */
+	        $assertTypeMatches (DummyPrototypeWithTests.$tests, [{ '*': 'function' }])
+	        $assertThrows (function () { DummyPrototypeWithTests.$tests = 42 })
+	
+	        /*  Tests are added to Testosterone.prototypeTests
+	         */
+	        $assertMatches (_.pluck (Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest .$tests,
+	                                                                         DummyPrototypeWithTests.$tests]) }
+	 }
+	
+	/*  For marking methods in internal impl that should publish themselves as global keywords (like $assert)
+	 */
+	_.defineTagKeyword ('assertion')
+	
+	Testosterone = $singleton ({
+	
+	    prototypeTests: [],
+	
+	    isRunning: $property (function () {
+	        return this.currentAssertion !== undefined }),
+	
+	    /*  Hook up to assertion syntax defined in common.js
+	     */
+	    constructor: function () {
+	
+	        _.each (_.assertions, function (fn, name) {
+	                                    this.defineAssertion (name, (name === 'assertFails') ?
+	                                        $shouldFail (function (what) { what.call (this) }) : fn) }, this);
+	
+	        /*  For defining tests inside prototype definitions
+	         */
+	        (function (register) {
+	            $prototype.macro ('$test',  register)
+	            $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
+	                                                        this.prototypeTests.push ({
+	                                                            proto: def.constructor,
+	                                                            tests: value })
+	
+	                                                        def.$tests = $static ($property ($constant (
+	                                                            (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
+	
+	                                                        return def }))
+	        this.run = this.$ (this.run) },
+	
+	    /*  Entry point
+	     */
+	    run: _.interlocked (function (cfg_) {
+	
+	        /*  Configuration
+	         */
+	        var defaults = {
+	            suites: [],
+	            silent:  true,
+	            verbose: false,
+	            timeout: 2000,
+	            filter: _.identity,
+	            testStarted:  function (test) {},
+	            testComplete: function (test) {} }
+	
+	        var cfg = this.runConfig = _.extend (defaults, cfg_)
+	
+	        /*  Read cfg.suites
+	         */
+	        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+	        var suites = _.map (cfg.suites, this.$ (function (suite, name) {
+	            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto) }))
+	
+	        /*  Pick prototype tests
+	         */
+	        var result = ((cfg.codebase === false) ? __([]) : this.collectPrototypeTests ()).then (this.$ (function (prototypeTests) {
+	
+	            /*  Gather tests
+	             */
+	            var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
+	            var allTests    = _.flatten (_.pluck (baseTests.concat (suites).concat (prototypeTests), 'tests'))
+	            var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
+	
+	            /*  Reset context (assigning indices)
+	             */
+	            this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
+	
+	            _.each (this.runningTests, function (t) {
+	                if (!(t.routine instanceof Function)) {
+	                    log.ee (t.suite, t.name, '– test routine is not a function:', t.routine)
+	                    throw new Error () } })
+	
+	            this.runningTests = _.filter (this.runningTests, cfg.filter || _.identity)
+	
+	            /*  Go
+	             */
+	            return __ .each (this.runningTests, this.$ (this.runTest))
+	                      .then (this.$ (function () {
+	                                _.assert (cfg.done !== true)
+	                                          cfg.done   = true
+	
+	                                this.printLog (cfg)
+	                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+	                                this.failed = (this.failedTests.length > 0)
+	                                
+	                                return !this.failed })) }))
+	
+	        return result.catch (function (e) {
+	                                log.margin ()
+	                                log.ee (log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e)
+	                                throw e }) }),
+	
+	    onException: function (e) {
+	        if (this.currentAssertion) 
+	            this.currentAssertion.onException (e)
+	        else
+	            throw e },
+	
+	    /*  You may define custom assertions through this API
+	     */
+	    defineAssertions: function (assertions) {
+	        _.each (assertions, function (fn, name) {
+	            this.defineAssertion (name, fn) }, this) },
+	
+	    /*  Internal impl
+	     */
+	    runTest: function (test, i) { var self = this, runConfig = this.runConfig
+	
+	        log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
+	    
+	        return __.then (runConfig.testStarted (test), function () {
+	
+	            test.verbose = runConfig.verbose
+	            test.timeout = runConfig.timeout
+	            test.startTime = Date.now ()
+	
+	            return test.run ()
+	                       .then (function () {
+	                                test.time = (Date.now () - test.startTime)
+	                                return runConfig.testComplete (test) }) }) },
+	
+	    collectTests: function () {
+	        return _.map (_.tests, this.$ (function (suite, name) {
+	            return this.testSuite (name, suite) } )) },
+	
+	    collectPrototypeTests: function () { var self = this
+	        return __.map (this.prototypeTests, function (def, then) {
+	                                                return def.proto.$meta.promise.then (function (meta) {
+	                                                    return self.testSuite (meta.name, def.tests, undefined, def.proto) }) }) },
+	
+	    testSuite: function (name, tests, context, proto) { return { 
+	        name: name || '',
+	        tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
+	                .map (function (keyValue) {
+	                        var test = new Test ({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context })
+	                            test.complete (function () {
+	                                if (!(test.hasLog = (test.logCalls.length > 0))) {
+	                                         if (test.failed)  { log.red   ('FAIL') }
+	                                    else if (test.verbose) { log.green ('PASS') } } })
+	
+	                            return test }) } },
+	
+	    defineAssertion: function (name, def) { var self = this
+	        _.deleteKeyword (name)
+	        _.defineKeyword (name, Tags.modify (def,
+	                                    function (fn) {
+	                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
+	                                            if (!self.currentAssertion) {
+	                                                return fn.apply (self, arguments) }
+	                                            else {
+	                                                return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } }) })) },
+	
+	    printLog: function (cfg) { if (!cfg.supressLog) {
+	
+	        var loggedTests = _.filter (this.runningTests, function (test) { return test.failed || (!cfg.silent && test.hasLog) })
+	        var failedTests = _.filter (this.runningTests, _.property ('failed'))
+	
+	        _.invoke (cfg.verbose ? this.runningTests : loggedTests, 'printLog')
+	
+	        if (failedTests.length) {
+	            log.orange ('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck (failedTests, 'name').join (', '), '\n\n') }
+	
+	        else if (cfg.silent !== true) {
+	            log.green ('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n') } } } })
+	
+	
+	/*  Encapsulates internals of test's I/O.
+	 */
+	Test = $prototype ({
+	
+	    constructor: function (cfg) {
+	        _.defaults (this, cfg, {
+	            name:       '<< UNNAMED FOR UNKNOWN REASON >>',
+	            failed:     false,
+	            routine:    undefined,
+	            verbose:    false,
+	            depth:      1,
+	            indent:     0,
+	            failedAssertions: [],
+	            context:    this,
+	            complete: _.extend (_.barrier (), { context: this }) })
+	
+	        this.babyAssertion = _.interlocked (this.babyAssertion) },
+	
+	    finalize: function () {
+	        this.babyAssertion.wait (this.$ (function () {
+	            if (this.canFail && this.failedAssertions.length) {
+	                this.failed = true }
+	            this.complete (true) })) },
+	
+	    babyAssertion: function (name, def, fn, args, loc) { var self = this
+	
+	        var assertion = new Test ({
+	            mother: this,
+	            name: name,
+	            shouldFail: def.$shouldFail || this.shouldFail,
+	            depth: this.depth + 1,
+	            location: loc,
+	            context: this.context,
+	            timeout: this.timeout / 2,
+	            verbose: this.verbose,
+	            silent:  this.silent,
+	            routine: Tags.modify (def, function (fn) {
+	                                            return function (done) {
+	                                                    if ($async.is (args[0]) || $async.is (def)) {
+	                                                        _.cps.apply (fn, self.context, args, function (args, then) {
+	                                                                                                         if (then) {
+	                                                                                                             then.apply (this, args) }
+	                                                                                                         done () }) }
+	                                                    else {
+	                                                        try       { fn.apply (self.context, args); done (); }
+	                                                        catch (e) { assertion.onException (e); } } } }) })
+	
+	        return assertion.run ()
+	                        .finally (function (e, x) {
+	                                Testosterone.currentAssertion = self
+	                                if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
+	                                    return assertion.location
+	                                                    .sourceReady
+	                                                    .promise
+	                                                    .then (function (src) {
+	                                                                log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
+	                                                                assertion.evalLogCalls ()
+	                                                                return src }) } })
+	
+	                        .then (function (src) {
+	                            if (assertion.failed && self.canFail) {
+	                                self.failedAssertions.push (assertion) } }) },
+	
+	    canFail: $property (function () {
+	        return !this.failed && !this.shouldFail }),
+	
+	    fail: function () {
+	        this.failed = true
+	        this.finalize () },
+	
+	    assertionStack: $property (function () { var result = [],
+	                                                      a = this; do { result.push (a); a = a.mother } while (a)
+	                                          return result }),
+	
+	    onException: function (e) {
+	
+	            if (this.canFail || this.verbose) {
+	
+	                if (_.isAssertionError (e)) {
+	                    //  • a
+	                    //  • b
+	                    if ('notMatching' in e) { var notMatching = _.coerceToArray (e.notMatching)
+	                        if (e.asColumns) {
+	                            log.orange (
+	                                log.columns (_.map (notMatching, function (obj) {
+	                                    return ['\t• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
+	                        else {
+	                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('\t• ')))
+	                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
+	                            if (common.length < 4) {
+	                                common = undefined }
+	
+	                            _.each (cases, function (what) {
+	
+	                                    if (common) {                                  var where  = what.indexOf (common)
+	                                        log.write ( log.color.orange,  what.substr (0, where),
+	                                                    log.color.dark,    common,
+	                                                    log.color.orange,  what.substr (where + common.length)) }
+	
+	                                    else {
+	                                        log.orange (what) } }) }} }
+	                        
+	                    // print exception
+	                else {
+	                    if (this.depth > 1) { log.newline () }
+	                                          log.write (e) }
+	                                          log.newline () }
+	
+	            if (this.canFail) { this.fail () }
+	                        else  { this.finalize () } },
+	
+	    run: function () { var self    = Testosterone.currentAssertion = this,
+	                           routine = Tags.unwrap (this.routine)
+	
+	        return new Channel (this.$ (function (then) {
+	
+	            this.shouldFail = $shouldFail.is (this.routine)
+	            this.failed = false
+	            this.hasLog = false
+	            this.logCalls = []
+	            this.failureLocations = {}
+	
+	            _.withTimeout ({
+	                maxTime: self.timeout,
+	                expired: function () { if (self.canFail) { log.ee ('TIMEOUT EXPIRED'); self.fail () } } },
+	                self.complete)
+	
+	            _.withUncaughtExceptionHandler (self.$ (self.onException), self.complete)
+	
+	            log.withWriteBackend (_.extendWith ({ indent: 1 },
+	                                        function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),
+	
+	                                  function (doneWithLogging)  { self.complete (doneWithLogging.arity0)
+	                                                    if (then) { self.complete (then) }
+	
+	                                        /*  Continuation-passing style flow control
+	                                         */
+	                                        if (routine.length > 0) {
+	                                            routine.call (self.context, self.$ (self.finalize)) }
+	
+	                                        /*  Return-style flow control
+	                                         */
+	                                        else {
+	
+	                                        /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
+	                                                    leads to broken unhandled exception handling after the Testosterone run completes  */
+	
+	                                            var result = undefined
+	
+	                                            try       { result = routine.call (self.context) }
+	                                            catch (e) { self.onException (e) }
+	
+	                                            if (_.isArrayLike (result) && (result[0] instanceof Promise)) {
+	                                                result = __.all (result) }
+	
+	                                            if (result instanceof Promise) {
+	                                                result.then (
+	                                                    function (x) { self.finalize () }.postponed,
+	                                                    function (e) { self.onException (e) }) }
+	                                            else {
+	                                                self.finalize () } } }) })) },
+	            
+	    printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
+	
+	        log.write (log.color.blue,
+	            '\n' + log.boldLine,
+	            '\n' + _.nonempty ([suiteName, this.name]).join (' '),
+	            (this.index + ' of ' + Testosterone.runningTests.length).quote ('()') +
+	            (this.failed ? ' FAILED' : '') + ':',
+	            '\n')
+	
+	        this.evalLogCalls () },
+	
+	    evalLogCalls: function () {
+	        _.each (this.logCalls, log.writeBackend ().arity1) } })
+	
+	
+	/*
+	 */
+	_.defineTagKeyword ('allowsRecursion')
+	
+	_.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
+	                        var depth       = -1
+	                        var reported    = false
+	                            return function () {
+	                                if (!reported) {
+	                                    if (depth > max) { reported = true
+	                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + _.stringify (arg) }) },
+	                                            new Error (name + ': max recursion depth reached (' + max + ')')) }
+	                                    else {
+	                                        var result = ((++depth), fn.apply (this, arguments)); depth--
+	                                            return result } } } }
+	                                            
+	Testosterone.ValidatesRecursion = $trait ({
+	
+	    $test: function () {
+	
+	        var test = new ($component ({
+	
+	            $traits: [Testosterone.ValidatesRecursion],
+	
+	            foo: function () {},
+	            bar: function () { this.bar () },
+	            baz: $allowsRecursion ({ max: 2 }, function () { this.baz () }),
+	            qux: $allowsRecursion (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
+	
+	                       test.foo ()
+	        $assertThrows (test.bar, { message: 'bar: max recursion depth reached (0)' })
+	                       test.bar () // should not report second time (to prevent overflood in case of buggy code)
+	        $assertThrows (test.baz, { message: 'baz: max recursion depth reached (2)' })
+	                       test.qux () },
+	
+	    $constructor: function () {
+	        _.each (this, function (member, name) {
+	            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$allowsRecursion || (member.$allowsRecursion.max !== undefined))) {
+	                this[name] = Tags.modify (member, function (fn) {
+	                    return _.limitRecursion ((member && member.$allowsRecursion && member.$allowsRecursion.max) || 0, fn, name) }) } }, this) } })
+	
+	/*  $log for methods
+	 */
+	;(function () { var colors = _.keys (_.omit (log.color, 'none'))
+	                    colors.each (_.defineTagKeyword)
+	
+	    _.defineTagKeyword ('verbose')
+	
+	    Testosterone.LogsMethodCalls = $trait ({
+	
+	        $test: $platform.Browser ? (function () {}) : function (testDone) {
+	
+	                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+	                    var Compo = $extends (Proto, {
+	                                        foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
+	
+	                    var compo = new Compo ()
+	                    var testContext = this
+	
+	                    Compo.$meta (function () {
+	                        $assert (compo.foo (42), 24)
+	                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+	                        $assert (testContext.logCalls[0].color === log.color ('pink'))
+	                        testDone () }) },
+	
+	        $macroTags: {
+	
+	            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
+	                                                var meta          = {}
+	                                                var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
+	                                                var template      = param && _.template (param, { interpolate: /\{\{(.+?)\}\}/g })
+	
+	                $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
+	
+	                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
+	                                                                                                             arguments_ = _.asArray (arguments)
+	
+	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
+	                        var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
+	
+	                    log.write (log.config ({
+	                        color: color,
+	                        location: true,
+	                        where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
+	
+	                    return log.withConfig ({ indent: 1,
+	                                             color: color,
+	                                             protoName: meta.name }, function () {
+	
+	                                                                        var numWritesBefore = log.impl.numWrites
+	                                                                        var result          = fn.apply (this_, arguments_);          
+	
+	                                                                        if (result !== undefined) {
+	                                                                            log.write ('→', _.stringifyOneLine (result)) }
+	
+	                                                                        if ((log.currentConfig ().indent < 2) &&
+	                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
+	
+	                                                                        return result }) } }) } } }) }) ();
+	
+	
+	if ($platform.NodeJS) {
+	    module.exports = Testosterone }
+
+/***/ },
+/* 45 */
+/***/ function(module, exports) {
+
+	/*  Measures run time of a routine (either sync or async)
+	    ======================================================================== */
+	
+	_.measure = function (routine, then) {
+	    if (then) {                             // async
+	        var now = _.now ()
+	        routine (function () {
+	            then (_.now () - now) }) }
+	    else {                                  // sync
+	        var now = _.now ()
+	        routine ()
+	        return _.now () - now } }
+	
+	
+	/*  Measures performance: perfTest (fn || { fn1: .., fn2: ... }, then)
+	    ======================================================================== */
+	
+	_.perfTest = function (arg, then) {
+	    var rounds = 500
+	    var routines = _.isFunction (arg) ? { test: arg } : arg
+	    var timings = {}
+	
+	    _.cps.each (routines, function (fn, name, then) {
+	
+	        /*  Define test routine (we store and print result, to assure our routine
+	            won't be throwed away by optimizing JIT)
+	         */
+	        var result = []
+	        var run = function () {
+	            for (var i = 0; i < rounds; i++) {
+	                result.push (fn ()) }
+	            console.log (name, result) }
+	
+	        /*  Warm-up run, to force JIT work its magic (not sure if 500 rounds is enough)
+	         */
+	        run ()
+	
+	        /*  Measure (after some delay)
+	         */
+	        _.delay (function () {
+	            timings[name] = _.measure (run) / rounds
+	            then () }, 100) },
+	
+	        /*  all done
+	         */
+	        function () {
+	            then (timings) }) }
+
+
+/***/ },
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -20380,7 +23298,7 @@
 
 
 /***/ },
-/* 35 */
+/* 47 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -20407,6 +23325,10 @@
 	/*  Element methods
 	 */
 	.fn.extend ({
+	
+	    /*  For this-binding
+	     */
+	    $: function () { return _.$.apply (null, [this].concat (_.asArray (arguments))) },
 	
 	    /*  Provides auto-unbinding of $component $listeners from DOM events upon destroy
 	     */
@@ -20785,2929 +23707,6 @@
 	    })
 	
 	}) (jQuery) }
-
-/***/ },
-/* 36 */
-/***/ function(module, exports) {
-
-	(function () { var is = function (tag) { return function () { return this.tagName === tag } }
-	
-	/*  Constructors
-	    ======================================================================== */
-	
-	/*  N (tag)                                                                  */
-	
-	    N = function (tag, children) {
-	            var n = document.createElement (tag.uppercase)
-	                return children ? n.append (children) : n }
-	
-	/*  N.text                                                                   */
-	
-	    N.text = function (text) {
-	                return document.createTextNode (text) }
-	
-	/*  N.span / N.div ...                                                       */
-	
-	    _.each (['br', 'p', 'div', 'em', 'a', 'b', 'i', 'u', 's', 'strong', 'span',
-	             'sup', 'sub', 'button', 'iframe', 'pre', 'img', 'video', 'source',
-	             'h1', 'h2', 'h3', 'h4', 'h5', 'textarea', 'input', 'style'],
-	
-	             function (tag) {
-	
-	                var TAG = tag.uppercase
-	
-	                _.defineProperty (N, tag, function () {
-	                                            return document.createElement (TAG) }) })
-	
-	
-	/*  Querying                                                                 */
-	
-	    N.all = document.querySelectorAll.bind (document)
-	    N.one = document.querySelector.bind (document)
-	
-	
-	/*  Node+
-	    ======================================================================== */
-	
-	    $mixin (Node, {
-	
-	        $: $prototype.impl.$,    // brings this.$ semantics from $prototype
-	
-	        
-	    /*  Various predicates
-	        ------------------
-	
-	        New $callableAsFreeFunction tag means that its subject will be available
-	        as context-free (static) version along with instance method. For example,
-	        following two calls are equivalent:
-	
-	            console.log (document.body.isLinebreak)
-	            console.log (Node.isLinebreak (document.body))
-	
-	        Having dual calling convention for common predicates is super useful, as
-	        you can use them in functional data-crunching expressions, where free
-	        functions are far more suitable than instance methods.
-	
-	        It was inspired by $extensionMethods from Useless, where it carries the
-	        exact same semantics for member definitions. Those definitions served
-	        a very limited purpose of merging Underscore functions to built-in types,
-	        so a more generic tool needed.
-	        
-	        ======================================================================== */
-	
-	        $callableAsFreeFunction: {
-	
-	            $property: {
-	
-	                isElement: function () { return (this.nodeType === Node.ELEMENT_NODE) },
-	                isText:    function () { return (this.nodeType === Node.TEXT_NODE) },
-	
-	                isLinebreak: is ('BR'),
-	                isDiv:       is ('DIV'),
-	                isParagraph: is ('P'),
-	                isHyperlink: is ('A'),
-	
-	                isAttachedToDocument: function () {
-	                    return this.matchUpwards (_.equals (document.body)) ? true : false },
-	
-	                /*  TODO: make use of native .isContentEditable
-	                 */
-	                forbidsEditing: function () {
-	                    return (this.nodeType === Node.ELEMENT_NODE) &&
-	                           (this.getAttribute ('contenteditable') === 'false') } } },
-	
-	
-	    /*  Up/outside means
-	        ======================================================================== */
-	
-	        grandParentNode: $property (function () { return this.parentNode && this.parentNode.parentNode }),
-	
-	        isFirstInParent: $property (function () { return this.parentNode && (this.parentNode.firstChild === this) }),
-	        isLastInParent:  $property (function () { return this.parentNode && (this.parentNode.lastChild  === this) }),
-	
-	        removeFromParent: $callableAsFreeFunction (function () { this.parentNode.removeChild (this); return this }),
-	
-	        outerLeftBoundaryIn: function (container) { var n = this
-	            while (n.grandParentNode && (n.parentNode !== container) && n.isFirstInParent) { n = n.parentNode }
-	            return n },
-	
-	        outerRightBoundaryIn: function (container) { var n = this
-	            while (n.grandParentNode && (n.parentNode !== container) && n.isLastInParent) { n = n.parentNode }
-	            return n },
-	
-	        matchUpwards: function (pred) { var n = this
-	                   while (n && !pred (n)) { n = n.parentNode }
-	                                     return n },
-	
-	        isLeftmostNodeIn: function (parent) {
-	                             return parent && ((this.matchUpwards (function (n) {
-	                                                                     return (n === parent) ||
-	                                                                            !n.isFirstInParent })) === parent) },
-	
-	        isRightmostNodeIn: function (parent) {
-	                             return parent && ((this.matchUpwards (function (n) {
-	                                                                     return (n === parent) ||
-	                                                                            !n.isLastInParent })) === parent) },
-	
-	    /*  Down/inside means
-	        ======================================================================== */
-	
-	        hasChildren: $property (function () { return   this.hasChildNodes () }),
-	        noChildren:  $property (function () { return !(this.hasChildNodes ()) }),
-	        numChildren: $property (function () { return   this.childNodes.length }),
-	
-	        length: $property (function () { return (this.childNodes ? this.childNodes.length :
-	                                                (this.nodeValue  ? this.nodeValue .length  : 0)) }),
-	
-	        /*  If you modify childNodes while iterating it, you'll get into problem.
-	            Use following method to safely do so.
-	         */
-	        safeEnumChildren: function (fn, context) {
-	                                _.each (this.childNodesArray, fn, context || this); return this },
-	
-	        /*  childNodes is not really an array, so to get Array instance, use this helper
-	         */
-	        childNodesArray: $property (function () {
-	                                        return _.asArray (this.childNodes) }),
-	
-	        add:    $alias ('appendChildren'),
-	        append: $alias ('appendChildren'),
-	
-	        appendChildren: function (arg1, arg2) {
-	                            for (var arr = (arg2 === undefined ? _.coerceToArray (arg1) : arguments), i = 0, len = arr.length; i < len; i++) {
-	                                var n = arr[i]
-	                                this.appendChild (_.isString (n) ? document.createTextNode (n) : n) }
-	                            return this },
-	
-	        removeChildren: function (nodes) {
-	                            for (var arr = _.coerceToArray (nodes), i = 0, len = arr.length; i < len; i++) {
-	                                this.removeChild (arr[i]) }
-	                            return this },
-	
-	        removeAllChildren: function () {
-	                                return this.removeChildren (this.childNodesArray) },
-	
-	        walkTree: function (cfg, accept) { accept = (arguments.length === 1) ? cfg : accept
-	
-	                    var walker = document.createTreeWalker (this,   (cfg && cfg.what) || NodeFilter.SHOW_ALL,
-	                                                                    (cfg && cfg.filter) || null,
-	                                                                    (cfg && cfg.entityReferenceExpansion) || null)
-	
-	                    while ((node = walker.nextNode ())) { accept (node) } },
-	
-	        firstInnermostChild: $callableAsMethod ($property (function (n) { while (n && n.firstChild) { n = n.firstChild } return n })),
-	
-	        /*  foo<b>123</b>bar    →   <b>.unwrapChildren  →   foo123bar
-	         */
-	        unwrapChildren: $callableAsFreeFunction (function () {      this.insertAfterMe (this.childNodesArray)
-	                                                       var parent = this.parentNode
-	                                                           parent.removeChild (this)
-	                                                    return parent }),
-	
-	    /*  Sideways means
-	        ======================================================================== */
-	
-	        prevSiblings: $property (function ()  { var r = [],     n = this.previousSibling
-	                                    while (n) {     r.push (n); n =    n.previousSibling } return r.reversed }),
-	
-	        nextNextSibling: $property (function () {
-	            return (this.nextSibling && this.nextSibling.nextSibling) }),
-	
-	        nextOutermostSibling: $callableAsMethod ($property (function ( n) {
-	                                                                while (n && !n.nextSibling) { n = n.parentNode  } // walk upwards until has next sibling
-	                                                                   if (n)                   { n = n.nextSibling } // take next sibling
-	                                                                return n })),
-	
-	        nextInnermostSibling: $callableAsMethod ($property (function (n) {
-	                                                                return Node.firstInnermostChild (
-	                                                                        Node.nextOutermostSibling (this)) })),
-	
-	        appendTo: function (ref) {
-	            ref.appendChild (this); return this },
-	
-	        prependTo: function (ref) {
-	            ref.insertBefore (this, ref.firstChild); return this },
-	
-	        replaceWith: function (what) { this.insertBeforeMe (what).removeFromParent () },
-	
-	        insertMeBefore: function (ref) {
-	            ref.parentNode.insertBefore (this, ref); return this },
-	
-	        insertMeAfter: function (ref) {
-	            ref.parentNode.insertBefore (this, ref.nextSibling); return this },
-	
-	        insertBeforeMe: function (nodes) { var parent = this.parentNode
-	                                           var me     = this
-	
-	            _.each (_.coerceToArray (nodes).reversed, function (n) { parent.insertBefore (n, me) }); return this },
-	
-	        insertAfterMe: function (nodes) { var parent = this.parentNode
-	                                          var next   = this.nextSibling
-	
-	            _.each (_.coerceToArray (nodes).reversed, function (n) { parent.insertBefore (n, next) }); return this },
-	
-	
-	    /*  Events
-	        ======================================================================== */
-	
-	        on:   function (e, fn) { this.addEventListener (e, fn); return this },
-	        once: function (e) {
-	                    var node = this, finalize, finalized = false
-	                    var p = new Promise (function (resolve) {
-	                                            node.addEventListener (e, finalize =
-	                                                function (e) {
-	                                                    if (!finalized) {
-	                                                        finalized = true
-	                                                        node.removeEventListener (e, finalize)
-	                                                        resolve (e) } }) })
-	                    p.finalize = finalize
-	                    return p },
-	
-	        touched: function (fn) {
-	                    return this.on ($platform.touch ? 'touchstart' : 'click', fn) },
-	
-	    /*  Properties
-	        ======================================================================== */
-	
-	        extend: function (props) { return _.extend (this, props) },
-	
-	
-	    /*  Attributes
-	        ======================================================================== */
-	
-	        cls: function (x) { this.className = x; return this },
-	        css: function (x) { _.extend (this.style, x); return this; },
-	
-	        hasClass: function (x) { return (this.className || '').split (' ').contains (x) },
-	
-	        toggleAttribute: function (name, value) { var arg1 = arguments.length < 2
-	
-	                                    if (arg1) {
-	                                        value = !this.hasAttribute (name) }
-	
-	                                     if (value) { this.setAttribute    (name, value) }
-	                                           else { this.removeAttribute (name) }
-	
-	                                    return arg1 ? value : this },
-	
-	        toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
-	        setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
-	
-	        intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
-	
-	        attr: $alias ('setAttributes'),
-	
-	        removeAttr: function (name) { this.removeAttribute (name); return this },
-	
-	
-	    /*  Splitting
-	        ======================================================================== */
-	
-	        splitSubtreeBefore: function (node) { // returns right (remaining) subtree
-	            if (!node || (node.parentNode === this)) {
-	                return node }
-	            else {
-	                return this.splitSubtreeBefore (
-	                                    !node.previousSibling // if first node in parent, nothing to split – simply proceed to parent
-	                                        ? node.parentNode
-	                                        : document.createElement  (node.parentNode.tagName)
-	                                                  .insertMeBefore (node.parentNode)
-	                                                  .appendChildren (node.prevSiblings)
-	                                                  .nextSibling) } },
-	
-	        splitSubtreeAt: function (location) { var n = location.node, i = location.offset
-	            return (i > 0) ? (location.node.isText ?
-	                                this.splitSubtreeBefore (N.text (n.nodeValue.substr (i)).insertMeAfter (_.extend (n, { nodeValue: n.nodeValue.substr (0, i) }))) :
-	                                this.splitSubtreeBefore (n.childNodes[i])) :
-	                                this.splitSubtreeBefore (n) },
-	
-	
-	    /*  innerHTML/innerText
-	        ======================================================================== */
-	
-	        html: function (x) { this.innerHTML = x; return this },
-	        text: function (x) { this.innerText = x; return this },
-	
-	
-	    /*  Animation
-	        ======================================================================== */
-	
-	        attributeUntil: function (attr, promise) {
-	                                                                     this.   setAttribute (attr, true)
-	                      return promise.done (this.$ (function (e, x) { this.removeAttribute (attr) })) },
-	
-	        busyUntil: function (promise) { return this.attributeUntil ('busy', promise) },
-	
-	        onceAnimationEnd: $property (function () {
-	            return this.once ($platform.WebKit ? 'webkitAnimationEnd' : 'animationend') }),
-	
-	        onceTransitionEnd: $property (function () {
-	            return this.once ($platform.WebKit ? 'webkitTransitionEnd' : 'transitionend') }),
-	
-	        animateWithAttribute: function (attr) {
-	
-	        /*  If already animating with this attribute — return previously allocated promise    */
-	
-	            if (this.hasAttribute (attr) && this._onceAnimationEnd) {
-	                return this._onceAnimationEnd }
-	
-	        /*  If already animating — finalize the existing promise */
-	
-	            if (this._onceAnimationEnd) {
-	                this._onceAnimationEnd.finalize () }
-	
-	        /*  Allocate new promise    */
-	
-	            this.setAttribute (attr, true)
-	
-	            this._onceAnimationEnd = this.onceAnimationEnd
-	
-	            return this._onceAnimationEnd.then (this.$ (function () {
-	                    this.removeAttribute (attr)
-	                    this.getBoundingClientRect () // forces layout recalc, otherwise new animation (if set in callback) may not start
-	                    this._onceAnimationEnd = undefined })) },
-	
-	        animatedWithAttribute: function (attr) {
-	                                    this.animateWithAttribute (attr); return this },
-	
-	        //transitionWithAttribute: function (attr) { this.setAttribute (attr, true)
-	        //     return this.onceTransitionEnd.then ( this.removeAttribute.bind (this, attr)).delay () }
-	    })
-	
-	
-	/*  ========================================================================= */
-	
-	    $mixin (Element, {
-	
-	    /*  Selectors   */
-	
-	        all: Element.prototype.querySelectorAll,
-	        one: Element.prototype.querySelector,
-	
-	
-	    /*  New Safari (as seen in technology preview) defines its own Element.append
-	        method, which gets into conflict with our previously-defined Node.append
-	        So will explicitly overrride it.    */
-	
-	        append: Node.prototype.append,
-	
-	
-	    /*  Metrics
-	        ======================================================================== */
-	
-	        clientBBox: $property (function () { return BBox.fromLTWH (this.getBoundingClientRect ()) }),
-	              bbox: $property (function () { return this.clientBBox.offset (document.bbox.leftTop) }),
-	
-	        setWidthHeight: function (v) {
-	                            this.style.width = v.x + 'px'
-	                            this.style.height = v.y + 'px'
-	                            return this },
-	
-	        setTransform: function (x) { this.transform = x; return this },
-	
-	        transform: $property ({
-	
-	            get: function () {
-	                    var components = (this.css ('transform') || '').match (/^matrix\((.+\))$/)
-	                    if (components) {
-	                        var m = components[1].split (',').map (parseFloat)
-	                        return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }
-	                    else {
-	                        return Transform.identity } },
-	
-	            /*  Example value: { translate: new Vec2 (a, b),  scale: new Vec2 (x, y), rotate: 180 }
-	             */
-	            set: function (cfg) {
-	                this.style.transform = (_.isStrictlyObject (cfg) && (
-	                                            (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
-	                                            (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
-	                                            (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
-	
-	    /*  Experimental FRP stuff
-	        ======================================================================== */
-	
-	        reads: function (stream, fn) { // DEPRECATED
-	                    stream (this.$ (function (x) { x = (fn || _.identity).call (this, x)
-	                        this.removeAllChildren ()
-	                        this.add (x instanceof Node ? x : (x + '')) }))
-	                    return this },
-	
-	        $toggleAttribute: function (name, value) {
-	                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
-	
-	        $add: function (nodes) { // TODO: make it default .add impl (but keep .appendChildren intact)
-	
-	                if (nodes instanceof Promise) {
-	                    var placeholder = document.createElement ('PROMISE')
-	                        this.appendChild (placeholder)
-	                        nodes.then (function (nodes) {
-	                            placeholder.replaceWith (nodes) }).panic }
-	                else {
-	                    this.add (nodes) }
-	
-	                return this }
-	    })
-	
-	/*  ========================================================================= */
-	
-	    $mixin (HTMLInputElement, {
-	
-	        $value: $property (function () {
-	
-	                            if (!this._observableValue) {
-	                                 this._observableValue = _.observable (this.value)
-	                                 this._observableValue.context = this
-	                                 this.on ('input', this.$ (function () {
-	                                     this._observableValue (this.value) })) }
-	
-	                            return this._observableValue })
-	
-	    })
-	
-	/*  ========================================================================= */
-	
-	    $mixin (Image, {
-	        
-	        fetch: $static (function (url) {
-	                            return new Promise (function (resolve, reject) {
-	                                                _.extend (new Image (), {
-	                                                                src: url,
-	                                                             onload: function ()  { resolve (this) },
-	                                                            onerror: function (e) { reject (e) } }) }) }) })
-	
-	
-	/*  document.clientBBox
-	    ======================================================================== */
-	
-	    _.defineProperties (document, {
-	
-	                            bbox: function () {
-	                                    return this.clientBBox.offset (Vec2.y (document.body.scrollTop)) },
-	                                    
-	                            clientBBox: function () {
-	                                            return BBox.fromLTWH (0, 0,
-	                                                            window.innerWidth  || document.documentElement.clientWidth,
-	                                                            window.innerHeight || document.documentElement.clientHeight) } })
-	
-	/*  document.ready
-	    ======================================================================== */
-	
-	    document.on ('DOMContentLoaded', document.ready = _.barrier ())
-	
-	
-	/*  ======================================================================== */
-	
-	_.tests.NodePlus = {
-	
-	    'tree splitting': function () {
-	
-	        Testosterone.defineAssertions ({
-	            assertSplitAtBr: function (html, desiredResult) {   var node = N.div.html (html)
-	                                                                    node.splitSubtreeBefore (node.one ('br'))
-	                                                                    return _.assert (node.innerHTML, desiredResult) } })
-	        $assertSplitAtBr ('<b><br>foo</b>', '<b><br>foo</b>')
-	        $assertSplitAtBr ('<b>foo<br></b>', '<b>foo</b><b><br></b>')
-	        $assertSplitAtBr ('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>') },
-	
-	    /*'animateWithAttribute': function () {
-	
-	        var style =
-	
-	            N.style.text (
-	                '@keyframes slide-to-right {' +
-	                    '0%   { transform: translate(0,0); opacity: 1; }' +
-	                    '100% { transform: translate(100%,0); opacity: 0; } }' +
-	
-	                '[slide-to-right] { animation: slide-to-right 1s ease-in-out; }' +
-	                '[slide-from-right] { animation: slide-to-right 1s ease-in-out; animation-direction: reverse; }'
-	
-	            ).appendTo (document.body)
-	
-	        var div =
-	            N.div.css ({
-	                position: 'fixed', left: '0px', top: '0px', width: '100px', height: '100px', background: 'red' }).appendTo (document.body)
-	
-	        div.animateWithAttribute ('slide-to-right').then (function () {
-	            div.style.background = 'blue'
-	            div.animateWithAttribute ('slide-from-right').then (function () {
-	                div.style.background = 'green' }) })
-	    }*/
-	
-	}
-	
-	/*  ======================================================================== */
-	
-	}) ()
-	
-	
-	
-	
-	
-	
-
-
-/***/ },
-/* 37 */
-/***/ function(module, exports) {
-
-	/*  How-to / spec / test
-	    ============================================================================ */
-	
-	_.tests['DOMReference + DOMEvents'] = {
-	
-	    'DOMReference + DOMEvents basics': function () {
-	
-	        $assertEveryCalled (function (changeCalled, reactToFocusEventsCalled, reactToWindowResizeCalled, domReadyCalled) {
-	
-	            /*  Example component that owns a DOM reference and listens to events
-	                ---------------------------------------------------------------- */
-	
-	            var textarea = new ($component ({
-	
-	                $traits: [DOMReference,
-	                          DOMEvents],
-	
-	            /*  That's how you initialize DOMReference using $barrier (see the big
-	                comment below for the example on how to access the stored reference,
-	                and why/when you will need that domReady thing).
-	                ---------------------------------------------------------------- */
-	
-	                init: function () { this.domReady (
-	                                            N.textarea
-	                                             .insertMeAfter (document.body.lastChild)) },
-	
-	            /*  That's how you bind to events (simplest way)
-	                ---------------------------------------------------------------- */
-	
-	                change: $on (function (e) { changeCalled () }),
-	
-	            /*  Binding with custom method name
-	                ---------------------------------------------------------------- */
-	
-	                shouldNotCall: $on ('input', function () { $fail }),
-	
-	            /*  Multiple events
-	                ---------------------------------------------------------------- */
-	
-	                reactToFocusEvents: $on ('focus blur', function (e) { reactToFocusEventsCalled () }),
-	
-	            /*  Binding to 'window' or 'document' events
-	                ---------------------------------------------------------------- */
-	
-	                reactToWindowResize: $on ({ what: 'resize', target: window }, function () { reactToWindowResizeCalled () }) })) ()
-	
-	
-	        /*  That's how you access DOM if you're 100% sure it's initialized
-	            -------------------------------------------------------------------- */
-	
-	            var dom    = textarea.dom
-	                $assert (textarea.dom instanceof Node)
-	
-	
-	        /*  Often you stumble upon a situation when your code tries to access
-	            something that is not initialized yet (e.g. a DOM tree).
-	
-	            Even if you 'fix' that by rearranging the call order, you cannot
-	            always rely on predictable outcome of that method: as components get
-	            more complex, you need to look forward for more reliable control
-	            mechanisms... at least, more reliable than shuffling init calls
-	            randomly to see if it 'solves' the problem.
-	
-	            Normally, it solved by introducing some well-known concurrent
-	            programming techniques - like a barrier, in this case. By simply
-	            encapsulating all unsafe DOM accesses to the barrier context,
-	            you enforce the expected call order automagically™, paying a
-	            minuscule runtime overhead for that.
-	            -------------------------------------------------------------------- */
-	
-	            textarea.domReady (function (dom) { $assert (dom instanceof Node); domReadyCalled () })
-	
-	
-	        /*  That's how you dispatch events programmatically
-	            TODO: configuration
-	            -------------------------------------------------------------------- */
-	
-	            textarea.dispatchEvent ('change')
-	            textarea.dispatchEvent ('blur')
-	
-	            /*  Dispatch window.resize
-	             */
-	                              var e = document.createEvent ('Event')
-	                                  e.initEvent ('resize', true, true)
-	            window.dispatchEvent (e)
-	
-	
-	        /*  That's how you enumerate listeners bound with $on 
-	            -------------------------------------------------------------------- */
-	
-	            $assert (textarea.constructor.DOMEventListeners,
-	
-	                     [{ e: 'change', fn: 'change' },
-	                      { e: 'input',  fn: 'shouldNotCall' },
-	                      { e: 'focus',  fn: 'reactToFocusEvents' },
-	                      { e: 'blur',   fn: 'reactToFocusEvents' },
-	                      { e: 'resize', fn: 'reactToWindowResize', target: window }])
-	
-	
-	        /*  Deinitialization semantics
-	            -------------------------------------------------------------------- */
-	        
-	            textarea.destroy ()
-	
-	            textarea.dispatchEvent ('input')    /*  destroy () removes event listeners, so our .shouldNotCall listener shouldn't get called */
-	            $assert (!dom.isAttachedToDocument) /*  destroy () removes node from document */
-	            $assert (textarea.dom, undefined)   /*  destroy () sets .dom to undefined     */ }) },
-	
-	
-	/*  Listeners defined in traits are bound in order of appearance, so you can
-	    utilize built-in e.stopImmediatePropagation () semantics for the flow control.
-	    -------------------------------------------------------------------- */
-	
-	    'Blocking event propagation in $traits with e.stopImmediatePropagation': function () {
-	
-	        $assertEveryCalled (function (blockChangeEventCalled) {
-	
-	            var textarea = new ($component ({
-	
-	                    $traits: [DOMReference,
-	                              DOMEvents,
-	                              $trait ({ blockChangeEvent: $on ('change', function (e) { blockChangeEventCalled (); e.stopImmediatePropagation () }) }),
-	                              $trait ({ shouldNotCall:    $on ('change', function (e) { $fail }) }) ],
-	
-	                    init: function () { this.domReady (
-	                                            N.textarea.insertMeAfter (document.body.lastChild)) } })) ()
-	
-	                textarea.dispatchEvent ('change')
-	                textarea.destroy () }) } }
-	
-	
-	/*  Impl.
-	    ======================================================================== */
-	
-	DOMReference = $trait ({
-	
-	        domReady: $barrier (function (dom) {
-	                                 this.dom = dom
-	                                 this.el = jQuery (this.dom) }),
-	
-	    afterDestroy: function () {  if (this.dom) {
-	                                     this.dom.removeFromParent ()
-	                                     this.dom = undefined
-	                                     this.el  = undefined }
-	                                 this.domReady.reset () } })
-	
-	/*  ======================================================================== */
-	
-	DOMReferenceWeak = $trait ({
-	    
-	    domReady: $barrier (function (dom) { this.dom = dom }),
-	    afterDestroy:       function ()    { this.dom = undefined } })
-	
-	
-	/*  ======================================================================== */
-	
-	DOMEvents = $trait ({
-	
-	    /*  TODO: configuration
-	     */
-	    dispatchEvent: function (type) {
-	                        this.domReady (function (dom) { var e = document.createEvent ('Event')
-	                                                            e.initEvent (type, true /* bubbles */, true /* cancellable */)
-	                                         dom.dispatchEvent (e) }) },            
-	    /*  $on syntax
-	     */
-	    $macroTags: {
-	
-	        on: function (def, method, methodName) {        var DOMEventListeners = (def.constructor.DOMEventListeners ||
-	                                                                                (def.constructor.DOMEventListeners = []))
-	                var on_def = method.$on
-	                    on_def = (_.isString (on_def) ? { fn: methodName, e: on_def } :
-	                             (_.isObject (on_def) ? { fn: methodName, e: on_def.what, target: on_def.target } :
-	                                                    { fn: methodName, e: methodName }))
-	
-	                _.each (on_def.e.split (' '), function (e) { DOMEventListeners.push (_.defaults ({ e: e }, on_def)) }) } },
-	
-	    /*  Bindings
-	     */
-	    domReady: function (dom) {
-	                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
-	                                                                (on_def.target || dom).addEventListener (
-	                                                                                                on_def.e,
-	                                                                                           this[on_def.fn]) }, this) },
-	
-	    beforeDestroy: function () {
-	        this.domReady (function (dom) {
-	                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
-	                                                                (on_def.target || dom).removeEventListener (
-	                                                                                                on_def.e,
-	                                                                                           this[on_def.fn]) }, this) }) } })
-	
-	/*  ======================================================================== */
-	
-	HideOnEscape = $trait ({
-	
-	    hideOnEscape: $on ({ what: 'keydown', target: document }, function (e) {
-	                                                                if (e.keyCode === 27) {
-	                                                                    this.destroy ()
-	                                                                    e.preventDefault () } })
-	})
-	
-	/*  ======================================================================== */
-	
-	
-
-
-/***/ },
-/* 38 */
-/***/ function(module, exports) {
-
-	/*  Animation tools
-	 */
-	
-	InertialValue = $component ({
-	
-	    $defaults: { duration:  0.2,
-	                 easing:   'linear' },
-	
-	    animating: $observableProperty (false),
-	    target:    $observableProperty (/* scalar or vector */),
-	    current:   $observableProperty (),
-	
-	    init: function (cfg) {
-	
-	        this.easing  = (_.isNumber (this.target) ? Easing.scalar : Easing.vector)[this.easing]
-	
-	        this.targetChange (function (value) {
-	
-	            if (this.animating === false) {
-	                this.start     = this.value
-	                this.current   = this.target = value
-	                this.startTime = Date.now ()
-	                this.step () }
-	
-	            else {
-	                this.start      = this.current
-	                this.startTime  = this.lastTime     } })  },
-	
-	    step: function () {
-	
-	        var now    = Date.now ()
-	        var travel = Math.min (1.0, ((this.lastTime = now) - this.startTime) / (this.duration * 1000.0))
-	        if (travel < 1.0) {
-	
-	             var animated  = this.easing (this.start, this.target, travel)
-	            this.animating = true
-	            this.current   = animated
-	
-	            window.requestAnimationFrame (this.step) }
-	
-	        else {
-	            this.current   = this.target
-	            this.animating = false          } } })
-	
-	
-	/*  Easing functions (1D an 2D)
-	 */
-	
-	Easing = {
-	
-	    scalar: {
-	
-	        linear: function (a, b, t) {
-	            return a + (b - a) * t },
-	
-	        in: function (a, b, t) {
-	            return a + (b - a) * Math.pow (t, 2) },
-	
-	        out: function (a, b, t) {
-	            return b - (b - a) * Math.pow (1.0 - t, 2) },
-	
-	        inOut: function (a, b, t) {
-	            var c = b - a
-	            if (t < 0.5) {
-	                return a + (c * (Math.pow (t * 2.0, 2) * 0.5)) }
-	            else {
-	                return b - (c * (Math.pow (2.0 - (t * 2.0), 2) * 0.5)) } } },
-	
-	    vector: {
-	
-	        linear: function (a, b, t) {
-	            console.log (t)
-	            return a.add (b.sub (a).scale (t)) },
-	
-	        inOut: function (a, b, t) { var c = b.sub (a)
-	            if (t < 0.5) {
-	                return a.add (c.scale (Math.pow (t * 2.0, 2) * 0.5)) }
-	            else {
-	                return b.sub (c.scale (Math.pow (2.0 - (t * 2.0), 2) * 0.5)) } },
-	
-	        in: function (a, b, t) {
-	            return a.add (b.sub (a).scale (Math.pow (t, 2))) },
-	
-	        out: function (a, b, t) {
-	            return b.sub (b.sub (a).scale (Math.pow (1.0 - t, 2))) } } }
-
-/***/ },
-/* 39 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__ (40)
-	__webpack_require__ (41)
-	__webpack_require__ (43)
-	__webpack_require__ (44)
-	__webpack_require__ (45)
-	__webpack_require__ (46)
-	__webpack_require__ (47)
-	__webpack_require__ (48)
-	__webpack_require__ (49)
-	
-	__webpack_require__ (50)
-	__webpack_require__ (54)
-	
-	/*  ======================================================================== */
-	
-	document.ready (function () {
-		
-		Panic.init ()
-	
-		CallStack.isThirdParty.intercept (function (file, originalImpl) {
-		    return (file.indexOf ('underscore') >= 0) ||
-		           (file.indexOf ('jquery') >= 0)     ||
-		           (file.indexOf ('useless') >= 0)    ||
-		           (file.indexOf ('mootools') >= 0) })
-	})
-
-/***/ },
-/* 40 */
-/***/ function(module, exports) {
-
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	------------------------------------------------------------------------
-	
-	Unit tests (bootstrap code)
-	
-	------------------------------------------------------------------------
-	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	
-	_.hasAsserts = true
-	
-	_.extend (_, {
-	
-	/*  a namespace where you put tests (for enumeration purposes)
-	    ======================================================================== */
-	
-	    tests: {},
-	
-	/*  A degenerate case of a test shell. We use it to bootstrap most critical
-	    useless.js internals, where real shell (Testosterone.js) is not available,
-	    as it itself depends on these utility. It takes test and test's subject as
-	    arguments (test before code, embodying test-driven philosophy) and executes
-	    test immediately, throwing exception if anything fails - which is simply
-	    the default behavior of $assert. So expect no advanced error reporting
-	    and no controlled execution by using this API.
-	    ======================================================================== */
-	
-	    withTest:   function (name, test, defineSubject) {
-	                    defineSubject ()
-	                    _.runTest (name, test)
-	                    _.publishToTestsNamespace (name, test) },
-	
-	/*  Publishes to _.tests namespace, but does not run
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    deferTest:  function (name, test, defineSubject) {
-	                    defineSubject ()
-	                    _.publishToTestsNamespace (name, test) },
-	
-	    /*  INTERNALS (you won't need that)
-	        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	        runTest:    function (name, test) {
-	                        try {
-	                            if (_.isFunction (test)) {                               test () }
-	                                                else { _.each (test, function (fn) { fn () }) } }
-	                        catch (e) {
-	                            if (_.isAssertionError (e)) { var printedName = ((_.isArray (name) && name) || [name]).join ('.')
-	                                                          console.log (printedName + ':', e.message, '\n' + _.times (printedName.length, _.constant ('~')).join ('') + '\n')
-	                                                         _.each (e.notMatching, function (x) { console.log ('  •', x) }) }
-	                            throw e } },
-	
-	        publishToTestsNamespace: function (name, test) {
-	                        if (_.isArray (name)) { // [suite, name] case
-	                            (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test }
-	                        else {
-	                            _.tests[name] = test } } })
-	        
-	/*  TEST ITSELF
-	    ======================================================================== */
-	
-	_.withTest ('assert.js bootstrap', function () {
-	
-	/*  One-argument $assert (requires its argument to be strictly 'true')
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assert (true)
-	
-	    $assert (                       // public front end, may be replaced by environment)
-	        _.assert ===                // member of _ namespace (original implementation, do not mess with that)
-	        _.assertions.assert)        // member of _.assertions (for enumeration purposes)
-	
-	    $assertNot (false)
-	    $assertNot (5)                  // NB: assertNot means 'assert not true', hence this will pass
-	
-	/*  Multi-argument assert (requires its arguments be strictly equal to each other)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assert (2 + 2, 2 * 2, 4)                    // any number of arguments
-	    $assert ({ foo: [1,2,3] }, { foo: [1,2,3] }) // compares objects (deep match)
-	    $assert ({ foo: { bar: 1 }, baz: 2 },        // ignores order of properties
-	             { baz: 2, foo: { bar: 1 } })
-	
-	    $assertNot (2 + 2, 5)
-	
-	/*  Nonstrict matching (a wrapup over _.matches)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assertMatches ({ foo: 1, bar: 2 },
-	                    { foo: 1 })
-	
-	/*  Nonstrict matching against complex objects (stdlib.js feature)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if (_.hasStdlib) { $assertMatches ( { foo: [1,2], bar: 3 },
-	                                        { foo: [1] }) }
-	
-	/*  Regex matching (stdlib.js feature)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if (_.hasStdlib) { $assertMatches ('123', /[0-9]+/) }
-	
-	
-	/*  Type matching (plain)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if (_.hasStdlib) {  $assertTypeMatches (42, 'number')
-	                        $assertFails (function () {
-	                            $assertTypeMatches ('foo', 'number') }) }
-	
-	/*  Type matching (array type)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if (_.hasStdlib) {  $assertTypeMatches ([1,2],   [])
-	                        $assertTypeMatches ([],      [])
-	                        $assertTypeMatches ([1,2,3], ['number'])
-	                        $assertTypeMatches ([],      ['number'])
-	                        $assertFails (function () {
-	                            $assertTypeMatches ([1,2,3],     ['string'])
-	                            $assertTypeMatches ([1,2,'foo'], ['number']) }) }
-	
-	/*  Type matching (deep)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if (_.hasStdlib) {  $assertTypeMatches ({
-	
-	                            /*  Input object */
-	
-	                                foo: 42,
-	                                bar: {
-	                                    even: 4,
-	                                    many: ['foo','bar'] } }, {
-	
-	                            /*  Type contract */
-	
-	                                foo: 'number',      // simple type check
-	                                qux: 'undefined',   // nonexisting match 'undefined' 
-	                                bar: {                                              // breakdown of complex object 
-	                                    even: function (n) { return (n % 2) === 0 },    // custom contract predicate    
-	                                    many: ['string'] } }) }                         // array contract (here, 'array of strings')
-	
-	/*  Type matching ($prototype)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if (_.hasOOP) { var Foo = $prototype (),
-	                        Bar = $prototype ()
-	
-	        $assertTypeMatches ({ foo: new Foo (),
-	                              bar: new Bar () },
-	
-	                            { foo: Foo,
-	                              bar: Bar })
-	
-	        $assertFails (function () {
-	            $assertTypeMatches (new Bar (), Foo) }) };
-	
-	
-	/*  Argument contracts
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	if (_.hasStdlib) {
-	
-	    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertArguments (arguments) }
-	
-	                    testF (777, 'foo bar baz')
-	
-	    $assertFails (function () { testF (777, 42) }) }
-	
-	/*  Ensuring throw (and no throw)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assertThrows (function () { throw 42 })
-	    $assertNotThrows (function () {})
-	
-	/*  Ensuring throw (strict version)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assertThrows (     function () { throw 42 }, 42) // accepts either plain value or predicate
-	    $assertThrows (     function () { throw new Error ('42') }, _.matches ({ message: '42' }))
-	
-	    $assertFails (function () {
-	        $assertThrows ( function () { throw 42 }, 24)
-	        $assertThrows ( function () { throw new Error ('42') }, _.matches ({ message: '24' })) })
-	
-	/*  Ensuring execution
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assertEveryCalled     (function (a, b, c) { a (); a (); b (); c () })
-	    $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
-	    $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
-	
-	    /*$assertFails (function () {
-	        $assertEveryCalled     (function (a, b, c) { a (); b () })
-	        $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
-	        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
-	
-	
-	/*  TODO:   1) add CPS support
-	            2) replace $assertCPS with this
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if (_.hasStdlib) {
-	
-	            $assertCalledWithArguments (   ['foo',
-	                                           ['foo', 'bar']], function (fn) {
-	
-	                                        fn ('foo')
-	                                        fn ('foo', 'bar') }) }
-	
-	
-	/*  Ensuring CPS routine result (DEPRECATED)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assertCPS (function (then) { then ('foo', 'bar') }, ['foo', 'bar'])
-	    $assertCPS (function (then) { then ('foo') }, 'foo')
-	    $assertCPS (function (then) { then () })
-	
-	
-	/*  Ensuring assertion failure
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    $assertFails (function () {
-	        $fail                                           // simplest way to generate assertion
-	        $stub                                           // to mark code stubs (throws error)
-	        $assert ('not true')                            // remember that assert is more strict than JavaScript if clauses
-	        $assert ({ foo: 1, bar: 2 }, { foo: 1 })        // not be confused with _.matches behavior (use $assertMatches for that)
-	        $assert ([1,2,3,4], [1,2,3])                    // same for arrays
-	        $assert (['foo'], { 0: 'foo', length: 1 })      // array-like objects not gonna pass (regression test)
-	        $assertFails (function () {}) })                // $assertFails fails if passed code don't
-	
-	/*  Default fail behavior (never depend on that, as it's environment-dependent)
-	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	    if ($assert === _.assertions.assert) {
-	        $assertThrows (function () { $fail }) }
-	
-	
-	/*  IMPLEMENTATION
-	    ======================================================================== */
-	
-	}, function () {
-	
-	    var assertImpl = function (positive) {
-	                        return function (__) {  var args = [].splice.call (arguments, 0)
-	
-	                                                if (args.length === 1) {
-	                                                    if (positive && (args[0] !== true)) {
-	                                                        _.assertionFailed ({ notMatching: args }) } }
-	
-	                                                else if (positive && (_.allEqual (args) !== true)) {
-	                                                    _.assertionFailed ({ notMatching: args }) }
-	
-	                                                return true } }
-	
-	    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
-	     */
-	    $overrideUnderscore ('matches', function (matches) {
-	        return function (a) {
-	            return _.isObject (a) ? matches (a) : function (b) { return a === b } } })
-	
-	    _.extend (_, _.assertions = {
-	
-	        assert:    assertImpl (true),
-	        assertNot: assertImpl (false),
-	
-	        assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
-	            fn (function () {
-	                $assert ([].splice.call (arguments, 0), requiredResult)
-	                if (then) { then (); return true; } }) },
-	
-	        assertNotCalled: function (context) {
-	            var inContext = true; context (function () { if (inContext) { $fail } }); inContext = false },
-	
-	        assertEveryCalledOnce: function (fn, then) {
-	            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
-	
-	        assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
-	                                                      async = _.hasTags ? $async.is (fn_) : fn_.async
-	                                                      once  = _.hasTags ? $once.is (fn_)  : fn_.once
-	
-	            var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
-	            var contracts = once ? _.times (fn.length, _.constant (1)) :
-	                                   _.map (match[1].split (','), function (arg) {
-	                                                                    var parts = (arg.trim ().match (/^(.+)__(\d+)$/))
-	                                                                    var num = (parts && parseInt (parts[2], 10))
-	                                                                    return _.isFinite (num) ? (num || false) : true })
-	            var status    = _.times (fn.length, _.constant (false))
-	            var callbacks = _.times (fn.length, function (i) {
-	                                                    return function () {
-	                                                        status[i] =
-	                                                            _.isNumber (contracts[i]) ?
-	                                                                ((status[i] || 0) + 1) : true
-	                                                        if (async && _.isEqual (status, contracts))
-	                                                            then () } })
-	            fn.apply (null, callbacks)
-	
-	            if (!async)   { _.assert (status, contracts)
-	                if (then) { then () } } },
-	
-	        assertCalledWithArguments: function (argsPattern, generateCalls) {
-	                                        return _.assert (_.arr (generateCalls), argsPattern) },
-	
-	        assertCallOrder: function (fn) {
-	            var callIndex = 0
-	            var callbacks = _.times (fn.length, function (i) { return function () { arguments.callee.callIndex = callIndex++ } })
-	            fn.apply (null, callbacks)
-	            return _.assert (_.pluck (callbacks, 'callIndex'), _.times (callbacks.length, _.identity.arity1)) },
-	
-	        assertMatches: function (value, pattern) {
-	            try {       return _.assert (_.matches.apply (null, _.rest (arguments)) (value)) }
-	            catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
-	
-	        assertNotMatches: function (value, pattern) {
-	            try {       return _.assert (!_.matches.apply (null, _.rest (arguments)) (value)) }
-	            catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
-	
-	        assertType: function (value, contract) {
-	            return _.assert (_.decideType (value), contract) },
-	
-	        assertTypeMatches: function (value, contract) { 
-	                                return _.isEmpty (mismatches = _.typeMismatches (contract, value))
-	                                    ? true
-	                                    : _.assertionFailed ({
-	                                        message: 'provided value type not matches required contract',
-	                                        asColumns: true,
-	                                        notMatching: [
-	                                            { provided: value },
-	                                            { required: contract },
-	                                            { mismatches: mismatches }] }) },
-	
-	        assertFails: function (what) {
-	            return _.assertThrows.call (this, what, _.isAssertionError) },
-	
-	        assertThrows: function (what, errorPattern) {
-	                            var e = undefined, thrown = false
-	                                try         { what.call (this) }
-	                                catch (__)  { e = __; thrown = true }
-	
-	                            _.assert.call (this, thrown)
-	
-	                            if (arguments.length > 1) {
-	                                _.assertMatches.call (this, e, errorPattern) } },
-	
-	        assertNotThrows: function (what) {
-	            return _.assertEveryCalled (function (ok) { what (); ok () }) },
-	
-	        assertArguments: function (args, callee, name) {
-	            var fn    = (callee || args.callee).toString ()
-	            var match = fn.match (/.*function[^\(]\(([^\)]+)\)/)
-	            if (match) {
-	                var valuesPassed   = _.asArray (args);
-	                var valuesNeeded   = _.map (match[1].split (','),
-	                                            function (_s) {
-	                                                var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
-	                                                var n = parseInt (s, 10)
-	                                                return _.isFinite (n) ? n : s })
-	
-	                var zap = _.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
-	                                return (a === undefined) ? true : (a === b) })
-	
-	                if (!_.every (zap)) {
-	                    _.assertionFailed ({ notMatching: _.nonempty ([[name, fn].join (': '), valuesNeeded, valuesPassed]) }) } } },
-	
-	        fail: function () {
-	                _.assertionFailed () },
-	
-	        fails: _.constant (function () {    // higher order version
-	                _.assertionFailed () }),
-	
-	        stub: function () {
-	                _.assertionFailed () } })
-	
-	
-	    /*  DEFAULT FAILURE IMPL.
-	        ---------------------
-	        We do not subclass Error, because _.isTypeOf currently does not support
-	        inhertitance (UPDATE: now does) and it would cause troubles in test shell
-	        and logging facility. Thus a subclass is defined that way.
-	        ======================================================================== */
-	
-	    _.extend (_, {
-	
-	        assertionError: function (additionalInfo) {
-	                            return _.extend (new Error (
-	                                (additionalInfo && additionalInfo.message) || 'assertion failed'), additionalInfo, { assertion: true }) },
-	
-	        assertionFailed: function (additionalInfo) {
-	                            throw _.extend (_.assertionError (additionalInfo), {
-	                                        stack: _.rest ((new Error ()).stack.split ('\n'), 3).join ('\n') }) },
-	
-	        isAssertionError: function (e) {        
-	                            return e && (e.assertion === true) } })
-	
-	
-	    /*  $assert helper
-	        ======================================================================== */
-	
-	    _.extend (_, {
-	
-	        allEqual: function (values) {
-	                            return _.reduce (values, function (prevEqual, x) {
-	                                return prevEqual && _.isEqual (values[0], x) }, true) } })
-	
-	    /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
-	        thus configurable=true)
-	        ======================================================================== */
-	
-	    _.each (_.keys (_.assertions), function (name) {
-	        $global.define ('$' + name, _[name], { configurable: true }) })
-	
-	    for (var k in _.assertions) {
-	        $global['$' + k] = 1
-	    }
-	
-	    $assert
-	
-	})
-	
-	
-	
-	
-
-
-/***/ },
-/* 41 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/*  Uncaught exception handling facility
-	    ======================================================================== */
-	
-	(function () {
-	
-	    _.hasUncaught = true
-	
-	    var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
-	
-	    var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
-	
-	        var chain = arguments.callee.chain
-	                    arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
-	
-	        if (chain.length) {
-	            for (var i = 0, n = chain.length; i < n; i++) {
-	                try {
-	                    chain[i] (e)
-	                    break }
-	                catch (newE) {
-	                    console.log (newE)
-	                    if (i === n - 1) {
-	                        newE.message += reThrownTag
-	                        throw newE }
-	                    else {
-	                        if (newE && (typeof newE === 'object')) { newE.originalError = e }
-	                        e = newE } } } }
-	        else {
-	            e.message += reThrownTag
-	            throw e } }
-	
-	    _.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity
-	
-	        if (context_) {
-	            handler.catchesOnce = true }
-	
-	                               globalUncaughtExceptionHandler.chain.unshift (handler)
-	        context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
-	
-	    globalUncaughtExceptionHandler.chain = []
-	
-	    switch ($platform.engine) {
-	        case 'node':
-	            __webpack_require__ (42).on ('uncaughtException', globalUncaughtExceptionHandler); break;
-	
-	        case 'browser':
-	            window.addEventListener ('error', function (e) {
-	
-	                if (e.message.indexOf (reThrownTag) < 0) { // if not already processed by async hooks
-	
-	                    if (e.error) {
-	                        globalUncaughtExceptionHandler (e.error) }
-	
-	                    else { // emulate missing .error (that's Safari)
-	                        globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
-	                            stub: true,
-	                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } }) }
-	}) ()
-
-/***/ },
-/* 42 */
-/***/ function(module, exports) {
-
-	// shim for using process in browser
-	
-	var process = module.exports = {};
-	var queue = [];
-	var draining = false;
-	var currentQueue;
-	var queueIndex = -1;
-	
-	function cleanUpNextTick() {
-	    draining = false;
-	    if (currentQueue.length) {
-	        queue = currentQueue.concat(queue);
-	    } else {
-	        queueIndex = -1;
-	    }
-	    if (queue.length) {
-	        drainQueue();
-	    }
-	}
-	
-	function drainQueue() {
-	    if (draining) {
-	        return;
-	    }
-	    var timeout = setTimeout(cleanUpNextTick);
-	    draining = true;
-	
-	    var len = queue.length;
-	    while(len) {
-	        currentQueue = queue;
-	        queue = [];
-	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
-	        }
-	        queueIndex = -1;
-	        len = queue.length;
-	    }
-	    currentQueue = null;
-	    draining = false;
-	    clearTimeout(timeout);
-	}
-	
-	process.nextTick = function (fun) {
-	    var args = new Array(arguments.length - 1);
-	    if (arguments.length > 1) {
-	        for (var i = 1; i < arguments.length; i++) {
-	            args[i - 1] = arguments[i];
-	        }
-	    }
-	    queue.push(new Item(fun, args));
-	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
-	    }
-	};
-	
-	// v8 likes predictible objects
-	function Item(fun, array) {
-	    this.fun = fun;
-	    this.array = array;
-	}
-	Item.prototype.run = function () {
-	    this.fun.apply(null, this.array);
-	};
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-	process.version = ''; // empty string to avoid regexp issues
-	process.versions = {};
-	
-	function noop() {}
-	
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-	
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-	
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-	process.umask = function() { return 0; };
-
-
-/***/ },
-/* 43 */
-/***/ function(module, exports) {
-
-	/*  Provides call stack persistence across async call boundaries.
-	    ======================================================================== */
-	
-	(function () {
-	
-	    if ($platform.Browser) {
-	
-	        _.hasUncaughtAsync = true
-	
-	        var globalAsyncContext = undefined
-	
-	        var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
-	
-	            var override = function (obj) {
-	
-	                obj.addEventListener    = genAddEventListener    (obj.addEventListener)
-	                obj.removeEventListener = genRemoveEventListener (obj.removeEventListener) }
-	
-	            if (window.EventTarget) {
-	                override (window.EventTarget.prototype) }
-	
-	            else {
-	                override (Node.prototype)
-	                override (XMLHttpRequest.prototype) } }
-	
-	        var asyncHook = function (originalImpl, callbackArgumentIndex) {
-	            return __supressErrorReporting = function () {
-	
-	                    var asyncContext = {
-	                        name: name,
-	                        stack: (new Error ()).stack,
-	                        asyncContext: globalAsyncContext }
-	
-	                    var args = _.asArray (arguments)
-	                    var fn   = args[callbackArgumentIndex]
-	
-	                    if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
-	
-	                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
-	
-	                        globalAsyncContext = asyncContext
-	
-	                        try       { return fn.apply (this, arguments) }
-	                        catch (e) { _.globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
-	
-	                    return originalImpl.apply (this, args) } }
-	
-	        window.setTimeout = asyncHook (window.setTimeout, 0)
-	
-	        /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
-	         */ 
-	        listenEventListeners (
-	            function (addEventListener) { return asyncHook (addEventListener, 1) },
-	            function (removeEventListener) {
-	                return function (name, fn, bubble, untrusted) {
-	                   return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } }) }
-	
-	}) ()
-
-/***/ },
-/* 44 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(__filename) {/*  Self-awareness module
-	    ======================================================================== */
-	
-	_.hasReflection = true
-	
-	_.tests.reflection = {
-	
-	    'file paths': function () {
-	        $assert ($sourcePath .length > 0)
-	        $assert ($uselessPath.length > 0) },
-	
-	    'readSource': function () { var uselessJS = $uselessPath + $uselessFile
-	
-	        SourceFiles.read (uselessJS, function (text) {
-	            $assert (text.length > 0) })
-	
-	        SourceFiles.line (uselessJS, 0, function (line) {
-	            $assert (line.length > 0) }) },
-	
-	    'CallStack from error': function () {
-	        try {
-	            throw new Error ('oh fock') }
-	        catch (e) {
-	            $assertTypeMatches (CallStack.fromError (e), CallStack) } },
-	
-	    '$callStack': function (testDone) {
-	
-	        /*  That's how you access call stack at current location
-	         */
-	        var stack = $callStack
-	
-	        /*  It is an array of entries...
-	         */
-	        $assert (_.isArray (stack))
-	
-	        /*  ...each having following members
-	         */
-	        $assertTypeMatches (stack[0], {
-	            callee:         'string',       // function name
-	            calleeShort:    'string',       // short function name (only the last part of dot-sequence)
-	            file:           'string',       // full path to source file at which call occurred
-	            fileName:       'string',       // name only (with extension)
-	            fileShort:      'string',       // path relative to $sourcePath
-	            thirdParty:     'boolean',      // denotes whether the call location occured at 3rd party library
-	            index:          'boolean',      // denotes whether the call location occured at index page
-	           'native':        'boolean',      // denotes whether the call location occured in native impl.
-	            line:           'number',       // line number
-	            column:         'number',       // character number
-	            source:         'string',       // source code (may be not ready right away)
-	            sourceReady:    'function' })   // a barrier, opened when source is loaded (see dynamic/stream.js on how-to use)
-	
-	        /*  $callStack is CallStack instance, providing some helpful utility:
-	         */
-	        $assert (_.isTypeOf (CallStack, stack))
-	
-	        /*  1. clean CallStack (with 3rdparty calls stripped)
-	         */
-	        $assert (_.isTypeOf (CallStack, stack.clean))
-	
-	        /*  2. shifted by some N (useful for error reporting, to strip error reporter calls)
-	         */
-	        $assert (_.isTypeOf (CallStack, stack.offset (2)))
-	
-	        /*  3. filter and reject semantics supported, returning CallStack instances
-	         */
-	        $assert (_.isTypeOf (CallStack, stack.filter (_.identity)))
-	        $assert (_.isTypeOf (CallStack, stack.reject (_.identity)))
-	
-	        $assertEveryCalled ($async (function (sourceReady, sourcesReady, safeLocationReady) {
-	
-	            /*  4. source code access, either per entry..
-	             */
-	            stack[0].sourceReady (function (src) {               // sourceReady is barrier, i.e. if ready, called immediately
-	                $assert (typeof src, 'string'); sourceReady () })
-	
-	            /*  5. ..or for all stack
-	             */
-	            stack.sourcesReady (function () {                     // sourcesReady is barrier, i.e. if ready, called immediately
-	                _.each (stack, function (entry) {
-	                    $assert (typeof entry.source, 'string') }); sourcesReady () })
-	
-	            /*  Safe location querying
-	             */
-	            stack.safeLocation (7777).sourceReady (function (line) {
-	                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) },
-	
-	    'Prototype.$meta': function (done) {
-	        var Dummy = $prototype ()
-	
-	        Dummy.$meta (function (meta) {
-	            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
-	            done () }) },
-	
-	    'Trait.$meta': function (done) {
-	        var Dummy = $trait ()
-	        Dummy.$meta (function (meta) {
-	            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
-	            done () }) }
-	}
-	
-	
-	/*  Custom syntax (defined in a way that avoids cross-dependency loops)
-	 */
-	_.defineKeyword ('callStack',   function () {
-	    return CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0) })
-	
-	_.defineKeyword ('currentFile', function () {
-	    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file })
-	
-	_.defineKeyword ('uselessPath', _.memoize (function () {
-	    return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
-	
-	_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
-	    return local ? (local + '/') : $uselessPath }))
-	
-	
-	/*  Port __filename for browsers
-	 */
-	if ($platform.Browser) {
-	    _.defineProperty (window, '__filename', function () { return $currentFile }) }
-	
-	
-	/*  Source code access (cross-platform)
-	 */
-	SourceFiles = $singleton (Component, {
-	
-	    /*apiConfig: {
-	        port:      1338,
-	        hostname: 'locahost',
-	        protocol: 'http:' },*/
-	
-	    line: function (file, line, then) {
-	        SourceFiles.read (file, function (data) {
-	            then ((data.split ('\n')[line] || '').trimmed) }) },
-	
-	    read: $memoizeCPS (function (file, then) {
-	        if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
-	            try {
-	                if ($platform.NodeJS) {
-	                    then (__webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).readFileSync (file, { encoding: 'utf8' }) || '') }
-	                else {
-	                    /*  Return response body regardless of status code
-	                     */
-	                    var xhr = new XMLHttpRequest ()
-	                    xhr.open ('GET', file, true)
-	                    xhr.onreadystatechange = function () { if (xhr.readyState == 4) { then (xhr.responseText) } }
-	                    xhr.send (null) } }
-	            catch (e) {
-	                then ('') } }
-	        else {
-	            then ('') } }),
-	
-	    write: function (file, text, then) {
-	
-	        if ($platform.NodeJS) {
-	
-	            this.read (file, function (prevText) { // save previous version at <file>.backups/<date>
-	
-	                var fs   = __webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())),
-	                    opts = { encoding: 'utf8' }
-	
-	          try { fs.mkdirSync     (file + '.backups') } catch (e) {}
-	                fs.writeFileSync (file + '.backups/' + Date.now (), prevText, opts)
-	                fs.writeFileSync (file,                             text,     opts)
-	
-	                then () }) }
-	            
-	        else {
-	            JSONAPI
-	                .post ('source/' + file, _.extend2 ({}, this.apiConfig, { what: { text: text } }))
-	                .then (function () {
-	                    log.ok (file, '— successfully saved')
-	                    if (then) {
-	                        then () } }) }} })
-	
-	
-	/*  Callstack API
-	 */
-	CallStack = $extends (Array, {
-	
-	    current: $static ($property (function () {
-	        return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
-	
-	    fromError: $static (function (e) {
-	        if (e && e.parsedStack) {
-	            return CallStack.fromParsedArray (e.parsedStack).offset (e.stackOffset || 0) }
-	        else if (e && e.stack) {
-	            return CallStack.fromRawString (e.stack).offset (e.stackOffset || 0) }
-	        else {
-	            return CallStack.fromParsedArray ([]) } }),
-	
-	    fromErrorWithAsync: $static (function (e) {
-	        var stackEntries = CallStack.fromError (e),
-	            asyncContext = e.asyncContext
-	
-	        while (asyncContext) {
-	            stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
-	            asyncContext = asyncContext.asyncContext }
-	
-	        return stackEntries.mergeDuplicateLines }),
-	
-	    locationEquals: $static (function (a, b) {
-	        return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
-	
-	    safeLocation: function (n) {
-	        return this[n] || {
-	            callee: '', calleeShort: '', file: '',
-	            fileName: '', fileShort: '', thirdParty:    false,
-	            source: '??? WRONG LOCATION ???',
-	            sourceReady: _.barrier ('??? WRONG LOCATION ???') } },
-	
-	    mergeDuplicateLines: $property (function () {
-	        return CallStack.fromParsedArray (
-	            _.map (_.partition2 (this, function (e) { return e.file + e.line }),
-	                    function (group) {
-	                        return _.reduce (_.rest (group), function (memo, entry) {
-	                            memo.callee      = (memo.callee      || '<anonymous>') + ' → ' + (entry.callee      || '<anonymous>')
-	                            memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>')
-	                            return memo }, _.clone (group[0])) })) }),
-	
-	    clean: $property (function () {
-	        var clean = this.mergeDuplicateLines.reject (function (e, i) { return (e.thirdParty || e.hide) && (i !== 0) })
-	        return (clean.length === 0) ? this : clean }),
-	
-	    asArray: $property (function () {
-	        return _.asArray (this) }),
-	
-	    offset: function (N) {
-	        return (N && CallStack.fromParsedArray (_.rest (this, N))) || this },
-	
-	    initial: function (N) {
-	        return (N && CallStack.fromParsedArray (_.initial (this, N))) || this },
-	
-	    concat: function (stack) {
-	        return CallStack.fromParsedArray (this.asArray.concat (stack.asArray)) },
-	
-	    filter: function (fn) {
-	        return CallStack.fromParsedArray (_.filter (this, fn)) },
-	
-	    reject: function (fn) {
-	        return CallStack.fromParsedArray (_.reject (this, fn)) },
-	
-	    reversed: $property (function () {
-	        return CallStack.fromParsedArray (_.reversed (this)) }),
-	
-	    sourcesReady: function (then) {
-	        return _.allTriggered (_.pluck (this, 'sourceReady'), then) },
-	
-	    /*  Internal impl.
-	     */
-	    constructor: function (arr) { Array.prototype.constructor.call (this)
-	
-	        _.each (arr, function (entry) {
-	            if (!entry.sourceReady) {
-	                 entry.sourceReady = _.barrier ()
-	                 SourceFiles.line ((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
-	                    entry.hide = src.contains ('// @hide')
-	                    entry.sourceReady (entry.source = src.replace ('// @hide', '')) }) }
-	
-	            this.push (entry) }, this) },
-	
-	    fromParsedArray: $static (function (arr) {
-	        return new CallStack (arr) }),
-	
-	    currentAsRawString: $static ($property (function () {
-	        var cut = $platform.Browser ? 3 : 2
-	        return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
-	
-	    shortenPath: $static (function (path) {
-	                    var relative = path.replace ($uselessPath, '')
-	                                       .replace ($sourcePath,  '')
-	                    return (relative !== path)
-	                        ? relative.replace (/^node_modules\//, '')
-	                        : path.split ('/').last }), // extract last part of /-separated sequence
-	
-	    isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
-	                    return ($platform.NodeJS && (file[0] !== '/')) || // from Node source
-	                           (local.indexOf ('/node_modules/') >= 0) ||
-	                           (file.indexOf  ('/node_modules/') >= 0 && !local) ||
-	                           (local.indexOf ('underscore') >= 0) ||
-	                           (local.indexOf ('jquery') >= 0) })),
-	
-	    fromRawString: $static (_.sequence (
-	        function (rawString) {
-	            return CallStack.rawStringToArray (rawString) },
-	
-	        function (array) {
-	            return _.map (array, function (entry) {
-	                return _.extend (entry, {
-	                            calleeShort:    _.last (entry.callee.split ('.')),
-	                            fileName:       _.last (entry.file.split ('/')),
-	                            fileShort:      CallStack.shortenPath (entry.file),
-	                            thirdParty:     CallStack.isThirdParty (entry.file) && !entry.index }) }) },
-	
-	        function (parsedArrayWithSourceLines) { return CallStack.fromParsedArray (parsedArrayWithSourceLines) })),
-	
-	    rawStringToArray: $static (function (rawString) { var lines = (rawString || '').split ('\n')
-	
-	        return _.filter2 (lines, function (line) { line = line.trimmed
-	
-	            var callee, fileLineColumn = [], native_ = false
-	            var planA = undefined, planB = undefined
-	
-	            if ((planA = line.match (/at (.+) \((.+)\)/)) ||
-	                (planA = line.match (/(.*)@(.*)/))) {
-	
-	                callee         =         planA[1]
-	                native_        =        (planA[2] === 'native')
-	                fileLineColumn = _.rest (planA[2].match (/(.*):(.+):(.+)/) || []) }
-	
-	            else if ((planB = line.match (/^(at\s+)*(.+):([0-9]+):([0-9]+)/) )) {
-	                fileLineColumn = _.rest (planB, 2) }
-	
-	            else {
-	                return false } // filter this shit out
-	
-	            if ((callee || '').indexOf ('__supressErrorReporting') >= 0) {
-	                return false }
-	
-	            return {
-	                beforeParse: line,
-	                callee:      callee || '',
-	                index:       $platform.Browser && (fileLineColumn[0] === window.location.href),
-	               'native':     native_,
-	                file:        fileLineColumn[0] || '',
-	                line:       (fileLineColumn[1] || '').integerValue,
-	                column:     (fileLineColumn[2] || '').integerValue } }) }) })
-	
-	/*  Reflection for $prototypes
-	 */
-	$prototype.impl.findMeta = function (stack) {
-	
-	    return function (then) {
-	
-	        _.cps.find (CallStack.fromRawString (stack).reversed,
-	
-	                    function (entry, found) {
-	                        entry.sourceReady (function (text) { var match = (text || '').match (
-	                                                                             /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
-	                            found ((match && {
-	                                name: match[1],
-	                                type: match[2],
-	                                file: entry.fileShort }) || false) }) },
-	
-	                    function (found) {
-	                        then (found || {}) }) } }
-	
-	$prototype.macro (function (def, base) {
-	
-	    if (!def.$meta) {
-	
-	        var findMeta = _.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))
-	
-	        _.defineMemoizedProperty (findMeta, 'promise', function () {
-	              return new Promise (findMeta) })
-	
-	        def.$meta = $static (findMeta) }
-	
-	    return def })
-	
-	
-	
-	
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
-
-/***/ },
-/* 45 */
-/***/ function(module, exports) {
-
-	_.hasLog = true
-	
-	_.tests.log = {
-	
-	    basic: function () {
-	
-	        log         ('log (x)')         //  Basic API
-	
-	        log.green      ('log.green')       //  Use for plain colored output.
-	        log.boldGreen  ('log.boldGreen')
-	        log.darkGreen  ('log.darkGreen')
-	        log.blue       ('log.blue')
-	        log.boldBlue   ('log.boldBlue')
-	        log.darkBlue   ('log.darkBlue')
-	        log.orange     ('log.orange')
-	        log.boldOrange ('log.boldOrange')
-	        log.darkOrange ('log.darkOrange')
-	        log.red        ('log.red')         //  ..for more colors, see the implementation below
-	        log.boldRed    ('log.boldRed')
-	        log.darkRed    ('log.darkRed')
-	        log.pink       ('log.pink')
-	        log.boldPink   ('log.boldPink')
-	        log.darkPink   ('log.darkPink')
-	
-	        log.margin ()
-	        log.margin ()  // collapses
-	
-	        log.bright ('log.bright')
-	        log.dark   ('log.dark')
-	
-	        log.margin ()
-	
-	        log.success ('log.success')     //  Use for quality production logging (logging that lasts).
-	        log.ok      ('log.ok')
-	        log.g       ('log.g')
-	        log.gg      ('log.gg')
-	        log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
-	        log.i       ('log.i')
-	        log.ii      ('log.ii')
-	        log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
-	        log.warn    ('log.warn')
-	        log.w       ('log.w')
-	        log.ww      ('log.ww')        
-	        log.error   ('log.error')
-	        log.e       ('log.e')
-	        log.ee      ('log.ee')
-	
-	        $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
-	                                                            // (as it returns it first argument, like in _.identity)
-	
-	        log.info    (log.stackOffset (2), 'log.info (log.config ({ stackOffset: 2 }), ...)')
-	
-	        log.write   ('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace')
-	
-	        log.write (                     'Multi',
-	                    log.color.red,      'Colored',
-	                    log.color.green,    'Output',
-	                    log.color.blue,     'For',
-	                    log.color.orange,   'The',
-	                    log.color.pink,     'Fucking',
-	                    log.color.none,     'Win')
-	
-	        log.write   (log.boldLine)  //  ASCII art <hr>
-	        log.write   (log.thinLine)
-	        log.write   (log.line)
-	
-	        log.write   (log.indent (1),
-	                     ['You can set indentation',
-	                      'that is nicely handled',
-	                      'in case of multiline text'].join ('\n'))
-	
-	        log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
-	        log.orange  (log.config ({ indent: 2, table: true }), [
-	            { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
-	            { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
-	
-	        log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
-	        log.write ('Array:', [1, 2, 3])                             //  Arrays too
-	        log.write ('Function:', _.identity)                         //  Prints code of a function
-	
-	        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n');
-	
-	        log.withConfig (log.indent (1), function () {
-	            log.pink ('Config stack + scopes + higher order API test:')
-	            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
-	
-	        $assert (log (42), 42) } }
-	
-	_.extend (
-	
-	    /*  Basic API
-	     */
-	    log = function () {
-	        return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
-	
-	    Config: $prototype (),
-	
-	    /*  Could be passed as any argument to any write function.
-	     */
-	    config: function (cfg) {
-	        return new log.Config (cfg) } })
-	
-	
-	_.extend (log, {
-	
-	    /*  Shortcut for common cases
-	     */
-	    indent: function (n) {
-	        return log.config ({ indent: n }) },
-	
-	    stackOffset: function (n) {
-	        return log.config ({ stackOffset: n }) },
-	
-	    where: function (wat) {
-	        return log.config ({ location: true, where: wat || undefined }) },
-	
-	    color: _.extend (function (x) { return (log.color[x] || {}).color },
-	
-	        _.object (
-	        _.map  ([['none',        '0m',           ''],
-	                 ['red',         '31m',          'color:crimson'],
-	                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
-	                 ['darkRed',    ['31m', '2m'],   'color:crimson'],
-	                 ['blue',        '36m',          'color:royalblue'],
-	                 ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
-	                 ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
-	                 ['boldOrange', ['33m', '1m'],   'color:saddlebrown;font-weight:bold;'],
-	                 ['darkOrange', ['33m', '2m'],   'color:saddlebrown'],
-	                 ['orange',      '33m',          'color:saddlebrown'],
-	                 ['brown',      ['33m', '2m'],   'color:saddlebrown'],
-	                 ['green',       '32m',          'color:forestgreen'],
-	                 ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
-	                 ['darkGreen',  ['32m', '2m'],   'color:forestgreen;opacity:0.5'],
-	                 ['pink',        '35m',          'color:magenta'],
-	                 ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
-	                 ['darkPink',   ['35m', '2m'],   'color:magenta'],
-	                 ['black',       '0m',           'color:black'],
-	                 ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
-	                 ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
-	
-	             function (def) {
-	                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
-	
-	    /*  Need one? Take! I have plenty of them!
-	     */
-	    boldLine:   '======================================',
-	    line:       '--------------------------------------',
-	    thinLine:   '......................................',
-	
-	    /*  Set to true to precede each log message with date and time (useful for server side logs).
-	     */
-	    timestampEnabled: false,
-	
-	    /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
-	     */
-	    withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
-	                                                                                        log.writeBackend.value = backend
-	        contextFn (function /* release */ (then) { // @hide
-	                     release (function () {                                             log.writeBackend.value = prev
-	                        if (then) then ()
-	                        if (done) done () }) }) }),  
-	
-	    /*  For writing with forced default backend
-	     */
-	    writeUsingDefaultBackend: function (/* arguments */) { var args = arguments
-	        log.withWriteBackend (
-	            log.impl.defaultWriteBackend,
-	            function (done) {
-	                log.write.apply (null, args); done () }) },
-	
-	    writeBackend: function () {
-	        return arguments.callee.value || log.impl.defaultWriteBackend },
-	
-	    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
-	                     var result = what (); log.impl.configStack.pop ();
-	                  return result },
-	
-	    currentConfig: function () { return log.impl.configure (log.impl.configStack) },
-	
-	    /*  Use instead of 'log.newline ()' for collapsing newlines
-	     */
-	    margin: (function () {
-	                var lastWrite = undefined
-	                return function () {
-	                    if (lastWrite !== log.impl.numWrites)
-	                        log.newline ()
-	                        lastWrite   = log.impl.numWrites } }) (),
-	
-	    /*  Internals
-	     */
-	    impl: {
-	
-	        configStack: [],
-	        numWrites: 0,
-	
-	        configure: function (configs) {
-	            return _.reduce2 (
-	                { stackOffset: 0, indent: 0 },
-	                _.nonempty (configs), function (memo, cfg) {
-	                                        return _.extend (memo, _.nonempty (cfg), {
-	                                            indent:      memo.indent      + (cfg.indent || 0),
-	                                            stackOffset: memo.stackOffset + (cfg.stackOffset || 0) }) }) },
-	
-	        /*  Nuts & guts
-	         */
-	        write: $restArg (_.bindable (function () { var writeBackend = log.writeBackend ()
-	
-	            log.impl.numWrites++
-	
-	            var args   = _.asArray (arguments)
-	            var config = log.impl.configure ([{ stackOffset: $platform.NodeJS ? 1 : 3,
-	                                                indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
-	
-	            var runs = _.reduce2 (
-	
-	                /*  Initial memo
-	                 */
-	                [],
-	                
-	                /*  Arguments split by configs
-	                 */
-	                _.partition3 (args, _.isTypeOf.$ (log.Config)),
-	                
-	                /*  Gather function
-	                 */
-	                function (runs, span) {
-	                    if (span.label === true) { config = log.impl.configure ([config].concat (span.items))
-	                                               return runs }
-	                                        else { return runs.concat ({ config: config,
-	                                                                     text: log.impl.stringifyArguments (span.items, config) }) } })
-	
-	            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match (/(\n*)([^]*)/)
-	            var trailNewlines = (trailNewlinesMatch && trailNewlinesMatch[1]) // dumb way to select trailing newlines (i'm no good at regex)
-	            if (trailNewlinesMatch) {
-	                runs.last.text = trailNewlinesMatch[2].reversed }
-	
-	
-	            /*  Split by linebreaks
-	             */
-	            var newline = {}
-	            var lines = _.pluck.with ('items',
-	                            _.reject.with (_.property ('label'),
-	                                _.partition3.with (_.equals (newline),
-	                                    _.scatter (runs, function (run, i, emit) {
-	                                                        _.each (run.text.split ('\n'), function (line, i, arr) {
-	                                                                                            emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
-	                                                                                            emit (newline) } }) }))))
-	
-	            var totalText       = _.pluck (runs, 'text').join ('')
-	            var where           = config.where || log.impl.walkStack ($callStack) || {}
-	            var indentation     = (config.indentPattern || '\t').repeats (config.indent)
-	
-	            writeBackend ({
-	                lines:         lines,
-	                config:        config,
-	                color:         config.color,
-	                when:          (new Date ()).toISOString (),
-	                args:          _.reject (args, _.isTypeOf.$ (log.Config)),
-	                indentation:   indentation,
-	                indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
-	                                                 _.joinsWith (''),
-	                                                 _.prepends (indentation))).join ('\n'),
-	                text:          totalText,
-	                codeLocation:  (config.location && log.impl.location (where)) || '',
-	                trailNewlines: trailNewlines || '',
-	                where:         (config.location && where) || undefined })
-	
-	            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
-	
-	        walkStack: function (stack) {
-	            return _.find (stack.clean.offset ($platform.Browser ? 1 : 2),
-	                        function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
-	
-	        defaultWriteBackend: function (params) {
-	
-	            var codeLocation = params.codeLocation
-	
-	            if ($platform.NodeJS) {
-	
-	                var lines = _.map (params.lines, function (line) {
-	                                                    return params.indentation + _.map (line, function (run) {
-	                                                        return (run.config.color
-	                                                                    ? (run.config.color.shell + run.text + '\u001b[0m')
-	                                                                    : (                         run.text)) }).join ('') }).join ('\n')
-	
-	                if (log.timestampEnabled) {
-	                    lines = log.color ('dark').shell + _.bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
-	
-	                console.log (lines,
-	                             log.color ('dark').shell + codeLocation + '\u001b[0m',
-	                             params.trailNewlines) }
-	
-	            else {
-	                console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
-	
-	                /*  Text   */
-	
-	                    [(log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + '%c') : '')
-	
-	                        , _.map (params.lines, function (line, i) {
-	                                                return params.indentation + _.reduce2 ('', line, function (s, run) {
-	                                                    return s + (run.text && ((run.config.color ? '%c' : '') +
-	                                                        run.text) || '') }) }).join ('\n')
-	
-	                        , (codeLocation ? ('%c' + codeLocation) : '')].nonempty.join (' '),
-	
-	                /*  Colors */
-	
-	                    (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)', 'color:black'] : [])
-	
-	                        .concat ((_.scatter (params.lines, function (line, i, emit) {
-	                            _.each (line, function (run) {
-	                                if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []))
-	
-	                        .concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
-	
-	                    params.trailNewlines))) } },
-	
-	        /*  Formats timestamp preceding log messages
-	         */
-	        timestamp: function (x) {
-	        	           return x },
-	
-	        /*  Formats that "function @ source.js:321" thing
-	         */
-	        location: function (where) {
-	            return _.quoteWith ('()', _.nonempty ([where.calleeShort,
-	                                      _.nonempty ([where.fileName,
-	                                                   where.line]).join (':')]).join (' @ ')) },
-	
-	
-	        /*  This could be re-used by outer code for turning arbitrary argument lists into string
-	         */
-	        stringifyArguments: function (args, cfg) {
-	            return _.map (args, function (arg) {
-	                var x = log.impl.stringify (arg, cfg)
-	                return (cfg.maxArgLength ? x.limitedTo (cfg.maxArgLength) : x) }).join (' ') },
-	
-	        /*  Smart object stringifier
-	         */
-	        stringify: function (what, cfg) { cfg = cfg || {}
-	            if (_.isTypeOf (Error, what)) {
-	                var str = log.impl.stringifyError (what)
-	                if (what.originalError) {
-	                    return str + '\n\n' + log.impl.stringify (what.originalError) }
-	                else {
-	                    return str } }
-	
-	            else if (_.isTypeOf (CallStack, what)) {
-	                return log.impl.stringifyCallStack (what) }
-	
-	            else if (typeof what === 'object') {
-	                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
-	                    return log.asTable (what) }
-	                else {
-	                    return _.stringify (what, cfg) } }
-	                    
-	            else if (typeof what === 'string') {
-	                return what }
-	
-	            else {
-	                return _.stringify (what) } },
-	        
-	        stringifyError: function (e) {
-	            try {       
-	                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
-	                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
-	
-	                return ('[EXCEPTION] ' + why + '\n\n') +
-	                    (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
-	                                        log.impl.stringify.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
-	                    log.impl.stringifyCallStack (stack) + '\n' }
-	            catch (sub) {
-	                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
-	                    '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
-	
-	        stringifyCallStack: function (stack) {
-	            return log.columns (stack.map (
-	                function (entry) { return [
-	                    '\t' + 'at ' + entry.calleeShort.first (30),
-	                    _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-	                    (entry.source || '').first (80)] })).join ('\n') } } })
-	
-	
-	/*  Printing API
-	 */
-	;(function () {                                                var write = log.impl.write
-	   _.extend (log,
-	             log.printAPI =
-	                    _.object (
-	                    _.concat (            [[            'newline', write.$ (log.config ({ location: false }), '') ],
-	                                           [              'write', write                                                          ]],
-	                            _.flat (_.map (['red failure error e',
-	                                                    'blue info i',
-	                                               'darkBlue minor m',
-	                                          'orange warning warn w',
-	                                             'green success ok g',
-	                                                   'darkGreen dg',
-	                                            'pink notice alert p',
-	                                                    'boldPink pp',
-	                                                    'dark hint d',
-	                                                   'boldGreen gg',
-	                                                       'bright b',
-	                                          'boldRed bloody bad ee',
-	                                                    'darkPink dp',
-	                                                       'brown br',
-	                                                 'darkOrange wtf',
-	                                                  'boldOrange ww',
-	                                                     'darkRed er',
-	                                                    'boldBlue ii' ],
-	                                                    _.splitsWith  (' ').then (
-	                                                      _.mapsWith  (
-	                                                  function (name,                                   i,                         names      )  {
-	                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first), stackOffset: 2 })) ] })))))))
-	
-	}) ()
-	
-	
-	/*  Higher order API
-	 */
-	logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
-	
-	
-	/*  Experimental formatting shit.
-	 */
-	_.extend (log, {
-	
-	    asTable: function (arrayOfObjects) {
-	        var columnsDef  = arrayOfObjects.map (_.keys.arity1).reduce (_.union.arity2, []) // makes ['col1', 'col2', 'col3'] by unifying objects keys
-	        var lines       = log.columns ( [columnsDef].concat (
-	                                            _.map (arrayOfObjects, function (object) {
-	                                                                        return columnsDef.map (_.propertyOf (object)) })), {
-	                                        maxTotalWidth: 120,
-	                                        minColumnWidths: columnsDef.map (_.property ('length')) })
-	
-	        return [lines[0], log.thinLine[0].repeats (lines[0].length), _.rest (lines)].flat.join ('\n') },
-	
-	    /*  Layout algorithm for ASCII sheets (v 2.0)
-	     */
-	    columns: function (rows, cfg_) {
-	        if (rows.length === 0) {
-	            return [] }
-	        else {
-	            
-	            /*  convert column data to string, taking first line
-	             */
-	            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return _.asString (col).split ('\n')[0] }))
-	
-	            /*  compute column widths (per row) and max widths (per column)
-	             */
-	            var columnWidths    = rowsToStr.map (_.map.tails2 (_.property ('length')))
-	            var maxWidths       = columnWidths.zip (_.largest)
-	
-	            /*  default config
-	             */
-	            var cfg             = cfg_ || { minColumnWidths: maxWidths, maxTotalWidth: 0 }
-	
-	            /*  project desired column widths, taking maxTotalWidth and minColumnWidths in account
-	             */
-	            var totalWidth      = _.reduce (maxWidths, _.sum, 0)
-	            var relativeWidths  = _.map (maxWidths, _.muls (1.0 / totalWidth))
-	            var excessWidth     = Math.max (0, totalWidth - cfg.maxTotalWidth)
-	            var computedWidths  = _.map (maxWidths, function (w, i) {
-	                                                        return Math.max (cfg.minColumnWidths[i], Math.floor (w - excessWidth * relativeWidths[i])) })
-	
-	            /*  this is how many symbols we should pad or cut (per column)
-	             */
-	            var restWidths      = columnWidths.map (function (widths) { return [computedWidths, widths].zip (_.subtract) })
-	
-	            /*  perform final composition
-	             */
-	            return [rowsToStr, restWidths].zip (
-	                 _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
-	                 .then (_.joinsWith ('  ')) ) } }
-	})
-	
-	if ($platform.NodeJS) {
-	    module.exports = log }
-	
-	
-
-
-/***/ },
-/* 46 */
-/***/ function(module, exports) {
-
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	------------------------------------------------------------------------
-	
-	Testosterone is a cross-platform unit test shell. Features:
-	
-	    - asynchronous tests
-	    - asynchronous assertions
-	    - log handling (log.xxx calls are scheduled to current test log)
-	    - exception handling (uncaught exceptions are nicely handled)
-	
-	------------------------------------------------------------------------
-	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	
-	/*  A contract for test routines that says that test should fail and it's the behavior expected
-	 */
-	_.defineTagKeyword ('shouldFail')
-	
-	
-	/*  A contract for custom assertions, says that assertion is asynchronous.
-	 */
-	_.defineTagKeyword ('async')
-	
-	
-	/*  This is test suite for tests framework itself.
-	
-	    As you can see, tests are defined as _.tests.xxx. So, if you have module called 'foo',
-	    place tests for that module in _.tests.foo — it will be picked up by tests framework
-	    automagically ©
-	 */
-	_.tests.Testosterone = {
-	
-	    /*  3.  To write asynchronous tests, define second argument in your test routine, which
-	            is 'done' callback. The framework will look into argument count of your routine,
-	            and if second argument is there, your routine will be considered as asynchronous,
-	            i.e. not completing until 'done' is explicitly triggered.
-	     */
-	    'async': function (done) {
-	        _.delay (function () {
-	            done () }) },
-	
-	
-	    /*  4.  Use $tests to define unit tests on prototypes (works only on stuff in global namespace)
-	     */
-	    '$tests': function () {
-	
-	        DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
-	        DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
-	
-	        /*  $test/$tests renders to static immutable property $tests
-	         */
-	        $assertTypeMatches (DummyPrototypeWithTests.$tests, [{ '*': 'function' }])
-	        $assertThrows (function () { DummyPrototypeWithTests.$tests = 42 })
-	
-	        /*  Tests are added to Testosterone.prototypeTests
-	         */
-	        $assertMatches (_.pluck (Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest .$tests,
-	                                                                         DummyPrototypeWithTests.$tests]) }
-	 }
-	
-	/*  For marking methods in internal impl that should publish themselves as global keywords (like $assert)
-	 */
-	_.defineTagKeyword ('assertion')
-	
-	Testosterone = $singleton ({
-	
-	    prototypeTests: [],
-	
-	    isRunning: $property (function () {
-	        return this.currentAssertion !== undefined }),
-	
-	    /*  Hook up to assertion syntax defined in common.js
-	     */
-	    constructor: function () {
-	
-	        _.each (_.assertions, function (fn, name) {
-	                                    this.defineAssertion (name, (name === 'assertFails') ?
-	                                        $shouldFail (function (what) { what.call (this) }) : fn) }, this);
-	
-	        /*  For defining tests inside prototype definitions
-	         */
-	        (function (register) {
-	            $prototype.macro ('$test',  register)
-	            $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
-	                                                        this.prototypeTests.push ({
-	                                                            proto: def.constructor,
-	                                                            tests: value })
-	
-	                                                        def.$tests = $static ($property ($constant (
-	                                                            (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
-	
-	                                                        return def }))
-	        this.run = this.$ (this.run) },
-	
-	    /*  Entry point
-	     */
-	    run: _.interlocked (function (cfg_) {
-	
-	        /*  Configuration
-	         */
-	        var defaults = {
-	            suites: [],
-	            silent:  true,
-	            verbose: false,
-	            timeout: 2000,
-	            filter: _.identity,
-	            testStarted:  function (test) {},
-	            testComplete: function (test) {} }
-	
-	        var cfg = this.runConfig = _.extend (defaults, cfg_)
-	
-	        /*  Read cfg.suites
-	         */
-	        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
-	        var suites = _.map (cfg.suites, this.$ (function (suite, name) {
-	            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto) }))
-	
-	        /*  Pick prototype tests
-	         */
-	        var result = ((cfg.codebase === false) ? __([]) : this.collectPrototypeTests ()).then (this.$ (function (prototypeTests) {
-	
-	            /*  Gather tests
-	             */
-	            var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
-	            var allTests    = _.flatten (_.pluck (baseTests.concat (suites).concat (prototypeTests), 'tests'))
-	            var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
-	
-	            /*  Reset context (assigning indices)
-	             */
-	            this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
-	
-	            _.each (this.runningTests, function (t) {
-	                if (!(t.routine instanceof Function)) {
-	                    log.ee (t.suite, t.name, '– test routine is not a function:', t.routine)
-	                    throw new Error () } })
-	
-	            this.runningTests = _.filter (this.runningTests, cfg.filter || _.identity)
-	
-	            /*  Go
-	             */
-	            return __ .each (this.runningTests, this.$ (this.runTest))
-	                      .then (this.$ (function () {
-	                                _.assert (cfg.done !== true)
-	                                          cfg.done   = true
-	
-	                                this.printLog (cfg)
-	                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-	                                this.failed = (this.failedTests.length > 0)
-	                                
-	                                return !this.failed })) }))
-	
-	        return result.catch (function (e) {
-	                                log.margin ()
-	                                log.ee (log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e)
-	                                throw e }) }),
-	
-	    onException: function (e) {
-	        if (this.currentAssertion) 
-	            this.currentAssertion.onException (e)
-	        else
-	            throw e },
-	
-	    /*  You may define custom assertions through this API
-	     */
-	    defineAssertions: function (assertions) {
-	        _.each (assertions, function (fn, name) {
-	            this.defineAssertion (name, fn) }, this) },
-	
-	    /*  Internal impl
-	     */
-	    runTest: function (test, i) { var self = this, runConfig = this.runConfig
-	
-	        log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
-	    
-	        return __.then (runConfig.testStarted (test), function () {
-	
-	            test.verbose = runConfig.verbose
-	            test.timeout = runConfig.timeout
-	            test.startTime = Date.now ()
-	
-	            return test.run ()
-	                       .then (function () {
-	                                test.time = (Date.now () - test.startTime)
-	                                return runConfig.testComplete (test) }) }) },
-	
-	    collectTests: function () {
-	        return _.map (_.tests, this.$ (function (suite, name) {
-	            return this.testSuite (name, suite) } )) },
-	
-	    collectPrototypeTests: function () { var self = this
-	        return __.map (this.prototypeTests, function (def, then) {
-	                                                return def.proto.$meta.promise.then (function (meta) {
-	                                                    return self.testSuite (meta.name, def.tests, undefined, def.proto) }) }) },
-	
-	    testSuite: function (name, tests, context, proto) { return { 
-	        name: name || '',
-	        tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
-	                .map (function (keyValue) {
-	                        var test = new Test ({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context })
-	                            test.complete (function () {
-	                                if (!(test.hasLog = (test.logCalls.length > 0))) {
-	                                         if (test.failed)  { log.red   ('FAIL') }
-	                                    else if (test.verbose) { log.green ('PASS') } } })
-	
-	                            return test }) } },
-	
-	    defineAssertion: function (name, def) { var self = this
-	        _.deleteKeyword (name)
-	        _.defineKeyword (name, Tags.modify (def,
-	                                    function (fn) {
-	                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
-	                                            if (!self.currentAssertion) {
-	                                                return fn.apply (self, arguments) }
-	                                            else {
-	                                                return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } }) })) },
-	
-	    printLog: function (cfg) { if (!cfg.supressLog) {
-	
-	        var loggedTests = _.filter (this.runningTests, function (test) { return test.failed || (!cfg.silent && test.hasLog) })
-	        var failedTests = _.filter (this.runningTests, _.property ('failed'))
-	
-	        _.invoke (cfg.verbose ? this.runningTests : loggedTests, 'printLog')
-	
-	        if (failedTests.length) {
-	            log.orange ('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck (failedTests, 'name').join (', '), '\n\n') }
-	
-	        else if (cfg.silent !== true) {
-	            log.green ('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n') } } } })
-	
-	
-	/*  Encapsulates internals of test's I/O.
-	 */
-	Test = $prototype ({
-	
-	    constructor: function (cfg) {
-	        _.defaults (this, cfg, {
-	            name:       '<< UNNAMED FOR UNKNOWN REASON >>',
-	            failed:     false,
-	            routine:    undefined,
-	            verbose:    false,
-	            depth:      1,
-	            indent:     0,
-	            failedAssertions: [],
-	            context:    this,
-	            complete: _.extend (_.barrier (), { context: this }) })
-	
-	        this.babyAssertion = _.interlocked (this.babyAssertion) },
-	
-	    finalize: function () {
-	        this.babyAssertion.wait (this.$ (function () {
-	            if (this.canFail && this.failedAssertions.length) {
-	                this.failed = true }
-	            this.complete (true) })) },
-	
-	    babyAssertion: function (name, def, fn, args, loc) { var self = this
-	
-	        var assertion = new Test ({
-	            mother: this,
-	            name: name,
-	            shouldFail: def.$shouldFail || this.shouldFail,
-	            depth: this.depth + 1,
-	            location: loc,
-	            context: this.context,
-	            timeout: this.timeout / 2,
-	            verbose: this.verbose,
-	            silent:  this.silent,
-	            routine: Tags.modify (def, function (fn) {
-	                                            return function (done) {
-	                                                    if ($async.is (args[0]) || $async.is (def)) {
-	                                                        _.cps.apply (fn, self.context, args, function (args, then) {
-	                                                                                                         if (then) {
-	                                                                                                             then.apply (this, args) }
-	                                                                                                         done () }) }
-	                                                    else {
-	                                                        try       { fn.apply (self.context, args); done (); }
-	                                                        catch (e) { assertion.onException (e); } } } }) })
-	
-	        return assertion.run ()
-	                        .finally (function (e, x) {
-	                                Testosterone.currentAssertion = self
-	                                if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
-	                                    return assertion.location
-	                                                    .sourceReady
-	                                                    .promise
-	                                                    .then (function (src) {
-	                                                                log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
-	                                                                assertion.evalLogCalls ()
-	                                                                return src }) } })
-	
-	                        .then (function (src) {
-	                            if (assertion.failed && self.canFail) {
-	                                self.failedAssertions.push (assertion) } }) },
-	
-	    canFail: $property (function () {
-	        return !this.failed && !this.shouldFail }),
-	
-	    fail: function () {
-	        this.failed = true
-	        this.finalize () },
-	
-	    assertionStack: $property (function () { var result = [],
-	                                                      a = this; do { result.push (a); a = a.mother } while (a)
-	                                          return result }),
-	
-	    onException: function (e) {
-	
-	            if (this.canFail || this.verbose) {
-	
-	                if (_.isAssertionError (e)) {
-	                    //  • a
-	                    //  • b
-	                    if ('notMatching' in e) { var notMatching = _.coerceToArray (e.notMatching)
-	                        if (e.asColumns) {
-	                            log.orange (
-	                                log.columns (_.map (notMatching, function (obj) {
-	                                    return ['\t• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
-	                        else {
-	                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('\t• ')))
-	                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
-	                            if (common.length < 4) {
-	                                common = undefined }
-	
-	                            _.each (cases, function (what) {
-	
-	                                    if (common) {                                  var where  = what.indexOf (common)
-	                                        log.write ( log.color.orange,  what.substr (0, where),
-	                                                    log.color.dark,    common,
-	                                                    log.color.orange,  what.substr (where + common.length)) }
-	
-	                                    else {
-	                                        log.orange (what) } }) }} }
-	                        
-	                    // print exception
-	                else {
-	                    if (this.depth > 1) { log.newline () }
-	                                          log.write (e) }
-	                                          log.newline () }
-	
-	            if (this.canFail) { this.fail () }
-	                        else  { this.finalize () } },
-	
-	    run: function () { var self    = Testosterone.currentAssertion = this,
-	                           routine = Tags.unwrap (this.routine)
-	
-	        return new Channel (this.$ (function (then) {
-	
-	            this.shouldFail = $shouldFail.is (this.routine)
-	            this.failed = false
-	            this.hasLog = false
-	            this.logCalls = []
-	            this.failureLocations = {}
-	
-	            _.withTimeout ({
-	                maxTime: self.timeout,
-	                expired: function () { if (self.canFail) { log.ee ('TIMEOUT EXPIRED'); self.fail () } } },
-	                self.complete)
-	
-	            _.withUncaughtExceptionHandler (self.$ (self.onException), self.complete)
-	
-	            log.withWriteBackend (_.extendWith ({ indent: 1 },
-	                                        function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),
-	
-	                                  function (doneWithLogging)  { self.complete (doneWithLogging.arity0)
-	                                                    if (then) { self.complete (then) }
-	
-	                                        /*  Continuation-passing style flow control
-	                                         */
-	                                        if (routine.length > 0) {
-	                                            routine.call (self.context, self.$ (self.finalize)) }
-	
-	                                        /*  Return-style flow control
-	                                         */
-	                                        else {
-	
-	                                        /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
-	                                                    leads to broken unhandled exception handling after the Testosterone run completes  */
-	
-	                                            var result = undefined
-	
-	                                            try       { result = routine.call (self.context) }
-	                                            catch (e) { self.onException (e) }
-	
-	                                            if (_.isArrayLike (result) && (result[0] instanceof Promise)) {
-	                                                result = __.all (result) }
-	
-	                                            if (result instanceof Promise) {
-	                                                result.then (
-	                                                    function (x) { self.finalize () }.postponed,
-	                                                    function (e) { self.onException (e) }) }
-	                                            else {
-	                                                self.finalize () } } }) })) },
-	            
-	    printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
-	
-	        log.write (log.color.blue,
-	            '\n' + log.boldLine,
-	            '\n' + _.nonempty ([suiteName, this.name]).join (' '),
-	            (this.index + ' of ' + Testosterone.runningTests.length).quote ('()') +
-	            (this.failed ? ' FAILED' : '') + ':',
-	            '\n')
-	
-	        this.evalLogCalls () },
-	
-	    evalLogCalls: function () {
-	        _.each (this.logCalls, log.writeBackend ().arity1) } })
-	
-	
-	/*
-	 */
-	_.defineTagKeyword ('allowsRecursion')
-	
-	_.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
-	                        var depth       = -1
-	                        var reported    = false
-	                            return function () {
-	                                if (!reported) {
-	                                    if (depth > max) { reported = true
-	                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + _.stringify (arg) }) },
-	                                            new Error (name + ': max recursion depth reached (' + max + ')')) }
-	                                    else {
-	                                        var result = ((++depth), fn.apply (this, arguments)); depth--
-	                                            return result } } } }
-	                                            
-	Testosterone.ValidatesRecursion = $trait ({
-	
-	    $test: function () {
-	
-	        var test = new ($component ({
-	
-	            $traits: [Testosterone.ValidatesRecursion],
-	
-	            foo: function () {},
-	            bar: function () { this.bar () },
-	            baz: $allowsRecursion ({ max: 2 }, function () { this.baz () }),
-	            qux: $allowsRecursion (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
-	
-	                       test.foo ()
-	        $assertThrows (test.bar, { message: 'bar: max recursion depth reached (0)' })
-	                       test.bar () // should not report second time (to prevent overflood in case of buggy code)
-	        $assertThrows (test.baz, { message: 'baz: max recursion depth reached (2)' })
-	                       test.qux () },
-	
-	    $constructor: function () {
-	        _.each (this, function (member, name) {
-	            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$allowsRecursion || (member.$allowsRecursion.max !== undefined))) {
-	                this[name] = Tags.modify (member, function (fn) {
-	                    return _.limitRecursion ((member && member.$allowsRecursion && member.$allowsRecursion.max) || 0, fn, name) }) } }, this) } })
-	
-	/*  $log for methods
-	 */
-	;(function () { var colors = _.keys (_.omit (log.color, 'none'))
-	                    colors.each (_.defineTagKeyword)
-	
-	    _.defineTagKeyword ('verbose')
-	
-	    Testosterone.LogsMethodCalls = $trait ({
-	
-	        $test: $platform.Browser ? (function () {}) : function (testDone) {
-	
-	                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-	                    var Compo = $extends (Proto, {
-	                                        foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
-	
-	                    var compo = new Compo ()
-	                    var testContext = this
-	
-	                    Compo.$meta (function () {
-	                        $assert (compo.foo (42), 24)
-	                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
-	                        $assert (testContext.logCalls[0].color === log.color ('pink'))
-	                        testDone () }) },
-	
-	        $macroTags: {
-	
-	            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
-	                                                var meta          = {}
-	                                                var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
-	                                                var template      = param && _.template (param, { interpolate: /\{\{(.+?)\}\}/g })
-	
-	                $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
-	
-	                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
-	                                                                                                             arguments_ = _.asArray (arguments)
-	
-	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
-	                        var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
-	
-	                    log.write (log.config ({
-	                        color: color,
-	                        location: true,
-	                        where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
-	
-	                    return log.withConfig ({ indent: 1,
-	                                             color: color,
-	                                             protoName: meta.name }, function () {
-	
-	                                                                        var numWritesBefore = log.impl.numWrites
-	                                                                        var result          = fn.apply (this_, arguments_);          
-	
-	                                                                        if (result !== undefined) {
-	                                                                            log.write ('→', _.stringifyOneLine (result)) }
-	
-	                                                                        if ((log.currentConfig ().indent < 2) &&
-	                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
-	
-	                                                                        return result }) } }) } } }) }) ();
-	
-	
-	if ($platform.NodeJS) {
-	    module.exports = Testosterone }
-
-/***/ },
-/* 47 */
-/***/ function(module, exports) {
-
-	/*  Measures run time of a routine (either sync or async)
-	    ======================================================================== */
-	
-	_.measure = function (routine, then) {
-	    if (then) {                             // async
-	        var now = _.now ()
-	        routine (function () {
-	            then (_.now () - now) }) }
-	    else {                                  // sync
-	        var now = _.now ()
-	        routine ()
-	        return _.now () - now } }
-	
-	
-	/*  Measures performance: perfTest (fn || { fn1: .., fn2: ... }, then)
-	    ======================================================================== */
-	
-	_.perfTest = function (arg, then) {
-	    var rounds = 500
-	    var routines = _.isFunction (arg) ? { test: arg } : arg
-	    var timings = {}
-	
-	    _.cps.each (routines, function (fn, name, then) {
-	
-	        /*  Define test routine (we store and print result, to assure our routine
-	            won't be throwed away by optimizing JIT)
-	         */
-	        var result = []
-	        var run = function () {
-	            for (var i = 0; i < rounds; i++) {
-	                result.push (fn ()) }
-	            console.log (name, result) }
-	
-	        /*  Warm-up run, to force JIT work its magic (not sure if 500 rounds is enough)
-	         */
-	        run ()
-	
-	        /*  Measure (after some delay)
-	         */
-	        _.delay (function () {
-	            timings[name] = _.measure (run) / rounds
-	            then () }, 100) },
-	
-	        /*  all done
-	         */
-	        function () {
-	            then (timings) }) }
-
 
 /***/ },
 /* 48 */

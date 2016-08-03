@@ -718,13 +718,6 @@ _.withTest ('OOP', {
         return result }
 
 
-/*  Adds this.$ to jQuery objects (to enforce code style consistency)
-    ======================================================================== */
-
-    if (typeof jQuery !== 'undefined') {
-        jQuery.fn.extend ({ $: function () { return _.$.apply (null, [this].concat (_.asArray (arguments))) } })}
-
-
 /*  $const (xxx) as convenient alias for $static ($property (xxx))
     ======================================================================== */
  

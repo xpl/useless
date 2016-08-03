@@ -23,6 +23,10 @@ _.extend ($, {
  */
 .fn.extend ({
 
+    /*  For this-binding
+     */
+    $: function () { return _.$.apply (null, [this].concat (_.asArray (arguments))) },
+
     /*  Provides auto-unbinding of $component $listeners from DOM events upon destroy
      */
     on: function (what, method) { var el = this, method = _.find (arguments, _.isFunction)

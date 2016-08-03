@@ -3,9 +3,6 @@
         <meta charset="utf-8"></meta>
         <title>Useless Examples</title>
 
-        <script src="/example/lib/underscore-min.js"></script>
-        <script src="/example/lib/jquery-2.1.4.js"></script>
-        
         <script src="/build/useless.client.js"></script>
         <script src="/build/useless.devtools.js"></script>
 
@@ -52,6 +49,8 @@
             -webkit-transition: color 0.2s ease-in-out; }
     </style>
     <script>
+
+    (function ($) {
 
         log.timestampEnabled = true
 
@@ -136,6 +135,8 @@
 
             initErrorHandlingDemo ()
             initComponentDemo ()  })
+
+    }) (jQuery);
 
         </script>
 

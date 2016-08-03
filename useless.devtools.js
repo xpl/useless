@@ -5,9 +5,13 @@ require ('./base/reflection')
 require ('./base/log')
 require ('./base/Testosterone')
 require ('./base/profiling')
+
+jQuery = require ('jquery')
+
+require ('./client/jQueryPlus')
+
 require ('./client/Panic')
 require ('./client/LogOverlay')
-
 require ('./client/Panic.css')
 require ('./client/LogOverlay.css')
 
