@@ -5774,7 +5774,7 @@
                 indexBy: _.indexBy,
                 find: _.find,
                 filter: _.filter,
-                reject: _.reject,
+                reject: $method(_.reject),
                 flat: _.flatten.tails2(true),
                 object: _.object,
                 shuffle: _.shuffle,

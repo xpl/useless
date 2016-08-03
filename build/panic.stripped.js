@@ -5779,7 +5779,7 @@
                 indexBy: _.indexBy,
                 find: _.find,
                 filter: _.filter,
-                reject: _.reject,
+                reject: $method(_.reject),
                 flat: _.flatten.tails2(true),
                 object: _.object,
                 shuffle: _.shuffle,
@@ -12302,11 +12302,46 @@
     },
     function (module, exports) {
         var process = module.exports = {};
+        var cachedSetTimeout;
+        var cachedClearTimeout;
+        (function () {
+            try {
+                cachedSetTimeout = setTimeout;
+            } catch (e) {
+                cachedSetTimeout = function () {
+                    throw new Error('setTimeout is not defined');
+                };
+            }
+            try {
+                cachedClearTimeout = clearTimeout;
+            } catch (e) {
+                cachedClearTimeout = function () {
+                    throw new Error('clearTimeout is not defined');
+                };
+            }
+        }());
+        function runTimeout(fun) {
+            if (cachedSetTimeout === setTimeout) {
+                return setTimeout(fun, 0);
+            } else {
+                return cachedSetTimeout.call(null, fun, 0);
+            }
+        }
+        function runClearTimeout(marker) {
+            if (cachedClearTimeout === clearTimeout) {
+                clearTimeout(marker);
+            } else {
+                cachedClearTimeout.call(null, marker);
+            }
+        }
         var queue = [];
         var draining = false;
         var currentQueue;
         var queueIndex = -1;
         function cleanUpNextTick() {
+            if (!draining || !currentQueue) {
+                return;
+            }
             draining = false;
             if (currentQueue.length) {
                 queue = currentQueue.concat(queue);
@@ -12321,7 +12356,7 @@
             if (draining) {
                 return;
             }
-            var timeout = setTimeout(cleanUpNextTick);
+            var timeout = runTimeout(cleanUpNextTick);
             draining = true;
             var len = queue.length;
             while (len) {
@@ -12337,7 +12372,7 @@
             }
             currentQueue = null;
             draining = false;
-            clearTimeout(timeout);
+            runClearTimeout(timeout);
         }
         process.nextTick = function (fun) {
             var args = new Array(arguments.length - 1);
@@ -12348,7 +12383,7 @@
             }
             queue.push(new Item(fun, args));
             if (queue.length === 1 && !draining) {
-                setTimeout(drainQueue, 0);
+                runTimeout(drainQueue);
             }
         };
         function Item(fun, array) {
