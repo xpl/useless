@@ -57,9 +57,9 @@ ServerWebsocket = module.exports = $trait ({
 
             connection.on ('message', this.$ (function (message) {
                 if (message.type === 'utf8') {
-                    this.websocketAuth (_.json (message.utf8Data), this.$ (function (user) {
+                    this.websocketAuth (JSON.parse (message.utf8Data), this.$ (function (user) {
                         log.gg ('peer authorized:', this.websocketStringifyUser (user), '(' + connection.remoteAddress + ')')
-                        connection.send (_.json ({ what: 'handshake', uptime: this.uptime ? this.uptime () : undefined }))
+                        connection.send (JSON.stringify ({ what: 'handshake', uptime: this.uptime ? this.uptime () : undefined }))
                         connection.user = user
                         this.peers.push (connection) }), drop) }
                 else {

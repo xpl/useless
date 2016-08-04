@@ -2921,17 +2921,6 @@
         }());
     },
     function (module, exports) {
-        _.json = function (arg) {
-            if (typeof arg === 'string') {
-                try {
-                    return JSON.parse(arg);
-                } catch (e) {
-                    return {};
-                }
-            } else {
-                return JSON.stringify(arg);
-            }
-        };
         {
             _.alignStringsRight = function (strings) {
                 var lengths = strings.map(_.count);
@@ -3078,21 +3067,12 @@
                         })));
                     }
                 } else if (_.isDecimal(x) && cfg.precision > 0) {
-                    return _.toFixed(x, cfg.precision);
+                    return x.toFixed(cfg.precision);
                 } else {
                     return String(x);
                 }
             };
         }
-        _.toFixed = function (x, precision) {
-            return x && x.toFixed && x.toFixed(precision) || undefined;
-        };
-        _.toFixed2 = function (x) {
-            return _.toFixed(x, 2);
-        };
-        _.toFixed3 = function (x) {
-            return _.toFixed(x, 3);
-        };
     },
     function (module, exports) {
         _.cps = function () {

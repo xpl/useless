@@ -159,7 +159,7 @@ APISchema = {
                     if (isBinding) {
                         var key    = match.slice (1)
                         var value  = decodeURIComponent (subroutes ? element : path.slice (depth).join ('/'))
-                        vars[key]  = isJsonBinding ? _.json (value) : value
+                        vars[key]  = isJsonBinding ? JSON.parse.catches () (value) : value
 
                         trace (match + ' = ' + vars[key]) }
                     else {

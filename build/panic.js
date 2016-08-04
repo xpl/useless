@@ -4225,17 +4225,6 @@
 /* 14 */
 /***/ function(module, exports) {
 
-	/*  Tired of wrapping JSON.parse to try/catch? Here's solution.
-	    Also, it's two-way (can either parse, or stringify).
-	    ======================================================================== */
-	
-	_.json = function (arg) {
-	            if (typeof arg === 'string') {
-	                try         { return JSON.parse (arg) }
-	                catch (e)   { return {} } }
-	            else {
-	                return JSON.stringify (arg) } }
-	                
 	/*  Object stringifier
 	    ======================================================================== */
 	
@@ -4422,22 +4411,11 @@
 	                                                            return (isArray ? '' : (kv[0].quote (quoteKeys) + ': ')) + impl (kv[1]) }))) } }
 	
 	                            else if (_.isDecimal (x) && (cfg.precision > 0)) {
-	                                return _.toFixed (x,     cfg.precision) }
+	                                return x.toFixed (cfg.precision) }
 	
 	                            else {
 	                                return String (x) } } })
 	
-	/*  Safe version of toFixed
-	    ======================================================================== */
-	
-	_.toFixed = function (x, precision) {
-	    return (x && x.toFixed && x.toFixed (precision)) || undefined }
-	
-	_.toFixed2 = function (x) {
-	    return _.toFixed (x, 2) }
-	
-	_.toFixed3 = function (x) {
-	    return _.toFixed (x, 3) }
 	
 
 
