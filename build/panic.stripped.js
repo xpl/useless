@@ -2964,7 +2964,7 @@
                 if ($platform.NodeJS && x.$meta) {
                     var name = '';
                     x.$meta(function (values) {
-                        name = values.name;
+                        name = values.name === 'exports' ? values.file : values.name;
                     });
                     return name && name + ' ()';
                 } else
@@ -7758,46 +7758,11 @@
     },
     function (module, exports) {
         var process = module.exports = {};
-        var cachedSetTimeout;
-        var cachedClearTimeout;
-        (function () {
-            try {
-                cachedSetTimeout = setTimeout;
-            } catch (e) {
-                cachedSetTimeout = function () {
-                    throw new Error('setTimeout is not defined');
-                };
-            }
-            try {
-                cachedClearTimeout = clearTimeout;
-            } catch (e) {
-                cachedClearTimeout = function () {
-                    throw new Error('clearTimeout is not defined');
-                };
-            }
-        }());
-        function runTimeout(fun) {
-            if (cachedSetTimeout === setTimeout) {
-                return setTimeout(fun, 0);
-            } else {
-                return cachedSetTimeout.call(null, fun, 0);
-            }
-        }
-        function runClearTimeout(marker) {
-            if (cachedClearTimeout === clearTimeout) {
-                clearTimeout(marker);
-            } else {
-                cachedClearTimeout.call(null, marker);
-            }
-        }
         var queue = [];
         var draining = false;
         var currentQueue;
         var queueIndex = -1;
         function cleanUpNextTick() {
-            if (!draining || !currentQueue) {
-                return;
-            }
             draining = false;
             if (currentQueue.length) {
                 queue = currentQueue.concat(queue);
@@ -7812,7 +7777,7 @@
             if (draining) {
                 return;
             }
-            var timeout = runTimeout(cleanUpNextTick);
+            var timeout = setTimeout(cleanUpNextTick);
             draining = true;
             var len = queue.length;
             while (len) {
@@ -7828,7 +7793,7 @@
             }
             currentQueue = null;
             draining = false;
-            runClearTimeout(timeout);
+            clearTimeout(timeout);
         }
         process.nextTick = function (fun) {
             var args = new Array(arguments.length - 1);
@@ -7839,7 +7804,7 @@
             }
             queue.push(new Item(fun, args));
             if (queue.length === 1 && !draining) {
-                runTimeout(drainQueue);
+                setTimeout(drainQueue, 0);
             }
         };
         function Item(fun, array) {
@@ -15702,8 +15667,8 @@
             module.exports = content.locals;
         if (false) {
             if (!content.locals) {
-                module.hot.accept('!!./../node_modules/css-loader/index.js!./Panic.css', function () {
-                    var newContent = require('!!./../node_modules/css-loader/index.js!./Panic.css');
+                module.hot.accept('!!./../../css-loader/index.js!./Panic.css', function () {
+                    var newContent = require('!!./../../css-loader/index.js!./Panic.css');
                     if (typeof newContent === 'string')
                         newContent = [[
                                 module.id,
@@ -15999,8 +15964,8 @@
             module.exports = content.locals;
         if (false) {
             if (!content.locals) {
-                module.hot.accept('!!./../node_modules/css-loader/index.js!./LogOverlay.css', function () {
-                    var newContent = require('!!./../node_modules/css-loader/index.js!./LogOverlay.css');
+                module.hot.accept('!!./../../css-loader/index.js!./LogOverlay.css', function () {
+                    var newContent = require('!!./../../css-loader/index.js!./LogOverlay.css');
                     if (typeof newContent === 'string')
                         newContent = [[
                                 module.id,

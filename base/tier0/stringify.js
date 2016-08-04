@@ -68,7 +68,7 @@ _.deferTest (['type', 'stringify'], function () {
 
     _.stringifyPrototype = function (x) {
             if ($platform.NodeJS && x.$meta) { var name = ''
-                x.$meta (function (values) { name = values.name })
+                x.$meta (function (values) { name = ((values.name === 'exports') ? values.file : values.name) })
                 return name && (name + ' ()') }
             else return '<prototype>' }
 

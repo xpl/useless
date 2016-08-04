@@ -5,6 +5,8 @@ var util    = require ('./base/util'),
 
 module.exports = $trait ({
 
+    $depends: [require ('./args')],
+
     $defaults: {
         configPath:
             path.join (process.cwd (), '/config.json'),

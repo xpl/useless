@@ -2959,7 +2959,7 @@
                 if ($platform.NodeJS && x.$meta) {
                     var name = '';
                     x.$meta(function (values) {
-                        name = values.name;
+                        name = values.name === 'exports' ? values.file : values.name;
                     });
                     return name && name + ' ()';
                 } else

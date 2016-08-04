@@ -1,4 +1,4 @@
-ServerAPI = module.exports = $trait ({
+ module.exports = ServerAPI = $trait ({
 
     tests: {
 

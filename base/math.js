@@ -737,7 +737,8 @@ _.withTest (['DAG', 'squash'], function () {
                                                      .topoSort ()
                                                      .remove (node0) }
 
-    DAG.sortedSubgraphOf = function (node0, cfg) { return new DAG (cfg).sortedSubgraphOf (node0) }
+    DAG.sortedSubgraphOf = function (node0, cfg) {
+                                return new DAG (cfg).sortedSubgraphOf (node0) }
 
 })
 

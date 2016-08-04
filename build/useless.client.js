@@ -4285,7 +4285,7 @@
 	
 	    _.stringifyPrototype = function (x) {
 	            if ($platform.NodeJS && x.$meta) { var name = ''
-	                x.$meta (function (values) { name = values.name })
+	                x.$meta (function (values) { name = ((values.name === 'exports') ? values.file : values.name) })
 	                return name && (name + ' ()') }
 	            else return '<prototype>' }
 	
@@ -7853,7 +7853,8 @@
 	                                                     .topoSort ()
 	                                                     .remove (node0) }
 	
-	    DAG.sortedSubgraphOf = function (node0, cfg) { return new DAG (cfg).sortedSubgraphOf (node0) }
+	    DAG.sortedSubgraphOf = function (node0, cfg) {
+	                                return new DAG (cfg).sortedSubgraphOf (node0) }
 	
 	})
 	
@@ -7880,6 +7881,7 @@
 	exports.array = toposort
 	
 	function toposort(nodes, edges) {
+	
 	  var cursor = nodes.length
 	    , sorted = new Array(cursor)
 	    , visited = {}
@@ -7892,6 +7894,7 @@
 	  return sorted
 	
 	  function visit(node, i, predecessors) {
+	
 	    if(predecessors.indexOf(node) >= 0) {
 	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
 	    }
@@ -7907,6 +7910,7 @@
 	    var outgoing = edges.filter(function(edge){
 	      return edge[0] === node
 	    })
+	
 	    if (i = outgoing.length) {
 	      var preds = predecessors.concat(node)
 	      do {
