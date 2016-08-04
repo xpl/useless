@@ -333,9 +333,9 @@
 	
 	    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
 	     */
-	    $overrideUnderscore ('matches', function (matches) {
-	        return function (a) {
-	            return _.isObject (a) ? matches (a) : function (b) { return a === b } } })
+	    ;(function () {
+	        var _matches = _.matches
+	        _.matches = function (a) { return _.isObject (a) ? _matches (a) : function (b) { return a === b } } }) ();
 	
 	    _.extend (_, _.assertions = {
 	
@@ -474,11 +474,9 @@
 	    /*  $assert helper
 	        ======================================================================== */
 	
-	    _.extend (_, {
-	
-	        allEqual: function (values) {
-	                            return _.reduce (values, function (prevEqual, x) {
-	                                return prevEqual && _.isEqual (values[0], x) }, true) } })
+	    _.allEqual = function (values) {
+	                    return _.reduce (values, function (prevEqual, x) {
+	                        return prevEqual && _.isEqual (values[0], x) }, true) }
 	
 	    /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
 	        thus configurable=true)
@@ -490,9 +488,6 @@
 	    for (var k in _.assertions) {
 	        $global['$' + k] = 1
 	    }
-	
-	    $assert
-	
 	})
 	
 	

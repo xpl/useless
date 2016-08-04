@@ -69,12 +69,6 @@
                                         }, function (v, k) { return { enumerable: true, value: v } })))
 }) ();
 
-/*  Use this helper to override underscore's functions
-    ======================================================================== */
-
-$overrideUnderscore = function (name, genImpl) {
-    return _[name] = genImpl (_[name]) }
-
 /*  alert2 for ghetto debugging in browser
     ======================================================================== */
 

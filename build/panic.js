@@ -102,21 +102,20 @@
 	    __webpack_require__ (12)    // metaprogramming utility
 	    __webpack_require__ (13)   // advanced type system extensions
 	    __webpack_require__ (14)   // configurable object printer
-	    __webpack_require__ (15)      // dependency list / tree squashing algorithms
 	
-	    __webpack_require__ (16)
+	    __webpack_require__ (15)
 	
-	    __webpack_require__ (17)    // bootstrap
-	    __webpack_require__ (18)            // extends Function
-	    __webpack_require__ (19)               // extends Array
-	    __webpack_require__ (20)              // extends String
+	    __webpack_require__ (16)    // bootstrap
+	    __webpack_require__ (17)            // extends Function
+	    __webpack_require__ (18)               // extends Array
+	    __webpack_require__ (19)              // extends String
 	
-	    __webpack_require__ (21)          // for ad-hoc dependency injection in any object's method
-	    __webpack_require__ (22)            // a generalization of Event (multicast model for function calls)
+	    __webpack_require__ (20)          // for ad-hoc dependency injection in any object's method
+	    __webpack_require__ (21)            // a generalization of Event (multicast model for function calls)
 	
-	    __webpack_require__ (23)
+	    __webpack_require__ (22)
 	
-	    __webpack_require__ (24)      // clumsy math utils
+	    __webpack_require__ (23)      // clumsy math utils
 	    __webpack_require__ (25)     // clumsy parsing utils
 	    __webpack_require__ (26)      // (this one is normal)
 	
@@ -2004,12 +2003,6 @@
 	                                        }, function (v, k) { return { enumerable: true, value: v } })))
 	}) ();
 	
-	/*  Use this helper to override underscore's functions
-	    ======================================================================== */
-	
-	$overrideUnderscore = function (name, genImpl) {
-	    return _[name] = genImpl (_[name]) }
-	
 	/*  alert2 for ghetto debugging in browser
 	    ======================================================================== */
 	
@@ -2058,15 +2051,6 @@
 	/*  Argument count tracking module (provides hinting to several metaprogramming
 	    utilities, like property definitions)
 	    ======================================================================== */
-	
-	/*  NOTE:   "rest argument" is a term from upcoming ECMAScript 6 standard,
-	             denoting the "..." thing in "f(a,b,...)"-type signatures.
-	
-	             Although it's best known elsewhere as 'variable argument list',
-	             and the "rest argument" term is really confusing to most of
-	             people, we should take course on the future language prospects
-	             that will soon become widely recognized reality for everyone.
-	 */
 	
 	_.withTest ('argcount tracking', function () {
 	
@@ -2130,26 +2114,31 @@
 	    will be de-mounted, thus sacrificing clarity in some places.
 	    ======================================================================== */
 	
-	$overrideUnderscore ('memoize',
-	    function (memoize) {
-	        return function (fn) {
-	                    return _.withSameArgs (fn, memoize (fn)) } })
+	;(function () {
 	
-	$overrideUnderscore ('partial',
-	    function (partial) {
-	        return $restArg (function (fn) {
+	    var override = function (name, genImpl) {
+	                        return _[name] = genImpl (_[name]) }
+	
+	    override ('memoize',
+	        function (memoize) {
+	            return function (fn) {
+	                        return _.withSameArgs (fn, memoize (fn)) } })
+	
+	    override ('partial',
+	        function (partial) {
+	            return $restArg (function (fn) {
+	                                    return _.withArgs (
+	                                        Math.max (0, _.numArgs (fn) - (arguments.length - 1)), fn._ra,
+	                                            partial.apply (this, arguments)) }) })
+	
+	    override ('bind',
+	        function (bind) {
+	            return $restArg (function (fn, this_) {
 	                                return _.withArgs (
-	                                    Math.max (0, _.numArgs (fn) - (arguments.length - 1)), fn._ra,
-	                                        partial.apply (this, arguments)) }) })
+	                                    Math.max (0, _.numArgs (fn) - (arguments.length - 2)), fn._ra,
+	                                        bind.apply (this, arguments)) }) })
 	
-	
-	$overrideUnderscore ('bind',
-	    function (bind) {
-	        return $restArg (function (fn, this_) {
-	                            return _.withArgs (
-	                                Math.max (0, _.numArgs (fn) - (arguments.length - 2)), fn._ra,
-	                                    bind.apply (this, arguments)) }) })
-	
+	}) ();
 
 
 /***/ },
@@ -4456,150 +4445,6 @@
 /* 15 */
 /***/ function(module, exports) {
 
-	/*  ======================================================================== */
-	
-	_.deferTest (['Array', 'squash'], function () {
-	
-	      $assert ( [['all','your',                'to','us'],
-	                 [      'your',       'belong',     'us'],
-	                 [             'base','belong','to'     ],
-	                 [      'your','base'                   ]].squash (),
-	               /* -------------------------------------- */
-	                 ['all','your','base','belong','to','us'])
-	
-	
-	/*  ======================================================================== */
-	
-	}, function () {    /*  Seems like the algoritm is O(N²) in the worst case,
-	                        but it can be optimized to O(N log N).
-	                        ---------------------------------------------------- */
-	
-	    Array.prototype.squash = function (cfg) {
-	                                       cfg = cfg || {}
-	
-	        var key  = cfg.key  || _.identity,  //  for element key extraction
-	            sort = cfg.sort || undefined    //  should be fn(a,b) -> {-1,0,1}
-	
-	        var head  = { key: null, next: {}, depth: {} }
-	        var nodes = {}
-	
-	        _.each (this, function (arr) {
-	                        for (
-	                            var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-	                            var item = arr[i]
-	                            var k    = key (item)
-	                            node = nodes[k] || (nodes[k] = { key: k, item: item, next: {}, depth: {} })
-	                            if (prev) {
-	                                prev.next [k] = node
-	                                prev.depth[k] = 0 } } })
-	
-	        var decyclize =
-	            function (  visited, node, prev, depth) { depth = depth || 0
-	                        visited [node.key] = true                    
-	                                 node.next = _.filter2 (
-	                                             _.values (node.next),
-	                                                 function (next) {
-	                                                       if (next.key in visited) { return false }
-	                                                       else {
-	                                                            next  = decyclize (visited, next, node)
-	                                                            depth = Math.max (depth, node.depth[next.key])
-	                                                            return next } })
-	                if (prev) {
-	                    prev.depth[node.key] = Math.max (prev.depth[node.key] || 0, depth + 1) }
-	
-	                delete visited[node.key]
-	                return         node }
-	
-	        var ordered = function (    a,    b) {
-	                            return (a === b) || _.some (a.next, function (aa) {
-	                                                          return ordered (aa, b) }) }
-	
-	        var flatten = function (node) { if (!node) return []
-	
-	                            var next = (node.next || []).sort (
-	                                          function (a, b) { return (node.depth[a.key] || 0) <
-	                                                                   (node.depth[b.key] || 0) })
-	              /* DEBUG */   if (false) {
-	                                log.gg (node.key)
-	                                log.pp (next.map (function (next) {
-	                                                        return next.key + ' ' +
-	                                                               node.depth[next.key] })) }
-	
-	                            return [node].concat (flatten (_.reduce (next, function (a, b) {
-	
-	                                if (a === b)             { return a }
-	                                else if (ordered (b, a)) { b.next.push (a); return b }
-	                                else                     { a.next.push (b); return a } }))) }
-	
-	        return _.rest (
-	               _.pluck (flatten (decyclize ({}, head)),
-	                       'item'))
-	    }
-	})
-	
-	/*  ======================================================================== */
-	
-	_.deferTest (['DAG', 'squash'], function () {
-	
-	    var modules = {
-	        
-	        'tier1':   { requires: [] },
-	        'tier11':  { requires: ['tier1'] },
-	        'tier2':   { requires: ['tier0'] },
-	        'tier111': { requires: ['tier12', 'tier100'] },
-	        'tier12':  { requires: ['tier0',  'tier11', 'tier2'] },
-	        'tier100': { requires: ['tier10'] },
-	        'tier0':   { requires: [] },
-	        'tier10':  { requires: ['tier0', 'tier2'] },
-	        'root':    { requires: ['tier2', 'tier111'] } }
-	
-	    $assert (
-	        DAG.squash ('root', { nodes: function (x) { return modules[x].requires } }),
-	        ["tier0", "tier1", "tier11", "tier2", "tier12", "tier10", "tier100", "tier111"]  )
-	
-	/*  ======================================================================== */
-	
-	}, function () {
-	
-	    DAG = function (cfg) {
-	                    this.cfg   = cfg       || {},
-	                    this.nodes = cfg.nodes || _.noop },
-	
-	    DAG.prototype.each = function (N, fn, prev,  visited) {
-	                                                 visited = visited || new Set ()
-	
-	                                            if (!visited.has (N)) { 
-	                                                 visited.add (N);   var self  = this,
-	                                                                        nodes = this.nodes (N) || [],
-	                                                                        stop  = fn.call (this, N, {     nodes: nodes,
-	                                                                                                         prev: prev,
-	                                                                                                      visited: visited })
-	                                                if (stop !== true) {
-	                                                    nodes.forEach (function ( NN) {
-	                                                                   self.each (NN, fn, N, visited) }) } }; return visited },
-	    DAG.prototype.edges = function (N) {
-	                                var edges = []
-	                                    this.each (N, function (N, context) {   context .nodes
-	                                                                                    .concat (N)
-	                                                                                    .reduce (function (A, B) {
-	                                                                                          edges.push ([A, B]); return B }) }); return edges },
-	    DAG.prototype.squash = function  (node0) {
-	                  return this.edges  (node0)
-	                             .squash (this.cfg)
-	                             .remove (node0) }
-	
-	    DAG.squash = function (node0, cfg) { return new DAG (cfg).squash (node0) }
-	
-	})
-	
-	/*  ======================================================================== */
-	
-
-
-/***/ },
-/* 16 */
-/***/ function(module, exports) {
-
 	/*  CPS primitives module
 	    ======================================================================== */
 	
@@ -5031,7 +4876,7 @@
 	})
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/*  Extensions methods
@@ -5066,7 +4911,7 @@
 	            throw new Error ('$extensionMethods: crazy input, unable to match') } })}
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/*  Function extensions
@@ -5314,7 +5159,7 @@
 
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports) {
 
 	/*  Array extensions
@@ -5461,7 +5306,7 @@
 
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports) {
 
 	/*  String extensions
@@ -5724,7 +5569,7 @@
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/*  Interceptable/observable methods
@@ -5921,7 +5766,7 @@
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports) {
 
 	/*  Generic functional primitives for dynamic code binding
@@ -6451,7 +6296,7 @@
 
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -7276,8 +7121,8 @@
 
 
 /***/ },
-/* 24 */
-/***/ function(module, exports) {
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
 
 	/*  TODO:   UNIT TEST DAT MUTHAFUCKA
 	 */
@@ -7930,6 +7775,170 @@
 	    value = value.toString().split('e');
 	    return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 	}))
+	
+	/*  ======================================================================== */
+	
+	;(function () {
+	
+	    var toposort = __webpack_require__ (24)
+	
+	    Array.prototype.topoSort = function () { return toposort (this) }
+	
+	}) ();
+	
+	/*  ======================================================================== */
+	
+	_.withTest (['Array', 'topomerge'], function () {
+	
+	      $assert ( [['all','your',                'to','us'],
+	                 [      'your',       'belong',     'us'],
+	                 [             'base','belong','to'     ],
+	                 [      'your','base'                   ]].topoMerge (),
+	               /* -------------------------------------- */
+	                 ['all','your','base','belong','to','us'])
+	
+	/*  ======================================================================== */
+	
+	}, function () {
+	
+	    Array.prototype.topoMerge = function () {                    var edges    = []
+	        for (var i = 0, ni = this.length;         i < ni; i++) { var sequence = this[i]
+	        for (var j = 0, nj = sequence.length - 1; j < nj; j++) {
+	            edges.push ([
+	                sequence[j    ],
+	                sequence[j + 1]]) } }
+	
+	        return edges.topoSort ()
+	    }
+	})
+	
+	/*  ======================================================================== */
+	
+	_.withTest (['DAG', 'squash'], function () {
+	
+	    var modules = {
+	        
+	        '1':    { requires: [] },
+	        '11':   { requires: ['1'] },
+	        '2':    { requires: ['0'] },
+	        '111':  { requires: ['12', '100'] },
+	        '12':   { requires: ['0',  '11', '2'] },
+	        '100':  { requires: ['10'] },
+	        '0':    { requires: [] },
+	        '10':   { requires: ['0', '2'] },
+	        'root': { requires: ['2', '111'] } }
+	
+	    $assert (
+	        DAG.sortedSubgraphOf ('root', { nodes: function (x) { return modules[x].requires } }),
+	        ["0", "1", "11", "2", "12", "10", "100", "111"]  )
+	
+	/*  ======================================================================== */
+	
+	}, function () {
+	
+	    DAG = function (cfg) {
+	                    this.cfg   = cfg       || {},
+	                    this.nodes = cfg.nodes || _.noop },
+	
+	    DAG.prototype.each = function (N, fn, prev,  visited) {
+	                                                 visited = visited || new Set ()
+	
+	                                            if (!visited.has (N)) { 
+	                                                 visited.add (N);   var self  = this,
+	                                                                        nodes = this.nodes (N) || [],
+	                                                                        stop  = fn.call (this, N, {     nodes: nodes,
+	                                                                                                         prev: prev,
+	                                                                                                      visited: visited })
+	                                                if (stop !== true) {
+	                                                    nodes.forEach (function ( NN) {
+	                                                                   self.each (NN, fn, N, visited) }) } }; return visited },
+	    DAG.prototype.edges = function (N) {
+	                                var edges = []
+	                                    this.each (N, function (N, context) {   context .nodes
+	                                                                                    .concat (N)
+	                                                                                    .reduce (function (A, B) {
+	                                                                                          edges.push ([A, B]); return B }) }); return edges },
+	    DAG.prototype.sortedSubgraphOf = function (node0) {
+	                                          return this.edges  (node0)
+	                                                     .topoSort ()
+	                                                     .remove (node0) }
+	
+	    DAG.sortedSubgraphOf = function (node0, cfg) { return new DAG (cfg).sortedSubgraphOf (node0) }
+	
+	})
+	
+	/*  ======================================================================== */
+	
+
+
+/***/ },
+/* 24 */
+/***/ function(module, exports) {
+
+	
+	/**
+	 * Topological sorting function
+	 *
+	 * @param {Array} edges
+	 * @returns {Array}
+	 */
+	
+	module.exports = exports = function(edges){
+	  return toposort(uniqueNodes(edges), edges)
+	}
+	
+	exports.array = toposort
+	
+	function toposort(nodes, edges) {
+	  var cursor = nodes.length
+	    , sorted = new Array(cursor)
+	    , visited = {}
+	    , i = cursor
+	
+	  while (i--) {
+	    if (!visited[i]) visit(nodes[i], i, [])
+	  }
+	
+	  return sorted
+	
+	  function visit(node, i, predecessors) {
+	    if(predecessors.indexOf(node) >= 0) {
+	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
+	    }
+	
+	    if (!~nodes.indexOf(node)) {
+	      throw new Error('Found unknown node. Make sure to provided all involved nodes. Unknown node: '+JSON.stringify(node))
+	    }
+	
+	    if (visited[i]) return;
+	    visited[i] = true
+	
+	    // outgoing edges
+	    var outgoing = edges.filter(function(edge){
+	      return edge[0] === node
+	    })
+	    if (i = outgoing.length) {
+	      var preds = predecessors.concat(node)
+	      do {
+	        var child = outgoing[--i][1]
+	        visit(child, nodes.indexOf(child), preds)
+	      } while (i)
+	    }
+	
+	    sorted[--cursor] = node
+	  }
+	}
+	
+	function uniqueNodes(arr){
+	  var res = []
+	  for (var i = 0, len = arr.length; i < len; i++) {
+	    var edge = arr[i]
+	    if (res.indexOf(edge[0]) < 0) res.push(edge[0])
+	    if (res.indexOf(edge[1]) < 0) res.push(edge[1])
+	  }
+	  return res
+	}
+
 
 /***/ },
 /* 25 */
@@ -8631,8 +8640,6 @@
 	
 	        $assert (parent.attached.length === 0) })},
 	
-	    'random $nonce generation': function () { var X = $prototype (); $assert (_.isString (X.$nonce)) },
-	
 	    '$macroTags for component-specific macros': function () {
 	
 	        var Trait =    $trait ({   $macroTags: {
@@ -8803,9 +8810,6 @@
 	                      def[name] = $builtin ($const (value))
 	               return def })
 	
-	$prototype.macro (function (def) {
-	                            def.$nonce = $static ($builtin ($property (String.randomHex (32)))); return def })
-	
 	Component = $prototype ({
 	
 	    $defaults:  $extendable ({}),
@@ -8841,9 +8845,9 @@
 	
 	                if (_.isNonempty ($untag (def.$depends)) &&
 	                    _.isEmpty    ($untag (def.$traits))) {
-	                                          def.$traits = DAG.squash (def, {
-	                                                                  nodes: function (def) { return $untag (def.$depends) },
-	                                                                    key: function (def) { return $untag (def.$nonce) } }) }; return def },
+	                                          def.$traits = DAG.sortedSubgraphOf (def, {
+	                                                                nodes: function (def) {
+	                                                                    return $untag (def.$depends) } }) }; return def },
 	
 	        mergeExtendables: function (base) { return function (def) {
 	
@@ -11536,9 +11540,9 @@
 	
 	    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
 	     */
-	    $overrideUnderscore ('matches', function (matches) {
-	        return function (a) {
-	            return _.isObject (a) ? matches (a) : function (b) { return a === b } } })
+	    ;(function () {
+	        var _matches = _.matches
+	        _.matches = function (a) { return _.isObject (a) ? _matches (a) : function (b) { return a === b } } }) ();
 	
 	    _.extend (_, _.assertions = {
 	
@@ -11677,11 +11681,9 @@
 	    /*  $assert helper
 	        ======================================================================== */
 	
-	    _.extend (_, {
-	
-	        allEqual: function (values) {
-	                            return _.reduce (values, function (prevEqual, x) {
-	                                return prevEqual && _.isEqual (values[0], x) }, true) } })
+	    _.allEqual = function (values) {
+	                    return _.reduce (values, function (prevEqual, x) {
+	                        return prevEqual && _.isEqual (values[0], x) }, true) }
 	
 	    /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
 	        thus configurable=true)
@@ -11693,9 +11695,6 @@
 	    for (var k in _.assertions) {
 	        $global['$' + k] = 1
 	    }
-	
-	    $assert
-	
 	})
 	
 	

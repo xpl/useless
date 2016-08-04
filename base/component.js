@@ -517,8 +517,6 @@ _.tests.component = {
 
         $assert (parent.attached.length === 0) })},
 
-    'random $nonce generation': function () { var X = $prototype (); $assert (_.isString (X.$nonce)) },
-
     '$macroTags for component-specific macros': function () {
 
         var Trait =    $trait ({   $macroTags: {
@@ -689,9 +687,6 @@ $prototype.macroTag ('extendable',
                       def[name] = $builtin ($const (value))
                return def })
 
-$prototype.macro (function (def) {
-                            def.$nonce = $static ($builtin ($property (String.randomHex (32)))); return def })
-
 Component = $prototype ({
 
     $defaults:  $extendable ({}),
@@ -727,9 +722,9 @@ Component = $prototype ({
 
                 if (_.isNonempty ($untag (def.$depends)) &&
                     _.isEmpty    ($untag (def.$traits))) {
-                                          def.$traits = DAG.squash (def, {
-                                                                  nodes: function (def) { return $untag (def.$depends) },
-                                                                    key: function (def) { return $untag (def.$nonce) } }) }; return def },
+                                          def.$traits = DAG.sortedSubgraphOf (def, {
+                                                                nodes: function (def) {
+                                                                    return $untag (def.$depends) } }) }; return def },
 
         mergeExtendables: function (base) { return function (def) {
 

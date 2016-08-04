@@ -95,13 +95,14 @@
                     return true;
                 };
             };
-            $overrideUnderscore('matches', function (matches) {
-                return function (a) {
-                    return _.isObject(a) ? matches(a) : function (b) {
+            (function () {
+                var _matches = _.matches;
+                _.matches = function (a) {
+                    return _.isObject(a) ? _matches(a) : function (b) {
                         return a === b;
                     };
                 };
-            });
+            }());
             _.extend(_, _.assertions = {
                 assert: assertImpl(true),
                 assertNot: assertImpl(false),
@@ -276,20 +277,17 @@
                     return e && e.assertion === true;
                 }
             });
-            _.extend(_, {
-                allEqual: function (values) {
-                    return _.reduce(values, function (prevEqual, x) {
-                        return prevEqual && _.isEqual(values[0], x);
-                    }, true);
-                }
-            });
+            _.allEqual = function (values) {
+                return _.reduce(values, function (prevEqual, x) {
+                    return prevEqual && _.isEqual(values[0], x);
+                }, true);
+            };
             _.each(_.keys(_.assertions), function (name) {
                 $global.define('$' + name, _[name], { configurable: true });
             });
             for (var k in _.assertions) {
                 $global['$' + k] = 1;
             }
-            $assert;
         }());
     },
     function (module, exports, __webpack_require__) {

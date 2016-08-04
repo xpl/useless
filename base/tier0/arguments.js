@@ -26,15 +26,6 @@ _.withTest (['stdlib', 'asArray'], function () {
     utilities, like property definitions)
     ======================================================================== */
 
-/*  NOTE:   "rest argument" is a term from upcoming ECMAScript 6 standard,
-             denoting the "..." thing in "f(a,b,...)"-type signatures.
-
-             Although it's best known elsewhere as 'variable argument list',
-             and the "rest argument" term is really confusing to most of
-             people, we should take course on the future language prospects
-             that will soon become widely recognized reality for everyone.
- */
-
 _.withTest ('argcount tracking', function () {
 
     var none        = function () {}
@@ -97,23 +88,28 @@ _.withTest ('argcount tracking', function () {
     will be de-mounted, thus sacrificing clarity in some places.
     ======================================================================== */
 
-$overrideUnderscore ('memoize',
-    function (memoize) {
-        return function (fn) {
-                    return _.withSameArgs (fn, memoize (fn)) } })
+;(function () {
 
-$overrideUnderscore ('partial',
-    function (partial) {
-        return $restArg (function (fn) {
+    var override = function (name, genImpl) {
+                        return _[name] = genImpl (_[name]) }
+
+    override ('memoize',
+        function (memoize) {
+            return function (fn) {
+                        return _.withSameArgs (fn, memoize (fn)) } })
+
+    override ('partial',
+        function (partial) {
+            return $restArg (function (fn) {
+                                    return _.withArgs (
+                                        Math.max (0, _.numArgs (fn) - (arguments.length - 1)), fn._ra,
+                                            partial.apply (this, arguments)) }) })
+
+    override ('bind',
+        function (bind) {
+            return $restArg (function (fn, this_) {
                                 return _.withArgs (
-                                    Math.max (0, _.numArgs (fn) - (arguments.length - 1)), fn._ra,
-                                        partial.apply (this, arguments)) }) })
+                                    Math.max (0, _.numArgs (fn) - (arguments.length - 2)), fn._ra,
+                                        bind.apply (this, arguments)) }) })
 
-
-$overrideUnderscore ('bind',
-    function (bind) {
-        return $restArg (function (fn, this_) {
-                            return _.withArgs (
-                                Math.max (0, _.numArgs (fn) - (arguments.length - 2)), fn._ra,
-                                    bind.apply (this, arguments)) }) })
-
+}) ();

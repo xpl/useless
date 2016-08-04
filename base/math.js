@@ -649,3 +649,97 @@ _.extend (Math, (function (decimalAdjust) {
     value = value.toString().split('e');
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }))
+
+/*  ======================================================================== */
+
+;(function () {
+
+    var toposort = require ('toposort')
+
+    Array.prototype.topoSort = function () { return toposort (this) }
+
+}) ();
+
+/*  ======================================================================== */
+
+_.withTest (['Array', 'topomerge'], function () {
+
+      $assert ( [['all','your',                'to','us'],
+                 [      'your',       'belong',     'us'],
+                 [             'base','belong','to'     ],
+                 [      'your','base'                   ]].topoMerge (),
+               /* -------------------------------------- */
+                 ['all','your','base','belong','to','us'])
+
+/*  ======================================================================== */
+
+}, function () {
+
+    Array.prototype.topoMerge = function () {                    var edges    = []
+        for (var i = 0, ni = this.length;         i < ni; i++) { var sequence = this[i]
+        for (var j = 0, nj = sequence.length - 1; j < nj; j++) {
+            edges.push ([
+                sequence[j    ],
+                sequence[j + 1]]) } }
+
+        return edges.topoSort ()
+    }
+})
+
+/*  ======================================================================== */
+
+_.withTest (['DAG', 'squash'], function () {
+
+    var modules = {
+        
+        '1':    { requires: [] },
+        '11':   { requires: ['1'] },
+        '2':    { requires: ['0'] },
+        '111':  { requires: ['12', '100'] },
+        '12':   { requires: ['0',  '11', '2'] },
+        '100':  { requires: ['10'] },
+        '0':    { requires: [] },
+        '10':   { requires: ['0', '2'] },
+        'root': { requires: ['2', '111'] } }
+
+    $assert (
+        DAG.sortedSubgraphOf ('root', { nodes: function (x) { return modules[x].requires } }),
+        ["0", "1", "11", "2", "12", "10", "100", "111"]  )
+
+/*  ======================================================================== */
+
+}, function () {
+
+    DAG = function (cfg) {
+                    this.cfg   = cfg       || {},
+                    this.nodes = cfg.nodes || _.noop },
+
+    DAG.prototype.each = function (N, fn, prev,  visited) {
+                                                 visited = visited || new Set ()
+
+                                            if (!visited.has (N)) { 
+                                                 visited.add (N);   var self  = this,
+                                                                        nodes = this.nodes (N) || [],
+                                                                        stop  = fn.call (this, N, {     nodes: nodes,
+                                                                                                         prev: prev,
+                                                                                                      visited: visited })
+                                                if (stop !== true) {
+                                                    nodes.forEach (function ( NN) {
+                                                                   self.each (NN, fn, N, visited) }) } }; return visited },
+    DAG.prototype.edges = function (N) {
+                                var edges = []
+                                    this.each (N, function (N, context) {   context .nodes
+                                                                                    .concat (N)
+                                                                                    .reduce (function (A, B) {
+                                                                                          edges.push ([A, B]); return B }) }); return edges },
+    DAG.prototype.sortedSubgraphOf = function (node0) {
+                                          return this.edges  (node0)
+                                                     .topoSort ()
+                                                     .remove (node0) }
+
+    DAG.sortedSubgraphOf = function (node0, cfg) { return new DAG (cfg).sortedSubgraphOf (node0) }
+
+})
+
+/*  ======================================================================== */
+

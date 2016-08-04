@@ -46,7 +46,6 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     require ('./base/tier0/keywords')    // metaprogramming utility
     require ('./base/tier0/typeMatch')   // advanced type system extensions
     require ('./base/tier0/stringify')   // configurable object printer
-    require ('./base/tier0/squash')      // dependency list / tree squashing algorithms
 
     require ('./base/CPS')
 

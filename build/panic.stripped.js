@@ -80,7 +80,6 @@
         __webpack_require__(21);
         __webpack_require__(22);
         __webpack_require__(23);
-        __webpack_require__(24);
         __webpack_require__(25);
         __webpack_require__(26);
         __webpack_require__(27);
@@ -1486,9 +1485,6 @@
                     };
                 })));
             }());
-            $overrideUnderscore = function (name, genImpl) {
-                return _[name] = genImpl(_[name]);
-            };
             if ($platform.NodeJS) {
                 $global.alert = function (args) {
                     var print = $global.log && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
@@ -1561,21 +1557,26 @@
                 }
             });
         }
-        $overrideUnderscore('memoize', function (memoize) {
-            return function (fn) {
-                return _.withSameArgs(fn, memoize(fn));
+        (function () {
+            var override = function (name, genImpl) {
+                return _[name] = genImpl(_[name]);
             };
-        });
-        $overrideUnderscore('partial', function (partial) {
-            return $restArg(function (fn) {
-                return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 1)), fn._ra, partial.apply(this, arguments));
+            override('memoize', function (memoize) {
+                return function (fn) {
+                    return _.withSameArgs(fn, memoize(fn));
+                };
             });
-        });
-        $overrideUnderscore('bind', function (bind) {
-            return $restArg(function (fn, this_) {
-                return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 2)), fn._ra, bind.apply(this, arguments));
+            override('partial', function (partial) {
+                return $restArg(function (fn) {
+                    return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 1)), fn._ra, partial.apply(this, arguments));
+                });
             });
-        });
+            override('bind', function (bind) {
+                return $restArg(function (fn, this_) {
+                    return _.withArgs(Math.max(0, _.numArgs(fn) - (arguments.length - 2)), fn._ra, bind.apply(this, arguments));
+                });
+            });
+        }());
     },
     function (module, exports) {
         _.debugEcho = function () {
@@ -3092,123 +3093,6 @@
         _.toFixed3 = function (x) {
             return _.toFixed(x, 3);
         };
-    },
-    function (module, exports) {
-        {
-            Array.prototype.squash = function (cfg) {
-                cfg = cfg || {};
-                var key = cfg.key || _.identity, sort = cfg.sort || undefined;
-                var head = {
-                    key: null,
-                    next: {},
-                    depth: {}
-                };
-                var nodes = {};
-                _.each(this, function (arr) {
-                    for (var i = 0, n = arr.length, prev = head, node = undefined; i < n; i++, prev = node) {
-                        var item = arr[i];
-                        var k = key(item);
-                        node = nodes[k] || (nodes[k] = {
-                            key: k,
-                            item: item,
-                            next: {},
-                            depth: {}
-                        });
-                        if (prev) {
-                            prev.next[k] = node;
-                            prev.depth[k] = 0;
-                        }
-                    }
-                });
-                var decyclize = function (visited, node, prev, depth) {
-                    depth = depth || 0;
-                    visited[node.key] = true;
-                    node.next = _.filter2(_.values(node.next), function (next) {
-                        if (next.key in visited) {
-                            return false;
-                        } else {
-                            next = decyclize(visited, next, node);
-                            depth = Math.max(depth, node.depth[next.key]);
-                            return next;
-                        }
-                    });
-                    if (prev) {
-                        prev.depth[node.key] = Math.max(prev.depth[node.key] || 0, depth + 1);
-                    }
-                    delete visited[node.key];
-                    return node;
-                };
-                var ordered = function (a, b) {
-                    return a === b || _.some(a.next, function (aa) {
-                        return ordered(aa, b);
-                    });
-                };
-                var flatten = function (node) {
-                    if (!node)
-                        return [];
-                    var next = (node.next || []).sort(function (a, b) {
-                        return (node.depth[a.key] || 0) < (node.depth[b.key] || 0);
-                    });
-                    if (false) {
-                        log.gg(node.key);
-                        log.pp(next.map(function (next) {
-                            return next.key + ' ' + node.depth[next.key];
-                        }));
-                    }
-                    return [node].concat(flatten(_.reduce(next, function (a, b) {
-                        if (a === b) {
-                            return a;
-                        } else if (ordered(b, a)) {
-                            b.next.push(a);
-                            return b;
-                        } else {
-                            a.next.push(b);
-                            return a;
-                        }
-                    })));
-                };
-                return _.rest(_.pluck(flatten(decyclize({}, head)), 'item'));
-            };
-        }
-        {
-            DAG = function (cfg) {
-                this.cfg = cfg || {}, this.nodes = cfg.nodes || _.noop;
-            }, DAG.prototype.each = function (N, fn, prev, visited) {
-                visited = visited || new Set();
-                if (!visited.has(N)) {
-                    visited.add(N);
-                    var self = this, nodes = this.nodes(N) || [], stop = fn.call(this, N, {
-                            nodes: nodes,
-                            prev: prev,
-                            visited: visited
-                        });
-                    if (stop !== true) {
-                        nodes.forEach(function (NN) {
-                            self.each(NN, fn, N, visited);
-                        });
-                    }
-                }
-                ;
-                return visited;
-            }, DAG.prototype.edges = function (N) {
-                var edges = [];
-                this.each(N, function (N, context) {
-                    context.nodes.concat(N).reduce(function (A, B) {
-                        edges.push([
-                            A,
-                            B
-                        ]);
-                        return B;
-                    });
-                });
-                return edges;
-            }, DAG.prototype.squash = function (node0) {
-                return this.edges(node0).squash(this.cfg).remove(node0);
-            };
-            DAG.squash = function (node0, cfg) {
-                return new DAG(cfg).squash(node0);
-            };
-        }
     },
     function (module, exports) {
         _.cps = function () {
@@ -4745,7 +4629,7 @@
             };
         }
     },
-    function (module, exports) {
+    function (module, exports, __webpack_require__) {
         Math.clamp = _.clamp = function (n, min, max) {
             return Math.max(min, Math.min(max, n));
         };
@@ -5479,6 +5363,113 @@
             value = value.toString().split('e');
             return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
         }));
+        (function () {
+            var toposort = __webpack_require__(24);
+            Array.prototype.topoSort = function () {
+                return toposort(this);
+            };
+        }());
+        {
+            Array.prototype.topoMerge = function () {
+                var edges = [];
+                for (var i = 0, ni = this.length; i < ni; i++) {
+                    var sequence = this[i];
+                    for (var j = 0, nj = sequence.length - 1; j < nj; j++) {
+                        edges.push([
+                            sequence[j],
+                            sequence[j + 1]
+                        ]);
+                    }
+                }
+                return edges.topoSort();
+            };
+        }
+        {
+            DAG = function (cfg) {
+                this.cfg = cfg || {}, this.nodes = cfg.nodes || _.noop;
+            }, DAG.prototype.each = function (N, fn, prev, visited) {
+                visited = visited || new Set();
+                if (!visited.has(N)) {
+                    visited.add(N);
+                    var self = this, nodes = this.nodes(N) || [], stop = fn.call(this, N, {
+                            nodes: nodes,
+                            prev: prev,
+                            visited: visited
+                        });
+                    if (stop !== true) {
+                        nodes.forEach(function (NN) {
+                            self.each(NN, fn, N, visited);
+                        });
+                    }
+                }
+                ;
+                return visited;
+            }, DAG.prototype.edges = function (N) {
+                var edges = [];
+                this.each(N, function (N, context) {
+                    context.nodes.concat(N).reduce(function (A, B) {
+                        edges.push([
+                            A,
+                            B
+                        ]);
+                        return B;
+                    });
+                });
+                return edges;
+            }, DAG.prototype.sortedSubgraphOf = function (node0) {
+                return this.edges(node0).topoSort().remove(node0);
+            };
+            DAG.sortedSubgraphOf = function (node0, cfg) {
+                return new DAG(cfg).sortedSubgraphOf(node0);
+            };
+        }
+    },
+    function (module, exports) {
+        module.exports = exports = function (edges) {
+            return toposort(uniqueNodes(edges), edges);
+        };
+        exports.array = toposort;
+        function toposort(nodes, edges) {
+            var cursor = nodes.length, sorted = new Array(cursor), visited = {}, i = cursor;
+            while (i--) {
+                if (!visited[i])
+                    visit(nodes[i], i, []);
+            }
+            return sorted;
+            function visit(node, i, predecessors) {
+                if (predecessors.indexOf(node) >= 0) {
+                    throw new Error('Cyclic dependency: ' + JSON.stringify(node));
+                }
+                if (!~nodes.indexOf(node)) {
+                    throw new Error('Found unknown node. Make sure to provided all involved nodes. Unknown node: ' + JSON.stringify(node));
+                }
+                if (visited[i])
+                    return;
+                visited[i] = true;
+                var outgoing = edges.filter(function (edge) {
+                    return edge[0] === node;
+                });
+                if (i = outgoing.length) {
+                    var preds = predecessors.concat(node);
+                    do {
+                        var child = outgoing[--i][1];
+                        visit(child, nodes.indexOf(child), preds);
+                    } while (i);
+                }
+                sorted[--cursor] = node;
+            }
+        }
+        function uniqueNodes(arr) {
+            var res = [];
+            for (var i = 0, len = arr.length; i < len; i++) {
+                var edge = arr[i];
+                if (res.indexOf(edge[0]) < 0)
+                    res.push(edge[0]);
+                if (res.indexOf(edge[1]) < 0)
+                    res.push(edge[1]);
+            }
+            return res;
+        }
     },
     function (module, exports) {
         ;
@@ -5654,10 +5645,6 @@
             def[name] = $builtin($const(value));
             return def;
         });
-        $prototype.macro(function (def) {
-            def.$nonce = $static($builtin($property(String.randomHex(32))));
-            return def;
-        });
         Component = $prototype({
             $defaults: $extendable({}),
             $requires: $extendable({}),
@@ -5668,12 +5655,9 @@
                 },
                 expandTraitsDependencies: function (def) {
                     if (_.isNonempty($untag(def.$depends)) && _.isEmpty($untag(def.$traits))) {
-                        def.$traits = DAG.squash(def, {
+                        def.$traits = DAG.sortedSubgraphOf(def, {
                             nodes: function (def) {
                                 return $untag(def.$depends);
-                            },
-                            key: function (def) {
-                                return $untag(def.$nonce);
                             }
                         });
                     }
@@ -7516,13 +7500,14 @@
                     return true;
                 };
             };
-            $overrideUnderscore('matches', function (matches) {
-                return function (a) {
-                    return _.isObject(a) ? matches(a) : function (b) {
+            (function () {
+                var _matches = _.matches;
+                _.matches = function (a) {
+                    return _.isObject(a) ? _matches(a) : function (b) {
                         return a === b;
                     };
                 };
-            });
+            }());
             _.extend(_, _.assertions = {
                 assert: assertImpl(true),
                 assertNot: assertImpl(false),
@@ -7697,20 +7682,17 @@
                     return e && e.assertion === true;
                 }
             });
-            _.extend(_, {
-                allEqual: function (values) {
-                    return _.reduce(values, function (prevEqual, x) {
-                        return prevEqual && _.isEqual(values[0], x);
-                    }, true);
-                }
-            });
+            _.allEqual = function (values) {
+                return _.reduce(values, function (prevEqual, x) {
+                    return prevEqual && _.isEqual(values[0], x);
+                }, true);
+            };
             _.each(_.keys(_.assertions), function (name) {
                 $global.define('$' + name, _[name], { configurable: true });
             });
             for (var k in _.assertions) {
                 $global['$' + k] = 1;
             }
-            $assert;
         }());
     },
     function (module, exports, __webpack_require__) {
