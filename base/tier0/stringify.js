@@ -198,7 +198,7 @@ _.deferTest (['type', 'stringify'], function () {
                                 return _.toFixed (x,     cfg.precision) }
 
                             else {
-                                return x + '' } } })
+                                return String (x) } } })
 
 /*  Safe version of toFixed
     ======================================================================== */

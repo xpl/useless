@@ -1,7 +1,8 @@
 /*  DEPRECATED. Don't add new utility here. Will be refactored:
 
     1.  Http utils will go to /base/http.js (cross-platform)
-    2.  Script compiler will go to github.com/xpl/ECMASquasher (separate project)
+    2.  Filesystem utils will go to base/fs.js
+    3.  Script compiler will go to separate project
  */
 
 var path        = require ('path'),
@@ -11,7 +12,6 @@ var path        = require ('path'),
     https       = require ('https'),
     exec        = require ('child_process').exec,
     Buffer      = require ('buffer').Buffer,
-    Iconv       = require ('iconv').Iconv,
     _           = require ('underscore'),
     jsStrEscape = require ('js-string-escape')
 
@@ -138,7 +138,7 @@ module.exports = {
             response.on ('end', function() {
                 switch (encoding) {
                     case 'cp1251':
-                        then (new Iconv ('windows-1251', 'utf-8//IGNORE').convert (new Buffer (data, 'binary')).toString ()); break;
+                        then (new (require ('iconv').Iconv) ('windows-1251', 'utf-8//IGNORE').convert (new Buffer (data, 'binary')).toString ()); break;
                     case 'binary':
                         then (new Buffer (data, 'binary')); break;
                     default:

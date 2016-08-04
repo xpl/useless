@@ -3074,7 +3074,7 @@
                 } else if (_.isDecimal(x) && cfg.precision > 0) {
                     return _.toFixed(x, cfg.precision);
                 } else {
-                    return x + '';
+                    return String(x);
                 }
             };
         }
@@ -6617,17 +6617,15 @@
                     this.resolve(fn);
                 }
             },
-            $private: {
-                _resolve: function (x) {
-                    this.state = 'resolved';
-                    this.value = x;
-                    this.after.forEach(c => c.resolve(x));
-                },
-                _reject: function (e) {
-                    this.state = 'rejected';
-                    this.value = e;
-                    this.after.forEach(c => c.reject(e));
-                }
+            _resolve: function (x) {
+                this.state = 'resolved';
+                this.value = x;
+                this.after.forEach(c => c.resolve(x));
+            },
+            _reject: function (e) {
+                this.state = 'rejected';
+                this.value = e;
+                this.after.forEach(c => c.reject(e));
             },
             resolve: function (x, transducer) {
                 try {
@@ -6640,6 +6638,7 @@
                 } catch (e) {
                     this._reject(e);
                 }
+                return this;
             },
             reject: function (e) {
                 return this.resolve(e, this.transducers.reject);

@@ -4426,7 +4426,7 @@
 	                                return _.toFixed (x,     cfg.precision) }
 	
 	                            else {
-	                                return x + '' } } })
+	                                return String (x) } } })
 	
 	/*  Safe version of toFixed
 	    ======================================================================== */
@@ -10012,45 +10012,161 @@
 	    '$channel(const)': () => {
 	
 	        $assert ($singleton ({ count: $channel (7) }).count.value, 7)
-	    }
+	    },
+	
+	    'resolve/reject returns this': () => {
+	
+	        $assert (Channel.resolve (123).resolve (555).resolve (666).value, 666) },
+	
+	    /*'proxy shit works': () => {
+	
+	        var Channel = class extends Function {
+	
+	            constructor (fn, transducers, before) {
+	
+	                super ()
+	
+	                this.after = []
+	                this.state = 'pending'
+	                this.value = undefined
+	                this.transducers = {
+	                        resolve: (transducers && transducers.resolve) || (x => x),
+	                        reject:  (transducers && transducers.reject)  || (e => { throw e }) }
+	
+	                if (fn instanceof Function) {
+	                    try {
+	                        fn.call (this,
+	                            this.resolve.bind (this),
+	                            this.reject.bind (this)) }
+	
+	                    catch (e) {
+	                        this.reject (e) } }
+	
+	                else if (fn !== undefined) {
+	                    this.resolve (fn) } }
+	
+	            _resolve (x) {
+	                        this.state = 'resolved'
+	                        this.value = x
+	                        this.after.forEach (c => c.resolve (x)) }
+	
+	            _reject (e) {
+	                        this.state = 'rejected'
+	                        this.value = e
+	                        this.after.forEach (c => c.reject (e)) }
+	
+	            resolve (x, transducer) {
+	
+	                        try {
+	                            x = (transducer || this.transducers.resolve) (x)
+	
+	                            if (x instanceof Promise) {
+	                                x.then (
+	                                    x => this._resolve (x),
+	                                    e => this._reject (e)) }
+	
+	                            else {
+	                                this._resolve (x) } }
+	                                
+	                        catch (e) {
+	                            this._reject (e) }
+	
+	                        return this }
+	
+	            reject (e) {
+	                        return this.resolve (e, this.transducers.reject) }
+	
+	            then (resolve, reject) {
+	
+	                    var c = new Channel (undefined, { resolve: resolve, reject: reject }, this)
+	
+	                    this.after.push (c)
+	
+	                    if (this.state === 'resolved') {
+	                        c.resolve (this.value) }
+	
+	                    else if (this.state === 'rejected') {
+	                        c.reject (this.value) }
+	
+	                    return c }
+	
+	            catch (fn) {
+	                    
+	                    return this.then (undefined, fn) } }
+	
+	        var props = {}
+	
+	        for (var key of Object.keys(Promise.prototype)) {
+	            if (!Channel.prototype.hasOwnProperty (key)) {
+	                props[key] = Object.getOwnPropertyDescriptor (Promise.prototype, key) } }
+	
+	        Object.defineProperties (Channel.prototype, props);
+	
+	        Channel = new Proxy (Channel, {
+	
+	            construct: function (OriginalChannel, args, newTarget) {
+	               
+	               var proxy = new Proxy (new OriginalChannel (args[0], args[1], args[2]), {
+	                    
+	                    apply: function (chan, thisArg, args) {
+	
+	                        if (args[0] instanceof Function) {
+	                            return chan.then.apply (chan, args) }
+	                        else {
+	                            chan.resolve.apply (chan, args)
+	                            return proxy } },
+	
+	                    getPrototypeOf: function () {
+	                        return Promise.prototype } })
+	
+	                return proxy } })
+	
+	        var foo = new Channel (7)
+	
+	        $assert (foo instanceof Promise) // is Promise
+	        $assert (foo (5).value, 5)       // is Function
+	
+	        $assert (foo.delay, Promise.prototype.delay)
+	
+	        return Promise.all ([foo, Promise.resolve (10)]).then (function (x) {
+	            $assert (x, [5, 10]) })
+	    },*/
 	}
 	
 	/*  ------------------------------------------------------------------------ */
 	
 	$global.Channel = $extends (Promise, {
 	
-	    constructor: function (fn, transducers, before) { 
+	    constructor: function (fn, transducers, before) {
 	
-	                    this.after = []
-	                    this.state = 'pending'
-	                    this.value = undefined
-	                    this.transducers = {
-	                            resolve: (transducers && transducers.resolve) || (x => x),
-	                            reject:  (transducers && transducers.reject)  || (e => { throw e }) }
+	        this.after = []
+	        this.state = 'pending'
+	        this.value = undefined
+	        this.transducers = {
+	                resolve: (transducers && transducers.resolve) || (x => x),
+	                reject:  (transducers && transducers.reject)  || (e => { throw e }) }
 	
-	                    if (fn instanceof Function) {
-	                        try {
-	                            fn.call (this,
-	                                this.$ (this.resolve),
-	                                this.$ (this.reject)) }
+	        if (fn instanceof Function) {
+	            try {
+	                fn.call (this,
+	                    this.$ (this.resolve),
+	                    this.$ (this.reject)) }
 	
-	                        catch (e) {
-	                            this.reject (e) } }
+	            catch (e) {
+	                this.reject (e) } }
 	
-	                    else if (fn !== undefined) {
-	                        this.resolve (fn) } },
+	        else if (fn !== undefined) {
+	            this.resolve (fn) } },
 	
-	    $private: {
+	    _resolve: function (x) {
+	                this.state = 'resolved'
+	                this.value = x
+	                this.after.forEach (c => c.resolve (x)) },
 	
-	        _resolve: function (x) {
-	                    this.state = 'resolved'
-	                    this.value = x
-	                    this.after.forEach (c => c.resolve (x)) },
-	
-	        _reject: function (e) {
-	                    this.state = 'rejected'
-	                    this.value = e
-	                    this.after.forEach (c => c.reject (e)) } },
+	    _reject: function (e) {
+	                this.state = 'rejected'
+	                this.value = e
+	                this.after.forEach (c => c.reject (e)) },
 	
 	    resolve: function (x, transducer) {
 	
@@ -10066,7 +10182,9 @@
 	                        this._resolve (x) } }
 	                        
 	                catch (e) {
-	                    this._reject (e) } },
+	                    this._reject (e) }
+	
+	                return this },
 	
 	    reject: function (e) {
 	                return this.resolve (e, this.transducers.reject) },
@@ -10086,7 +10204,8 @@
 	            return c },
 	
 	    catch: function (fn) {
-	                return this.then (undefined, fn) },
+	            
+	            return this.then (undefined, fn) }
 	})
 	
 	/*  ------------------------------------------------------------------------ */

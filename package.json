@@ -62,7 +62,6 @@
     "escodegen": ">= 0.0.0",
     "esprima": ">= 0.0.0",
     "forever-monitor": ">= 0.0.0",
-    "iconv": ">= 2.1.7",
     "jquery": "^3.1.0",
     "js-string-escape": ">= 1.0.0",
     "mongodb": ">= 2.0.41",
