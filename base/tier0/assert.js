@@ -403,11 +403,8 @@ if (_.hasStdlib) {
         ======================================================================== */
 
     _.each (_.keys (_.assertions), function (name) {
-        $global.define ('$' + name, _[name], { configurable: true }) })
-
-    for (var k in _.assertions) {
-        $global['$' + k] = 1
-    }
+                                        var define = ((_[name].length === 0) ? $global.property : $global.const)
+                                        define ('$' + name, _[name], { configurable: true }) })
 })
 
 

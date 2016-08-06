@@ -1,21 +1,8 @@
-/*  isTypeOf (bootstrap for OOP.js)
+/*  isTypeOf
     ======================================================================== */
 
-_.isInstanceofSyntaxAvailable = function () { var e = new Error ()
-    try       { return e instanceof Error }
-    catch (e) { return false } }
-
-_.isTypeOf_ES4 = function (constructor, what) {
-    while (what) {
-        if (what.constructor === constructor) {
-            return true }
-        what = what.constructor.$base }
-    return false }
-
-_.isTypeOf_ES5 = function (constructor, what) {
+_.isTypeOf = function (constructor, what) {
     return what instanceof constructor }
-
-_.isTypeOf = _.isInstanceofSyntaxAvailable () ? _.isTypeOf_ES5 : _.isTypeOf_ES4
 
 _.isPrototypeInstance = function (x) {
     return x && x.constructor && _.isPrototypeConstructor (x.constructor) }
@@ -158,28 +145,6 @@ _.withTest (['type', 'POD'], function () {
         _.isPOD = function (v) {
                     return !_.isNonPOD (v) } })
 
-/*  Numbers
-    ======================================================================== */
-
-_.withTest (['type', 'numbers'], function () {
-
-    $assert (_.every (_.map ([0,        1,     -7,    200003, 12344567788], _.arity1 (_.not (_.isDecimal)))))
-    $assert (_.every (_.map ([0.1, -0.001, 0.0001, -0.000001,    0.000001], _.arity1 (       _.isDecimal))))
-
-    $assert (_.isDecimal (0.003, 0.01), false) // custom tolerance
-
-}, function () {
-
-    if (typeof Number.EPSILON === 'undefined') {
-        Object.defineProperty (Number, 'EPSILON', { enumerable: true,
-                                                    get:  _.constant (2.2204460492503130808472633361816E-16) }) } // NodeJS lack this
-
-    
-    _.isDecimal = function (x, tolerance) {
-                    if (!_.isNumber (x) || _.isNaN (x)) {
-                        return false }
-                    else {
-                        return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } })
 
 /*  'empty' classifiers (fixes underscore shit)
     ======================================================================== */

@@ -9,8 +9,8 @@ you define assertions without need to actually plug in tests.js trait.
 
 /*  For marking custom assertions
  */
-_.defineTagKeyword ('assertion')
+Tags.define ('assertion')
 
 /*  For marking methods with test procedure
  */
-_.defineTagKeyword ('withTest')
+Tags.define ('withTest')

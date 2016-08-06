@@ -64,7 +64,6 @@
         __webpack_require__(9);
         __webpack_require__(10);
         __webpack_require__(11);
-        __webpack_require__(12);
         __webpack_require__(13);
         __webpack_require__(14);
         __webpack_require__(15);
@@ -1425,7 +1424,7 @@
             ;
             (function () {
                 var p = function () {
-                    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.platform && navigator.platform.indexOf) {
+                    if (typeof window !== 'undefined' && window.window === window && window.navigator !== undefined) {
                         var platform = navigator.platform, userAgent = navigator.userAgent, platformOrUserAgent = platform + '\n' + userAgent;
                         return _.extend({
                             engine: 'browser',
@@ -1443,22 +1442,34 @@
                             system: 'iOS',
                             device: 'iPhone'
                         } : {});
-                    } else if (typeof global !== 'undefined' && global._) {
+                    } else if (typeof global !== 'undefined' && global.global === global) {
                         return { engine: 'node' };
                     } else {
                         return {};
                     }
                 }();
                 var $global = p.engine === 'browser' ? window : p.engine === 'node' ? global : undefined;
-                $global.define = function (name, v, cfg) {
+                $global.property = function (name, v, cfg) {
                     if (name in $global) {
-                        throw new Error('cannot define global ' + name + ': already there');
+                        throw new Error('cannot redefine global ' + name);
+                    } else {
+                        var def = v instanceof Function ? {
+                            get: v,
+                            set: function () {
+                                throw new Error('cannot set global ' + name);
+                            }
+                        } : v;
+                        return Object.defineProperty($global, name, Object.assign({}, def, { enumerable: true }, cfg));
                     }
-                    var def = v && v.get instanceof Function && v.set instanceof Function && v || v instanceof Function && v.length === 0 && { get: v } || { value: v };
-                    return Object.defineProperty($global, name, _.extend(def, { enumerable: true }, cfg));
                 };
-                $global.define('$global', $global);
-                $global.define('$platform', Object.defineProperties({}, _.mapObject({
+                $global.const = function (name, v, cfg) {
+                    return $global.property(name, {
+                        value: v,
+                        writable: false
+                    }, cfg);
+                };
+                $global.const('$global', $global);
+                $global.const('$platform', Object.freeze({
                     engine: p.engine,
                     system: p.system,
                     device: p.device,
@@ -1473,26 +1484,8 @@
                     iPad: p.device === 'iPad',
                     iPhone: p.device === 'iPhone',
                     iOS: p.system === 'iOS'
-                }, function (v, k) {
-                    return {
-                        enumerable: true,
-                        value: v
-                    };
-                })));
+                }));
             }());
-            if ($platform.NodeJS) {
-                $global.alert = function (args) {
-                    var print = $global.log && _.partial(log.warn, log.config({ stackOffset: 2 })) || console.log;
-                    print.apply(print, ['ALERT:'].concat(_.asArray(arguments)));
-                };
-            }
-            $global.alert2 = function (args) {
-                alert(_.map(arguments, _.stringify).join(', '));
-                return arguments[0];
-            };
-            $global.log = function () {
-                console.log.apply(console, arguments);
-            };
         }.call(exports, function () {
             return this;
         }()));
@@ -1993,27 +1986,9 @@
         });
     },
     function (module, exports) {
-        _.isInstanceofSyntaxAvailable = function () {
-            var e = new Error();
-            try {
-                return e instanceof Error;
-            } catch (e) {
-                return false;
-            }
-        };
-        _.isTypeOf_ES4 = function (constructor, what) {
-            while (what) {
-                if (what.constructor === constructor) {
-                    return true;
-                }
-                what = what.constructor.$base;
-            }
-            return false;
-        };
-        _.isTypeOf_ES5 = function (constructor, what) {
+        _.isTypeOf = function (constructor, what) {
             return what instanceof constructor;
         };
-        _.isTypeOf = _.isInstanceofSyntaxAvailable() ? _.isTypeOf_ES5 : _.isTypeOf_ES4;
         _.isPrototypeInstance = function (x) {
             return x && x.constructor && _.isPrototypeConstructor(x.constructor);
         };
@@ -2066,21 +2041,6 @@
             };
             _.isPOD = function (v) {
                 return !_.isNonPOD(v);
-            };
-        }
-        {
-            if (typeof Number.EPSILON === 'undefined') {
-                Object.defineProperty(Number, 'EPSILON', {
-                    enumerable: true,
-                    get: _.constant(2.220446049250313e-16)
-                });
-            }
-            _.isDecimal = function (x, tolerance) {
-                if (!_.isNumber(x) || _.isNaN(x)) {
-                    return false;
-                } else {
-                    return Math.abs(Math.floor(x) - x) > (tolerance || Number.EPSILON);
-                }
             };
         }
         {
@@ -2663,42 +2623,45 @@
             });
         }
     },
-    function (module, exports) {
+    function (module, exports, __webpack_require__) {
+        'use strict';
+        const O = Object;
         _.hasTags = true;
         {
-            Tags = _.extend2(function (subject, keys) {
+            $global.Tags = function (subject, keys) {
                 if (subject !== undefined) {
                     this.subject = subject;
                 }
                 if (keys !== undefined) {
                     _.extend(this, keys);
                 }
-            }, {
-                $definition: {},
-                prototype: {
-                    add: function (name, additionalData) {
-                        return this[_.keyword(name)] = additionalData || true, this;
-                    },
-                    clone: function (newSubject) {
-                        return _.extend(new Tags(newSubject || this.subject), _.pick(this, _.keyIsKeyword));
-                    },
-                    modify: function (changesFn) {
-                        this.subject = changesFn(this.subject);
-                        if (_.isTypeOf(Tags, this.subject)) {
-                            return _.extend(this.subject, _.pick(this, _.keyIsKeyword));
-                        } else {
-                            return this;
-                        }
-                    },
-                    extend: function (other) {
-                        return _.isTypeOf(Tags, other) ? _.extend(this, _.pick(other, _.keyIsKeyword)) : this;
+            };
+            Tags.$definition = {};
+            O.assign(Tags.prototype, {
+                add: function (name, additionalData) {
+                    return this['$' + name] = additionalData || true, this;
+                },
+                clone: function (newSubject) {
+                    return O.assign(new Tags(newSubject || this.subject), Tags.get(this));
+                },
+                modify: function (changesFn) {
+                    this.subject = changesFn(this.subject);
+                    if (this.subject instanceof Tags) {
+                        return O.assign(this.subject, Tags.get(this));
+                    } else {
+                        return this;
                     }
                 },
+                extend: function (other) {
+                    return other instanceof Tags ? O.assign(this, Tags.get(other)) : this;
+                }
+            });
+            O.assign(Tags, {
                 omit: $restArg(function (what, ___) {
-                    if (_.isTypeOf(Tags, what)) {
+                    if (what instanceof Tags) {
                         var keysToOmit = _.index(_.rest(arguments));
                         var keysLeft = _.pick(what, function (v, k) {
-                            return _.isKeyword(k) && !(k in keysToOmit);
+                            return k[0] === '$' && !(k in keysToOmit);
                         });
                         return !_.isEmptyObject(keysLeft) ? new Tags(what.subject, keysLeft) : what.subject;
                     } else {
@@ -2706,16 +2669,18 @@
                     }
                 }),
                 clone: function (what, newSubject) {
-                    return _.isTypeOf(Tags, what) ? what.clone(newSubject) : newSubject || what;
+                    return what instanceof Tags ? what.clone(newSubject) : newSubject || what;
                 },
                 extend: function (what, other) {
-                    return _.isTypeOf(Tags, what) ? what.clone().extend(other) : _.isTypeOf(Tags, other) ? Tags.wrap(what).extend(other) : what;
+                    return what instanceof Tags ? what.clone().extend(other) : other instanceof Tags ? Tags.wrap(what).extend(other) : what;
                 },
                 get: function (def) {
-                    return _.isTypeOf(Tags, def) ? _.pick(def, _.keyIsKeyword) : {};
+                    return def instanceof Tags ? _.pick(def, function (v, k) {
+                        return k[0] === '$';
+                    }) : {};
                 },
                 each: function (def, accept) {
-                    if (_.isTypeOf(Tags, def)) {
+                    if (def instanceof Tags) {
                         _.each(def, function (v, k) {
                             if (k[0] === '$') {
                                 accept(k.slice(1));
@@ -2724,107 +2689,105 @@
                     }
                 },
                 hasSubject: function (def) {
-                    return _.isTypeOf(Tags, def) && 'subject' in def;
+                    return def instanceof Tags && 'subject' in def;
                 },
                 matches: function (name) {
                     return function (obj) {
-                        return obj && obj[_.keyword(name)] !== undefined;
+                        return obj && obj['$' + name] !== undefined;
                     };
                 },
                 unwrapAll: function (definition) {
                     return _.map2(definition, Tags.unwrap);
                 },
                 unwrap: function (what) {
-                    return _.isTypeOf(Tags, what) ? what.subject : what;
+                    return what instanceof Tags ? what.subject : what;
                 },
                 wrap: function (what) {
-                    return _.isTypeOf(Tags, what) ? what : arguments.length === 0 ? new Tags() : new Tags(what);
+                    return what instanceof Tags ? what : arguments.length === 0 ? new Tags() : new Tags(what);
                 },
                 modify: function (what, changesFn) {
-                    return _.isTypeOf(Tags, what) ? what.clone().modify(changesFn) : changesFn(what);
+                    return what instanceof Tags ? what.clone().modify(changesFn) : changesFn(what);
                 },
                 map: function (obj, op) {
                     return Tags.modify(obj, function (obj) {
                         return _.map2(obj, function (t, k) {
                             return Tags.modify(t, function (v) {
-                                return op(v, k, _.isTypeOf(Tags, t) ? t : undefined);
+                                return op(v, k, t instanceof Tags ? t : undefined);
                             });
                         });
                     });
                 },
                 add: function (name, toWhat, additionalData) {
                     return Tags.wrap.apply(null, _.rest(arguments, 1)).add(name, additionalData);
-                }
-            });
-            _.keyword = function (name) {
-                return '$' + name;
-            };
-            _.isKeyword = function (key) {
-                return key[0] == '$';
-            };
-            _.keywordName = function (x) {
-                return _.isKeyword(x) ? x.slice(1) : x;
-            };
-            _.keywords = function (obj) {
-                return _.pick(obj, _.keyIsKeyword);
-            };
-            _.tagKeywords = {};
-            _.isTagKeyword = function (k) {
-                return _.keywordName(k) in _.tagKeywords;
-            };
-            _.keyIsKeyword = function (value, key) {
-                return _.isKeyword(key[0]);
-            };
-            _.defineKeyword = function (name, value) {
-                _.defineProperty($global, _.keyword(name), value);
-            };
-            _.defineKeyword('untag', Tags.unwrap);
-            _.defineTagKeyword = function (k, fn) {
-                fn = _.isFunction(fn) && fn || _.identity;
-                if (!(_.keyword(k) in $global)) {
-                    _.defineKeyword(k, Tags.add('constant', _.extendWith({ matches: Tags.matches(k) }, fn(function (a, b) {
+                },
+                all: new Set(),
+                isDefined: function (k) {
+                    return Tags.all.has(k);
+                },
+                define: function (k, fn) {
+                    Tags.all.add(k);
+                    fn = _.isFunction(fn) && fn || _.identity;
+                    var $k = '$' + k;
+                    $global[$k] = fn(function (a, b) {
                         if (arguments.length < 2) {
                             return Tags.add(k, a);
                         } else {
                             return Tags.add(k, b, a);
                         }
-                    }))));
-                    _.tagKeywords[k] = true;
+                    });
+                    return O.assign($global[$k], {
+                        matches: Tags.matches(k),
+                        is: function (x) {
+                            return x instanceof Tags && $k in x || false;
+                        },
+                        isNot: function (x) {
+                            return !(x instanceof Tags && $k in x) || false;
+                        },
+                        unwrap: function (x) {
+                            return $atom.matches(x) === true ? Tags.unwrap(x) : x;
+                        }
+                    });
                 }
-                var kk = _.keyword(k);
-                return _.extend($global[kk], {
-                    is: function (x) {
-                        return _.isTypeOf(Tags, x) && kk in x || false;
-                    },
-                    isNot: function (x) {
-                        return !(_.isTypeOf(Tags, x) && kk in x) || false;
-                    },
-                    unwrap: function (x) {
-                        return $atom.matches(x) === true ? Tags.unwrap(x) : x;
-                    }
-                });
-            };
-            _([
+            });
+            $global.$untag = Tags.unwrap;
+            [
                 'constant',
                 'get',
                 'once',
-                'async'
-            ]).each(_.defineTagKeyword);
-            _.defineModifierKeyword = function (name, fn) {
-                _.defineKeyword(name, function (val) {
-                    return Tags.modify(val, fn);
-                });
-            };
-            _.deleteKeyword = function (name) {
-                delete $global[_.keyword(name)];
+                'async',
+                'atom'
+            ].forEach(Tags.define);
+        }
+        if (typeof Symbol !== 'undefined') {
+            var bullet = __webpack_require__(12);
+            Tags.prototype[Symbol.for('String.ify')] = function (ctx) {
+                if (ctx.json) {
+                    return ctx.goDeeper($untag(this));
+                }
+                var tags = Tags.get(this);
+                var left = _.reduce(tags, function (memo, value, tag) {
+                    return _.isBoolean(value) ? tag + ' (' + memo : tag + ' (' + ctx.goDeeper(value, { pretty: false }) + ', ' + memo;
+                }, '');
+                return bullet(left, ctx.goDeeper($untag(this))) + ')'.repeats(_.keys(tags).length);
             };
         }
     },
     function (module, exports) {
+        module.exports = function (bullet, arg) {
+            var isArray = Array.isArray(arg);
+            var lines = isArray ? arg : arg.split('\n');
+            var indent = bullet.replace(/[^\s]/g, ' ');
+            lines = lines.map(function (line, i) {
+                return i === 0 ? bullet + line : indent + line;
+            });
+            return isArray ? lines : lines.join('\n');
+        };
+    },
+    function (module, exports) {
         _.hasTypeMatch = true;
-        _.defineTagKeyword('required');
-        _.defineTagKeyword('atom');
-        _.defineKeyword('any', _.identity);
+        Tags.define('required');
+        Tags.define('atom');
+        $global.const('$any', _.identity);
         (function () {
             _.isMeta = function (x) {
                 return x === $any || $atom.is(x) === true || $required.is(x) === true;
@@ -2914,160 +2877,6 @@
                 });
             };
         }());
-    },
-    function (module, exports) {
-        {
-            _.alignStringsRight = function (strings) {
-                var lengths = strings.map(_.count);
-                var max = _.max(lengths);
-                return [
-                    lengths,
-                    strings
-                ].zip(function (ln, str) {
-                    return ' '.repeats(max - ln) + str;
-                });
-            };
-            _.bullet = function (bullet, str) {
-                var indent = ' '.repeats(bullet.length);
-                return _.joinWith('\n', _.splitWith('\n', str).map(function (line, i) {
-                    return i === 0 ? bullet + line : indent + line;
-                }));
-            };
-            _.stringifyOneLine = function (x, cfg) {
-                return _.stringify(x, _.extend(cfg || {}, { pretty: false }));
-            };
-            _.pretty = function (x, cfg) {
-                return _.stringify(x, _.extend(cfg || {}, { pretty: true }));
-            };
-            _.stringify = function (x, cfg) {
-                cfg = cfg || {};
-                var measured = _.stringifyImpl(x, [], [], 0, cfg);
-                return measured.length < 80 || 'pretty' in cfg ? measured : _.pretty(x, cfg);
-            };
-            _.stringifyPrototype = function (x) {
-                if ($platform.NodeJS && x.$meta) {
-                    var name = '';
-                    x.$meta(function (values) {
-                        name = values.name === 'exports' ? values.file : values.name;
-                    });
-                    return name && name + ' ()';
-                } else
-                    return '<prototype>';
-            };
-            _.builtInTypes = {
-                'Event': { target: $any },
-                'MutationEvent': {
-                    target: $any,
-                    attrName: $any,
-                    prevValue: $any
-                },
-                'Range': {
-                    startContainer: $any,
-                    startOffset: $any,
-                    endContainer: $any,
-                    endOffset: $any
-                },
-                'ClientRect': {
-                    left: $any,
-                    top: $any,
-                    right: $any,
-                    bottom: $any,
-                    width: $any,
-                    height: $any
-                }
-            };
-            _.stringifyImpl = function (x, parents, siblings, depth, cfg) {
-                var customFormat = cfg.formatter && cfg.formatter(x);
-                if (customFormat) {
-                    return customFormat;
-                }
-                if (typeof jQuery !== 'undefined' && _.isTypeOf(jQuery, x)) {
-                    x = _.asArray(x);
-                }
-                if (x === $global) {
-                    return '$global';
-                } else if (parents.indexOf(x) >= 0) {
-                    return cfg.pure ? undefined : '<cyclic>';
-                } else if (siblings.indexOf(x) >= 0) {
-                    return cfg.pure ? undefined : '<ref:' + siblings.indexOf(x) + '>';
-                } else if (x === undefined) {
-                    return 'undefined';
-                } else if (x === null) {
-                    return 'null';
-                } else if (_.isFunction(x)) {
-                    return cfg.pure ? x.toString() : _.isPrototypeConstructor(x) && _.stringifyPrototype(x) || '<function>';
-                } else if (typeof x === 'string') {
-                    return _.quoteWith('"', x.limitedTo(cfg.pure ? Number.MAX_SAFE_INTEGER : 60));
-                } else if (_.isTypeOf(Tags, x)) {
-                    return _.reduce(Tags.get(x), function (memo, value, tag) {
-                        return _.isBoolean(value) ? tag + ' ' + memo.quote('()') : tag + ' (' + _.stringifyImpl(value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')';
-                    }, _.stringifyImpl($untag(x), parents, siblings, depth + 1, cfg));
-                } else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance(x) && $prototype.defines(x.constructor, 'toString')) {
-                    return x.toString();
-                } else if (_.isObject(x) && !(typeof $atom !== 'undefined' && $atom.is(x))) {
-                    var builtInValue = _.find2(_.builtInTypes, function (schema, name) {
-                        return $global[name] && x instanceof $global[name] && name + ' ' + _.stringifyOneLine(_.omitTypeMismatches(schema, x)) || false;
-                    });
-                    if (builtInValue) {
-                        return builtInValue;
-                    } else {
-                        if (x instanceof Set) {
-                            x = x.asArray;
-                        }
-                        var isArray = _.isArray(x);
-                        var pretty = cfg.pretty || false;
-                        if ($platform.Browser) {
-                            if (_.isTypeOf(Element, x)) {
-                                return (x.tagName.lowercase + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')).quote('<>');
-                            } else if (_.isTypeOf(Text, x)) {
-                                return '@' + x.wholeText.limitedTo(20);
-                            }
-                        }
-                        if (x.toJSON) {
-                            return _.quoteWith('"', x.toJSON());
-                        }
-                        if (!cfg.pure && (depth > (cfg.maxDepth || 5) || isArray && x.length > (cfg.maxArrayLength || 60))) {
-                            return isArray ? '<array[' + x.length + ']>' : '<object>';
-                        }
-                        var parentsPlusX = parents.concat([x]);
-                        siblings.push(x);
-                        var values = _.pairs(x);
-                        var oneLine = !pretty || values.length < 2;
-                        var impl = _.stringifyImpl.tails2(parentsPlusX, siblings, depth + 1, cfg);
-                        var quoteKeys = cfg.json ? '""' : '';
-                        if (pretty) {
-                            values = _.values(x);
-                            var printedKeys = _.alignStringsRight(_.keys(x).map(_.quotesWith(quoteKeys).then(_.appends(': '))));
-                            var printedValues = values.map(impl);
-                            var leftPaddings = printedValues.map(function (x, i) {
-                                return x[0] === '[' || x[0] === '{' ? 3 : _.isString(values[i]) ? 1 : 0;
-                            });
-                            var maxLeftPadding = _.max(leftPaddings);
-                            var indentedValues = [
-                                leftPaddings,
-                                printedValues
-                            ].zip(function (padding, x) {
-                                return ' '.repeats(maxLeftPadding - padding) + x;
-                            });
-                            var internals = isArray ? indentedValues : [
-                                printedKeys,
-                                indentedValues
-                            ].zip(_.bullet);
-                            var printed = _.bullet(isArray ? '[ ' : '{ ', internals.join(',\n'));
-                            var lines = printed.split('\n');
-                            return printed + (' '.repeats(_.max(lines.map(_.count)) - _.count(lines.last)) + (isArray ? ' ]' : ' }'));
-                        }
-                        return _.quoteWith(isArray ? '[]' : '{  }', _.joinWith(', ', _.map(values, function (kv) {
-                            return (isArray ? '' : kv[0].quote(quoteKeys) + ': ') + impl(kv[1]);
-                        })));
-                    }
-                } else if (_.isDecimal(x) && cfg.precision > 0) {
-                    return x.toFixed(cfg.precision);
-                } else {
-                    return String(x);
-                }
-            };
-        }
     },
     function (module, exports) {
         _.cps = function () {
@@ -3290,12 +3099,13 @@
         }
     },
     function (module, exports) {
-        _([
+        ;
+        [
             'method',
             'property',
             'flipped',
             'forceOverride'
-        ]).each(_.defineTagKeyword);
+        ].forEach(Tags.define);
         $extensionMethods = function (Type, methods) {
             _.each(methods, function (tags, name) {
                 var fn = Tags.unwrap(tags);
@@ -4230,7 +4040,7 @@
                 'builtin',
                 'hidden',
                 'testArguments'
-            ]).each(_.defineTagKeyword);
+            ]).each(Tags.define);
             $prototype = function (arg1, arg2) {
                 return $prototype.impl.compile.apply($prototype.impl, arguments.length > 1 ? _.asArray(arguments).reverse() : arguments);
             };
@@ -4252,13 +4062,13 @@
                     }
                 },
                 macroTag: function (name, fn) {
-                    _.defineTagKeyword(name);
-                    $prototype.impl.tagTriggeredMacros[_.keyword(name)] = fn;
+                    Tags.define(name);
+                    $prototype.impl.tagTriggeredMacros['$' + name] = fn;
                 },
                 each: function (visitor) {
                     var namespace = $global;
                     for (var k in namespace) {
-                        if (!_.isKeyword(k)) {
+                        if (!(k[0] === '$')) {
                             var value = namespace[k];
                             if ($prototype.isConstructor(value)) {
                                 visitor(value, k);
@@ -4299,17 +4109,17 @@
                         return _.sequence(this.flatten, this.contributeTraits(), this.expandAliases, this.evalMemberTriggeredMacros(), this.defineStaticMembers, this.defineInstanceMembers).call(this, def || {}).constructor;
                     },
                     flatten: function (def) {
-                        var tagKeywordGroups = _.pick(def, this.isTagKeywordGroup);
-                        var mergedKeywordGroups = _.object(_.flatten(_.map(tagKeywordGroups, function (membersDef, keyword) {
+                        var tagGroups = _.pick(def, this.isTagGroup);
+                        var mergedTagGroups = _.object(_.flatten(_.map(tagGroups, function (membersDef, tag) {
                             return _.map(this.flatten(membersDef), function (member, memberName) {
                                 return [
                                     memberName,
-                                    $global[keyword](member)
+                                    $global[tag](member)
                                 ];
                             });
                         }, this), true));
-                        var memberDefinitions = _.omit(def, this.isTagKeywordGroup);
-                        return _.extend(memberDefinitions, mergedKeywordGroups);
+                        var memberDefinitions = _.omit(def, this.isTagGroup);
+                        return _.extend(memberDefinitions, mergedTagGroups);
                     },
                     evalAlwaysTriggeredMacros: function (base) {
                         return function (def) {
@@ -4351,7 +4161,7 @@
                         _.each(def, function (memberDef, memberName) {
                             _.each(macroTags, function (macroFn, tagName) {
                                 memberDef = def[memberName];
-                                if (_.isObject(memberDef) && _.keyword(tagName) in memberDef) {
+                                if (_.isObject(memberDef) && '$' + tagName in memberDef) {
                                     def[memberName] = macroFn.call(def, def, memberDef, memberName) || memberDef;
                                 }
                             }, this);
@@ -4534,9 +4344,9 @@
                         def.$membersByTag = $static($builtin($property(membersByTag)));
                         return def;
                     },
-                    isTagKeywordGroup: function (value_, key) {
+                    isTagGroup: function (value_, key) {
                         var value = $untag(value_);
-                        return _.isKeyword(key) && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
+                        return key[0] === '$' && _.isFunction($global[key]) && typeof value === 'object' && !_.isArray(value);
                     },
                     modifyMember: function (member, newValue) {
                         return $property.is(member) && Tags.modify(member, function (value) {
@@ -4565,7 +4375,7 @@
         }
         $prototype.macro('$macroTags', function (def, value, name) {
             _.each($untag(value), function (v, k) {
-                _.defineTagKeyword(k);
+                Tags.define(k);
             });
         });
         _.$ = function (this_, fn) {
@@ -4579,19 +4389,19 @@
             return result;
         };
         {
-            _.defineKeyword('const', function (x) {
+            $global.$const = function (x) {
                 return $static($property(x));
-            });
+            };
         }
         {
-            _.defineTagKeyword('callableAsFreeFunction');
+            Tags.define('callableAsFreeFunction');
             $prototype.macroTag('callableAsFreeFunction', function (def, value, name) {
                 def.constructor[name] = $untag(value).asFreeFunction;
                 return def;
             });
         }
         {
-            _.defineTagKeyword('callableAsMethod');
+            Tags.define('callableAsMethod');
             $prototype.macroTag('callableAsMethod', function (def, value, name) {
                 def[name] = Tags.modify(value, _.asMethod);
                 def.constructor[name] = $untag(value);
@@ -4798,9 +4608,6 @@
                     return memo.add(v || Vec2.zero);
                 }, Vec2.zero);
             }),
-            toString: function () {
-                return '{' + this.x + ',' + this.y + '}';
-            },
             projectOnCircle: function (center, r) {
                 return center.add(this.sub(center).normal.scale(r));
             },
@@ -4823,6 +4630,11 @@
                 return this.sub(origin).dot(dir) / l2;
             }
         });
+        if (typeof Symbol !== 'undefined') {
+            Vec2.prototype[Symbol.for('String.ify')] = function () {
+                return '{' + this.x + ',' + this.y + '}';
+            };
+        }
         Bezier = {
             cubic: function (t, p0, p1, p2, p3) {
                 var cube = t * t * t;
@@ -5073,11 +4885,13 @@
             }),
             intersects: function (other) {
                 return !(this.right < other.left || this.left > other.right || this.bottom < other.top || this.top > other.bottom);
-            },
-            toString: function () {
-                return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
             }
         });
+        if (typeof Symbol !== 'undefined') {
+            Vec2.prototype[Symbol.for('String.ify')] = function () {
+                return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
+            };
+        }
         Transform = $prototype({
             $static: {
                 identity: $property(function () {
@@ -5553,7 +5367,7 @@
                 });
             });
         };
-        _.defineKeyword('scope', function (fn) {
+        $global.$scope = function (fn) {
             var releaseStack = undefined;
             return _.argumentPrependingWrapper(Tags.unwrap(fn), function (fn) {
                 var released = { when: undefined };
@@ -5571,16 +5385,16 @@
                     }
                 });
             });
-        });
+        };
         if ($platform.NodeJS) {
             module.exports = _;
         }
     },
     function (module, exports) {
         ;
-        _.defineKeyword('component', function (definition) {
+        $global.$component = function (definition) {
             return $extends(Component, definition);
-        });
+        };
         _([
             'extendable',
             'trigger',
@@ -5599,19 +5413,19 @@
             'raw',
             'binds',
             'observes'
-        ]).each(_.defineTagKeyword);
+        ]).each(Tags.define);
         (function () {
             var impl = function (impl) {
                 return function (x, fn) {
                     return _.isFunction(x) && arguments.length === 1 ? impl(x, fn) : impl(fn, x);
                 };
             };
-            _.defineTagKeyword('observableProperty', impl);
-            _.defineTagKeyword('observable', impl);
+            Tags.define('observableProperty', impl);
+            Tags.define('observable', impl);
         }());
-        _.defineKeyword('observableRef', function (x) {
+        $global.$observableRef = function (x) {
             return $observableProperty($reference(x));
-        });
+        };
         $prototype.macro('$depends', function (def, value, name) {
             def.$depends = $builtin($const(_.coerceToArray(value)));
             return def;
@@ -6152,10 +5966,10 @@
                 return r && r.$$ ? r.$$ : r;
             },
             initDSL: function () {
-                _.defineKeyword('r', function () {
+                $global.property('$r', function () {
                     return $$r([]);
                 });
-                _.defineKeyword('$r', function (cursor) {
+                $global.const('$$r', function (cursor) {
                     var shift = function (x) {
                         cursor.push(x);
                         return cursor.forward;
@@ -6239,7 +6053,7 @@
                     bind(target, methodName, boundMethod);
                 }
             };
-            _.defineKeyword('aspect', function (ofWhat, cfg) {
+            $global.$aspect = function (ofWhat, cfg) {
                 var aspectDef = Tags.unwrap(_.sequence($prototype.impl.extendWithTags, $prototype.impl.flatten, $prototype.impl.generateArgumentContractsIfNeeded, $prototype.impl.contributeTraits({}), $prototype.impl.expandAliases).call($prototype.impl, cfg));
                 var motherDef = ofWhat.constructor && ofWhat.constructor.$definition;
                 if (motherDef) {
@@ -6260,7 +6074,7 @@
                     ofWhat.aspectAdded(aspectDef);
                 }
                 return aspectDef;
-            });
+            };
         }());
     },
     function (module, exports) {

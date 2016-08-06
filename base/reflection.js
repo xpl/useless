@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Self-awareness module
     ======================================================================== */
 
@@ -6,6 +8,7 @@ _.hasReflection = true
 _.tests.reflection = {
 
     'file paths': function () {
+        $assert (typeof $uselessPath, 'string')
         $assert ($sourcePath .length > 0)
         $assert ($uselessPath.length > 0) },
 
@@ -82,47 +85,25 @@ _.tests.reflection = {
             /*  Safe location querying
              */
             stack.safeLocation (7777).sourceReady (function (line) {
-                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) },
-
-    'Prototype.$meta': function (done) {
-        var Dummy = $prototype ()
-
-        Dummy.$meta (function (meta) {
-            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
-            done () }) },
-
-    'Trait.$meta': function (done) {
-        var Dummy = $trait ()
-        Dummy.$meta (function (meta) {
-            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
-            done () }) }
+                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) }
 }
 
-
-/*  Custom syntax (defined in a way that avoids cross-dependency loops)
- */
-_.defineKeyword ('callStack',   function () {
-    return CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0) })
-
-_.defineKeyword ('currentFile', function () {
-    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file })
-
-_.defineKeyword ('uselessPath', _.memoize (function () {
-    return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
-
-_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
-    return local ? (local + '/') : $uselessPath }))
-
+$global.property ('$callStack',   () => CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0))
+$global.property ('$currentFile', () => (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file)
+$global.property ('$uselessPath', _.memoize (function () { return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }))
+$global.property ('$sourcePath',  _.memoize (function () {
+                                                    var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+                                                    return local ? (local + '/') : $uselessPath }))
 
 /*  Port __filename for browsers
  */
 if ($platform.Browser) {
-    _.defineProperty (window, '__filename', function () { return $currentFile }) }
+    $global.property ('__filename', () => $currentFile) }
 
 
 /*  Source code access (cross-platform)
  */
-SourceFiles = $singleton (Component, {
+$global.SourceFiles = $singleton (Component, {
 
     /*apiConfig: {
         port:      1338,
@@ -176,7 +157,7 @@ SourceFiles = $singleton (Component, {
 
 /*  Callstack API
  */
-CallStack = $extends (Array, {
+$global.CallStack = $extends (Array, {
 
     current: $static ($property (function () {
         return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
@@ -328,6 +309,30 @@ CallStack = $extends (Array, {
 
 /*  Reflection for $prototypes
  */
+
+_.tests.prototypeMeta = {
+
+    'Prototype.$meta': function (done) {
+        var Dummy = $prototype ()
+
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
+            done () }) },
+
+    'Trait.$meta': function (done) {
+        var Dummy = $trait ()
+        Dummy.$meta (function (meta) {
+            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
+            done () }) },
+
+    'String.ify': function () {
+
+        var Proto = $prototype ({})
+
+        $assert (String.ify (Proto), $platform.NodeJS ? 'Proto ()' : '<prototype>')
+    }
+}
+
 $prototype.impl.findMeta = function (stack) {
 
     return function (then) {
@@ -346,6 +351,18 @@ $prototype.impl.findMeta = function (stack) {
                         then (found || {}) }) } }
 
 $prototype.macro (function (def, base) {
+
+    if (typeof Symbol !== 'undefined') {
+
+        def.constructor[Symbol.for ('String.ify')] = function (ctx) {
+
+            if ($platform.NodeJS) {
+                var name = ''
+                this.$meta (function (values) { name = ((values.name === 'exports') ? values.file : values.name) })
+                return name && (name + ' ()') }
+
+            else {
+                return '<prototype>' } } }
 
     if (!def.$meta) {
 

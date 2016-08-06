@@ -3,11 +3,10 @@ _.hasTypeMatch = true
 /*  Type matching for arbitrary complex structures (TODO: test)
     ======================================================================== */
 
-_.defineTagKeyword ('required')
+Tags.define ('required')
+Tags.define ('atom')
 
-_.defineTagKeyword ('atom')
-
-_.defineKeyword ('any', _.identity)
+$global.const ('$any', _.identity)
 
 _.deferTest (['type', 'type matching'], function () {
 

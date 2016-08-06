@@ -1,9 +1,8 @@
 /*  Extensions methods
     ======================================================================== */
 
-_(['method', 'property', 'flipped', 'forceOverride']) // keywords recognized by $extensionMethods
-    .each (_.defineTagKeyword)
-
+;['method', 'property', 'flipped', 'forceOverride'].forEach (Tags.define)
+    
 $extensionMethods = function (Type, methods) {
 
     _.each (methods, function (tags, name) { var fn = Tags.unwrap (tags)

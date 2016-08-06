@@ -360,7 +360,7 @@ _.tests.component = {
 
     'binding to streams with traits': function () {
 
-        _.defineTagKeyword ('dummy')
+        Tags.define ('dummy')
 
         $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
 
@@ -538,7 +538,7 @@ _.tests.component = {
         $assert (42, Compo.testValue ())
         $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
 
-        _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
+        _.each (_.keys (Compo.$macroTags), function (name) { delete $global['$' + name] }) },
 
     '$raw for performance-critical methods (disables thiscall proxy)': function () {
 
@@ -658,12 +658,12 @@ _.tests.component = {
 
 /*  General syntax
  */
-_.defineKeyword ('component', function (definition) {
-                                return $extends (Component, definition) })
+$global.$component = function (definition) {
+                        return $extends (Component, definition) }
 
 _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw', 'binds', 'observes'])
-    .each (_.defineTagKeyword)
+    .each (Tags.define)
 
 ;(function () {
     var impl = function (impl) {
@@ -672,11 +672,11 @@ _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'bindable', 'memoize', 'i
                                 impl (x, fn) :     // $observableProperty (listener)
                                 impl (fn, x)) } }  // $observableProperty (value[, listener])
 
-    _.defineTagKeyword ('observableProperty', impl) 
-    _.defineTagKeyword ('observable',         impl) 
+    Tags.define ('observableProperty', impl) 
+    Tags.define ('observable',         impl) 
 }) ();
 
-_.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
+$global.$observableRef = function (x) { return $observableProperty ($reference (x)) }
 
 $prototype.macro ('$depends', function  (def, value, name) {
                                        (def.$depends = $builtin ($const (_.coerceToArray (value))))

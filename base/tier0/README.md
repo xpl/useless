@@ -519,9 +519,9 @@ _.partition2 ([ 'a', 'b', 'c',   undefined, undefined,   'd'], _.isNonempty)
 
 [Source](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js). Configurable object printer.
 
-# keywords.js
+# meta-tags.js
 
-[Source](https://github.com/xpl/useless/blob/master/base/tier0/keywords.js). Metaprogramming/DSL utility, allows to tag JavaScript values with meta-information, readable by definition processing tools. All custom syntax in **Useless** is built on top of that facility.
+[Source](https://github.com/xpl/useless/blob/master/base/tier0/meta-tags.js). Metaprogramming/DSL utility, allows to tag JavaScript values with meta-information, readable by definition processing tools. All custom syntax in **Useless** is built on top of that facility.
 
 # platform.js
 

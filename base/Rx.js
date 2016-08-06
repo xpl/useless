@@ -98,8 +98,8 @@ R = $singleton ({
 
     initDSL: function () {
 
-        _.defineKeyword ( 'r', function ()       { return $$r ([]) })
-        _.defineKeyword ('$r', function (cursor) {
+        $global.property ('$r',  function () { return $$r ([]) })
+        $global.const    ('$$r', function (cursor) {
 
             var shift = function (x) { cursor.push (x); return cursor.forward }
 
@@ -133,4 +133,7 @@ R = $singleton ({
             _.defineHiddenProperty (cursor, '$', function () {
                 return R.expr (cursor.$$) })
 
-            return cursor }) } })
+            return cursor
+        })
+    }
+})

@@ -1,3 +1,5 @@
+var stringify = require ('string.ify')
+
 ServerWebsocket = module.exports = $trait ({
 
     $defaults: {
@@ -23,7 +25,7 @@ ServerWebsocket = module.exports = $trait ({
                 drop ('missing auth credentials') } } },
 
     websocketStringifyUser: function (user) {
-        return ((this.entitySchema && this.entitySchema.users && this.entitySchema.users.text) || _.stringify) (user) },
+        return ((this.entitySchema && this.entitySchema.users && this.entitySchema.users.text) || stringify) (user) },
 
     /*  Sends a message to connected peers via WebSocket
      */

@@ -22,13 +22,13 @@ _.withTest ('OOP', {
 
 //          constructor: function (cfg) { _.extend (this, cfg) },
 
-        /*  $static keyword is used to designate type-level members (context-free ones),
+        /*  $static is used to designate type-level members (context-free ones),
             effectively porting that shit from C++/C#/Java world.                           */
 
             method:                  function () { return 'foo.method' },
             staticMethod:   $static (function () { return 'Foo.staticMethod' }),
 
-        /*  $property keyword is used to tag a value as an property definition.
+        /*  $property is used to tag a value as an property definition.
             Property definitions expand itself within properties.js module, which
             is separate from OOP.js                                                         */
 
@@ -36,7 +36,7 @@ _.withTest ('OOP', {
             staticProperty: $static ($property (function () { return 'Foo.staticProperty' })),
 
         /*  Tags on members can be grouped like this, to reduce clutter if you have lots
-            of members tagged with same keyword.                                            */
+            of members tagged with same tag.                                                */
 
             $static: {
                 $property: {
@@ -234,15 +234,7 @@ _.withTest ('OOP', {
         $assert (!foo.isInstanceOf (Bar))
         $assert (bar.isInstanceOf (Bar))
         $assert (bar.isInstanceOf (Foo))
-
-    /*  A private impl of isTypeOf (one shouldn't invoke these directly)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-        $assert (_.isTypeOf_ES5 (Bar, bar))     // isTypeOf impl. for ECMAScript level 5
-        $assert (_.isTypeOf_ES5 (Foo, bar))     // (validate inheritance)
-
-        $assert (_.isTypeOf_ES4 (Bar, bar))     // isTypeOf impl. for ECMAScript level 4 (IE8 and below)
-        $assert (_.isTypeOf_ES4 (Foo, bar)) },  // (validate inheritance)
+    },
 
 
 /*  This is how to decide whether a function is $prototype constructor
@@ -350,7 +342,7 @@ _.withTest ('OOP', {
     ======================================================================== */
 
     _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'hidden', 'testArguments'])
-        .each (_.defineTagKeyword)
+        .each (Tags.define)
 
     $prototype = function (arg1, arg2) {
                     return $prototype.impl.compile.apply ($prototype.impl,
@@ -375,12 +367,12 @@ _.withTest ('OOP', {
             else {
                 $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
 
-        macroTag: function (name, fn) { _.defineTagKeyword (name)
-            $prototype.impl.tagTriggeredMacros[_.keyword (name)] = fn },
+        macroTag: function (name, fn) { Tags.define (name)
+            $prototype.impl.tagTriggeredMacros['$' + name] = fn },
 
         each: function (visitor) { var namespace = $global
             for (var k in namespace) {
-                if (!_.isKeyword (k)) { var value = namespace[k]
+                if (!(k[0] === '$')) { var value = namespace[k]
                     if ($prototype.isConstructor (value)) {
                         visitor (value, k) } } } },
 
@@ -445,14 +437,14 @@ _.withTest ('OOP', {
                     this.defineInstanceMembers).call (this, def || {}).constructor },
 
             flatten: function (def) {
-                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
-                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
+                var tagGroups    = _.pick (def, this.isTagGroup)
+                var mergedTagGroups = _.object (_.flatten (_.map (tagGroups, function (membersDef, tag) {
                     return _.map (this.flatten (membersDef), function (member, memberName) {
-                        return [memberName, $global[keyword] (member)] }) }, this), true))
+                        return [memberName, $global[tag] (member)] }) }, this), true))
 
-                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+                var memberDefinitions   = _.omit (def, this.isTagGroup)
 
-                return _.extend (memberDefinitions, mergedKeywordGroups) },
+                return _.extend (memberDefinitions, mergedTagGroups) },
 
             evalAlwaysTriggeredMacros: function (base) {
                 return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
@@ -479,7 +471,7 @@ _.withTest ('OOP', {
             applyMacroTags: function (macroTags, def) {
                 _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
-                                if (_.isObject (memberDef) && (_.keyword (tagName) in memberDef)) {
+                                if (_.isObject (memberDef) && (('$' + tagName) in memberDef)) {
                                     def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }, this) }, this)
                 return def },
 
@@ -613,8 +605,8 @@ _.withTest ('OOP', {
 
                                                     def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 
-            isTagKeywordGroup: function (value_, key) { var value = $untag (value_)
-                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
+            isTagGroup: function (value_, key) { var value = $untag (value_)
+                return (key[0] === '$') && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
 
             modifyMember: function (member, newValue) {
                 return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), newValue)) })) ||
@@ -701,7 +693,7 @@ _.withTest ('OOP', {
     ======================================================================== */
 
     $prototype.macro ('$macroTags', function (def, value, name) {
-        _.each ($untag (value), function (v, k) { _.defineTagKeyword (k) }) })
+        _.each ($untag (value), function (v, k) { Tags.define (k) }) })
 
 
 /*  Context-free implementation of this.$
@@ -733,7 +725,7 @@ _.withTest ('OOP', {
         $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
         $assertThrows (function () { A.foo = 'bar '}) }, function () {
 
-    _.defineKeyword ('const', function (x) { return $static ($property (x)) })  })
+    $global.$const = function (x) { return $static ($property (x)) }  })
 
 
 
@@ -753,7 +745,7 @@ _.withTest ('OOP', {
 
                 /*  Impl
                  */
-                _.defineTagKeyword  ('callableAsFreeFunction')
+                Tags.define  ('callableAsFreeFunction')
                 $prototype.macroTag ('callableAsFreeFunction',
                     function (def, value, name) {
                               def.constructor[name] = $untag (value).asFreeFunction
@@ -772,7 +764,7 @@ _.withTest ('OOP', {
 
                 /*  Impl 
                  */
-                _.defineTagKeyword  ('callableAsMethod')
+                Tags.define  ('callableAsMethod')
                 $prototype.macroTag ('callableAsMethod',
                     function (def, value, name) {
                               def[name] = Tags.modify (value, _.asMethod)

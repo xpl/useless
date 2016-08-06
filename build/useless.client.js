@@ -89,9 +89,8 @@
 	    __webpack_require__ (8)        // type system extensions
 	    __webpack_require__ (9)      // consider it as underscore 2.0
 	    __webpack_require__ (10)  // properties 2.0
-	    __webpack_require__ (11)    // metaprogramming utility
-	    __webpack_require__ (12)   // advanced type system extensions
-	    __webpack_require__ (13)   // configurable object printer
+	    __webpack_require__ (11)   // metaprogramming utility
+	    __webpack_require__ (13)   // advanced type system extensions
 	
 	    __webpack_require__ (14)
 	
@@ -1922,14 +1921,14 @@
 /* 4 */
 /***/ function(module, exports) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/*  $platform and $global
+	/* WEBPACK VAR INJECTION */(function(global) {/*  $platform / $global
 	    ======================================================================== */
 	
 	;(function () {
 	
 	    var p = (function () {
 	
-	                if ((typeof window !== 'undefined') && (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
+	                if ((typeof window !== 'undefined') && (window.window === window) && (window.navigator !== undefined)) {
 	                        
 	                    var platform            = navigator.platform,
 	                        userAgent           = navigator.userAgent,
@@ -1951,7 +1950,7 @@
 	                                    ((platformOrUserAgent.indexOf ("iPhone") >= 0)
 	                                ||   (platformOrUserAgent.indexOf ("iPod")   >= 0) ? { touch: true, system: 'iOS', device: 'iPhone' } : {} )))) }
 	
-	                else if ((typeof global !== 'undefined') && global._) {
+	                else if ((typeof global !== 'undefined') && (global.global === global)) {
 	                    return { engine: 'node' } }
 	
 	                else {
@@ -1960,53 +1959,42 @@
 	    var $global = (p.engine === 'browser') ? window :
 	                  (p.engine === 'node')    ? global : undefined
 	
-	    $global.define = function (name, v, cfg) {  if (name in $global) {
-	                                                    throw new Error ('cannot define global ' + name + ': already there') }
+	    $global.property = function (name, v, cfg) { 
 	
-	        var def = (v && (v.get instanceof Function) && (v.set instanceof Function) && v) || // { get: .., set: .. }
-	                       ((v instanceof Function) && (v.length === 0) && { get: v }) ||       // getter function () { }
-	                       { value: v }                                                         // constant value
+	                            if (name in $global) {
+	                                throw new Error ('cannot redefine global ' + name) }
 	
-	        return Object.defineProperty ($global, name, _.extend (def, { enumerable: true }, cfg)) }
+	                            else {
+	                                var def = (v instanceof Function)
+	                                            ? { get: v, set: function () { throw new Error ('cannot set global ' + name) } }
+	                                            : v
 	
+	                                return Object.defineProperty ($global, name, Object.assign ({}, def, { enumerable: true }, cfg)) } }
 	
-	    $global.define ('$global', $global)
-	    $global.define ('$platform', Object.defineProperties ({}, _.mapObject ({
+	    $global.const = function (name, v, cfg) {
+	                        return $global.property (name, { value: v, writable: false }, cfg) }
 	
-	                                            engine:  p.engine,
-	                                            system:  p.system,
-	                                            device:  p.device,
-	                                            touch:   p.touch || false,
+	    $global.const ('$global', $global)
+	    $global.const ('$platform', Object.freeze ({
 	
-	                                            IE:      p.browser       === 'IE',
-	                                            Firefox: p.browser       === 'Firefox',
-	                                            Safari:  p.browser       === 'Safari',
-	                                            Chrome:  p.browser       === 'Chrome',
-	                                            WebKit:  p.browserEngine === 'WebKit',
+	                                    engine:  p.engine,
+	                                    system:  p.system,
+	                                    device:  p.device,
+	                                    touch:   p.touch || false,
 	
-	                                            Browser: p.engine === 'browser',
-	                                            NodeJS:  p.engine === 'node',
-	                                            iPad:    p.device === 'iPad',
-	                                            iPhone:  p.device === 'iPhone',
-	                                            iOS:     p.system === 'iOS'
+	                                    IE:      p.browser       === 'IE',
+	                                    Firefox: p.browser       === 'Firefox',
+	                                    Safari:  p.browser       === 'Safari',
+	                                    Chrome:  p.browser       === 'Chrome',
+	                                    WebKit:  p.browserEngine === 'WebKit',
 	
-	                                        }, function (v, k) { return { enumerable: true, value: v } })))
+	                                    Browser: p.engine === 'browser',
+	                                    NodeJS:  p.engine === 'node',
+	                                    iPad:    p.device === 'iPad',
+	                                    iPhone:  p.device === 'iPhone',
+	                                    iOS:     p.system === 'iOS'              }))
+	
 	}) ();
-	
-	/*  alert2 for ghetto debugging in browser
-	    ======================================================================== */
-	
-	if ($platform.NodeJS) {
-	    $global.alert = function (args) {
-	        var print = ($global.log && _.partial (log.warn, log.config ({ stackOffset: 2 }))) || console.log
-	        print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) } }
-	 
-	$global.alert2 = function (args) {
-	    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] }
-	
-	$global.log = function () { console.log.apply (console, arguments) } // placeholder for log.js
-	
-	
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
@@ -2613,24 +2601,11 @@
 /* 8 */
 /***/ function(module, exports) {
 
-	/*  isTypeOf (bootstrap for OOP.js)
+	/*  isTypeOf
 	    ======================================================================== */
 	
-	_.isInstanceofSyntaxAvailable = function () { var e = new Error ()
-	    try       { return e instanceof Error }
-	    catch (e) { return false } }
-	
-	_.isTypeOf_ES4 = function (constructor, what) {
-	    while (what) {
-	        if (what.constructor === constructor) {
-	            return true }
-	        what = what.constructor.$base }
-	    return false }
-	
-	_.isTypeOf_ES5 = function (constructor, what) {
+	_.isTypeOf = function (constructor, what) {
 	    return what instanceof constructor }
-	
-	_.isTypeOf = _.isInstanceofSyntaxAvailable () ? _.isTypeOf_ES5 : _.isTypeOf_ES4
 	
 	_.isPrototypeInstance = function (x) {
 	    return x && x.constructor && _.isPrototypeConstructor (x.constructor) }
@@ -2773,28 +2748,6 @@
 	        _.isPOD = function (v) {
 	                    return !_.isNonPOD (v) } })
 	
-	/*  Numbers
-	    ======================================================================== */
-	
-	_.withTest (['type', 'numbers'], function () {
-	
-	    $assert (_.every (_.map ([0,        1,     -7,    200003, 12344567788], _.arity1 (_.not (_.isDecimal)))))
-	    $assert (_.every (_.map ([0.1, -0.001, 0.0001, -0.000001,    0.000001], _.arity1 (       _.isDecimal))))
-	
-	    $assert (_.isDecimal (0.003, 0.01), false) // custom tolerance
-	
-	}, function () {
-	
-	    if (typeof Number.EPSILON === 'undefined') {
-	        Object.defineProperty (Number, 'EPSILON', { enumerable: true,
-	                                                    get:  _.constant (2.2204460492503130808472633361816E-16) }) } // NodeJS lack this
-	
-	    
-	    _.isDecimal = function (x, tolerance) {
-	                    if (!_.isNumber (x) || _.isNaN (x)) {
-	                        return false }
-	                    else {
-	                        return (Math.abs (Math.floor (x) - x) > (tolerance || Number.EPSILON)) } } })
 	
 	/*  'empty' classifiers (fixes underscore shit)
 	    ======================================================================== */
@@ -3820,247 +3773,279 @@
 
 /***/ },
 /* 11 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	_.hasTags = true
+	"use strict";
 	
-	/*  Keywords
+	const O = Object
+	
+	/*  For checking whether the module is available
 	    ======================================================================== */
 	
-	_.withTest ('keywords', function () {
+	_.hasTags = true
 	
-	    if ($global['$fourtyTwo'] === undefined) { // coz this test called twice during startup
 	
-	        _.defineKeyword ('fourtyTwo',       42)
-	        _.defineKeyword ('fourtyTwo_too',   function ()  { return 42 })
-	        _.defineKeyword ('fourtyTwo_orDie', function (x) { $assert (x == 42); return 42 })
+	/*  Unit test / spec
+	    ======================================================================== */
 	
-	        _.defineTagKeyword ('foo')
-	        _.defineTagKeyword ('bar')
-	        _.defineTagKeyword ('qux')
+	_.withTest ('meta-tags', function () {
 	
-	        $assert (_.isTagKeyword ('qux'))
+	/*  This is how you define tags     */
 	
-	        _.defineModifierKeyword ('plusOne', function (x) { return x + 1 }) }
+	    Tags.define ('foo')
+	    Tags.define ('bar')
+	    Tags.define ('qux')
 	
-	    $assert (42,
-	        $fourtyTwo,
-	        $fourtyTwo_too,
-	        $fourtyTwo_orDie (42))
+	    $assert (Tags.isDefined ('foo'))
+	    $assert ($foo instanceof Function)
 	
-	    /*  Tags produce objects containing them as boolean flags. You can tag anything.
-	        Order doesn't matter, redundancy is legal.
-	     */
+	/*  Tags produce objects containing them as boolean flags. You can tag anything.
+	    Order doesn't matter, redundancy is legal.   */
+	
 	    $assert ($foo (42).$foo,    true)
 	    $assert ($bar (null).$bar,  true)
 	    $assert ($foo (42).$bar,    undefined)
 	    $assert ($foo ($bar (42)),  $bar ($foo ($foo (42))))
 	
-	    /*  Safe way to check for a tag presence is $tag.is method:
-	     */
+	/*  Safe way to check for a tag presence is $tag.is method:     */
+	
 	    $assert ($foo.is ($foo (42)), true)
 	    $assert ($foo.is ($bar (42)), false)
 	    $assert ($foo.is (42),        false)
 	
-	    /*  Example of complex object containing tagged fields.
-	     */
+	/*  Example of complex object containing tagged fields.     */
+	
 	    var test = {
 	        fourtyOne: $bar ($foo (41)),
 	        fourtyTwo: $foo ($bar (42)),
 	        notTagged: 40 }
 	
-	    /*  This is how you coerce what-might-be-tagged to actual values:
-	     */
+	/*  This is how you coerce what-might-be-tagged to actual values:   */
+	
 	    $assert ($untag (42), Tags.unwrap (42), Tags.unwrap (test.fourtyTwo), 42)
 	    $assert (Tags.unwrapAll (test), { fourtyTwo: 42, fourtyOne: 41, notTagged: 40 })
 	
-	    /*  Tags have .matches property, which is a predicate to test objects for those tags.
-	     */
+	/*  Tags have .matches property, which is a predicate to test objects for those tags.   */
+	
 	    $assert ($foo.matches ($foo ()))
 	    $assert ($foo.matches (test.fourtyOne))
 	    $assert ($foo.matches (42) === false)
 	
-	    /*  These predicates could be combined to produce complex test (a generic feature of Function provided by common.js)
-	     */
+	/*  These predicates could be combined to produce complex test (a generic feature of Function provided by common.js)    */
+	
 	    $assert ({ fourtyOne: 41, fourtyTwo: 42 },  Tags.unwrapAll (_.pick (test, _.and ($foo.matches, $bar.matches))))
 	    $assert ({ notTagged: 40 },                 Tags.unwrapAll (_.omit (test, $foo.matches)))
 	
-	    /*  You can replace value that might be tagged, i.e. $foo($bar(x)) → $foo($bar(y))
-	     */
+	/*  You can replace value that might be tagged, i.e. $foo($bar(x)) → $foo($bar(y))  */
+	
 	    $assert (43,                Tags.modify (42,         function (subject) { return subject + 1 })) // not tagged
 	    $assert ($foo (43),         Tags.modify ($foo (42),  _.constant (43)))
 	    $assert ($foo ($bar (43)),  Tags.modify ($foo (42),  function (subject) { return $bar (subject + 1) }))
 	
-	    /*  Previous mechanism is essential to so-called 'modifier keywords'
-	     */
-	    $assert ($plusOne (            41),                 42)
-	    $assert ($plusOne ($foo ($bar (41))),   $foo ($bar (42)))
+	/*  Low-level way of tags addition, for run-time shit.  */
 	
-	    /*  Low-level way of tags addition, for run-time shit.
-	     */
 	    $assert (Tags.add ('qux', 42).$qux)
 	    $assert (Tags.add ('qux', test.fourtyTwo).$qux)
 	
-	    /*  Wrapping nothing is now legal
-	     */
+	/*  Wrapping nothing is now legal   */
+	
 	    $assert (Tags.hasSubject ($foo ()),   false)
 	    $assert (Tags.hasSubject ($foo (42)), true)
 	
-	    /*  Map over tagged values:
-	     */
+	/*  Map over tagged values:     */
+	
 	    $assert (     $qux ([8, 9, $foo ($bar (10))]),
 	        Tags.map ($qux ([1, 2, $foo ($bar (3))]), _.sums (7)))
 	
-	    /*  Enumerating tags with Tags.each (obj, iter)
-	     */
+	/*  Enumerating tags with Tags.each (obj, iter)     */
+	
 	    $assertMatches (['foo', 'bar', 'qux'], _.arr (function (iter) { Tags.each (test.fourtyTwo, iter) }))
 	
-	    /*  Tagging with non-boolean data
-	     */
+	/*  Tagging with non-boolean data   */
+	
 	    $assert ($foo ({ some: 'params' }, 42).$foo, { some: 'params' })
 	
-	    /*  'Extend' algebra
-	     */
+	/*  'Extend' algebra    */
+	
 	    $assert (Tags.extend ($foo (7), $bar (8)), $foo ($bar (7)))
 	    $assert (Tags.extend ($foo (7),       8),  $foo (      7))
 	    $assert (Tags.extend (      7,  $foo (8)), $foo (      7))
 	    $assert (Tags.extend (      7,        8),              7)
 	
-	    /*  Tags.omit
-	     */
+	/*  Tags.omit   */
+	
 	    $assert (Tags.omit (            7,   '$foo'),          7)
 	    $assert (Tags.omit ($foo ($bar (7)), '$foo',  '$bar'), 7)
 	    $assert (Tags.omit ($foo ($bar (7)), '$foo'),  $bar (  7))
 	
+	/*  String.ify  */
+	
+	    if (String.ify) {
+	
+	        $assert (String.ify ({ foo: $constant ($get ({ bar: 7 }, 1)) }),
+	                            '{ foo: $constant ($get ({ bar: 7 }, 1)) }')
+	        
+	        $assert (String.ify ({ foo: $constant ($get ([ 7,
+	                                                       8  ])) }, { pretty: true }),
+	                            '{ foo: $constant ($get ([ 7,\n'
+	                          + '                          8  ])) }')
+	    }
+	
+	/*  Cleanup test stuff  */
+	
+	    ;['$foo', '$bar', '$qux', '$plusOne'].forEach (function (x) { delete $global[x] })
+	        
+	
+	/*  IMPLEMENTATION
+	    ======================================================================== */
+	
 	}, function () {
 	
-	    Tags = _.extend2 (
-	                function (subject, keys) { if (subject !== undefined) { this.subject = subject }
-	                                           if (keys    !== undefined) { _.extend (this, keys) } }, {
+	/*  Tags object
+	    ======================================================================== */
 	
-	    $definition: {}, // to make it recognizeable by _.isPrototypeInstance
+	    $global.Tags = function (subject, keys) { if (subject !== undefined) { this.subject = subject }
+	                                              if (keys    !== undefined) { _.extend (this, keys) } }
 	
-	    prototype: {
+	    Tags.$definition = {} // to make it recognizeable by ES3000
 	
-	            /* instance methods (internal impl)
-	             */
-	            add: function (name, additionalData) {
-	                    return this[_.keyword (name)] = additionalData || true, this },
 	
-	            clone: function (newSubject) {
-	                return _.extend (new Tags (newSubject || this.subject), _.pick (this, _.keyIsKeyword)) },
+	/*  Instance methods (internal API)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	    
+	    O.assign (Tags.prototype, {
 	
-	            modify: function (changesFn) {
-	                                this.subject = changesFn (this.subject)
-	                                if (_.isTypeOf (Tags, this.subject)) {
-	                                    return _.extend (this.subject, _.pick (this, _.keyIsKeyword)) }
-	                                else {
-	                                    return this }},
+	        add: function (name, additionalData) {
+	                    return this['$' + name] = additionalData || true, this },
 	
-	            extend: function (other) {
-	                        return (_.isTypeOf (Tags, other)) ? _.extend (this, _.pick (other, _.keyIsKeyword)) : this } },
+	        clone: function (newSubject) {
+	                    return O.assign (new Tags (newSubject || this.subject), Tags.get (this)) },
 	
-	        /* static methods (actual API)
-	         */
+	        modify: function (changesFn) {
+	                            this.subject = changesFn (this.subject)
+	                            if (this.subject instanceof Tags) {
+	                                return O.assign (this.subject, Tags.get (this)) }
+	                            else {
+	                                return this }},
+	
+	        extend: function (other) {
+	                    return (other instanceof Tags) ? O.assign (this, Tags.get (other)) : this } })
+	
+	
+	/*  Static methods (public API)
+	    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	
+	    O.assign (Tags, {
+	
 	        omit: $restArg (function (what, ___) {
-	            if (_.isTypeOf (Tags, what)) {                var keysToOmit = _.index (_.rest (arguments))
-	                                                          var keysLeft   = _.pick (what, function (v, k) { return _.isKeyword (k) && !(k in keysToOmit) })
+	
+	            if (what instanceof Tags) {                   var keysToOmit = _.index (_.rest (arguments))
+	                                                          var keysLeft   = _.pick (what, function (v, k) { return (k[0] === '$') && !(k in keysToOmit) })
 	                        return (!_.isEmptyObject (            keysLeft)
 	                                    ? new Tags (what.subject, keysLeft)
-	                                    :           what.subject) }             else { return what } }),
+	                                    :           what.subject) }
+	            else {
+	                return what } }),
 	  
 	        clone: function (what, newSubject) {
-	                        return (_.isTypeOf (Tags, what) ? what.clone (newSubject) : (newSubject || what)) },
+	                    return (what instanceof Tags) ? what.clone (newSubject) : (newSubject || what) },
 	
-	        extend: function (what, other) { return _.isTypeOf (Tags, what)  ? what.clone ().extend (other) : (
-	                                                _.isTypeOf (Tags, other) ? Tags.wrap (what).extend (other) : what) },
+	        extend: function (what, other) { return (what instanceof Tags)  ? what.clone ().extend (other) : (
+	                                                (other instanceof Tags) ? Tags.wrap (what).extend (other) : what) },
 	
 	        get: function (def) {
-	                        return (_.isTypeOf (Tags, def) ? _.pick (def, _.keyIsKeyword) : {}) },
+	                    return ((def instanceof Tags) ? _.pick (def, function (v, k) { return k[0] === '$' }) : {}) },
 	
 	        each: function (def, accept) {
-	                        if (_.isTypeOf (Tags, def)) { _.each (def, function (v, k) { if (k[0] === '$') { accept (k.slice (1)) } }) } },
+	                    if (def instanceof Tags) { _.each (def, function (v, k) { if (k[0] === '$') { accept (k.slice (1)) } }) } },
 	
 	        hasSubject: function (def) {
-	                        return (_.isTypeOf (Tags, def) && ('subject' in def)) },
+	                        return ((def instanceof Tags) && ('subject' in def)) },
 	
 	        matches: function (name) {
-	                    return function (obj) { return obj && (obj[_.keyword (name)] !== undefined) } },
+	                    return function (obj) { return obj && (obj['$' + name] !== undefined) } },
 	
 	        unwrapAll: function (definition) {
 	                        return _.map2 (definition, Tags.unwrap) },
 	
 	        unwrap: function (what) {
-	                    return _.isTypeOf (Tags, what) ? what.subject : what },
+	                    return (what instanceof Tags) ? what.subject : what },
 	
 	        wrap: function (what) {
-	            return _.isTypeOf (Tags, what) ? what : ((arguments.length === 0) ? new Tags () : new Tags (what)) },
+	                    return (what instanceof Tags) ? what : ((arguments.length === 0) ? new Tags () : new Tags (what)) },
 	
 	        modify: function (what, changesFn) {
-	                            return _.isTypeOf (Tags, what) ?
+	                            return (what instanceof Tags) ?
 	                                        what.clone ().modify (changesFn) : changesFn (what) }, // short circuits if not wrapped
 	
 	        map: function (obj, op) { return Tags.modify (obj,
 	                                                function (obj) {
 	                                                    return _.map2 (obj, function (t, k) {
 	                                                        return Tags.modify (t, function (v) {
-	                                                            return op (v, k, _.isTypeOf (Tags, t) ? t : undefined) }) }) }) },
+	                                                            return op (v, k, (t instanceof Tags) ? t : undefined) }) }) }) },
 	
 	        add: function (name, toWhat, additionalData) {
-	                return Tags.wrap.apply (null, _.rest (arguments, 1)).add (name, additionalData) } })
+	                return Tags.wrap.apply (null, _.rest (arguments, 1)).add (name, additionalData) },
 	
-	    _.keyword = function (name) {
-	                    return '$' + name }
+	        all: new Set (),
 	
-	    _.isKeyword = function (key) {
-	                    return key[0] == '$' }
+	        isDefined: function (k) {
+	                        return Tags.all.has (k) },
 	
-	    _.keywordName = function (x) {
-	        return _.isKeyword (x) ? x.slice (1) : x }
+	        define: function (k, fn) { // fn for additional processing of constructed function
 	
-	    _.keywords = function (obj) { return _.pick (obj, _.keyIsKeyword) }
+	                    Tags.all.add (k)
 	
-	    _.tagKeywords = {}
+	                    fn = (_.isFunction (fn) && fn) || _.identity
 	
-	    _.isTagKeyword = function (k) {
-	                        return _.keywordName (k) in _.tagKeywords }
+	                    var $k = '$' + k
 	
-	    _.keyIsKeyword = function (value, key) {
-	                        return _.isKeyword (key[0]) }
+	                    $global[$k] = fn (function (a, b) {
+	                                        if (arguments.length < 2) { return Tags.add (k, a) }       // $tag (value)
+	                                                             else { return Tags.add (k, b, a) } }) // $tag (params, value)
+	                    
+	                    return O.assign ($global[$k], {
+	                               matches: Tags.matches (k),
+	                                    is: function (x) { return  ((x instanceof Tags) && ($k in x)) || false },
+	                                 isNot: function (x) { return !((x instanceof Tags) && ($k in x)) || false },
+	                                unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) },
+	    })
 	
-	    _.defineKeyword = function (name, value) {
-	                        _.defineProperty ($global, _.keyword (name), value) }
+	/*  $untag
+	    ======================================================================== */
 	
-	    _.defineKeyword ('untag', Tags.unwrap)
-	
-	    _.defineTagKeyword = function (k, fn) { // fn for additional processing of constructed function
-	
-	                            fn = (_.isFunction (fn) && fn) || _.identity
-	
-	                            if (!(_.keyword (k) in $global)) { // tag keyword definitions may overlap
-	                                _.defineKeyword (k, Tags.add ('constant',
-	                                    _.extendWith ({ matches: Tags.matches (k) }, fn (function (a, b) {      // generates $tag.matches predicate
-	                                        if (arguments.length < 2) { return Tags.add (k, a) }            // $tag (value)
-	                                                             else { return Tags.add (k, b, a) } }))))    // $tag (params, value)
-	                                _.tagKeywords[k] = true }
-	
-	                                var kk = _.keyword (k)
-	
-	                            return _.extend ($global[kk], {
-	                                        is: function (x) { return  (_.isTypeOf (Tags, x) && (kk in x)) || false },
-	                                     isNot: function (x) { return !(_.isTypeOf (Tags, x) && (kk in x)) || false },
-	                                    unwrap: function (x) { return  ($atom.matches (x) === true) ? Tags.unwrap (x) : x } }) }
+	    $global.$untag = Tags.unwrap
 	
 	
-	    _(['constant', 'get', 'once', 'async'])
-	        .each (_.defineTagKeyword)
+	/*  TODO: move out of this file
+	    ======================================================================== */
 	
-	    _.defineModifierKeyword = function (name, fn) {
-	                                _.defineKeyword (name, function (val) {
-	                                                            return Tags.modify (val, fn) }) }
+	    ;['constant', 'get', 'once', 'async', 'atom'].forEach (Tags.define);
 	
-	    _.deleteKeyword = function (name) {
-	                        delete $global[_.keyword (name)] } } )
+	})
+	
+	/*  Formatting shit
+	    ======================================================================== */
+	
+	    if (typeof Symbol !== 'undefined') {
+	
+	        var bullet = __webpack_require__ (12)
+	
+	        Tags.prototype[Symbol.for ('String.ify')] = function (ctx) {
+	
+	            if (ctx.json) {
+	                return ctx.goDeeper ($untag (this)) }
+	
+	            var tags = Tags.get (this)
+	            var left = _.reduce (tags, function (memo, value, tag) {
+	                                            return _.isBoolean (value)
+	                                                ? (tag + ' (' + memo)
+	                                                : (tag + ' (' + ctx.goDeeper (value, { pretty: false }) + ', ' + memo) }, '')
+	
+	            return bullet (left, ctx.goDeeper ($untag (this))) + ')'.repeats (_.keys (tags).length)
+	        }
+	    }
+	
 	
 
 
@@ -4068,16 +4053,30 @@
 /* 12 */
 /***/ function(module, exports) {
 
+	module.exports = function (bullet, arg) {
+	
+	                    var isArray = Array.isArray (arg)
+	                    
+	                    var lines = isArray ? arg : arg.split ('\n')
+	                    
+	                    var indent = bullet.replace (/[^\s]/g, ' ') // replace non-whitespace with whitespace
+	                        lines = lines.map (function (line, i) { return (i === 0) ? (bullet + line) : (indent + line) })
+	                    
+	                    return isArray ? lines : lines.join ('\n') }
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
 	_.hasTypeMatch = true
 	
 	/*  Type matching for arbitrary complex structures (TODO: test)
 	    ======================================================================== */
 	
-	_.defineTagKeyword ('required')
+	Tags.define ('required')
+	Tags.define ('atom')
 	
-	_.defineTagKeyword ('atom')
-	
-	_.defineKeyword ('any', _.identity)
+	$global.const ('$any', _.identity)
 	
 	_.deferTest (['type', 'type matching'], function () {
 	
@@ -4208,204 +4207,6 @@
 	                return value.constructor }
 	            else {
 	                return _.isEmptyArray (value) ? value : (typeof value) } }) } }) // TODO: fix hyperOperator to remove additional check for []
-	
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports) {
-
-	/*  Object stringifier
-	    ======================================================================== */
-	
-	_.deferTest (['type', 'stringify'], function () {
-	
-	        if (_.hasTags) {
-	
-	            var complex =  { foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: _.identity, bar: [{ baz: "garply", qux: [1, 2, 3] }] }
-	                complex.bar[0].bar = complex.bar
-	
-	            var renders = '{ foo: $constant ($get ({ foo: 7 }, 1)), nil: null, nope: undefined, fn: <function>, bar: [{ baz: "garply", qux: [1, 2, 3], bar: <cyclic> }] }'
-	
-	            var Proto = $prototype ({})
-	
-	            $assert (_.stringify (Proto),   $platform.NodeJS ? 'Proto ()' : '<prototype>')
-	
-	            $assert (_.stringify (undefined),'undefined')
-	            $assert (_.stringify (123),     '123')
-	            $assert (_.stringify (complex, { pretty: false }), renders) }
-	
-	        $assert (_.pretty ({    array: ['foo',
-	                                        'bar',
-	                                        'baz'],
-	                                 more:  'qux',
-	                             evenMore:   42    }), ['{    array: [ "foo",'    ,
-	                                                    '              "bar",'    ,
-	                                                    '              "baz"  ],' ,
-	                                                    '      more:   "qux",'    ,
-	                                                    '  evenMore:    42       }'].join ('\n'))
-	
-	        var obj = {}
-	        $assert (_.stringify ([obj, obj, obj]), '[{  }, <ref:1>, <ref:1>]')
-	
-	        $assert (_.stringify ({ foo: 1 }, { json: true, pretty: true }), '{ "foo": 1 }') }, function () {
-	
-	    _.alignStringsRight = function (strings) {
-	                                                var              lengths = strings.map (_.count)
-	                                                var max = _.max (lengths)
-	                            return                              [lengths,  strings].zip (function (ln,   str) {
-	                                return ' '.repeats (max -                                          ln) + str }) }
-	
-	    _.bullet = function (bullet,        str) { var indent = ' '.repeats (bullet.length)
-	              return _.joinWith  ('\n',
-	                     _.splitWith ('\n', str).map (function (line, i) { return (i === 0)
-	                                                                                 ? (bullet + line)
-	                                                                                 : (indent + line) })) }
-	                        
-	    _.stringifyOneLine = function (x, cfg) {
-	                            return _.stringify (x, _.extend (cfg || {}, { pretty: false })) }
-	
-	    _.pretty = function (x, cfg) {
-	                    return _.stringify  (x, _.extend (cfg || {}, { pretty: true })) }
-	
-	    _.stringify = function  (x, cfg) { cfg = cfg || {}
-	                    var measured = _.stringifyImpl (x, [], [], 0, cfg)
-	                    return (measured.length < 80 || 'pretty' in cfg) ? measured : _.pretty (x, cfg) }
-	
-	    _.stringifyPrototype = function (x) {
-	            if ($platform.NodeJS && x.$meta) { var name = ''
-	                x.$meta (function (values) { name = ((values.name === 'exports') ? values.file : values.name) })
-	                return name && (name + ' ()') }
-	            else return '<prototype>' }
-	
-	    _.builtInTypes = {
-	        'Event':         { target: $any },
-	        'MutationEvent': { target: $any, attrName: $any, prevValue: $any },
-	        'Range':         { startContainer: $any, startOffset: $any, endContainer: $any, endOffset: $any },
-	        'ClientRect':    { left: $any, top: $any, right: $any, bottom: $any, width: $any, height: $any } }
-	
-	    _.stringifyImpl     = function (x, parents, siblings, depth, cfg) {
-	
-	                            var customFormat = cfg.formatter && cfg.formatter (x)
-	
-	                            if (customFormat) {
-	                                return customFormat }
-	
-	                            if ((typeof jQuery !== 'undefined') && _.isTypeOf (jQuery, x)) {
-	                                x = _.asArray (x) }
-	
-	                            if (x === $global) {
-	                                return '$global' }
-	
-	                            else if (parents.indexOf (x) >= 0) {
-	                                return cfg.pure ? undefined : '<cyclic>' }
-	
-	                            else if (siblings.indexOf (x) >= 0) {
-	                                return cfg.pure ? undefined : '<ref:' + siblings.indexOf (x) + '>' }
-	
-	                            else if (x === undefined) {
-	                                return 'undefined' }
-	
-	                            else if (x === null) {
-	                                return 'null' }
-	
-	                            else if (_.isFunction (x)) {
-	                                return (cfg.pure ? x.toString () : ((_.isPrototypeConstructor (x) && _.stringifyPrototype (x)) || '<function>')) }
-	
-	                            else if (typeof x === 'string') {
-	                                return _.quoteWith ('"', x.limitedTo (cfg.pure ? Number.MAX_SAFE_INTEGER : 60)) }
-	
-	                            else if (_.isTypeOf (Tags, x)) {
-	                                return _.reduce (Tags.get (x), function (memo, value, tag) {
-	                                                                    return _.isBoolean (value)
-	                                                                        ? (tag + ' ' + memo.quote ('()'))
-	                                                                        : (tag + ' (' + _.stringifyImpl (value, parents, siblings, 0, { pretty: false }) + ', ' + memo + ')') },
-	                                    _.stringifyImpl ($untag (x), parents, siblings, depth + 1, cfg)) }
-	
-	                            else if (!cfg.pure && _.hasOOP && _.isPrototypeInstance (x) && $prototype.defines (x.constructor, 'toString')) {
-	                                return x.toString () }
-	
-	                            else if (_.isObject (x) && !((typeof $atom !== 'undefined') && ($atom.is (x)))) {
-	
-	                                var builtInValue = _.find2 (_.builtInTypes, function (schema, name) {
-	                                                                                return ($global[name] &&
-	                                                                                    (x instanceof $global[name]) &&
-	                                                                                    (name + ' ' + _.stringifyOneLine (
-	                                                                                                        _.omitTypeMismatches (schema, x)))) || false })
-	                                if (builtInValue) {
-	                                    return builtInValue }
-	                                    
-	                                else {
-	                                    if (x instanceof Set) {
-	                                        x = x.asArray }
-	
-	                                    var isArray = _.isArray (x)
-	
-	                                    var pretty = cfg.pretty || false
-	
-	                                    if ($platform.Browser) {
-	                                        if (_.isTypeOf (Element, x)) {
-	                                            return (x.tagName.lowercase +
-	                                                        ((x.id && ('#' + x.id)) || '') +
-	                                                        ((x.className && ('.' + x.className)) || '')).quote ('<>') }
-	                                            //return x.outerHTML.substr (0, 12) + '…' }
-	                                            //return x.tagName.lowercase.quote ('<>') }
-	                                        else if (_.isTypeOf (Text, x)) {
-	                                            return '@' + x.wholeText.limitedTo (20) } }
-	
-	                                    if (x.toJSON) {
-	                                        return _.quoteWith ('"', x.toJSON ()) } // for MongoDB ObjectID
-	
-	                                    if (!cfg.pure && (depth > (cfg.maxDepth || 5) || (isArray && x.length > (cfg.maxArrayLength || 60)))) {
-	                                        return isArray ? '<array[' + x.length + ']>' : '<object>' }
-	
-	                                    var parentsPlusX = parents.concat ([x])
-	
-	                                    siblings.push (x)
-	
-	                                    var values  = _.pairs (x)
-	
-	                                    var oneLine = !pretty || (values.length < 2)
-	
-	                                    var impl = _.stringifyImpl.tails2 (parentsPlusX, siblings, depth + 1, cfg)
-	
-	                                    var quoteKeys = cfg.json ? '""' : ''
-	
-	                                    if (pretty) {
-	                                            values        = _.values (x)
-	                                        var printedKeys   = _.alignStringsRight (_.keys   (x).map (_.quotesWith (quoteKeys).then (_.appends (': '))))
-	                                        var printedValues =                            values.map (impl)
-	
-	                                        var leftPaddings = printedValues.map (function (x, i) {
-	                                                                                return (((x[0] === '[') ||
-	                                                                                         (x[0] === '{')) ? 3 :
-	                                                                                            _.isString (values[i]) ? 1 : 0) })
-	                                        var maxLeftPadding = _.max (leftPaddings)
-	
-	                                        var indentedValues = [leftPaddings, printedValues].zip (function (padding,   x) {
-	                                                                     return ' '.repeats (maxLeftPadding - padding) + x })
-	
-	                                        var internals = isArray ? indentedValues :
-	                                                    [printedKeys, indentedValues].zip (_.bullet)
-	
-	                                        var printed = _.bullet (isArray ? '[ ' :
-	                                                                          '{ ', internals.join (',\n'))
-	                                        var lines = printed.split ('\n')
-	
-	                                        return printed +  (' '.repeats (_.max (lines.map (_.count)) -
-	                                                                        _.count (lines.last)) + (isArray ? ' ]' :
-	                                                                                                           ' }')) }
-	
-	                                    return _.quoteWith (isArray ? '[]' : '{  }', _.joinWith (', ',
-	                                                _.map (values, function (kv) {
-	                                                            return (isArray ? '' : (kv[0].quote (quoteKeys) + ': ')) + impl (kv[1]) }))) } }
-	
-	                            else if (_.isDecimal (x) && (cfg.precision > 0)) {
-	                                return x.toFixed (cfg.precision) }
-	
-	                            else {
-	                                return String (x) } } })
-	
 	
 
 
@@ -4850,9 +4651,8 @@
 	/*  Extensions methods
 	    ======================================================================== */
 	
-	_(['method', 'property', 'flipped', 'forceOverride']) // keywords recognized by $extensionMethods
-	    .each (_.defineTagKeyword)
-	
+	;['method', 'property', 'flipped', 'forceOverride'].forEach (Tags.define)
+	    
 	$extensionMethods = function (Type, methods) {
 	
 	    _.each (methods, function (tags, name) { var fn = Tags.unwrap (tags)
@@ -6291,13 +6091,13 @@
 	
 	//          constructor: function (cfg) { _.extend (this, cfg) },
 	
-	        /*  $static keyword is used to designate type-level members (context-free ones),
+	        /*  $static is used to designate type-level members (context-free ones),
 	            effectively porting that shit from C++/C#/Java world.                           */
 	
 	            method:                  function () { return 'foo.method' },
 	            staticMethod:   $static (function () { return 'Foo.staticMethod' }),
 	
-	        /*  $property keyword is used to tag a value as an property definition.
+	        /*  $property is used to tag a value as an property definition.
 	            Property definitions expand itself within properties.js module, which
 	            is separate from OOP.js                                                         */
 	
@@ -6305,7 +6105,7 @@
 	            staticProperty: $static ($property (function () { return 'Foo.staticProperty' })),
 	
 	        /*  Tags on members can be grouped like this, to reduce clutter if you have lots
-	            of members tagged with same keyword.                                            */
+	            of members tagged with same tag.                                                */
 	
 	            $static: {
 	                $property: {
@@ -6503,15 +6303,7 @@
 	        $assert (!foo.isInstanceOf (Bar))
 	        $assert (bar.isInstanceOf (Bar))
 	        $assert (bar.isInstanceOf (Foo))
-	
-	    /*  A private impl of isTypeOf (one shouldn't invoke these directly)
-	        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-	
-	        $assert (_.isTypeOf_ES5 (Bar, bar))     // isTypeOf impl. for ECMAScript level 5
-	        $assert (_.isTypeOf_ES5 (Foo, bar))     // (validate inheritance)
-	
-	        $assert (_.isTypeOf_ES4 (Bar, bar))     // isTypeOf impl. for ECMAScript level 4 (IE8 and below)
-	        $assert (_.isTypeOf_ES4 (Foo, bar)) },  // (validate inheritance)
+	    },
 	
 	
 	/*  This is how to decide whether a function is $prototype constructor
@@ -6619,7 +6411,7 @@
 	    ======================================================================== */
 	
 	    _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'hidden', 'testArguments'])
-	        .each (_.defineTagKeyword)
+	        .each (Tags.define)
 	
 	    $prototype = function (arg1, arg2) {
 	                    return $prototype.impl.compile.apply ($prototype.impl,
@@ -6644,12 +6436,12 @@
 	            else {
 	                $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
 	
-	        macroTag: function (name, fn) { _.defineTagKeyword (name)
-	            $prototype.impl.tagTriggeredMacros[_.keyword (name)] = fn },
+	        macroTag: function (name, fn) { Tags.define (name)
+	            $prototype.impl.tagTriggeredMacros['$' + name] = fn },
 	
 	        each: function (visitor) { var namespace = $global
 	            for (var k in namespace) {
-	                if (!_.isKeyword (k)) { var value = namespace[k]
+	                if (!(k[0] === '$')) { var value = namespace[k]
 	                    if ($prototype.isConstructor (value)) {
 	                        visitor (value, k) } } } },
 	
@@ -6714,14 +6506,14 @@
 	                    this.defineInstanceMembers).call (this, def || {}).constructor },
 	
 	            flatten: function (def) {
-	                var tagKeywordGroups    = _.pick (def, this.isTagKeywordGroup)
-	                var mergedKeywordGroups = _.object (_.flatten (_.map (tagKeywordGroups, function (membersDef, keyword) {
+	                var tagGroups    = _.pick (def, this.isTagGroup)
+	                var mergedTagGroups = _.object (_.flatten (_.map (tagGroups, function (membersDef, tag) {
 	                    return _.map (this.flatten (membersDef), function (member, memberName) {
-	                        return [memberName, $global[keyword] (member)] }) }, this), true))
+	                        return [memberName, $global[tag] (member)] }) }, this), true))
 	
-	                var memberDefinitions   = _.omit (def, this.isTagKeywordGroup)
+	                var memberDefinitions   = _.omit (def, this.isTagGroup)
 	
-	                return _.extend (memberDefinitions, mergedKeywordGroups) },
+	                return _.extend (memberDefinitions, mergedTagGroups) },
 	
 	            evalAlwaysTriggeredMacros: function (base) {
 	                return function (def) { var macros = $prototype.impl.alwaysTriggeredMacros
@@ -6748,7 +6540,7 @@
 	            applyMacroTags: function (macroTags, def) {
 	                _.each (def, function (memberDef, memberName) {
 	                            _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
-	                                if (_.isObject (memberDef) && (_.keyword (tagName) in memberDef)) {
+	                                if (_.isObject (memberDef) && (('$' + tagName) in memberDef)) {
 	                                    def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }, this) }, this)
 	                return def },
 	
@@ -6882,8 +6674,8 @@
 	
 	                                                    def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 	
-	            isTagKeywordGroup: function (value_, key) { var value = $untag (value_)
-	                return _.isKeyword (key) && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
+	            isTagGroup: function (value_, key) { var value = $untag (value_)
+	                return (key[0] === '$') && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
 	
 	            modifyMember: function (member, newValue) {
 	                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), newValue)) })) ||
@@ -6970,7 +6762,7 @@
 	    ======================================================================== */
 	
 	    $prototype.macro ('$macroTags', function (def, value, name) {
-	        _.each ($untag (value), function (v, k) { _.defineTagKeyword (k) }) })
+	        _.each ($untag (value), function (v, k) { Tags.define (k) }) })
 	
 	
 	/*  Context-free implementation of this.$
@@ -7002,7 +6794,7 @@
 	        $assert ([A.foo, A.bar, A.qux, A.zap], ['foo', 'bar', 'qux', 'zap'])
 	        $assertThrows (function () { A.foo = 'bar '}) }, function () {
 	
-	    _.defineKeyword ('const', function (x) { return $static ($property (x)) })  })
+	    $global.$const = function (x) { return $static ($property (x)) }  })
 	
 	
 	
@@ -7022,7 +6814,7 @@
 	
 	                /*  Impl
 	                 */
-	                _.defineTagKeyword  ('callableAsFreeFunction')
+	                Tags.define  ('callableAsFreeFunction')
 	                $prototype.macroTag ('callableAsFreeFunction',
 	                    function (def, value, name) {
 	                              def.constructor[name] = $untag (value).asFreeFunction
@@ -7041,7 +6833,7 @@
 	
 	                /*  Impl 
 	                 */
-	                _.defineTagKeyword  ('callableAsMethod')
+	                Tags.define  ('callableAsMethod')
 	                $prototype.macroTag ('callableAsMethod',
 	                    function (def, value, name) {
 	                              def[name] = Tags.modify (value, _.asMethod)
@@ -7263,9 +7055,6 @@
 	                    return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
 	                        function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 	
-	    toString: function () {
-	        return '{' + this.x + ',' + this.y + '}' },
-	
 	    projectOnCircle: function (center, r) {
 	        return center.add (this.sub (center).normal.scale (r)) },
 	
@@ -7283,6 +7072,11 @@
 	        if (l2 == 0) return 0
 	        return this.sub (origin).dot (dir) / l2 } })
 	
+	/*  ------------------------------------------------------------------------ */
+	
+	if (typeof Symbol !== 'undefined') {
+	    Vec2.prototype[Symbol.for ('String.ify')] = function () {
+	                                                    return '{' + this.x + ',' + this.y + '}'  } }
 	
 	/*  Cubic bezier
 	    ======================================================================== */
@@ -7535,9 +7329,13 @@
 	                             (this.left > other.right) ||
 	                             (this.bottom < other.top) ||
 	                             (this.top > other.bottom)) },
+	})
 	
-	    toString: function () {
-	        return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }' } })
+	/*  ------------------------------------------------------------------------ */
+	
+	if (typeof Symbol !== 'undefined') {
+	    Vec2.prototype[Symbol.for ('String.ify')] = function () {
+	                                                    return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }'  } }
 	
 	
 	/*  3x3 affine transform matrix, encoding scale/offset/rotate/skew in 2D
@@ -7859,7 +7657,6 @@
 	exports.array = toposort
 	
 	function toposort(nodes, edges) {
-	
 	  var cursor = nodes.length
 	    , sorted = new Array(cursor)
 	    , visited = {}
@@ -7872,7 +7669,6 @@
 	  return sorted
 	
 	  function visit(node, i, predecessors) {
-	
 	    if(predecessors.indexOf(node) >= 0) {
 	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
 	    }
@@ -7888,7 +7684,6 @@
 	    var outgoing = edges.filter(function(edge){
 	      return edge[0] === node
 	    })
-	
 	    if (i = outgoing.length) {
 	      var preds = predecessors.concat(node)
 	      do {
@@ -8068,7 +7863,7 @@
 	                                                                                                lock.release (); resolve (x) }) }) }) }) }
 	/*  EXPERIMENTAL (TBD)
 	 */
-	_.defineKeyword ('scope', function (fn) { var releaseStack = undefined
+	$global.$scope = function (fn) { var releaseStack = undefined
 	                                                    
 	    return _.argumentPrependingWrapper (Tags.unwrap (fn),
 	
@@ -8084,7 +7879,7 @@
 	                               releaseStack.last.when) { var trigger =  releaseStack.last.when
 	                                                                   if ((releaseStack = _.initial (releaseStack)).isEmpty) {
 	                                                                        releaseStack = undefined }
-	                                                             trigger () } }) }) })
+	                                                             trigger () } }) }) }
 	
 	if ($platform.NodeJS) {
 	    module.exports = _ }
@@ -8455,7 +8250,7 @@
 	
 	    'binding to streams with traits': function () {
 	
-	        _.defineTagKeyword ('dummy')
+	        Tags.define ('dummy')
 	
 	        $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
 	
@@ -8633,7 +8428,7 @@
 	        $assert (42, Compo.testValue ())
 	        $assertMatches (_.keys (Compo.$macroTags), ['dummy', 'add_2', 'add_20'])
 	
-	        _.each (_.keys (Compo.$macroTags), _.deleteKeyword) },
+	        _.each (_.keys (Compo.$macroTags), function (name) { delete $global['$' + name] }) },
 	
 	    '$raw for performance-critical methods (disables thiscall proxy)': function () {
 	
@@ -8753,12 +8548,12 @@
 	
 	/*  General syntax
 	 */
-	_.defineKeyword ('component', function (definition) {
-	                                return $extends (Component, definition) })
+	$global.$component = function (definition) {
+	                        return $extends (Component, definition) }
 	
 	_([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'bindable', 'memoize', 'interlocked',
 	    'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw', 'binds', 'observes'])
-	    .each (_.defineTagKeyword)
+	    .each (Tags.define)
 	
 	;(function () {
 	    var impl = function (impl) {
@@ -8767,11 +8562,11 @@
 	                                impl (x, fn) :     // $observableProperty (listener)
 	                                impl (fn, x)) } }  // $observableProperty (value[, listener])
 	
-	    _.defineTagKeyword ('observableProperty', impl) 
-	    _.defineTagKeyword ('observable',         impl) 
+	    Tags.define ('observableProperty', impl) 
+	    Tags.define ('observable',         impl) 
 	}) ();
 	
-	_.defineKeyword ('observableRef', function (x) { return $observableProperty ($reference (x)) })
+	$global.$observableRef = function (x) { return $observableProperty ($reference (x)) }
 	
 	$prototype.macro ('$depends', function  (def, value, name) {
 	                                       (def.$depends = $builtin ($const (_.coerceToArray (value))))
@@ -9328,8 +9123,8 @@
 	
 	    initDSL: function () {
 	
-	        _.defineKeyword ( 'r', function ()       { return $$r ([]) })
-	        _.defineKeyword ('$r', function (cursor) {
+	        $global.property ('$r',  function () { return $$r ([]) })
+	        $global.const    ('$$r', function (cursor) {
 	
 	            var shift = function (x) { cursor.push (x); return cursor.forward }
 	
@@ -9363,7 +9158,10 @@
 	            _.defineHiddenProperty (cursor, '$', function () {
 	                return R.expr (cursor.$$) })
 	
-	            return cursor }) } })
+	            return cursor
+	        })
+	    }
+	})
 
 /***/ },
 /* 29 */
@@ -9449,7 +9247,7 @@
 	        if (method && _.isFunction (method)) {
 	            bind (target, methodName, boundMethod) } }
 	
-	    _.defineKeyword ('aspect', function (ofWhat, cfg) {
+	    $global.$aspect = function (ofWhat, cfg) {
 	
 	        var aspectDef = Tags.unwrap (_.sequence (
 	                            $prototype.impl.extendWithTags,
@@ -9478,7 +9276,7 @@
 	        if (ofWhat.aspectAdded) {
 	            ofWhat.aspectAdded (aspectDef) }
 	
-	        return aspectDef })
+	        return aspectDef }
 	
 	}) ()
 

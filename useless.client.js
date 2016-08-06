@@ -43,9 +43,8 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     require ('./base/tier0/type')        // type system extensions
     require ('./base/tier0/stdlib')      // consider it as underscore 2.0
     require ('./base/tier0/properties')  // properties 2.0
-    require ('./base/tier0/keywords')    // metaprogramming utility
+    require ('./base/tier0/meta-tags')   // metaprogramming utility
     require ('./base/tier0/typeMatch')   // advanced type system extensions
-    require ('./base/tier0/stringify')   // configurable object printer
 
     require ('./base/CPS')
 

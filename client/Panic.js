@@ -121,7 +121,7 @@ Panic.widget = $singleton (Component, {
 	hash: function (what) {
 		return ((_.isTypeOf (Error, what) ? (what && what.stack) :
 				(_.isTypeOf (Test, what)  ? (what.suite + what.name) :
-                _.stringify (what))) || '').hash },
+                String.ify (what))) || '').hash },
 
 	print: function (what, raw) {
 		return (_.isTypeOf (Error, what) ?

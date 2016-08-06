@@ -1,4 +1,4 @@
-_.defineTagKeyword ('callableFromMasterProcess')
+Tags.define ('callableFromMasterProcess')
 
 module.exports = $trait ({
 

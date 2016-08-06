@@ -1,5 +1,7 @@
 "use strict";
 
+var bullet = require ('string.bullet')
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -37,7 +39,7 @@ _.tests['Testicles'] = { // run "node test2 Testicles" to see output
 
 var printDiff = args => {
 
-                    var cases  = _.map (args, log.impl.stringify.arity1.then (_.bullet.$ ('• ')))
+                    var cases  = _.map (args, log.impl.stringify.arity1.then (bullet.$ ('• ')))
                     var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
 
                     if ((cases.length < 2) || (common.length < 4)) {

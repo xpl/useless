@@ -70,7 +70,7 @@ _.interlocked = function (fn) { var lock = new Lock (),
                                                                                                 lock.release (); resolve (x) }) }) }) }) }
 /*  EXPERIMENTAL (TBD)
  */
-_.defineKeyword ('scope', function (fn) { var releaseStack = undefined
+$global.$scope = function (fn) { var releaseStack = undefined
                                                     
     return _.argumentPrependingWrapper (Tags.unwrap (fn),
 
@@ -86,7 +86,7 @@ _.defineKeyword ('scope', function (fn) { var releaseStack = undefined
                                releaseStack.last.when) { var trigger =  releaseStack.last.when
                                                                    if ((releaseStack = _.initial (releaseStack)).isEmpty) {
                                                                         releaseStack = undefined }
-                                                             trigger () } }) }) })
+                                                             trigger () } }) }) }
 
 if ($platform.NodeJS) {
     module.exports = _ }

@@ -78,7 +78,7 @@ _.tests.AOP = {
         if (method && _.isFunction (method)) {
             bind (target, methodName, boundMethod) } }
 
-    _.defineKeyword ('aspect', function (ofWhat, cfg) {
+    $global.$aspect = function (ofWhat, cfg) {
 
         var aspectDef = Tags.unwrap (_.sequence (
                             $prototype.impl.extendWithTags,
@@ -107,6 +107,6 @@ _.tests.AOP = {
         if (ofWhat.aspectAdded) {
             ofWhat.aspectAdded (aspectDef) }
 
-        return aspectDef })
+        return aspectDef }
 
 }) ()

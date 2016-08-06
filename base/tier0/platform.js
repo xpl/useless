@@ -1,11 +1,11 @@
-/*  $platform and $global
+/*  $platform / $global
     ======================================================================== */
 
 ;(function () {
 
     var p = (function () {
 
-                if ((typeof window !== 'undefined') && (typeof navigator !== 'undefined') && navigator.platform && navigator.platform.indexOf) {
+                if ((typeof window !== 'undefined') && (window.window === window) && (window.navigator !== undefined)) {
                         
                     var platform            = navigator.platform,
                         userAgent           = navigator.userAgent,
@@ -27,7 +27,7 @@
                                     ((platformOrUserAgent.indexOf ("iPhone") >= 0)
                                 ||   (platformOrUserAgent.indexOf ("iPod")   >= 0) ? { touch: true, system: 'iOS', device: 'iPhone' } : {} )))) }
 
-                else if ((typeof global !== 'undefined') && global._) {
+                else if ((typeof global !== 'undefined') && (global.global === global)) {
                     return { engine: 'node' } }
 
                 else {
@@ -36,50 +36,39 @@
     var $global = (p.engine === 'browser') ? window :
                   (p.engine === 'node')    ? global : undefined
 
-    $global.define = function (name, v, cfg) {  if (name in $global) {
-                                                    throw new Error ('cannot define global ' + name + ': already there') }
+    $global.property = function (name, v, cfg) { 
 
-        var def = (v && (v.get instanceof Function) && (v.set instanceof Function) && v) || // { get: .., set: .. }
-                       ((v instanceof Function) && (v.length === 0) && { get: v }) ||       // getter function () { }
-                       { value: v }                                                         // constant value
+                            if (name in $global) {
+                                throw new Error ('cannot redefine global ' + name) }
 
-        return Object.defineProperty ($global, name, _.extend (def, { enumerable: true }, cfg)) }
+                            else {
+                                var def = (v instanceof Function)
+                                            ? { get: v, set: function () { throw new Error ('cannot set global ' + name) } }
+                                            : v
 
+                                return Object.defineProperty ($global, name, Object.assign ({}, def, { enumerable: true }, cfg)) } }
 
-    $global.define ('$global', $global)
-    $global.define ('$platform', Object.defineProperties ({}, _.mapObject ({
+    $global.const = function (name, v, cfg) {
+                        return $global.property (name, { value: v, writable: false }, cfg) }
 
-                                            engine:  p.engine,
-                                            system:  p.system,
-                                            device:  p.device,
-                                            touch:   p.touch || false,
+    $global.const ('$global', $global)
+    $global.const ('$platform', Object.freeze ({
 
-                                            IE:      p.browser       === 'IE',
-                                            Firefox: p.browser       === 'Firefox',
-                                            Safari:  p.browser       === 'Safari',
-                                            Chrome:  p.browser       === 'Chrome',
-                                            WebKit:  p.browserEngine === 'WebKit',
+                                    engine:  p.engine,
+                                    system:  p.system,
+                                    device:  p.device,
+                                    touch:   p.touch || false,
 
-                                            Browser: p.engine === 'browser',
-                                            NodeJS:  p.engine === 'node',
-                                            iPad:    p.device === 'iPad',
-                                            iPhone:  p.device === 'iPhone',
-                                            iOS:     p.system === 'iOS'
+                                    IE:      p.browser       === 'IE',
+                                    Firefox: p.browser       === 'Firefox',
+                                    Safari:  p.browser       === 'Safari',
+                                    Chrome:  p.browser       === 'Chrome',
+                                    WebKit:  p.browserEngine === 'WebKit',
 
-                                        }, function (v, k) { return { enumerable: true, value: v } })))
+                                    Browser: p.engine === 'browser',
+                                    NodeJS:  p.engine === 'node',
+                                    iPad:    p.device === 'iPad',
+                                    iPhone:  p.device === 'iPhone',
+                                    iOS:     p.system === 'iOS'              }))
+
 }) ();
-
-/*  alert2 for ghetto debugging in browser
-    ======================================================================== */
-
-if ($platform.NodeJS) {
-    $global.alert = function (args) {
-        var print = ($global.log && _.partial (log.warn, log.config ({ stackOffset: 2 }))) || console.log
-        print.apply (print, ['ALERT:'].concat (_.asArray (arguments))) } }
- 
-$global.alert2 = function (args) {
-    alert (_.map (arguments, _.stringify).join (', ')); return arguments[0] }
-
-$global.log = function () { console.log.apply (console, arguments) } // placeholder for log.js
-
-

@@ -1,3 +1,5 @@
+String.ify = require ('string.ify')
+
 require ('./base/tier0/assert')
 require ('./base/uncaught')
 require ('./base/uncaughtAsync')

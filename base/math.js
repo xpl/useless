@@ -169,9 +169,6 @@ Vec2 = $prototype ({
                     return _.reduce ((_.isArray (arr) && arr) || _.asArray (arguments),
                         function (memo, v) { return memo.add (v || Vec2.zero) }, Vec2.zero) }),
 
-    toString: function () {
-        return '{' + this.x + ',' + this.y + '}' },
-
     projectOnCircle: function (center, r) {
         return center.add (this.sub (center).normal.scale (r)) },
 
@@ -189,6 +186,11 @@ Vec2 = $prototype ({
         if (l2 == 0) return 0
         return this.sub (origin).dot (dir) / l2 } })
 
+/*  ------------------------------------------------------------------------ */
+
+if (typeof Symbol !== 'undefined') {
+    Vec2.prototype[Symbol.for ('String.ify')] = function () {
+                                                    return '{' + this.x + ',' + this.y + '}'  } }
 
 /*  Cubic bezier
     ======================================================================== */
@@ -441,9 +443,13 @@ BBox = $prototype ({
                              (this.left > other.right) ||
                              (this.bottom < other.top) ||
                              (this.top > other.bottom)) },
+})
 
-    toString: function () {
-        return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }' } })
+/*  ------------------------------------------------------------------------ */
+
+if (typeof Symbol !== 'undefined') {
+    Vec2.prototype[Symbol.for ('String.ify')] = function () {
+                                                    return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }'  } }
 
 
 /*  3x3 affine transform matrix, encoding scale/offset/rotate/skew in 2D

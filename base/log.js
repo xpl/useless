@@ -1,3 +1,5 @@
+var bullet = require ('string.bullet')
+
 _.hasLog = true
 
 _.tests.log = {
@@ -284,7 +286,7 @@ _.extend (log, {
                                                                     : (                         run.text)) }).join ('') }).join ('\n')
 
                 if (log.timestampEnabled) {
-                    lines = log.color ('dark').shell + _.bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
+                    lines = log.color ('dark').shell + bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
 
                 console.log (lines,
                              log.color ('dark').shell + codeLocation + '\u001b[0m',
@@ -353,13 +355,13 @@ _.extend (log, {
                 if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
                     return log.asTable (what) }
                 else {
-                    return _.stringify (what, cfg) } }
+                    return String.ify (what, cfg) } }
                     
             else if (typeof what === 'string') {
                 return what }
 
             else {
-                return _.stringify (what) } },
+                return String.ify (what) } },
         
         stringifyError: function (e) {
             try {       

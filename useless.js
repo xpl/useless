@@ -48,9 +48,8 @@ _ = (function () {
     require ('./base/tier0/type')        // type system extensions
     require ('./base/tier0/stdlib')      // consider it as underscore 2.0
     require ('./base/tier0/properties')  // properties 2.0
-    require ('./base/tier0/keywords')    // metaprogramming utility
+    require ('./base/tier0/meta-tags')   // metaprogramming utility
     require ('./base/tier0/typeMatch')   // advanced type system extensions
-    require ('./base/tier0/stringify')   // configurable object printer
 
 
 /*  Delivers continuation-passing style notation to various common things
@@ -99,6 +98,8 @@ _ = (function () {
 /*  Developer tools
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+    String.ify = require ('string.ify')
+    
     require ('./base/uncaught')        // uncaught exception facility
     require ('./base/reflection')      // callstack access + source code access
     require ('./base/log')             // logging facility

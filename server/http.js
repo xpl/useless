@@ -1,11 +1,12 @@
 "use strict";
 
-var http    = require ('http'),
-    util    = require ('./base/util'),
-    ass     = require ('./base/assertion_syntax'),
-    fs      = require ('./base/fs'),
-    url     = require ('url'),
-    path    = require ('path')
+var http      = require ('http'),
+    util      = require ('./base/util'),
+    ass       = require ('./base/assertion_syntax'),
+    fs        = require ('./base/fs'),
+    url       = require ('url'),
+    path      = require ('path'),
+    stringify = require ('string.ify')
 
 /*  ======================================================================== */
 
@@ -197,13 +198,13 @@ module.exports = $trait ({
 
         /*  Creates $http thing
          */
-        $global.define ('$http', {
+        $global.property ('$http', {
             get: () => AndrogeneProcessContext.current &&  AndrogeneProcessContext.current.env,
             set: x  => AndrogeneProcessContext.current && (AndrogeneProcessContext.current.env = x) })
 
         /*  Creates $env thing
          */
-        $global.define ('$env', {
+        $global.property ('$env', {
             get: () => ($http && $http.env) || {},
             set: x  => _.extend ($http.env, x) })
 
@@ -323,7 +324,7 @@ module.exports = $trait ({
     jsVariable: function (rvalue, lvalue) {
                     $http.contentType ($http.mime.javascript)
                     return 'var ' + rvalue +
-                            ' = ' + _.stringify (lvalue, { pure: true, pretty: true }) },
+                            ' = ' + stringify (lvalue, { pure: true, pretty: true }) },
 
     receiveJSON: function () {
                     return $http.receiveData ()

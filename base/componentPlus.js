@@ -23,7 +23,7 @@ _.tests['component+'] = {
 /*  Observable enum (implemented via novel prototype macro facility from OOP.js)
  */
 
- _.defineTagKeyword ('observableEnum', function (impl) {
+ Tags.define ('observableEnum', function (impl) {
                                             return function () {
                                                 return impl (_.asArray (arguments)) } })
 

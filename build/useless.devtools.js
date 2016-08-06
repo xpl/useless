@@ -40,26 +40,51 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
+/******/ ((function(modules) {
+	// Check all modules for deduplicated modules
+	for(var i in modules) {
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "function": break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(this, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+				break;
+			default:
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			}
+		}
+	}
+	return modules;
+}([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__ (1)
-	__webpack_require__ (2)
-	__webpack_require__ (4)
+	String.ify = __webpack_require__ (1)
+	
 	__webpack_require__ (5)
 	__webpack_require__ (6)
-	__webpack_require__ (7)
 	__webpack_require__ (8)
-	
-	jQuery = __webpack_require__ (9)
-	
+	__webpack_require__ (9)
 	__webpack_require__ (10)
-	
-	__webpack_require__ (11)
 	__webpack_require__ (12)
 	__webpack_require__ (13)
+	
+	jQuery = __webpack_require__ (14)
+	
+	__webpack_require__ (15)
+	
+	__webpack_require__ (16)
 	__webpack_require__ (17)
+	__webpack_require__ (18)
+	__webpack_require__ (22)
 	
 	/*  ======================================================================== */
 	
@@ -76,6 +101,230 @@
 
 /***/ },
 /* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
+	
+	const Object     = __webpack_require__ (2),
+	      bullet     = __webpack_require__ (4),
+	      isBrowser  = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
+	      maxOf      = (arr, pick) => arr.reduce ((max, s) => Math.max (max, pick ? pick (s) : s), 0),
+	      limitTo    = (s, n) => s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')),
+	      isInteger  = Number.isInteger || (value => (typeof value === 'number') && isFinite (value) && (Math.floor (value) === value))
+	
+	const stringify = module.exports = function (x, cfg) {
+	
+	    cfg = Object.assign ({ pretty: 'auto' }, cfg)
+	
+	    if (cfg.pretty === 'auto') {
+	        var oneLine = stringify (x, Object.assign ({}, cfg, { pretty: false, siblings: new Map () }))
+	        if (oneLine.length <= 80) {
+	            return oneLine }
+	        else {
+	            return stringify (x, Object.assign ({}, cfg, { pretty: true, siblings: new Map () })) } }
+	
+	    cfg = Object.assign ({
+	
+	                parents: new Set (),
+	                siblings: new Map (),
+	                depth: 0,
+	                pure: false,
+	                maxDepth: 5,
+	                maxArrayLength: 60,
+	                maxStringLength: 60,
+	                precision: undefined,
+	                formatter: undefined
+	
+	            }, cfg, {
+	
+	                goDeeper: (y, newCfg) => stringify (y, Object.assign ({}, cfg, { depth: cfg.depth + 1 }, newCfg))
+	
+	            })
+	
+	    var customFormat = cfg.formatter && cfg.formatter (x, cfg)
+	
+	    if (typeof customFormat === 'string') {
+	        return customFormat }
+	
+	    if ((typeof jQuery !== 'undefined') && (x instanceof jQuery)) {
+	        x = x.toArray () }
+	
+	    if (isBrowser && (x === window)) {
+	        return 'window' }
+	
+	    else if (!isBrowser && (typeof global !== 'undefined') && (x === global)) {
+	        return 'global' }
+	
+	    else if (x === null) {
+	        return 'null' }
+	
+	    else if (cfg.parents.has (x)) {
+	        return cfg.pure ? undefined : '<cyclic>' }
+	
+	    else if (cfg.siblings.has (x)) {
+	        return cfg.pure ? undefined : '<ref:' + cfg.siblings.get (x) + '>' }
+	
+	    else if (x && (typeof Symbol !== 'undefined')
+	               && (customFormat = x[Symbol.for ('String.ify')])
+	               && (typeof (customFormat = customFormat.call (x, cfg)) === 'string')) {
+	        return customFormat }
+	
+	    else if (x instanceof Function) {
+	        return (cfg.pure ? x.toString () : (x.name ? ('<function:' + x.name + '>') : '<function>')) }
+	
+	    else if (typeof x === 'string') {
+	        return '"' + limitTo (x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"' }
+	
+	    else if (typeof x === 'object') {
+	
+	        cfg.parents.add (x)
+	        cfg.siblings.set (x, cfg.siblings.size)
+	
+	        var result = stringify.object (x, cfg)
+	
+	        cfg.parents.delete (x)
+	
+	        return result }
+	
+	    else if (!isInteger (x) && (cfg.precision > 0)) {
+	        return x.toFixed (cfg.precision) }
+	
+	    else {
+	        return String (x) } }
+	
+	stringify.oneLine = function (x, cfg) {
+	                        return stringify (x, Object.assign (cfg || {}, { pretty: false })) }
+	
+	stringify.object = function (x, cfg) {
+	
+	    if (x instanceof Set) {
+	        x = Array.from (x.values ()) }
+	
+	    else if (x instanceof Map) {
+	        x = Array.from (x.entries ()) }
+	
+	    var isArray = Array.isArray (x)
+	
+	    if (isBrowser) {
+	        
+	        if (x instanceof Element) {
+	            return '<' + (x.tagName.toLowerCase () +
+	                        ((x.id && ('#' + x.id)) || '') +
+	                        ((x.className && ('.' + x.className)) || '')) + '>' }
+	        
+	        else if (x instanceof Text) {
+	            return '@' + limitTo (x.wholeText, 20) } }
+	
+	    if (!cfg.pure && ((cfg.depth > cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
+	        return isArray ? '<array[' + x.length + ']>' : '<object>' }
+	
+	    var pretty   = cfg.pretty ? true : false
+	    var entries  = Object.entries (x)
+	    var oneLine  = !pretty || (entries.length < 2)
+	    var quoteKey = cfg.json ? (k => '"' + k + '"') : (k => k)
+	
+	    if (pretty) {
+	
+	        var alignStringsRight = strings => {
+	                                    var max = maxOf (strings, s => s.length)
+	                                    return strings.map (s => ' '.repeat (max - s.length) + s) }
+	
+	        var values        = Object.values (x)
+	        var printedKeys   = alignStringsRight (Object.keys (x).map (k => quoteKey (k) + ': '))
+	        var printedValues = values.map (cfg.goDeeper)
+	
+	        var leftPaddings = printedValues.map (function (x, i) {
+	                                                return (((x[0] === '[') ||
+	                                                         (x[0] === '{')) ? 3 :
+	                                                            (typeof values[i] === 'string') ? 1 : 0) })
+	        var maxLeftPadding = maxOf (leftPaddings)
+	
+	        var items = leftPaddings.map ((padding, i) => {
+	                                var value = ' '.repeat (maxLeftPadding - padding) + printedValues[i]
+	                                return isArray ? value : bullet (printedKeys[i], value) })
+	
+	        var printed = bullet (isArray ? '[ ' :
+	                                        '{ ', items.join (',\n'))
+	
+	        var lines    = printed.split ('\n')
+	        var lastLine = lines[lines.length - 1]
+	
+	        return printed +  (' '.repeat (maxOf (lines, l => l.length) - lastLine.length) + (isArray ? ' ]' : ' }')) }
+	
+	    else {
+	
+	        var items = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + cfg.goDeeper (kv[1]))
+	        var content = items.join (', ')
+	
+	        return isArray
+	                ? ('['  + content +  ']')
+	                : ('{ ' + content + ' }')
+	    }
+	}
+	
+	
+	
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = (function () {
+		"use strict";
+	
+		var ownKeys      = __webpack_require__ (3)
+		var reduce       = Function.bind.call(Function.call, Array.prototype.reduce);
+		var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
+		var concat       = Function.bind.call(Function.call, Array.prototype.concat);
+	
+		if (!Object.values) {
+			 Object.values = function values(O) {
+				return reduce(ownKeys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []) } }
+	
+		if (!Object.entries) {
+			 Object.entries = function entries(O) {
+				return reduce(ownKeys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []) } }
+	
+		return Object
+	
+	}) ();
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+	if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
+	  module.exports = Reflect.ownKeys;
+	} else if (typeof Object.getOwnPropertySymbols === 'function') {
+	  module.exports = function Reflect_ownKeys(o) {
+	    return (
+	      Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o))
+	    );
+	  }
+	} else {
+	  module.exports = Object.getOwnPropertyNames;
+	}
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	module.exports = function (bullet, arg) {
+	
+	                    var isArray = Array.isArray (arg)
+	                    
+	                    var lines = isArray ? arg : arg.split ('\n')
+	                    
+	                    var indent = bullet.replace (/[^\s]/g, ' ') // replace non-whitespace with whitespace
+	                        lines = lines.map (function (line, i) { return (i === 0) ? (bullet + line) : (indent + line) })
+	                    
+	                    return isArray ? lines : lines.join ('\n') }
+
+/***/ },
+/* 5 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -483,11 +732,8 @@
 	        ======================================================================== */
 	
 	    _.each (_.keys (_.assertions), function (name) {
-	        $global.define ('$' + name, _[name], { configurable: true }) })
-	
-	    for (var k in _.assertions) {
-	        $global['$' + k] = 1
-	    }
+	                                        var define = ((_[name].length === 0) ? $global.property : $global.const)
+	                                        define ('$' + name, _[name], { configurable: true }) })
 	})
 	
 	
@@ -496,7 +742,7 @@
 
 
 /***/ },
-/* 2 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*  Uncaught exception handling facility
@@ -542,7 +788,7 @@
 	
 	    switch ($platform.engine) {
 	        case 'node':
-	            __webpack_require__ (3).on ('uncaughtException', globalUncaughtExceptionHandler); break;
+	            __webpack_require__ (7).on ('uncaughtException', globalUncaughtExceptionHandler); break;
 	
 	        case 'browser':
 	            window.addEventListener ('error', function (e) {
@@ -559,18 +805,59 @@
 	}) ()
 
 /***/ },
-/* 3 */
+/* 7 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
-	
 	var process = module.exports = {};
+	
+	// cached from whatever global is present so that test runners that stub it
+	// don't break things.  But we need to wrap it in a try catch in case it is
+	// wrapped in strict mode code which doesn't define any globals.  It's inside a
+	// function because try/catches deoptimize in certain engines.
+	
+	var cachedSetTimeout;
+	var cachedClearTimeout;
+	
+	(function () {
+	    try {
+	        cachedSetTimeout = setTimeout;
+	    } catch (e) {
+	        cachedSetTimeout = function () {
+	            throw new Error('setTimeout is not defined');
+	        }
+	    }
+	    try {
+	        cachedClearTimeout = clearTimeout;
+	    } catch (e) {
+	        cachedClearTimeout = function () {
+	            throw new Error('clearTimeout is not defined');
+	        }
+	    }
+	} ())
+	function runTimeout(fun) {
+	    if (cachedSetTimeout === setTimeout) {
+	        return setTimeout(fun, 0);
+	    } else {
+	        return cachedSetTimeout.call(null, fun, 0);
+	    }
+	}
+	function runClearTimeout(marker) {
+	    if (cachedClearTimeout === clearTimeout) {
+	        clearTimeout(marker);
+	    } else {
+	        cachedClearTimeout.call(null, marker);
+	    }
+	}
 	var queue = [];
 	var draining = false;
 	var currentQueue;
 	var queueIndex = -1;
 	
 	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);
@@ -586,7 +873,7 @@
 	    if (draining) {
 	        return;
 	    }
-	    var timeout = setTimeout(cleanUpNextTick);
+	    var timeout = runTimeout(cleanUpNextTick);
 	    draining = true;
 	
 	    var len = queue.length;
@@ -603,7 +890,7 @@
 	    }
 	    currentQueue = null;
 	    draining = false;
-	    clearTimeout(timeout);
+	    runClearTimeout(timeout);
 	}
 	
 	process.nextTick = function (fun) {
@@ -615,7 +902,7 @@
 	    }
 	    queue.push(new Item(fun, args));
 	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
+	        runTimeout(drainQueue);
 	    }
 	};
 	
@@ -656,7 +943,7 @@
 
 
 /***/ },
-/* 4 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/*  Provides call stack persistence across async call boundaries.
@@ -719,10 +1006,12 @@
 	}) ()
 
 /***/ },
-/* 5 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(__filename) {/*  Self-awareness module
+	/* WEBPACK VAR INJECTION */(function(__filename) {"use strict";
+	
+	/*  Self-awareness module
 	    ======================================================================== */
 	
 	_.hasReflection = true
@@ -730,6 +1019,7 @@
 	_.tests.reflection = {
 	
 	    'file paths': function () {
+	        $assert (typeof $uselessPath, 'string')
 	        $assert ($sourcePath .length > 0)
 	        $assert ($uselessPath.length > 0) },
 	
@@ -806,47 +1096,25 @@
 	            /*  Safe location querying
 	             */
 	            stack.safeLocation (7777).sourceReady (function (line) {
-	                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) },
-	
-	    'Prototype.$meta': function (done) {
-	        var Dummy = $prototype ()
-	
-	        Dummy.$meta (function (meta) {
-	            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
-	            done () }) },
-	
-	    'Trait.$meta': function (done) {
-	        var Dummy = $trait ()
-	        Dummy.$meta (function (meta) {
-	            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
-	            done () }) }
+	                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) }
 	}
 	
-	
-	/*  Custom syntax (defined in a way that avoids cross-dependency loops)
-	 */
-	_.defineKeyword ('callStack',   function () {
-	    return CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0) })
-	
-	_.defineKeyword ('currentFile', function () {
-	    return (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file })
-	
-	_.defineKeyword ('uselessPath', _.memoize (function () {
-	    return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }) )
-	
-	_.defineKeyword ('sourcePath', _.memoize (function () { var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
-	    return local ? (local + '/') : $uselessPath }))
-	
+	$global.property ('$callStack',   () => CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0))
+	$global.property ('$currentFile', () => (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file)
+	$global.property ('$uselessPath', _.memoize (function () { return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }))
+	$global.property ('$sourcePath',  _.memoize (function () {
+	                                                    var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+	                                                    return local ? (local + '/') : $uselessPath }))
 	
 	/*  Port __filename for browsers
 	 */
 	if ($platform.Browser) {
-	    _.defineProperty (window, '__filename', function () { return $currentFile }) }
+	    $global.property ('__filename', () => $currentFile) }
 	
 	
 	/*  Source code access (cross-platform)
 	 */
-	SourceFiles = $singleton (Component, {
+	$global.SourceFiles = $singleton (Component, {
 	
 	    /*apiConfig: {
 	        port:      1338,
@@ -900,7 +1168,7 @@
 	
 	/*  Callstack API
 	 */
-	CallStack = $extends (Array, {
+	$global.CallStack = $extends (Array, {
 	
 	    current: $static ($property (function () {
 	        return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
@@ -1052,6 +1320,30 @@
 	
 	/*  Reflection for $prototypes
 	 */
+	
+	_.tests.prototypeMeta = {
+	
+	    'Prototype.$meta': function (done) {
+	        var Dummy = $prototype ()
+	
+	        Dummy.$meta (function (meta) {
+	            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
+	            done () }) },
+	
+	    'Trait.$meta': function (done) {
+	        var Dummy = $trait ()
+	        Dummy.$meta (function (meta) {
+	            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
+	            done () }) },
+	
+	    'String.ify': function () {
+	
+	        var Proto = $prototype ({})
+	
+	        $assert (String.ify (Proto), $platform.NodeJS ? 'Proto ()' : '<prototype>')
+	    }
+	}
+	
 	$prototype.impl.findMeta = function (stack) {
 	
 	    return function (then) {
@@ -1071,6 +1363,18 @@
 	
 	$prototype.macro (function (def, base) {
 	
+	    if (typeof Symbol !== 'undefined') {
+	
+	        def.constructor[Symbol.for ('String.ify')] = function (ctx) {
+	
+	            if ($platform.NodeJS) {
+	                var name = ''
+	                this.$meta (function (values) { name = ((values.name === 'exports') ? values.file : values.name) })
+	                return name && (name + ' ()') }
+	
+	            else {
+	                return '<prototype>' } } }
+	
 	    if (!def.$meta) {
 	
 	        var findMeta = _.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))
@@ -1089,9 +1393,11 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
 
 /***/ },
-/* 6 */
-/***/ function(module, exports) {
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
 
+	var bullet = __webpack_require__ (11)
+	
 	_.hasLog = true
 	
 	_.tests.log = {
@@ -1378,7 +1684,7 @@
 	                                                                    : (                         run.text)) }).join ('') }).join ('\n')
 	
 	                if (log.timestampEnabled) {
-	                    lines = log.color ('dark').shell + _.bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
+	                    lines = log.color ('dark').shell + bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
 	
 	                console.log (lines,
 	                             log.color ('dark').shell + codeLocation + '\u001b[0m',
@@ -1447,13 +1753,13 @@
 	                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
 	                    return log.asTable (what) }
 	                else {
-	                    return _.stringify (what, cfg) } }
+	                    return String.ify (what, cfg) } }
 	                    
 	            else if (typeof what === 'string') {
 	                return what }
 	
 	            else {
-	                return _.stringify (what) } },
+	                return String.ify (what) } },
 	        
 	        stringifyError: function (e) {
 	            try {       
@@ -1575,8 +1881,10 @@
 
 
 /***/ },
-/* 7 */
-/***/ function(module, exports) {
+/* 11 */
+4,
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	------------------------------------------------------------------------
@@ -1591,14 +1899,16 @@
 	------------------------------------------------------------------------
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
+	var bullet = __webpack_require__ (11)
+	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
 	 */
-	_.defineTagKeyword ('shouldFail')
+	Tags.define ('shouldFail')
 	
 	
 	/*  A contract for custom assertions, says that assertion is asynchronous.
 	 */
-	_.defineTagKeyword ('async')
+	Tags.define ('async')
 	
 	
 	/*  This is test suite for tests framework itself.
@@ -1637,9 +1947,9 @@
 	                                                                         DummyPrototypeWithTests.$tests]) }
 	 }
 	
-	/*  For marking methods in internal impl that should publish themselves as global keywords (like $assert)
+	/*  For marking methods in internal impl that should publish themselves as global functions (like $assert)
 	 */
-	_.defineTagKeyword ('assertion')
+	Tags.define ('assertion')
 	
 	Testosterone = $singleton ({
 	
@@ -1783,15 +2093,21 @@
 	
 	                            return test }) } },
 	
-	    defineAssertion: function (name, def) { var self = this
-	        _.deleteKeyword (name)
-	        _.defineKeyword (name, Tags.modify (def,
-	                                    function (fn) {
-	                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
-	                                            if (!self.currentAssertion) {
-	                                                return fn.apply (self, arguments) }
-	                                            else {
-	                                                return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } }) })) },
+	    defineAssertion: function (name, def) {
+	
+	        var self = this
+	        var fn   = $untag (def)
+	
+	        delete $global['$' + name]
+	               $global['$' + name] = _.withSameArgs (fn, function () {
+	
+	                    var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
+	                    
+	                    if (!self.currentAssertion) {
+	                        return fn.apply (self, arguments) }
+	                    else {
+	                        return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } })
+	    },
 	
 	    printLog: function (cfg) { if (!cfg.supressLog) {
 	
@@ -1892,9 +2208,9 @@
 	                        if (e.asColumns) {
 	                            log.orange (
 	                                log.columns (_.map (notMatching, function (obj) {
-	                                    return ['\t• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
+	                                    return ['\t• ' + _.keys (obj)[0], String.ify (_.values (obj)[0])] })).join ('\n')) }
 	                        else {
-	                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('\t• ')))
+	                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (bullet.$ ('\t• ')))
 	                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
 	                            if (common.length < 4) {
 	                                common = undefined }
@@ -1986,7 +2302,7 @@
 	
 	/*
 	 */
-	_.defineTagKeyword ('allowsRecursion')
+	Tags.define ('allowsRecursion')
 	
 	_.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
 	                        var depth       = -1
@@ -1994,7 +2310,7 @@
 	                            return function () {
 	                                if (!reported) {
 	                                    if (depth > max) { reported = true
-	                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + _.stringify (arg) }) },
+	                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + String.ify (arg) }) },
 	                                            new Error (name + ': max recursion depth reached (' + max + ')')) }
 	                                    else {
 	                                        var result = ((++depth), fn.apply (this, arguments)); depth--
@@ -2028,9 +2344,9 @@
 	/*  $log for methods
 	 */
 	;(function () { var colors = _.keys (_.omit (log.color, 'none'))
-	                    colors.each (_.defineTagKeyword)
+	                    colors.each (Tags.define)
 	
-	    _.defineTagKeyword ('verbose')
+	    Tags.define ('verbose')
 	
 	    Testosterone.LogsMethodCalls = $trait ({
 	
@@ -2061,8 +2377,8 @@
 	                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
 	                                                                                                             arguments_ = _.asArray (arguments)
 	
-	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
-	                        var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
+	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, String.ify.oneLine.arity1)))) || this.desc || ''
+	                        var args_dump = _.map (arguments_, String.ify.oneLine.arity1).join (', ').quote ('()')
 	
 	                    log.write (log.config ({
 	                        color: color,
@@ -2077,7 +2393,7 @@
 	                                                                        var result          = fn.apply (this_, arguments_);          
 	
 	                                                                        if (result !== undefined) {
-	                                                                            log.write ('→', _.stringifyOneLine (result)) }
+	                                                                            log.write ('→', String.ify.oneLine (result)) }
 	
 	                                                                        if ((log.currentConfig ().indent < 2) &&
 	                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
@@ -2089,7 +2405,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 8 */
+/* 13 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2142,7 +2458,7 @@
 
 
 /***/ },
-/* 9 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12222,7 +12538,7 @@
 
 
 /***/ },
-/* 10 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12633,7 +12949,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 11 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -12759,7 +13075,7 @@
 		hash: function (what) {
 			return ((_.isTypeOf (Error, what) ? (what && what.stack) :
 					(_.isTypeOf (Test, what)  ? (what.suite + what.name) :
-	                _.stringify (what))) || '').hash },
+	                String.ify (what))) || '').hash },
 	
 		print: function (what, raw) {
 			return (_.isTypeOf (Error, what) ?
@@ -12885,7 +13201,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 12 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -12961,23 +13277,23 @@
 	}) (jQuery);
 
 /***/ },
-/* 13 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(14);
+	var content = __webpack_require__(19);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(16)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./Panic.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./Panic.css");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./Panic.css", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./Panic.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -12987,10 +13303,10 @@
 	}
 
 /***/ },
-/* 14 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(15)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	
@@ -13001,7 +13317,7 @@
 
 
 /***/ },
-/* 15 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/*
@@ -13057,7 +13373,7 @@
 
 
 /***/ },
-/* 16 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13309,23 +13625,23 @@
 
 
 /***/ },
-/* 17 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(18);
+	var content = __webpack_require__(23);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(16)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./LogOverlay.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./LogOverlay.css");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./LogOverlay.css", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./LogOverlay.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -13335,10 +13651,10 @@
 	}
 
 /***/ },
-/* 18 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(15)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	
@@ -13349,5 +13665,5 @@
 
 
 /***/ }
-/******/ ]);
+/******/ ])));
 //# sourceMappingURL=useless.devtools.js.map

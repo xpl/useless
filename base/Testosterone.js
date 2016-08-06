@@ -11,14 +11,16 @@ Testosterone is a cross-platform unit test shell. Features:
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+var bullet = require ('string.bullet')
+
 /*  A contract for test routines that says that test should fail and it's the behavior expected
  */
-_.defineTagKeyword ('shouldFail')
+Tags.define ('shouldFail')
 
 
 /*  A contract for custom assertions, says that assertion is asynchronous.
  */
-_.defineTagKeyword ('async')
+Tags.define ('async')
 
 
 /*  This is test suite for tests framework itself.
@@ -57,9 +59,9 @@ _.tests.Testosterone = {
                                                                          DummyPrototypeWithTests.$tests]) }
  }
 
-/*  For marking methods in internal impl that should publish themselves as global keywords (like $assert)
+/*  For marking methods in internal impl that should publish themselves as global functions (like $assert)
  */
-_.defineTagKeyword ('assertion')
+Tags.define ('assertion')
 
 Testosterone = $singleton ({
 
@@ -203,15 +205,21 @@ Testosterone = $singleton ({
 
                             return test }) } },
 
-    defineAssertion: function (name, def) { var self = this
-        _.deleteKeyword (name)
-        _.defineKeyword (name, Tags.modify (def,
-                                    function (fn) {
-                                        return _.withSameArgs (fn, function () { var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
-                                            if (!self.currentAssertion) {
-                                                return fn.apply (self, arguments) }
-                                            else {
-                                                return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } }) })) },
+    defineAssertion: function (name, def) {
+
+        var self = this
+        var fn   = $untag (def)
+
+        delete $global['$' + name]
+               $global['$' + name] = _.withSameArgs (fn, function () {
+
+                    var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
+                    
+                    if (!self.currentAssertion) {
+                        return fn.apply (self, arguments) }
+                    else {
+                        return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } })
+    },
 
     printLog: function (cfg) { if (!cfg.supressLog) {
 
@@ -312,9 +320,9 @@ Test = $prototype ({
                         if (e.asColumns) {
                             log.orange (
                                 log.columns (_.map (notMatching, function (obj) {
-                                    return ['\t• ' + _.keys (obj)[0], _.stringify (_.values (obj)[0])] })).join ('\n')) }
+                                    return ['\t• ' + _.keys (obj)[0], String.ify (_.values (obj)[0])] })).join ('\n')) }
                         else {
-                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (_.bullet.$ ('\t• ')))
+                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (bullet.$ ('\t• ')))
                             var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
                             if (common.length < 4) {
                                 common = undefined }
@@ -406,7 +414,7 @@ Test = $prototype ({
 
 /*
  */
-_.defineTagKeyword ('allowsRecursion')
+Tags.define ('allowsRecursion')
 
 _.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
                         var depth       = -1
@@ -414,7 +422,7 @@ _.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
                             return function () {
                                 if (!reported) {
                                     if (depth > max) { reported = true
-                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + _.stringify (arg) }) },
+                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + String.ify (arg) }) },
                                             new Error (name + ': max recursion depth reached (' + max + ')')) }
                                     else {
                                         var result = ((++depth), fn.apply (this, arguments)); depth--
@@ -448,9 +456,9 @@ Testosterone.ValidatesRecursion = $trait ({
 /*  $log for methods
  */
 ;(function () { var colors = _.keys (_.omit (log.color, 'none'))
-                    colors.each (_.defineTagKeyword)
+                    colors.each (Tags.define)
 
-    _.defineTagKeyword ('verbose')
+    Tags.define ('verbose')
 
     Testosterone.LogsMethodCalls = $trait ({
 
@@ -481,8 +489,8 @@ Testosterone.ValidatesRecursion = $trait ({
                 return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
                                                                                                              arguments_ = _.asArray (arguments)
 
-                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, _.stringifyOneLine.arity1)))) || this.desc || ''
-                        var args_dump = _.map (arguments_, _.stringifyOneLine.arity1).join (', ').quote ('()')
+                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, String.ify.oneLine.arity1)))) || this.desc || ''
+                        var args_dump = _.map (arguments_, String.ify.oneLine.arity1).join (', ').quote ('()')
 
                     log.write (log.config ({
                         color: color,
@@ -497,7 +505,7 @@ Testosterone.ValidatesRecursion = $trait ({
                                                                         var result          = fn.apply (this_, arguments_);          
 
                                                                         if (result !== undefined) {
-                                                                            log.write ('→', _.stringifyOneLine (result)) }
+                                                                            log.write ('→', String.ify.oneLine (result)) }
 
                                                                         if ((log.currentConfig ().indent < 2) &&
                                                                             (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
