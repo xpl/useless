@@ -88,19 +88,6 @@ _.tests.reflection = {
                 $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) }
 }
 
-$global.property ('$callStack',   () => CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0))
-$global.property ('$currentFile', () => (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file)
-$global.property ('$uselessPath', _.memoize (function () { return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }))
-$global.property ('$sourcePath',  _.memoize (function () {
-                                                    var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
-                                                    return local ? (local + '/') : $uselessPath }))
-
-/*  Port __filename for browsers
- */
-if ($platform.Browser) {
-    $global.property ('__filename', () => $currentFile) }
-
-
 /*  Source code access (cross-platform)
  */
 $global.SourceFiles = $singleton (Component, {
@@ -306,6 +293,21 @@ $global.CallStack = $extends (Array, {
                 file:        fileLineColumn[0] || '',
                 line:       (fileLineColumn[1] || '').integerValue,
                 column:     (fileLineColumn[2] || '').integerValue } }) }) })
+
+    $global.property ('$callStack',   () => CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0))
+    
+;(function () {
+
+    var currentFile = $platform.Browser
+                        ? (CallStack.rawStringToArray (CallStack.currentAsRawString)[2] || { file: '' }).file
+                        : __filename
+
+    $global.const ('$uselessPath', _.initial (currentFile.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/')
+    $global.const ('$sourcePath',  (function () {
+                                        var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+                                        return local ? (local + '/') : $uselessPath }) ())
+
+}) ();
 
 /*  Reflection for $prototypes
  */

@@ -40,30 +40,7 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ((function(modules) {
-	// Check all modules for deduplicated modules
-	for(var i in modules) {
-		if(Object.prototype.hasOwnProperty.call(modules, i)) {
-			switch(typeof modules[i]) {
-			case "function": break;
-			case "object":
-				// Module can be created from a template
-				modules[i] = (function(_m) {
-					var args = _m.slice(1), fn = modules[_m[0]];
-					return function (a,b,c) {
-						fn.apply(this, [a,b,c].concat(args));
-					};
-				}(modules[i]));
-				break;
-			default:
-				// Module is a copy of another module
-				modules[i] = modules[modules[i]];
-				break;
-			}
-		}
-	}
-	return modules;
-}([
+/******/ ([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -74,17 +51,17 @@
 	__webpack_require__ (8)
 	__webpack_require__ (9)
 	__webpack_require__ (10)
+	__webpack_require__ (11)
 	__webpack_require__ (12)
-	__webpack_require__ (13)
 	
-	jQuery = __webpack_require__ (14)
+	jQuery = __webpack_require__ (13)
+	
+	__webpack_require__ (14)
 	
 	__webpack_require__ (15)
-	
 	__webpack_require__ (16)
 	__webpack_require__ (17)
-	__webpack_require__ (18)
-	__webpack_require__ (22)
+	__webpack_require__ (21)
 	
 	/*  ======================================================================== */
 	
@@ -1099,19 +1076,6 @@
 	                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) }
 	}
 	
-	$global.property ('$callStack',   () => CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0))
-	$global.property ('$currentFile', () => (CallStack.rawStringToArray (CallStack.currentAsRawString)[$platform.NodeJS ? 3 : 1] || { file: '' }).file)
-	$global.property ('$uselessPath', _.memoize (function () { return _.initial (__filename.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/' }))
-	$global.property ('$sourcePath',  _.memoize (function () {
-	                                                    var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
-	                                                    return local ? (local + '/') : $uselessPath }))
-	
-	/*  Port __filename for browsers
-	 */
-	if ($platform.Browser) {
-	    $global.property ('__filename', () => $currentFile) }
-	
-	
 	/*  Source code access (cross-platform)
 	 */
 	$global.SourceFiles = $singleton (Component, {
@@ -1318,6 +1282,21 @@
 	                line:       (fileLineColumn[1] || '').integerValue,
 	                column:     (fileLineColumn[2] || '').integerValue } }) }) })
 	
+	    $global.property ('$callStack',   () => CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0))
+	    
+	;(function () {
+	
+	    var currentFile = $platform.Browser
+	                        ? (CallStack.rawStringToArray (CallStack.currentAsRawString)[2] || { file: '' }).file
+	                        : __filename
+	
+	    $global.const ('$uselessPath', _.initial (currentFile.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/')
+	    $global.const ('$sourcePath',  (function () {
+	                                        var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
+	                                        return local ? (local + '/') : $uselessPath }) ())
+	
+	}) ();
+	
 	/*  Reflection for $prototypes
 	 */
 	
@@ -1396,7 +1375,7 @@
 /* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var bullet = __webpack_require__ (11)
+	var bullet = __webpack_require__ (4)
 	
 	_.hasLog = true
 	
@@ -1882,8 +1861,6 @@
 
 /***/ },
 /* 11 */
-4,
-/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1899,7 +1876,7 @@
 	------------------------------------------------------------------------
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
-	var bullet = __webpack_require__ (11)
+	var bullet = __webpack_require__ (4)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
 	 */
@@ -2405,7 +2382,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2458,7 +2435,7 @@
 
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12538,7 +12515,7 @@
 
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12949,7 +12926,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13201,7 +13178,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13277,16 +13254,16 @@
 	}) (jQuery);
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(19);
+	var content = __webpack_require__(18);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(21)(content, {});
+	var update = __webpack_require__(20)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13303,10 +13280,10 @@
 	}
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(20)();
+	exports = module.exports = __webpack_require__(19)();
 	// imports
 	
 	
@@ -13317,7 +13294,7 @@
 
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports) {
 
 	/*
@@ -13373,7 +13350,7 @@
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13625,16 +13602,16 @@
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(23);
+	var content = __webpack_require__(22);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(21)(content, {});
+	var update = __webpack_require__(20)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13651,10 +13628,10 @@
 	}
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(20)();
+	exports = module.exports = __webpack_require__(19)();
 	// imports
 	
 	
@@ -13665,5 +13642,5 @@
 
 
 /***/ }
-/******/ ])));
+/******/ ]);
 //# sourceMappingURL=useless.devtools.js.map
