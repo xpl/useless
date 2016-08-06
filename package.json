@@ -70,7 +70,7 @@
     "mongodb": "^2.2.5",
     "process": "^0.11.7",
     "string.bullet": "^1.0.0",
-    "string.ify": "^1.0.3",
+    "string.ify": "^1.0.4",
     "style-loader": "^0.13.1",
     "toposort": "^1.0.0",
     "underscore": "^1.8.3",
