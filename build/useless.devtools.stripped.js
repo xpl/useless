@@ -149,7 +149,7 @@
                         return '@' + limitTo(x.wholeText, 20);
                     }
                 }
-                if (!cfg.pure && (cfg.depth > cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
+                if (!cfg.pure && (cfg.depth >= cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
                     return isArray ? '<array[' + x.length + ']>' : '<object>';
                 }
                 var pretty = cfg.pretty ? true : false;
