@@ -52,9 +52,7 @@
                         return $global.property (name, { value: v, writable: false }, cfg) }
 
     $global.const ('$global', $global)
-    $global.const ('$platform', Object.freeze ({
-
-                                    engine:  p.engine,
+    $global.const ('$platform', {   engine:  p.engine,
                                     system:  p.system,
                                     device:  p.device,
                                     touch:   p.touch || false,
@@ -69,6 +67,6 @@
                                     NodeJS:  p.engine === 'node',
                                     iPad:    p.device === 'iPad',
                                     iPhone:  p.device === 'iPhone',
-                                    iOS:     p.system === 'iOS'              }))
+                                    iOS:     p.system === 'iOS'              })
 
 }) ();

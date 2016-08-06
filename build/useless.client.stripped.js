@@ -1469,7 +1469,7 @@
                     }, cfg);
                 };
                 $global.const('$global', $global);
-                $global.const('$platform', Object.freeze({
+                $global.const('$platform', {
                     engine: p.engine,
                     system: p.system,
                     device: p.device,
@@ -1484,7 +1484,7 @@
                     iPad: p.device === 'iPad',
                     iPhone: p.device === 'iPhone',
                     iOS: p.system === 'iOS'
-                }));
+                });
             }());
         }.call(exports, function () {
             return this;

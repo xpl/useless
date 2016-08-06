@@ -40,7 +40,30 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
+/******/ ((function(modules) {
+	// Check all modules for deduplicated modules
+	for(var i in modules) {
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "function": break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(this, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+				break;
+			default:
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			}
+		}
+	}
+	return modules;
+}([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -1985,9 +2008,7 @@
 	                        return $global.property (name, { value: v, writable: false }, cfg) }
 	
 	    $global.const ('$global', $global)
-	    $global.const ('$platform', Object.freeze ({
-	
-	                                    engine:  p.engine,
+	    $global.const ('$platform', {   engine:  p.engine,
 	                                    system:  p.system,
 	                                    device:  p.device,
 	                                    touch:   p.touch || false,
@@ -2002,7 +2023,7 @@
 	                                    NodeJS:  p.engine === 'node',
 	                                    iPad:    p.device === 'iPad',
 	                                    iPhone:  p.device === 'iPhone',
-	                                    iOS:     p.system === 'iOS'              }))
+	                                    iOS:     p.system === 'iOS'              })
 	
 	}) ();
 	
@@ -11033,22 +11054,22 @@
 
 	String.ify = __webpack_require__ (38)
 	
-	__webpack_require__ (41)
 	__webpack_require__ (42)
-	__webpack_require__ (44)
+	__webpack_require__ (43)
 	__webpack_require__ (45)
 	__webpack_require__ (46)
 	__webpack_require__ (47)
 	__webpack_require__ (48)
+	__webpack_require__ (49)
 	
-	jQuery = __webpack_require__ (49)
-	
-	__webpack_require__ (50)
+	jQuery = __webpack_require__ (50)
 	
 	__webpack_require__ (51)
+	
 	__webpack_require__ (52)
 	__webpack_require__ (53)
-	__webpack_require__ (57)
+	__webpack_require__ (54)
+	__webpack_require__ (58)
 	
 	/*  ======================================================================== */
 	
@@ -11070,7 +11091,7 @@
 	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
 	
 	const Object     = __webpack_require__ (39),
-	      bullet     = __webpack_require__ (13),
+	      bullet     = __webpack_require__ (41),
 	      isBrowser  = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
 	      maxOf      = (arr, pick) => arr.reduce ((max, s) => Math.max (max, pick ? pick (s) : s), 0),
 	      limitTo    = (s, n) => s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')),
@@ -11274,6 +11295,8 @@
 
 /***/ },
 /* 41 */
+13,
+/* 42 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -11691,7 +11714,7 @@
 
 
 /***/ },
-/* 42 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*  Uncaught exception handling facility
@@ -11737,7 +11760,7 @@
 	
 	    switch ($platform.engine) {
 	        case 'node':
-	            __webpack_require__ (43).on ('uncaughtException', globalUncaughtExceptionHandler); break;
+	            __webpack_require__ (44).on ('uncaughtException', globalUncaughtExceptionHandler); break;
 	
 	        case 'browser':
 	            window.addEventListener ('error', function (e) {
@@ -11754,7 +11777,7 @@
 	}) ()
 
 /***/ },
-/* 43 */
+/* 44 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -11892,7 +11915,7 @@
 
 
 /***/ },
-/* 44 */
+/* 45 */
 /***/ function(module, exports) {
 
 	/*  Provides call stack persistence across async call boundaries.
@@ -11955,7 +11978,7 @@
 	}) ()
 
 /***/ },
-/* 45 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(__filename) {"use strict";
@@ -12344,7 +12367,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
 
 /***/ },
-/* 46 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var bullet = __webpack_require__ (13)
@@ -12832,7 +12855,7 @@
 
 
 /***/ },
-/* 47 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13354,7 +13377,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 48 */
+/* 49 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -13407,7 +13430,7 @@
 
 
 /***/ },
-/* 49 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -23487,7 +23510,7 @@
 
 
 /***/ },
-/* 50 */
+/* 51 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -23898,7 +23921,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 51 */
+/* 52 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -24150,7 +24173,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 52 */
+/* 53 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -24226,16 +24249,16 @@
 	}) (jQuery);
 
 /***/ },
-/* 53 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(54);
+	var content = __webpack_require__(55);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(56)(content, {});
+	var update = __webpack_require__(57)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24252,10 +24275,10 @@
 	}
 
 /***/ },
-/* 54 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(55)();
+	exports = module.exports = __webpack_require__(56)();
 	// imports
 	
 	
@@ -24266,7 +24289,7 @@
 
 
 /***/ },
-/* 55 */
+/* 56 */
 /***/ function(module, exports) {
 
 	/*
@@ -24322,7 +24345,7 @@
 
 
 /***/ },
-/* 56 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -24574,16 +24597,16 @@
 
 
 /***/ },
-/* 57 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(58);
+	var content = __webpack_require__(59);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(56)(content, {});
+	var update = __webpack_require__(57)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -24600,10 +24623,10 @@
 	}
 
 /***/ },
-/* 58 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(55)();
+	exports = module.exports = __webpack_require__(56)();
 	// imports
 	
 	
@@ -24614,5 +24637,5 @@
 
 
 /***/ }
-/******/ ]);
+/******/ ])));
 //# sourceMappingURL=panic.js.map

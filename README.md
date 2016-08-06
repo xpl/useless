@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- `String.ify` function now available as a [separate NPM module](https://github.com/xpl/string.ify).
+
 - A wiki entry explaining the [Stream concept](https://github.com/xpl/useless/wiki/Stream). Thanks to @kroitor for the translation/adaptation from Russian!
 
 - Build system now utilizes **webpack** for squashing `require` imports. All external dependencies (e.g. underscore) now embedded in `useless.client.js` — no need to link them separately.

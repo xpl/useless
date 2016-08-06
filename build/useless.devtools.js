@@ -40,7 +40,30 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
+/******/ ((function(modules) {
+	// Check all modules for deduplicated modules
+	for(var i in modules) {
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "function": break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(this, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+				break;
+			default:
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			}
+		}
+	}
+	return modules;
+}([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -51,17 +74,17 @@
 	__webpack_require__ (8)
 	__webpack_require__ (9)
 	__webpack_require__ (10)
-	__webpack_require__ (11)
 	__webpack_require__ (12)
+	__webpack_require__ (13)
 	
-	jQuery = __webpack_require__ (13)
-	
-	__webpack_require__ (14)
+	jQuery = __webpack_require__ (14)
 	
 	__webpack_require__ (15)
+	
 	__webpack_require__ (16)
 	__webpack_require__ (17)
-	__webpack_require__ (21)
+	__webpack_require__ (18)
+	__webpack_require__ (22)
 	
 	/*  ======================================================================== */
 	
@@ -1375,7 +1398,7 @@
 /* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var bullet = __webpack_require__ (4)
+	var bullet = __webpack_require__ (11)
 	
 	_.hasLog = true
 	
@@ -1861,6 +1884,8 @@
 
 /***/ },
 /* 11 */
+4,
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1876,7 +1901,7 @@
 	------------------------------------------------------------------------
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
-	var bullet = __webpack_require__ (4)
+	var bullet = __webpack_require__ (11)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
 	 */
@@ -2382,7 +2407,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2435,7 +2460,7 @@
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12515,7 +12540,7 @@
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12926,7 +12951,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13178,7 +13203,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13254,16 +13279,16 @@
 	}) (jQuery);
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(18);
+	var content = __webpack_require__(19);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(20)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13280,10 +13305,10 @@
 	}
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(19)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	
@@ -13294,7 +13319,7 @@
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/*
@@ -13350,7 +13375,7 @@
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13602,16 +13627,16 @@
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(22);
+	var content = __webpack_require__(23);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(20)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13628,10 +13653,10 @@
 	}
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(19)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	
@@ -13642,5 +13667,5 @@
 
 
 /***/ }
-/******/ ]);
+/******/ ])));
 //# sourceMappingURL=useless.devtools.js.map
