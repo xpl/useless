@@ -116,6 +116,8 @@ _.propertyOf = function (obj) { return function (prop) { return obj[prop] } } //
 
 # function.js
 
+[Source Reference](https://github.com/xpl/useless/blob/master/base/tier0/function.js)
+
 Various function-centric utility.
 
 ## arity
