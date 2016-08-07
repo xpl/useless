@@ -1879,9 +1879,6 @@
         }
     },
     function (module, exports) {
-        _.asString = function (what) {
-            return what + '';
-        };
         _.typeOf = function (what) {
             return typeof what;
         };
@@ -3408,14 +3405,6 @@
                     return arr;
                 })
             });
-            _.zap = function (firstArg) {
-                var zippo = _.last(arguments);
-                return _.reduce(_.rest(_.initial(arguments)), function (memo, row) {
-                    return _.times(Math.max(memo.length, row.length), function (i) {
-                        return zippo(memo[i], row[i]);
-                    });
-                }, firstArg);
-            };
         }
     },
     function (module, exports) {

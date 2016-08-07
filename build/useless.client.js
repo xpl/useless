@@ -2510,8 +2510,6 @@
 	/*  Basic utility for writing data-crunching functional expressions.
 	    ======================================================================== */
 	
-	_.asString = function (what) { return what + '' }
-	
 	_.typeOf = function (what) {
 	                return typeof what }
 	
@@ -4965,7 +4963,6 @@
 	                                        
 	    $assert ([[1], [[2], 3], 4].flat,         [1, [2], 3, 4])
 	    $assert ([[1,2,3], [4,5,6]].zip (_.sum),  [5,7,9])
-	    $assert (_.zap ([1,2,3], [4,5,6], _.sum), [5,7,9])
 	
 	    $assert (['a','b','c'].swap (1,2), ['a','c','b']) // NOTE: mutates original
 	
@@ -5063,12 +5060,7 @@
 	            arr[indexA] = b
 	            arr[indexB] = a
 	            return arr }) })
-	
-	    _.zap = function (firstArg) { /* (arg1..argN fn) syntax */
-	        var zippo = _.last (arguments)
-	        return _.reduce (_.rest (_.initial (arguments)), function (memo, row) {
-	                        return _.times (Math.max (memo.length, row.length), function (i) {
-	                            return zippo (memo[i], row[i]) }) }, firstArg) } })
+	})
 
 
 /***/ },
@@ -7655,6 +7647,7 @@
 	exports.array = toposort
 	
 	function toposort(nodes, edges) {
+	
 	  var cursor = nodes.length
 	    , sorted = new Array(cursor)
 	    , visited = {}
@@ -7667,6 +7660,7 @@
 	  return sorted
 	
 	  function visit(node, i, predecessors) {
+	
 	    if(predecessors.indexOf(node) >= 0) {
 	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
 	    }
@@ -7682,6 +7676,7 @@
 	    var outgoing = edges.filter(function(edge){
 	      return edge[0] === node
 	    })
+	
 	    if (i = outgoing.length) {
 	      var preds = predecessors.concat(node)
 	      do {

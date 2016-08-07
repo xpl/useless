@@ -21,7 +21,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- `String.ify` function now available as a [separate NPM module](https://github.com/xpl/string.ify).
+- `asTable` function now available as a separate NPM module: [as-table](https://www.npmjs.com/package/as-table).
+
+- `String.ify` function now available as a separate NPM module: [string.ify](https://www.npmjs.com/package/string.ify).
 
 - A wiki entry explaining the [Stream concept](https://github.com/xpl/useless/wiki/Stream). Thanks to @kroitor for the translation/adaptation from Russian!
 

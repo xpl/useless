@@ -50,18 +50,18 @@
 	__webpack_require__ (6)
 	__webpack_require__ (8)
 	__webpack_require__ (9)
-	__webpack_require__ (10)
 	__webpack_require__ (11)
 	__webpack_require__ (12)
+	__webpack_require__ (13)
 	
-	jQuery = __webpack_require__ (13)
-	
-	__webpack_require__ (14)
+	jQuery = __webpack_require__ (14)
 	
 	__webpack_require__ (15)
+	
 	__webpack_require__ (16)
 	__webpack_require__ (17)
-	__webpack_require__ (21)
+	__webpack_require__ (18)
+	__webpack_require__ (22)
 	
 	/*  ======================================================================== */
 	
@@ -82,7 +82,7 @@
 
 	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
 	
-	const Object     = __webpack_require__ (2),
+	const O          = __webpack_require__ (2),
 	      bullet     = __webpack_require__ (4),
 	      isBrowser  = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
 	      maxOf      = (arr, pick) => arr.reduce ((max, s) => Math.max (max, pick ? pick (s) : s), 0),
@@ -91,21 +91,22 @@
 	
 	const stringify = module.exports = function (x, cfg) {
 	
-	    cfg = Object.assign ({ pretty: 'auto' }, cfg)
+	    cfg = O.assign ({ pretty: 'auto' }, cfg)
 	
 	    if (cfg.pretty === 'auto') {
-	        var oneLine = stringify (x, Object.assign ({}, cfg, { pretty: false, siblings: new Map () }))
+	        var oneLine = stringify (x, O.assign ({}, cfg, { pretty: false, siblings: new Map () }))
 	        if (oneLine.length <= 80) {
 	            return oneLine }
 	        else {
-	            return stringify (x, Object.assign ({}, cfg, { pretty: true, siblings: new Map () })) } }
+	            return stringify (x, O.assign ({}, cfg, { pretty: true, siblings: new Map () })) } }
 	
-	    cfg = Object.assign ({
+	    cfg = O.assign ({
 	
 	                parents: new Set (),
 	                siblings: new Map (),
 	                depth: 0,
 	                pure: false,
+	                color: false,
 	                maxDepth: 5,
 	                maxArrayLength: 60,
 	                maxStringLength: 60,
@@ -114,7 +115,7 @@
 	
 	            }, cfg, {
 	
-	                goDeeper: (y, newCfg) => stringify (y, Object.assign ({}, cfg, { depth: cfg.depth + 1 }, newCfg))
+	                goDeeper: (y, newCfg) => stringify (y, O.assign ({}, cfg, { depth: cfg.depth + 1 }, newCfg))
 	
 	            })
 	
@@ -170,7 +171,7 @@
 	        return String (x) } }
 	
 	stringify.oneLine = function (x, cfg) {
-	                        return stringify (x, Object.assign (cfg || {}, { pretty: false })) }
+	                        return stringify (x, O.assign (cfg || {}, { pretty: false })) }
 	
 	stringify.object = function (x, cfg) {
 	
@@ -196,7 +197,7 @@
 	        return isArray ? '<array[' + x.length + ']>' : '<object>' }
 	
 	    var pretty   = cfg.pretty ? true : false
-	    var entries  = Object.entries (x)
+	    var entries  = O.entries (x)
 	    var oneLine  = !pretty || (entries.length < 2)
 	    var quoteKey = cfg.json ? (k => '"' + k + '"') : (k => k)
 	
@@ -206,8 +207,8 @@
 	                                    var max = maxOf (strings, s => s.length)
 	                                    return strings.map (s => ' '.repeat (max - s.length) + s) }
 	
-	        var values        = Object.values (x)
-	        var printedKeys   = alignStringsRight (Object.keys (x).map (k => quoteKey (k) + ': '))
+	        var values        = O.values (x)
+	        var printedKeys   = alignStringsRight (O.keys (x).map (k => quoteKey (k) + ': '))
 	        var printedValues = values.map (cfg.goDeeper)
 	
 	        var leftPaddings = printedValues.map (function (x, i) {
@@ -786,55 +787,14 @@
 /***/ function(module, exports) {
 
 	// shim for using process in browser
+	
 	var process = module.exports = {};
-	
-	// cached from whatever global is present so that test runners that stub it
-	// don't break things.  But we need to wrap it in a try catch in case it is
-	// wrapped in strict mode code which doesn't define any globals.  It's inside a
-	// function because try/catches deoptimize in certain engines.
-	
-	var cachedSetTimeout;
-	var cachedClearTimeout;
-	
-	(function () {
-	    try {
-	        cachedSetTimeout = setTimeout;
-	    } catch (e) {
-	        cachedSetTimeout = function () {
-	            throw new Error('setTimeout is not defined');
-	        }
-	    }
-	    try {
-	        cachedClearTimeout = clearTimeout;
-	    } catch (e) {
-	        cachedClearTimeout = function () {
-	            throw new Error('clearTimeout is not defined');
-	        }
-	    }
-	} ())
-	function runTimeout(fun) {
-	    if (cachedSetTimeout === setTimeout) {
-	        return setTimeout(fun, 0);
-	    } else {
-	        return cachedSetTimeout.call(null, fun, 0);
-	    }
-	}
-	function runClearTimeout(marker) {
-	    if (cachedClearTimeout === clearTimeout) {
-	        clearTimeout(marker);
-	    } else {
-	        cachedClearTimeout.call(null, marker);
-	    }
-	}
 	var queue = [];
 	var draining = false;
 	var currentQueue;
 	var queueIndex = -1;
 	
 	function cleanUpNextTick() {
-	    if (!draining || !currentQueue) {
-	        return;
-	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);
@@ -850,7 +810,7 @@
 	    if (draining) {
 	        return;
 	    }
-	    var timeout = runTimeout(cleanUpNextTick);
+	    var timeout = setTimeout(cleanUpNextTick);
 	    draining = true;
 	
 	    var len = queue.length;
@@ -867,7 +827,7 @@
 	    }
 	    currentQueue = null;
 	    draining = false;
-	    runClearTimeout(timeout);
+	    clearTimeout(timeout);
 	}
 	
 	process.nextTick = function (fun) {
@@ -879,7 +839,7 @@
 	    }
 	    queue.push(new Item(fun, args));
 	    if (queue.length === 1 && !draining) {
-	        runTimeout(drainQueue);
+	        setTimeout(drainQueue, 0);
 	    }
 	};
 	
@@ -1297,6 +1257,37 @@
 	
 	}) ();
 	
+	/*  Stringifiers
+	 */
+	
+	const asTable = __webpack_require__ (10)
+	
+	CallStack.prototype[Symbol.for ('String.ify')] = function (stringify) {
+	    return asTable (stack.map (
+	                    function (entry) { return [
+	                        '\t' + 'at ' + entry.calleeShort.first (30),
+	                        _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
+	                        (entry.source || '').first (80)] }))
+	}
+	
+	Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
+	
+	    try {
+	        var stack   = CallStack.fromErrorWithAsync (this).offset (e.stackOffset || 0).clean
+	        var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
+	
+	        return ('[EXCEPTION] ' + why +
+	
+	            (this.notMatching && (_.map (_.coerceToArray (this.notMatching || []),
+	                                    stringify.goDeeper.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+	
+	            '\n\n') + stringify.goDeeper (stack) + '\n' }
+	
+	    catch (sub) {
+	        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
+	            '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' }
+	}
+	
 	/*  Reflection for $prototypes
 	 */
 	
@@ -1373,9 +1364,91 @@
 
 /***/ },
 /* 10 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	const
+	
+	O = Object,
+	
+	asColumns = (rows, cfg_) => {
+	    
+	    if (rows.length === 0) {
+	        return [] }
+	
+	    else { const
+	
+	        zip = (arrs, f) => arrs.reduce ((a, b) => b.map ((b, i) => [...a[i] || [], b]), []).map (args => f (...args)),
+	
+	    /*  Convert cell data to string (converting multiline text to singleline) */
+	
+	        cells           = rows.map (r => r.map (c => (c === undefined) ? '' : String (c).replace (/\n/g, '\\n'))),
+	
+	    /*  Compute column widths (per row) and max widths (per column)     */
+	
+	        cellWidths      = cells.map (r => r.map (c => c.length)),
+	        maxWidths       = zip (cellWidths, Math.max),
+	
+	    /*  Default config     */
+	
+	        cfg             = O.assign ({
+	                            delimiter: '  ',
+	                            minColumnWidths: maxWidths.map (x => 0),
+	                            maxTotalWidth: 0 }, cfg_),
+	
+	    /*  Project desired column widths, taking maxTotalWidth and minColumnWidths in account.     */
+	
+	        totalWidth      = maxWidths.reduce ((a, b) => a + b, 0),
+	        relativeWidths  = maxWidths.map (w => w / totalWidth),
+	        maxTotalWidth   = cfg.maxTotalWidth - (cfg.delimiter.length * maxWidths.length),
+	        excessWidth     = Math.max (0, totalWidth - maxTotalWidth),
+	        computedWidths  = zip ([cfg.minColumnWidths, maxWidths, relativeWidths],
+	                            (min, max, relative) => Math.max (min, Math.floor (max - excessWidth * relative))),
+	
+	    /*  This is how many symbols we should pad or cut (per column).  */
+	
+	        restCellWidths  = cellWidths.map (widths => zip ([computedWidths, widths], (a, b) => a - b))
+	
+	    /*  Perform final composition.   */
+	
+	        return zip ([cells, restCellWidths], (a, b) =>
+	                zip ([a, b], (str, w) => (w >= 0)
+	                                            ? (str + ' '.repeat (w))
+	                                            : (str.slice (0, w))).join (cfg.delimiter))
+	    }
+	},
+	
+	configure = cfg =>
+	            arr => {
+	
+	/*  Print arrays  */
+	
+	    if (arr[0] && Array.isArray (arr[0]))
+	        return asColumns (arr, cfg).join ('\n')
+	
+	/*  Print objects   */
+	
+	    const colNames = [...new Set (arr.map (O.keys).reduce ((a, b) => [...a, ...b]))],
+	          columns  = [colNames, ...arr.map (o => colNames.map (key => o[key]))],
+	          lines    = asColumns (columns, O.assign ({ minColumnWidths: colNames.map (n => n.length) }, cfg))
+	
+	    return [lines[0], '-'.repeat (lines[0].length), ...lines.slice (1)].join ('\n')
+	}
+	
+	module.exports = O.assign (configure ({ maxTotalWidth: 120 }), { configure: configure })
+	
+	
+
+
+/***/ },
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var bullet = __webpack_require__ (4)
+	"use strict";
+	
+	const bullet  = __webpack_require__ (4),
+	      asTable = __webpack_require__ (10)
 	
 	_.hasLog = true
 	
@@ -1383,7 +1456,7 @@
 	
 	    basic: function () {
 	
-	        log         ('log (x)')         //  Basic API
+	        log            ('log (x)')         //  Basic API
 	
 	        log.green      ('log.green')       //  Use for plain colored output.
 	        log.boldGreen  ('log.boldGreen')
@@ -1469,7 +1542,7 @@
 	
 	    /*  Basic API
 	     */
-	    log = function () {
+	    $global.log = function () {
 	        return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
 	
 	    Config: $prototype (),
@@ -1548,7 +1621,7 @@
 	                log.write.apply (null, args); done () }) },
 	
 	    writeBackend: function () {
-	        return arguments.callee.value || log.impl.defaultWriteBackend },
+	        return log.writeBackend.value || log.impl.defaultWriteBackend },
 	
 	    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
 	                     var result = what (); log.impl.configStack.pop ();
@@ -1730,7 +1803,8 @@
 	
 	            else if (typeof what === 'object') {
 	                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
-	                    return log.asTable (what) }
+	                    return asTable (what) }
+	
 	                else {
 	                    return String.ify (what, cfg) } }
 	                    
@@ -1754,11 +1828,11 @@
 	                    '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
 	
 	        stringifyCallStack: function (stack) {
-	            return log.columns (stack.map (
+	            return asTable (stack.map (
 	                function (entry) { return [
 	                    '\t' + 'at ' + entry.calleeShort.first (30),
 	                    _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-	                    (entry.source || '').first (80)] })).join ('\n') } } })
+	                    (entry.source || '').first (80)] })) } } })
 	
 	
 	/*  Printing API
@@ -1797,61 +1871,8 @@
 	
 	/*  Higher order API
 	 */
-	logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
+	$global.logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
 	
-	
-	/*  Experimental formatting shit.
-	 */
-	_.extend (log, {
-	
-	    asTable: function (arrayOfObjects) {
-	        var columnsDef  = arrayOfObjects.map (_.keys.arity1).reduce (_.union.arity2, []) // makes ['col1', 'col2', 'col3'] by unifying objects keys
-	        var lines       = log.columns ( [columnsDef].concat (
-	                                            _.map (arrayOfObjects, function (object) {
-	                                                                        return columnsDef.map (_.propertyOf (object)) })), {
-	                                        maxTotalWidth: 120,
-	                                        minColumnWidths: columnsDef.map (_.property ('length')) })
-	
-	        return [lines[0], log.thinLine[0].repeats (lines[0].length), _.rest (lines)].flat.join ('\n') },
-	
-	    /*  Layout algorithm for ASCII sheets (v 2.0)
-	     */
-	    columns: function (rows, cfg_) {
-	        if (rows.length === 0) {
-	            return [] }
-	        else {
-	            
-	            /*  convert column data to string, taking first line
-	             */
-	            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return _.asString (col).split ('\n')[0] }))
-	
-	            /*  compute column widths (per row) and max widths (per column)
-	             */
-	            var columnWidths    = rowsToStr.map (_.map.tails2 (_.property ('length')))
-	            var maxWidths       = columnWidths.zip (_.largest)
-	
-	            /*  default config
-	             */
-	            var cfg             = cfg_ || { minColumnWidths: maxWidths, maxTotalWidth: 0 }
-	
-	            /*  project desired column widths, taking maxTotalWidth and minColumnWidths in account
-	             */
-	            var totalWidth      = _.reduce (maxWidths, _.sum, 0)
-	            var relativeWidths  = _.map (maxWidths, _.muls (1.0 / totalWidth))
-	            var excessWidth     = Math.max (0, totalWidth - cfg.maxTotalWidth)
-	            var computedWidths  = _.map (maxWidths, function (w, i) {
-	                                                        return Math.max (cfg.minColumnWidths[i], Math.floor (w - excessWidth * relativeWidths[i])) })
-	
-	            /*  this is how many symbols we should pad or cut (per column)
-	             */
-	            var restWidths      = columnWidths.map (function (widths) { return [computedWidths, widths].zip (_.subtract) })
-	
-	            /*  perform final composition
-	             */
-	            return [rowsToStr, restWidths].zip (
-	                 _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
-	                 .then (_.joinsWith ('  ')) ) } }
-	})
 	
 	if ($platform.NodeJS) {
 	    module.exports = log }
@@ -1860,7 +1881,7 @@
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1876,7 +1897,8 @@
 	------------------------------------------------------------------------
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
-	var bullet = __webpack_require__ (4)
+	var bullet  = __webpack_require__ (4),
+	    asTable = __webpack_require__ (10)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
 	 */
@@ -2184,8 +2206,8 @@
 	                    if ('notMatching' in e) { var notMatching = _.coerceToArray (e.notMatching)
 	                        if (e.asColumns) {
 	                            log.orange (
-	                                log.columns (_.map (notMatching, function (obj) {
-	                                    return ['\t• ' + _.keys (obj)[0], String.ify (_.values (obj)[0])] })).join ('\n')) }
+	                                asTable (_.map (notMatching, function (obj) {
+	                                    return ['\t• ' + _.keys (obj)[0], String.ify (_.values (obj)[0])] }))) }
 	                        else {
 	                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (bullet.$ ('\t• ')))
 	                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
@@ -2382,7 +2404,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2435,7 +2457,7 @@
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12515,7 +12537,7 @@
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12926,7 +12948,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13178,7 +13200,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13254,23 +13276,23 @@
 	}) (jQuery);
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(18);
+	var content = __webpack_require__(19);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(20)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../node_modules/css-loader/index.js!./Panic.css", function() {
-				var newContent = require("!!./../node_modules/css-loader/index.js!./Panic.css");
+			module.hot.accept("!!./../../css-loader/index.js!./Panic.css", function() {
+				var newContent = require("!!./../../css-loader/index.js!./Panic.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -13280,10 +13302,10 @@
 	}
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(19)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	
@@ -13294,7 +13316,7 @@
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/*
@@ -13350,7 +13372,7 @@
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13602,23 +13624,23 @@
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(22);
+	var content = __webpack_require__(23);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(20)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../node_modules/css-loader/index.js!./LogOverlay.css", function() {
-				var newContent = require("!!./../node_modules/css-loader/index.js!./LogOverlay.css");
+			module.hot.accept("!!./../../css-loader/index.js!./LogOverlay.css", function() {
+				var newContent = require("!!./../../css-loader/index.js!./LogOverlay.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -13628,10 +13650,10 @@
 	}
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(19)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	

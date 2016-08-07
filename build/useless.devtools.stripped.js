@@ -18,31 +18,6 @@
     __webpack_require__.c = installedModules;
     __webpack_require__.p = '';
     return __webpack_require__(0);
-}(function (modules) {
-    for (var i in modules) {
-        if (Object.prototype.hasOwnProperty.call(modules, i)) {
-            switch (typeof modules[i]) {
-            case 'function':
-                break;
-            case 'object':
-                modules[i] = function (_m) {
-                    var args = _m.slice(1), fn = modules[_m[0]];
-                    return function (a, b, c) {
-                        fn.apply(this, [
-                            a,
-                            b,
-                            c
-                        ].concat(args));
-                    };
-                }(modules[i]);
-                break;
-            default:
-                modules[i] = modules[modules[i]];
-                break;
-            }
-        }
-    }
-    return modules;
 }([
     function (module, exports, __webpack_require__) {
         String.ify = __webpack_require__(1);
@@ -50,7 +25,7 @@
         __webpack_require__(6);
         __webpack_require__(8);
         __webpack_require__(9);
-        __webpack_require__(10);
+        __webpack_require__(11);
         __webpack_require__(12);
         __webpack_require__(13);
         jQuery = __webpack_require__(14);
@@ -69,34 +44,35 @@
     function (module, exports, __webpack_require__) {
         (function (global) {
             'use strict';
-            const Object = __webpack_require__(2), bullet = __webpack_require__(4), isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, maxOf = (arr, pick) => arr.reduce((max, s) => Math.max(max, pick ? pick(s) : s), 0), limitTo = (s, n) => s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026'), isInteger = Number.isInteger || (value => typeof value === 'number' && isFinite(value) && Math.floor(value) === value);
+            const O = __webpack_require__(2), bullet = __webpack_require__(4), isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, maxOf = (arr, pick) => arr.reduce((max, s) => Math.max(max, pick ? pick(s) : s), 0), limitTo = (s, n) => s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026'), isInteger = Number.isInteger || (value => typeof value === 'number' && isFinite(value) && Math.floor(value) === value);
             const stringify = module.exports = function (x, cfg) {
-                cfg = Object.assign({ pretty: 'auto' }, cfg);
+                cfg = O.assign({ pretty: 'auto' }, cfg);
                 if (cfg.pretty === 'auto') {
-                    var oneLine = stringify(x, Object.assign({}, cfg, {
+                    var oneLine = stringify(x, O.assign({}, cfg, {
                         pretty: false,
                         siblings: new Map()
                     }));
                     if (oneLine.length <= 80) {
                         return oneLine;
                     } else {
-                        return stringify(x, Object.assign({}, cfg, {
+                        return stringify(x, O.assign({}, cfg, {
                             pretty: true,
                             siblings: new Map()
                         }));
                     }
                 }
-                cfg = Object.assign({
+                cfg = O.assign({
                     parents: new Set(),
                     siblings: new Map(),
                     depth: 0,
                     pure: false,
+                    color: false,
                     maxDepth: 5,
                     maxArrayLength: 60,
                     maxStringLength: 60,
                     precision: undefined,
                     formatter: undefined
-                }, cfg, { goDeeper: (y, newCfg) => stringify(y, Object.assign({}, cfg, { depth: cfg.depth + 1 }, newCfg)) });
+                }, cfg, { goDeeper: (y, newCfg) => stringify(y, O.assign({}, cfg, { depth: cfg.depth + 1 }, newCfg)) });
                 var customFormat = cfg.formatter && cfg.formatter(x, cfg);
                 if (typeof customFormat === 'string') {
                     return customFormat;
@@ -133,7 +109,7 @@
                 }
             };
             stringify.oneLine = function (x, cfg) {
-                return stringify(x, Object.assign(cfg || {}, { pretty: false }));
+                return stringify(x, O.assign(cfg || {}, { pretty: false }));
             };
             stringify.object = function (x, cfg) {
                 if (x instanceof Set) {
@@ -153,7 +129,7 @@
                     return isArray ? '<array[' + x.length + ']>' : '<object>';
                 }
                 var pretty = cfg.pretty ? true : false;
-                var entries = Object.entries(x);
+                var entries = O.entries(x);
                 var oneLine = !pretty || entries.length < 2;
                 var quoteKey = cfg.json ? k => '"' + k + '"' : k => k;
                 if (pretty) {
@@ -161,8 +137,8 @@
                         var max = maxOf(strings, s => s.length);
                         return strings.map(s => ' '.repeat(max - s.length) + s);
                     };
-                    var values = Object.values(x);
-                    var printedKeys = alignStringsRight(Object.keys(x).map(k => quoteKey(k) + ': '));
+                    var values = O.values(x);
+                    var printedKeys = alignStringsRight(O.keys(x).map(k => quoteKey(k) + ': '));
                     var printedValues = values.map(cfg.goDeeper);
                     var leftPaddings = printedValues.map(function (x, i) {
                         return x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0;
@@ -272,214 +248,7 @@
                 }
             }
         });
-        _.deferTest('assert.js bootstrap', function () {
-            $assert(true);
-            $assert(_.assert === _.assertions.assert);
-            $assertNot(false);
-            $assertNot(5);
-            $assert(2 + 2, 2 * 2, 4);
-            $assert({
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            }, {
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            });
-            $assert({
-                foo: { bar: 1 },
-                baz: 2
-            }, {
-                baz: 2,
-                foo: { bar: 1 }
-            });
-            $assertNot(2 + 2, 5);
-            $assertMatches({
-                foo: 1,
-                bar: 2
-            }, { foo: 1 });
-            if (_.hasStdlib) {
-                $assertMatches({
-                    foo: [
-                        1,
-                        2
-                    ],
-                    bar: 3
-                }, { foo: [1] });
-            }
-            if (_.hasStdlib) {
-                $assertMatches('123', /[0-9]+/);
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches(42, 'number');
-                $assertFails(function () {
-                    $assertTypeMatches('foo', 'number');
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches([
-                    1,
-                    2
-                ], []);
-                $assertTypeMatches([], []);
-                $assertTypeMatches([
-                    1,
-                    2,
-                    3
-                ], ['number']);
-                $assertTypeMatches([], ['number']);
-                $assertFails(function () {
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        3
-                    ], ['string']);
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        'foo'
-                    ], ['number']);
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches({
-                    foo: 42,
-                    bar: {
-                        even: 4,
-                        many: [
-                            'foo',
-                            'bar'
-                        ]
-                    }
-                }, {
-                    foo: 'number',
-                    qux: 'undefined',
-                    bar: {
-                        even: function (n) {
-                            return n % 2 === 0;
-                        },
-                        many: ['string']
-                    }
-                });
-            }
-            if (_.hasOOP) {
-                var Foo = $prototype(), Bar = $prototype();
-                $assertTypeMatches({
-                    foo: new Foo(),
-                    bar: new Bar()
-                }, {
-                    foo: Foo,
-                    bar: Bar
-                });
-                $assertFails(function () {
-                    $assertTypeMatches(new Bar(), Foo);
-                });
-            }
-            ;
-            if (_.hasStdlib) {
-                var testF = function (_777, _foo_bar_baz, notInvolved) {
-                    $assertArguments(arguments);
-                };
-                testF(777, 'foo bar baz');
-                $assertFails(function () {
-                    testF(777, 42);
-                });
-            }
-            $assertThrows(function () {
-                throw 42;
-            });
-            $assertNotThrows(function () {
-            });
-            $assertThrows(function () {
-                throw 42;
-            }, 42);
-            $assertThrows(function () {
-                throw new Error('42');
-            }, _.matches({ message: '42' }));
-            $assertFails(function () {
-                $assertThrows(function () {
-                    throw 42;
-                }, 24);
-                $assertThrows(function () {
-                    throw new Error('42');
-                }, _.matches({ message: '24' }));
-            });
-            $assertEveryCalled(function (a, b, c) {
-                a();
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalledOnce(function (a, b, c) {
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalled(function (x__3) {
-                x__3();
-                x__3();
-                x__3();
-            });
-            if (_.hasStdlib) {
-                $assertCalledWithArguments([
-                    'foo',
-                    [
-                        'foo',
-                        'bar'
-                    ]
-                ], function (fn) {
-                    fn('foo');
-                    fn('foo', 'bar');
-                });
-            }
-            $assertCPS(function (then) {
-                then('foo', 'bar');
-            }, [
-                'foo',
-                'bar'
-            ]);
-            $assertCPS(function (then) {
-                then('foo');
-            }, 'foo');
-            $assertCPS(function (then) {
-                then();
-            });
-            $assertFails(function () {
-                $fail;
-                $stub;
-                $assert('not true');
-                $assert({
-                    foo: 1,
-                    bar: 2
-                }, { foo: 1 });
-                $assert([
-                    1,
-                    2,
-                    3,
-                    4
-                ], [
-                    1,
-                    2,
-                    3
-                ]);
-                $assert(['foo'], {
-                    0: 'foo',
-                    length: 1
-                });
-                $assertFails(function () {
-                });
-            });
-            if ($assert === _.assertions.assert) {
-                $assertThrows(function () {
-                    $fail;
-                });
-            }
-        }, function () {
+        (function () {
             var assertImpl = function (positive) {
                 return function (__) {
                     var args = [].splice.call(arguments, 0);
@@ -684,7 +453,7 @@
                 var define = _[name].length === 0 ? $global.property : $global.const;
                 define('$' + name, _[name], { configurable: true });
             });
-        });
+        }());
     },
     function (module, exports, __webpack_require__) {
         (function () {
@@ -749,46 +518,11 @@
     },
     function (module, exports) {
         var process = module.exports = {};
-        var cachedSetTimeout;
-        var cachedClearTimeout;
-        (function () {
-            try {
-                cachedSetTimeout = setTimeout;
-            } catch (e) {
-                cachedSetTimeout = function () {
-                    throw new Error('setTimeout is not defined');
-                };
-            }
-            try {
-                cachedClearTimeout = clearTimeout;
-            } catch (e) {
-                cachedClearTimeout = function () {
-                    throw new Error('clearTimeout is not defined');
-                };
-            }
-        }());
-        function runTimeout(fun) {
-            if (cachedSetTimeout === setTimeout) {
-                return setTimeout(fun, 0);
-            } else {
-                return cachedSetTimeout.call(null, fun, 0);
-            }
-        }
-        function runClearTimeout(marker) {
-            if (cachedClearTimeout === clearTimeout) {
-                clearTimeout(marker);
-            } else {
-                cachedClearTimeout.call(null, marker);
-            }
-        }
         var queue = [];
         var draining = false;
         var currentQueue;
         var queueIndex = -1;
         function cleanUpNextTick() {
-            if (!draining || !currentQueue) {
-                return;
-            }
             draining = false;
             if (currentQueue.length) {
                 queue = currentQueue.concat(queue);
@@ -803,7 +537,7 @@
             if (draining) {
                 return;
             }
-            var timeout = runTimeout(cleanUpNextTick);
+            var timeout = setTimeout(cleanUpNextTick);
             draining = true;
             var len = queue.length;
             while (len) {
@@ -819,7 +553,7 @@
             }
             currentQueue = null;
             draining = false;
-            runClearTimeout(timeout);
+            clearTimeout(timeout);
         }
         process.nextTick = function (fun) {
             var args = new Array(arguments.length - 1);
@@ -830,7 +564,7 @@
             }
             queue.push(new Item(fun, args));
             if (queue.length === 1 && !draining) {
-                runTimeout(drainQueue);
+                setTimeout(drainQueue, 0);
             }
         };
         function Item(fun, array) {
@@ -1201,6 +935,29 @@
                     return local ? local + '/' : $uselessPath;
                 }());
             }());
+            const asTable = __webpack_require__(10);
+            CallStack.prototype[Symbol.for('String.ify')] = function (stringify) {
+                return asTable(stack.map(function (entry) {
+                    return [
+                        '\t' + 'at ' + entry.calleeShort.first(30),
+                        _.nonempty([
+                            entry.fileShort,
+                            ':',
+                            entry.line
+                        ]).join(''),
+                        (entry.source || '').first(80)
+                    ];
+                }));
+            };
+            Error.prototype[Symbol.for('String.ify')] = function (stringify) {
+                try {
+                    var stack = CallStack.fromErrorWithAsync(this).offset(e.stackOffset || 0).clean;
+                    var why = (e.message || '').replace(/\r|\n/g, '').trimmed.limitedTo(120);
+                    return '[EXCEPTION] ' + why + (this.notMatching && _.map(_.coerceToArray(this.notMatching || []), stringify.goDeeper.then(_.prepends('\t'))).join('\n') + '\n\n' || '') + '\n\n' + stringify.goDeeper(stack) + '\n';
+                } catch (sub) {
+                    return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n';
+                }
+            };
             _.tests.prototypeMeta = {
                 'Prototype.$meta': function (done) {
                     var Dummy = $prototype();
@@ -1268,110 +1025,59 @@
             });
         }.call(exports, '/index.js'));
     },
+    function (module, exports) {
+        'use strict';
+        const O = Object, asColumns = (rows, cfg_) => {
+                if (rows.length === 0) {
+                    return [];
+                } else {
+                    const zip = (arrs, f) => arrs.reduce((a, b) => b.map((b, i) => [
+                            ...a[i] || [],
+                            b
+                        ]), []).map(args => f(...args)), cells = rows.map(r => r.map(c => c === undefined ? '' : String(c).replace(/\n/g, '\\n'))), cellWidths = cells.map(r => r.map(c => c.length)), maxWidths = zip(cellWidths, Math.max), cfg = O.assign({
+                            delimiter: '  ',
+                            minColumnWidths: maxWidths.map(x => 0),
+                            maxTotalWidth: 0
+                        }, cfg_), totalWidth = maxWidths.reduce((a, b) => a + b, 0), relativeWidths = maxWidths.map(w => w / totalWidth), maxTotalWidth = cfg.maxTotalWidth - cfg.delimiter.length * maxWidths.length, excessWidth = Math.max(0, totalWidth - maxTotalWidth), computedWidths = zip([
+                            cfg.minColumnWidths,
+                            maxWidths,
+                            relativeWidths
+                        ], (min, max, relative) => Math.max(min, Math.floor(max - excessWidth * relative))), restCellWidths = cellWidths.map(widths => zip([
+                            computedWidths,
+                            widths
+                        ], (a, b) => a - b));
+                    return zip([
+                        cells,
+                        restCellWidths
+                    ], (a, b) => zip([
+                        a,
+                        b
+                    ], (str, w) => w >= 0 ? str + ' '.repeat(w) : str.slice(0, w)).join(cfg.delimiter));
+                }
+            }, configure = cfg => arr => {
+                if (arr[0] && Array.isArray(arr[0]))
+                    return asColumns(arr, cfg).join('\n');
+                const colNames = [...new Set(arr.map(O.keys).reduce((a, b) => [
+                            ...a,
+                            ...b
+                        ]))], columns = [
+                        colNames,
+                        ...arr.map(o => colNames.map(key => o[key]))
+                    ], lines = asColumns(columns, O.assign({ minColumnWidths: colNames.map(n => n.length) }, cfg));
+                return [
+                    lines[0],
+                    '-'.repeat(lines[0].length),
+                    ...lines.slice(1)
+                ].join('\n');
+            };
+        module.exports = O.assign(configure({ maxTotalWidth: 120 }), { configure: configure });
+    },
     function (module, exports, __webpack_require__) {
-        var bullet = __webpack_require__(11);
+        'use strict';
+        const bullet = __webpack_require__(4), asTable = __webpack_require__(10);
         _.hasLog = true;
-        _.tests.log = {
-            basic: function () {
-                log('log (x)');
-                log.green('log.green');
-                log.boldGreen('log.boldGreen');
-                log.darkGreen('log.darkGreen');
-                log.blue('log.blue');
-                log.boldBlue('log.boldBlue');
-                log.darkBlue('log.darkBlue');
-                log.orange('log.orange');
-                log.boldOrange('log.boldOrange');
-                log.darkOrange('log.darkOrange');
-                log.red('log.red');
-                log.boldRed('log.boldRed');
-                log.darkRed('log.darkRed');
-                log.pink('log.pink');
-                log.boldPink('log.boldPink');
-                log.darkPink('log.darkPink');
-                log.margin();
-                log.margin();
-                log.bright('log.bright');
-                log.dark('log.dark');
-                log.margin();
-                log.success('log.success');
-                log.ok('log.ok');
-                log.g('log.g');
-                log.gg('log.gg');
-                log.info('log.info');
-                log.i('log.i');
-                log.ii('log.ii');
-                log.warning('log.warning');
-                log.warn('log.warn');
-                log.w('log.w');
-                log.ww('log.ww');
-                log.error('log.error');
-                log.e('log.e');
-                log.ee('log.ee');
-                $assert(log('log (x) === x'), 'log (x) === x');
-                log.info(log.stackOffset(2), 'log.info (log.config ({ stackOffset: 2 }), ...)');
-                log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
-                log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
-                log.write(log.boldLine);
-                log.write(log.thinLine);
-                log.write(log.line);
-                log.write(log.indent(1), [
-                    'You can set indentation',
-                    'that is nicely handled',
-                    'in case of multiline text'
-                ].join('\n'));
-                log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
-                log.orange(log.config({
-                    indent: 2,
-                    table: true
-                }), [
-                    {
-                        field: 'line',
-                        matches: false,
-                        valueType: 'string',
-                        contractType: 'number'
-                    },
-                    {
-                        field: 'column',
-                        matches: true,
-                        valueType: 'string',
-                        contractType: 'number'
-                    }
-                ]);
-                log.write('\nObject:', {
-                    foo: 1,
-                    bar: 2,
-                    qux: 3
-                });
-                log.write('Array:', [
-                    1,
-                    2,
-                    3
-                ]);
-                log.write('Function:', _.identity);
-                log.write('Complex object:', {
-                    foo: 1,
-                    bar: {
-                        qux: [
-                            1,
-                            2,
-                            3
-                        ],
-                        garply: _.identity
-                    }
-                }, '\n\n');
-                log.withConfig(log.indent(1), function () {
-                    log.pink('Config stack + scopes + higher order API test:');
-                    _.each([
-                        5,
-                        6,
-                        7
-                    ], logs.pink(log.indent(1), 'item = ', log.color.blue));
-                });
-                $assert(log(42), 42);
-            }
-        };
-        _.extend(log = function () {
+        ;
+        _.extend($global.log = function () {
             return log.write.apply(this, [log.config({
                     location: true,
                     stackOffset: 1
@@ -1573,7 +1279,7 @@
                 });
             },
             writeBackend: function () {
-                return arguments.callee.value || log.impl.defaultWriteBackend;
+                return log.writeBackend.value || log.impl.defaultWriteBackend;
             },
             withConfig: function (config, what) {
                 log.impl.configStack.push(log.impl.configure([
@@ -1729,7 +1435,7 @@
                         return log.impl.stringifyCallStack(what);
                     } else if (typeof what === 'object') {
                         if (_.isArray(what) && what.length > 1 && _.isObject(what[0]) && cfg.table) {
-                            return log.asTable(what);
+                            return asTable(what);
                         } else {
                             return String.ify(what, cfg);
                         }
@@ -1749,7 +1455,7 @@
                     }
                 },
                 stringifyCallStack: function (stack) {
-                    return log.columns(stack.map(function (entry) {
+                    return asTable(stack.map(function (entry) {
                         return [
                             '\t' + 'at ' + entry.calleeShort.first(30),
                             _.nonempty([
@@ -1759,7 +1465,7 @@
                             ]).join(''),
                             (entry.source || '').first(80)
                         ];
-                    })).join('\n');
+                    }));
                 }
             }
         });
@@ -1804,92 +1510,16 @@
                 ];
             })))))));
         }());
-        logs = _.mapWith(_.callsTo.compose(_.callsWith(log.stackOffset(1))), log.printAPI);
-        _.extend(log, {
-            asTable: function (arrayOfObjects) {
-                var columnsDef = arrayOfObjects.map(_.keys.arity1).reduce(_.union.arity2, []);
-                var lines = log.columns([columnsDef].concat(_.map(arrayOfObjects, function (object) {
-                    return columnsDef.map(_.propertyOf(object));
-                })), {
-                    maxTotalWidth: 120,
-                    minColumnWidths: columnsDef.map(_.property('length'))
-                });
-                return [
-                    lines[0],
-                    log.thinLine[0].repeats(lines[0].length),
-                    _.rest(lines)
-                ].flat.join('\n');
-            },
-            columns: function (rows, cfg_) {
-                if (rows.length === 0) {
-                    return [];
-                } else {
-                    var rowsToStr = rows.map(_.map.tails2(function (col) {
-                        return _.asString(col).split('\n')[0];
-                    }));
-                    var columnWidths = rowsToStr.map(_.map.tails2(_.property('length')));
-                    var maxWidths = columnWidths.zip(_.largest);
-                    var cfg = cfg_ || {
-                        minColumnWidths: maxWidths,
-                        maxTotalWidth: 0
-                    };
-                    var totalWidth = _.reduce(maxWidths, _.sum, 0);
-                    var relativeWidths = _.map(maxWidths, _.muls(1 / totalWidth));
-                    var excessWidth = Math.max(0, totalWidth - cfg.maxTotalWidth);
-                    var computedWidths = _.map(maxWidths, function (w, i) {
-                        return Math.max(cfg.minColumnWidths[i], Math.floor(w - excessWidth * relativeWidths[i]));
-                    });
-                    var restWidths = columnWidths.map(function (widths) {
-                        return [
-                            computedWidths,
-                            widths
-                        ].zip(_.subtract);
-                    });
-                    return [
-                        rowsToStr,
-                        restWidths
-                    ].zip(_.zap.tails(function (str, w) {
-                        return w >= 0 ? str + ' '.repeats(w) : _.initial(str, -w).join('');
-                    }).then(_.joinsWith('  ')));
-                }
-            }
-        });
+        $global.logs = _.mapWith(_.callsTo.compose(_.callsWith(log.stackOffset(1))), log.printAPI);
         if ($platform.NodeJS) {
             module.exports = log;
         }
     },
-    4,
     function (module, exports, __webpack_require__) {
-        var bullet = __webpack_require__(11);
+        var bullet = __webpack_require__(4), asTable = __webpack_require__(10);
         Tags.define('shouldFail');
         Tags.define('async');
-        _.tests.Testosterone = {
-            'async': function (done) {
-                _.delay(function () {
-                    done();
-                });
-            },
-            '$tests': function () {
-                DummyPrototypeWithTest = $prototype({
-                    $test: function () {
-                    }
-                });
-                DummyPrototypeWithTests = $prototype({
-                    $tests: {
-                        dummy: function () {
-                        }
-                    }
-                });
-                $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
-                $assertThrows(function () {
-                    DummyPrototypeWithTests.$tests = 42;
-                });
-                $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [
-                    DummyPrototypeWithTest.$tests,
-                    DummyPrototypeWithTests.$tests
-                ]);
-            }
-        };
+        ;
         Tags.define('assertion');
         Testosterone = $singleton({
             prototypeTests: [],
@@ -2153,12 +1783,12 @@
                         if ('notMatching' in e) {
                             var notMatching = _.coerceToArray(e.notMatching);
                             if (e.asColumns) {
-                                log.orange(log.columns(_.map(notMatching, function (obj) {
+                                log.orange(asTable(_.map(notMatching, function (obj) {
                                     return [
                                         '\t\u2022 ' + _.keys(obj)[0],
                                         String.ify(_.values(obj)[0])
                                     ];
-                                })).join('\n'));
+                                })));
                             } else {
                                 var cases = _.map(notMatching, log.impl.stringify.arity1.then(bullet.$('\t\u2022 ')));
                                 var common = _.reduce2(cases, _.longestCommonSubstring) || '';
@@ -8832,8 +8462,8 @@
             module.exports = content.locals;
         if (false) {
             if (!content.locals) {
-                module.hot.accept('!!./../node_modules/css-loader/index.js!./Panic.css', function () {
-                    var newContent = require('!!./../node_modules/css-loader/index.js!./Panic.css');
+                module.hot.accept('!!./../../css-loader/index.js!./Panic.css', function () {
+                    var newContent = require('!!./../../css-loader/index.js!./Panic.css');
                     if (typeof newContent === 'string')
                         newContent = [[
                                 module.id,
@@ -9129,8 +8759,8 @@
             module.exports = content.locals;
         if (false) {
             if (!content.locals) {
-                module.hot.accept('!!./../node_modules/css-loader/index.js!./LogOverlay.css', function () {
-                    var newContent = require('!!./../node_modules/css-loader/index.js!./LogOverlay.css');
+                module.hot.accept('!!./../../css-loader/index.js!./LogOverlay.css', function () {
+                    var newContent = require('!!./../../css-loader/index.js!./LogOverlay.css');
                     if (typeof newContent === 'string')
                         newContent = [[
                                 module.id,
@@ -9153,4 +8783,4 @@
             ''
         ]);
     }
-])));
+]));
