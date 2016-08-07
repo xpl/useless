@@ -2757,15 +2757,15 @@
         }
         if (typeof Symbol !== 'undefined') {
             var bullet = __webpack_require__(12);
-            Tags.prototype[Symbol.for('String.ify')] = function (ctx) {
-                if (ctx.json) {
-                    return ctx.goDeeper($untag(this));
+            Tags.prototype[Symbol.for('String.ify')] = function (stringify) {
+                if (stringify.json) {
+                    return stringify($untag(this));
                 }
                 var tags = Tags.get(this);
                 var left = _.reduce(tags, function (memo, value, tag) {
-                    return _.isBoolean(value) ? tag + ' (' + memo : tag + ' (' + ctx.goDeeper(value, { pretty: false }) + ', ' + memo;
+                    return _.isBoolean(value) ? tag + ' (' + memo : tag + ' (' + stringify.configure({ pretty: false })(value) + ', ' + memo;
                 }, '');
-                return bullet(left, ctx.goDeeper($untag(this))) + ')'.repeats(_.keys(tags).length);
+                return bullet(left, stringify($untag(this))) + ')'.repeats(_.keys(tags).length);
             };
         }
     },

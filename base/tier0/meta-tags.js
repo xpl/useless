@@ -108,8 +108,9 @@ _.withTest ('meta-tags', function () {
         $assert (String.ify ({ foo: $constant ($get ({ bar: 7 }, 1)) }),
                             '{ foo: $constant ($get ({ bar: 7 }, 1)) }')
         
-        $assert (String.ify ({ foo: $constant ($get ([ 7,
-                                                       8  ])) }, { pretty: true }),
+        $assert (String.ify.configure ({ pretty: true })
+                            ({ foo: $constant ($get ([ 7,
+                                                       8  ])) }),
                             '{ foo: $constant ($get ([ 7,\n'
                           + '                          8  ])) }')
     }
@@ -265,7 +266,7 @@ _.withTest ('meta-tags', function () {
                                                 ? (tag + ' (' + memo)
                                                 : (tag + ' (' + stringify.configure ({ pretty: false }) (value) + ', ' + memo) }, '')
 
-            return bullet (left, stringify.configure ({ pretty: 'auto' }) ($untag (this))) + ')'.repeats (_.keys (tags).length)
+            return bullet (left, stringify ($untag (this))) + ')'.repeats (_.keys (tags).length)
         }
     }
 

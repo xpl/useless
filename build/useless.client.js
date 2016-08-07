@@ -3881,8 +3881,9 @@
 	        $assert (String.ify ({ foo: $constant ($get ({ bar: 7 }, 1)) }),
 	                            '{ foo: $constant ($get ({ bar: 7 }, 1)) }')
 	        
-	        $assert (String.ify ({ foo: $constant ($get ([ 7,
-	                                                       8  ])) }, { pretty: true }),
+	        $assert (String.ify.configure ({ pretty: true })
+	                            ({ foo: $constant ($get ([ 7,
+	                                                       8  ])) }),
 	                            '{ foo: $constant ($get ([ 7,\n'
 	                          + '                          8  ])) }')
 	    }
@@ -4027,18 +4028,18 @@
 	
 	        var bullet = __webpack_require__ (12)
 	
-	        Tags.prototype[Symbol.for ('String.ify')] = function (ctx) {
+	        Tags.prototype[Symbol.for ('String.ify')] = function (stringify) {
 	
-	            if (ctx.json) {
-	                return ctx.goDeeper ($untag (this)) }
+	            if (stringify.json) {
+	                return stringify ($untag (this)) }
 	
 	            var tags = Tags.get (this)
 	            var left = _.reduce (tags, function (memo, value, tag) {
 	                                            return _.isBoolean (value)
 	                                                ? (tag + ' (' + memo)
-	                                                : (tag + ' (' + ctx.goDeeper (value, { pretty: false }) + ', ' + memo) }, '')
+	                                                : (tag + ' (' + stringify.configure ({ pretty: false }) (value) + ', ' + memo) }, '')
 	
-	            return bullet (left, ctx.goDeeper ($untag (this))) + ')'.repeats (_.keys (tags).length)
+	            return bullet (left, stringify ($untag (this))) + ')'.repeats (_.keys (tags).length)
 	        }
 	    }
 	
