@@ -256,7 +256,7 @@ _.withTest ('meta-tags', function () {
 
         Tags.prototype[Symbol.for ('String.ify')] = function (stringify) {
 
-            if (ctx.json) {
+            if (stringify.json) {
                 return stringify ($untag (this)) }
 
             var tags = Tags.get (this)
