@@ -289,7 +289,7 @@ _.extend (log, {
                                                                     : (                         run.text)) }).join ('') }).join ('\n')
 
                 if (log.timestampEnabled) {
-                    lines = log.color ('dark').shell + bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
+                    lines = log.color ('dark').shell + bullet (String (params.when), log.color ('none').shell + lines) }
 
                 console.log (lines,
                              log.color ('dark').shell + codeLocation + '\u001b[0m',
@@ -300,7 +300,7 @@ _.extend (log, {
 
                 /*  Text   */
 
-                    [(log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + '%c') : '')
+                    [(log.timestampEnabled ? ('%c' + params.when + '%c') : '')
 
                         , _.map (params.lines, function (line, i) {
                                                 return params.indentation + _.reduce2 ('', line, function (s, run) {
@@ -321,71 +321,22 @@ _.extend (log, {
 
                     params.trailNewlines))) } },
 
-        /*  Formats timestamp preceding log messages
-         */
-        timestamp: function (x) {
-        	           return x },
+    /*  Ex.: function @ source.js:321  */
 
-        /*  Formats that "function @ source.js:321" thing
-         */
-        location: function (where) {
-            return _.quoteWith ('()', _.nonempty ([where.calleeShort,
-                                      _.nonempty ([where.fileName,
-                                                   where.line]).join (':')]).join (' @ ')) },
+        location: where => '(' + [].concat (where.calleeShort || [],
+                                 [].concat (where.fileName || [], where.line || []).join (':')).join (' @ ') + ')',
 
+        stringifyArguments: (args, cfg) =>
+                                args.map (arg => {
+                                    var x = log.impl.stringify (arg, cfg)
+                                    return (cfg.maxArgLength ? String.ify.limit (x, cfg.maxArgLength) : x) }).join (' '),
 
-        /*  This could be re-used by outer code for turning arbitrary argument lists into string
-         */
-        stringifyArguments: function (args, cfg) {
-            return _.map (args, function (arg) {
-                var x = log.impl.stringify (arg, cfg)
-                return (cfg.maxArgLength ? x.limitedTo (cfg.maxArgLength) : x) }).join (' ') },
-
-        /*  Smart object stringifier
-         */
-        stringify: function (what, cfg) { cfg = cfg || {}
-            if (_.isTypeOf (Error, what)) {
-                var str = log.impl.stringifyError (what)
-                if (what.originalError) {
-                    return str + '\n\n' + log.impl.stringify (what.originalError) }
-                else {
-                    return str } }
-
-            else if (_.isTypeOf (CallStack, what)) {
-                return log.impl.stringifyCallStack (what) }
-
-            else if (typeof what === 'object') {
-                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
-                    return asTable (what) }
-
-                else {
-                    return String.ify (what, cfg) } }
-                    
-            else if (typeof what === 'string') {
-                return what }
-
-            else {
-                return String.ify (what) } },
-        
-        stringifyError: function (e) {
-            try {       
-                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
-                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
-
-                return ('[EXCEPTION] ' + why + '\n\n') +
-                    (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
-                                        log.impl.stringify.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
-                    log.impl.stringifyCallStack (stack) + '\n' }
-            catch (sub) {
-                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
-                    '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
-
-        stringifyCallStack: function (stack) {
-            return asTable (stack.map (
-                function (entry) { return [
-                    '\t' + 'at ' + entry.calleeShort.first (30),
-                    _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-                    (entry.source || '').first (80)] })) } } })
+        stringify: (what, cfg) =>
+                    (typeof what === 'string') ? what :
+                    (Array.isArray (what) && cfg.table) ? asTable (what) :
+                    String.ify.configure (cfg) (what)
+    }
+})
 
 
 /*  Printing API

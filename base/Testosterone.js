@@ -490,7 +490,7 @@ Testosterone.ValidatesRecursion = $trait ({
                 return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
                                                                                                              arguments_ = _.asArray (arguments)
 
-                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, String.ify.oneLine.arity1)))) || this.desc || ''
+                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, String.ify.configure ({ pretty: false }).arity1)))) || this.desc || ''
                         var args_dump = _.map (arguments_, String.ify.oneLine.arity1).join (', ').quote ('()')
 
                     log.write (log.config ({

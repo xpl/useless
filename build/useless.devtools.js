@@ -40,7 +40,30 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
+/******/ ((function(modules) {
+	// Check all modules for deduplicated modules
+	for(var i in modules) {
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "function": break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(this, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+				break;
+			default:
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			}
+		}
+	}
+	return modules;
+}([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -51,17 +74,17 @@
 	__webpack_require__ (8)
 	__webpack_require__ (9)
 	__webpack_require__ (11)
-	__webpack_require__ (12)
 	__webpack_require__ (13)
+	__webpack_require__ (14)
 	
-	jQuery = __webpack_require__ (14)
-	
-	__webpack_require__ (15)
+	jQuery = __webpack_require__ (15)
 	
 	__webpack_require__ (16)
+	
 	__webpack_require__ (17)
 	__webpack_require__ (18)
-	__webpack_require__ (22)
+	__webpack_require__ (19)
+	__webpack_require__ (23)
 	
 	/*  ======================================================================== */
 	
@@ -86,159 +109,160 @@
 	      bullet     = __webpack_require__ (4),
 	      isBrowser  = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
 	      maxOf      = (arr, pick) => arr.reduce ((max, s) => Math.max (max, pick ? pick (s) : s), 0),
-	      limitTo    = (s, n) => s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')),
 	      isInteger  = Number.isInteger || (value => (typeof value === 'number') && isFinite (value) && (Math.floor (value) === value))
 	
-	const stringify = module.exports = function (x, cfg) {
+	const configure = cfg => {
+	const stringify = O.assign (x => {
 	
-	    cfg = O.assign ({ pretty: 'auto' }, cfg)
+	        if (cfg.pretty === 'auto') {
+	            const   oneLine =                         stringify.configure ({ pretty: false, siblings: new Map () }) (x)
+	            return (oneLine.length <= 80) ? oneLine : stringify.configure ({ pretty: true,  siblings: new Map () }) (x) }
 	
-	    if (cfg.pretty === 'auto') {
-	        var oneLine = stringify (x, O.assign ({}, cfg, { pretty: false, siblings: new Map () }))
-	        if (oneLine.length <= 80) {
-	            return oneLine }
+	        var customFormat = cfg.formatter && cfg.formatter (x, stringify)
+	
+	        if (typeof customFormat === 'string') {
+	            return customFormat }
+	
+	        if ((typeof jQuery !== 'undefined') && (x instanceof jQuery)) {
+	            x = x.toArray () }
+	
+	        if (isBrowser && (x === window)) {
+	            return 'window' }
+	
+	        else if (!isBrowser && (typeof global !== 'undefined') && (x === global)) {
+	            return 'global' }
+	
+	        else if (x === null) {
+	            return 'null' }
+	
+	        else if (cfg.parents.has (x)) {
+	            return cfg.pure ? undefined : '<cyclic>' }
+	
+	        else if (cfg.siblings.has (x)) {
+	            return cfg.pure ? undefined : '<ref:' + cfg.siblings.get (x) + '>' }
+	
+	        else if (x && (typeof Symbol !== 'undefined')
+	                   && (customFormat = x[Symbol.for ('String.ify')])
+	                   && (typeof (customFormat = customFormat.call (x, stringify)) === 'string')) {
+	            return customFormat }
+	
+	        else if (x instanceof Function) {
+	            return (cfg.pure ? x.toString () : (x.name ? ('<function:' + x.name + '>') : '<function>')) }
+	
+	        else if (typeof x === 'string') {
+	            return '"' + stringify.limit (x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"' }
+	
+	        else if (typeof x === 'object') {
+	
+	            cfg.parents.add (x)
+	            cfg.siblings.set (x, cfg.siblings.size)
+	
+	            const result = stringify.object (x, cfg)
+	
+	            cfg.parents.delete (x)
+	
+	            return result }
+	
+	        else if (!isInteger (x) && (cfg.precision > 0)) {
+	            return x.toFixed (cfg.precision) }
+	
 	        else {
-	            return stringify (x, O.assign ({}, cfg, { pretty: true, siblings: new Map () })) } }
+	            return String (x) }
 	
-	    cfg = O.assign ({
+	    }, cfg, {
 	
-	                parents: new Set (),
-	                siblings: new Map (),
-	                depth: 0,
-	                pure: false,
-	                color: false,
-	                maxDepth: 5,
-	                maxArrayLength: 60,
-	                maxStringLength: 60,
-	                precision: undefined,
-	                formatter: undefined
+	        configure: newConfig => configure (O.assign ({}, cfg, newConfig)),
 	
-	            }, cfg, {
+	        limit: (s, n) => s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')),
 	
-	                goDeeper: (y, newCfg) => stringify (y, O.assign ({}, cfg, { depth: cfg.depth + 1 }, newCfg))
+	        oneLine: x => stringify.configure ({ pretty: false }) (x),
 	
-	            })
+	        rightAlign: strings => {
+	                        var max = maxOf (strings, s => s.length)
+	                        return strings.map (s => ' '.repeat (max - s.length) + s) },
 	
-	    var customFormat = cfg.formatter && cfg.formatter (x, cfg)
+	        object: x => {
 	
-	    if (typeof customFormat === 'string') {
-	        return customFormat }
+	            if (x instanceof Set) {
+	                x = Array.from (x.values ()) }
 	
-	    if ((typeof jQuery !== 'undefined') && (x instanceof jQuery)) {
-	        x = x.toArray () }
+	            else if (x instanceof Map) {
+	                x = Array.from (x.entries ()) }
 	
-	    if (isBrowser && (x === window)) {
-	        return 'window' }
+	            const isArray = Array.isArray (x)
 	
-	    else if (!isBrowser && (typeof global !== 'undefined') && (x === global)) {
-	        return 'global' }
+	            if (isBrowser) {
+	                
+	                if (x instanceof Element) {
+	                    return '<' + (x.tagName.toLowerCase () +
+	                                ((x.id && ('#' + x.id)) || '') +
+	                                ((x.className && ('.' + x.className)) || '')) + '>' }
+	                
+	                else if (x instanceof Text) {
+	                    return '@' + stringify.limit (x.wholeText, 20) } }
 	
-	    else if (x === null) {
-	        return 'null' }
+	            if (!cfg.pure && ((cfg.depth >= cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
+	                return isArray ? '<array[' + x.length + ']>' : '<object>' }
 	
-	    else if (cfg.parents.has (x)) {
-	        return cfg.pure ? undefined : '<cyclic>' }
+	            const pretty   = cfg.pretty ? true : false,
+	                  entries  = O.entries (x),
+	                  oneLine  = !pretty || (entries.length < 2),
+	                  quoteKey = cfg.json ? (k => '"' + k + '"') : (k => k)
 	
-	    else if (cfg.siblings.has (x)) {
-	        return cfg.pure ? undefined : '<ref:' + cfg.siblings.get (x) + '>' }
+	            if (pretty) {
 	
-	    else if (x && (typeof Symbol !== 'undefined')
-	               && (customFormat = x[Symbol.for ('String.ify')])
-	               && (typeof (customFormat = customFormat.call (x, cfg)) === 'string')) {
-	        return customFormat }
+	                const values        = O.values (x),
+	                      printedKeys   = stringify.rightAlign (O.keys (x).map (k => quoteKey (k) + ': ')),
+	                      printedValues = values.map (stringify.configure ({ depth: cfg.depth + 1 })),
+	                      leftPaddings  = printedValues.map ((x, i) => (((x[0] === '[') ||
+	                                                                     (x[0] === '{'))
+	                                                                        ? 3
+	                                                                        : ((typeof values[i] === 'string') ? 1 : 0))),
+	                      maxLeftPadding = maxOf (leftPaddings),
 	
-	    else if (x instanceof Function) {
-	        return (cfg.pure ? x.toString () : (x.name ? ('<function:' + x.name + '>') : '<function>')) }
+	                      items = leftPaddings.map ((padding, i) => {
+	                                        const value = ' '.repeat (maxLeftPadding - padding) + printedValues[i]
+	                                        return isArray ? value : bullet (printedKeys[i], value) }),
 	
-	    else if (typeof x === 'string') {
-	        return '"' + limitTo (x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"' }
+	                      printed = bullet (isArray ? '[ ' :
+	                                                  '{ ', items.join (',\n')),
 	
-	    else if (typeof x === 'object') {
+	                      lines    = printed.split ('\n'),
+	                      lastLine = lines[lines.length - 1]
 	
-	        cfg.parents.add (x)
-	        cfg.siblings.set (x, cfg.siblings.size)
+	                return printed +  (' '.repeat (maxOf (lines, l => l.length) - lastLine.length) + (isArray ? ' ]' : ' }')) }
 	
-	        var result = stringify.object (x, cfg)
+	            else {
 	
-	        cfg.parents.delete (x)
+	                const items   = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + stringify.configure ({ depth: cfg.depth + 1 }) (kv[1])),
+	                      content = items.join (', ')
 	
-	        return result }
+	                return isArray
+	                        ? ('['  + content +  ']')
+	                        : ('{ ' + content + ' }')
+	            }
+	        }
+	    })
 	
-	    else if (!isInteger (x) && (cfg.precision > 0)) {
-	        return x.toFixed (cfg.precision) }
-	
-	    else {
-	        return String (x) } }
-	
-	stringify.oneLine = function (x, cfg) {
-	                        return stringify (x, O.assign (cfg || {}, { pretty: false })) }
-	
-	stringify.object = function (x, cfg) {
-	
-	    if (x instanceof Set) {
-	        x = Array.from (x.values ()) }
-	
-	    else if (x instanceof Map) {
-	        x = Array.from (x.entries ()) }
-	
-	    var isArray = Array.isArray (x)
-	
-	    if (isBrowser) {
-	        
-	        if (x instanceof Element) {
-	            return '<' + (x.tagName.toLowerCase () +
-	                        ((x.id && ('#' + x.id)) || '') +
-	                        ((x.className && ('.' + x.className)) || '')) + '>' }
-	        
-	        else if (x instanceof Text) {
-	            return '@' + limitTo (x.wholeText, 20) } }
-	
-	    if (!cfg.pure && ((cfg.depth >= cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
-	        return isArray ? '<array[' + x.length + ']>' : '<object>' }
-	
-	    var pretty   = cfg.pretty ? true : false
-	    var entries  = O.entries (x)
-	    var oneLine  = !pretty || (entries.length < 2)
-	    var quoteKey = cfg.json ? (k => '"' + k + '"') : (k => k)
-	
-	    if (pretty) {
-	
-	        var alignStringsRight = strings => {
-	                                    var max = maxOf (strings, s => s.length)
-	                                    return strings.map (s => ' '.repeat (max - s.length) + s) }
-	
-	        var values        = O.values (x)
-	        var printedKeys   = alignStringsRight (O.keys (x).map (k => quoteKey (k) + ': '))
-	        var printedValues = values.map (cfg.goDeeper)
-	
-	        var leftPaddings = printedValues.map (function (x, i) {
-	                                                return (((x[0] === '[') ||
-	                                                         (x[0] === '{')) ? 3 :
-	                                                            (typeof values[i] === 'string') ? 1 : 0) })
-	        var maxLeftPadding = maxOf (leftPaddings)
-	
-	        var items = leftPaddings.map ((padding, i) => {
-	                                var value = ' '.repeat (maxLeftPadding - padding) + printedValues[i]
-	                                return isArray ? value : bullet (printedKeys[i], value) })
-	
-	        var printed = bullet (isArray ? '[ ' :
-	                                        '{ ', items.join (',\n'))
-	
-	        var lines    = printed.split ('\n')
-	        var lastLine = lines[lines.length - 1]
-	
-	        return printed +  (' '.repeat (maxOf (lines, l => l.length) - lastLine.length) + (isArray ? ' ]' : ' }')) }
-	
-	    else {
-	
-	        var items = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + cfg.goDeeper (kv[1]))
-	        var content = items.join (', ')
-	
-	        return isArray
-	                ? ('['  + content +  ']')
-	                : ('{ ' + content + ' }')
-	    }
+	    return stringify
 	}
+	
+	module.exports = configure ({
+	
+	                    parents:         new Set (),
+	                    siblings:        new Map (),
+	                    depth:           0,
+	                    pure:            false,
+	                    json:            false,
+	                    color:           false, // not supported yet
+	                    maxDepth:        5,
+	                    maxArrayLength:  60,
+	                    maxStringLength: 60,
+	                    precision:       undefined,
+	                    formatter:       undefined,
+	                    pretty:         'auto'
+	
+	                })
 	
 	
 	
@@ -948,6 +972,8 @@
 
 	/* WEBPACK VAR INJECTION */(function(__filename) {"use strict";
 	
+	const O = Object
+	
 	/*  Self-awareness module
 	    ======================================================================== */
 	
@@ -1263,29 +1289,28 @@
 	const asTable = __webpack_require__ (10)
 	
 	CallStack.prototype[Symbol.for ('String.ify')] = function (stringify) {
-	    return asTable (stack.map (
-	                    function (entry) { return [
-	                        '\t' + 'at ' + entry.calleeShort.first (30),
-	                        _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-	                        (entry.source || '').first (80)] }))
+	
+	    return asTable (this.map (entry => [
+	                        '\t' + 'at ' + entry.calleeShort.slice (0, 30),
+	                        (entry.fileShort && (entry.fileShort + ':' + entry.line)) || '',
+	                        (entry.source || '').slice (0, 80)]))
 	}
 	
 	Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
 	
 	    try {
-	        var stack   = CallStack.fromErrorWithAsync (this).offset (e.stackOffset || 0).clean
-	        var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
+	        var stack   = CallStack.fromErrorWithAsync (this).offset (this.stackOffset || 0).clean
+	        var why     = stringify.limit ((this.message || '').replace (/\r|\n/g, '').trim (), 120)
 	
 	        return ('[EXCEPTION] ' + why +
 	
-	            (this.notMatching && (_.map (_.coerceToArray (this.notMatching || []),
-	                                    stringify.goDeeper.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+	                (this.notMatching && ([].concat (this.notMatching).map (x => '\t' + stringify (x)).join ('\n') + '\n\n') || '') +
 	
-	            '\n\n') + stringify.goDeeper (stack) + '\n' }
+	            '\n\n') + stringify (stack) + '\n' }
 	
 	    catch (sub) {
 	        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
-	            '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' }
+	            '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n' }
 	}
 	
 	/*  Reflection for $prototypes
@@ -1419,8 +1444,7 @@
 	    }
 	},
 	
-	configure = cfg =>
-	            arr => {
+	asTable = cfg => O.assign (arr => {
 	
 	/*  Print arrays  */
 	
@@ -1434,9 +1458,13 @@
 	          lines    = asColumns (columns, O.assign ({ minColumnWidths: colNames.map (n => n.length) }, cfg))
 	
 	    return [lines[0], '-'.repeat (lines[0].length), ...lines.slice (1)].join ('\n')
-	}
 	
-	module.exports = O.assign (configure ({ maxTotalWidth: 120 }), { configure: configure })
+	}, cfg, {
+	
+	    configure: newConfig => asTable (O.assign ({}, cfg, newConfig)),
+	})
+	
+	module.exports = asTable ({ maxTotalWidth: 120 })
 	
 	
 
@@ -1447,7 +1475,7 @@
 
 	"use strict";
 	
-	const bullet  = __webpack_require__ (4),
+	const bullet  = __webpack_require__ (12),
 	      asTable = __webpack_require__ (10)
 	
 	_.hasLog = true
@@ -1736,7 +1764,7 @@
 	                                                                    : (                         run.text)) }).join ('') }).join ('\n')
 	
 	                if (log.timestampEnabled) {
-	                    lines = log.color ('dark').shell + bullet (log.impl.timestamp (params.when) + ' ', log.color ('none').shell + lines) }
+	                    lines = log.color ('dark').shell + bullet (String (params.when), log.color ('none').shell + lines) }
 	
 	                console.log (lines,
 	                             log.color ('dark').shell + codeLocation + '\u001b[0m',
@@ -1747,7 +1775,7 @@
 	
 	                /*  Text   */
 	
-	                    [(log.timestampEnabled ? ('%c' + log.impl.timestamp (params.when) + '%c') : '')
+	                    [(log.timestampEnabled ? ('%c' + params.when + '%c') : '')
 	
 	                        , _.map (params.lines, function (line, i) {
 	                                                return params.indentation + _.reduce2 ('', line, function (s, run) {
@@ -1768,71 +1796,22 @@
 	
 	                    params.trailNewlines))) } },
 	
-	        /*  Formats timestamp preceding log messages
-	         */
-	        timestamp: function (x) {
-	        	           return x },
+	    /*  Ex.: function @ source.js:321  */
 	
-	        /*  Formats that "function @ source.js:321" thing
-	         */
-	        location: function (where) {
-	            return _.quoteWith ('()', _.nonempty ([where.calleeShort,
-	                                      _.nonempty ([where.fileName,
-	                                                   where.line]).join (':')]).join (' @ ')) },
+	        location: where => '(' + [].concat (where.calleeShort || [],
+	                                 [].concat (where.fileName || [], where.line || []).join (':')).join (' @ ') + ')',
 	
+	        stringifyArguments: (args, cfg) =>
+	                                args.map (arg => {
+	                                    var x = log.impl.stringify (arg, cfg)
+	                                    return (cfg.maxArgLength ? String.ify.limit (x, cfg.maxArgLength) : x) }).join (' '),
 	
-	        /*  This could be re-used by outer code for turning arbitrary argument lists into string
-	         */
-	        stringifyArguments: function (args, cfg) {
-	            return _.map (args, function (arg) {
-	                var x = log.impl.stringify (arg, cfg)
-	                return (cfg.maxArgLength ? x.limitedTo (cfg.maxArgLength) : x) }).join (' ') },
-	
-	        /*  Smart object stringifier
-	         */
-	        stringify: function (what, cfg) { cfg = cfg || {}
-	            if (_.isTypeOf (Error, what)) {
-	                var str = log.impl.stringifyError (what)
-	                if (what.originalError) {
-	                    return str + '\n\n' + log.impl.stringify (what.originalError) }
-	                else {
-	                    return str } }
-	
-	            else if (_.isTypeOf (CallStack, what)) {
-	                return log.impl.stringifyCallStack (what) }
-	
-	            else if (typeof what === 'object') {
-	                if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
-	                    return asTable (what) }
-	
-	                else {
-	                    return String.ify (what, cfg) } }
-	                    
-	            else if (typeof what === 'string') {
-	                return what }
-	
-	            else {
-	                return String.ify (what) } },
-	        
-	        stringifyError: function (e) {
-	            try {       
-	                var stack   = CallStack.fromErrorWithAsync (e).offset (e.stackOffset || 0).clean
-	                var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
-	
-	                return ('[EXCEPTION] ' + why + '\n\n') +
-	                    (e.notMatching && (_.map (_.coerceToArray (e.notMatching || []),
-	                                        log.impl.stringify.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
-	                    log.impl.stringifyCallStack (stack) + '\n' }
-	            catch (sub) {
-	                return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
-	                    '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
-	
-	        stringifyCallStack: function (stack) {
-	            return asTable (stack.map (
-	                function (entry) { return [
-	                    '\t' + 'at ' + entry.calleeShort.first (30),
-	                    _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-	                    (entry.source || '').first (80)] })) } } })
+	        stringify: (what, cfg) =>
+	                    (typeof what === 'string') ? what :
+	                    (Array.isArray (what) && cfg.table) ? asTable (what) :
+	                    String.ify.configure (cfg) (what)
+	    }
+	})
 	
 	
 	/*  Printing API
@@ -1882,6 +1861,8 @@
 
 /***/ },
 /* 12 */
+4,
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1897,7 +1878,7 @@
 	------------------------------------------------------------------------
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
-	var bullet  = __webpack_require__ (4),
+	var bullet  = __webpack_require__ (12),
 	    asTable = __webpack_require__ (10)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
@@ -2376,7 +2357,7 @@
 	                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
 	                                                                                                             arguments_ = _.asArray (arguments)
 	
-	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, String.ify.oneLine.arity1)))) || this.desc || ''
+	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, String.ify.configure ({ pretty: false }).arity1)))) || this.desc || ''
 	                        var args_dump = _.map (arguments_, String.ify.oneLine.arity1).join (', ').quote ('()')
 	
 	                    log.write (log.config ({
@@ -2404,7 +2385,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2457,7 +2438,7 @@
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12537,7 +12518,7 @@
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12948,7 +12929,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13200,7 +13181,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13276,16 +13257,16 @@
 	}) (jQuery);
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(19);
+	var content = __webpack_require__(20);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(21)(content, {});
+	var update = __webpack_require__(22)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13302,10 +13283,10 @@
 	}
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(20)();
+	exports = module.exports = __webpack_require__(21)();
 	// imports
 	
 	
@@ -13316,7 +13297,7 @@
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports) {
 
 	/*
@@ -13372,7 +13353,7 @@
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13624,16 +13605,16 @@
 
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(23);
+	var content = __webpack_require__(24);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(21)(content, {});
+	var update = __webpack_require__(22)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13650,10 +13631,10 @@
 	}
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(20)();
+	exports = module.exports = __webpack_require__(21)();
 	// imports
 	
 	
@@ -13664,5 +13645,5 @@
 
 
 /***/ }
-/******/ ]);
+/******/ ])));
 //# sourceMappingURL=useless.devtools.js.map

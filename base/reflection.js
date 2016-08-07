@@ -1,5 +1,7 @@
 "use strict";
 
+const O = Object
+
 /*  Self-awareness module
     ======================================================================== */
 
@@ -315,29 +317,28 @@ $global.CallStack = $extends (Array, {
 const asTable = require ('as-table')
 
 CallStack.prototype[Symbol.for ('String.ify')] = function (stringify) {
-    return asTable (stack.map (
-                    function (entry) { return [
-                        '\t' + 'at ' + entry.calleeShort.first (30),
-                        _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-                        (entry.source || '').first (80)] }))
+
+    return asTable (this.map (entry => [
+                        '\t' + 'at ' + entry.calleeShort.slice (0, 30),
+                        (entry.fileShort && (entry.fileShort + ':' + entry.line)) || '',
+                        (entry.source || '').slice (0, 80)]))
 }
 
 Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
 
     try {
-        var stack   = CallStack.fromErrorWithAsync (this).offset (e.stackOffset || 0).clean
-        var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
+        var stack   = CallStack.fromErrorWithAsync (this).offset (this.stackOffset || 0).clean
+        var why     = stringify.limit ((this.message || '').replace (/\r|\n/g, '').trim (), 120)
 
         return ('[EXCEPTION] ' + why +
 
-            (this.notMatching && (_.map (_.coerceToArray (this.notMatching || []),
-                                    stringify.goDeeper.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+                (this.notMatching && ([].concat (this.notMatching).map (x => '\t' + stringify (x)).join ('\n') + '\n\n') || '') +
 
-            '\n\n') + stringify.goDeeper (stack) + '\n' }
+            '\n\n') + stringify (stack) + '\n' }
 
     catch (sub) {
         return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
-            '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' }
+            '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n' }
 }
 
 /*  Reflection for $prototypes

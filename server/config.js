@@ -47,7 +47,7 @@ module.exports = $trait ({
                     /*  Re-write config at startup (with default values and pretty printed).
                      */
                     util.writeFile (this.configPath,
-                        String.ify (this.applyConfig (this.readConfig ()), { pretty: true, json: true }))
+                        String.ify.configure ({ pretty: true, json: true }) (this.applyConfig (this.readConfig ())))
 
                     /*  Supresses double-reporting when running under supervisor.
                      */
