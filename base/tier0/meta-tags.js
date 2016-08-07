@@ -265,7 +265,7 @@ _.withTest ('meta-tags', function () {
                                                 ? (tag + ' (' + memo)
                                                 : (tag + ' (' + stringify.configure ({ pretty: false }) (value) + ', ' + memo) }, '')
 
-            return bullet (left, stringify ($untag (this))) + ')'.repeats (_.keys (tags).length)
+            return bullet (left, stringify.configure ({ pretty: 'auto' }) ($untag (this))) + ')'.repeats (_.keys (tags).length)
         }
     }
 
