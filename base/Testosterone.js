@@ -11,7 +11,8 @@ Testosterone is a cross-platform unit test shell. Features:
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-var bullet = require ('string.bullet')
+var bullet  = require ('string.bullet'),
+    asTable = require ('as-table')
 
 /*  A contract for test routines that says that test should fail and it's the behavior expected
  */
@@ -319,8 +320,8 @@ Test = $prototype ({
                     if ('notMatching' in e) { var notMatching = _.coerceToArray (e.notMatching)
                         if (e.asColumns) {
                             log.orange (
-                                log.columns (_.map (notMatching, function (obj) {
-                                    return ['\t• ' + _.keys (obj)[0], String.ify (_.values (obj)[0])] })).join ('\n')) }
+                                asTable (_.map (notMatching, function (obj) {
+                                    return ['\t• ' + _.keys (obj)[0], String.ify (_.values (obj)[0])] }))) }
                         else {
                             var cases  = _.map (notMatching, log.impl.stringify.arity1.then (bullet.$ ('\t• ')))
                             var common = _.reduce2 (cases, _.longestCommonSubstring) || ''

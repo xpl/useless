@@ -1,4 +1,7 @@
-var bullet = require ('string.bullet')
+"use strict";
+
+const bullet  = require ('string.bullet'),
+      asTable = require ('as-table')
 
 _.hasLog = true
 
@@ -6,7 +9,7 @@ _.tests.log = {
 
     basic: function () {
 
-        log         ('log (x)')         //  Basic API
+        log            ('log (x)')         //  Basic API
 
         log.green      ('log.green')       //  Use for plain colored output.
         log.boldGreen  ('log.boldGreen')
@@ -92,7 +95,7 @@ _.extend (
 
     /*  Basic API
      */
-    log = function () {
+    $global.log = function () {
         return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
 
     Config: $prototype (),
@@ -171,7 +174,7 @@ _.extend (log, {
                 log.write.apply (null, args); done () }) },
 
     writeBackend: function () {
-        return arguments.callee.value || log.impl.defaultWriteBackend },
+        return log.writeBackend.value || log.impl.defaultWriteBackend },
 
     withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
                      var result = what (); log.impl.configStack.pop ();
@@ -353,7 +356,8 @@ _.extend (log, {
 
             else if (typeof what === 'object') {
                 if (_.isArray (what) && what.length > 1 && _.isObject (what[0]) && cfg.table) {
-                    return log.asTable (what) }
+                    return asTable (what) }
+
                 else {
                     return String.ify (what, cfg) } }
                     
@@ -377,11 +381,11 @@ _.extend (log, {
                     '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' } },
 
         stringifyCallStack: function (stack) {
-            return log.columns (stack.map (
+            return asTable (stack.map (
                 function (entry) { return [
                     '\t' + 'at ' + entry.calleeShort.first (30),
                     _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
-                    (entry.source || '').first (80)] })).join ('\n') } } })
+                    (entry.source || '').first (80)] })) } } })
 
 
 /*  Printing API
@@ -420,61 +424,8 @@ _.extend (log, {
 
 /*  Higher order API
  */
-logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
+$global.logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
 
-
-/*  Experimental formatting shit.
- */
-_.extend (log, {
-
-    asTable: function (arrayOfObjects) {
-        var columnsDef  = arrayOfObjects.map (_.keys.arity1).reduce (_.union.arity2, []) // makes ['col1', 'col2', 'col3'] by unifying objects keys
-        var lines       = log.columns ( [columnsDef].concat (
-                                            _.map (arrayOfObjects, function (object) {
-                                                                        return columnsDef.map (_.propertyOf (object)) })), {
-                                        maxTotalWidth: 120,
-                                        minColumnWidths: columnsDef.map (_.property ('length')) })
-
-        return [lines[0], log.thinLine[0].repeats (lines[0].length), _.rest (lines)].flat.join ('\n') },
-
-    /*  Layout algorithm for ASCII sheets (v 2.0)
-     */
-    columns: function (rows, cfg_) {
-        if (rows.length === 0) {
-            return [] }
-        else {
-            
-            /*  convert column data to string, taking first line
-             */
-            var rowsToStr       = rows.map (_.map.tails2 (function (col) { return _.asString (col).split ('\n')[0] }))
-
-            /*  compute column widths (per row) and max widths (per column)
-             */
-            var columnWidths    = rowsToStr.map (_.map.tails2 (_.property ('length')))
-            var maxWidths       = columnWidths.zip (_.largest)
-
-            /*  default config
-             */
-            var cfg             = cfg_ || { minColumnWidths: maxWidths, maxTotalWidth: 0 }
-
-            /*  project desired column widths, taking maxTotalWidth and minColumnWidths in account
-             */
-            var totalWidth      = _.reduce (maxWidths, _.sum, 0)
-            var relativeWidths  = _.map (maxWidths, _.muls (1.0 / totalWidth))
-            var excessWidth     = Math.max (0, totalWidth - cfg.maxTotalWidth)
-            var computedWidths  = _.map (maxWidths, function (w, i) {
-                                                        return Math.max (cfg.minColumnWidths[i], Math.floor (w - excessWidth * relativeWidths[i])) })
-
-            /*  this is how many symbols we should pad or cut (per column)
-             */
-            var restWidths      = columnWidths.map (function (widths) { return [computedWidths, widths].zip (_.subtract) })
-
-            /*  perform final composition
-             */
-            return [rowsToStr, restWidths].zip (
-                 _.zap.tails (function (str, w) { return w >= 0 ? (str + ' '.repeats (w)) : (_.initial (str, -w).join ('')) })
-                 .then (_.joinsWith ('  ')) ) } }
-})
 
 if ($platform.NodeJS) {
     module.exports = log }

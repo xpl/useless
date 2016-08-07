@@ -1,8 +1,6 @@
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
 
-_.asString = function (what) { return what + '' }
-
 _.typeOf = function (what) {
                 return typeof what }
 

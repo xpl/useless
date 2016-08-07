@@ -57,6 +57,7 @@
   },
   "homepage": "https://github.com/xpl/useless#readme",
   "dependencies": {
+    "as-table": "^1.0.5",
     "babel-polyfill": "^6.13.0",
     "chokidar": "^1.6.0",
     "css-loader": "^0.23.1",

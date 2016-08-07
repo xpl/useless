@@ -309,6 +309,37 @@ $global.CallStack = $extends (Array, {
 
 }) ();
 
+/*  Stringifiers
+ */
+
+const asTable = require ('as-table')
+
+CallStack.prototype[Symbol.for ('String.ify')] = function (stringify) {
+    return asTable (stack.map (
+                    function (entry) { return [
+                        '\t' + 'at ' + entry.calleeShort.first (30),
+                        _.nonempty ([entry.fileShort, ':', entry.line]).join (''),
+                        (entry.source || '').first (80)] }))
+}
+
+Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
+
+    try {
+        var stack   = CallStack.fromErrorWithAsync (this).offset (e.stackOffset || 0).clean
+        var why     = (e.message || '').replace (/\r|\n/g, '').trimmed.limitedTo (120)
+
+        return ('[EXCEPTION] ' + why +
+
+            (this.notMatching && (_.map (_.coerceToArray (this.notMatching || []),
+                                    stringify.goDeeper.then (_.prepends ('\t'))).join ('\n') + '\n\n') || '') +
+
+            '\n\n') + stringify.goDeeper (stack) + '\n' }
+
+    catch (sub) {
+        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
+            '\n\nORIGINAL EXCEPTION:\n\n' + e.stack + '\n\n' }
+}
+
 /*  Reflection for $prototypes
  */
 

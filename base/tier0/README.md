@@ -11,7 +11,6 @@ Most deep layer of Useless.js code base.
 Basic utility for writing data-crunching functional expressions.
 
 ```javascript
-_.asString = function (what) { return what + '' }
 _.typeOf   = function (what) { return typeof what }
 
 _.count = function (what)       { return what.length } // underscore reserved _.length for its own purposes..
