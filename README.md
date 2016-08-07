@@ -284,7 +284,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 + Platform-independent
 + Color output (even in WebInspector)
 + Shows code location
-+ [Configurable object printer](https://github.com/xpl/useless/blob/master/base/tier0/stringify.js)
++ [Configurable object printer](https://github.com/xpl/string.ify)
 + Table layout formatting
 + Hookable/interceptable
 
