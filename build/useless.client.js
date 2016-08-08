@@ -5021,6 +5021,7 @@
 	        /*  TODO: refactor
 	         */
 	        take:   function (arr, n) { return arr.slice (0, n) },
+	        takeAt: function (arr, n) { return arr.slice (n, 1).first },
 	        lastN:  $method (_.last),
 	
 	        before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
@@ -7648,7 +7649,6 @@
 	exports.array = toposort
 	
 	function toposort(nodes, edges) {
-	
 	  var cursor = nodes.length
 	    , sorted = new Array(cursor)
 	    , visited = {}
@@ -7661,7 +7661,6 @@
 	  return sorted
 	
 	  function visit(node, i, predecessors) {
-	
 	    if(predecessors.indexOf(node) >= 0) {
 	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
 	    }
@@ -7677,7 +7676,6 @@
 	    var outgoing = edges.filter(function(edge){
 	      return edge[0] === node
 	    })
-	
 	    if (i = outgoing.length) {
 	      var preds = predecessors.concat(node)
 	      do {

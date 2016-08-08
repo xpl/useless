@@ -92,6 +92,7 @@ _.withTest ('Array extensions', function () {
         /*  TODO: refactor
          */
         take:   function (arr, n) { return arr.slice (0, n) },
+        takeAt: function (arr, n) { return arr.slice (n, 1).first },
         lastN:  $method (_.last),
 
         before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
