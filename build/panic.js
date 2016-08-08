@@ -5005,7 +5005,7 @@
 	        indexBy:     _.indexBy,
 	        find:        _.find,
 	        filter:      _.filter,
-		reject:      $method (_.reject),
+	        reject:      $method (_.reject),
 	        flat:        _.flatten.tails2 (true),
 	        object:      _.object,
 	        shuffle:     _.shuffle,
@@ -5031,7 +5031,7 @@
 	        /*  TODO: refactor
 	         */
 	        take:   function (arr, n) { return arr.slice (0, n) },
-	        takeAt: function (arr, n) { return arr.slice (n, 1).first },
+	        takeAt: $method (function (arr, n) { return arr.slice (n, 1).first }),
 	        lastN:  $method (_.last),
 	
 	        before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
