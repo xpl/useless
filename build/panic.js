@@ -40,30 +40,7 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ((function(modules) {
-	// Check all modules for deduplicated modules
-	for(var i in modules) {
-		if(Object.prototype.hasOwnProperty.call(modules, i)) {
-			switch(typeof modules[i]) {
-			case "function": break;
-			case "object":
-				// Module can be created from a template
-				modules[i] = (function(_m) {
-					var args = _m.slice(1), fn = modules[_m[0]];
-					return function (a,b,c) {
-						fn.apply(this, [a,b,c].concat(args));
-					};
-				}(modules[i]));
-				break;
-			default:
-				// Module is a copy of another module
-				modules[i] = modules[modules[i]];
-				break;
-			}
-		}
-	}
-	return modules;
-}([
+/******/ ([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -2743,17 +2720,17 @@
 	
 	_.withTest (['type', 'isScalar'], function () {
 	
-	        $assert (_.every ([42, 'foo', null, undefined, true],        _.isScalar))
+	        $assert (_.every ([0, 42, 'foo', null, undefined, true, false], _.isScalar))
 	        $assert (_.every ([/foo/, new Date (), {}, []],       _.not (_.isScalar))) },
 	
 	    function () {
 	
 	        _.isScalar = function (v) {
 	                        return (v === undefined) ||
-	                               (v === null) || ((v && v.constructor) &&
-	                                                    ((v.constructor === String) ||
-	                                                     (v.constructor === Number) ||
-	                                                     (v.constructor === Boolean))) } })
+	                               (v === null) ||
+	                               (v.constructor === String) ||
+	                               (v.constructor === Number) ||
+	                               (v.constructor === Boolean) } })
 	
 	
 	/*  POD data types
@@ -2761,21 +2738,17 @@
 	
 	_.withTest (['type', 'POD'], function () {
 	
-	        $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
+	        $assert (_.every ([[], {}, 42, 0, 'foo', null, undefined, true].map (_.isPOD)))
 	        $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD))) },
 	
 	    function () {
 	
 	        _.isNonPOD = function (v) {
-	                        return (v && v.constructor) &&
-	                            (v.constructor !== Object) &&
-	                            (v.constructor !== Array) &&
-	                            (v.constructor !== String) &&
-	                            (v.constructor !== Number) &&
-	                            (v.constructor !== Boolean) }
+	                        return !_.isPOD (v) }
 	
 	        _.isPOD = function (v) {
-	                    return !_.isNonPOD (v) } })
+	                    return _.isScalar (v) ||
+	                                (v && ((v.constructor === Object) || (v.constructor === Array))) } })
 	
 	
 	/*  'empty' classifiers (fixes underscore shit)
@@ -7681,7 +7654,6 @@
 	exports.array = toposort
 	
 	function toposort(nodes, edges) {
-	
 	  var cursor = nodes.length
 	    , sorted = new Array(cursor)
 	    , visited = {}
@@ -7694,7 +7666,6 @@
 	  return sorted
 	
 	  function visit(node, i, predecessors) {
-	
 	    if(predecessors.indexOf(node) >= 0) {
 	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
 	    }
@@ -7710,7 +7681,6 @@
 	    var outgoing = edges.filter(function(edge){
 	      return edge[0] === node
 	    })
-	
 	    if (i = outgoing.length) {
 	      var preds = predecessors.concat(node)
 	      do {
@@ -11050,22 +11020,22 @@
 
 	String.ify = __webpack_require__ (38)
 	
+	__webpack_require__ (41)
 	__webpack_require__ (42)
-	__webpack_require__ (43)
+	__webpack_require__ (44)
 	__webpack_require__ (45)
-	__webpack_require__ (46)
+	__webpack_require__ (47)
 	__webpack_require__ (48)
 	__webpack_require__ (49)
-	__webpack_require__ (50)
 	
-	jQuery = __webpack_require__ (51)
+	jQuery = __webpack_require__ (50)
+	
+	__webpack_require__ (51)
 	
 	__webpack_require__ (52)
-	
 	__webpack_require__ (53)
 	__webpack_require__ (54)
-	__webpack_require__ (55)
-	__webpack_require__ (59)
+	__webpack_require__ (58)
 	
 	/*  ======================================================================== */
 	
@@ -11087,13 +11057,15 @@
 	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
 	
 	const O          = __webpack_require__ (39),
-	      bullet     = __webpack_require__ (41),
+	      bullet     = __webpack_require__ (13),
 	      isBrowser  = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
 	      maxOf      = (arr, pick) => arr.reduce ((max, s) => Math.max (max, pick ? pick (s) : s), 0),
 	      isInteger  = Number.isInteger || (value => (typeof value === 'number') && isFinite (value) && (Math.floor (value) === value))
 	
 	const configure = cfg => {
 	const stringify = O.assign (x => {
+	
+	        const state = O.assign ({ parents: new Set (), siblings: new Map () }, cfg)
 	
 	        if (cfg.pretty === 'auto') {
 	            const   oneLine =                         stringify.configure ({ pretty: false, siblings: new Map () }) (x)
@@ -11116,15 +11088,15 @@
 	        else if (x === null) {
 	            return 'null' }
 	
-	        else if (cfg.parents.has (x)) {
-	            return cfg.pure ? undefined : '<cyclic>' }
+	        else if (state.parents.has (x)) {
+	            return state.pure ? undefined : '<cyclic>' }
 	
-	        else if (cfg.siblings.has (x)) {
-	            return cfg.pure ? undefined : '<ref:' + cfg.siblings.get (x) + '>' }
+	        else if (state.siblings.has (x)) {
+	            return state.pure ? undefined : '<ref:' + state.siblings.get (x) + '>' }
 	
 	        else if (x && (typeof Symbol !== 'undefined')
 	                   && (customFormat = x[Symbol.for ('String.ify')])
-	                   && (typeof (customFormat = customFormat.call (x, stringify)) === 'string')) {
+	                   && (typeof (customFormat = customFormat.call (x, stringify.configure (state))) === 'string')) {
 	            return customFormat }
 	
 	        else if (x instanceof Function) {
@@ -11135,12 +11107,12 @@
 	
 	        else if (typeof x === 'object') {
 	
-	            cfg.parents.add (x)
-	            cfg.siblings.set (x, cfg.siblings.size)
+	            state.parents.add (x)
+	            state.siblings.set (x, state.siblings.size)
 	
-	            const result = stringify.object (x, cfg)
+	            const result = stringify.configure (O.assign ({}, state, { depth: state.depth + 1 })).object (x)
 	
-	            cfg.parents.delete (x)
+	            state.parents.delete (x)
 	
 	            return result }
 	
@@ -11155,8 +11127,6 @@
 	        configure: newConfig => configure (O.assign ({}, cfg, newConfig)),
 	
 	        limit: (s, n) => s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')),
-	
-	        oneLine: x => stringify.configure ({ pretty: false }) (x),
 	
 	        rightAlign: strings => {
 	                        var max = maxOf (strings, s => s.length)
@@ -11182,7 +11152,7 @@
 	                else if (x instanceof Text) {
 	                    return '@' + stringify.limit (x.wholeText, 20) } }
 	
-	            if (!cfg.pure && ((cfg.depth >= cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
+	            if (!cfg.pure && ((cfg.depth > cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
 	                return isArray ? '<array[' + x.length + ']>' : '<object>' }
 	
 	            const pretty   = cfg.pretty ? true : false,
@@ -11194,7 +11164,7 @@
 	
 	                const values        = O.values (x),
 	                      printedKeys   = stringify.rightAlign (O.keys (x).map (k => quoteKey (k) + ': ')),
-	                      printedValues = values.map (stringify.configure ({ depth: cfg.depth + 1 })),
+	                      printedValues = values.map (stringify),
 	                      leftPaddings  = printedValues.map ((x, i) => (((x[0] === '[') ||
 	                                                                     (x[0] === '{'))
 	                                                                        ? 3
@@ -11215,7 +11185,7 @@
 	
 	            else {
 	
-	                const items   = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + stringify.configure ({ depth: cfg.depth + 1 }) (kv[1])),
+	                const items   = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + stringify (kv[1])),
 	                      content = items.join (', ')
 	
 	                return isArray
@@ -11230,8 +11200,6 @@
 	
 	module.exports = configure ({
 	
-	                    parents:         new Set (),
-	                    siblings:        new Map (),
 	                    depth:           0,
 	                    pure:            false,
 	                    json:            false,
@@ -11293,8 +11261,6 @@
 
 /***/ },
 /* 41 */
-13,
-/* 42 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -11712,7 +11678,7 @@
 
 
 /***/ },
-/* 43 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*  Uncaught exception handling facility
@@ -11758,7 +11724,7 @@
 	
 	    switch ($platform.engine) {
 	        case 'node':
-	            __webpack_require__ (44).on ('uncaughtException', globalUncaughtExceptionHandler); break;
+	            __webpack_require__ (43).on ('uncaughtException', globalUncaughtExceptionHandler); break;
 	
 	        case 'browser':
 	            window.addEventListener ('error', function (e) {
@@ -11775,18 +11741,87 @@
 	}) ()
 
 /***/ },
-/* 44 */
+/* 43 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
-	
 	var process = module.exports = {};
+	
+	// cached from whatever global is present so that test runners that stub it
+	// don't break things.  But we need to wrap it in a try catch in case it is
+	// wrapped in strict mode code which doesn't define any globals.  It's inside a
+	// function because try/catches deoptimize in certain engines.
+	
+	var cachedSetTimeout;
+	var cachedClearTimeout;
+	
+	(function () {
+	    try {
+	        cachedSetTimeout = setTimeout;
+	    } catch (e) {
+	        cachedSetTimeout = function () {
+	            throw new Error('setTimeout is not defined');
+	        }
+	    }
+	    try {
+	        cachedClearTimeout = clearTimeout;
+	    } catch (e) {
+	        cachedClearTimeout = function () {
+	            throw new Error('clearTimeout is not defined');
+	        }
+	    }
+	} ())
+	function runTimeout(fun) {
+	    if (cachedSetTimeout === setTimeout) {
+	        //normal enviroments in sane situations
+	        return setTimeout(fun, 0);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedSetTimeout(fun, 0);
+	    } catch(e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+	            return cachedSetTimeout.call(null, fun, 0);
+	        } catch(e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+	            return cachedSetTimeout.call(this, fun, 0);
+	        }
+	    }
+	
+	
+	}
+	function runClearTimeout(marker) {
+	    if (cachedClearTimeout === clearTimeout) {
+	        //normal enviroments in sane situations
+	        return clearTimeout(marker);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedClearTimeout(marker);
+	    } catch (e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+	            return cachedClearTimeout.call(null, marker);
+	        } catch (e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+	            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+	            return cachedClearTimeout.call(this, marker);
+	        }
+	    }
+	
+	
+	
+	}
 	var queue = [];
 	var draining = false;
 	var currentQueue;
 	var queueIndex = -1;
 	
 	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);
@@ -11802,7 +11837,7 @@
 	    if (draining) {
 	        return;
 	    }
-	    var timeout = setTimeout(cleanUpNextTick);
+	    var timeout = runTimeout(cleanUpNextTick);
 	    draining = true;
 	
 	    var len = queue.length;
@@ -11819,7 +11854,7 @@
 	    }
 	    currentQueue = null;
 	    draining = false;
-	    clearTimeout(timeout);
+	    runClearTimeout(timeout);
 	}
 	
 	process.nextTick = function (fun) {
@@ -11831,7 +11866,7 @@
 	    }
 	    queue.push(new Item(fun, args));
 	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
+	        runTimeout(drainQueue);
 	    }
 	};
 	
@@ -11872,7 +11907,7 @@
 
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports) {
 
 	/*  Provides call stack persistence across async call boundaries.
@@ -11935,7 +11970,7 @@
 	}) ()
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(__filename) {"use strict";
@@ -12254,7 +12289,7 @@
 	/*  Stringifiers
 	 */
 	
-	const asTable = __webpack_require__ (47)
+	const asTable = __webpack_require__ (46)
 	
 	CallStack.prototype[Symbol.for ('String.ify')] = function (stringify) {
 	
@@ -12356,7 +12391,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -12438,13 +12473,14 @@
 
 
 /***/ },
-/* 48 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
-	const bullet  = __webpack_require__ (13),
-	      asTable = __webpack_require__ (47)
+	const O         = __webpack_require__ (39),
+	      bullet    = __webpack_require__ (13),
+	      asTable   = __webpack_require__ (46)
 	
 	_.hasLog = true
 	
@@ -12828,7 +12864,7 @@
 
 
 /***/ },
-/* 49 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -12845,7 +12881,7 @@
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
 	var bullet  = __webpack_require__ (13),
-	    asTable = __webpack_require__ (47)
+	    asTable = __webpack_require__ (46)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
 	 */
@@ -13296,6 +13332,7 @@
 	
 	    Testosterone.LogsMethodCalls = $trait ({
 	
+	/*
 	        $test: $platform.Browser ? (function () {}) : function (testDone) {
 	
 	                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
@@ -13310,7 +13347,7 @@
 	                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
 	                        $assert (testContext.logCalls[0].color === log.color ('pink'))
 	                        testDone () }) },
-	
+	*/
 	        $macroTags: {
 	
 	            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
@@ -13351,7 +13388,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 50 */
+/* 49 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -13404,7 +13441,7 @@
 
 
 /***/ },
-/* 51 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -23484,7 +23521,7 @@
 
 
 /***/ },
-/* 52 */
+/* 51 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -23895,7 +23932,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 53 */
+/* 52 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -24147,7 +24184,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 54 */
+/* 53 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -24223,23 +24260,23 @@
 	}) (jQuery);
 
 /***/ },
-/* 55 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(56);
+	var content = __webpack_require__(55);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(58)(content, {});
+	var update = __webpack_require__(57)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./Panic.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./Panic.css");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./Panic.css", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./Panic.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -24249,10 +24286,10 @@
 	}
 
 /***/ },
-/* 56 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(57)();
+	exports = module.exports = __webpack_require__(56)();
 	// imports
 	
 	
@@ -24263,7 +24300,7 @@
 
 
 /***/ },
-/* 57 */
+/* 56 */
 /***/ function(module, exports) {
 
 	/*
@@ -24319,7 +24356,7 @@
 
 
 /***/ },
-/* 58 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -24571,23 +24608,23 @@
 
 
 /***/ },
-/* 59 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(60);
+	var content = __webpack_require__(59);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(58)(content, {});
+	var update = __webpack_require__(57)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./LogOverlay.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./LogOverlay.css");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./LogOverlay.css", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./LogOverlay.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -24597,10 +24634,10 @@
 	}
 
 /***/ },
-/* 60 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(57)();
+	exports = module.exports = __webpack_require__(56)();
 	// imports
 	
 	
@@ -24611,5 +24648,5 @@
 
 
 /***/ }
-/******/ ])));
+/******/ ]);
 //# sourceMappingURL=panic.js.map

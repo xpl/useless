@@ -40,30 +40,7 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ((function(modules) {
-	// Check all modules for deduplicated modules
-	for(var i in modules) {
-		if(Object.prototype.hasOwnProperty.call(modules, i)) {
-			switch(typeof modules[i]) {
-			case "function": break;
-			case "object":
-				// Module can be created from a template
-				modules[i] = (function(_m) {
-					var args = _m.slice(1), fn = modules[_m[0]];
-					return function (a,b,c) {
-						fn.apply(this, [a,b,c].concat(args));
-					};
-				}(modules[i]));
-				break;
-			default:
-				// Module is a copy of another module
-				modules[i] = modules[modules[i]];
-				break;
-			}
-		}
-	}
-	return modules;
-}([
+/******/ ([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -74,17 +51,17 @@
 	__webpack_require__ (8)
 	__webpack_require__ (9)
 	__webpack_require__ (11)
+	__webpack_require__ (12)
+	__webpack_require__ (13)
+	
+	jQuery = __webpack_require__ (14)
+	
 	__webpack_require__ (15)
+	
 	__webpack_require__ (16)
-	
-	jQuery = __webpack_require__ (17)
-	
+	__webpack_require__ (17)
 	__webpack_require__ (18)
-	
-	__webpack_require__ (19)
-	__webpack_require__ (20)
-	__webpack_require__ (21)
-	__webpack_require__ (25)
+	__webpack_require__ (22)
 	
 	/*  ======================================================================== */
 	
@@ -114,6 +91,8 @@
 	const configure = cfg => {
 	const stringify = O.assign (x => {
 	
+	        const state = O.assign ({ parents: new Set (), siblings: new Map () }, cfg)
+	
 	        if (cfg.pretty === 'auto') {
 	            const   oneLine =                         stringify.configure ({ pretty: false, siblings: new Map () }) (x)
 	            return (oneLine.length <= 80) ? oneLine : stringify.configure ({ pretty: true,  siblings: new Map () }) (x) }
@@ -135,15 +114,15 @@
 	        else if (x === null) {
 	            return 'null' }
 	
-	        else if (cfg.parents.has (x)) {
-	            return cfg.pure ? undefined : '<cyclic>' }
+	        else if (state.parents.has (x)) {
+	            return state.pure ? undefined : '<cyclic>' }
 	
-	        else if (cfg.siblings.has (x)) {
-	            return cfg.pure ? undefined : '<ref:' + cfg.siblings.get (x) + '>' }
+	        else if (state.siblings.has (x)) {
+	            return state.pure ? undefined : '<ref:' + state.siblings.get (x) + '>' }
 	
 	        else if (x && (typeof Symbol !== 'undefined')
 	                   && (customFormat = x[Symbol.for ('String.ify')])
-	                   && (typeof (customFormat = customFormat.call (x, stringify)) === 'string')) {
+	                   && (typeof (customFormat = customFormat.call (x, stringify.configure (state))) === 'string')) {
 	            return customFormat }
 	
 	        else if (x instanceof Function) {
@@ -154,12 +133,12 @@
 	
 	        else if (typeof x === 'object') {
 	
-	            cfg.parents.add (x)
-	            cfg.siblings.set (x, cfg.siblings.size)
+	            state.parents.add (x)
+	            state.siblings.set (x, state.siblings.size)
 	
-	            const result = stringify.object (x, cfg)
+	            const result = stringify.configure (O.assign ({}, state, { depth: state.depth + 1 })).object (x)
 	
-	            cfg.parents.delete (x)
+	            state.parents.delete (x)
 	
 	            return result }
 	
@@ -174,8 +153,6 @@
 	        configure: newConfig => configure (O.assign ({}, cfg, newConfig)),
 	
 	        limit: (s, n) => s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')),
-	
-	        oneLine: x => stringify.configure ({ pretty: false }) (x),
 	
 	        rightAlign: strings => {
 	                        var max = maxOf (strings, s => s.length)
@@ -201,7 +178,7 @@
 	                else if (x instanceof Text) {
 	                    return '@' + stringify.limit (x.wholeText, 20) } }
 	
-	            if (!cfg.pure && ((cfg.depth >= cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
+	            if (!cfg.pure && ((cfg.depth > cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
 	                return isArray ? '<array[' + x.length + ']>' : '<object>' }
 	
 	            const pretty   = cfg.pretty ? true : false,
@@ -213,7 +190,7 @@
 	
 	                const values        = O.values (x),
 	                      printedKeys   = stringify.rightAlign (O.keys (x).map (k => quoteKey (k) + ': ')),
-	                      printedValues = values.map (stringify.configure ({ depth: cfg.depth + 1 })),
+	                      printedValues = values.map (stringify),
 	                      leftPaddings  = printedValues.map ((x, i) => (((x[0] === '[') ||
 	                                                                     (x[0] === '{'))
 	                                                                        ? 3
@@ -234,7 +211,7 @@
 	
 	            else {
 	
-	                const items   = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + stringify.configure ({ depth: cfg.depth + 1 }) (kv[1])),
+	                const items   = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + stringify (kv[1])),
 	                      content = items.join (', ')
 	
 	                return isArray
@@ -249,8 +226,6 @@
 	
 	module.exports = configure ({
 	
-	                    parents:         new Set (),
-	                    siblings:        new Map (),
 	                    depth:           0,
 	                    pure:            false,
 	                    json:            false,
@@ -271,7 +246,29 @@
 
 /***/ },
 /* 2 */
-[27, 3],
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = (function () {
+		"use strict";
+	
+		var ownKeys      = __webpack_require__ (3)
+		var reduce       = Function.bind.call(Function.call, Array.prototype.reduce);
+		var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
+		var concat       = Function.bind.call(Function.call, Array.prototype.concat);
+	
+		if (!Object.values) {
+			 Object.values = function values(O) {
+				return reduce(ownKeys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []) } }
+	
+		if (!Object.entries) {
+			 Object.entries = function entries(O) {
+				return reduce(ownKeys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []) } }
+	
+		return Object
+	
+	}) ();
+
+/***/ },
 /* 3 */
 /***/ function(module, exports) {
 
@@ -789,14 +786,83 @@
 /***/ function(module, exports) {
 
 	// shim for using process in browser
-	
 	var process = module.exports = {};
+	
+	// cached from whatever global is present so that test runners that stub it
+	// don't break things.  But we need to wrap it in a try catch in case it is
+	// wrapped in strict mode code which doesn't define any globals.  It's inside a
+	// function because try/catches deoptimize in certain engines.
+	
+	var cachedSetTimeout;
+	var cachedClearTimeout;
+	
+	(function () {
+	    try {
+	        cachedSetTimeout = setTimeout;
+	    } catch (e) {
+	        cachedSetTimeout = function () {
+	            throw new Error('setTimeout is not defined');
+	        }
+	    }
+	    try {
+	        cachedClearTimeout = clearTimeout;
+	    } catch (e) {
+	        cachedClearTimeout = function () {
+	            throw new Error('clearTimeout is not defined');
+	        }
+	    }
+	} ())
+	function runTimeout(fun) {
+	    if (cachedSetTimeout === setTimeout) {
+	        //normal enviroments in sane situations
+	        return setTimeout(fun, 0);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedSetTimeout(fun, 0);
+	    } catch(e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+	            return cachedSetTimeout.call(null, fun, 0);
+	        } catch(e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+	            return cachedSetTimeout.call(this, fun, 0);
+	        }
+	    }
+	
+	
+	}
+	function runClearTimeout(marker) {
+	    if (cachedClearTimeout === clearTimeout) {
+	        //normal enviroments in sane situations
+	        return clearTimeout(marker);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedClearTimeout(marker);
+	    } catch (e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+	            return cachedClearTimeout.call(null, marker);
+	        } catch (e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+	            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+	            return cachedClearTimeout.call(this, marker);
+	        }
+	    }
+	
+	
+	
+	}
 	var queue = [];
 	var draining = false;
 	var currentQueue;
 	var queueIndex = -1;
 	
 	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);
@@ -812,7 +878,7 @@
 	    if (draining) {
 	        return;
 	    }
-	    var timeout = setTimeout(cleanUpNextTick);
+	    var timeout = runTimeout(cleanUpNextTick);
 	    draining = true;
 	
 	    var len = queue.length;
@@ -829,7 +895,7 @@
 	    }
 	    currentQueue = null;
 	    draining = false;
-	    clearTimeout(timeout);
+	    runClearTimeout(timeout);
 	}
 	
 	process.nextTick = function (fun) {
@@ -841,7 +907,7 @@
 	    }
 	    queue.push(new Item(fun, args));
 	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
+	        runTimeout(drainQueue);
 	    }
 	};
 	
@@ -1453,8 +1519,8 @@
 
 	"use strict";
 	
-	const O         = __webpack_require__ (12),
-	      bullet    = __webpack_require__ (14),
+	const O         = __webpack_require__ (2),
+	      bullet    = __webpack_require__ (4),
 	      asTable   = __webpack_require__ (10)
 	
 	_.hasLog = true
@@ -1462,8 +1528,6 @@
 	_.tests.log = {
 	
 	    basic: function () {
-	
-	        return
 	
 	        log            ('log (x)')         //  Basic API
 	
@@ -1842,12 +1906,6 @@
 
 /***/ },
 /* 12 */
-[27, 13],
-/* 13 */
-3,
-/* 14 */
-4,
-/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1863,7 +1921,7 @@
 	------------------------------------------------------------------------
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
-	var bullet  = __webpack_require__ (14),
+	var bullet  = __webpack_require__ (4),
 	    asTable = __webpack_require__ (10)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
@@ -2315,6 +2373,7 @@
 	
 	    Testosterone.LogsMethodCalls = $trait ({
 	
+	/*
 	        $test: $platform.Browser ? (function () {}) : function (testDone) {
 	
 	                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
@@ -2329,7 +2388,7 @@
 	                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
 	                        $assert (testContext.logCalls[0].color === log.color ('pink'))
 	                        testDone () }) },
-	
+	*/
 	        $macroTags: {
 	
 	            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
@@ -2370,7 +2429,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 16 */
+/* 13 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2423,7 +2482,7 @@
 
 
 /***/ },
-/* 17 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12503,7 +12562,7 @@
 
 
 /***/ },
-/* 18 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12914,7 +12973,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 19 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13166,7 +13225,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 20 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13242,23 +13301,23 @@
 	}) (jQuery);
 
 /***/ },
-/* 21 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(22);
+	var content = __webpack_require__(19);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(24)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./Panic.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./Panic.css");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./Panic.css", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./Panic.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -13268,10 +13327,10 @@
 	}
 
 /***/ },
-/* 22 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(23)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	
@@ -13282,7 +13341,7 @@
 
 
 /***/ },
-/* 23 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/*
@@ -13338,7 +13397,7 @@
 
 
 /***/ },
-/* 24 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13590,23 +13649,23 @@
 
 
 /***/ },
-/* 25 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(26);
+	var content = __webpack_require__(23);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(24)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./LogOverlay.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./LogOverlay.css");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./LogOverlay.css", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./LogOverlay.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -13616,10 +13675,10 @@
 	}
 
 /***/ },
-/* 26 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(23)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 	
 	
@@ -13629,30 +13688,6 @@
 	// exports
 
 
-/***/ },
-/* 27 */
-/***/ function(module, exports, __webpack_require__, __webpack_module_template_argument_0__) {
-
-	module.exports = (function () {
-		"use strict";
-	
-		var ownKeys      = __webpack_require__ (__webpack_module_template_argument_0__)
-		var reduce       = Function.bind.call(Function.call, Array.prototype.reduce);
-		var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
-		var concat       = Function.bind.call(Function.call, Array.prototype.concat);
-	
-		if (!Object.values) {
-			 Object.values = function values(O) {
-				return reduce(ownKeys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []) } }
-	
-		if (!Object.entries) {
-			 Object.entries = function entries(O) {
-				return reduce(ownKeys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []) } }
-	
-		return Object
-	
-	}) ();
-
 /***/ }
-/******/ ])));
+/******/ ]);
 //# sourceMappingURL=useless.devtools.js.map

@@ -2029,15 +2029,15 @@
         }
         {
             _.isScalar = function (v) {
-                return v === undefined || v === null || v && v.constructor && (v.constructor === String || v.constructor === Number || v.constructor === Boolean);
+                return v === undefined || v === null || v.constructor === String || v.constructor === Number || v.constructor === Boolean;
             };
         }
         {
             _.isNonPOD = function (v) {
-                return v && v.constructor && v.constructor !== Object && v.constructor !== Array && v.constructor !== String && v.constructor !== Number && v.constructor !== Boolean;
+                return !_.isPOD(v);
             };
             _.isPOD = function (v) {
-                return !_.isNonPOD(v);
+                return _.isScalar(v) || v && (v.constructor === Object || v.constructor === Array);
             };
         }
         {

@@ -463,6 +463,7 @@ Testosterone.ValidatesRecursion = $trait ({
 
     Testosterone.LogsMethodCalls = $trait ({
 
+/*
         $test: $platform.Browser ? (function () {}) : function (testDone) {
 
                     var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
@@ -477,7 +478,7 @@ Testosterone.ValidatesRecursion = $trait ({
                         $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
                         $assert (testContext.logCalls[0].color === log.color ('pink'))
                         testDone () }) },
-
+*/
         $macroTags: {
 
             log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')

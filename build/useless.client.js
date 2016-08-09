@@ -2710,17 +2710,17 @@
 	
 	_.withTest (['type', 'isScalar'], function () {
 	
-	        $assert (_.every ([42, 'foo', null, undefined, true],        _.isScalar))
+	        $assert (_.every ([0, 42, 'foo', null, undefined, true, false], _.isScalar))
 	        $assert (_.every ([/foo/, new Date (), {}, []],       _.not (_.isScalar))) },
 	
 	    function () {
 	
 	        _.isScalar = function (v) {
 	                        return (v === undefined) ||
-	                               (v === null) || ((v && v.constructor) &&
-	                                                    ((v.constructor === String) ||
-	                                                     (v.constructor === Number) ||
-	                                                     (v.constructor === Boolean))) } })
+	                               (v === null) ||
+	                               (v.constructor === String) ||
+	                               (v.constructor === Number) ||
+	                               (v.constructor === Boolean) } })
 	
 	
 	/*  POD data types
@@ -2728,21 +2728,17 @@
 	
 	_.withTest (['type', 'POD'], function () {
 	
-	        $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
+	        $assert (_.every ([[], {}, 42, 0, 'foo', null, undefined, true].map (_.isPOD)))
 	        $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD))) },
 	
 	    function () {
 	
 	        _.isNonPOD = function (v) {
-	                        return (v && v.constructor) &&
-	                            (v.constructor !== Object) &&
-	                            (v.constructor !== Array) &&
-	                            (v.constructor !== String) &&
-	                            (v.constructor !== Number) &&
-	                            (v.constructor !== Boolean) }
+	                        return !_.isPOD (v) }
 	
 	        _.isPOD = function (v) {
-	                    return !_.isNonPOD (v) } })
+	                    return _.isScalar (v) ||
+	                                (v && ((v.constructor === Object) || (v.constructor === Array))) } })
 	
 	
 	/*  'empty' classifiers (fixes underscore shit)
@@ -7648,7 +7644,6 @@
 	exports.array = toposort
 	
 	function toposort(nodes, edges) {
-	
 	  var cursor = nodes.length
 	    , sorted = new Array(cursor)
 	    , visited = {}
@@ -7661,7 +7656,6 @@
 	  return sorted
 	
 	  function visit(node, i, predecessors) {
-	
 	    if(predecessors.indexOf(node) >= 0) {
 	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
 	    }
@@ -7677,7 +7671,6 @@
 	    var outgoing = edges.filter(function(edge){
 	      return edge[0] === node
 	    })
-	
 	    if (i = outgoing.length) {
 	      var preds = predecessors.concat(node)
 	      do {

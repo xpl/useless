@@ -18,31 +18,6 @@
     __webpack_require__.c = installedModules;
     __webpack_require__.p = '';
     return __webpack_require__(0);
-}(function (modules) {
-    for (var i in modules) {
-        if (Object.prototype.hasOwnProperty.call(modules, i)) {
-            switch (typeof modules[i]) {
-            case 'function':
-                break;
-            case 'object':
-                modules[i] = function (_m) {
-                    var args = _m.slice(1), fn = modules[_m[0]];
-                    return function (a, b, c) {
-                        fn.apply(this, [
-                            a,
-                            b,
-                            c
-                        ].concat(args));
-                    };
-                }(modules[i]);
-                break;
-            default:
-                modules[i] = modules[modules[i]];
-                break;
-            }
-        }
-    }
-    return modules;
 }([
     function (module, exports, __webpack_require__) {
         String.ify = __webpack_require__(1);
@@ -51,14 +26,14 @@
         __webpack_require__(8);
         __webpack_require__(9);
         __webpack_require__(11);
+        __webpack_require__(12);
         __webpack_require__(13);
-        __webpack_require__(14);
-        jQuery = __webpack_require__(15);
+        jQuery = __webpack_require__(14);
+        __webpack_require__(15);
         __webpack_require__(16);
         __webpack_require__(17);
         __webpack_require__(18);
-        __webpack_require__(19);
-        __webpack_require__(23);
+        __webpack_require__(22);
         document.ready(function () {
             Panic.init();
             CallStack.isThirdParty.intercept(function (file, originalImpl) {
@@ -72,6 +47,10 @@
             const O = __webpack_require__(2), bullet = __webpack_require__(4), isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, maxOf = (arr, pick) => arr.reduce((max, s) => Math.max(max, pick ? pick(s) : s), 0), isInteger = Number.isInteger || (value => typeof value === 'number' && isFinite(value) && Math.floor(value) === value);
             const configure = cfg => {
                 const stringify = O.assign(x => {
+                    const state = O.assign({
+                        parents: new Set(),
+                        siblings: new Map()
+                    }, cfg);
                     if (cfg.pretty === 'auto') {
                         const oneLine = stringify.configure({
                             pretty: false,
@@ -95,21 +74,21 @@
                         return 'global';
                     } else if (x === null) {
                         return 'null';
-                    } else if (cfg.parents.has(x)) {
-                        return cfg.pure ? undefined : '<cyclic>';
-                    } else if (cfg.siblings.has(x)) {
-                        return cfg.pure ? undefined : '<ref:' + cfg.siblings.get(x) + '>';
-                    } else if (x && typeof Symbol !== 'undefined' && (customFormat = x[Symbol.for('String.ify')]) && typeof (customFormat = customFormat.call(x, stringify)) === 'string') {
+                    } else if (state.parents.has(x)) {
+                        return state.pure ? undefined : '<cyclic>';
+                    } else if (state.siblings.has(x)) {
+                        return state.pure ? undefined : '<ref:' + state.siblings.get(x) + '>';
+                    } else if (x && typeof Symbol !== 'undefined' && (customFormat = x[Symbol.for('String.ify')]) && typeof (customFormat = customFormat.call(x, stringify.configure(state))) === 'string') {
                         return customFormat;
                     } else if (x instanceof Function) {
                         return cfg.pure ? x.toString() : x.name ? '<function:' + x.name + '>' : '<function>';
                     } else if (typeof x === 'string') {
                         return '"' + stringify.limit(x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"';
                     } else if (typeof x === 'object') {
-                        cfg.parents.add(x);
-                        cfg.siblings.set(x, cfg.siblings.size);
-                        const result = stringify.object(x, cfg);
-                        cfg.parents.delete(x);
+                        state.parents.add(x);
+                        state.siblings.set(x, state.siblings.size);
+                        const result = stringify.configure(O.assign({}, state, { depth: state.depth + 1 })).object(x);
+                        state.parents.delete(x);
                         return result;
                     } else if (!isInteger(x) && cfg.precision > 0) {
                         return x.toFixed(cfg.precision);
@@ -119,7 +98,6 @@
                 }, cfg, {
                     configure: newConfig => configure(O.assign({}, cfg, newConfig)),
                     limit: (s, n) => s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026'),
-                    oneLine: x => stringify.configure({ pretty: false })(x),
                     rightAlign: strings => {
                         var max = maxOf(strings, s => s.length);
                         return strings.map(s => ' '.repeat(max - s.length) + s);
@@ -138,18 +116,18 @@
                                 return '@' + stringify.limit(x.wholeText, 20);
                             }
                         }
-                        if (!cfg.pure && (cfg.depth >= cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
+                        if (!cfg.pure && (cfg.depth > cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
                             return isArray ? '<array[' + x.length + ']>' : '<object>';
                         }
                         const pretty = cfg.pretty ? true : false, entries = O.entries(x), oneLine = !pretty || entries.length < 2, quoteKey = cfg.json ? k => '"' + k + '"' : k => k;
                         if (pretty) {
-                            const values = O.values(x), printedKeys = stringify.rightAlign(O.keys(x).map(k => quoteKey(k) + ': ')), printedValues = values.map(stringify.configure({ depth: cfg.depth + 1 })), leftPaddings = printedValues.map((x, i) => x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0), maxLeftPadding = maxOf(leftPaddings), items = leftPaddings.map((padding, i) => {
+                            const values = O.values(x), printedKeys = stringify.rightAlign(O.keys(x).map(k => quoteKey(k) + ': ')), printedValues = values.map(stringify), leftPaddings = printedValues.map((x, i) => x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0), maxLeftPadding = maxOf(leftPaddings), items = leftPaddings.map((padding, i) => {
                                     const value = ' '.repeat(maxLeftPadding - padding) + printedValues[i];
                                     return isArray ? value : bullet(printedKeys[i], value);
                                 }), printed = bullet(isArray ? '[ ' : '{ ', items.join(',\n')), lines = printed.split('\n'), lastLine = lines[lines.length - 1];
                             return printed + (' '.repeat(maxOf(lines, l => l.length) - lastLine.length) + (isArray ? ' ]' : ' }'));
                         } else {
-                            const items = entries.map(kv => (isArray ? '' : quoteKey(kv[0]) + ': ') + stringify.configure({ depth: cfg.depth + 1 })(kv[1])), content = items.join(', ');
+                            const items = entries.map(kv => (isArray ? '' : quoteKey(kv[0]) + ': ') + stringify(kv[1])), content = items.join(', ');
                             return isArray ? '[' + content + ']' : '{ ' + content + ' }';
                         }
                     }
@@ -157,8 +135,6 @@
                 return stringify;
             };
             module.exports = configure({
-                parents: new Set(),
-                siblings: new Map(),
                 depth: 0,
                 pure: false,
                 json: false,
@@ -260,214 +236,7 @@
                 }
             }
         });
-        _.deferTest('assert.js bootstrap', function () {
-            $assert(true);
-            $assert(_.assert === _.assertions.assert);
-            $assertNot(false);
-            $assertNot(5);
-            $assert(2 + 2, 2 * 2, 4);
-            $assert({
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            }, {
-                foo: [
-                    1,
-                    2,
-                    3
-                ]
-            });
-            $assert({
-                foo: { bar: 1 },
-                baz: 2
-            }, {
-                baz: 2,
-                foo: { bar: 1 }
-            });
-            $assertNot(2 + 2, 5);
-            $assertMatches({
-                foo: 1,
-                bar: 2
-            }, { foo: 1 });
-            if (_.hasStdlib) {
-                $assertMatches({
-                    foo: [
-                        1,
-                        2
-                    ],
-                    bar: 3
-                }, { foo: [1] });
-            }
-            if (_.hasStdlib) {
-                $assertMatches('123', /[0-9]+/);
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches(42, 'number');
-                $assertFails(function () {
-                    $assertTypeMatches('foo', 'number');
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches([
-                    1,
-                    2
-                ], []);
-                $assertTypeMatches([], []);
-                $assertTypeMatches([
-                    1,
-                    2,
-                    3
-                ], ['number']);
-                $assertTypeMatches([], ['number']);
-                $assertFails(function () {
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        3
-                    ], ['string']);
-                    $assertTypeMatches([
-                        1,
-                        2,
-                        'foo'
-                    ], ['number']);
-                });
-            }
-            if (_.hasStdlib) {
-                $assertTypeMatches({
-                    foo: 42,
-                    bar: {
-                        even: 4,
-                        many: [
-                            'foo',
-                            'bar'
-                        ]
-                    }
-                }, {
-                    foo: 'number',
-                    qux: 'undefined',
-                    bar: {
-                        even: function (n) {
-                            return n % 2 === 0;
-                        },
-                        many: ['string']
-                    }
-                });
-            }
-            if (_.hasOOP) {
-                var Foo = $prototype(), Bar = $prototype();
-                $assertTypeMatches({
-                    foo: new Foo(),
-                    bar: new Bar()
-                }, {
-                    foo: Foo,
-                    bar: Bar
-                });
-                $assertFails(function () {
-                    $assertTypeMatches(new Bar(), Foo);
-                });
-            }
-            ;
-            if (_.hasStdlib) {
-                var testF = function (_777, _foo_bar_baz, notInvolved) {
-                    $assertArguments(arguments);
-                };
-                testF(777, 'foo bar baz');
-                $assertFails(function () {
-                    testF(777, 42);
-                });
-            }
-            $assertThrows(function () {
-                throw 42;
-            });
-            $assertNotThrows(function () {
-            });
-            $assertThrows(function () {
-                throw 42;
-            }, 42);
-            $assertThrows(function () {
-                throw new Error('42');
-            }, _.matches({ message: '42' }));
-            $assertFails(function () {
-                $assertThrows(function () {
-                    throw 42;
-                }, 24);
-                $assertThrows(function () {
-                    throw new Error('42');
-                }, _.matches({ message: '24' }));
-            });
-            $assertEveryCalled(function (a, b, c) {
-                a();
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalledOnce(function (a, b, c) {
-                a();
-                b();
-                c();
-            });
-            $assertEveryCalled(function (x__3) {
-                x__3();
-                x__3();
-                x__3();
-            });
-            if (_.hasStdlib) {
-                $assertCalledWithArguments([
-                    'foo',
-                    [
-                        'foo',
-                        'bar'
-                    ]
-                ], function (fn) {
-                    fn('foo');
-                    fn('foo', 'bar');
-                });
-            }
-            $assertCPS(function (then) {
-                then('foo', 'bar');
-            }, [
-                'foo',
-                'bar'
-            ]);
-            $assertCPS(function (then) {
-                then('foo');
-            }, 'foo');
-            $assertCPS(function (then) {
-                then();
-            });
-            $assertFails(function () {
-                $fail;
-                $stub;
-                $assert('not true');
-                $assert({
-                    foo: 1,
-                    bar: 2
-                }, { foo: 1 });
-                $assert([
-                    1,
-                    2,
-                    3,
-                    4
-                ], [
-                    1,
-                    2,
-                    3
-                ]);
-                $assert(['foo'], {
-                    0: 'foo',
-                    length: 1
-                });
-                $assertFails(function () {
-                });
-            });
-            if ($assert === _.assertions.assert) {
-                $assertThrows(function () {
-                    $fail;
-                });
-            }
-        }, function () {
+        (function () {
             var assertImpl = function (positive) {
                 return function (__) {
                     var args = [].splice.call(arguments, 0);
@@ -672,7 +441,7 @@
                 var define = _[name].length === 0 ? $global.property : $global.const;
                 define('$' + name, _[name], { configurable: true });
             });
-        });
+        }());
     },
     function (module, exports, __webpack_require__) {
         (function () {
@@ -737,11 +506,60 @@
     },
     function (module, exports) {
         var process = module.exports = {};
+        var cachedSetTimeout;
+        var cachedClearTimeout;
+        (function () {
+            try {
+                cachedSetTimeout = setTimeout;
+            } catch (e) {
+                cachedSetTimeout = function () {
+                    throw new Error('setTimeout is not defined');
+                };
+            }
+            try {
+                cachedClearTimeout = clearTimeout;
+            } catch (e) {
+                cachedClearTimeout = function () {
+                    throw new Error('clearTimeout is not defined');
+                };
+            }
+        }());
+        function runTimeout(fun) {
+            if (cachedSetTimeout === setTimeout) {
+                return setTimeout(fun, 0);
+            }
+            try {
+                return cachedSetTimeout(fun, 0);
+            } catch (e) {
+                try {
+                    return cachedSetTimeout.call(null, fun, 0);
+                } catch (e) {
+                    return cachedSetTimeout.call(this, fun, 0);
+                }
+            }
+        }
+        function runClearTimeout(marker) {
+            if (cachedClearTimeout === clearTimeout) {
+                return clearTimeout(marker);
+            }
+            try {
+                return cachedClearTimeout(marker);
+            } catch (e) {
+                try {
+                    return cachedClearTimeout.call(null, marker);
+                } catch (e) {
+                    return cachedClearTimeout.call(this, marker);
+                }
+            }
+        }
         var queue = [];
         var draining = false;
         var currentQueue;
         var queueIndex = -1;
         function cleanUpNextTick() {
+            if (!draining || !currentQueue) {
+                return;
+            }
             draining = false;
             if (currentQueue.length) {
                 queue = currentQueue.concat(queue);
@@ -756,7 +574,7 @@
             if (draining) {
                 return;
             }
-            var timeout = setTimeout(cleanUpNextTick);
+            var timeout = runTimeout(cleanUpNextTick);
             draining = true;
             var len = queue.length;
             while (len) {
@@ -772,7 +590,7 @@
             }
             currentQueue = null;
             draining = false;
-            clearTimeout(timeout);
+            runClearTimeout(timeout);
         }
         process.nextTick = function (fun) {
             var args = new Array(arguments.length - 1);
@@ -783,7 +601,7 @@
             }
             queue.push(new Item(fun, args));
             if (queue.length === 1 && !draining) {
-                setTimeout(drainQueue, 0);
+                runTimeout(drainQueue);
             }
         };
         function Item(fun, array) {
@@ -1288,108 +1106,9 @@
     },
     function (module, exports, __webpack_require__) {
         'use strict';
-        const bullet = __webpack_require__(12), asTable = __webpack_require__(10);
+        const O = __webpack_require__(2), bullet = __webpack_require__(4), asTable = __webpack_require__(10);
         _.hasLog = true;
-        _.tests.log = {
-            basic: function () {
-                log('log (x)');
-                log.green('log.green');
-                log.boldGreen('log.boldGreen');
-                log.darkGreen('log.darkGreen');
-                log.blue('log.blue');
-                log.boldBlue('log.boldBlue');
-                log.darkBlue('log.darkBlue');
-                log.orange('log.orange');
-                log.boldOrange('log.boldOrange');
-                log.darkOrange('log.darkOrange');
-                log.red('log.red');
-                log.boldRed('log.boldRed');
-                log.darkRed('log.darkRed');
-                log.pink('log.pink');
-                log.boldPink('log.boldPink');
-                log.darkPink('log.darkPink');
-                log.margin();
-                log.margin();
-                log.bright('log.bright');
-                log.dark('log.dark');
-                log.margin();
-                log.success('log.success');
-                log.ok('log.ok');
-                log.g('log.g');
-                log.gg('log.gg');
-                log.info('log.info');
-                log.i('log.i');
-                log.ii('log.ii');
-                log.warning('log.warning');
-                log.warn('log.warn');
-                log.w('log.w');
-                log.ww('log.ww');
-                log.error('log.error');
-                log.e('log.e');
-                log.ee('log.ee');
-                $assert(log('log (x) === x'), 'log (x) === x');
-                log.info(log.stackOffset(2), 'log.info (log.config ({ stackOffset: 2 }), ...)');
-                log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
-                log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
-                log.write(log.boldLine);
-                log.write(log.thinLine);
-                log.write(log.line);
-                log.write(log.indent(1), [
-                    'You can set indentation',
-                    'that is nicely handled',
-                    'in case of multiline text'
-                ].join('\n'));
-                log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
-                log.orange(log.config({
-                    indent: 2,
-                    table: true
-                }), [
-                    {
-                        field: 'line',
-                        matches: false,
-                        valueType: 'string',
-                        contractType: 'number'
-                    },
-                    {
-                        field: 'column',
-                        matches: true,
-                        valueType: 'string',
-                        contractType: 'number'
-                    }
-                ]);
-                log.write('\nObject:', {
-                    foo: 1,
-                    bar: 2,
-                    qux: 3
-                });
-                log.write('Array:', [
-                    1,
-                    2,
-                    3
-                ]);
-                log.write('Function:', _.identity);
-                log.write('Complex object:', {
-                    foo: 1,
-                    bar: {
-                        qux: [
-                            1,
-                            2,
-                            3
-                        ],
-                        garply: _.identity
-                    }
-                }, '\n\n');
-                log.withConfig(log.indent(1), function () {
-                    log.pink('Config stack + scopes + higher order API test:');
-                    _.each([
-                        5,
-                        6,
-                        7
-                    ], logs.pink(log.indent(1), 'item = ', log.color.blue));
-                });
-                $assert(log(42), 42);
-            }
-        };
+        ;
         _.extend($global.log = function () {
             return log.write.apply(this, [log.config({
                     location: true,
@@ -1771,38 +1490,11 @@
             module.exports = log;
         }
     },
-    4,
     function (module, exports, __webpack_require__) {
-        var bullet = __webpack_require__(12), asTable = __webpack_require__(10);
+        var bullet = __webpack_require__(4), asTable = __webpack_require__(10);
         Tags.define('shouldFail');
         Tags.define('async');
-        _.tests.Testosterone = {
-            'async': function (done) {
-                _.delay(function () {
-                    done();
-                });
-            },
-            '$tests': function () {
-                DummyPrototypeWithTest = $prototype({
-                    $test: function () {
-                    }
-                });
-                DummyPrototypeWithTests = $prototype({
-                    $tests: {
-                        dummy: function () {
-                        }
-                    }
-                });
-                $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
-                $assertThrows(function () {
-                    DummyPrototypeWithTests.$tests = 42;
-                });
-                $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [
-                    DummyPrototypeWithTest.$tests,
-                    DummyPrototypeWithTests.$tests
-                ]);
-            }
-        };
+        ;
         Tags.define('assertion');
         Testosterone = $singleton({
             prototypeTests: [],
@@ -2229,28 +1921,6 @@
             colors.each(Tags.define);
             Tags.define('verbose');
             Testosterone.LogsMethodCalls = $trait({
-                $test: $platform.Browser ? function () {
-                } : function (testDone) {
-                    var Proto = $prototype({ $traits: [Testosterone.LogsMethodCalls] });
-                    var Compo = $extends(Proto, {
-                        foo: $log($pink($verbose(function (_42) {
-                            $assert(_42, 42);
-                            return 24;
-                        })))
-                    });
-                    var compo = new Compo();
-                    var testContext = this;
-                    Compo.$meta(function () {
-                        $assert(compo.foo(42), 24);
-                        $assert(_.pluck(testContext.logCalls, 'text'), [
-                            'Compo.foo (42)',
-                            '\u2192 24',
-                            ''
-                        ]);
-                        $assert(testContext.logCalls[0].color === log.color('pink'));
-                        testDone();
-                    });
-                },
                 $macroTags: {
                     log: function (def, member, name) {
                         var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
@@ -8733,20 +8403,20 @@
         }(jQuery));
     },
     function (module, exports, __webpack_require__) {
-        var content = __webpack_require__(20);
+        var content = __webpack_require__(19);
         if (typeof content === 'string')
             content = [[
                     module.id,
                     content,
                     ''
                 ]];
-        var update = __webpack_require__(22)(content, {});
+        var update = __webpack_require__(21)(content, {});
         if (content.locals)
             module.exports = content.locals;
         if (false) {
             if (!content.locals) {
-                module.hot.accept('!!./../../css-loader/index.js!./Panic.css', function () {
-                    var newContent = require('!!./../../css-loader/index.js!./Panic.css');
+                module.hot.accept('!!./../node_modules/css-loader/index.js!./Panic.css', function () {
+                    var newContent = require('!!./../node_modules/css-loader/index.js!./Panic.css');
                     if (typeof newContent === 'string')
                         newContent = [[
                                 module.id,
@@ -8762,7 +8432,7 @@
         }
     },
     function (module, exports, __webpack_require__) {
-        exports = module.exports = __webpack_require__(21)();
+        exports = module.exports = __webpack_require__(20)();
         exports.push([
             module.id,
             '@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal * { letter-spacing: 0; font-family: Helvetica, sans-serif; }\n.panic-modal { font-family: Helvetica, sans-serif; min-width: 640px; max-width: 90%; transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { font-family: Helvetica, sans-serif; color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; padding: 0; }\n.panic-alert-error .callstack * { font-family: Menlo, monospace; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \\2192   \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.hide:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after  { content: \', \'; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: \':\'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: \' \'; }\n.panic-alert-error .test-log .log-entry        .line:after { content: \' \'; }\n.panic-alert-error           .callstack-entry  .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { max-width: 640px; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n.panic-alert-error.inline-exception:not(:first-child) { margin-top: 10px; border-top: 1px solid #904C34; }\n\n',
@@ -9030,20 +8700,20 @@
         }
     },
     function (module, exports, __webpack_require__) {
-        var content = __webpack_require__(24);
+        var content = __webpack_require__(23);
         if (typeof content === 'string')
             content = [[
                     module.id,
                     content,
                     ''
                 ]];
-        var update = __webpack_require__(22)(content, {});
+        var update = __webpack_require__(21)(content, {});
         if (content.locals)
             module.exports = content.locals;
         if (false) {
             if (!content.locals) {
-                module.hot.accept('!!./../../css-loader/index.js!./LogOverlay.css', function () {
-                    var newContent = require('!!./../../css-loader/index.js!./LogOverlay.css');
+                module.hot.accept('!!./../node_modules/css-loader/index.js!./LogOverlay.css', function () {
+                    var newContent = require('!!./../node_modules/css-loader/index.js!./LogOverlay.css');
                     if (typeof newContent === 'string')
                         newContent = [[
                                 module.id,
@@ -9059,11 +8729,11 @@
         }
     },
     function (module, exports, __webpack_require__) {
-        exports = module.exports = __webpack_require__(21)();
+        exports = module.exports = __webpack_require__(20)();
         exports.push([
             module.id,
             '.useless-log-overlay {\tposition: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;\n\t\t\t\t\t\toverflow: hidden;\n\t\t\t\t\t\tpointer-events: none;\n\t\t\t\t\t\t-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,\n\t\t\t\t\t\t\tcolor-stop(0.00, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.50, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.60, rgba(0,0,0,0.8)),\n\t\t\t\t\t\t\tcolor-stop(1.00, rgba(0,0,0,1))); }\n\n.useless-log-overlay-body {\n\n\tfont-family: Menlo, monospace;\n\tfont-size: 11px;\n\twhite-space: pre;\n\tbackground: rgba(255,255,255,1);\n\ttext-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }',
             ''
         ]);
     }
-])));
+]));
