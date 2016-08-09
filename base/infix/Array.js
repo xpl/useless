@@ -92,7 +92,9 @@ _.withTest ('Array extensions', function () {
         /*  TODO: refactor
          */
         take:   function (arr, n) { return arr.slice (0, n) },
-        takeAt: $method (function (arr, n) { return arr.splice (_.isScalar (n) ? n : arr.findIndex (n), 1).first }),
+        takeAt: $method (function (arr, n) {
+        	var i = _.isScalar (n) ? n : arr.findIndex (n)
+        	return (i !== -1) ? arr.splice (i, 1).first : undefined }),
         lastN:  $method (_.last),
 
         before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
