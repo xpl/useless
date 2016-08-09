@@ -5022,7 +5022,7 @@
 	         */
 	        take:   function (arr, n) { return arr.slice (0, n) },
 	        takeAt: $method (function (arr, n) {
-	        	var i = _.isScalar (n) ? n : arr.findIndex (n)
+	        	var i = (typeof (n) == 'number') ? n : arr.findIndex (n)
 	        	return (i !== -1) ? arr.splice (i, 1).first : undefined }),
 	        lastN:  $method (_.last),
 	
