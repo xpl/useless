@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- ANSI color management now available as separate NPM module: [ansicolor](https://www.npmjs.com/package/ansicolor).
+
 - `asTable` function now available as a separate NPM module: [as-table](https://www.npmjs.com/package/as-table).
 
 - `String.ify` function now available as a separate NPM module: [string.ify](https://www.npmjs.com/package/string.ify).
