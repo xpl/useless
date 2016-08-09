@@ -4990,8 +4990,9 @@
 	        groupBy:     _.groupBy,
 	        indexBy:     _.indexBy,
 	        find:        _.find,
+	        findWhere:   $method (_.findWhere),
 	        filter:      _.filter,
-		reject:      $method (_.reject),
+	        reject:      $method (_.reject),
 	        flat:        _.flatten.tails2 (true),
 	        object:      _.object,
 	        shuffle:     _.shuffle,
@@ -5017,6 +5018,9 @@
 	        /*  TODO: refactor
 	         */
 	        take:   function (arr, n) { return arr.slice (0, n) },
+	        takeAt: $method (function (arr, n) {
+	        	var i = (typeof (n) == 'number') ? n : arr.findIndex (n)
+	        	return (i !== -1) ? arr.splice (i, 1).first : undefined }),
 	        lastN:  $method (_.last),
 	
 	        before: function (arr, x) { var i = arr.indexOf (x); return i < 0 ? arr : arr.slice (0, i - 1) },
