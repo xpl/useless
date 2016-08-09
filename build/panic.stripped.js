@@ -3311,6 +3311,7 @@
                 groupBy: _.groupBy,
                 indexBy: _.indexBy,
                 find: _.find,
+                findWhere: $method(_.findWhere),
                 filter: _.filter,
                 reject: $method(_.reject),
                 flat: _.flatten.tails2(true),
