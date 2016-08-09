@@ -111,17 +111,17 @@ _.deferTest (['type', 'matches(regex)'], function () {
 
 _.withTest (['type', 'isScalar'], function () {
 
-        $assert (_.every ([42, 'foo', null, undefined, true],        _.isScalar))
+        $assert (_.every ([0, 42, 'foo', null, undefined, true, false], _.isScalar))
         $assert (_.every ([/foo/, new Date (), {}, []],       _.not (_.isScalar))) },
 
     function () {
 
         _.isScalar = function (v) {
                         return (v === undefined) ||
-                               (v === null) || ((v && v.constructor) &&
-                                                    ((v.constructor === String) ||
-                                                     (v.constructor === Number) ||
-                                                     (v.constructor === Boolean))) } })
+                               (v === null) ||
+                               (v.constructor === String) ||
+                               (v.constructor === Number) ||
+                               (v.constructor === Boolean) } })
 
 
 /*  POD data types
@@ -129,21 +129,17 @@ _.withTest (['type', 'isScalar'], function () {
 
 _.withTest (['type', 'POD'], function () {
 
-        $assert (_.every ([[], {}, 42, 'foo', null, undefined, true].map (_.isPOD)))
+        $assert (_.every ([[], {}, 42, 0, 'foo', null, undefined, true].map (_.isPOD)))
         $assert (_.every ([/foo/, new Date ()].map (_.isNonPOD))) },
 
     function () {
 
         _.isNonPOD = function (v) {
-                        return (v && v.constructor) &&
-                            (v.constructor !== Object) &&
-                            (v.constructor !== Array) &&
-                            (v.constructor !== String) &&
-                            (v.constructor !== Number) &&
-                            (v.constructor !== Boolean) }
+                        return !_.isPOD (v) }
 
         _.isPOD = function (v) {
-                    return !_.isNonPOD (v) } })
+                    return _.isScalar (v) ||
+                                (v && ((v.constructor === Object) || (v.constructor === Array))) } })
 
 
 /*  'empty' classifiers (fixes underscore shit)

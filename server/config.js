@@ -52,6 +52,9 @@ module.exports = $trait ({
                     /*  Supresses double-reporting when running under supervisor.
                      */
                     if (!this.args.spawnedBySupervisor) {
+                        var x = { foo: true }
+                        console.log (String.ify.configure ({ pretty: true }) (x), String.ify.configure ({ pretty: true }) (x))
+
                         log.p (log.config ({ pretty: true }), this.config) } } })
 
 

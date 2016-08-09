@@ -74,17 +74,17 @@
 	__webpack_require__ (8)
 	__webpack_require__ (9)
 	__webpack_require__ (11)
-	__webpack_require__ (13)
-	__webpack_require__ (14)
-	
-	jQuery = __webpack_require__ (15)
-	
+	__webpack_require__ (15)
 	__webpack_require__ (16)
 	
-	__webpack_require__ (17)
+	jQuery = __webpack_require__ (17)
+	
 	__webpack_require__ (18)
+	
 	__webpack_require__ (19)
-	__webpack_require__ (23)
+	__webpack_require__ (20)
+	__webpack_require__ (21)
+	__webpack_require__ (25)
 	
 	/*  ======================================================================== */
 	
@@ -271,29 +271,7 @@
 
 /***/ },
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = (function () {
-		"use strict";
-	
-		var ownKeys      = __webpack_require__ (3)
-		var reduce       = Function.bind.call(Function.call, Array.prototype.reduce);
-		var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
-		var concat       = Function.bind.call(Function.call, Array.prototype.concat);
-	
-		if (!Object.values) {
-			 Object.values = function values(O) {
-				return reduce(ownKeys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []) } }
-	
-		if (!Object.entries) {
-			 Object.entries = function entries(O) {
-				return reduce(ownKeys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []) } }
-	
-		return Object
-	
-	}) ();
-
-/***/ },
+[27, 3],
 /* 3 */
 /***/ function(module, exports) {
 
@@ -1475,14 +1453,17 @@
 
 	"use strict";
 	
-	const bullet  = __webpack_require__ (12),
-	      asTable = __webpack_require__ (10)
+	const O         = __webpack_require__ (12),
+	      bullet    = __webpack_require__ (14),
+	      asTable   = __webpack_require__ (10)
 	
 	_.hasLog = true
 	
 	_.tests.log = {
 	
 	    basic: function () {
+	
+	        return
 	
 	        log            ('log (x)')         //  Basic API
 	
@@ -1861,8 +1842,12 @@
 
 /***/ },
 /* 12 */
-4,
+[27, 13],
 /* 13 */
+3,
+/* 14 */
+4,
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1878,7 +1863,7 @@
 	------------------------------------------------------------------------
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
-	var bullet  = __webpack_require__ (12),
+	var bullet  = __webpack_require__ (14),
 	    asTable = __webpack_require__ (10)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
@@ -2385,7 +2370,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2438,7 +2423,7 @@
 
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12518,7 +12503,7 @@
 
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12929,7 +12914,7 @@
 	}) (jQuery) }
 
 /***/ },
-/* 17 */
+/* 19 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13181,7 +13166,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 18 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13257,16 +13242,16 @@
 	}) (jQuery);
 
 /***/ },
-/* 19 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(20);
+	var content = __webpack_require__(22);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(22)(content, {});
+	var update = __webpack_require__(24)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13283,10 +13268,10 @@
 	}
 
 /***/ },
-/* 20 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(21)();
+	exports = module.exports = __webpack_require__(23)();
 	// imports
 	
 	
@@ -13297,7 +13282,7 @@
 
 
 /***/ },
-/* 21 */
+/* 23 */
 /***/ function(module, exports) {
 
 	/*
@@ -13353,7 +13338,7 @@
 
 
 /***/ },
-/* 22 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13605,16 +13590,16 @@
 
 
 /***/ },
-/* 23 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(24);
+	var content = __webpack_require__(26);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(22)(content, {});
+	var update = __webpack_require__(24)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13631,10 +13616,10 @@
 	}
 
 /***/ },
-/* 24 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(21)();
+	exports = module.exports = __webpack_require__(23)();
 	// imports
 	
 	
@@ -13643,6 +13628,30 @@
 	
 	// exports
 
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__, __webpack_module_template_argument_0__) {
+
+	module.exports = (function () {
+		"use strict";
+	
+		var ownKeys      = __webpack_require__ (__webpack_module_template_argument_0__)
+		var reduce       = Function.bind.call(Function.call, Array.prototype.reduce);
+		var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
+		var concat       = Function.bind.call(Function.call, Array.prototype.concat);
+	
+		if (!Object.values) {
+			 Object.values = function values(O) {
+				return reduce(ownKeys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []) } }
+	
+		if (!Object.entries) {
+			 Object.entries = function entries(O) {
+				return reduce(ownKeys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []) } }
+	
+		return Object
+	
+	}) ();
 
 /***/ }
 /******/ ])));

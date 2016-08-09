@@ -1,7 +1,8 @@
 "use strict";
 
-const bullet  = require ('string.bullet'),
-      asTable = require ('as-table')
+const O         = require ('es7-object-polyfill'),
+      bullet    = require ('string.bullet'),
+      asTable   = require ('as-table')
 
 _.hasLog = true
 
