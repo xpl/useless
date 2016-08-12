@@ -4887,7 +4887,7 @@
             }
         });
         if (typeof Symbol !== 'undefined') {
-            Vec2.prototype[Symbol.for('String.ify')] = function () {
+            BBox.prototype[Symbol.for('String.ify')] = function () {
                 return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
             };
         }
@@ -7141,18 +7141,19 @@
             },
             animating: $observableProperty(false),
             target: $observableProperty(),
-            current: $observableProperty(),
+            value: $observableProperty(),
             init: function (cfg) {
                 this.easing = (_.isNumber(this.target) ? Easing.scalar : Easing.vector)[this.easing];
-                this.targetChange(function (value) {
-                    if (this.animating === false) {
-                        this.start = this.value;
-                        this.current = this.target = value;
-                        this.startTime = Date.now();
-                        this.step();
-                    } else {
-                        this.start = this.current;
-                        this.startTime = this.lastTime;
+                this.targetChange(function (target) {
+                    if (target !== undefined) {
+                        if (this.animating === false) {
+                            this.start = this.value;
+                            this.target = target;
+                            this.startTime = Date.now();
+                            this.step();
+                        } else {
+                            this.start = this.value;
+                        }
                     }
                 });
             },
@@ -7160,12 +7161,11 @@
                 var now = Date.now();
                 var travel = Math.min(1, ((this.lastTime = now) - this.startTime) / (this.duration * 1000));
                 if (travel < 1) {
-                    var animated = this.easing(this.start, this.target, travel);
                     this.animating = true;
-                    this.current = animated;
-                    window.requestAnimationFrame(this.step);
+                    this.value = this.easing(this.start, this.target, travel);
+                    requestAnimationFrame(this.step);
                 } else {
-                    this.current = this.target;
+                    this.value = this.target;
                     this.animating = false;
                 }
             }

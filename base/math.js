@@ -448,7 +448,7 @@ BBox = $prototype ({
 /*  ------------------------------------------------------------------------ */
 
 if (typeof Symbol !== 'undefined') {
-    Vec2.prototype[Symbol.for ('String.ify')] = function () {
+    BBox.prototype[Symbol.for ('String.ify')] = function () {
                                                     return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }'  } }
 
 

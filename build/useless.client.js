@@ -7325,7 +7325,7 @@
 	/*  ------------------------------------------------------------------------ */
 	
 	if (typeof Symbol !== 'undefined') {
-	    Vec2.prototype[Symbol.for ('String.ify')] = function () {
+	    BBox.prototype[Symbol.for ('String.ify')] = function () {
 	                                                    return '{ ' + this.left + ',' + this.top + ' ←→ ' + this.right + ',' + this.bottom + ' }'  } }
 	
 	
@@ -10928,27 +10928,29 @@
 	InertialValue = $component ({
 	
 	    $defaults: { duration:  0.2,
-	                 easing:   'linear' },
+	                 easing:   'linear' }, // initial value
 	
 	    animating: $observableProperty (false),
 	    target:    $observableProperty (/* scalar or vector */),
-	    current:   $observableProperty (),
+	    value:     $observableProperty (),
 	
 	    init: function (cfg) {
 	
 	        this.easing  = (_.isNumber (this.target) ? Easing.scalar : Easing.vector)[this.easing]
 	
-	        this.targetChange (function (value) {
+	        this.targetChange (function (target) {
 	
-	            if (this.animating === false) {
-	                this.start     = this.value
-	                this.current   = this.target = value
-	                this.startTime = Date.now ()
-	                this.step () }
+	            if (target !== undefined) {
 	
-	            else {
-	                this.start      = this.current
-	                this.startTime  = this.lastTime     } })  },
+	                if (this.animating === false) {
+	                    this.start     = this.value
+	                    this.target    = target
+	                    this.startTime = Date.now ()
+	                    this.step () }
+	
+	                else {
+	                    this.start      = this.value
+	                    /*this.startTime  = this.lastTime*/     } } })  },
 	
 	    step: function () {
 	
@@ -10956,14 +10958,13 @@
 	        var travel = Math.min (1.0, ((this.lastTime = now) - this.startTime) / (this.duration * 1000.0))
 	        if (travel < 1.0) {
 	
-	             var animated  = this.easing (this.start, this.target, travel)
 	            this.animating = true
-	            this.current   = animated
+	            this.value     = this.easing (this.start, this.target, travel)
 	
-	            window.requestAnimationFrame (this.step) }
+	            requestAnimationFrame (this.step) }
 	
 	        else {
-	            this.current   = this.target
+	            this.value     = this.target
 	            this.animating = false          } } })
 	
 	
