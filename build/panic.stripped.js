@@ -7143,7 +7143,7 @@
             target: $observableProperty(),
             value: $observableProperty(),
             init: function (cfg) {
-                this.easing = (_.isNumber(this.target) ? Easing.scalar : Easing.vector)[this.easing];
+                this.easing = (this.value instanceof Vec2 ? Easing.vector : Easing.scalar)[this.easing];
                 this.targetChange(function (target) {
                     if (target !== undefined) {
                         if (this.animating === false) {

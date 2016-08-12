@@ -4,7 +4,7 @@
 InertialValue = $component ({
 
     $defaults: { duration:  0.2,
-                 easing:   'linear' }, // initial value
+                 easing:   'linear' },
 
     animating: $observableProperty (false),
     target:    $observableProperty (/* scalar or vector */),
@@ -12,7 +12,7 @@ InertialValue = $component ({
 
     init: function (cfg) {
 
-        this.easing  = (_.isNumber (this.target) ? Easing.scalar : Easing.vector)[this.easing]
+        this.easing  = ((this.value instanceof Vec2) ? Easing.vector : Easing.scalar)[this.easing]
 
         this.targetChange (function (target) {
 
