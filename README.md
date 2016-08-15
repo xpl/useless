@@ -419,7 +419,7 @@ For building everything, run:
 node build
 ```
 
-It will generate `./build/***.js` by substituting `$include` directives found in header files. Produced result will undergo stripping of tests and comments, and then finally compiled using Google Closure Compiler, outputting minified result to `./build/***.min.js`
+It will generate `./build/***.js` by squashing all `require` imports into a single monolithic file. Produced result will undergo stripping of tests and comments, and then finally compiled using Google Closure Compiler, outputting minified result to `./build/***.min.js`
 
 ### no-compress option
 
