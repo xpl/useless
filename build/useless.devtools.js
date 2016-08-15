@@ -2369,6 +2369,8 @@
 	;(function () { var colors = _.keys (_.omit (log.color, 'none'))
 	                    colors.each (Tags.define)
 	
+	    var stringify = String.ify.configure ({ pretty: false })
+	
 	    Tags.define ('verbose')
 	
 	    Testosterone.LogsMethodCalls = $trait ({
@@ -2401,8 +2403,8 @@
 	                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
 	                                                                                                             arguments_ = _.asArray (arguments)
 	
-	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, String.ify.configure ({ pretty: false }).arity1)))) || this.desc || ''
-	                        var args_dump = _.map (arguments_, String.ify.oneLine.arity1).join (', ').quote ('()')
+	                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, stringify)))) || this.desc || ''
+	                        var args_dump = _.map (arguments_, stringify).join (', ').quote ('()')
 	
 	                    log.write (log.config ({
 	                        color: color,
@@ -2417,7 +2419,7 @@
 	                                                                        var result          = fn.apply (this_, arguments_);          
 	
 	                                                                        if (result !== undefined) {
-	                                                                            log.write ('→', String.ify.oneLine (result)) }
+	                                                                            log.write ('→', stringify (result)) }
 	
 	                                                                        if ((log.currentConfig ().indent < 2) &&
 	                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }

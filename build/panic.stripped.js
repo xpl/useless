@@ -9100,6 +9100,7 @@
         (function () {
             var colors = _.keys(_.omit(log.color, 'none'));
             colors.each(Tags.define);
+            var stringify = String.ify.configure({ pretty: false });
             Tags.define('verbose');
             Testosterone.LogsMethodCalls = $trait({
                 $macroTags: {
@@ -9116,8 +9117,8 @@
                         return $prototype.impl.modifyMember(member, function (fn, name_) {
                             return function () {
                                 var this_ = this, arguments_ = _.asArray(arguments);
-                                var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, String.ify.configure({ pretty: false }).arity1))) || this.desc || '';
-                                var args_dump = _.map(arguments_, String.ify.oneLine.arity1).join(', ').quote('()');
+                                var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, stringify))) || this.desc || '';
+                                var args_dump = _.map(arguments_, stringify).join(', ').quote('()');
                                 log.write(log.config({
                                     color: color,
                                     location: true,
@@ -9135,7 +9136,7 @@
                                     var numWritesBefore = log.impl.numWrites;
                                     var result = fn.apply(this_, arguments_);
                                     if (result !== undefined) {
-                                        log.write('\u2192', String.ify.oneLine(result));
+                                        log.write('\u2192', stringify(result));
                                     }
                                     if (log.currentConfig().indent < 2 && log.impl.numWrites - numWritesBefore > 0) {
                                         log.newline();
