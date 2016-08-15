@@ -387,7 +387,7 @@
              */
             set: function (cfg) {
                 this.style.transform = (_.isStrictlyObject (cfg) && (
-                                            (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
+                                            (cfg.translate ? ('translate(' + cfg.translate.x.toFixed (0) + 'px,' + cfg.translate.y.toFixed (0) + 'px) ') : '') +
                                             (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
                                             (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '' } }),
 

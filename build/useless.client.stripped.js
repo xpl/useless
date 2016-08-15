@@ -2621,8 +2621,7 @@
         }
     },
     function (module, exports, __webpack_require__) {
-        'use strict';
-        const O = Object;
+        var O = Object;
         _.hasTags = true;
         {
             $global.Tags = function (subject, keys) {
@@ -6969,7 +6968,7 @@
                         }
                     },
                     set: function (cfg) {
-                        this.style.transform = _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '';
+                        this.style.transform = _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x.toFixed(0) + 'px,' + cfg.translate.y.toFixed(0) + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '';
                     }
                 }),
                 reads: function (stream, fn) {

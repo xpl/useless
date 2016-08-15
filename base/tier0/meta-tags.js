@@ -1,6 +1,4 @@
-"use strict";
-
-const O = Object
+var O = Object
 
 /*  For checking whether the module is available
     ======================================================================== */
