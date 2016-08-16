@@ -6200,6 +6200,9 @@
                     return fn(e, null);
                 });
             },
+            reflect: $static(function (promise) {
+                return promise.then(v => v, e => e);
+            }),
             log: $property(function () {
                 return this.then(log, log.then(_.throwsError));
             }),
