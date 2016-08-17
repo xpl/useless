@@ -222,7 +222,11 @@ $mixin (Promise, {
     finally: function (fn) { return this.then (function (x) { return fn (null, x) },
                                                function (e) { return fn (e, null) }) },
 
-    reflect: $static (function (promise) { return promise.then (v => v, e => e) }),
+    $callableAsFreeFunction: {
+        $property: {
+            reflect: function () { return this.then (v => v, e => e) },
+        },
+    },
 
     /*state: $property (function () {
                         return this.then (
