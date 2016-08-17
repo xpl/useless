@@ -1497,7 +1497,7 @@
 	
 	/*  Print objects   */
 	
-	    const colNames = [...new Set (arr.map (O.keys).reduce ((a, b) => [...a, ...b]))],
+	    const colNames = [...new Set (arr.map (O.keys).reduce ((a, b) => [...a, ...b], []))],
 	          columns  = [colNames, ...arr.map (o => colNames.map (key => o[key]))],
 	          lines    = asColumns (columns, O.assign ({ minColumnWidths: colNames.map (n => n.length) }, cfg))
 	

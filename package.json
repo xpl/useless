@@ -57,7 +57,7 @@
   },
   "homepage": "https://github.com/xpl/useless#readme",
   "dependencies": {
-    "as-table": "^1.0.7",
+    "as-table": "^1.0.8",
     "babel-polyfill": "^6.13.0",
     "chokidar": "^1.6.0",
     "css-loader": "^0.23.1",
@@ -68,7 +68,7 @@
     "forever-monitor": "^1.7.0",
     "jquery": "^3.1.0",
     "js-string-escape": "^1.0.1",
-    "mongodb": "^2.2.5",
+    "mongodb": "^2.2.6",
     "process": "^0.11.8",
     "string.bullet": "^1.0.0",
     "string.ify": "^1.0.10",
