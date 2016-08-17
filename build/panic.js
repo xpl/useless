@@ -9416,7 +9416,9 @@
 	    ======================================================================== */
 	
 	
-	TimeoutError = $extends (Error, { message: 'timeout expired' })                                
+	class TimeoutError extends Error {
+	    constructor () { super ('timeout expired') }
+	}                                
 	
 	/*  ------------------------------------------------------------------------ */
 	

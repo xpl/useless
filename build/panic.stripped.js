@@ -6077,7 +6077,11 @@
     },
     function (module, exports) {
         ;
-        TimeoutError = $extends(Error, { message: 'timeout expired' });
+        class TimeoutError extends Error {
+            constructor() {
+                super('timeout expired');
+            }
+        }
         __ = Promise.eval = function (x) {
             var this_ = this, args = _.rest(arguments);
             return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
