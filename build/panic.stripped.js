@@ -6077,11 +6077,11 @@
     },
     function (module, exports) {
         ;
-        class TimeoutError extends Error {
+        $global.TimeoutError = class extends Error {
             constructor() {
                 super('timeout expired');
             }
-        }
+        };
         __ = Promise.eval = function (x) {
             var this_ = this, args = _.rest(arguments);
             return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
@@ -6247,8 +6247,8 @@
                 });
             }
         });
-        (function () {
-            var TaskPool = $prototype({
+        {
+            $global.TaskPool = $prototype({
                 constructor: function (cfg) {
                     this.maxTime = cfg && cfg.maxTime;
                     this.pending = [];
@@ -6304,7 +6304,7 @@
                     }
                 });
             };
-        }());
+        }
         __.map = function (x, fn, cfg) {
             return __.scatter(x, function (v, k, x) {
                 return __.then(fn.$(v, k, x), function (x) {

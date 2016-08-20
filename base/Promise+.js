@@ -131,9 +131,9 @@ _.tests['Promise+'] = {
     ======================================================================== */
 
 
-class TimeoutError extends Error {
+$global.TimeoutError = class extends Error {
     constructor () { super ('timeout expired') }
-}                                
+}
 
 /*  ------------------------------------------------------------------------ */
 
@@ -280,7 +280,7 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
     function () {
 
-        var TaskPool = $prototype ({
+        $global.TaskPool = $prototype ({
 
             constructor: function (cfg) {
                             

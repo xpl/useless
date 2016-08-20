@@ -9416,9 +9416,9 @@
 	    ======================================================================== */
 	
 	
-	class TimeoutError extends Error {
+	$global.TimeoutError = class extends Error {
 	    constructor () { super ('timeout expired') }
-	}                                
+	}
 	
 	/*  ------------------------------------------------------------------------ */
 	
@@ -9565,7 +9565,7 @@
 	
 	    function () {
 	
-	        var TaskPool = $prototype ({
+	        $global.TaskPool = $prototype ({
 	
 	            constructor: function (cfg) {
 	                            
