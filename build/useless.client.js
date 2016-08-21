@@ -9273,6 +9273,8 @@
 /* 30 */
 /***/ function(module, exports) {
 
+	"use strict";
+	
 	/*  Promise-centric extensions (WIP) /// TODO: REFACTOR
 	    ======================================================================== */
 	
@@ -9412,12 +9414,13 @@
 	
 	/*  ------------------------------------------------------------------------ */
 	
-	__ = Promise.eval = function (x) { var this_ = this,
-	                                       args = _.rest (arguments)
+	$global.__ =
+	Promise.eval = function (x) { var this_ = this,
+	                                  args = _.rest (arguments)
 	
-	                        return ((x instanceof Promise)   ?  x :
-	                               ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x.apply (this_, args)) }) : // @hide
-	                                                                Promise.resolve (x))) }
+	                    return ((x instanceof Promise)   ?  x :
+	                           ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x.apply (this_, args)) }) : // @hide
+	                                                            Promise.resolve (x))) }
 	
 	Promise.coerce = function (x) {
 	                        return (x instanceof Promise) ? x : Promise.resolve (x) }
