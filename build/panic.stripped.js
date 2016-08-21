@@ -6076,13 +6076,14 @@
         }());
     },
     function (module, exports) {
+        'use strict';
         ;
         $global.TimeoutError = class extends Error {
             constructor() {
                 super('timeout expired');
             }
         };
-        __ = Promise.eval = function (x) {
+        $global.__ = Promise.eval = function (x) {
             var this_ = this, args = _.rest(arguments);
             return x instanceof Promise ? x : x instanceof Function ? new Promise(function (resolve) {
                 resolve(x.apply(this_, args));

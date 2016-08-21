@@ -28,7 +28,7 @@ _.tests['Promise+'] = {
 
     /*  Run     */
 
-        fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
+        const fsAsync = Function.promisifyAll (fs, { except: _.endsWith.$$ ('Sync').or (['dontTouchMe', 'dontTouchMe2'].asSet.matches) })
 
     /*  Check if 'except' worked successfully */
 
