@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- More NPM modules to come: [StackTracey](https://www.npmjs.com/package/stacktracey) and [get-source](https://www.npmjs.com/package/get-source) (re-written from scratch). Not integrated yet.
+
 - ANSI color management now available as separate NPM module: [ansicolor](https://www.npmjs.com/package/ansicolor).
 
 - `asTable` function now available as a separate NPM module: [as-table](https://www.npmjs.com/package/as-table).
