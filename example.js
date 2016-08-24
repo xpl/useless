@@ -20,7 +20,7 @@ Examples = $singleton (Component, {
         
         require ('./server/supervisor'),
         require ('./server/tests'),
-        require ('./server/deploy'),
+        require ('./server/webpack'),
         require ('./server/http'),
         require ('./server/templating'),
         require ('./server/websocket'),

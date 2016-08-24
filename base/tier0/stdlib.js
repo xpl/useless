@@ -223,6 +223,10 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
                     { foo: 'foo',   bar: [7, 'foo', { bar: 'foo' }] }, _.not (_.equals ('foo'))),
                     {               bar: [7,        {            }] })  
 
+    // there was a bug
+
+    $assert (_.hyperFilter ({ foo: /regexp/ }, _.constant (true)).foo instanceof RegExp)
+
 }, function () {
 
     _.reject2 = function (value, op) {

@@ -698,10 +698,10 @@ Component = $prototype ({
     $impl: {
 
         sequence: function (def, base) { return _.sequence (
+            this.convertPropertyAccessors,
             this.extendWithTags,
             this.flatten,
             this.generateCustomCompilerImpl (base),
-            this.generateArgumentContractsIfNeeded,
             this.ensureFinalContracts (base),
             this.generateConstructor (base),
             this.evalAlwaysTriggeredMacros (base),

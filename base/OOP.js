@@ -1,3 +1,5 @@
+"use strict";
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -146,6 +148,31 @@ _.withTest ('OOP', {
 
              _.matches ({ message: 'Cannot derive from $final-marked prototype' })) },
 
+/*  Use $alias to make member aliases with correct semantics
+    ======================================================================== */
+
+    'ES6 properties comprehension': function () {
+
+        let Foo = $prototype ({
+
+            get foo () {
+                $assertTypeMatches (this.constructor.$definition.foo, { subject: { get: 'function' }, $property: true })
+                return 42
+            },
+
+            $static: {
+                get bar () {
+                    return 42
+                }
+            }
+        })
+
+        $assertTypeMatches (Foo.$definition.bar, { subject: { get: 'function' }, $property: true, $static: true })
+        $assert (Foo.bar, 42)
+
+        let foo = new Foo ()
+        $assert (foo.foo, 42)
+    },
 
 /*  Use $alias to make member aliases with correct semantics
     ======================================================================== */
@@ -286,25 +313,6 @@ _.withTest ('OOP', {
         $assert (B.$base === A.prototype) },
 
 
-/*  Adds value contracts to arguments for unit testing purposes
-    ======================================================================== */
-
-    'value contracts for arguments': function () {
-
-        var Proto = $prototype ($testArguments ({
-
-            frobnicate:  function (_777, _foo_bar_baz, unaffected) {},
-            noMistake:   function () {} }))
-
-        var obj = new Proto ()
-
-        $assertFails (function () {
-            obj.frobnicate (999, 'not right') })
-
-        obj.frobnicate (777, 'foo bar baz')
-        obj.noMistake () },
-
-
 /*  You can enumerate members grouped by tag name via $membersByTag
     ======================================================================== */
 
@@ -344,17 +352,20 @@ _.withTest ('OOP', {
     _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'hidden', 'testArguments'])
         .each (Tags.define)
 
-    $prototype = function (arg1, arg2) {
-                    return $prototype.impl.compile.apply ($prototype.impl,
-                                (arguments.length > 1)
-                                    ? _.asArray (arguments).reverse ()
-                                    : arguments) }
+    _.extend ($global, {
+    
+        $prototype: function (arg1, arg2) {
+                        return $prototype.impl.compile.apply ($prototype.impl,
+                                    (arguments.length > 1)
+                                        ? _.asArray (arguments).reverse ()
+                                        : arguments) },
 
-    $extends = function (base, def) {
-                    return $prototype (base, def || {}) }
+        $extends: function (base, def) {
+                        return $prototype (base, def || {}) },
 
-    $mixin = function (constructor, def) {
-        return $prototype.impl.compileMixin (_.extend (def, { constructor: constructor })) }
+        $mixin: function (constructor, def) {
+                        return $prototype.impl.compileMixin (_.extend (def, { constructor: constructor })) }
+    })
 
     _.extend ($prototype, {
 
@@ -410,10 +421,10 @@ _.withTest ('OOP', {
 
                 /*  TODO: optimize performance (there's PLENTY of room to do that)
                  */
+                this.convertPropertyAccessors,
                 this.extendWithTags,
                 this.flatten,
                 this.generateCustomCompilerImpl (base),
-                this.generateArgumentContractsIfNeeded,
                 this.ensureFinalContracts (base),
                 this.generateConstructor (base),
                 this.evalAlwaysTriggeredMacros (base),
@@ -429,6 +440,7 @@ _.withTest ('OOP', {
 
             compileMixin: function (def) {
                 return _.sequence (
+                    this.convertPropertyAccessors,
                     this.flatten,
                     this.contributeTraits (),
                     this.expandAliases,
@@ -436,10 +448,26 @@ _.withTest ('OOP', {
                     this.defineStaticMembers,
                     this.defineInstanceMembers).call (this, def || {}).constructor },
 
+            convertPropertyAccessors: function (def) { // converts { get foo () {} } to { get: $property (...) }
+
+                for (let name of Object.getOwnPropertyNames (def)) {
+                    const desc = Object.getOwnPropertyDescriptor (def, name)
+
+                    if ((desc.get instanceof Function ||
+                         desc.set instanceof Function)) {
+
+                        Object.defineProperty (def, name, { value: $property (desc) }) } }
+
+                return def
+            },
+
             flatten: function (def) {
+
+            /*  merge groups    */
+
                 var tagGroups    = _.pick (def, this.isTagGroup)
                 var mergedTagGroups = _.object (_.flatten (_.map (tagGroups, function (membersDef, tag) {
-                    return _.map (this.flatten (membersDef), function (member, memberName) {
+                    return _.map (this.flatten (this.convertPropertyAccessors (membersDef)), function (member, memberName) {
                         return [memberName, $global[tag] (member)] }) }, this), true))
 
                 var memberDefinitions   = _.omit (def, this.isTagGroup)
@@ -484,11 +512,6 @@ _.withTest ('OOP', {
                         def.$impl = $static ($builtin ($property (base.$impl))) }
                     return def } },
 
-            generateArgumentContractsIfNeeded: function (def) {
-                return def.$testArguments ? $prototype.wrapMethods (def, function (fn, name) {
-                                                                     return function () { var args = _.asArray (arguments)
-                                                                        $assertArguments (args.copy, fn.original, name)
-                                                                         return fn.apply (this, args) } }) : def },
             contributeTraits: function (base) {
                         return function (def) {
                 
@@ -679,7 +702,7 @@ _.withTest ('OOP', {
                                                         //  no need to pre-index
     _.isTypeOf = _.or (_.isTypeOf, _.isTraitOf)
 
-    $trait = function (arg1, arg2) {
+    $global.$trait = function (arg1, arg2) {
         var constructor = undefined
         var def = _.extend (arguments.length > 1 ? arg2 : arg1, {
                         constructor: _.throwsError ('Traits are not instantiable (what for?)'),
@@ -736,10 +759,10 @@ _.withTest ('OOP', {
      */
     _.withTest (['OOP', '$callableAsFreeFunction'], function () {
 
-            var X = $prototype ({
-                foo: $callableAsFreeFunction ($property (function () { $assert (this._42, 42); return 42 })) })
+            const X = $prototype ({
+                        foo: $callableAsFreeFunction ($property (function () { $assert (this._42, 42); return 42 })) }),
 
-                x = new X ({ _42: 42 })
+                  x = new X ({ _42: 42 })
 
             $assert (x.foo, X.foo (x), 42) },       function () {
 
@@ -755,10 +778,10 @@ _.withTest ('OOP', {
      */
     _.withTest (['OOP', '$callableAsMethod'],       function () {
 
-            var X = $prototype ({
-                foo: $callableAsMethod (function (this_, _42) { $assert (this_._42, _42, 42); return 42 }) })
+            const X = $prototype ({
+                        foo: $callableAsMethod (function (this_, _42) { $assert (this_._42, _42, 42); return 42 }) }),
 
-                x = new X ({ _42: 42 })
+                  x = new X ({ _42: 42 })
 
             $assert (x.foo (42), X.foo (x, 42), 42) },  function () {
 
@@ -806,6 +829,6 @@ _.withTest ('OOP', {
         /*  IMPLEMENTATION
             ==================================================================== */
 
-            $singleton = function (arg1, arg2) {
+            $global.$singleton = function (arg1, arg2) {
                     return new ($prototype.apply (null, arguments)) () } })
 

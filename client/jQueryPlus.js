@@ -1,7 +1,7 @@
 /*  Some handy jQuery extensions
     ======================================================================== */
 
-if (typeof jQuery !== 'undefined') { (function ($) {
+;(function ($) {
 
 /*  We override some jQuery methods, so store previous impl. here
  */
@@ -403,4 +403,6 @@ _.extend ($, {
             $(e.target).trigger ('click') }) }      // also synthesize click events we just swallowed up
     })
 
-}) (jQuery) }
+}) (require ('jquery'));
+
+

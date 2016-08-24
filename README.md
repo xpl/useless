@@ -303,7 +303,7 @@ UselessApp = $singleton (Component, {
 
     $depends: [
         require ('useless/server/tests'),
-        require ('useless/server/deploy'),
+        require ('useless/server/webpack'),
         require ('useless/server/http') ],
 
     /*    URL router schema
@@ -444,7 +444,7 @@ Applications that are based on top of `useless/server` can easily enable automat
 ```javascript
 $traits: [        
         require ('useless/server/tests'),
-        require ('useless/server/deploy'),
+        require ('useless/server/webpack'),
         require ('useless/server/supervisor')
 ```
 

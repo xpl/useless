@@ -1,0 +1,71 @@
+<html>
+    <head>
+        <meta charset="utf-8"></meta>
+        <title>InertialValue test</title>
+
+        <script src="../build/useless.client.min.js"></script>
+
+    </head>
+    <style>
+
+        @keyframes slide-to-right {
+            0%   { transform: translate(0,0); opacity: 1; }
+            100% { transform: translate(100%,0); opacity: 0; } }
+
+        [slide-to-right]   { animation: slide-to-right 1s ease-in-out; }
+        [slide-from-right] { animation: slide-to-right 1s ease-in-out; animation-direction: reverse; }
+        
+    </style>
+    <script>
+
+        $mixin (Node, {
+
+            animateWithAttribute: function (attr) {
+
+            /*  If already animating with this attribute — return previously allocated promise    */
+
+                if (this.hasAttribute (attr) && this._onceAnimationEnd) {
+                    return this._onceAnimationEnd }
+
+            /*  If already animating — finalize the existing promise */
+
+                if (this._onceAnimationEnd) {
+                    this._onceAnimationEnd.finalize () }
+
+            /*  Allocate new promise    */
+
+                this.setAttribute (attr, true)
+
+                this._onceAnimationEnd = this.onceAnimationEnd
+
+                return this._onceAnimationEnd.then (this.$ (function () {
+                        this.removeAttribute (attr)
+                        this.getBoundingClientRect () // forces layout recalc, otherwise new animation (if set in callback) may not start
+                        this._onceAnimationEnd = undefined })) },
+
+        })
+        
+        document.ready (function () {
+
+            var div =
+                N.div.css ({
+                    position: 'fixed', left: '0px', top: '0px', width: '100px', height: '100px', background: 'red' }).appendTo (document.body)
+
+            var animate = function () {
+                div.animateWithAttribute ('slide-to-right').then (function () {
+                    div.style.background = 'blue'
+                    div.animateWithAttribute ('slide-from-right').then (function () {
+                        div.style.background = 'green' })
+                })
+            }
+
+            div.touched (animate); animate ()
+        })
+
+    </script>
+
+    <body>
+
+
+    </body>
+</html>

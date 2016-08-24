@@ -135,14 +135,19 @@ _.tests['DOMReference + DOMEvents'] = {
 DOMReference = $trait ({
 
         domReady: $barrier (function (dom) {
-                                 this.dom = dom
-                                 this.el = jQuery (this.dom) }),
+                                this.dom = dom
 
-    afterDestroy: function () {  if (this.dom) {
-                                     this.dom.removeFromParent ()
-                                     this.dom = undefined
-                                     this.el  = undefined }
-                                 this.domReady.reset () } })
+                                if (typeof jQuery !== 'undefined') {
+                                    this.el = jQuery (this.dom) } }), // legacy
+
+    afterDestroy: function () {
+
+        if (this.dom) {
+            this.dom.removeFromParent ()
+            this.dom = undefined
+            this.el  = undefined }
+
+        this.domReady.reset () } })
 
 /*  ======================================================================== */
 

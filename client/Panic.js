@@ -10,9 +10,6 @@ Error reporting UI
 
 (function ($ /* JQUERY */) {
 
-if (typeof UI === 'undefined') {
-	UI = {} }
-
 Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
 
 	if (_.isTypeOf (Error, what)) {
@@ -244,4 +241,4 @@ $.fn.extend ({
 
 // -- end of namespace
 
-}) (jQuery);
+}) (require ('jquery'));
