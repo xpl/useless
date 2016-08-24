@@ -104,8 +104,8 @@ $extensionMethods (Function, {
 
     wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w); return f },
     wrapped: function (f) { return f._wrapped || f },
-    original: function (f) {  while (f && f._wrapped) {
-                                     f  = f._wrapped } return f },
+    originalWrapped: function (f) {  while (f && f._wrapped) {
+                                            f  = f._wrapped } return f },
 
     arity0:         _.arity0,
     arity1:         _.arity1,

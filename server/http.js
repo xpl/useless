@@ -295,7 +295,7 @@ module.exports = $trait ({
                      .write ({
                         success: false,
                         error: e.message,
-                        parsedStack: CallStack.fromError (e).asArray.map (e => _.extend (e, { remote: true })) }) }
+                        parsedStack: new StackTracey (e).map (e => _.extend (e, { remote: true })) }) }
             else {
                 $http.writeHead ()
                      .write ({

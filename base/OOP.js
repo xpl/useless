@@ -487,7 +487,7 @@ _.withTest ('OOP', {
             generateArgumentContractsIfNeeded: function (def) {
                 return def.$testArguments ? $prototype.wrapMethods (def, function (fn, name) {
                                                                      return function () { var args = _.asArray (arguments)
-                                                                        $assertArguments (args.copy, fn.original, name)
+                                                                        $assertArguments (args.copy, fn.originalWrapped, name)
                                                                          return fn.apply (this, args) } }) : def },
             contributeTraits: function (base) {
                         return function (def) {

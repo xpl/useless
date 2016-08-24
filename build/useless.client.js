@@ -4779,8 +4779,8 @@
 	
 	    wraps: function (f, w) { f._wrapped = _.withSameArgs (f, w); return f },
 	    wrapped: function (f) { return f._wrapped || f },
-	    original: function (f) {  while (f && f._wrapped) {
-	                                     f  = f._wrapped } return f },
+	    originalWrapped: function (f) {  while (f && f._wrapped) {
+	                                            f  = f._wrapped } return f },
 	
 	    arity0:         _.arity0,
 	    arity1:         _.arity1,
@@ -6545,7 +6545,7 @@
 	            generateArgumentContractsIfNeeded: function (def) {
 	                return def.$testArguments ? $prototype.wrapMethods (def, function (fn, name) {
 	                                                                     return function () { var args = _.asArray (arguments)
-	                                                                        $assertArguments (args.copy, fn.original, name)
+	                                                                        $assertArguments (args.copy, fn.originalWrapped, name)
 	                                                                         return fn.apply (this, args) } }) : def },
 	            contributeTraits: function (base) {
 	                        return function (def) {
@@ -10040,46 +10040,47 @@
 /* 32 */
 /***/ function(module, exports) {
 
-	/*  Promise-based HTTP protocol API (cross-platform)
-	    ======================================================================== */
+	"use strict";
 	
-	Http = $singleton (Component, {
+	/*  ------------------------------------------------------------------------ */
 	
-	    /*  You can re-use the HttpMethods trait to build API-specific layers over Http
-	     */
+	const O = Object
 	
-	    $traits: [HttpMethods = $trait ({
+	/*  ------------------------------------------------------------------------ */
 	
-	                                get: function (path, cfg) {
-	                                            return this.request ('GET',  path, cfg) },
+	$global.Http = $singleton (Component, {
 	
-	                                post: function (path, cfg) {
-	                                            return this.request ('POST', path, cfg) },
+	/*  You can re-use the HttpMethods trait to build API-specific layers over Http */
 	
-	                                loadFile: function (path, cfg) {
-	                                            return this.request ('GET', path, { responseType: 'arraybuffer' }) },
+	    $traits: [$global.HttpMethods = $trait ({
 	
-	                                uploadFile: function (path, file, cfg) {
-	                                                return this.post (path, _.extend2 ({
-	                                                    data: file,
-	                                                    headers: {
-	                                                        'Content-Type': 'binary/octet-stream',
-	                                                        'X-File-Name': Parse.fileName (file.name || 'file').transliterate || 'file',
-	                                                        'X-File-Size': file.size,
-	                                                        'X-File-Type': file.type } }, cfg)) } }) ],
+	                get (path, cfg) {
+	                    return this.request ('GET',  path, cfg) },
 	
-	    /*  Impl
-	     */
+	                post (path, cfg) {
+	                    return this.request ('POST', path, cfg) },
 	
-	    request: function (type, path, cfg_) { var cfg = cfg_ || {}
+	                loadFile (path, cfg) {
+	                    return this.request ('GET', path, { responseType: 'arraybuffer' }) },
+	
+	                uploadFile (path, file, cfg) {
+	                    return this.post (path, _.extend2 ({
+	                        data: file,
+	                        headers: {
+	                            'Content-Type': 'binary/octet-stream',
+	                            'X-File-Name': Parse.fileName (file.name || 'file').transliterate || 'file',
+	                            'X-File-Size': file.size,
+	                            'X-File-Type': file.type } }, cfg)) } }) ],
+	
+	    request (type, path, cfg_) { const cfg = cfg_ || {}
 	                                           
-	                /*  Reference to the abort method (will be initialized at Promise construction)
-	                 */
-	                var abort = undefined
+	            /*  Reference to the abort method (will be initialized at Promise construction) */
 	
-	                /*  returned Promise
-	                 */
-	                var p = new Promise (function (resolve, reject) {
+	                let abort = undefined
+	
+	            /*  returned Promise     */
+	
+	                const p = new Promise ((resolve, reject) => {
 	
 	                    if ($platform.Browser) {
 	
@@ -10100,7 +10101,7 @@
 	
 	                        /*  Set headers
 	                         */
-	                        _.each (cfg.headers, function (value, key) {
+	                        _.each (cfg.headers, (value, key) => {
 	                            xhr.setRequestHeader (key, value) })
 	
 	                        /*  Bind events
@@ -10108,13 +10109,13 @@
 	                        if (cfg.progress) {
 	                            xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
 	
-	                            xhr.onreadystatechange = function () {
+	                            xhr.onreadystatechange = () => {
 	
 	                                if (xhr.readyState === 4) {
 	                                    if (cfg.progress) {
 	                                        cfg.progress (1) }
 	
-	                                    var response = (xhr.responseType === 'arraybuffer')
+	                                    const response = (xhr.responseType === 'arraybuffer')
 	                                                        ? xhr.response
 	                                                        : xhr.responseText
 	
@@ -10124,7 +10125,7 @@
 	                                                                                        httpStatus: xhr.status })) } } }
 	                        /*  Set up the abort method
 	                         */
-	                        abort = function () {
+	                        abort = () => {
 	                                    xhr.abort ()
 	                                    reject ('aborted') }
 	
@@ -10140,10 +10141,11 @@
 	                 */
 	                return _.extend (p, { abort: abort }) },
 	
-	    progressCallbackWithSimulation: function (progress) { var simulated = 0
-	                                                        progress (0)
-	        return function (e) { if (e.lengthComputable) { progress (e.loaded / e.total) }
-	                                                 else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
+	    progressCallbackWithSimulation (progress) { let simulated = 0
+	
+	                                                progress (0)
+	        return e => { if (e.lengthComputable) { progress (e.loaded / e.total) }
+	                                         else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
 	})
 	
 	/*  An example of custom API layer over Http:
@@ -10154,24 +10156,24 @@
 	    
 	    ------------------------------------------------------------------------ */
 	
-	JSONAPI = $singleton (Component, {
+	$global.JSONAPI = $singleton (Component, {
 	
 	    $traits: [HttpMethods],
 	
-	    request: function (type, path, cfg) {
+	    request (type, path, cfg_) {
 	
-	                var cfg = _.extend2 ({ headers: {
+	                const cfg = _.extend2 ({ headers: {
 	                                            'Cache-Control': 'no-cache',
-	                                            'Content-Type' : 'application/json; charset=utf-8' } }, cfg)
+	                                            'Content-Type' : 'application/json; charset=utf-8' } }, cfg_)
 	
 	                if (cfg.what) {
 	                    cfg.data = JSON.stringify (cfg.what) }
 	
-	                var stackBeforeCall = _.hasReflection && $callStack.offset ((cfg.stackOffset || 0) + 1).asArray
+	                const stackBeforeCall = _.hasReflection && (new StackTracey ()) // @hide 
 	
 	                return Http
 	                        .request (type, '/api/' + path, cfg)
-	                        .finally (function (e, response) {
+	                        .finally ((e, response) => {
 	
 	                            if (response) {
 	                                return JSON.parse (response) }
@@ -10185,16 +10187,34 @@
 	                            else {
 	                                throw new Error ('empty response') } })
 	
-	                        .then (function (response) {
+	                        .then (response => {
+	
 	                            if (response.success) {
 	                                return response.value }
+	
 	                            else {
+	
 	                                if (response.parsedStack) {
-	                                    throw _.extend (new Error ('SERVER: ' + response.error), {
-	                                                        remote: true,
-	                                                        parsedStack: response.parsedStack.concat (stackBeforeCall || []) }) }
+	
+	                                    const fieldName = (typeof Symbol !== 'undefined') ? Symbol.for ('StackTracey') : '__StackTracey'
+	                                    const joinedStack = response.parsedStack
+	                                                         .map (e => O.assign (e, { file: '/api/source/' + e.file }))
+	                                                         .concat (stackBeforeCall || [])
+	
+	                                    throw O.assign (new Error ('SERVER: ' + response.error), {
+	                                        remote: true,
+	                                        [fieldName]: joinedStack
+	                                    })
+	                                }
+	
 	                                else {
-	                                    throw new Error (response.error) } } }) } })
+	                                    throw new Error (response.error) } } })
+	    }
+	})
+	
+	
+	
+
 
 /***/ },
 /* 33 */
@@ -10900,14 +10920,14 @@
 	    /*  Bindings
 	     */
 	    domReady: function (dom) {
-	                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
+	                _.each (this.constructor.DOMEventListeners, function (on_def) { // @hide
 	                                                                (on_def.target || dom).addEventListener (
 	                                                                                                on_def.e,
 	                                                                                           this[on_def.fn]) }, this) },
 	
 	    beforeDestroy: function () {
 	        this.domReady (function (dom) {
-	                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
+	                _.each (this.constructor.DOMEventListeners, function (on_def) { // @hide
 	                                                                (on_def.target || dom).removeEventListener (
 	                                                                                                on_def.e,
 	                                                                                           this[on_def.fn]) }, this) }) } })

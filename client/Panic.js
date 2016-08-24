@@ -1,19 +1,11 @@
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-------------------------------------------------------------------------
+"use strict";
 
-Error reporting UI
-
-------------------------------------------------------------------------
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-/*  ======================================================================== */
+/*  TODO: REWRITE THIS MESS WITH REACT
+	======================================================================== */
 
 (function ($ /* JQUERY */) {
 
-if (typeof UI === 'undefined') {
-	UI = {} }
-
-Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
+$global.Panic = (what, cfg) => { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
 
 	if (_.isTypeOf (Error, what)) {
 		_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
@@ -26,7 +18,7 @@ Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss:
 	if (_.isFunction (cfg.dismiss)) {
 		Panic.widget.onClose (cfg.dismiss) } }
 
-Panic.init = function () {
+Panic.init = () => {
 	if (!Panic._initialized) {
 		 Panic._initialized = true
 	   _.withUncaughtExceptionHandler (function (e) { Panic (e); throw e /* re-throw, to make it visible in WebInspector */ }) } }
@@ -64,14 +56,14 @@ Panic.widget = $singleton (Component, {
 
 		return el })),
 
-	layout: function () { var maxContentWidth = _.coerceToUndefined (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))))
+	layout () { var maxContentWidth = _.coerceToUndefined (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))))
 
 		this.modal.css ({ 'max-height': $(window).height () - 100,
 						  'width': maxContentWidth && (maxContentWidth + 120) })
 
 		this.modalBody.scroll () },
 
-	toggleVisibility: function (yes) {
+	toggleVisibility (yes) {
 		if (yes !== !(this.el.css ('display') === 'none')) {
 	        if (yes) {
 	            this.el.css ('display', '') }
@@ -79,33 +71,33 @@ Panic.widget = $singleton (Component, {
 	            if (!yes) {
 	                this.el.css ('display', 'none') } })) } },
 
-	onRetry: function (retry) {
+	onRetry (retry) {
 		this.retryTriggered (retry)
 		this.btnRetry.css ('display', '') },
 
-	onClose: function (close) {
+	onClose (close) {
 		this.closeTriggered (close)
 		this.btnClose.css ('display', '') },
 
-	retry: function () {
+	retry () {
 		this._clean ()
 		this.closeTriggered.off ()
 		this.toggleVisibility (false)
 		this.retryTriggered () },
 
-	close: function () {
+	close () {
 		this._clean ()
 		this.retryTriggered.off ()
 		this.toggleVisibility (false)
 		this.closeTriggered () },
 
-   _clean: function () {
+   _clean () {
 		this.modalBody.find ('.panic-alert-error').remove ()
 		this.modalBody.scroll ()
 		this.btnRetry.css ('display', 'none')
 		this.btnClose.css ('display', 'none') },
 
-	append: function (what, raw) { var id = 'panic' + this.hash (what)
+	append (what, raw) { var id = 'panic' + this.hash (what)
 
 		var counter = $('#' + id + ' .panic-alert-counter')
 		if (counter.length) {
@@ -118,31 +110,31 @@ Panic.widget = $singleton (Component, {
 		this.toggleVisibility (true)
 		this.layout ()  },
 
-	hash: function (what) {
+	hash (what) {
 		return ((_.isTypeOf (Error, what) ? (what && what.stack) :
 				(_.isTypeOf (Test, what)  ? (what.suite + what.name) :
                 String.ify (what))) || '').hash },
 
-	print: function (what, raw) {
+	print (what, raw) {
 		return (_.isTypeOf (Error, what) ?
 						this.printError (what) :
 			   (_.isTypeOf (Test, what) ?
 						this.printFailedTest (what) :
 						this.printUnknownStuff (what, raw))) },
 
-	printUnknownStuff: function (what, raw) {
+	printUnknownStuff (what, raw) {
 		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 
-	printLocation: function (where) {
+	printLocation (where) {
 		return $('<span class="location">')
 					.append ([$('<span class="callee">').text (where.calleeShort),
 							  $('<span class="file">')  .text (where.fileName), 
 							  $('<span class="line">')  .text (where.line)]) },
 
-	printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
+	printFailedTest (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 
 		log.withWriteBackend (
-			this.$ (function (params) { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
+			params => { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
 
 				logEl.append (_.isTypeOf (Error, params.args.first)
 						? ($('<div class="inline-exception-entry">')
@@ -160,9 +152,9 @@ Panic.widget = $singleton (Component, {
 																									.text (run.text) }))
 																		.append ((i === lines.lastIndex) ?
 																			[params.where && this.printLocation (params.where),
-																			 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) }),
+																			 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) },
 
-			function (done) {
+			done => {
 				test.evalLogCalls ()
 				done () })
 
@@ -170,7 +162,7 @@ Panic.widget = $singleton (Component, {
 				    .text (test.name)
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
-	printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
+	printError (e) { var stackEntries = StackTracey.fromErrorWithAsync (e).withSources
 		return [
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
@@ -197,30 +189,31 @@ Panic.widget = $singleton (Component, {
 							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort,
 																		entry.line]).join (':')),
 							$('<span class="callee">').text (entry.calleeShort),
-							$('<span class="src i-am-busy">').click (this.$ (function (e) { var el = $(e.delegateTarget)
-								el.waitUntil (SourceFiles.read.partial ((entry.remote ? 'api/source/' : '') + entry.file), this.$ (function (text) {
-									if (dom.is ('.full')) {
-										dom.removeClass ('full')
-										dom.transitionend (function () {
-											if (!dom.is ('.full')) {
-												entry.sourceReady (el.$ ($.fn.text)) } }) }
-									else {
-										dom.addClass ('full'); el.html (_.map (text.split ('\n'), function (line) {
-																			return $('<div class="line">').text (line) }))
+							$('<span class="src">').text ((entry.sourceLine || '').trim ()).click (this.$ (function (e) { var el = $(e.delegateTarget)
 
-										var line = el.find ('.line').eq (entry.line - 1).addClass ('hili')
-										if (line.length) {
-											var offset = line.offset ().top - el.offset ().top
-											el.scrollTop (offset - 100) }
+								if (dom.is ('.full')) {
+									dom.removeClass ('full')
+									dom.transitionend (function () {
+										if (!dom.is ('.full')) {
+											el.text ((entry.sourceLine || '').trim ()) } }) }
 
-										_.delay (this.$ (function () {
-											var shouldScrollDownMore = ((el.outerBBox ().bottom + 242) - this.modalBody.outerBBox ().bottom)
-											if (shouldScrollDownMore > 0) {
-												this.modalBody.animate ({
-													scrollTop: this.modalBody.scrollTop () + shouldScrollDownMore }, 250) }})) } })) })) ])
+								else {
 
-				entry.sourceReady (function (text) {
-					dom.find ('.src').removeClass ('i-am-busy').text (text) })
+									const lines = (entry.sourceFile || { lines: [] }).lines
+
+									dom.addClass ('full')
+									el.html (lines.map (line => $('<div class="line">').text (line)))
+
+									var line = el.find ('.line').eq (entry.line - 1).addClass ('hili')
+									if (line.length) {
+										var offset = line.offset ().top - el.offset ().top
+										el.scrollTop (offset - 100) }
+
+									_.delay (this.$ (function () {
+										var shouldScrollDownMore = ((el.outerBBox ().bottom + 242) - this.modalBody.outerBBox ().bottom)
+										if (shouldScrollDownMore > 0) {
+											this.modalBody.animate ({
+												scrollTop: this.modalBody.scrollTop () + shouldScrollDownMore }, 250) }})) } })) ])
 
 				return dom }))) ] } })
 

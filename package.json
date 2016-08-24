@@ -58,7 +58,10 @@
   "homepage": "https://github.com/xpl/useless#readme",
   "dependencies": {
     "as-table": "^1.0.8",
+    "babel-core": "^6.13.2",
+    "babel-loader": "^6.2.5",
     "babel-polyfill": "^6.13.0",
+    "babel-preset-es2015": "^6.13.2",
     "chokidar": "^1.6.0",
     "css-loader": "^0.23.1",
     "es6-object-assign": "^1.0.2",
@@ -66,16 +69,19 @@
     "escodegen": "^1.8.1",
     "esprima": "^2.7.2",
     "forever-monitor": "^1.7.0",
+    "get-source": "^1.0.5",
     "jquery": "^3.1.0",
     "js-string-escape": "^1.0.1",
     "mongodb": "^2.2.6",
     "process": "^0.11.8",
+    "stacktracey": "^1.0.23",
     "string.bullet": "^1.0.0",
     "string.ify": "^1.0.10",
     "style-loader": "^0.13.1",
     "toposort": "^1.0.0",
     "underscore": "^1.8.3",
     "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1",
     "websocket": "^1.0.23"
   }
 }

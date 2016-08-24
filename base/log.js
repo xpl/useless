@@ -253,7 +253,7 @@ _.extend (log, {
                                                                                             emit (newline) } }) }))))
 
             var totalText       = _.pluck (runs, 'text').join ('')
-            var where           = config.where || log.impl.walkStack ($callStack) || {}
+            var where           = config.where || log.impl.walkStack ((new StackTracey ()).withSources) || {}
             var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 
             writeBackend ({
@@ -274,7 +274,7 @@ _.extend (log, {
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
 
         walkStack: function (stack) {
-            return _.find (stack.clean.offset ($platform.Browser ? 1 : 2),
+            return _.find (stack.clean.slice ($platform.Browser ? 1 : 2),
                         function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 
         defaultWriteBackend: function (params) {

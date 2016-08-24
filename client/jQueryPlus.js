@@ -38,7 +38,7 @@ _.extend ($, {
 
             /*  Call original impl.
              */
-            return __previousMethods__.on.apply (this, arguments) },
+            return __previousMethods__.on.apply (this, arguments) }, // @hide
 
     /*  Links a data (or controller instance) to its DOM counterpart
      */

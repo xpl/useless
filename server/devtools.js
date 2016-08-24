@@ -2,9 +2,10 @@
     exec = require ('child_process').exec
 */
 
-var fs      = require ('fs'),
-    path    = require ('path'),
-    process = require ('process')
+var fs        = require ('fs'),
+    path      = require ('path'),
+    process   = require ('process'),
+    getSource = require ('get-source')
 
 module.exports = $trait ({
 
@@ -37,7 +38,8 @@ module.exports = $trait ({
  
             'api': {
                 'source/:file': { get:  [this.requireDeveloper, this.allowOrigin ('*'), this.readSource],
-                                  post: [this.requireDeveloper, this.allowOrigin ('*'), this.receiveJSON, this.writeSource] },
+                                  // post: [this.requireDeveloper, this.allowOrigin ('*'), this.receiveJSON, this.writeSource]
+                                },
             /*  'git-commits':  { get:  [this.requireDeveloper, this.gitCommits] },
                 'git-pull':     { post: [this.requireDeveloper, this.gitPull] }*/ } } },
 
@@ -50,21 +52,27 @@ module.exports = $trait ({
     /*  Access to the source code of server (requires developer privileges)
      */
     readSource: function () {
-                    return new Promise (then => {
-                                            $http.headers['Content-Type'] =
-                                                $http.mime.guessFromFileName ($http.env.file)
 
-                                            return SourceFiles.read (($http.env.file[0] === '/')
-                                                                        ? $http.env.file
-                                                                        : path.join (this.sourceRoot, $http.env.file), then) }) },
+                    $http.headers['Content-Type'] =
+                        $http.mime.guessFromFileName ($http.env.file)
 
-    writeSource: function (input) {
-                    return new Promise (then => {
-                                            log.w ('Writing source:', $http.env.file)
-                                            SourceFiles.write (
-                                                    path.join (this.sourceRoot, $http.env.file),
-                                                    input.text,
-                                                    then.arity0) }) },
+                    const src = getSource (($http.env.file[0] === '/')
+                                                ? $http.env.file
+                                                : path.join (this.sourceRoot, $http.env.file))
+
+                    if (src.error) {
+                        throw src.error }
+
+                    else {
+                        return src.text } },
+
+    // writeSource: function (input) {
+    //                 return new Promise (then => {
+    //                                         log.w ('Writing source:', $http.env.file)
+    //                                         SourceFiles.write (
+    //                                                 path.join (this.sourceRoot, $http.env.file),
+    //                                                 input.text,
+    //                                                 then.arity0) }) },
 
     /*  Git tools
      */

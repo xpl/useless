@@ -1,11 +1,6 @@
  module.exports = $trait ({
 
-    callStackFilter: undefined,
-
     beforeInit: function () { log.minor ('Setting up exception handling')
-
-        if (this.callStackFilter) {
-            $aspect (CallStack, { isThirdParty: (x, impl) => this.callStackFilter (x) || impl (x) }) }
 
         _.withUncaughtExceptionHandler (this.$ (function (e) {
 

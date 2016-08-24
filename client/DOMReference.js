@@ -178,14 +178,14 @@ DOMEvents = $trait ({
     /*  Bindings
      */
     domReady: function (dom) {
-                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
+                _.each (this.constructor.DOMEventListeners, function (on_def) { // @hide
                                                                 (on_def.target || dom).addEventListener (
                                                                                                 on_def.e,
                                                                                            this[on_def.fn]) }, this) },
 
     beforeDestroy: function () {
         this.domReady (function (dom) {
-                _.each (this.constructor.DOMEventListeners, __supressErrorReporting = function (on_def) {
+                _.each (this.constructor.DOMEventListeners, function (on_def) { // @hide
                                                                 (on_def.target || dom).removeEventListener (
                                                                                                 on_def.e,
                                                                                            this[on_def.fn]) }, this) }) } })

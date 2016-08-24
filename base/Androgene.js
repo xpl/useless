@@ -46,7 +46,7 @@
                                  Promise = AndrogenePromise
             
             var logHook = function () { context.eventLog.push (
-                                            [log.config ({ where: $callStack.safeLocation (5) })].concat (_.initial (arguments)))
+                                            [log.config ({ where: (new StackTracey ()).withSource (5) })].concat (_.initial (arguments)))
 
                                         return _.find (arguments, _.not (_.instanceOf (log.Config))) }
             
@@ -86,13 +86,13 @@
 
             log.margin ()
 
-            for (var loc of CallStack.fromError (this.where)
-                                        .offset (3)
-                                        .clean
-                                        .reject (x => x.native)
-                                        .reversed) {
+            for (var loc of new StackTracey (this.where)
+                                    .slice (3)
+                                    .clean
+                                    .filter (x => !x.native)
+                                    .reverse ()) {
                 
-                log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.source.trimmed) }
+                log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.sourceLine.trim ()) }
 
             log.margin () },
 

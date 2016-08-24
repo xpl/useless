@@ -8,7 +8,8 @@
                           entry: path.resolve (input),
                         devtool: 'source-map',
                          output: { path: path.dirname (output), filename: path.basename (output) },
-                        plugins: [ new webpack.optimize.DedupePlugin (), new webpack.IgnorePlugin(/^fs$/) ],
+                        plugins: [ new webpack.optimize.DedupePlugin (),
+                                   new webpack.IgnorePlugin(/^fs|path$/) ],
                          module: { loaders: [ { test: /\.css$/, loader: "style-loader!css-loader" } ] } })
 
     compiler.run = compiler.run.promisify

@@ -22,10 +22,4 @@ require ('./client/LogOverlay.css')
 document.ready (function () {
 	
 	Panic.init ()
-
-	CallStack.isThirdParty.intercept (function (file, originalImpl) {
-	    return (file.indexOf ('underscore') >= 0) ||
-	           (file.indexOf ('jquery') >= 0)     ||
-	           (file.indexOf ('useless') >= 0)    ||
-	           (file.indexOf ('mootools') >= 0) })
 })

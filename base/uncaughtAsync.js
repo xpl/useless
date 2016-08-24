@@ -24,11 +24,11 @@
                 override (XMLHttpRequest.prototype) } }
 
         var asyncHook = function (originalImpl, callbackArgumentIndex) {
-            return __supressErrorReporting = function () {
+            return function () { // @hide
 
                     var asyncContext = {
                         name: name,
-                        stack: (new Error ()).stack,
+                        stack: (new Error ()).stack, // @hide
                         asyncContext: globalAsyncContext }
 
                     var args = _.asArray (arguments)
@@ -36,7 +36,7 @@
 
                     if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
 
-                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
+                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = function () { // @hide
 
                         globalAsyncContext = asyncContext
 
