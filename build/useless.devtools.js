@@ -50,30 +50,24 @@
 	__webpack_require__ (6)
 	__webpack_require__ (8)
 	__webpack_require__ (9)
-	__webpack_require__ (11)
-	__webpack_require__ (12)
-	__webpack_require__ (13)
+	__webpack_require__ (26)
+	__webpack_require__ (27)
+	__webpack_require__ (28)
 	
-	jQuery = __webpack_require__ (14)
+	jQuery = __webpack_require__ (29)
 	
-	__webpack_require__ (15)
+	__webpack_require__ (30)
 	
-	__webpack_require__ (16)
-	__webpack_require__ (17)
-	__webpack_require__ (18)
-	__webpack_require__ (22)
+	__webpack_require__ (31)
+	__webpack_require__ (32)
+	__webpack_require__ (33)
+	__webpack_require__ (37)
 	
 	/*  ======================================================================== */
 	
 	document.ready (function () {
 		
 		Panic.init ()
-	
-		CallStack.isThirdParty.intercept (function (file, originalImpl) {
-		    return (file.indexOf ('underscore') >= 0) ||
-		           (file.indexOf ('jquery') >= 0)     ||
-		           (file.indexOf ('useless') >= 0)    ||
-		           (file.indexOf ('mootools') >= 0) })
 	})
 
 /***/ },
@@ -977,11 +971,11 @@
 	                override (XMLHttpRequest.prototype) } }
 	
 	        var asyncHook = function (originalImpl, callbackArgumentIndex) {
-	            return __supressErrorReporting = function () {
+	            return function () { // @hide
 	
 	                    var asyncContext = {
 	                        name: name,
-	                        stack: (new Error ()).stack,
+	                        stack: (new Error ()).stack, // @hide
 	                        asyncContext: globalAsyncContext }
 	
 	                    var args = _.asArray (arguments)
@@ -989,7 +983,7 @@
 	
 	                    if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
 	
-	                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = __supressErrorReporting = function () {
+	                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = function () { // @hide
 	
 	                        globalAsyncContext = asyncContext
 	
@@ -1016,12 +1010,35 @@
 
 	/* WEBPACK VAR INJECTION */(function(__filename) {"use strict";
 	
+	/*  ------------------------------------------------------------------------ */
+	
 	const O = Object
 	
-	/*  Self-awareness module
-	    ======================================================================== */
+	/*  ------------------------------------------------------------------------ */
 	
 	_.hasReflection = true
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	$global.getSource = __webpack_require__ (10)
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	$global.StackTracey = O.assign (__webpack_require__ (23), {
+	
+	    fromErrorWithAsync (e) {
+	
+	        let stackEntries = new StackTracey (e),
+	            asyncContext = e.asyncContext
+	
+	        while (asyncContext) {
+	            stackEntries = stackEntries.concat (new StackTracey (asyncContext.stack))
+	            asyncContext = asyncContext.asyncContext }
+	
+	        return stackEntries.mergeRepeatedLines }
+	})
+	
+	/*  ------------------------------------------------------------------------ */
 	
 	_.tests.reflection = {
 	
@@ -1029,295 +1046,12 @@
 	        $assert (typeof $uselessPath, 'string')
 	        $assert ($sourcePath .length > 0)
 	        $assert ($uselessPath.length > 0) },
-	
-	    'readSource': function () { var uselessJS = $uselessPath + $uselessFile
-	
-	        SourceFiles.read (uselessJS, function (text) {
-	            $assert (text.length > 0) })
-	
-	        SourceFiles.line (uselessJS, 0, function (line) {
-	            $assert (line.length > 0) }) },
-	
-	    'CallStack from error': function () {
-	        try {
-	            throw new Error ('oh fock') }
-	        catch (e) {
-	            $assertTypeMatches (CallStack.fromError (e), CallStack) } },
-	
-	    '$callStack': function (testDone) {
-	
-	        /*  That's how you access call stack at current location
-	         */
-	        var stack = $callStack
-	
-	        /*  It is an array of entries...
-	         */
-	        $assert (_.isArray (stack))
-	
-	        /*  ...each having following members
-	         */
-	        $assertTypeMatches (stack[0], {
-	            callee:         'string',       // function name
-	            calleeShort:    'string',       // short function name (only the last part of dot-sequence)
-	            file:           'string',       // full path to source file at which call occurred
-	            fileName:       'string',       // name only (with extension)
-	            fileShort:      'string',       // path relative to $sourcePath
-	            thirdParty:     'boolean',      // denotes whether the call location occured at 3rd party library
-	            index:          'boolean',      // denotes whether the call location occured at index page
-	           'native':        'boolean',      // denotes whether the call location occured in native impl.
-	            line:           'number',       // line number
-	            column:         'number',       // character number
-	            source:         'string',       // source code (may be not ready right away)
-	            sourceReady:    'function' })   // a barrier, opened when source is loaded (see dynamic/stream.js on how-to use)
-	
-	        /*  $callStack is CallStack instance, providing some helpful utility:
-	         */
-	        $assert (_.isTypeOf (CallStack, stack))
-	
-	        /*  1. clean CallStack (with 3rdparty calls stripped)
-	         */
-	        $assert (_.isTypeOf (CallStack, stack.clean))
-	
-	        /*  2. shifted by some N (useful for error reporting, to strip error reporter calls)
-	         */
-	        $assert (_.isTypeOf (CallStack, stack.offset (2)))
-	
-	        /*  3. filter and reject semantics supported, returning CallStack instances
-	         */
-	        $assert (_.isTypeOf (CallStack, stack.filter (_.identity)))
-	        $assert (_.isTypeOf (CallStack, stack.reject (_.identity)))
-	
-	        $assertEveryCalled ($async (function (sourceReady, sourcesReady, safeLocationReady) {
-	
-	            /*  4. source code access, either per entry..
-	             */
-	            stack[0].sourceReady (function (src) {               // sourceReady is barrier, i.e. if ready, called immediately
-	                $assert (typeof src, 'string'); sourceReady () })
-	
-	            /*  5. ..or for all stack
-	             */
-	            stack.sourcesReady (function () {                     // sourcesReady is barrier, i.e. if ready, called immediately
-	                _.each (stack, function (entry) {
-	                    $assert (typeof entry.source, 'string') }); sourcesReady () })
-	
-	            /*  Safe location querying
-	             */
-	            stack.safeLocation (7777).sourceReady (function (line) {
-	                $assert ('??? WRONG LOCATION ???', line); safeLocationReady () }) }), testDone) }
 	}
 	
-	/*  Source code access (cross-platform)
-	 */
-	$global.SourceFiles = $singleton (Component, {
-	
-	    /*apiConfig: {
-	        port:      1338,
-	        hostname: 'locahost',
-	        protocol: 'http:' },*/
-	
-	    line: function (file, line, then) {
-	        SourceFiles.read (file, function (data) {
-	            then ((data.split ('\n')[line] || '').trimmed) }) },
-	
-	    read: $memoizeCPS (function (file, then) {
-	        if (file.indexOf ('<') < 0) { // ignore things like "<anonymous>"
-	            try {
-	                if ($platform.NodeJS) {
-	                    then (__webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).readFileSync (file, { encoding: 'utf8' }) || '') }
-	                else {
-	                    /*  Return response body regardless of status code
-	                     */
-	                    var xhr = new XMLHttpRequest ()
-	                    xhr.open ('GET', file, true)
-	                    xhr.onreadystatechange = function () { if (xhr.readyState == 4) { then (xhr.responseText) } }
-	                    xhr.send (null) } }
-	            catch (e) {
-	                then ('') } }
-	        else {
-	            then ('') } }),
-	
-	    write: function (file, text, then) {
-	
-	        if ($platform.NodeJS) {
-	
-	            this.read (file, function (prevText) { // save previous version at <file>.backups/<date>
-	
-	                var fs   = __webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())),
-	                    opts = { encoding: 'utf8' }
-	
-	          try { fs.mkdirSync     (file + '.backups') } catch (e) {}
-	                fs.writeFileSync (file + '.backups/' + Date.now (), prevText, opts)
-	                fs.writeFileSync (file,                             text,     opts)
-	
-	                then () }) }
-	            
-	        else {
-	            JSONAPI
-	                .post ('source/' + file, _.extend2 ({}, this.apiConfig, { what: { text: text } }))
-	                .then (function () {
-	                    log.ok (file, '— successfully saved')
-	                    if (then) {
-	                        then () } }) }} })
-	
-	
-	/*  Callstack API
-	 */
-	$global.CallStack = $extends (Array, {
-	
-	    current: $static ($property (function () {
-	        return CallStack.fromRawString (CallStack.currentAsRawString).offset (1) })),
-	
-	    fromError: $static (function (e) {
-	        if (e && e.parsedStack) {
-	            return CallStack.fromParsedArray (e.parsedStack).offset (e.stackOffset || 0) }
-	        else if (e && e.stack) {
-	            return CallStack.fromRawString (e.stack).offset (e.stackOffset || 0) }
-	        else {
-	            return CallStack.fromParsedArray ([]) } }),
-	
-	    fromErrorWithAsync: $static (function (e) {
-	        var stackEntries = CallStack.fromError (e),
-	            asyncContext = e.asyncContext
-	
-	        while (asyncContext) {
-	            stackEntries = stackEntries.concat (CallStack.fromRawString (asyncContext.stack))
-	            asyncContext = asyncContext.asyncContext }
-	
-	        return stackEntries.mergeDuplicateLines }),
-	
-	    locationEquals: $static (function (a, b) {
-	        return (a.file === b.file) && (a.line === b.line) && (a.column === b.column) }),
-	
-	    safeLocation: function (n) {
-	        return this[n] || {
-	            callee: '', calleeShort: '', file: '',
-	            fileName: '', fileShort: '', thirdParty:    false,
-	            source: '??? WRONG LOCATION ???',
-	            sourceReady: _.barrier ('??? WRONG LOCATION ???') } },
-	
-	    mergeDuplicateLines: $property (function () {
-	        return CallStack.fromParsedArray (
-	            _.map (_.partition2 (this, function (e) { return e.file + e.line }),
-	                    function (group) {
-	                        return _.reduce (_.rest (group), function (memo, entry) {
-	                            memo.callee      = (memo.callee      || '<anonymous>') + ' → ' + (entry.callee      || '<anonymous>')
-	                            memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>')
-	                            return memo }, _.clone (group[0])) })) }),
-	
-	    clean: $property (function () {
-	        var clean = this.mergeDuplicateLines.reject (function (e, i) { return (e.thirdParty || e.hide) && (i !== 0) })
-	        return (clean.length === 0) ? this : clean }),
-	
-	    asArray: $property (function () {
-	        return _.asArray (this) }),
-	
-	    offset: function (N) {
-	        return (N && CallStack.fromParsedArray (_.rest (this, N))) || this },
-	
-	    initial: function (N) {
-	        return (N && CallStack.fromParsedArray (_.initial (this, N))) || this },
-	
-	    concat: function (stack) {
-	        return CallStack.fromParsedArray (this.asArray.concat (stack.asArray)) },
-	
-	    filter: function (fn) {
-	        return CallStack.fromParsedArray (_.filter (this, fn)) },
-	
-	    reject: function (fn) {
-	        return CallStack.fromParsedArray (_.reject (this, fn)) },
-	
-	    reversed: $property (function () {
-	        return CallStack.fromParsedArray (_.reversed (this)) }),
-	
-	    sourcesReady: function (then) {
-	        return _.allTriggered (_.pluck (this, 'sourceReady'), then) },
-	
-	    /*  Internal impl.
-	     */
-	    constructor: function (arr) { Array.prototype.constructor.call (this)
-	
-	        _.each (arr, function (entry) {
-	            if (!entry.sourceReady) {
-	                 entry.sourceReady = _.barrier ()
-	                 SourceFiles.line ((entry.remote ? 'api/source/' : '') + entry.file, entry.line - 1, function (src) {
-	                    entry.hide = src.contains ('// @hide')
-	                    entry.sourceReady (entry.source = src.replace ('// @hide', '')) }) }
-	
-	            this.push (entry) }, this) },
-	
-	    fromParsedArray: $static (function (arr) {
-	        return new CallStack (arr) }),
-	
-	    currentAsRawString: $static ($property (function () {
-	        var cut = $platform.Browser ? 3 : 2
-	        return _.rest (((new Error ()).stack || '').split ('\n'), cut).join ('\n') })),
-	
-	    shortenPath: $static (function (path) {
-	                    var relative = path.replace ($uselessPath, '')
-	                                       .replace ($sourcePath,  '')
-	                    return (relative !== path)
-	                        ? relative.replace (/^node_modules\//, '')
-	                        : path.split ('/').last }), // extract last part of /-separated sequence
-	
-	    isThirdParty: $static (_.bindable (function (file) { var local = file.replace ($sourcePath, '')
-	                    return ($platform.NodeJS && (file[0] !== '/')) || // from Node source
-	                           (local.indexOf ('/node_modules/') >= 0) ||
-	                           (file.indexOf  ('/node_modules/') >= 0 && !local) ||
-	                           (local.indexOf ('underscore') >= 0) ||
-	                           (local.indexOf ('jquery') >= 0) })),
-	
-	    fromRawString: $static (_.sequence (
-	        function (rawString) {
-	            return CallStack.rawStringToArray (rawString) },
-	
-	        function (array) {
-	            return _.map (array, function (entry) {
-	                return _.extend (entry, {
-	                            calleeShort:    _.last (entry.callee.split ('.')),
-	                            fileName:       _.last (entry.file.split ('/')),
-	                            fileShort:      CallStack.shortenPath (entry.file),
-	                            thirdParty:     CallStack.isThirdParty (entry.file) && !entry.index }) }) },
-	
-	        function (parsedArrayWithSourceLines) { return CallStack.fromParsedArray (parsedArrayWithSourceLines) })),
-	
-	    rawStringToArray: $static (function (rawString) { var lines = (rawString || '').split ('\n')
-	
-	        return _.filter2 (lines, function (line) { line = line.trimmed
-	
-	            var callee, fileLineColumn = [], native_ = false
-	            var planA = undefined, planB = undefined
-	
-	            if ((planA = line.match (/at (.+) \((.+)\)/)) ||
-	                (planA = line.match (/(.*)@(.*)/))) {
-	
-	                callee         =         planA[1]
-	                native_        =        (planA[2] === 'native')
-	                fileLineColumn = _.rest (planA[2].match (/(.*):(.+):(.+)/) || []) }
-	
-	            else if ((planB = line.match (/^(at\s+)*(.+):([0-9]+):([0-9]+)/) )) {
-	                fileLineColumn = _.rest (planB, 2) }
-	
-	            else {
-	                return false } // filter this shit out
-	
-	            if ((callee || '').indexOf ('__supressErrorReporting') >= 0) {
-	                return false }
-	
-	            return {
-	                beforeParse: line,
-	                callee:      callee || '',
-	                index:       $platform.Browser && (fileLineColumn[0] === window.location.href),
-	               'native':     native_,
-	                file:        fileLineColumn[0] || '',
-	                line:       (fileLineColumn[1] || '').integerValue,
-	                column:     (fileLineColumn[2] || '').integerValue } }) }) })
-	
-	    $global.property ('$callStack',   () => CallStack.fromRawString (CallStack.currentAsRawString).offset ($platform.NodeJS ? 1 : 0))
-	    
 	;(function () {
 	
 	    var currentFile = $platform.Browser
-	                        ? (CallStack.rawStringToArray (CallStack.currentAsRawString)[2] || { file: '' }).file
+	                        ? ((new StackTracey ())[2] || { file: '' }).file
 	                        : __filename
 	
 	    $global.const ('$uselessPath', _.initial (currentFile.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/')
@@ -1327,23 +1061,22 @@
 	
 	}) ();
 	
-	/*  Stringifiers
-	 */
+	/*  ------------------------------------------------------------------------ */
 	
-	const asTable = __webpack_require__ (10)
+	const asTable = __webpack_require__ (25)
 	
-	CallStack.prototype[Symbol.for ('String.ify')] = function (stringify) {
+	StackTracey.prototype[Symbol.for ('String.ify')] = function (stringify) {
 	
 	    return asTable (this.map (entry => [
 	                        '\t' + 'at ' + entry.calleeShort.slice (0, 30),
 	                        (entry.fileShort && (entry.fileShort + ':' + entry.line)) || '',
-	                        (entry.source || '').slice (0, 80)]))
+	                        (entry.sourceLine.trim () || '').slice (0, 80) ]))
 	}
 	
 	Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
 	
-	    try {
-	        var stack   = CallStack.fromErrorWithAsync (this).offset (this.stackOffset || 0).clean
+	    try {        
+	        var stack   = StackTracey.fromErrorWithAsync (this).slice (this.stackOffset || 0).clean
 	        var why     = stringify.limit ((this.message || '').replace (/\r|\n/g, '').trim (), 120)
 	
 	        return ('[EXCEPTION] ' + why +
@@ -1357,8 +1090,7 @@
 	            '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n' }
 	}
 	
-	/*  Reflection for $prototypes
-	 */
+	/*  ------------------------------------------------------------------------ */
 	
 	_.tests.prototypeMeta = {
 	
@@ -1383,22 +1115,18 @@
 	    }
 	}
 	
-	$prototype.impl.findMeta = function (stack) {
+	$prototype.impl.findMeta = stack => then => {
 	
-	    return function (then) {
+	    for (let location of stack.withSources.reverse ()) {
 	
-	        _.cps.find (CallStack.fromRawString (stack).reversed,
+	        let match = location.sourceLine.match (/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/)
+	            match = match && { name: match[1], type: match[2], file: location.fileShort }
 	
-	                    function (entry, found) {
-	                        entry.sourceReady (function (text) { var match = (text || '').match (
-	                                                                             /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
-	                            found ((match && {
-	                                name: match[1],
-	                                type: match[2],
-	                                file: entry.fileShort }) || false) }) },
-	
-	                    function (found) {
-	                        then (found || {}) }) } }
+	        if (match) {
+	            then (match)
+	        }
+	    }
+	}
 	
 	$prototype.macro (function (def, base) {
 	
@@ -1416,7 +1144,7 @@
 	
 	    if (!def.$meta) {
 	
-	        var findMeta = _.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))
+	        var findMeta = _.cps.memoize ($prototype.impl.findMeta (new StackTracey ()))
 	
 	        _.defineMemoizedProperty (findMeta, 'promise', function () {
 	              return new Promise (findMeta) })
@@ -1425,6 +1153,7 @@
 	
 	    return def })
 	
+	/*  ------------------------------------------------------------------------ */
 	
 	
 	
@@ -1433,6 +1162,4013 @@
 
 /***/ },
 /* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	const O                 = Object,
+	      isBrowser         = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
+	      SourceMapConsumer = __webpack_require__ (11).SourceMapConsumer,
+	      path              = __webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"./impl/path\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())),
+	      memoize           = __webpack_require__ (22),
+	      lastOf            = x => x[x.length - 1]
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	const newSourceFileMemoized = memoize (file => new SourceFile (file))
+	
+	const getSource = module.exports = file => { return newSourceFileMemoized (path.resolve (file)) }
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	class SourceMap {
+	
+	    constructor (originalFilePath, sourceMapPath) {
+	
+	        this.file      = getSource (path.relativeToFile (originalFilePath, sourceMapPath))
+	        this.parsed    = (this.file.text && SourceMapConsumer (JSON.parse (this.file.text))) || null
+	        this.sourceFor = memoize (this.sourceFor.bind (this))
+	    }
+	
+	    sourceFor (file) {
+	        const content = this.parsed.sourceContentFor (file, true /* return null on missing */)
+	        const fullPath = path.relativeToFile (this.file.path, file)
+	        return content ? new SourceFile (fullPath, content) : getSource (fullPath)
+	    }
+	
+	    resolve (loc) {
+	
+	        const originalLoc = this.parsed.originalPositionFor (loc)
+	        return originalLoc.source ? this.sourceFor (originalLoc.source)
+	                                        .resolve (O.assign ({}, loc, {
+	                                            line: originalLoc.line,
+	                                            column: originalLoc.column,
+	                                            name: originalLoc.name })) : loc
+	    }
+	}
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	class SourceFile {
+	
+	    constructor (path, text /* optional */) {
+	
+	        this.path = path
+	
+	        if (text) {
+	            this.text = text }
+	
+	        else {
+	            try {
+	                if (isBrowser) {
+	
+	                    let xhr = new XMLHttpRequest ()
+	
+	                        xhr.open ('GET', path, false /* SYNCHRONOUS XHR FTW :) */)
+	                        xhr.send (null)
+	
+	                    this.text = xhr.responseText }
+	
+	                else {
+	                    this.text = __webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).readFileSync (path, { encoding: 'utf8' }) } }
+	
+	            catch (e) {
+	                this.error = e
+	                this.text = '' } }
+	    }
+	
+	    get lines () {
+	        return (this.lines_ = this.lines_ || this.text.split ('\n'))
+	    }
+	
+	    get sourceMap () {
+	
+	        try {
+	            if (this.sourceMap_ === undefined) {
+	                let url = this.text.match (/\u0023 sourceMappingURL=(.+\.map)/) // escape #, otherwise it will match this exact line.. %)
+	                if (url = (url && url[1])) {
+	                    this.sourceMap_ = new SourceMap (this.path, url) }
+	                else {
+	                    this.sourceMap_ = null } } }
+	
+	        catch (e) {
+	            this.sourceMapError = e
+	            this.sourceMap_ = null }
+	
+	        return this.sourceMap_
+	    }
+	
+	    resolve (loc /* { line[, column] } */) /* → { line, column, sourceFile, sourceLine } */ {
+	
+	        return this.sourceMap ? this.sourceMap.resolve (loc) : O.assign ({}, loc, {
+	
+	            sourceFile:  this,
+	            sourceLine: (this.lines[loc.line - 1] || ''),
+	            error:       this.error
+	        })
+	    }
+	}
+	
+	/*  ------------------------------------------------------------------------ */
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 * Copyright 2009-2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE.txt or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	exports.SourceMapGenerator = __webpack_require__(12).SourceMapGenerator;
+	exports.SourceMapConsumer = __webpack_require__(18).SourceMapConsumer;
+	exports.SourceNode = __webpack_require__(21).SourceNode;
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	var base64VLQ = __webpack_require__(13);
+	var util = __webpack_require__(15);
+	var ArraySet = __webpack_require__(16).ArraySet;
+	var MappingList = __webpack_require__(17).MappingList;
+	
+	/**
+	 * An instance of the SourceMapGenerator represents a source map which is
+	 * being built incrementally. You may pass an object with the following
+	 * properties:
+	 *
+	 *   - file: The filename of the generated source.
+	 *   - sourceRoot: A root for all relative URLs in this source map.
+	 */
+	function SourceMapGenerator(aArgs) {
+	  if (!aArgs) {
+	    aArgs = {};
+	  }
+	  this._file = util.getArg(aArgs, 'file', null);
+	  this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
+	  this._skipValidation = util.getArg(aArgs, 'skipValidation', false);
+	  this._sources = new ArraySet();
+	  this._names = new ArraySet();
+	  this._mappings = new MappingList();
+	  this._sourcesContents = null;
+	}
+	
+	SourceMapGenerator.prototype._version = 3;
+	
+	/**
+	 * Creates a new SourceMapGenerator based on a SourceMapConsumer
+	 *
+	 * @param aSourceMapConsumer The SourceMap.
+	 */
+	SourceMapGenerator.fromSourceMap =
+	  function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
+	    var sourceRoot = aSourceMapConsumer.sourceRoot;
+	    var generator = new SourceMapGenerator({
+	      file: aSourceMapConsumer.file,
+	      sourceRoot: sourceRoot
+	    });
+	    aSourceMapConsumer.eachMapping(function (mapping) {
+	      var newMapping = {
+	        generated: {
+	          line: mapping.generatedLine,
+	          column: mapping.generatedColumn
+	        }
+	      };
+	
+	      if (mapping.source != null) {
+	        newMapping.source = mapping.source;
+	        if (sourceRoot != null) {
+	          newMapping.source = util.relative(sourceRoot, newMapping.source);
+	        }
+	
+	        newMapping.original = {
+	          line: mapping.originalLine,
+	          column: mapping.originalColumn
+	        };
+	
+	        if (mapping.name != null) {
+	          newMapping.name = mapping.name;
+	        }
+	      }
+	
+	      generator.addMapping(newMapping);
+	    });
+	    aSourceMapConsumer.sources.forEach(function (sourceFile) {
+	      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+	      if (content != null) {
+	        generator.setSourceContent(sourceFile, content);
+	      }
+	    });
+	    return generator;
+	  };
+	
+	/**
+	 * Add a single mapping from original source line and column to the generated
+	 * source's line and column for this source map being created. The mapping
+	 * object should have the following properties:
+	 *
+	 *   - generated: An object with the generated line and column positions.
+	 *   - original: An object with the original line and column positions.
+	 *   - source: The original source file (relative to the sourceRoot).
+	 *   - name: An optional original token name for this mapping.
+	 */
+	SourceMapGenerator.prototype.addMapping =
+	  function SourceMapGenerator_addMapping(aArgs) {
+	    var generated = util.getArg(aArgs, 'generated');
+	    var original = util.getArg(aArgs, 'original', null);
+	    var source = util.getArg(aArgs, 'source', null);
+	    var name = util.getArg(aArgs, 'name', null);
+	
+	    if (!this._skipValidation) {
+	      this._validateMapping(generated, original, source, name);
+	    }
+	
+	    if (source != null) {
+	      source = String(source);
+	      if (!this._sources.has(source)) {
+	        this._sources.add(source);
+	      }
+	    }
+	
+	    if (name != null) {
+	      name = String(name);
+	      if (!this._names.has(name)) {
+	        this._names.add(name);
+	      }
+	    }
+	
+	    this._mappings.add({
+	      generatedLine: generated.line,
+	      generatedColumn: generated.column,
+	      originalLine: original != null && original.line,
+	      originalColumn: original != null && original.column,
+	      source: source,
+	      name: name
+	    });
+	  };
+	
+	/**
+	 * Set the source content for a source file.
+	 */
+	SourceMapGenerator.prototype.setSourceContent =
+	  function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
+	    var source = aSourceFile;
+	    if (this._sourceRoot != null) {
+	      source = util.relative(this._sourceRoot, source);
+	    }
+	
+	    if (aSourceContent != null) {
+	      // Add the source content to the _sourcesContents map.
+	      // Create a new _sourcesContents map if the property is null.
+	      if (!this._sourcesContents) {
+	        this._sourcesContents = Object.create(null);
+	      }
+	      this._sourcesContents[util.toSetString(source)] = aSourceContent;
+	    } else if (this._sourcesContents) {
+	      // Remove the source file from the _sourcesContents map.
+	      // If the _sourcesContents map is empty, set the property to null.
+	      delete this._sourcesContents[util.toSetString(source)];
+	      if (Object.keys(this._sourcesContents).length === 0) {
+	        this._sourcesContents = null;
+	      }
+	    }
+	  };
+	
+	/**
+	 * Applies the mappings of a sub-source-map for a specific source file to the
+	 * source map being generated. Each mapping to the supplied source file is
+	 * rewritten using the supplied source map. Note: The resolution for the
+	 * resulting mappings is the minimium of this map and the supplied map.
+	 *
+	 * @param aSourceMapConsumer The source map to be applied.
+	 * @param aSourceFile Optional. The filename of the source file.
+	 *        If omitted, SourceMapConsumer's file property will be used.
+	 * @param aSourceMapPath Optional. The dirname of the path to the source map
+	 *        to be applied. If relative, it is relative to the SourceMapConsumer.
+	 *        This parameter is needed when the two source maps aren't in the same
+	 *        directory, and the source map to be applied contains relative source
+	 *        paths. If so, those relative source paths need to be rewritten
+	 *        relative to the SourceMapGenerator.
+	 */
+	SourceMapGenerator.prototype.applySourceMap =
+	  function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile, aSourceMapPath) {
+	    var sourceFile = aSourceFile;
+	    // If aSourceFile is omitted, we will use the file property of the SourceMap
+	    if (aSourceFile == null) {
+	      if (aSourceMapConsumer.file == null) {
+	        throw new Error(
+	          'SourceMapGenerator.prototype.applySourceMap requires either an explicit source file, ' +
+	          'or the source map\'s "file" property. Both were omitted.'
+	        );
+	      }
+	      sourceFile = aSourceMapConsumer.file;
+	    }
+	    var sourceRoot = this._sourceRoot;
+	    // Make "sourceFile" relative if an absolute Url is passed.
+	    if (sourceRoot != null) {
+	      sourceFile = util.relative(sourceRoot, sourceFile);
+	    }
+	    // Applying the SourceMap can add and remove items from the sources and
+	    // the names array.
+	    var newSources = new ArraySet();
+	    var newNames = new ArraySet();
+	
+	    // Find mappings for the "sourceFile"
+	    this._mappings.unsortedForEach(function (mapping) {
+	      if (mapping.source === sourceFile && mapping.originalLine != null) {
+	        // Check if it can be mapped by the source map, then update the mapping.
+	        var original = aSourceMapConsumer.originalPositionFor({
+	          line: mapping.originalLine,
+	          column: mapping.originalColumn
+	        });
+	        if (original.source != null) {
+	          // Copy mapping
+	          mapping.source = original.source;
+	          if (aSourceMapPath != null) {
+	            mapping.source = util.join(aSourceMapPath, mapping.source)
+	          }
+	          if (sourceRoot != null) {
+	            mapping.source = util.relative(sourceRoot, mapping.source);
+	          }
+	          mapping.originalLine = original.line;
+	          mapping.originalColumn = original.column;
+	          if (original.name != null) {
+	            mapping.name = original.name;
+	          }
+	        }
+	      }
+	
+	      var source = mapping.source;
+	      if (source != null && !newSources.has(source)) {
+	        newSources.add(source);
+	      }
+	
+	      var name = mapping.name;
+	      if (name != null && !newNames.has(name)) {
+	        newNames.add(name);
+	      }
+	
+	    }, this);
+	    this._sources = newSources;
+	    this._names = newNames;
+	
+	    // Copy sourcesContents of applied map.
+	    aSourceMapConsumer.sources.forEach(function (sourceFile) {
+	      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+	      if (content != null) {
+	        if (aSourceMapPath != null) {
+	          sourceFile = util.join(aSourceMapPath, sourceFile);
+	        }
+	        if (sourceRoot != null) {
+	          sourceFile = util.relative(sourceRoot, sourceFile);
+	        }
+	        this.setSourceContent(sourceFile, content);
+	      }
+	    }, this);
+	  };
+	
+	/**
+	 * A mapping can have one of the three levels of data:
+	 *
+	 *   1. Just the generated position.
+	 *   2. The Generated position, original position, and original source.
+	 *   3. Generated and original position, original source, as well as a name
+	 *      token.
+	 *
+	 * To maintain consistency, we validate that any new mapping being added falls
+	 * in to one of these categories.
+	 */
+	SourceMapGenerator.prototype._validateMapping =
+	  function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
+	                                              aName) {
+	    if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+	        && aGenerated.line > 0 && aGenerated.column >= 0
+	        && !aOriginal && !aSource && !aName) {
+	      // Case 1.
+	      return;
+	    }
+	    else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+	             && aOriginal && 'line' in aOriginal && 'column' in aOriginal
+	             && aGenerated.line > 0 && aGenerated.column >= 0
+	             && aOriginal.line > 0 && aOriginal.column >= 0
+	             && aSource) {
+	      // Cases 2 and 3.
+	      return;
+	    }
+	    else {
+	      throw new Error('Invalid mapping: ' + JSON.stringify({
+	        generated: aGenerated,
+	        source: aSource,
+	        original: aOriginal,
+	        name: aName
+	      }));
+	    }
+	  };
+	
+	/**
+	 * Serialize the accumulated mappings in to the stream of base 64 VLQs
+	 * specified by the source map format.
+	 */
+	SourceMapGenerator.prototype._serializeMappings =
+	  function SourceMapGenerator_serializeMappings() {
+	    var previousGeneratedColumn = 0;
+	    var previousGeneratedLine = 1;
+	    var previousOriginalColumn = 0;
+	    var previousOriginalLine = 0;
+	    var previousName = 0;
+	    var previousSource = 0;
+	    var result = '';
+	    var next;
+	    var mapping;
+	    var nameIdx;
+	    var sourceIdx;
+	
+	    var mappings = this._mappings.toArray();
+	    for (var i = 0, len = mappings.length; i < len; i++) {
+	      mapping = mappings[i];
+	      next = ''
+	
+	      if (mapping.generatedLine !== previousGeneratedLine) {
+	        previousGeneratedColumn = 0;
+	        while (mapping.generatedLine !== previousGeneratedLine) {
+	          next += ';';
+	          previousGeneratedLine++;
+	        }
+	      }
+	      else {
+	        if (i > 0) {
+	          if (!util.compareByGeneratedPositionsInflated(mapping, mappings[i - 1])) {
+	            continue;
+	          }
+	          next += ',';
+	        }
+	      }
+	
+	      next += base64VLQ.encode(mapping.generatedColumn
+	                                 - previousGeneratedColumn);
+	      previousGeneratedColumn = mapping.generatedColumn;
+	
+	      if (mapping.source != null) {
+	        sourceIdx = this._sources.indexOf(mapping.source);
+	        next += base64VLQ.encode(sourceIdx - previousSource);
+	        previousSource = sourceIdx;
+	
+	        // lines are stored 0-based in SourceMap spec version 3
+	        next += base64VLQ.encode(mapping.originalLine - 1
+	                                   - previousOriginalLine);
+	        previousOriginalLine = mapping.originalLine - 1;
+	
+	        next += base64VLQ.encode(mapping.originalColumn
+	                                   - previousOriginalColumn);
+	        previousOriginalColumn = mapping.originalColumn;
+	
+	        if (mapping.name != null) {
+	          nameIdx = this._names.indexOf(mapping.name);
+	          next += base64VLQ.encode(nameIdx - previousName);
+	          previousName = nameIdx;
+	        }
+	      }
+	
+	      result += next;
+	    }
+	
+	    return result;
+	  };
+	
+	SourceMapGenerator.prototype._generateSourcesContent =
+	  function SourceMapGenerator_generateSourcesContent(aSources, aSourceRoot) {
+	    return aSources.map(function (source) {
+	      if (!this._sourcesContents) {
+	        return null;
+	      }
+	      if (aSourceRoot != null) {
+	        source = util.relative(aSourceRoot, source);
+	      }
+	      var key = util.toSetString(source);
+	      return Object.prototype.hasOwnProperty.call(this._sourcesContents, key)
+	        ? this._sourcesContents[key]
+	        : null;
+	    }, this);
+	  };
+	
+	/**
+	 * Externalize the source map.
+	 */
+	SourceMapGenerator.prototype.toJSON =
+	  function SourceMapGenerator_toJSON() {
+	    var map = {
+	      version: this._version,
+	      sources: this._sources.toArray(),
+	      names: this._names.toArray(),
+	      mappings: this._serializeMappings()
+	    };
+	    if (this._file != null) {
+	      map.file = this._file;
+	    }
+	    if (this._sourceRoot != null) {
+	      map.sourceRoot = this._sourceRoot;
+	    }
+	    if (this._sourcesContents) {
+	      map.sourcesContent = this._generateSourcesContent(map.sources, map.sourceRoot);
+	    }
+	
+	    return map;
+	  };
+	
+	/**
+	 * Render the source map being generated to a string.
+	 */
+	SourceMapGenerator.prototype.toString =
+	  function SourceMapGenerator_toString() {
+	    return JSON.stringify(this.toJSON());
+	  };
+	
+	exports.SourceMapGenerator = SourceMapGenerator;
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 *
+	 * Based on the Base 64 VLQ implementation in Closure Compiler:
+	 * https://code.google.com/p/closure-compiler/source/browse/trunk/src/com/google/debugging/sourcemap/Base64VLQ.java
+	 *
+	 * Copyright 2011 The Closure Compiler Authors. All rights reserved.
+	 * Redistribution and use in source and binary forms, with or without
+	 * modification, are permitted provided that the following conditions are
+	 * met:
+	 *
+	 *  * Redistributions of source code must retain the above copyright
+	 *    notice, this list of conditions and the following disclaimer.
+	 *  * Redistributions in binary form must reproduce the above
+	 *    copyright notice, this list of conditions and the following
+	 *    disclaimer in the documentation and/or other materials provided
+	 *    with the distribution.
+	 *  * Neither the name of Google Inc. nor the names of its
+	 *    contributors may be used to endorse or promote products derived
+	 *    from this software without specific prior written permission.
+	 *
+	 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	 * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	 * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+	 * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+	 * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+	 * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+	 * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+	 * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+	 * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	 */
+	
+	var base64 = __webpack_require__(14);
+	
+	// A single base 64 digit can contain 6 bits of data. For the base 64 variable
+	// length quantities we use in the source map spec, the first bit is the sign,
+	// the next four bits are the actual value, and the 6th bit is the
+	// continuation bit. The continuation bit tells us whether there are more
+	// digits in this value following this digit.
+	//
+	//   Continuation
+	//   |    Sign
+	//   |    |
+	//   V    V
+	//   101011
+	
+	var VLQ_BASE_SHIFT = 5;
+	
+	// binary: 100000
+	var VLQ_BASE = 1 << VLQ_BASE_SHIFT;
+	
+	// binary: 011111
+	var VLQ_BASE_MASK = VLQ_BASE - 1;
+	
+	// binary: 100000
+	var VLQ_CONTINUATION_BIT = VLQ_BASE;
+	
+	/**
+	 * Converts from a two-complement value to a value where the sign bit is
+	 * placed in the least significant bit.  For example, as decimals:
+	 *   1 becomes 2 (10 binary), -1 becomes 3 (11 binary)
+	 *   2 becomes 4 (100 binary), -2 becomes 5 (101 binary)
+	 */
+	function toVLQSigned(aValue) {
+	  return aValue < 0
+	    ? ((-aValue) << 1) + 1
+	    : (aValue << 1) + 0;
+	}
+	
+	/**
+	 * Converts to a two-complement value from a value where the sign bit is
+	 * placed in the least significant bit.  For example, as decimals:
+	 *   2 (10 binary) becomes 1, 3 (11 binary) becomes -1
+	 *   4 (100 binary) becomes 2, 5 (101 binary) becomes -2
+	 */
+	function fromVLQSigned(aValue) {
+	  var isNegative = (aValue & 1) === 1;
+	  var shifted = aValue >> 1;
+	  return isNegative
+	    ? -shifted
+	    : shifted;
+	}
+	
+	/**
+	 * Returns the base 64 VLQ encoded value.
+	 */
+	exports.encode = function base64VLQ_encode(aValue) {
+	  var encoded = "";
+	  var digit;
+	
+	  var vlq = toVLQSigned(aValue);
+	
+	  do {
+	    digit = vlq & VLQ_BASE_MASK;
+	    vlq >>>= VLQ_BASE_SHIFT;
+	    if (vlq > 0) {
+	      // There are still more digits in this value, so we must make sure the
+	      // continuation bit is marked.
+	      digit |= VLQ_CONTINUATION_BIT;
+	    }
+	    encoded += base64.encode(digit);
+	  } while (vlq > 0);
+	
+	  return encoded;
+	};
+	
+	/**
+	 * Decodes the next base 64 VLQ value from the given string and returns the
+	 * value and the rest of the string via the out parameter.
+	 */
+	exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
+	  var strLen = aStr.length;
+	  var result = 0;
+	  var shift = 0;
+	  var continuation, digit;
+	
+	  do {
+	    if (aIndex >= strLen) {
+	      throw new Error("Expected more digits in base 64 VLQ value.");
+	    }
+	
+	    digit = base64.decode(aStr.charCodeAt(aIndex++));
+	    if (digit === -1) {
+	      throw new Error("Invalid base64 digit: " + aStr.charAt(aIndex - 1));
+	    }
+	
+	    continuation = !!(digit & VLQ_CONTINUATION_BIT);
+	    digit &= VLQ_BASE_MASK;
+	    result = result + (digit << shift);
+	    shift += VLQ_BASE_SHIFT;
+	  } while (continuation);
+	
+	  aOutParam.value = fromVLQSigned(result);
+	  aOutParam.rest = aIndex;
+	};
+
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	var intToCharMap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('');
+	
+	/**
+	 * Encode an integer in the range of 0 to 63 to a single base 64 digit.
+	 */
+	exports.encode = function (number) {
+	  if (0 <= number && number < intToCharMap.length) {
+	    return intToCharMap[number];
+	  }
+	  throw new TypeError("Must be between 0 and 63: " + number);
+	};
+	
+	/**
+	 * Decode a single base 64 character code digit to an integer. Returns -1 on
+	 * failure.
+	 */
+	exports.decode = function (charCode) {
+	  var bigA = 65;     // 'A'
+	  var bigZ = 90;     // 'Z'
+	
+	  var littleA = 97;  // 'a'
+	  var littleZ = 122; // 'z'
+	
+	  var zero = 48;     // '0'
+	  var nine = 57;     // '9'
+	
+	  var plus = 43;     // '+'
+	  var slash = 47;    // '/'
+	
+	  var littleOffset = 26;
+	  var numberOffset = 52;
+	
+	  // 0 - 25: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+	  if (bigA <= charCode && charCode <= bigZ) {
+	    return (charCode - bigA);
+	  }
+	
+	  // 26 - 51: abcdefghijklmnopqrstuvwxyz
+	  if (littleA <= charCode && charCode <= littleZ) {
+	    return (charCode - littleA + littleOffset);
+	  }
+	
+	  // 52 - 61: 0123456789
+	  if (zero <= charCode && charCode <= nine) {
+	    return (charCode - zero + numberOffset);
+	  }
+	
+	  // 62: +
+	  if (charCode == plus) {
+	    return 62;
+	  }
+	
+	  // 63: /
+	  if (charCode == slash) {
+	    return 63;
+	  }
+	
+	  // Invalid base64 digit.
+	  return -1;
+	};
+
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	/**
+	 * This is a helper function for getting values from parameter/options
+	 * objects.
+	 *
+	 * @param args The object we are extracting values from
+	 * @param name The name of the property we are getting.
+	 * @param defaultValue An optional value to return if the property is missing
+	 * from the object. If this is not specified and the property is missing, an
+	 * error will be thrown.
+	 */
+	function getArg(aArgs, aName, aDefaultValue) {
+	  if (aName in aArgs) {
+	    return aArgs[aName];
+	  } else if (arguments.length === 3) {
+	    return aDefaultValue;
+	  } else {
+	    throw new Error('"' + aName + '" is a required argument.');
+	  }
+	}
+	exports.getArg = getArg;
+	
+	var urlRegexp = /^(?:([\w+\-.]+):)?\/\/(?:(\w+:\w+)@)?([\w.]*)(?::(\d+))?(\S*)$/;
+	var dataUrlRegexp = /^data:.+\,.+$/;
+	
+	function urlParse(aUrl) {
+	  var match = aUrl.match(urlRegexp);
+	  if (!match) {
+	    return null;
+	  }
+	  return {
+	    scheme: match[1],
+	    auth: match[2],
+	    host: match[3],
+	    port: match[4],
+	    path: match[5]
+	  };
+	}
+	exports.urlParse = urlParse;
+	
+	function urlGenerate(aParsedUrl) {
+	  var url = '';
+	  if (aParsedUrl.scheme) {
+	    url += aParsedUrl.scheme + ':';
+	  }
+	  url += '//';
+	  if (aParsedUrl.auth) {
+	    url += aParsedUrl.auth + '@';
+	  }
+	  if (aParsedUrl.host) {
+	    url += aParsedUrl.host;
+	  }
+	  if (aParsedUrl.port) {
+	    url += ":" + aParsedUrl.port
+	  }
+	  if (aParsedUrl.path) {
+	    url += aParsedUrl.path;
+	  }
+	  return url;
+	}
+	exports.urlGenerate = urlGenerate;
+	
+	/**
+	 * Normalizes a path, or the path portion of a URL:
+	 *
+	 * - Replaces consecutive slashes with one slash.
+	 * - Removes unnecessary '.' parts.
+	 * - Removes unnecessary '<dir>/..' parts.
+	 *
+	 * Based on code in the Node.js 'path' core module.
+	 *
+	 * @param aPath The path or url to normalize.
+	 */
+	function normalize(aPath) {
+	  var path = aPath;
+	  var url = urlParse(aPath);
+	  if (url) {
+	    if (!url.path) {
+	      return aPath;
+	    }
+	    path = url.path;
+	  }
+	  var isAbsolute = exports.isAbsolute(path);
+	
+	  var parts = path.split(/\/+/);
+	  for (var part, up = 0, i = parts.length - 1; i >= 0; i--) {
+	    part = parts[i];
+	    if (part === '.') {
+	      parts.splice(i, 1);
+	    } else if (part === '..') {
+	      up++;
+	    } else if (up > 0) {
+	      if (part === '') {
+	        // The first part is blank if the path is absolute. Trying to go
+	        // above the root is a no-op. Therefore we can remove all '..' parts
+	        // directly after the root.
+	        parts.splice(i + 1, up);
+	        up = 0;
+	      } else {
+	        parts.splice(i, 2);
+	        up--;
+	      }
+	    }
+	  }
+	  path = parts.join('/');
+	
+	  if (path === '') {
+	    path = isAbsolute ? '/' : '.';
+	  }
+	
+	  if (url) {
+	    url.path = path;
+	    return urlGenerate(url);
+	  }
+	  return path;
+	}
+	exports.normalize = normalize;
+	
+	/**
+	 * Joins two paths/URLs.
+	 *
+	 * @param aRoot The root path or URL.
+	 * @param aPath The path or URL to be joined with the root.
+	 *
+	 * - If aPath is a URL or a data URI, aPath is returned, unless aPath is a
+	 *   scheme-relative URL: Then the scheme of aRoot, if any, is prepended
+	 *   first.
+	 * - Otherwise aPath is a path. If aRoot is a URL, then its path portion
+	 *   is updated with the result and aRoot is returned. Otherwise the result
+	 *   is returned.
+	 *   - If aPath is absolute, the result is aPath.
+	 *   - Otherwise the two paths are joined with a slash.
+	 * - Joining for example 'http://' and 'www.example.com' is also supported.
+	 */
+	function join(aRoot, aPath) {
+	  if (aRoot === "") {
+	    aRoot = ".";
+	  }
+	  if (aPath === "") {
+	    aPath = ".";
+	  }
+	  var aPathUrl = urlParse(aPath);
+	  var aRootUrl = urlParse(aRoot);
+	  if (aRootUrl) {
+	    aRoot = aRootUrl.path || '/';
+	  }
+	
+	  // `join(foo, '//www.example.org')`
+	  if (aPathUrl && !aPathUrl.scheme) {
+	    if (aRootUrl) {
+	      aPathUrl.scheme = aRootUrl.scheme;
+	    }
+	    return urlGenerate(aPathUrl);
+	  }
+	
+	  if (aPathUrl || aPath.match(dataUrlRegexp)) {
+	    return aPath;
+	  }
+	
+	  // `join('http://', 'www.example.com')`
+	  if (aRootUrl && !aRootUrl.host && !aRootUrl.path) {
+	    aRootUrl.host = aPath;
+	    return urlGenerate(aRootUrl);
+	  }
+	
+	  var joined = aPath.charAt(0) === '/'
+	    ? aPath
+	    : normalize(aRoot.replace(/\/+$/, '') + '/' + aPath);
+	
+	  if (aRootUrl) {
+	    aRootUrl.path = joined;
+	    return urlGenerate(aRootUrl);
+	  }
+	  return joined;
+	}
+	exports.join = join;
+	
+	exports.isAbsolute = function (aPath) {
+	  return aPath.charAt(0) === '/' || !!aPath.match(urlRegexp);
+	};
+	
+	/**
+	 * Make a path relative to a URL or another path.
+	 *
+	 * @param aRoot The root path or URL.
+	 * @param aPath The path or URL to be made relative to aRoot.
+	 */
+	function relative(aRoot, aPath) {
+	  if (aRoot === "") {
+	    aRoot = ".";
+	  }
+	
+	  aRoot = aRoot.replace(/\/$/, '');
+	
+	  // It is possible for the path to be above the root. In this case, simply
+	  // checking whether the root is a prefix of the path won't work. Instead, we
+	  // need to remove components from the root one by one, until either we find
+	  // a prefix that fits, or we run out of components to remove.
+	  var level = 0;
+	  while (aPath.indexOf(aRoot + '/') !== 0) {
+	    var index = aRoot.lastIndexOf("/");
+	    if (index < 0) {
+	      return aPath;
+	    }
+	
+	    // If the only part of the root that is left is the scheme (i.e. http://,
+	    // file:///, etc.), one or more slashes (/), or simply nothing at all, we
+	    // have exhausted all components, so the path is not relative to the root.
+	    aRoot = aRoot.slice(0, index);
+	    if (aRoot.match(/^([^\/]+:\/)?\/*$/)) {
+	      return aPath;
+	    }
+	
+	    ++level;
+	  }
+	
+	  // Make sure we add a "../" for each component we removed from the root.
+	  return Array(level + 1).join("../") + aPath.substr(aRoot.length + 1);
+	}
+	exports.relative = relative;
+	
+	var supportsNullProto = (function () {
+	  var obj = Object.create(null);
+	  return !('__proto__' in obj);
+	}());
+	
+	function identity (s) {
+	  return s;
+	}
+	
+	/**
+	 * Because behavior goes wacky when you set `__proto__` on objects, we
+	 * have to prefix all the strings in our set with an arbitrary character.
+	 *
+	 * See https://github.com/mozilla/source-map/pull/31 and
+	 * https://github.com/mozilla/source-map/issues/30
+	 *
+	 * @param String aStr
+	 */
+	function toSetString(aStr) {
+	  if (isProtoString(aStr)) {
+	    return '$' + aStr;
+	  }
+	
+	  return aStr;
+	}
+	exports.toSetString = supportsNullProto ? identity : toSetString;
+	
+	function fromSetString(aStr) {
+	  if (isProtoString(aStr)) {
+	    return aStr.slice(1);
+	  }
+	
+	  return aStr;
+	}
+	exports.fromSetString = supportsNullProto ? identity : fromSetString;
+	
+	function isProtoString(s) {
+	  if (!s) {
+	    return false;
+	  }
+	
+	  var length = s.length;
+	
+	  if (length < 9 /* "__proto__".length */) {
+	    return false;
+	  }
+	
+	  if (s.charCodeAt(length - 1) !== 95  /* '_' */ ||
+	      s.charCodeAt(length - 2) !== 95  /* '_' */ ||
+	      s.charCodeAt(length - 3) !== 111 /* 'o' */ ||
+	      s.charCodeAt(length - 4) !== 116 /* 't' */ ||
+	      s.charCodeAt(length - 5) !== 111 /* 'o' */ ||
+	      s.charCodeAt(length - 6) !== 114 /* 'r' */ ||
+	      s.charCodeAt(length - 7) !== 112 /* 'p' */ ||
+	      s.charCodeAt(length - 8) !== 95  /* '_' */ ||
+	      s.charCodeAt(length - 9) !== 95  /* '_' */) {
+	    return false;
+	  }
+	
+	  for (var i = length - 10; i >= 0; i--) {
+	    if (s.charCodeAt(i) !== 36 /* '$' */) {
+	      return false;
+	    }
+	  }
+	
+	  return true;
+	}
+	
+	/**
+	 * Comparator between two mappings where the original positions are compared.
+	 *
+	 * Optionally pass in `true` as `onlyCompareGenerated` to consider two
+	 * mappings with the same original source/line/column, but different generated
+	 * line and column the same. Useful when searching for a mapping with a
+	 * stubbed out mapping.
+	 */
+	function compareByOriginalPositions(mappingA, mappingB, onlyCompareOriginal) {
+	  var cmp = mappingA.source - mappingB.source;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.originalLine - mappingB.originalLine;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.originalColumn - mappingB.originalColumn;
+	  if (cmp !== 0 || onlyCompareOriginal) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.generatedColumn - mappingB.generatedColumn;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.generatedLine - mappingB.generatedLine;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  return mappingA.name - mappingB.name;
+	}
+	exports.compareByOriginalPositions = compareByOriginalPositions;
+	
+	/**
+	 * Comparator between two mappings with deflated source and name indices where
+	 * the generated positions are compared.
+	 *
+	 * Optionally pass in `true` as `onlyCompareGenerated` to consider two
+	 * mappings with the same generated line and column, but different
+	 * source/name/original line and column the same. Useful when searching for a
+	 * mapping with a stubbed out mapping.
+	 */
+	function compareByGeneratedPositionsDeflated(mappingA, mappingB, onlyCompareGenerated) {
+	  var cmp = mappingA.generatedLine - mappingB.generatedLine;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.generatedColumn - mappingB.generatedColumn;
+	  if (cmp !== 0 || onlyCompareGenerated) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.source - mappingB.source;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.originalLine - mappingB.originalLine;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.originalColumn - mappingB.originalColumn;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  return mappingA.name - mappingB.name;
+	}
+	exports.compareByGeneratedPositionsDeflated = compareByGeneratedPositionsDeflated;
+	
+	function strcmp(aStr1, aStr2) {
+	  if (aStr1 === aStr2) {
+	    return 0;
+	  }
+	
+	  if (aStr1 > aStr2) {
+	    return 1;
+	  }
+	
+	  return -1;
+	}
+	
+	/**
+	 * Comparator between two mappings with inflated source and name strings where
+	 * the generated positions are compared.
+	 */
+	function compareByGeneratedPositionsInflated(mappingA, mappingB) {
+	  var cmp = mappingA.generatedLine - mappingB.generatedLine;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.generatedColumn - mappingB.generatedColumn;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = strcmp(mappingA.source, mappingB.source);
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.originalLine - mappingB.originalLine;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  cmp = mappingA.originalColumn - mappingB.originalColumn;
+	  if (cmp !== 0) {
+	    return cmp;
+	  }
+	
+	  return strcmp(mappingA.name, mappingB.name);
+	}
+	exports.compareByGeneratedPositionsInflated = compareByGeneratedPositionsInflated;
+
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	var util = __webpack_require__(15);
+	var has = Object.prototype.hasOwnProperty;
+	
+	/**
+	 * A data structure which is a combination of an array and a set. Adding a new
+	 * member is O(1), testing for membership is O(1), and finding the index of an
+	 * element is O(1). Removing elements from the set is not supported. Only
+	 * strings are supported for membership.
+	 */
+	function ArraySet() {
+	  this._array = [];
+	  this._set = Object.create(null);
+	}
+	
+	/**
+	 * Static method for creating ArraySet instances from an existing array.
+	 */
+	ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
+	  var set = new ArraySet();
+	  for (var i = 0, len = aArray.length; i < len; i++) {
+	    set.add(aArray[i], aAllowDuplicates);
+	  }
+	  return set;
+	};
+	
+	/**
+	 * Return how many unique items are in this ArraySet. If duplicates have been
+	 * added, than those do not count towards the size.
+	 *
+	 * @returns Number
+	 */
+	ArraySet.prototype.size = function ArraySet_size() {
+	  return Object.getOwnPropertyNames(this._set).length;
+	};
+	
+	/**
+	 * Add the given string to this set.
+	 *
+	 * @param String aStr
+	 */
+	ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
+	  var sStr = util.toSetString(aStr);
+	  var isDuplicate = has.call(this._set, sStr);
+	  var idx = this._array.length;
+	  if (!isDuplicate || aAllowDuplicates) {
+	    this._array.push(aStr);
+	  }
+	  if (!isDuplicate) {
+	    this._set[sStr] = idx;
+	  }
+	};
+	
+	/**
+	 * Is the given string a member of this set?
+	 *
+	 * @param String aStr
+	 */
+	ArraySet.prototype.has = function ArraySet_has(aStr) {
+	  var sStr = util.toSetString(aStr);
+	  return has.call(this._set, sStr);
+	};
+	
+	/**
+	 * What is the index of the given string in the array?
+	 *
+	 * @param String aStr
+	 */
+	ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+	  var sStr = util.toSetString(aStr);
+	  if (has.call(this._set, sStr)) {
+	    return this._set[sStr];
+	  }
+	  throw new Error('"' + aStr + '" is not in the set.');
+	};
+	
+	/**
+	 * What is the element at the given index?
+	 *
+	 * @param Number aIdx
+	 */
+	ArraySet.prototype.at = function ArraySet_at(aIdx) {
+	  if (aIdx >= 0 && aIdx < this._array.length) {
+	    return this._array[aIdx];
+	  }
+	  throw new Error('No element indexed by ' + aIdx);
+	};
+	
+	/**
+	 * Returns the array representation of this set (which has the proper indices
+	 * indicated by indexOf). Note that this is a copy of the internal array used
+	 * for storing the members so that no one can mess with internal state.
+	 */
+	ArraySet.prototype.toArray = function ArraySet_toArray() {
+	  return this._array.slice();
+	};
+	
+	exports.ArraySet = ArraySet;
+
+
+/***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2014 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	var util = __webpack_require__(15);
+	
+	/**
+	 * Determine whether mappingB is after mappingA with respect to generated
+	 * position.
+	 */
+	function generatedPositionAfter(mappingA, mappingB) {
+	  // Optimized for most common case
+	  var lineA = mappingA.generatedLine;
+	  var lineB = mappingB.generatedLine;
+	  var columnA = mappingA.generatedColumn;
+	  var columnB = mappingB.generatedColumn;
+	  return lineB > lineA || lineB == lineA && columnB >= columnA ||
+	         util.compareByGeneratedPositionsInflated(mappingA, mappingB) <= 0;
+	}
+	
+	/**
+	 * A data structure to provide a sorted view of accumulated mappings in a
+	 * performance conscious manner. It trades a neglibable overhead in general
+	 * case for a large speedup in case of mappings being added in order.
+	 */
+	function MappingList() {
+	  this._array = [];
+	  this._sorted = true;
+	  // Serves as infimum
+	  this._last = {generatedLine: -1, generatedColumn: 0};
+	}
+	
+	/**
+	 * Iterate through internal items. This method takes the same arguments that
+	 * `Array.prototype.forEach` takes.
+	 *
+	 * NOTE: The order of the mappings is NOT guaranteed.
+	 */
+	MappingList.prototype.unsortedForEach =
+	  function MappingList_forEach(aCallback, aThisArg) {
+	    this._array.forEach(aCallback, aThisArg);
+	  };
+	
+	/**
+	 * Add the given source mapping.
+	 *
+	 * @param Object aMapping
+	 */
+	MappingList.prototype.add = function MappingList_add(aMapping) {
+	  if (generatedPositionAfter(this._last, aMapping)) {
+	    this._last = aMapping;
+	    this._array.push(aMapping);
+	  } else {
+	    this._sorted = false;
+	    this._array.push(aMapping);
+	  }
+	};
+	
+	/**
+	 * Returns the flat, sorted array of mappings. The mappings are sorted by
+	 * generated position.
+	 *
+	 * WARNING: This method returns internal data without copying, for
+	 * performance. The return value must NOT be mutated, and should be treated as
+	 * an immutable borrow. If you want to take ownership, you must make your own
+	 * copy.
+	 */
+	MappingList.prototype.toArray = function MappingList_toArray() {
+	  if (!this._sorted) {
+	    this._array.sort(util.compareByGeneratedPositionsInflated);
+	    this._sorted = true;
+	  }
+	  return this._array;
+	};
+	
+	exports.MappingList = MappingList;
+
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	var util = __webpack_require__(15);
+	var binarySearch = __webpack_require__(19);
+	var ArraySet = __webpack_require__(16).ArraySet;
+	var base64VLQ = __webpack_require__(13);
+	var quickSort = __webpack_require__(20).quickSort;
+	
+	function SourceMapConsumer(aSourceMap) {
+	  var sourceMap = aSourceMap;
+	  if (typeof aSourceMap === 'string') {
+	    sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
+	  }
+	
+	  return sourceMap.sections != null
+	    ? new IndexedSourceMapConsumer(sourceMap)
+	    : new BasicSourceMapConsumer(sourceMap);
+	}
+	
+	SourceMapConsumer.fromSourceMap = function(aSourceMap) {
+	  return BasicSourceMapConsumer.fromSourceMap(aSourceMap);
+	}
+	
+	/**
+	 * The version of the source mapping spec that we are consuming.
+	 */
+	SourceMapConsumer.prototype._version = 3;
+	
+	// `__generatedMappings` and `__originalMappings` are arrays that hold the
+	// parsed mapping coordinates from the source map's "mappings" attribute. They
+	// are lazily instantiated, accessed via the `_generatedMappings` and
+	// `_originalMappings` getters respectively, and we only parse the mappings
+	// and create these arrays once queried for a source location. We jump through
+	// these hoops because there can be many thousands of mappings, and parsing
+	// them is expensive, so we only want to do it if we must.
+	//
+	// Each object in the arrays is of the form:
+	//
+	//     {
+	//       generatedLine: The line number in the generated code,
+	//       generatedColumn: The column number in the generated code,
+	//       source: The path to the original source file that generated this
+	//               chunk of code,
+	//       originalLine: The line number in the original source that
+	//                     corresponds to this chunk of generated code,
+	//       originalColumn: The column number in the original source that
+	//                       corresponds to this chunk of generated code,
+	//       name: The name of the original symbol which generated this chunk of
+	//             code.
+	//     }
+	//
+	// All properties except for `generatedLine` and `generatedColumn` can be
+	// `null`.
+	//
+	// `_generatedMappings` is ordered by the generated positions.
+	//
+	// `_originalMappings` is ordered by the original positions.
+	
+	SourceMapConsumer.prototype.__generatedMappings = null;
+	Object.defineProperty(SourceMapConsumer.prototype, '_generatedMappings', {
+	  get: function () {
+	    if (!this.__generatedMappings) {
+	      this._parseMappings(this._mappings, this.sourceRoot);
+	    }
+	
+	    return this.__generatedMappings;
+	  }
+	});
+	
+	SourceMapConsumer.prototype.__originalMappings = null;
+	Object.defineProperty(SourceMapConsumer.prototype, '_originalMappings', {
+	  get: function () {
+	    if (!this.__originalMappings) {
+	      this._parseMappings(this._mappings, this.sourceRoot);
+	    }
+	
+	    return this.__originalMappings;
+	  }
+	});
+	
+	SourceMapConsumer.prototype._charIsMappingSeparator =
+	  function SourceMapConsumer_charIsMappingSeparator(aStr, index) {
+	    var c = aStr.charAt(index);
+	    return c === ";" || c === ",";
+	  };
+	
+	/**
+	 * Parse the mappings in a string in to a data structure which we can easily
+	 * query (the ordered arrays in the `this.__generatedMappings` and
+	 * `this.__originalMappings` properties).
+	 */
+	SourceMapConsumer.prototype._parseMappings =
+	  function SourceMapConsumer_parseMappings(aStr, aSourceRoot) {
+	    throw new Error("Subclasses must implement _parseMappings");
+	  };
+	
+	SourceMapConsumer.GENERATED_ORDER = 1;
+	SourceMapConsumer.ORIGINAL_ORDER = 2;
+	
+	SourceMapConsumer.GREATEST_LOWER_BOUND = 1;
+	SourceMapConsumer.LEAST_UPPER_BOUND = 2;
+	
+	/**
+	 * Iterate over each mapping between an original source/line/column and a
+	 * generated line/column in this source map.
+	 *
+	 * @param Function aCallback
+	 *        The function that is called with each mapping.
+	 * @param Object aContext
+	 *        Optional. If specified, this object will be the value of `this` every
+	 *        time that `aCallback` is called.
+	 * @param aOrder
+	 *        Either `SourceMapConsumer.GENERATED_ORDER` or
+	 *        `SourceMapConsumer.ORIGINAL_ORDER`. Specifies whether you want to
+	 *        iterate over the mappings sorted by the generated file's line/column
+	 *        order or the original's source/line/column order, respectively. Defaults to
+	 *        `SourceMapConsumer.GENERATED_ORDER`.
+	 */
+	SourceMapConsumer.prototype.eachMapping =
+	  function SourceMapConsumer_eachMapping(aCallback, aContext, aOrder) {
+	    var context = aContext || null;
+	    var order = aOrder || SourceMapConsumer.GENERATED_ORDER;
+	
+	    var mappings;
+	    switch (order) {
+	    case SourceMapConsumer.GENERATED_ORDER:
+	      mappings = this._generatedMappings;
+	      break;
+	    case SourceMapConsumer.ORIGINAL_ORDER:
+	      mappings = this._originalMappings;
+	      break;
+	    default:
+	      throw new Error("Unknown order of iteration.");
+	    }
+	
+	    var sourceRoot = this.sourceRoot;
+	    mappings.map(function (mapping) {
+	      var source = mapping.source === null ? null : this._sources.at(mapping.source);
+	      if (source != null && sourceRoot != null) {
+	        source = util.join(sourceRoot, source);
+	      }
+	      return {
+	        source: source,
+	        generatedLine: mapping.generatedLine,
+	        generatedColumn: mapping.generatedColumn,
+	        originalLine: mapping.originalLine,
+	        originalColumn: mapping.originalColumn,
+	        name: mapping.name === null ? null : this._names.at(mapping.name)
+	      };
+	    }, this).forEach(aCallback, context);
+	  };
+	
+	/**
+	 * Returns all generated line and column information for the original source,
+	 * line, and column provided. If no column is provided, returns all mappings
+	 * corresponding to a either the line we are searching for or the next
+	 * closest line that has any mappings. Otherwise, returns all mappings
+	 * corresponding to the given line and either the column we are searching for
+	 * or the next closest column that has any offsets.
+	 *
+	 * The only argument is an object with the following properties:
+	 *
+	 *   - source: The filename of the original source.
+	 *   - line: The line number in the original source.
+	 *   - column: Optional. the column number in the original source.
+	 *
+	 * and an array of objects is returned, each with the following properties:
+	 *
+	 *   - line: The line number in the generated source, or null.
+	 *   - column: The column number in the generated source, or null.
+	 */
+	SourceMapConsumer.prototype.allGeneratedPositionsFor =
+	  function SourceMapConsumer_allGeneratedPositionsFor(aArgs) {
+	    var line = util.getArg(aArgs, 'line');
+	
+	    // When there is no exact match, BasicSourceMapConsumer.prototype._findMapping
+	    // returns the index of the closest mapping less than the needle. By
+	    // setting needle.originalColumn to 0, we thus find the last mapping for
+	    // the given line, provided such a mapping exists.
+	    var needle = {
+	      source: util.getArg(aArgs, 'source'),
+	      originalLine: line,
+	      originalColumn: util.getArg(aArgs, 'column', 0)
+	    };
+	
+	    if (this.sourceRoot != null) {
+	      needle.source = util.relative(this.sourceRoot, needle.source);
+	    }
+	    if (!this._sources.has(needle.source)) {
+	      return [];
+	    }
+	    needle.source = this._sources.indexOf(needle.source);
+	
+	    var mappings = [];
+	
+	    var index = this._findMapping(needle,
+	                                  this._originalMappings,
+	                                  "originalLine",
+	                                  "originalColumn",
+	                                  util.compareByOriginalPositions,
+	                                  binarySearch.LEAST_UPPER_BOUND);
+	    if (index >= 0) {
+	      var mapping = this._originalMappings[index];
+	
+	      if (aArgs.column === undefined) {
+	        var originalLine = mapping.originalLine;
+	
+	        // Iterate until either we run out of mappings, or we run into
+	        // a mapping for a different line than the one we found. Since
+	        // mappings are sorted, this is guaranteed to find all mappings for
+	        // the line we found.
+	        while (mapping && mapping.originalLine === originalLine) {
+	          mappings.push({
+	            line: util.getArg(mapping, 'generatedLine', null),
+	            column: util.getArg(mapping, 'generatedColumn', null),
+	            lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
+	          });
+	
+	          mapping = this._originalMappings[++index];
+	        }
+	      } else {
+	        var originalColumn = mapping.originalColumn;
+	
+	        // Iterate until either we run out of mappings, or we run into
+	        // a mapping for a different line than the one we were searching for.
+	        // Since mappings are sorted, this is guaranteed to find all mappings for
+	        // the line we are searching for.
+	        while (mapping &&
+	               mapping.originalLine === line &&
+	               mapping.originalColumn == originalColumn) {
+	          mappings.push({
+	            line: util.getArg(mapping, 'generatedLine', null),
+	            column: util.getArg(mapping, 'generatedColumn', null),
+	            lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
+	          });
+	
+	          mapping = this._originalMappings[++index];
+	        }
+	      }
+	    }
+	
+	    return mappings;
+	  };
+	
+	exports.SourceMapConsumer = SourceMapConsumer;
+	
+	/**
+	 * A BasicSourceMapConsumer instance represents a parsed source map which we can
+	 * query for information about the original file positions by giving it a file
+	 * position in the generated source.
+	 *
+	 * The only parameter is the raw source map (either as a JSON string, or
+	 * already parsed to an object). According to the spec, source maps have the
+	 * following attributes:
+	 *
+	 *   - version: Which version of the source map spec this map is following.
+	 *   - sources: An array of URLs to the original source files.
+	 *   - names: An array of identifiers which can be referrenced by individual mappings.
+	 *   - sourceRoot: Optional. The URL root from which all sources are relative.
+	 *   - sourcesContent: Optional. An array of contents of the original source files.
+	 *   - mappings: A string of base64 VLQs which contain the actual mappings.
+	 *   - file: Optional. The generated file this source map is associated with.
+	 *
+	 * Here is an example source map, taken from the source map spec[0]:
+	 *
+	 *     {
+	 *       version : 3,
+	 *       file: "out.js",
+	 *       sourceRoot : "",
+	 *       sources: ["foo.js", "bar.js"],
+	 *       names: ["src", "maps", "are", "fun"],
+	 *       mappings: "AA,AB;;ABCDE;"
+	 *     }
+	 *
+	 * [0]: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?pli=1#
+	 */
+	function BasicSourceMapConsumer(aSourceMap) {
+	  var sourceMap = aSourceMap;
+	  if (typeof aSourceMap === 'string') {
+	    sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
+	  }
+	
+	  var version = util.getArg(sourceMap, 'version');
+	  var sources = util.getArg(sourceMap, 'sources');
+	  // Sass 3.3 leaves out the 'names' array, so we deviate from the spec (which
+	  // requires the array) to play nice here.
+	  var names = util.getArg(sourceMap, 'names', []);
+	  var sourceRoot = util.getArg(sourceMap, 'sourceRoot', null);
+	  var sourcesContent = util.getArg(sourceMap, 'sourcesContent', null);
+	  var mappings = util.getArg(sourceMap, 'mappings');
+	  var file = util.getArg(sourceMap, 'file', null);
+	
+	  // Once again, Sass deviates from the spec and supplies the version as a
+	  // string rather than a number, so we use loose equality checking here.
+	  if (version != this._version) {
+	    throw new Error('Unsupported version: ' + version);
+	  }
+	
+	  sources = sources
+	    .map(String)
+	    // Some source maps produce relative source paths like "./foo.js" instead of
+	    // "foo.js".  Normalize these first so that future comparisons will succeed.
+	    // See bugzil.la/1090768.
+	    .map(util.normalize)
+	    // Always ensure that absolute sources are internally stored relative to
+	    // the source root, if the source root is absolute. Not doing this would
+	    // be particularly problematic when the source root is a prefix of the
+	    // source (valid, but why??). See github issue #199 and bugzil.la/1188982.
+	    .map(function (source) {
+	      return sourceRoot && util.isAbsolute(sourceRoot) && util.isAbsolute(source)
+	        ? util.relative(sourceRoot, source)
+	        : source;
+	    });
+	
+	  // Pass `true` below to allow duplicate names and sources. While source maps
+	  // are intended to be compressed and deduplicated, the TypeScript compiler
+	  // sometimes generates source maps with duplicates in them. See Github issue
+	  // #72 and bugzil.la/889492.
+	  this._names = ArraySet.fromArray(names.map(String), true);
+	  this._sources = ArraySet.fromArray(sources, true);
+	
+	  this.sourceRoot = sourceRoot;
+	  this.sourcesContent = sourcesContent;
+	  this._mappings = mappings;
+	  this.file = file;
+	}
+	
+	BasicSourceMapConsumer.prototype = Object.create(SourceMapConsumer.prototype);
+	BasicSourceMapConsumer.prototype.consumer = SourceMapConsumer;
+	
+	/**
+	 * Create a BasicSourceMapConsumer from a SourceMapGenerator.
+	 *
+	 * @param SourceMapGenerator aSourceMap
+	 *        The source map that will be consumed.
+	 * @returns BasicSourceMapConsumer
+	 */
+	BasicSourceMapConsumer.fromSourceMap =
+	  function SourceMapConsumer_fromSourceMap(aSourceMap) {
+	    var smc = Object.create(BasicSourceMapConsumer.prototype);
+	
+	    var names = smc._names = ArraySet.fromArray(aSourceMap._names.toArray(), true);
+	    var sources = smc._sources = ArraySet.fromArray(aSourceMap._sources.toArray(), true);
+	    smc.sourceRoot = aSourceMap._sourceRoot;
+	    smc.sourcesContent = aSourceMap._generateSourcesContent(smc._sources.toArray(),
+	                                                            smc.sourceRoot);
+	    smc.file = aSourceMap._file;
+	
+	    // Because we are modifying the entries (by converting string sources and
+	    // names to indices into the sources and names ArraySets), we have to make
+	    // a copy of the entry or else bad things happen. Shared mutable state
+	    // strikes again! See github issue #191.
+	
+	    var generatedMappings = aSourceMap._mappings.toArray().slice();
+	    var destGeneratedMappings = smc.__generatedMappings = [];
+	    var destOriginalMappings = smc.__originalMappings = [];
+	
+	    for (var i = 0, length = generatedMappings.length; i < length; i++) {
+	      var srcMapping = generatedMappings[i];
+	      var destMapping = new Mapping;
+	      destMapping.generatedLine = srcMapping.generatedLine;
+	      destMapping.generatedColumn = srcMapping.generatedColumn;
+	
+	      if (srcMapping.source) {
+	        destMapping.source = sources.indexOf(srcMapping.source);
+	        destMapping.originalLine = srcMapping.originalLine;
+	        destMapping.originalColumn = srcMapping.originalColumn;
+	
+	        if (srcMapping.name) {
+	          destMapping.name = names.indexOf(srcMapping.name);
+	        }
+	
+	        destOriginalMappings.push(destMapping);
+	      }
+	
+	      destGeneratedMappings.push(destMapping);
+	    }
+	
+	    quickSort(smc.__originalMappings, util.compareByOriginalPositions);
+	
+	    return smc;
+	  };
+	
+	/**
+	 * The version of the source mapping spec that we are consuming.
+	 */
+	BasicSourceMapConsumer.prototype._version = 3;
+	
+	/**
+	 * The list of original sources.
+	 */
+	Object.defineProperty(BasicSourceMapConsumer.prototype, 'sources', {
+	  get: function () {
+	    return this._sources.toArray().map(function (s) {
+	      return this.sourceRoot != null ? util.join(this.sourceRoot, s) : s;
+	    }, this);
+	  }
+	});
+	
+	/**
+	 * Provide the JIT with a nice shape / hidden class.
+	 */
+	function Mapping() {
+	  this.generatedLine = 0;
+	  this.generatedColumn = 0;
+	  this.source = null;
+	  this.originalLine = null;
+	  this.originalColumn = null;
+	  this.name = null;
+	}
+	
+	/**
+	 * Parse the mappings in a string in to a data structure which we can easily
+	 * query (the ordered arrays in the `this.__generatedMappings` and
+	 * `this.__originalMappings` properties).
+	 */
+	BasicSourceMapConsumer.prototype._parseMappings =
+	  function SourceMapConsumer_parseMappings(aStr, aSourceRoot) {
+	    var generatedLine = 1;
+	    var previousGeneratedColumn = 0;
+	    var previousOriginalLine = 0;
+	    var previousOriginalColumn = 0;
+	    var previousSource = 0;
+	    var previousName = 0;
+	    var length = aStr.length;
+	    var index = 0;
+	    var cachedSegments = {};
+	    var temp = {};
+	    var originalMappings = [];
+	    var generatedMappings = [];
+	    var mapping, str, segment, end, value;
+	
+	    while (index < length) {
+	      if (aStr.charAt(index) === ';') {
+	        generatedLine++;
+	        index++;
+	        previousGeneratedColumn = 0;
+	      }
+	      else if (aStr.charAt(index) === ',') {
+	        index++;
+	      }
+	      else {
+	        mapping = new Mapping();
+	        mapping.generatedLine = generatedLine;
+	
+	        // Because each offset is encoded relative to the previous one,
+	        // many segments often have the same encoding. We can exploit this
+	        // fact by caching the parsed variable length fields of each segment,
+	        // allowing us to avoid a second parse if we encounter the same
+	        // segment again.
+	        for (end = index; end < length; end++) {
+	          if (this._charIsMappingSeparator(aStr, end)) {
+	            break;
+	          }
+	        }
+	        str = aStr.slice(index, end);
+	
+	        segment = cachedSegments[str];
+	        if (segment) {
+	          index += str.length;
+	        } else {
+	          segment = [];
+	          while (index < end) {
+	            base64VLQ.decode(aStr, index, temp);
+	            value = temp.value;
+	            index = temp.rest;
+	            segment.push(value);
+	          }
+	
+	          if (segment.length === 2) {
+	            throw new Error('Found a source, but no line and column');
+	          }
+	
+	          if (segment.length === 3) {
+	            throw new Error('Found a source and line, but no column');
+	          }
+	
+	          cachedSegments[str] = segment;
+	        }
+	
+	        // Generated column.
+	        mapping.generatedColumn = previousGeneratedColumn + segment[0];
+	        previousGeneratedColumn = mapping.generatedColumn;
+	
+	        if (segment.length > 1) {
+	          // Original source.
+	          mapping.source = previousSource + segment[1];
+	          previousSource += segment[1];
+	
+	          // Original line.
+	          mapping.originalLine = previousOriginalLine + segment[2];
+	          previousOriginalLine = mapping.originalLine;
+	          // Lines are stored 0-based
+	          mapping.originalLine += 1;
+	
+	          // Original column.
+	          mapping.originalColumn = previousOriginalColumn + segment[3];
+	          previousOriginalColumn = mapping.originalColumn;
+	
+	          if (segment.length > 4) {
+	            // Original name.
+	            mapping.name = previousName + segment[4];
+	            previousName += segment[4];
+	          }
+	        }
+	
+	        generatedMappings.push(mapping);
+	        if (typeof mapping.originalLine === 'number') {
+	          originalMappings.push(mapping);
+	        }
+	      }
+	    }
+	
+	    quickSort(generatedMappings, util.compareByGeneratedPositionsDeflated);
+	    this.__generatedMappings = generatedMappings;
+	
+	    quickSort(originalMappings, util.compareByOriginalPositions);
+	    this.__originalMappings = originalMappings;
+	  };
+	
+	/**
+	 * Find the mapping that best matches the hypothetical "needle" mapping that
+	 * we are searching for in the given "haystack" of mappings.
+	 */
+	BasicSourceMapConsumer.prototype._findMapping =
+	  function SourceMapConsumer_findMapping(aNeedle, aMappings, aLineName,
+	                                         aColumnName, aComparator, aBias) {
+	    // To return the position we are searching for, we must first find the
+	    // mapping for the given position and then return the opposite position it
+	    // points to. Because the mappings are sorted, we can use binary search to
+	    // find the best mapping.
+	
+	    if (aNeedle[aLineName] <= 0) {
+	      throw new TypeError('Line must be greater than or equal to 1, got '
+	                          + aNeedle[aLineName]);
+	    }
+	    if (aNeedle[aColumnName] < 0) {
+	      throw new TypeError('Column must be greater than or equal to 0, got '
+	                          + aNeedle[aColumnName]);
+	    }
+	
+	    return binarySearch.search(aNeedle, aMappings, aComparator, aBias);
+	  };
+	
+	/**
+	 * Compute the last column for each generated mapping. The last column is
+	 * inclusive.
+	 */
+	BasicSourceMapConsumer.prototype.computeColumnSpans =
+	  function SourceMapConsumer_computeColumnSpans() {
+	    for (var index = 0; index < this._generatedMappings.length; ++index) {
+	      var mapping = this._generatedMappings[index];
+	
+	      // Mappings do not contain a field for the last generated columnt. We
+	      // can come up with an optimistic estimate, however, by assuming that
+	      // mappings are contiguous (i.e. given two consecutive mappings, the
+	      // first mapping ends where the second one starts).
+	      if (index + 1 < this._generatedMappings.length) {
+	        var nextMapping = this._generatedMappings[index + 1];
+	
+	        if (mapping.generatedLine === nextMapping.generatedLine) {
+	          mapping.lastGeneratedColumn = nextMapping.generatedColumn - 1;
+	          continue;
+	        }
+	      }
+	
+	      // The last mapping for each line spans the entire line.
+	      mapping.lastGeneratedColumn = Infinity;
+	    }
+	  };
+	
+	/**
+	 * Returns the original source, line, and column information for the generated
+	 * source's line and column positions provided. The only argument is an object
+	 * with the following properties:
+	 *
+	 *   - line: The line number in the generated source.
+	 *   - column: The column number in the generated source.
+	 *   - bias: Either 'SourceMapConsumer.GREATEST_LOWER_BOUND' or
+	 *     'SourceMapConsumer.LEAST_UPPER_BOUND'. Specifies whether to return the
+	 *     closest element that is smaller than or greater than the one we are
+	 *     searching for, respectively, if the exact element cannot be found.
+	 *     Defaults to 'SourceMapConsumer.GREATEST_LOWER_BOUND'.
+	 *
+	 * and an object is returned with the following properties:
+	 *
+	 *   - source: The original source file, or null.
+	 *   - line: The line number in the original source, or null.
+	 *   - column: The column number in the original source, or null.
+	 *   - name: The original identifier, or null.
+	 */
+	BasicSourceMapConsumer.prototype.originalPositionFor =
+	  function SourceMapConsumer_originalPositionFor(aArgs) {
+	    var needle = {
+	      generatedLine: util.getArg(aArgs, 'line'),
+	      generatedColumn: util.getArg(aArgs, 'column')
+	    };
+	
+	    var index = this._findMapping(
+	      needle,
+	      this._generatedMappings,
+	      "generatedLine",
+	      "generatedColumn",
+	      util.compareByGeneratedPositionsDeflated,
+	      util.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
+	    );
+	
+	    if (index >= 0) {
+	      var mapping = this._generatedMappings[index];
+	
+	      if (mapping.generatedLine === needle.generatedLine) {
+	        var source = util.getArg(mapping, 'source', null);
+	        if (source !== null) {
+	          source = this._sources.at(source);
+	          if (this.sourceRoot != null) {
+	            source = util.join(this.sourceRoot, source);
+	          }
+	        }
+	        var name = util.getArg(mapping, 'name', null);
+	        if (name !== null) {
+	          name = this._names.at(name);
+	        }
+	        return {
+	          source: source,
+	          line: util.getArg(mapping, 'originalLine', null),
+	          column: util.getArg(mapping, 'originalColumn', null),
+	          name: name
+	        };
+	      }
+	    }
+	
+	    return {
+	      source: null,
+	      line: null,
+	      column: null,
+	      name: null
+	    };
+	  };
+	
+	/**
+	 * Return true if we have the source content for every source in the source
+	 * map, false otherwise.
+	 */
+	BasicSourceMapConsumer.prototype.hasContentsOfAllSources =
+	  function BasicSourceMapConsumer_hasContentsOfAllSources() {
+	    if (!this.sourcesContent) {
+	      return false;
+	    }
+	    return this.sourcesContent.length >= this._sources.size() &&
+	      !this.sourcesContent.some(function (sc) { return sc == null; });
+	  };
+	
+	/**
+	 * Returns the original source content. The only argument is the url of the
+	 * original source file. Returns null if no original source content is
+	 * available.
+	 */
+	BasicSourceMapConsumer.prototype.sourceContentFor =
+	  function SourceMapConsumer_sourceContentFor(aSource, nullOnMissing) {
+	    if (!this.sourcesContent) {
+	      return null;
+	    }
+	
+	    if (this.sourceRoot != null) {
+	      aSource = util.relative(this.sourceRoot, aSource);
+	    }
+	
+	    if (this._sources.has(aSource)) {
+	      return this.sourcesContent[this._sources.indexOf(aSource)];
+	    }
+	
+	    var url;
+	    if (this.sourceRoot != null
+	        && (url = util.urlParse(this.sourceRoot))) {
+	      // XXX: file:// URIs and absolute paths lead to unexpected behavior for
+	      // many users. We can help them out when they expect file:// URIs to
+	      // behave like it would if they were running a local HTTP server. See
+	      // https://bugzilla.mozilla.org/show_bug.cgi?id=885597.
+	      var fileUriAbsPath = aSource.replace(/^file:\/\//, "");
+	      if (url.scheme == "file"
+	          && this._sources.has(fileUriAbsPath)) {
+	        return this.sourcesContent[this._sources.indexOf(fileUriAbsPath)]
+	      }
+	
+	      if ((!url.path || url.path == "/")
+	          && this._sources.has("/" + aSource)) {
+	        return this.sourcesContent[this._sources.indexOf("/" + aSource)];
+	      }
+	    }
+	
+	    // This function is used recursively from
+	    // IndexedSourceMapConsumer.prototype.sourceContentFor. In that case, we
+	    // don't want to throw if we can't find the source - we just want to
+	    // return null, so we provide a flag to exit gracefully.
+	    if (nullOnMissing) {
+	      return null;
+	    }
+	    else {
+	      throw new Error('"' + aSource + '" is not in the SourceMap.');
+	    }
+	  };
+	
+	/**
+	 * Returns the generated line and column information for the original source,
+	 * line, and column positions provided. The only argument is an object with
+	 * the following properties:
+	 *
+	 *   - source: The filename of the original source.
+	 *   - line: The line number in the original source.
+	 *   - column: The column number in the original source.
+	 *   - bias: Either 'SourceMapConsumer.GREATEST_LOWER_BOUND' or
+	 *     'SourceMapConsumer.LEAST_UPPER_BOUND'. Specifies whether to return the
+	 *     closest element that is smaller than or greater than the one we are
+	 *     searching for, respectively, if the exact element cannot be found.
+	 *     Defaults to 'SourceMapConsumer.GREATEST_LOWER_BOUND'.
+	 *
+	 * and an object is returned with the following properties:
+	 *
+	 *   - line: The line number in the generated source, or null.
+	 *   - column: The column number in the generated source, or null.
+	 */
+	BasicSourceMapConsumer.prototype.generatedPositionFor =
+	  function SourceMapConsumer_generatedPositionFor(aArgs) {
+	    var source = util.getArg(aArgs, 'source');
+	    if (this.sourceRoot != null) {
+	      source = util.relative(this.sourceRoot, source);
+	    }
+	    if (!this._sources.has(source)) {
+	      return {
+	        line: null,
+	        column: null,
+	        lastColumn: null
+	      };
+	    }
+	    source = this._sources.indexOf(source);
+	
+	    var needle = {
+	      source: source,
+	      originalLine: util.getArg(aArgs, 'line'),
+	      originalColumn: util.getArg(aArgs, 'column')
+	    };
+	
+	    var index = this._findMapping(
+	      needle,
+	      this._originalMappings,
+	      "originalLine",
+	      "originalColumn",
+	      util.compareByOriginalPositions,
+	      util.getArg(aArgs, 'bias', SourceMapConsumer.GREATEST_LOWER_BOUND)
+	    );
+	
+	    if (index >= 0) {
+	      var mapping = this._originalMappings[index];
+	
+	      if (mapping.source === needle.source) {
+	        return {
+	          line: util.getArg(mapping, 'generatedLine', null),
+	          column: util.getArg(mapping, 'generatedColumn', null),
+	          lastColumn: util.getArg(mapping, 'lastGeneratedColumn', null)
+	        };
+	      }
+	    }
+	
+	    return {
+	      line: null,
+	      column: null,
+	      lastColumn: null
+	    };
+	  };
+	
+	exports.BasicSourceMapConsumer = BasicSourceMapConsumer;
+	
+	/**
+	 * An IndexedSourceMapConsumer instance represents a parsed source map which
+	 * we can query for information. It differs from BasicSourceMapConsumer in
+	 * that it takes "indexed" source maps (i.e. ones with a "sections" field) as
+	 * input.
+	 *
+	 * The only parameter is a raw source map (either as a JSON string, or already
+	 * parsed to an object). According to the spec for indexed source maps, they
+	 * have the following attributes:
+	 *
+	 *   - version: Which version of the source map spec this map is following.
+	 *   - file: Optional. The generated file this source map is associated with.
+	 *   - sections: A list of section definitions.
+	 *
+	 * Each value under the "sections" field has two fields:
+	 *   - offset: The offset into the original specified at which this section
+	 *       begins to apply, defined as an object with a "line" and "column"
+	 *       field.
+	 *   - map: A source map definition. This source map could also be indexed,
+	 *       but doesn't have to be.
+	 *
+	 * Instead of the "map" field, it's also possible to have a "url" field
+	 * specifying a URL to retrieve a source map from, but that's currently
+	 * unsupported.
+	 *
+	 * Here's an example source map, taken from the source map spec[0], but
+	 * modified to omit a section which uses the "url" field.
+	 *
+	 *  {
+	 *    version : 3,
+	 *    file: "app.js",
+	 *    sections: [{
+	 *      offset: {line:100, column:10},
+	 *      map: {
+	 *        version : 3,
+	 *        file: "section.js",
+	 *        sources: ["foo.js", "bar.js"],
+	 *        names: ["src", "maps", "are", "fun"],
+	 *        mappings: "AAAA,E;;ABCDE;"
+	 *      }
+	 *    }],
+	 *  }
+	 *
+	 * [0]: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit#heading=h.535es3xeprgt
+	 */
+	function IndexedSourceMapConsumer(aSourceMap) {
+	  var sourceMap = aSourceMap;
+	  if (typeof aSourceMap === 'string') {
+	    sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
+	  }
+	
+	  var version = util.getArg(sourceMap, 'version');
+	  var sections = util.getArg(sourceMap, 'sections');
+	
+	  if (version != this._version) {
+	    throw new Error('Unsupported version: ' + version);
+	  }
+	
+	  this._sources = new ArraySet();
+	  this._names = new ArraySet();
+	
+	  var lastOffset = {
+	    line: -1,
+	    column: 0
+	  };
+	  this._sections = sections.map(function (s) {
+	    if (s.url) {
+	      // The url field will require support for asynchronicity.
+	      // See https://github.com/mozilla/source-map/issues/16
+	      throw new Error('Support for url field in sections not implemented.');
+	    }
+	    var offset = util.getArg(s, 'offset');
+	    var offsetLine = util.getArg(offset, 'line');
+	    var offsetColumn = util.getArg(offset, 'column');
+	
+	    if (offsetLine < lastOffset.line ||
+	        (offsetLine === lastOffset.line && offsetColumn < lastOffset.column)) {
+	      throw new Error('Section offsets must be ordered and non-overlapping.');
+	    }
+	    lastOffset = offset;
+	
+	    return {
+	      generatedOffset: {
+	        // The offset fields are 0-based, but we use 1-based indices when
+	        // encoding/decoding from VLQ.
+	        generatedLine: offsetLine + 1,
+	        generatedColumn: offsetColumn + 1
+	      },
+	      consumer: new SourceMapConsumer(util.getArg(s, 'map'))
+	    }
+	  });
+	}
+	
+	IndexedSourceMapConsumer.prototype = Object.create(SourceMapConsumer.prototype);
+	IndexedSourceMapConsumer.prototype.constructor = SourceMapConsumer;
+	
+	/**
+	 * The version of the source mapping spec that we are consuming.
+	 */
+	IndexedSourceMapConsumer.prototype._version = 3;
+	
+	/**
+	 * The list of original sources.
+	 */
+	Object.defineProperty(IndexedSourceMapConsumer.prototype, 'sources', {
+	  get: function () {
+	    var sources = [];
+	    for (var i = 0; i < this._sections.length; i++) {
+	      for (var j = 0; j < this._sections[i].consumer.sources.length; j++) {
+	        sources.push(this._sections[i].consumer.sources[j]);
+	      }
+	    }
+	    return sources;
+	  }
+	});
+	
+	/**
+	 * Returns the original source, line, and column information for the generated
+	 * source's line and column positions provided. The only argument is an object
+	 * with the following properties:
+	 *
+	 *   - line: The line number in the generated source.
+	 *   - column: The column number in the generated source.
+	 *
+	 * and an object is returned with the following properties:
+	 *
+	 *   - source: The original source file, or null.
+	 *   - line: The line number in the original source, or null.
+	 *   - column: The column number in the original source, or null.
+	 *   - name: The original identifier, or null.
+	 */
+	IndexedSourceMapConsumer.prototype.originalPositionFor =
+	  function IndexedSourceMapConsumer_originalPositionFor(aArgs) {
+	    var needle = {
+	      generatedLine: util.getArg(aArgs, 'line'),
+	      generatedColumn: util.getArg(aArgs, 'column')
+	    };
+	
+	    // Find the section containing the generated position we're trying to map
+	    // to an original position.
+	    var sectionIndex = binarySearch.search(needle, this._sections,
+	      function(needle, section) {
+	        var cmp = needle.generatedLine - section.generatedOffset.generatedLine;
+	        if (cmp) {
+	          return cmp;
+	        }
+	
+	        return (needle.generatedColumn -
+	                section.generatedOffset.generatedColumn);
+	      });
+	    var section = this._sections[sectionIndex];
+	
+	    if (!section) {
+	      return {
+	        source: null,
+	        line: null,
+	        column: null,
+	        name: null
+	      };
+	    }
+	
+	    return section.consumer.originalPositionFor({
+	      line: needle.generatedLine -
+	        (section.generatedOffset.generatedLine - 1),
+	      column: needle.generatedColumn -
+	        (section.generatedOffset.generatedLine === needle.generatedLine
+	         ? section.generatedOffset.generatedColumn - 1
+	         : 0),
+	      bias: aArgs.bias
+	    });
+	  };
+	
+	/**
+	 * Return true if we have the source content for every source in the source
+	 * map, false otherwise.
+	 */
+	IndexedSourceMapConsumer.prototype.hasContentsOfAllSources =
+	  function IndexedSourceMapConsumer_hasContentsOfAllSources() {
+	    return this._sections.every(function (s) {
+	      return s.consumer.hasContentsOfAllSources();
+	    });
+	  };
+	
+	/**
+	 * Returns the original source content. The only argument is the url of the
+	 * original source file. Returns null if no original source content is
+	 * available.
+	 */
+	IndexedSourceMapConsumer.prototype.sourceContentFor =
+	  function IndexedSourceMapConsumer_sourceContentFor(aSource, nullOnMissing) {
+	    for (var i = 0; i < this._sections.length; i++) {
+	      var section = this._sections[i];
+	
+	      var content = section.consumer.sourceContentFor(aSource, true);
+	      if (content) {
+	        return content;
+	      }
+	    }
+	    if (nullOnMissing) {
+	      return null;
+	    }
+	    else {
+	      throw new Error('"' + aSource + '" is not in the SourceMap.');
+	    }
+	  };
+	
+	/**
+	 * Returns the generated line and column information for the original source,
+	 * line, and column positions provided. The only argument is an object with
+	 * the following properties:
+	 *
+	 *   - source: The filename of the original source.
+	 *   - line: The line number in the original source.
+	 *   - column: The column number in the original source.
+	 *
+	 * and an object is returned with the following properties:
+	 *
+	 *   - line: The line number in the generated source, or null.
+	 *   - column: The column number in the generated source, or null.
+	 */
+	IndexedSourceMapConsumer.prototype.generatedPositionFor =
+	  function IndexedSourceMapConsumer_generatedPositionFor(aArgs) {
+	    for (var i = 0; i < this._sections.length; i++) {
+	      var section = this._sections[i];
+	
+	      // Only consider this section if the requested source is in the list of
+	      // sources of the consumer.
+	      if (section.consumer.sources.indexOf(util.getArg(aArgs, 'source')) === -1) {
+	        continue;
+	      }
+	      var generatedPosition = section.consumer.generatedPositionFor(aArgs);
+	      if (generatedPosition) {
+	        var ret = {
+	          line: generatedPosition.line +
+	            (section.generatedOffset.generatedLine - 1),
+	          column: generatedPosition.column +
+	            (section.generatedOffset.generatedLine === generatedPosition.line
+	             ? section.generatedOffset.generatedColumn - 1
+	             : 0)
+	        };
+	        return ret;
+	      }
+	    }
+	
+	    return {
+	      line: null,
+	      column: null
+	    };
+	  };
+	
+	/**
+	 * Parse the mappings in a string in to a data structure which we can easily
+	 * query (the ordered arrays in the `this.__generatedMappings` and
+	 * `this.__originalMappings` properties).
+	 */
+	IndexedSourceMapConsumer.prototype._parseMappings =
+	  function IndexedSourceMapConsumer_parseMappings(aStr, aSourceRoot) {
+	    this.__generatedMappings = [];
+	    this.__originalMappings = [];
+	    for (var i = 0; i < this._sections.length; i++) {
+	      var section = this._sections[i];
+	      var sectionMappings = section.consumer._generatedMappings;
+	      for (var j = 0; j < sectionMappings.length; j++) {
+	        var mapping = sectionMappings[j];
+	
+	        var source = section.consumer._sources.at(mapping.source);
+	        if (section.consumer.sourceRoot !== null) {
+	          source = util.join(section.consumer.sourceRoot, source);
+	        }
+	        this._sources.add(source);
+	        source = this._sources.indexOf(source);
+	
+	        var name = section.consumer._names.at(mapping.name);
+	        this._names.add(name);
+	        name = this._names.indexOf(name);
+	
+	        // The mappings coming from the consumer for the section have
+	        // generated positions relative to the start of the section, so we
+	        // need to offset them to be relative to the start of the concatenated
+	        // generated file.
+	        var adjustedMapping = {
+	          source: source,
+	          generatedLine: mapping.generatedLine +
+	            (section.generatedOffset.generatedLine - 1),
+	          generatedColumn: mapping.generatedColumn +
+	            (section.generatedOffset.generatedLine === mapping.generatedLine
+	            ? section.generatedOffset.generatedColumn - 1
+	            : 0),
+	          originalLine: mapping.originalLine,
+	          originalColumn: mapping.originalColumn,
+	          name: name
+	        };
+	
+	        this.__generatedMappings.push(adjustedMapping);
+	        if (typeof adjustedMapping.originalLine === 'number') {
+	          this.__originalMappings.push(adjustedMapping);
+	        }
+	      }
+	    }
+	
+	    quickSort(this.__generatedMappings, util.compareByGeneratedPositionsDeflated);
+	    quickSort(this.__originalMappings, util.compareByOriginalPositions);
+	  };
+	
+	exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
+
+
+/***/ },
+/* 19 */
+/***/ function(module, exports) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	exports.GREATEST_LOWER_BOUND = 1;
+	exports.LEAST_UPPER_BOUND = 2;
+	
+	/**
+	 * Recursive implementation of binary search.
+	 *
+	 * @param aLow Indices here and lower do not contain the needle.
+	 * @param aHigh Indices here and higher do not contain the needle.
+	 * @param aNeedle The element being searched for.
+	 * @param aHaystack The non-empty array being searched.
+	 * @param aCompare Function which takes two elements and returns -1, 0, or 1.
+	 * @param aBias Either 'binarySearch.GREATEST_LOWER_BOUND' or
+	 *     'binarySearch.LEAST_UPPER_BOUND'. Specifies whether to return the
+	 *     closest element that is smaller than or greater than the one we are
+	 *     searching for, respectively, if the exact element cannot be found.
+	 */
+	function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare, aBias) {
+	  // This function terminates when one of the following is true:
+	  //
+	  //   1. We find the exact element we are looking for.
+	  //
+	  //   2. We did not find the exact element, but we can return the index of
+	  //      the next-closest element.
+	  //
+	  //   3. We did not find the exact element, and there is no next-closest
+	  //      element than the one we are searching for, so we return -1.
+	  var mid = Math.floor((aHigh - aLow) / 2) + aLow;
+	  var cmp = aCompare(aNeedle, aHaystack[mid], true);
+	  if (cmp === 0) {
+	    // Found the element we are looking for.
+	    return mid;
+	  }
+	  else if (cmp > 0) {
+	    // Our needle is greater than aHaystack[mid].
+	    if (aHigh - mid > 1) {
+	      // The element is in the upper half.
+	      return recursiveSearch(mid, aHigh, aNeedle, aHaystack, aCompare, aBias);
+	    }
+	
+	    // The exact needle element was not found in this haystack. Determine if
+	    // we are in termination case (3) or (2) and return the appropriate thing.
+	    if (aBias == exports.LEAST_UPPER_BOUND) {
+	      return aHigh < aHaystack.length ? aHigh : -1;
+	    } else {
+	      return mid;
+	    }
+	  }
+	  else {
+	    // Our needle is less than aHaystack[mid].
+	    if (mid - aLow > 1) {
+	      // The element is in the lower half.
+	      return recursiveSearch(aLow, mid, aNeedle, aHaystack, aCompare, aBias);
+	    }
+	
+	    // we are in termination case (3) or (2) and return the appropriate thing.
+	    if (aBias == exports.LEAST_UPPER_BOUND) {
+	      return mid;
+	    } else {
+	      return aLow < 0 ? -1 : aLow;
+	    }
+	  }
+	}
+	
+	/**
+	 * This is an implementation of binary search which will always try and return
+	 * the index of the closest element if there is no exact hit. This is because
+	 * mappings between original and generated line/col pairs are single points,
+	 * and there is an implicit region between each of them, so a miss just means
+	 * that you aren't on the very start of a region.
+	 *
+	 * @param aNeedle The element you are looking for.
+	 * @param aHaystack The array that is being searched.
+	 * @param aCompare A function which takes the needle and an element in the
+	 *     array and returns -1, 0, or 1 depending on whether the needle is less
+	 *     than, equal to, or greater than the element, respectively.
+	 * @param aBias Either 'binarySearch.GREATEST_LOWER_BOUND' or
+	 *     'binarySearch.LEAST_UPPER_BOUND'. Specifies whether to return the
+	 *     closest element that is smaller than or greater than the one we are
+	 *     searching for, respectively, if the exact element cannot be found.
+	 *     Defaults to 'binarySearch.GREATEST_LOWER_BOUND'.
+	 */
+	exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
+	  if (aHaystack.length === 0) {
+	    return -1;
+	  }
+	
+	  var index = recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack,
+	                              aCompare, aBias || exports.GREATEST_LOWER_BOUND);
+	  if (index < 0) {
+	    return -1;
+	  }
+	
+	  // We have found either the exact element, or the next-closest element than
+	  // the one we are searching for. However, there may be more than one such
+	  // element. Make sure we always return the smallest of these.
+	  while (index - 1 >= 0) {
+	    if (aCompare(aHaystack[index], aHaystack[index - 1], true) !== 0) {
+	      break;
+	    }
+	    --index;
+	  }
+	
+	  return index;
+	};
+
+
+/***/ },
+/* 20 */
+/***/ function(module, exports) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	// It turns out that some (most?) JavaScript engines don't self-host
+	// `Array.prototype.sort`. This makes sense because C++ will likely remain
+	// faster than JS when doing raw CPU-intensive sorting. However, when using a
+	// custom comparator function, calling back and forth between the VM's C++ and
+	// JIT'd JS is rather slow *and* loses JIT type information, resulting in
+	// worse generated code for the comparator function than would be optimal. In
+	// fact, when sorting with a comparator, these costs outweigh the benefits of
+	// sorting in C++. By using our own JS-implemented Quick Sort (below), we get
+	// a ~3500ms mean speed-up in `bench/bench.html`.
+	
+	/**
+	 * Swap the elements indexed by `x` and `y` in the array `ary`.
+	 *
+	 * @param {Array} ary
+	 *        The array.
+	 * @param {Number} x
+	 *        The index of the first item.
+	 * @param {Number} y
+	 *        The index of the second item.
+	 */
+	function swap(ary, x, y) {
+	  var temp = ary[x];
+	  ary[x] = ary[y];
+	  ary[y] = temp;
+	}
+	
+	/**
+	 * Returns a random integer within the range `low .. high` inclusive.
+	 *
+	 * @param {Number} low
+	 *        The lower bound on the range.
+	 * @param {Number} high
+	 *        The upper bound on the range.
+	 */
+	function randomIntInRange(low, high) {
+	  return Math.round(low + (Math.random() * (high - low)));
+	}
+	
+	/**
+	 * The Quick Sort algorithm.
+	 *
+	 * @param {Array} ary
+	 *        An array to sort.
+	 * @param {function} comparator
+	 *        Function to use to compare two items.
+	 * @param {Number} p
+	 *        Start index of the array
+	 * @param {Number} r
+	 *        End index of the array
+	 */
+	function doQuickSort(ary, comparator, p, r) {
+	  // If our lower bound is less than our upper bound, we (1) partition the
+	  // array into two pieces and (2) recurse on each half. If it is not, this is
+	  // the empty array and our base case.
+	
+	  if (p < r) {
+	    // (1) Partitioning.
+	    //
+	    // The partitioning chooses a pivot between `p` and `r` and moves all
+	    // elements that are less than or equal to the pivot to the before it, and
+	    // all the elements that are greater than it after it. The effect is that
+	    // once partition is done, the pivot is in the exact place it will be when
+	    // the array is put in sorted order, and it will not need to be moved
+	    // again. This runs in O(n) time.
+	
+	    // Always choose a random pivot so that an input array which is reverse
+	    // sorted does not cause O(n^2) running time.
+	    var pivotIndex = randomIntInRange(p, r);
+	    var i = p - 1;
+	
+	    swap(ary, pivotIndex, r);
+	    var pivot = ary[r];
+	
+	    // Immediately after `j` is incremented in this loop, the following hold
+	    // true:
+	    //
+	    //   * Every element in `ary[p .. i]` is less than or equal to the pivot.
+	    //
+	    //   * Every element in `ary[i+1 .. j-1]` is greater than the pivot.
+	    for (var j = p; j < r; j++) {
+	      if (comparator(ary[j], pivot) <= 0) {
+	        i += 1;
+	        swap(ary, i, j);
+	      }
+	    }
+	
+	    swap(ary, i + 1, j);
+	    var q = i + 1;
+	
+	    // (2) Recurse on each half.
+	
+	    doQuickSort(ary, comparator, p, q - 1);
+	    doQuickSort(ary, comparator, q + 1, r);
+	  }
+	}
+	
+	/**
+	 * Sort the given array in-place with the given comparator function.
+	 *
+	 * @param {Array} ary
+	 *        An array to sort.
+	 * @param {function} comparator
+	 *        Function to use to compare two items.
+	 */
+	exports.quickSort = function (ary, comparator) {
+	  doQuickSort(ary, comparator, 0, ary.length - 1);
+	};
+
+
+/***/ },
+/* 21 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	var SourceMapGenerator = __webpack_require__(12).SourceMapGenerator;
+	var util = __webpack_require__(15);
+	
+	// Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
+	// operating systems these days (capturing the result).
+	var REGEX_NEWLINE = /(\r?\n)/;
+	
+	// Newline character code for charCodeAt() comparisons
+	var NEWLINE_CODE = 10;
+	
+	// Private symbol for identifying `SourceNode`s when multiple versions of
+	// the source-map library are loaded. This MUST NOT CHANGE across
+	// versions!
+	var isSourceNode = "$$$isSourceNode$$$";
+	
+	/**
+	 * SourceNodes provide a way to abstract over interpolating/concatenating
+	 * snippets of generated JavaScript source code while maintaining the line and
+	 * column information associated with the original source code.
+	 *
+	 * @param aLine The original line number.
+	 * @param aColumn The original column number.
+	 * @param aSource The original source's filename.
+	 * @param aChunks Optional. An array of strings which are snippets of
+	 *        generated JS, or other SourceNodes.
+	 * @param aName The original identifier.
+	 */
+	function SourceNode(aLine, aColumn, aSource, aChunks, aName) {
+	  this.children = [];
+	  this.sourceContents = {};
+	  this.line = aLine == null ? null : aLine;
+	  this.column = aColumn == null ? null : aColumn;
+	  this.source = aSource == null ? null : aSource;
+	  this.name = aName == null ? null : aName;
+	  this[isSourceNode] = true;
+	  if (aChunks != null) this.add(aChunks);
+	}
+	
+	/**
+	 * Creates a SourceNode from generated code and a SourceMapConsumer.
+	 *
+	 * @param aGeneratedCode The generated code
+	 * @param aSourceMapConsumer The SourceMap for the generated code
+	 * @param aRelativePath Optional. The path that relative sources in the
+	 *        SourceMapConsumer should be relative to.
+	 */
+	SourceNode.fromStringWithSourceMap =
+	  function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer, aRelativePath) {
+	    // The SourceNode we want to fill with the generated code
+	    // and the SourceMap
+	    var node = new SourceNode();
+	
+	    // All even indices of this array are one line of the generated code,
+	    // while all odd indices are the newlines between two adjacent lines
+	    // (since `REGEX_NEWLINE` captures its match).
+	    // Processed fragments are removed from this array, by calling `shiftNextLine`.
+	    var remainingLines = aGeneratedCode.split(REGEX_NEWLINE);
+	    var shiftNextLine = function() {
+	      var lineContents = remainingLines.shift();
+	      // The last line of a file might not have a newline.
+	      var newLine = remainingLines.shift() || "";
+	      return lineContents + newLine;
+	    };
+	
+	    // We need to remember the position of "remainingLines"
+	    var lastGeneratedLine = 1, lastGeneratedColumn = 0;
+	
+	    // The generate SourceNodes we need a code range.
+	    // To extract it current and last mapping is used.
+	    // Here we store the last mapping.
+	    var lastMapping = null;
+	
+	    aSourceMapConsumer.eachMapping(function (mapping) {
+	      if (lastMapping !== null) {
+	        // We add the code from "lastMapping" to "mapping":
+	        // First check if there is a new line in between.
+	        if (lastGeneratedLine < mapping.generatedLine) {
+	          // Associate first line with "lastMapping"
+	          addMappingWithCode(lastMapping, shiftNextLine());
+	          lastGeneratedLine++;
+	          lastGeneratedColumn = 0;
+	          // The remaining code is added without mapping
+	        } else {
+	          // There is no new line in between.
+	          // Associate the code between "lastGeneratedColumn" and
+	          // "mapping.generatedColumn" with "lastMapping"
+	          var nextLine = remainingLines[0];
+	          var code = nextLine.substr(0, mapping.generatedColumn -
+	                                        lastGeneratedColumn);
+	          remainingLines[0] = nextLine.substr(mapping.generatedColumn -
+	                                              lastGeneratedColumn);
+	          lastGeneratedColumn = mapping.generatedColumn;
+	          addMappingWithCode(lastMapping, code);
+	          // No more remaining code, continue
+	          lastMapping = mapping;
+	          return;
+	        }
+	      }
+	      // We add the generated code until the first mapping
+	      // to the SourceNode without any mapping.
+	      // Each line is added as separate string.
+	      while (lastGeneratedLine < mapping.generatedLine) {
+	        node.add(shiftNextLine());
+	        lastGeneratedLine++;
+	      }
+	      if (lastGeneratedColumn < mapping.generatedColumn) {
+	        var nextLine = remainingLines[0];
+	        node.add(nextLine.substr(0, mapping.generatedColumn));
+	        remainingLines[0] = nextLine.substr(mapping.generatedColumn);
+	        lastGeneratedColumn = mapping.generatedColumn;
+	      }
+	      lastMapping = mapping;
+	    }, this);
+	    // We have processed all mappings.
+	    if (remainingLines.length > 0) {
+	      if (lastMapping) {
+	        // Associate the remaining code in the current line with "lastMapping"
+	        addMappingWithCode(lastMapping, shiftNextLine());
+	      }
+	      // and add the remaining lines without any mapping
+	      node.add(remainingLines.join(""));
+	    }
+	
+	    // Copy sourcesContent into SourceNode
+	    aSourceMapConsumer.sources.forEach(function (sourceFile) {
+	      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+	      if (content != null) {
+	        if (aRelativePath != null) {
+	          sourceFile = util.join(aRelativePath, sourceFile);
+	        }
+	        node.setSourceContent(sourceFile, content);
+	      }
+	    });
+	
+	    return node;
+	
+	    function addMappingWithCode(mapping, code) {
+	      if (mapping === null || mapping.source === undefined) {
+	        node.add(code);
+	      } else {
+	        var source = aRelativePath
+	          ? util.join(aRelativePath, mapping.source)
+	          : mapping.source;
+	        node.add(new SourceNode(mapping.originalLine,
+	                                mapping.originalColumn,
+	                                source,
+	                                code,
+	                                mapping.name));
+	      }
+	    }
+	  };
+	
+	/**
+	 * Add a chunk of generated JS to this source node.
+	 *
+	 * @param aChunk A string snippet of generated JS code, another instance of
+	 *        SourceNode, or an array where each member is one of those things.
+	 */
+	SourceNode.prototype.add = function SourceNode_add(aChunk) {
+	  if (Array.isArray(aChunk)) {
+	    aChunk.forEach(function (chunk) {
+	      this.add(chunk);
+	    }, this);
+	  }
+	  else if (aChunk[isSourceNode] || typeof aChunk === "string") {
+	    if (aChunk) {
+	      this.children.push(aChunk);
+	    }
+	  }
+	  else {
+	    throw new TypeError(
+	      "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+	    );
+	  }
+	  return this;
+	};
+	
+	/**
+	 * Add a chunk of generated JS to the beginning of this source node.
+	 *
+	 * @param aChunk A string snippet of generated JS code, another instance of
+	 *        SourceNode, or an array where each member is one of those things.
+	 */
+	SourceNode.prototype.prepend = function SourceNode_prepend(aChunk) {
+	  if (Array.isArray(aChunk)) {
+	    for (var i = aChunk.length-1; i >= 0; i--) {
+	      this.prepend(aChunk[i]);
+	    }
+	  }
+	  else if (aChunk[isSourceNode] || typeof aChunk === "string") {
+	    this.children.unshift(aChunk);
+	  }
+	  else {
+	    throw new TypeError(
+	      "Expected a SourceNode, string, or an array of SourceNodes and strings. Got " + aChunk
+	    );
+	  }
+	  return this;
+	};
+	
+	/**
+	 * Walk over the tree of JS snippets in this node and its children. The
+	 * walking function is called once for each snippet of JS and is passed that
+	 * snippet and the its original associated source's line/column location.
+	 *
+	 * @param aFn The traversal function.
+	 */
+	SourceNode.prototype.walk = function SourceNode_walk(aFn) {
+	  var chunk;
+	  for (var i = 0, len = this.children.length; i < len; i++) {
+	    chunk = this.children[i];
+	    if (chunk[isSourceNode]) {
+	      chunk.walk(aFn);
+	    }
+	    else {
+	      if (chunk !== '') {
+	        aFn(chunk, { source: this.source,
+	                     line: this.line,
+	                     column: this.column,
+	                     name: this.name });
+	      }
+	    }
+	  }
+	};
+	
+	/**
+	 * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
+	 * each of `this.children`.
+	 *
+	 * @param aSep The separator.
+	 */
+	SourceNode.prototype.join = function SourceNode_join(aSep) {
+	  var newChildren;
+	  var i;
+	  var len = this.children.length;
+	  if (len > 0) {
+	    newChildren = [];
+	    for (i = 0; i < len-1; i++) {
+	      newChildren.push(this.children[i]);
+	      newChildren.push(aSep);
+	    }
+	    newChildren.push(this.children[i]);
+	    this.children = newChildren;
+	  }
+	  return this;
+	};
+	
+	/**
+	 * Call String.prototype.replace on the very right-most source snippet. Useful
+	 * for trimming whitespace from the end of a source node, etc.
+	 *
+	 * @param aPattern The pattern to replace.
+	 * @param aReplacement The thing to replace the pattern with.
+	 */
+	SourceNode.prototype.replaceRight = function SourceNode_replaceRight(aPattern, aReplacement) {
+	  var lastChild = this.children[this.children.length - 1];
+	  if (lastChild[isSourceNode]) {
+	    lastChild.replaceRight(aPattern, aReplacement);
+	  }
+	  else if (typeof lastChild === 'string') {
+	    this.children[this.children.length - 1] = lastChild.replace(aPattern, aReplacement);
+	  }
+	  else {
+	    this.children.push(''.replace(aPattern, aReplacement));
+	  }
+	  return this;
+	};
+	
+	/**
+	 * Set the source content for a source file. This will be added to the SourceMapGenerator
+	 * in the sourcesContent field.
+	 *
+	 * @param aSourceFile The filename of the source file
+	 * @param aSourceContent The content of the source file
+	 */
+	SourceNode.prototype.setSourceContent =
+	  function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
+	    this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
+	  };
+	
+	/**
+	 * Walk over the tree of SourceNodes. The walking function is called for each
+	 * source file content and is passed the filename and source content.
+	 *
+	 * @param aFn The traversal function.
+	 */
+	SourceNode.prototype.walkSourceContents =
+	  function SourceNode_walkSourceContents(aFn) {
+	    for (var i = 0, len = this.children.length; i < len; i++) {
+	      if (this.children[i][isSourceNode]) {
+	        this.children[i].walkSourceContents(aFn);
+	      }
+	    }
+	
+	    var sources = Object.keys(this.sourceContents);
+	    for (var i = 0, len = sources.length; i < len; i++) {
+	      aFn(util.fromSetString(sources[i]), this.sourceContents[sources[i]]);
+	    }
+	  };
+	
+	/**
+	 * Return the string representation of this source node. Walks over the tree
+	 * and concatenates all the various snippets together to one string.
+	 */
+	SourceNode.prototype.toString = function SourceNode_toString() {
+	  var str = "";
+	  this.walk(function (chunk) {
+	    str += chunk;
+	  });
+	  return str;
+	};
+	
+	/**
+	 * Returns the string representation of this source node along with a source
+	 * map.
+	 */
+	SourceNode.prototype.toStringWithSourceMap = function SourceNode_toStringWithSourceMap(aArgs) {
+	  var generated = {
+	    code: "",
+	    line: 1,
+	    column: 0
+	  };
+	  var map = new SourceMapGenerator(aArgs);
+	  var sourceMappingActive = false;
+	  var lastOriginalSource = null;
+	  var lastOriginalLine = null;
+	  var lastOriginalColumn = null;
+	  var lastOriginalName = null;
+	  this.walk(function (chunk, original) {
+	    generated.code += chunk;
+	    if (original.source !== null
+	        && original.line !== null
+	        && original.column !== null) {
+	      if(lastOriginalSource !== original.source
+	         || lastOriginalLine !== original.line
+	         || lastOriginalColumn !== original.column
+	         || lastOriginalName !== original.name) {
+	        map.addMapping({
+	          source: original.source,
+	          original: {
+	            line: original.line,
+	            column: original.column
+	          },
+	          generated: {
+	            line: generated.line,
+	            column: generated.column
+	          },
+	          name: original.name
+	        });
+	      }
+	      lastOriginalSource = original.source;
+	      lastOriginalLine = original.line;
+	      lastOriginalColumn = original.column;
+	      lastOriginalName = original.name;
+	      sourceMappingActive = true;
+	    } else if (sourceMappingActive) {
+	      map.addMapping({
+	        generated: {
+	          line: generated.line,
+	          column: generated.column
+	        }
+	      });
+	      lastOriginalSource = null;
+	      sourceMappingActive = false;
+	    }
+	    for (var idx = 0, length = chunk.length; idx < length; idx++) {
+	      if (chunk.charCodeAt(idx) === NEWLINE_CODE) {
+	        generated.line++;
+	        generated.column = 0;
+	        // Mappings end at eol
+	        if (idx + 1 === length) {
+	          lastOriginalSource = null;
+	          sourceMappingActive = false;
+	        } else if (sourceMappingActive) {
+	          map.addMapping({
+	            source: original.source,
+	            original: {
+	              line: original.line,
+	              column: original.column
+	            },
+	            generated: {
+	              line: generated.line,
+	              column: generated.column
+	            },
+	            name: original.name
+	          });
+	        }
+	      } else {
+	        generated.column++;
+	      }
+	    }
+	  });
+	  this.walkSourceContents(function (sourceFile, sourceContent) {
+	    map.setSourceContent(sourceFile, sourceContent);
+	  });
+	
+	  return { code: generated.code, map: map };
+	};
+	
+	exports.SourceNode = SourceNode;
+
+
+/***/ },
+/* 22 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/**
+	 * lodash (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+	 * Released under MIT license <https://lodash.com/license>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 */
+	
+	/** Used as the `TypeError` message for "Functions" methods. */
+	var FUNC_ERROR_TEXT = 'Expected a function';
+	
+	/** Used to stand-in for `undefined` hash values. */
+	var HASH_UNDEFINED = '__lodash_hash_undefined__';
+	
+	/** `Object#toString` result references. */
+	var funcTag = '[object Function]',
+	    genTag = '[object GeneratorFunction]';
+	
+	/**
+	 * Used to match `RegExp`
+	 * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+	 */
+	var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+	
+	/** Used to detect host constructors (Safari). */
+	var reIsHostCtor = /^\[object .+?Constructor\]$/;
+	
+	/** Detect free variable `global` from Node.js. */
+	var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+	
+	/** Detect free variable `self`. */
+	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+	
+	/** Used as a reference to the global object. */
+	var root = freeGlobal || freeSelf || Function('return this')();
+	
+	/**
+	 * Gets the value at `key` of `object`.
+	 *
+	 * @private
+	 * @param {Object} [object] The object to query.
+	 * @param {string} key The key of the property to get.
+	 * @returns {*} Returns the property value.
+	 */
+	function getValue(object, key) {
+	  return object == null ? undefined : object[key];
+	}
+	
+	/**
+	 * Checks if `value` is a host object in IE < 9.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+	 */
+	function isHostObject(value) {
+	  // Many host objects are `Object` objects that can coerce to strings
+	  // despite having improperly defined `toString` methods.
+	  var result = false;
+	  if (value != null && typeof value.toString != 'function') {
+	    try {
+	      result = !!(value + '');
+	    } catch (e) {}
+	  }
+	  return result;
+	}
+	
+	/** Used for built-in method references. */
+	var arrayProto = Array.prototype,
+	    funcProto = Function.prototype,
+	    objectProto = Object.prototype;
+	
+	/** Used to detect overreaching core-js shims. */
+	var coreJsData = root['__core-js_shared__'];
+	
+	/** Used to detect methods masquerading as native. */
+	var maskSrcKey = (function() {
+	  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+	  return uid ? ('Symbol(src)_1.' + uid) : '';
+	}());
+	
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objectToString = objectProto.toString;
+	
+	/** Used to detect if a method is native. */
+	var reIsNative = RegExp('^' +
+	  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+	);
+	
+	/** Built-in value references. */
+	var splice = arrayProto.splice;
+	
+	/* Built-in method references that are verified to be native. */
+	var Map = getNative(root, 'Map'),
+	    nativeCreate = getNative(Object, 'create');
+	
+	/**
+	 * Creates a hash object.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [entries] The key-value pairs to cache.
+	 */
+	function Hash(entries) {
+	  var index = -1,
+	      length = entries ? entries.length : 0;
+	
+	  this.clear();
+	  while (++index < length) {
+	    var entry = entries[index];
+	    this.set(entry[0], entry[1]);
+	  }
+	}
+	
+	/**
+	 * Removes all key-value entries from the hash.
+	 *
+	 * @private
+	 * @name clear
+	 * @memberOf Hash
+	 */
+	function hashClear() {
+	  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+	}
+	
+	/**
+	 * Removes `key` and its value from the hash.
+	 *
+	 * @private
+	 * @name delete
+	 * @memberOf Hash
+	 * @param {Object} hash The hash to modify.
+	 * @param {string} key The key of the value to remove.
+	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+	 */
+	function hashDelete(key) {
+	  return this.has(key) && delete this.__data__[key];
+	}
+	
+	/**
+	 * Gets the hash value for `key`.
+	 *
+	 * @private
+	 * @name get
+	 * @memberOf Hash
+	 * @param {string} key The key of the value to get.
+	 * @returns {*} Returns the entry value.
+	 */
+	function hashGet(key) {
+	  var data = this.__data__;
+	  if (nativeCreate) {
+	    var result = data[key];
+	    return result === HASH_UNDEFINED ? undefined : result;
+	  }
+	  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+	}
+	
+	/**
+	 * Checks if a hash value for `key` exists.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf Hash
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function hashHas(key) {
+	  var data = this.__data__;
+	  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+	}
+	
+	/**
+	 * Sets the hash `key` to `value`.
+	 *
+	 * @private
+	 * @name set
+	 * @memberOf Hash
+	 * @param {string} key The key of the value to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns the hash instance.
+	 */
+	function hashSet(key, value) {
+	  var data = this.__data__;
+	  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+	  return this;
+	}
+	
+	// Add methods to `Hash`.
+	Hash.prototype.clear = hashClear;
+	Hash.prototype['delete'] = hashDelete;
+	Hash.prototype.get = hashGet;
+	Hash.prototype.has = hashHas;
+	Hash.prototype.set = hashSet;
+	
+	/**
+	 * Creates an list cache object.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [entries] The key-value pairs to cache.
+	 */
+	function ListCache(entries) {
+	  var index = -1,
+	      length = entries ? entries.length : 0;
+	
+	  this.clear();
+	  while (++index < length) {
+	    var entry = entries[index];
+	    this.set(entry[0], entry[1]);
+	  }
+	}
+	
+	/**
+	 * Removes all key-value entries from the list cache.
+	 *
+	 * @private
+	 * @name clear
+	 * @memberOf ListCache
+	 */
+	function listCacheClear() {
+	  this.__data__ = [];
+	}
+	
+	/**
+	 * Removes `key` and its value from the list cache.
+	 *
+	 * @private
+	 * @name delete
+	 * @memberOf ListCache
+	 * @param {string} key The key of the value to remove.
+	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+	 */
+	function listCacheDelete(key) {
+	  var data = this.__data__,
+	      index = assocIndexOf(data, key);
+	
+	  if (index < 0) {
+	    return false;
+	  }
+	  var lastIndex = data.length - 1;
+	  if (index == lastIndex) {
+	    data.pop();
+	  } else {
+	    splice.call(data, index, 1);
+	  }
+	  return true;
+	}
+	
+	/**
+	 * Gets the list cache value for `key`.
+	 *
+	 * @private
+	 * @name get
+	 * @memberOf ListCache
+	 * @param {string} key The key of the value to get.
+	 * @returns {*} Returns the entry value.
+	 */
+	function listCacheGet(key) {
+	  var data = this.__data__,
+	      index = assocIndexOf(data, key);
+	
+	  return index < 0 ? undefined : data[index][1];
+	}
+	
+	/**
+	 * Checks if a list cache value for `key` exists.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf ListCache
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function listCacheHas(key) {
+	  return assocIndexOf(this.__data__, key) > -1;
+	}
+	
+	/**
+	 * Sets the list cache `key` to `value`.
+	 *
+	 * @private
+	 * @name set
+	 * @memberOf ListCache
+	 * @param {string} key The key of the value to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns the list cache instance.
+	 */
+	function listCacheSet(key, value) {
+	  var data = this.__data__,
+	      index = assocIndexOf(data, key);
+	
+	  if (index < 0) {
+	    data.push([key, value]);
+	  } else {
+	    data[index][1] = value;
+	  }
+	  return this;
+	}
+	
+	// Add methods to `ListCache`.
+	ListCache.prototype.clear = listCacheClear;
+	ListCache.prototype['delete'] = listCacheDelete;
+	ListCache.prototype.get = listCacheGet;
+	ListCache.prototype.has = listCacheHas;
+	ListCache.prototype.set = listCacheSet;
+	
+	/**
+	 * Creates a map cache object to store key-value pairs.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [entries] The key-value pairs to cache.
+	 */
+	function MapCache(entries) {
+	  var index = -1,
+	      length = entries ? entries.length : 0;
+	
+	  this.clear();
+	  while (++index < length) {
+	    var entry = entries[index];
+	    this.set(entry[0], entry[1]);
+	  }
+	}
+	
+	/**
+	 * Removes all key-value entries from the map.
+	 *
+	 * @private
+	 * @name clear
+	 * @memberOf MapCache
+	 */
+	function mapCacheClear() {
+	  this.__data__ = {
+	    'hash': new Hash,
+	    'map': new (Map || ListCache),
+	    'string': new Hash
+	  };
+	}
+	
+	/**
+	 * Removes `key` and its value from the map.
+	 *
+	 * @private
+	 * @name delete
+	 * @memberOf MapCache
+	 * @param {string} key The key of the value to remove.
+	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+	 */
+	function mapCacheDelete(key) {
+	  return getMapData(this, key)['delete'](key);
+	}
+	
+	/**
+	 * Gets the map value for `key`.
+	 *
+	 * @private
+	 * @name get
+	 * @memberOf MapCache
+	 * @param {string} key The key of the value to get.
+	 * @returns {*} Returns the entry value.
+	 */
+	function mapCacheGet(key) {
+	  return getMapData(this, key).get(key);
+	}
+	
+	/**
+	 * Checks if a map value for `key` exists.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf MapCache
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function mapCacheHas(key) {
+	  return getMapData(this, key).has(key);
+	}
+	
+	/**
+	 * Sets the map `key` to `value`.
+	 *
+	 * @private
+	 * @name set
+	 * @memberOf MapCache
+	 * @param {string} key The key of the value to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns the map cache instance.
+	 */
+	function mapCacheSet(key, value) {
+	  getMapData(this, key).set(key, value);
+	  return this;
+	}
+	
+	// Add methods to `MapCache`.
+	MapCache.prototype.clear = mapCacheClear;
+	MapCache.prototype['delete'] = mapCacheDelete;
+	MapCache.prototype.get = mapCacheGet;
+	MapCache.prototype.has = mapCacheHas;
+	MapCache.prototype.set = mapCacheSet;
+	
+	/**
+	 * Gets the index at which the `key` is found in `array` of key-value pairs.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {*} key The key to search for.
+	 * @returns {number} Returns the index of the matched value, else `-1`.
+	 */
+	function assocIndexOf(array, key) {
+	  var length = array.length;
+	  while (length--) {
+	    if (eq(array[length][0], key)) {
+	      return length;
+	    }
+	  }
+	  return -1;
+	}
+	
+	/**
+	 * The base implementation of `_.isNative` without bad shim checks.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a native function,
+	 *  else `false`.
+	 */
+	function baseIsNative(value) {
+	  if (!isObject(value) || isMasked(value)) {
+	    return false;
+	  }
+	  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+	  return pattern.test(toSource(value));
+	}
+	
+	/**
+	 * Gets the data for `map`.
+	 *
+	 * @private
+	 * @param {Object} map The map to query.
+	 * @param {string} key The reference key.
+	 * @returns {*} Returns the map data.
+	 */
+	function getMapData(map, key) {
+	  var data = map.__data__;
+	  return isKeyable(key)
+	    ? data[typeof key == 'string' ? 'string' : 'hash']
+	    : data.map;
+	}
+	
+	/**
+	 * Gets the native function at `key` of `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {string} key The key of the method to get.
+	 * @returns {*} Returns the function if it's native, else `undefined`.
+	 */
+	function getNative(object, key) {
+	  var value = getValue(object, key);
+	  return baseIsNative(value) ? value : undefined;
+	}
+	
+	/**
+	 * Checks if `value` is suitable for use as unique object key.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+	 */
+	function isKeyable(value) {
+	  var type = typeof value;
+	  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+	    ? (value !== '__proto__')
+	    : (value === null);
+	}
+	
+	/**
+	 * Checks if `func` has its source masked.
+	 *
+	 * @private
+	 * @param {Function} func The function to check.
+	 * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+	 */
+	function isMasked(func) {
+	  return !!maskSrcKey && (maskSrcKey in func);
+	}
+	
+	/**
+	 * Converts `func` to its source code.
+	 *
+	 * @private
+	 * @param {Function} func The function to process.
+	 * @returns {string} Returns the source code.
+	 */
+	function toSource(func) {
+	  if (func != null) {
+	    try {
+	      return funcToString.call(func);
+	    } catch (e) {}
+	    try {
+	      return (func + '');
+	    } catch (e) {}
+	  }
+	  return '';
+	}
+	
+	/**
+	 * Creates a function that memoizes the result of `func`. If `resolver` is
+	 * provided, it determines the cache key for storing the result based on the
+	 * arguments provided to the memoized function. By default, the first argument
+	 * provided to the memoized function is used as the map cache key. The `func`
+	 * is invoked with the `this` binding of the memoized function.
+	 *
+	 * **Note:** The cache is exposed as the `cache` property on the memoized
+	 * function. Its creation may be customized by replacing the `_.memoize.Cache`
+	 * constructor with one whose instances implement the
+	 * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+	 * method interface of `delete`, `get`, `has`, and `set`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Function
+	 * @param {Function} func The function to have its output memoized.
+	 * @param {Function} [resolver] The function to resolve the cache key.
+	 * @returns {Function} Returns the new memoized function.
+	 * @example
+	 *
+	 * var object = { 'a': 1, 'b': 2 };
+	 * var other = { 'c': 3, 'd': 4 };
+	 *
+	 * var values = _.memoize(_.values);
+	 * values(object);
+	 * // => [1, 2]
+	 *
+	 * values(other);
+	 * // => [3, 4]
+	 *
+	 * object.a = 2;
+	 * values(object);
+	 * // => [1, 2]
+	 *
+	 * // Modify the result cache.
+	 * values.cache.set(object, ['a', 'b']);
+	 * values(object);
+	 * // => ['a', 'b']
+	 *
+	 * // Replace `_.memoize.Cache`.
+	 * _.memoize.Cache = WeakMap;
+	 */
+	function memoize(func, resolver) {
+	  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+	    throw new TypeError(FUNC_ERROR_TEXT);
+	  }
+	  var memoized = function() {
+	    var args = arguments,
+	        key = resolver ? resolver.apply(this, args) : args[0],
+	        cache = memoized.cache;
+	
+	    if (cache.has(key)) {
+	      return cache.get(key);
+	    }
+	    var result = func.apply(this, args);
+	    memoized.cache = cache.set(key, result);
+	    return result;
+	  };
+	  memoized.cache = new (memoize.Cache || MapCache);
+	  return memoized;
+	}
+	
+	// Assign cache to `_.memoize`.
+	memoize.Cache = MapCache;
+	
+	/**
+	 * Performs a
+	 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+	 * comparison between two values to determine if they are equivalent.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to compare.
+	 * @param {*} other The other value to compare.
+	 * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+	 * @example
+	 *
+	 * var object = { 'a': 1 };
+	 * var other = { 'a': 1 };
+	 *
+	 * _.eq(object, object);
+	 * // => true
+	 *
+	 * _.eq(object, other);
+	 * // => false
+	 *
+	 * _.eq('a', 'a');
+	 * // => true
+	 *
+	 * _.eq('a', Object('a'));
+	 * // => false
+	 *
+	 * _.eq(NaN, NaN);
+	 * // => true
+	 */
+	function eq(value, other) {
+	  return value === other || (value !== value && other !== other);
+	}
+	
+	/**
+	 * Checks if `value` is classified as a `Function` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+	 * @example
+	 *
+	 * _.isFunction(_);
+	 * // => true
+	 *
+	 * _.isFunction(/abc/);
+	 * // => false
+	 */
+	function isFunction(value) {
+	  // The use of `Object#toString` avoids issues with the `typeof` operator
+	  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+	  var tag = isObject(value) ? objectToString.call(value) : '';
+	  return tag == funcTag || tag == genTag;
+	}
+	
+	/**
+	 * Checks if `value` is the
+	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+	function isObject(value) {
+	  var type = typeof value;
+	  return !!value && (type == 'object' || type == 'function');
+	}
+	
+	module.exports = memoize;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	const O            = Object,
+	      isBrowser    = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
+	      lastOf       = x => x[x.length - 1],
+	      getSource    = __webpack_require__ (10),
+	      partition    = __webpack_require__ (24)
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	class StackTracey extends Array {
+	
+	    constructor (input, offset) {
+	
+	        super ()
+	
+	    /*  new StackTracey ()            */
+	
+	        if (!input) {
+	             input = new Error ()
+	             offset = (offset === undefined) ? 1 : offset }
+	
+	    /*  new StackTracey (Error)      */
+	
+	        if (input instanceof Error) {
+	            input = input[StackTracey.stack] || input.stack || '' }
+	
+	    /*  new StackTracey (string)     */
+	
+	        if (typeof input === 'string') {
+	            input = StackTracey.rawParse (input).slice (offset).map (StackTracey.extractEntryMetadata) }
+	
+	    /*  new StackTracey (array)      */
+	
+	        if (Array.isArray (input)) {
+	
+	            this.length = input.length
+	            input.forEach ((x, i) => this[i] = x) }
+	    }
+	
+	    static extractEntryMetadata (e) {
+	
+	        return StackTracey.updateEntryFilePath (O.assign (e, {
+	
+	            calleeShort:    lastOf (e.callee.split ('.')),
+	            fileName:       lastOf (e.file  .split ('/')) }))
+	    }
+	
+	    static updateEntryFilePath (e) { const short = StackTracey.shortenPath (e.file)
+	
+	        return O.assign (e, {
+	            fileShort:  short,
+	            thirdParty: StackTracey.isThirdParty (short) && !e.index
+	        })
+	    }
+	
+	    static shortenPath (s) {
+	        return s.replace (isBrowser ? window.location.href : (process.cwd () + '/'), '')
+	                .replace (/^.*\:\/\/?\/?/, '')
+	    }
+	
+	    static isThirdParty (shortPath) {
+	        return (shortPath[0] === '~')                          || // webpack-specific heuristic
+	               (shortPath.indexOf ('node_modules')      === 0) ||
+	               (shortPath.indexOf ('webpack/bootstrap') === 0)
+	    }
+	
+	    static rawParse (str) {
+	
+	        const lines = (str || '').split ('\n')
+	
+	        const entries = lines.map (line => { line = line.trim ()
+	
+	            var callee, fileLineColumn = [], native, planA, planB
+	
+	            if ((planA = line.match (/at (.+) \((.+)\)/)) ||
+	                (planA = line.match (/(.*)@(.*)/))) {
+	
+	                callee         =  planA[1]
+	                native         = (planA[2] === 'native')
+	                fileLineColumn = (planA[2].match (/(.*):(.+):(.+)/) || []).slice (1) }
+	
+	            else if ((planB = line.match (/^(at\s+)*(.+):([0-9]+):([0-9]+)/) )) {
+	                fileLineColumn = (planB).slice (2) }
+	
+	            else {
+	                return undefined }
+	
+	            return {
+	                beforeParse: line,
+	                callee:      callee || '',
+	                index:       isBrowser && (fileLineColumn[0] === window.location.href),
+	                native:      native || false,
+	                file:        fileLineColumn[0] || '',
+	                line:        parseInt (fileLineColumn[1] || '', 10) || undefined,
+	                column:      parseInt (fileLineColumn[2] || '', 10) || undefined } })
+	
+	        return entries.filter (x => (x !== undefined))
+	    }
+	
+	    withSource (i) {
+	        return StackTracey.withSource (this[i])
+	    }
+	
+	    static withSource (loc) {
+	
+	        if (loc.sourceFile || (loc.file && loc.file.indexOf ('<') >= 0)) { // skip things like <anonymous> and stuff that was already fetched
+	            return loc }
+	
+	        else {
+	            let resolved = getSource (loc.file).resolve (loc)
+	
+	            if (resolved.sourceFile) {
+	                resolved = StackTracey.updateEntryFilePath (O.assign (resolved, { file: resolved.sourceFile.path }))
+	            }
+	
+	            if (resolved.sourceLine && resolved.sourceLine.includes ('// @hide')) {
+	                resolved.sourceLine  = resolved.sourceLine.replace  ('// @hide', '')
+	                resolved.hide = true }
+	
+	            return O.assign ({ sourceLine: '' }, loc, resolved)
+	        }
+	    }
+	
+	    get withSources () {
+	        return new StackTracey (this.map (StackTracey.withSource))
+	    }
+	
+	    get mergeRepeatedLines () {
+	        return new StackTracey (
+	            partition (this, e => e.file + e.line).map (
+	                group => {
+	                    return group.items.slice (1).reduce ((memo, entry) => {
+	                        memo.callee      = (memo.callee      || '<anonymous>') + ' → ' + (entry.callee      || '<anonymous>')
+	                        memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>')
+	                        return memo }, O.assign ({}, group.items[0])) }))
+	    }
+	
+	    get clean () {
+	        return this.withSources.mergeRepeatedLines.filter ((e, i) => (i === 0) || !(e.thirdParty || e.hide))
+	    }
+	
+	    static locationsEqual (a, b) {
+	        return (a.file   === b.file) &&
+	               (a.line   === b.line) &&
+	               (a.column === b.column)
+	    }
+	
+	    map (fn) {
+	        return new StackTracey (Array.prototype.map.call (this, fn))
+	    }
+	
+	    filter (fn) {
+	        return new StackTracey (Array.prototype.filter.call (this, fn))
+	    }
+	
+	    slice (begin, end) {
+	        return new StackTracey (Array.prototype.slice.call (this, begin, end))
+	    }
+	}
+	
+	/*  A a private field that an Error instance can expose
+	    ------------------------------------------------------------------------ */
+	
+	StackTracey.stack = (typeof Symbol !== 'undefined') ? Symbol.for ('StackTracey') : '__StackTracey'
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	module.exports = StackTracey
+	
+	/*  ------------------------------------------------------------------------ */
+	
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+
+/***/ },
+/* 24 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	module.exports = (arr_, pred) => {
+	
+	    const arr   = arr_ || [],
+	          spans = []
+	    
+	    let span = { label: undefined,
+	                 items: [arr.first] }
+	
+	    arr.forEach (x => {
+	
+	        const label = pred (x)
+	
+	        if ((span.label !== label) && span.items.length) {
+	            spans.push (span = { label: label, items: [x] }) }
+	
+	        else {
+	            span.items.push (x) } })
+	
+	    if (span.length)
+	        spans.push (span)
+	
+	    return spans
+	}
+
+/***/ },
+/* 25 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1514,14 +5250,14 @@
 
 
 /***/ },
-/* 11 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
 	const O         = __webpack_require__ (2),
 	      bullet    = __webpack_require__ (4),
-	      asTable   = __webpack_require__ (10)
+	      asTable   = __webpack_require__ (25)
 	
 	_.hasLog = true
 	
@@ -1772,7 +5508,7 @@
 	                                                                                            emit (newline) } }) }))))
 	
 	            var totalText       = _.pluck (runs, 'text').join ('')
-	            var where           = config.where || log.impl.walkStack ($callStack) || {}
+	            var where           = config.where || log.impl.walkStack ((new StackTracey ()).withSources) || {}
 	            var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 	
 	            writeBackend ({
@@ -1793,7 +5529,7 @@
 	            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
 	
 	        walkStack: function (stack) {
-	            return _.find (stack.clean.offset ($platform.Browser ? 1 : 2),
+	            return _.find (stack.clean.slice ($platform.Browser ? 1 : 2),
 	                        function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 	
 	        defaultWriteBackend: function (params) {
@@ -1905,7 +5641,7 @@
 
 
 /***/ },
-/* 12 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1922,7 +5658,7 @@
 	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
 	var bullet  = __webpack_require__ (4),
-	    asTable = __webpack_require__ (10)
+	    asTable = __webpack_require__ (25)
 	
 	/*  A contract for test routines that says that test should fail and it's the behavior expected
 	 */
@@ -2089,7 +5825,6 @@
 	            test.verbose = runConfig.verbose
 	            test.timeout = runConfig.timeout
 	            test.startTime = Date.now ()
-	
 	            return test.run ()
 	                       .then (function () {
 	                                test.time = (Date.now () - test.startTime)
@@ -2124,7 +5859,7 @@
 	        delete $global['$' + name]
 	               $global['$' + name] = _.withSameArgs (fn, function () {
 	
-	                    var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
+	                    var loc = (new StackTracey ()).withSource (($platform.Browser && !$platform.Chrome) ? 0 : 1)
 	                    
 	                    if (!self.currentAssertion) {
 	                        return fn.apply (self, arguments) }
@@ -2197,17 +5932,20 @@
 	                        .finally (function (e, x) {
 	                                Testosterone.currentAssertion = self
 	                                if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
-	                                    return assertion.location
-	                                                    .sourceReady
-	                                                    .promise
-	                                                    .then (function (src) {
-	                                                                log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
-	                                                                assertion.evalLogCalls ()
-	                                                                return src }) } })
+	                                    var src = assertion.location.sourceLine.trim ()
+	                                    log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
+	                                    assertion.evalLogCalls ()
+	                                    return src } })
 	
-	                        .then (function (src) {
+	                        .then (function () {
 	                            if (assertion.failed && self.canFail) {
-	                                self.failedAssertions.push (assertion) } }) },
+	                                self.failedAssertions.push (assertion) } })
+	
+	                        .catch (function (e) {
+	
+	                            log.ee (log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e)
+	
+	                        }) },
 	
 	    canFail: $property (function () {
 	        return !this.failed && !this.shouldFail }),
@@ -2431,7 +6169,7 @@
 	    module.exports = Testosterone }
 
 /***/ },
-/* 13 */
+/* 28 */
 /***/ function(module, exports) {
 
 	/*  Measures run time of a routine (either sync or async)
@@ -2484,7 +6222,7 @@
 
 
 /***/ },
-/* 14 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -12564,7 +16302,7 @@
 
 
 /***/ },
-/* 15 */
+/* 30 */
 /***/ function(module, exports) {
 
 	/*  Some handy jQuery extensions
@@ -12607,7 +16345,7 @@
 	
 	            /*  Call original impl.
 	             */
-	            return __previousMethods__.on.apply (this, arguments) },
+	            return __previousMethods__.on.apply (this, arguments) }, // @hide
 	
 	    /*  Links a data (or controller instance) to its DOM counterpart
 	     */
@@ -12975,25 +16713,17 @@
 	}) (jQuery) }
 
 /***/ },
-/* 16 */
+/* 31 */
 /***/ function(module, exports) {
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	------------------------------------------------------------------------
+	"use strict";
 	
-	Error reporting UI
-	
-	------------------------------------------------------------------------
-	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	
-	/*  ======================================================================== */
+	/*  TODO: REWRITE THIS MESS WITH REACT
+		======================================================================== */
 	
 	(function ($ /* JQUERY */) {
 	
-	if (typeof UI === 'undefined') {
-		UI = {} }
-	
-	Panic = function (what, cfg) { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
+	$global.Panic = (what, cfg) => { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
 	
 		if (_.isTypeOf (Error, what)) {
 			_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
@@ -13006,7 +16736,7 @@
 		if (_.isFunction (cfg.dismiss)) {
 			Panic.widget.onClose (cfg.dismiss) } }
 	
-	Panic.init = function () {
+	Panic.init = () => {
 		if (!Panic._initialized) {
 			 Panic._initialized = true
 		   _.withUncaughtExceptionHandler (function (e) { Panic (e); throw e /* re-throw, to make it visible in WebInspector */ }) } }
@@ -13044,14 +16774,14 @@
 	
 			return el })),
 	
-		layout: function () { var maxContentWidth = _.coerceToUndefined (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))))
+		layout () { var maxContentWidth = _.coerceToUndefined (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))))
 	
 			this.modal.css ({ 'max-height': $(window).height () - 100,
 							  'width': maxContentWidth && (maxContentWidth + 120) })
 	
 			this.modalBody.scroll () },
 	
-		toggleVisibility: function (yes) {
+		toggleVisibility (yes) {
 			if (yes !== !(this.el.css ('display') === 'none')) {
 		        if (yes) {
 		            this.el.css ('display', '') }
@@ -13059,33 +16789,33 @@
 		            if (!yes) {
 		                this.el.css ('display', 'none') } })) } },
 	
-		onRetry: function (retry) {
+		onRetry (retry) {
 			this.retryTriggered (retry)
 			this.btnRetry.css ('display', '') },
 	
-		onClose: function (close) {
+		onClose (close) {
 			this.closeTriggered (close)
 			this.btnClose.css ('display', '') },
 	
-		retry: function () {
+		retry () {
 			this._clean ()
 			this.closeTriggered.off ()
 			this.toggleVisibility (false)
 			this.retryTriggered () },
 	
-		close: function () {
+		close () {
 			this._clean ()
 			this.retryTriggered.off ()
 			this.toggleVisibility (false)
 			this.closeTriggered () },
 	
-	   _clean: function () {
+	   _clean () {
 			this.modalBody.find ('.panic-alert-error').remove ()
 			this.modalBody.scroll ()
 			this.btnRetry.css ('display', 'none')
 			this.btnClose.css ('display', 'none') },
 	
-		append: function (what, raw) { var id = 'panic' + this.hash (what)
+		append (what, raw) { var id = 'panic' + this.hash (what)
 	
 			var counter = $('#' + id + ' .panic-alert-counter')
 			if (counter.length) {
@@ -13098,31 +16828,31 @@
 			this.toggleVisibility (true)
 			this.layout ()  },
 	
-		hash: function (what) {
+		hash (what) {
 			return ((_.isTypeOf (Error, what) ? (what && what.stack) :
 					(_.isTypeOf (Test, what)  ? (what.suite + what.name) :
 	                String.ify (what))) || '').hash },
 	
-		print: function (what, raw) {
+		print (what, raw) {
 			return (_.isTypeOf (Error, what) ?
 							this.printError (what) :
 				   (_.isTypeOf (Test, what) ?
 							this.printFailedTest (what) :
 							this.printUnknownStuff (what, raw))) },
 	
-		printUnknownStuff: function (what, raw) {
+		printUnknownStuff (what, raw) {
 			return raw ? what : $('<span>').text (log.impl.stringify (what)) },
 	
-		printLocation: function (where) {
+		printLocation (where) {
 			return $('<span class="location">')
 						.append ([$('<span class="callee">').text (where.calleeShort),
 								  $('<span class="file">')  .text (where.fileName), 
 								  $('<span class="line">')  .text (where.line)]) },
 	
-		printFailedTest: function (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
+		printFailedTest (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
 	
 			log.withWriteBackend (
-				this.$ (function (params) { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
+				params => { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
 	
 					logEl.append (_.isTypeOf (Error, params.args.first)
 							? ($('<div class="inline-exception-entry">')
@@ -13140,9 +16870,9 @@
 																										.text (run.text) }))
 																			.append ((i === lines.lastIndex) ?
 																				[params.where && this.printLocation (params.where),
-																				 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) }),
+																				 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) },
 	
-				function (done) {
+				done => {
 					test.evalLogCalls ()
 					done () })
 	
@@ -13150,7 +16880,7 @@
 					    .text (test.name)
 					    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 	
-		printError: function (e) { var stackEntries = CallStack.fromErrorWithAsync (e)
+		printError (e) { var stackEntries = StackTracey.fromErrorWithAsync (e).withSources
 			return [
 	
 				$('<div class="panic-alert-error-message" style="font-weight: bold;">')
@@ -13177,30 +16907,31 @@
 								$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort,
 																			entry.line]).join (':')),
 								$('<span class="callee">').text (entry.calleeShort),
-								$('<span class="src i-am-busy">').click (this.$ (function (e) { var el = $(e.delegateTarget)
-									el.waitUntil (SourceFiles.read.partial ((entry.remote ? 'api/source/' : '') + entry.file), this.$ (function (text) {
-										if (dom.is ('.full')) {
-											dom.removeClass ('full')
-											dom.transitionend (function () {
-												if (!dom.is ('.full')) {
-													entry.sourceReady (el.$ ($.fn.text)) } }) }
-										else {
-											dom.addClass ('full'); el.html (_.map (text.split ('\n'), function (line) {
-																				return $('<div class="line">').text (line) }))
+								$('<span class="src">').text ((entry.sourceLine || '').trim ()).click (this.$ (function (e) { var el = $(e.delegateTarget)
 	
-											var line = el.find ('.line').eq (entry.line - 1).addClass ('hili')
-											if (line.length) {
-												var offset = line.offset ().top - el.offset ().top
-												el.scrollTop (offset - 100) }
+									if (dom.is ('.full')) {
+										dom.removeClass ('full')
+										dom.transitionend (function () {
+											if (!dom.is ('.full')) {
+												el.text ((entry.sourceLine || '').trim ()) } }) }
 	
-											_.delay (this.$ (function () {
-												var shouldScrollDownMore = ((el.outerBBox ().bottom + 242) - this.modalBody.outerBBox ().bottom)
-												if (shouldScrollDownMore > 0) {
-													this.modalBody.animate ({
-														scrollTop: this.modalBody.scrollTop () + shouldScrollDownMore }, 250) }})) } })) })) ])
+									else {
 	
-					entry.sourceReady (function (text) {
-						dom.find ('.src').removeClass ('i-am-busy').text (text) })
+										const lines = (entry.sourceFile || { lines: [] }).lines
+	
+										dom.addClass ('full')
+										el.html (lines.map (line => $('<div class="line">').text (line)))
+	
+										var line = el.find ('.line').eq (entry.line - 1).addClass ('hili')
+										if (line.length) {
+											var offset = line.offset ().top - el.offset ().top
+											el.scrollTop (offset - 100) }
+	
+										_.delay (this.$ (function () {
+											var shouldScrollDownMore = ((el.outerBBox ().bottom + 242) - this.modalBody.outerBBox ().bottom)
+											if (shouldScrollDownMore > 0) {
+												this.modalBody.animate ({
+													scrollTop: this.modalBody.scrollTop () + shouldScrollDownMore }, 250) }})) } })) ])
 	
 					return dom }))) ] } })
 	
@@ -13227,7 +16958,7 @@
 	}) (jQuery);
 
 /***/ },
-/* 17 */
+/* 32 */
 /***/ function(module, exports) {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13303,16 +17034,16 @@
 	}) (jQuery);
 
 /***/ },
-/* 18 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(19);
+	var content = __webpack_require__(34);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(21)(content, {});
+	var update = __webpack_require__(36)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13329,10 +17060,10 @@
 	}
 
 /***/ },
-/* 19 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(20)();
+	exports = module.exports = __webpack_require__(35)();
 	// imports
 	
 	
@@ -13343,7 +17074,7 @@
 
 
 /***/ },
-/* 20 */
+/* 35 */
 /***/ function(module, exports) {
 
 	/*
@@ -13399,7 +17130,7 @@
 
 
 /***/ },
-/* 21 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -13651,16 +17382,16 @@
 
 
 /***/ },
-/* 22 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(23);
+	var content = __webpack_require__(38);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(21)(content, {});
+	var update = __webpack_require__(36)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -13677,10 +17408,10 @@
 	}
 
 /***/ },
-/* 23 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(20)();
+	exports = module.exports = __webpack_require__(35)();
 	// imports
 	
 	

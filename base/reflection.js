@@ -1,11 +1,25 @@
 "use strict";
 
+/*  ------------------------------------------------------------------------ */
+
+const O = Object
+
+/*  ------------------------------------------------------------------------ */
+
+_.hasReflection = true
+
+/*  ------------------------------------------------------------------------ */
+
+$global.getSource = require ('get-source')
+
+/*  ------------------------------------------------------------------------ */
+
 $global.StackTracey = O.assign (require ('stacktracey'), {
 
     fromErrorWithAsync (e) {
 
-        const stackEntries = new StackTracey (e),
-              asyncContext = e.asyncContext
+        let stackEntries = new StackTracey (e),
+            asyncContext = e.asyncContext
 
         while (asyncContext) {
             stackEntries = stackEntries.concat (new StackTracey (asyncContext.stack))
@@ -14,9 +28,7 @@ $global.StackTracey = O.assign (require ('stacktracey'), {
         return stackEntries.mergeRepeatedLines }
 })
 
-const O = Object
-
-_.hasReflection = true
+/*  ------------------------------------------------------------------------ */
 
 _.tests.reflection = {
 
@@ -29,7 +41,7 @@ _.tests.reflection = {
 ;(function () {
 
     var currentFile = $platform.Browser
-                        ? (CallStack.rawStringToArray (CallStack.currentAsRawString)[2] || { file: '' }).file
+                        ? ((new StackTracey ())[2] || { file: '' }).file
                         : __filename
 
     $global.const ('$uselessPath', _.initial (currentFile.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/')
@@ -39,23 +51,22 @@ _.tests.reflection = {
 
 }) ();
 
-/*  Stringifiers
- */
+/*  ------------------------------------------------------------------------ */
 
 const asTable = require ('as-table')
 
-CallStack.prototype[Symbol.for ('String.ify')] = function (stringify) {
+StackTracey.prototype[Symbol.for ('String.ify')] = function (stringify) {
 
     return asTable (this.map (entry => [
                         '\t' + 'at ' + entry.calleeShort.slice (0, 30),
                         (entry.fileShort && (entry.fileShort + ':' + entry.line)) || '',
-                        (entry.source || '').slice (0, 80)]))
+                        (entry.sourceLine.trim () || '').slice (0, 80) ]))
 }
 
 Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
 
-    try {
-        var stack   = StackTracey.fromErrorWithAsync (this).offset (this.stackOffset || 0).clean
+    try {        
+        var stack   = StackTracey.fromErrorWithAsync (this).slice (this.stackOffset || 0).clean
         var why     = stringify.limit ((this.message || '').replace (/\r|\n/g, '').trim (), 120)
 
         return ('[EXCEPTION] ' + why +
@@ -69,8 +80,7 @@ Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
             '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n' }
 }
 
-/*  Reflection for $prototypes
- */
+/*  ------------------------------------------------------------------------ */
 
 _.tests.prototypeMeta = {
 
@@ -95,22 +105,18 @@ _.tests.prototypeMeta = {
     }
 }
 
-$prototype.impl.findMeta = function (stack) {
+$prototype.impl.findMeta = stack => then => {
 
-    return function (then) {
+    for (let location of stack.withSources.reverse ()) {
 
-        _.cps.find (CallStack.fromRawString (stack).reversed,
+        let match = location.sourceLine.match (/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/)
+            match = match && { name: match[1], type: match[2], file: location.fileShort }
 
-                    function (entry, found) {
-                        entry.sourceReady (function (text) { var match = (text || '').match (
-                                                                             /([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait|aspect)/)
-                            found ((match && {
-                                name: match[1],
-                                type: match[2],
-                                file: entry.fileShort }) || false) }) },
-
-                    function (found) {
-                        then (found || {}) }) } }
+        if (match) {
+            then (match)
+        }
+    }
+}
 
 $prototype.macro (function (def, base) {
 
@@ -128,7 +134,7 @@ $prototype.macro (function (def, base) {
 
     if (!def.$meta) {
 
-        var findMeta = _.cps.memoize ($prototype.impl.findMeta (CallStack.currentAsRawString))
+        var findMeta = _.cps.memoize ($prototype.impl.findMeta (new StackTracey ()))
 
         _.defineMemoizedProperty (findMeta, 'promise', function () {
               return new Promise (findMeta) })
@@ -137,6 +143,7 @@ $prototype.macro (function (def, base) {
 
     return def })
 
+/*  ------------------------------------------------------------------------ */
 
 
 

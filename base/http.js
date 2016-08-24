@@ -1,43 +1,44 @@
-/*  Promise-based HTTP protocol API (cross-platform)
-    ======================================================================== */
+"use strict";
 
-Http = $singleton (Component, {
+/*  ------------------------------------------------------------------------ */
 
-    /*  You can re-use the HttpMethods trait to build API-specific layers over Http
-     */
+const O = Object
 
-    $traits: [HttpMethods = $trait ({
+/*  ------------------------------------------------------------------------ */
 
-                                get: function (path, cfg) {
-                                            return this.request ('GET',  path, cfg) },
+$global.Http = $singleton (Component, {
 
-                                post: function (path, cfg) {
-                                            return this.request ('POST', path, cfg) },
+/*  You can re-use the HttpMethods trait to build API-specific layers over Http */
 
-                                loadFile: function (path, cfg) {
-                                            return this.request ('GET', path, { responseType: 'arraybuffer' }) },
+    $traits: [$global.HttpMethods = $trait ({
 
-                                uploadFile: function (path, file, cfg) {
-                                                return this.post (path, _.extend2 ({
-                                                    data: file,
-                                                    headers: {
-                                                        'Content-Type': 'binary/octet-stream',
-                                                        'X-File-Name': Parse.fileName (file.name || 'file').transliterate || 'file',
-                                                        'X-File-Size': file.size,
-                                                        'X-File-Type': file.type } }, cfg)) } }) ],
+                get (path, cfg) {
+                    return this.request ('GET',  path, cfg) },
 
-    /*  Impl
-     */
+                post (path, cfg) {
+                    return this.request ('POST', path, cfg) },
 
-    request: function (type, path, cfg_) { var cfg = cfg_ || {}
+                loadFile (path, cfg) {
+                    return this.request ('GET', path, { responseType: 'arraybuffer' }) },
+
+                uploadFile (path, file, cfg) {
+                    return this.post (path, _.extend2 ({
+                        data: file,
+                        headers: {
+                            'Content-Type': 'binary/octet-stream',
+                            'X-File-Name': Parse.fileName (file.name || 'file').transliterate || 'file',
+                            'X-File-Size': file.size,
+                            'X-File-Type': file.type } }, cfg)) } }) ],
+
+    request (type, path, cfg_) { const cfg = cfg_ || {}
                                            
-                /*  Reference to the abort method (will be initialized at Promise construction)
-                 */
-                var abort = undefined
+            /*  Reference to the abort method (will be initialized at Promise construction) */
 
-                /*  returned Promise
-                 */
-                var p = new Promise (function (resolve, reject) {
+                let abort = undefined
+
+            /*  returned Promise     */
+
+                const p = new Promise ((resolve, reject) => {
 
                     if ($platform.Browser) {
 
@@ -58,7 +59,7 @@ Http = $singleton (Component, {
 
                         /*  Set headers
                          */
-                        _.each (cfg.headers, function (value, key) {
+                        _.each (cfg.headers, (value, key) => {
                             xhr.setRequestHeader (key, value) })
 
                         /*  Bind events
@@ -66,13 +67,13 @@ Http = $singleton (Component, {
                         if (cfg.progress) {
                             xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
 
-                            xhr.onreadystatechange = function () {
+                            xhr.onreadystatechange = () => {
 
                                 if (xhr.readyState === 4) {
                                     if (cfg.progress) {
                                         cfg.progress (1) }
 
-                                    var response = (xhr.responseType === 'arraybuffer')
+                                    const response = (xhr.responseType === 'arraybuffer')
                                                         ? xhr.response
                                                         : xhr.responseText
 
@@ -82,7 +83,7 @@ Http = $singleton (Component, {
                                                                                         httpStatus: xhr.status })) } } }
                         /*  Set up the abort method
                          */
-                        abort = function () {
+                        abort = () => {
                                     xhr.abort ()
                                     reject ('aborted') }
 
@@ -98,10 +99,11 @@ Http = $singleton (Component, {
                  */
                 return _.extend (p, { abort: abort }) },
 
-    progressCallbackWithSimulation: function (progress) { var simulated = 0
-                                                        progress (0)
-        return function (e) { if (e.lengthComputable) { progress (e.loaded / e.total) }
-                                                 else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
+    progressCallbackWithSimulation (progress) { let simulated = 0
+
+                                                progress (0)
+        return e => { if (e.lengthComputable) { progress (e.loaded / e.total) }
+                                         else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
 })
 
 /*  An example of custom API layer over Http:
@@ -112,24 +114,24 @@ Http = $singleton (Component, {
     
     ------------------------------------------------------------------------ */
 
-JSONAPI = $singleton (Component, {
+$global.JSONAPI = $singleton (Component, {
 
     $traits: [HttpMethods],
 
-    request: function (type, path, cfg) {
+    request (type, path, cfg_) {
 
-                var cfg = _.extend2 ({ headers: {
+                const cfg = _.extend2 ({ headers: {
                                             'Cache-Control': 'no-cache',
-                                            'Content-Type' : 'application/json; charset=utf-8' } }, cfg)
+                                            'Content-Type' : 'application/json; charset=utf-8' } }, cfg_)
 
                 if (cfg.what) {
                     cfg.data = JSON.stringify (cfg.what) }
 
-                var stackBeforeCall = _.hasReflection && $callStack.offset ((cfg.stackOffset || 0) + 1).asArray
+                const stackBeforeCall = _.hasReflection && (new StackTracey ()) // @hide 
 
                 return Http
                         .request (type, '/api/' + path, cfg)
-                        .finally (function (e, response) {
+                        .finally ((e, response) => {
 
                             if (response) {
                                 return JSON.parse (response) }
@@ -143,13 +145,30 @@ JSONAPI = $singleton (Component, {
                             else {
                                 throw new Error ('empty response') } })
 
-                        .then (function (response) {
+                        .then (response => {
+
                             if (response.success) {
                                 return response.value }
+
                             else {
+
                                 if (response.parsedStack) {
-                                    throw _.extend (new Error ('SERVER: ' + response.error), {
-                                                        remote: true,
-                                                        parsedStack: response.parsedStack.concat (stackBeforeCall || []) }) }
+
+                                    const fieldName = (typeof Symbol !== 'undefined') ? Symbol.for ('StackTracey') : '__StackTracey'
+                                    const joinedStack = response.parsedStack
+                                                         .map (e => O.assign (e, { file: '/api/source/' + e.file }))
+                                                         .concat (stackBeforeCall || [])
+
+                                    throw O.assign (new Error ('SERVER: ' + response.error), {
+                                        remote: true,
+                                        [fieldName]: joinedStack
+                                    })
+                                }
+
                                 else {
-                                    throw new Error (response.error) } } }) } })
+                                    throw new Error (response.error) } } })
+    }
+})
+
+
+

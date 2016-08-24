@@ -179,7 +179,6 @@ Testosterone = $singleton ({
             test.verbose = runConfig.verbose
             test.timeout = runConfig.timeout
             test.startTime = Date.now ()
-
             return test.run ()
                        .then (function () {
                                 test.time = (Date.now () - test.startTime)
@@ -214,7 +213,7 @@ Testosterone = $singleton ({
         delete $global['$' + name]
                $global['$' + name] = _.withSameArgs (fn, function () {
 
-                    var loc = $callStack.safeLocation (($platform.Browser && !$platform.Chrome) ? 0 : 1)
+                    var loc = (new StackTracey ()).withSource (($platform.Browser && !$platform.Chrome) ? 0 : 1)
                     
                     if (!self.currentAssertion) {
                         return fn.apply (self, arguments) }
@@ -287,17 +286,20 @@ Test = $prototype ({
                         .finally (function (e, x) {
                                 Testosterone.currentAssertion = self
                                 if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
-                                    return assertion.location
-                                                    .sourceReady
-                                                    .promise
-                                                    .then (function (src) {
-                                                                log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
-                                                                assertion.evalLogCalls ()
-                                                                return src }) } })
+                                    var src = assertion.location.sourceLine.trim ()
+                                    log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
+                                    assertion.evalLogCalls ()
+                                    return src } })
 
-                        .then (function (src) {
+                        .then (function () {
                             if (assertion.failed && self.canFail) {
-                                self.failedAssertions.push (assertion) } }) },
+                                self.failedAssertions.push (assertion) } })
+
+                        .catch (function (e) {
+
+                            log.ee (log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e)
+
+                        }) },
 
     canFail: $property (function () {
         return !this.failed && !this.shouldFail }),
