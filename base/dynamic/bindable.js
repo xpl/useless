@@ -172,7 +172,7 @@ _.deferTest ('bindable', function () {
 
                 /*  Call intercept
                  */
-                var result = (intercept.length ? _.cps.compose ([method].concat (intercept)) : method).apply (this_, arguments)
+                var result = (intercept.length ? _.cps.compose ([method].concat (intercept)) : method).apply (this_, arguments) // @hide
 
                 if (after.length || onceAfter.length) { var args = _.asArray (arguments).concat (result)
 

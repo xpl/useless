@@ -54,8 +54,6 @@ _.tests.log = {
         $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
                                                             // (as it returns it first argument, like in _.identity)
 
-        log.info    (log.stackOffset (2), 'log.info (log.config ({ stackOffset: 2 }), ...)')
-
         log.write   ('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace')
 
         log.write (                     'Multi',
@@ -90,14 +88,18 @@ _.tests.log = {
             log.pink ('Config stack + scopes + higher order API test:')
             _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
 
-        $assert (log (42), 42) } }
+        $assert (log (42), 42)
+
+        $assert (logs.red (42) (), 42)
+
+  } }
 
 _.extend (
 
     /*  Basic API
      */
     $global.log = function () {
-        return log.write.apply (this, [log.config ({ location: true, stackOffset: 1 })].concat (_.asArray (arguments))) }, {
+        return log.write.apply (this, [log.config ({ location: true })].concat (_.asArray (arguments))) }, { // @hide
 
     Config: $prototype (),
 
@@ -113,9 +115,6 @@ _.extend (log, {
      */
     indent: function (n) {
         return log.config ({ indent: n }) },
-
-    stackOffset: function (n) {
-        return log.config ({ stackOffset: n }) },
 
     where: function (wat) {
         return log.config ({ location: true, where: wat || undefined }) },
@@ -172,12 +171,12 @@ _.extend (log, {
         log.withWriteBackend (
             log.impl.defaultWriteBackend,
             function (done) {
-                log.write.apply (null, args); done () }) },
+                log.write.apply (null, args); done () }) }, // @hide
 
     writeBackend: function () {
         return log.writeBackend.value || log.impl.defaultWriteBackend },
 
-    withConfig: function (config, what) {  log.impl.configStack.push (log.impl.configure ([{ stackOffset: -1 }, config]))
+    withConfig: function (config, what) {  log.impl.configStack.push (config)
                      var result = what (); log.impl.configStack.pop ();
                   return result },
 
@@ -201,11 +200,9 @@ _.extend (log, {
 
         configure: function (configs) {
             return _.reduce2 (
-                { stackOffset: 0, indent: 0 },
+                { indent: 0 },
                 _.nonempty (configs), function (memo, cfg) {
-                                        return _.extend (memo, _.nonempty (cfg), {
-                                            indent:      memo.indent      + (cfg.indent || 0),
-                                            stackOffset: memo.stackOffset + (cfg.stackOffset || 0) }) }) },
+                                        return _.extend (memo, _.nonempty (cfg), { indent: memo.indent + (cfg.indent || 0) }) }) },
 
         /*  Nuts & guts
          */
@@ -214,8 +211,7 @@ _.extend (log, {
             log.impl.numWrites++
 
             var args   = _.asArray (arguments)
-            var config = log.impl.configure ([{ stackOffset: $platform.NodeJS ? 1 : 3,
-                                                indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
+            var config = log.impl.configure ([{ indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
 
             var runs = _.reduce2 (
 
@@ -253,7 +249,7 @@ _.extend (log, {
                                                                                             emit (newline) } }) }))))
 
             var totalText       = _.pluck (runs, 'text').join ('')
-            var where           = config.where || log.impl.walkStack ((new StackTracey ()).withSources) || {}
+            var where           = config.where || (new StackTracey ()).withSources.clean[1]
             var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 
             writeBackend ({
@@ -272,10 +268,6 @@ _.extend (log, {
                 where:         (config.location && where) || undefined })
 
             return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
-
-        walkStack: function (stack) {
-            return _.find (stack.clean.slice ($platform.Browser ? 1 : 2),
-                        function (entry) { return (entry.fileShort.indexOf ('base/log.js') < 0) }) || stack[0] },
 
         defaultWriteBackend: function (params) {
 
@@ -369,15 +361,11 @@ _.extend (log, {
                                                     _.splitsWith  (' ').then (
                                                       _.mapsWith  (
                                                   function (name,                                   i,                         names      )  {
-                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first), stackOffset: 2 })) ] })))))))
+                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first) })) ] })))))))
 
 }) ()
 
-
-/*  Higher order API
- */
-$global.logs = _.mapWith (_.callsTo.compose (_.callsWith (log.stackOffset (1))), log.printAPI)
-
+$global.logs = _.higherOrder.map (log.printAPI)
 
 if ($platform.NodeJS) {
     module.exports = log }

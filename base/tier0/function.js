@@ -86,18 +86,18 @@ _.withTest (['function', 'calls / tails'], function () {
     _.callsWith = $restArg (function (/* args */) { var args = _.asArray (arguments)
                                         return function (fn) {
                                             return _.withSameArgs (fn, function () {
-                                                return fn.apply (this, args.concat (_.asArray (arguments))) }) } })
+                                                return fn.apply (this, args.concat (_.asArray (arguments))) }) } }) // @hide
 
 
     _.tailsWith = $restArg (function (/* args */) { var args = _.asArray (arguments)
                                         return function (fn) {
                                             return _.withSameArgs (fn, function () {
-                                                return fn.apply (this, _.asArray (arguments).concat (args)) }) } })
+                                                return fn.apply (this, _.asArray (arguments).concat (args)) }) } }) // @hide
 
     _.argumentAppendingWrapper = function (fn, then) {
         return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
                                         return then (function () {
-                                            return fn.apply (this_, args.concat (_.asArray (arguments))) }) }) }
+                                            return fn.apply (this_, args.concat (_.asArray (arguments))) }) }) } // @hide
 
     _.argumentPrependingWrapper = function (fn, then) {
         return _.withSameArgs (fn, function () { var this_ = this, args = _.asArray (arguments)
@@ -278,7 +278,7 @@ _.asFreeFunction = function (fn) { return function (this_, restArg) {
                                             return fn.apply (this_, _.rest (arguments)) } }
 
 _.asMethod = function (fn) { return function () {
-                                        return fn.apply (undefined, [this].concat (_.asArray (arguments))) } }
+                                        return fn.apply (undefined, [this].concat (_.asArray (arguments))) } } // @hide
 
 
 /*  _.once
