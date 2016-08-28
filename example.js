@@ -33,7 +33,6 @@ const Examples = $singleton (Component, {
     $depends: [
         
         require ('./server/supervisor'),
-        require ('./server/tests'),
         require ('./server/webpack'),
         require ('./server/templating'),
         require ('./server/websocket'),

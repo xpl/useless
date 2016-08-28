@@ -2,15 +2,15 @@
 
 require ('./useless')
 
-const   fs          = require ('fs'),
-        util        = require ('./server/base/util'),
-        webpack     = require ('./server/base/webpack'),
-        querystring = require ('querystring'),
-        http        = require ('http'),
-        process     = require ('process'),
-        path        = require ('path'),
-        esprima     = require ('esprima'),
-        escodegen   = require ('escodegen')
+const   fs            = require ('fs'),
+        util          = require ('./server/base/util'),
+        querystring   = require ('querystring'),
+        http          = require ('http'),
+        process       = require ('process'),
+        path          = require ('path'),
+        esprima       = require ('esprima'),
+        escodegen     = require ('escodegen'),
+        moduleLocator = require ('./server/base/module-locator')
 
 /*  ------------------------------------------------------------------------ */
 
@@ -49,11 +49,57 @@ const BuildApp = $singleton (Component, {
             })
     },
 
+    webpack (input, output) {
+
+        var webpack = require ('webpack') 
+        var compiler = webpack ({
+
+              entry: path.resolve (input),
+              
+              devtool: 'source-map',
+
+              output: {
+                  path: path.dirname (output),
+                  filename: path.basename (output),
+                  pathinfo: true },
+
+              externals: { fs: true, path: true },
+
+              module: {
+                    loaders: [
+
+                        { test: /\.css$/,
+                          loader: 'style-loader!css-loader'
+                        },
+                    
+                        { test: /\.js$/,
+                          include: moduleLocator.hasBabelrc,
+                          loaders: ['babel?cacheDirectory'] },
+                    ]
+                }
+            })
+
+        compiler.run = compiler.run.promisify
+
+        return compiler.run ().then (stats => {
+
+            console.log (stats.toString({
+                assets: false,
+                colors: true
+            }))
+
+            if (stats.toJson ('normal').errors.length > 0) {
+                throw new Error ('webpack failure') }
+
+            return fs.readFileSync (output, 'utf-8')
+        })
+    },
+
     compile: function (file) { log.w ('Compiling', log.color.boldOrange, ' ' + file)
 
         var name = _.initial (path.basename (file).split ('.')).join ('.')
 
-        return webpack (file, path.join (this.buildPath, name + '.js')).then (compiledSrc => {
+        return this.webpack (file, path.join (this.buildPath, name + '.js')).then (compiledSrc => {
 
             var strippedSrc = this.stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name,
                                     !this.args.noStripped &&

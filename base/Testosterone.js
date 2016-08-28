@@ -194,7 +194,10 @@ $global.Testosterone = $singleton ({
             return this.testSuite (name, suite) } )) },
 
     collectPrototypeTests () {
-        return this.prototypeTests.map (def => this.testSuite (def.proto.$meta.name, def.tests, undefined, def.proto))
+        return this.prototypeTests.map (def =>
+                this.testSuite (
+                    (def.proto.$meta && def.proto.$meta.name) || '<prototype>',
+                    def.tests, undefined, def.proto))
     },
 
     testSuite: function (name, tests, context, proto) { return { 

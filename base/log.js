@@ -271,7 +271,8 @@ _.extend (log, {
         })),
 
         findWhere: function (stack) {
-            return stack.withSources.filter (x => !x.hide).at (2)
+            //console.log (log.impl.stringify (stack))
+            return stack.withSources.filter (x => !(x.hide || (x.fileName === 'underscore.js'))).at (0)
         },
 
         defaultWriteBackend: function (params) {

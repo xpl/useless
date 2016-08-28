@@ -7,18 +7,25 @@ const fs   = require ('fs'),
 
 /*  ------------------------------------------------------------------------ */
 
-module.exports = {
+const locator = module.exports = {
+
+    hasBabelrc (x) {
+
+        const moduleDir  = locator.locateFromFile (x)
+        const hasBabelrc = locator.isFile (module && path.join (moduleDir, '.babelrc'))
+
+        return hasBabelrc },
 
     locateFromFile (file) {
-        return _.find (this.parentDirsOf (file),
-                    dir => this.isFile (path.join (dir, 'package.json')))
+        return _.find (locator.parentDirsOf (file),
+                    dir => locator.isFile (path.join (dir, 'package.json')))
     },
 
 /*  Locates NPM module path     */
 
     locate (name) {
-        return _.find (this.parentDirsOf (process.cwd ()),
-                    dir => this.isDirectory (path.join (dir, 'node_modules', name)))
+        return _.find (locator.parentDirsOf (process.cwd ()),
+                    dir => locator.isDirectory (path.join (dir, 'node_modules', name)))
     },
 
 /*  Returns full paths to all parent directories, including itself     */

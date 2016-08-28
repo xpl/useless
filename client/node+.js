@@ -159,7 +159,8 @@ var is = function (tag) { return function () { return this.tagName === tag } }
 
         walkTree: function (cfg, accept) { accept = (arguments.length === 1) ? cfg : accept
 
-                    var walker = document.createTreeWalker (this,   (cfg && cfg.what) || NodeFilter.SHOW_ALL,
+                    let node
+                    let walker = document.createTreeWalker (this,   (cfg && cfg.what) || NodeFilter.SHOW_ALL,
                                                                     (cfg && cfg.filter) || null,
                                                                     (cfg && cfg.entityReferenceExpansion) || null)
 

@@ -132,17 +132,6 @@ module.exports = $trait ({
         const outputPath = path.resolve (config.buildPath),
               publicPath = this.webpackServerURL.concatPath ('build')
 
-    /*  Detects files from modules that do not have .babelrc file (a heuristic to not process them with Babel)  */
-
-        const shouldBabel = x => {
-
-            const moduleDir  = moduleLocator.locateFromFile (x)
-            const hasBabelrc = moduleLocator.isFile (module && path.join (moduleDir, '.babelrc'))
-
-            //log (hasBabelrc, log.color.boldPink, x)
-
-            return hasBabelrc }
-
     /*  Full path here is for handling modules that are symlinked with `npm link`.
         Otherwise babel blames with `Error: Couldn't find preset "es2015" relative to
         directory <symlinked module path>`                                              */
@@ -192,7 +181,7 @@ module.exports = $trait ({
                 /*  JS  processing  */
 
                     { test: /\.js$/,
-                      include: shouldBabel,
+                      include: moduleLocator.hasBabelrc,
                       loaders: [/*'react-hot', 'babel?presets[]=es2015,presets[]=react'*/
                                 //...(config.compress ? ['strip-tests-loader'] : []),
                                 'babel?cacheDirectory' // cacheDirectory speeds up ×2

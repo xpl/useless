@@ -39,7 +39,7 @@
         return Object.prototype.hasOwnProperty.call(object, property);
     };
     __webpack_require__.p = '';
-    return __webpack_require__(__webpack_require__.s = 39);
+    return __webpack_require__(__webpack_require__.s = 41);
 }([
     function (module, exports) {
         function getArg(aArgs, aName, aDefaultValue) {
@@ -307,73 +307,151 @@
     function (module, exports) {
         'use strict';
         'use strict';
-        const O = Object, asColumns = (rows, cfg_) => {
+        var _typeof = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol' ? function (obj) {
+            return typeof obj;
+        } : function (obj) {
+            return obj && typeof Symbol === 'function' && obj.constructor === Symbol ? 'symbol' : typeof obj;
+        };
+        function _toConsumableArray(arr) {
+            if (Array.isArray(arr)) {
+                for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+                    arr2[i] = arr[i];
+                }
+                return arr2;
+            } else {
+                return Array.from(arr);
+            }
+        }
+        var O = Object, asColumns = function asColumns(rows, cfg_) {
                 if (rows.length === 0) {
                     return [];
                 } else {
-                    const zip = (arrs, f) => arrs.reduce((a, b) => b.map((b, i) => [
-                            ...a[i] || [],
-                            b
-                        ]), []).map(args => f(...args)), cells = rows.map(r => r.map(c => c === undefined ? '' : String(c).replace(/\n/g, '\\n'))), cellWidths = cells.map(r => r.map(c => c.length)), maxWidths = zip(cellWidths, Math.max), cfg = O.assign({
-                            delimiter: '  ',
-                            minColumnWidths: maxWidths.map(x => 0),
-                            maxTotalWidth: 0
-                        }, cfg_), totalWidth = maxWidths.reduce((a, b) => a + b, 0), relativeWidths = maxWidths.map(w => w / totalWidth), maxTotalWidth = cfg.maxTotalWidth - cfg.delimiter.length * maxWidths.length, excessWidth = Math.max(0, totalWidth - maxTotalWidth), computedWidths = zip([
-                            cfg.minColumnWidths,
-                            maxWidths,
-                            relativeWidths
-                        ], (min, max, relative) => Math.max(min, Math.floor(max - excessWidth * relative))), restCellWidths = cellWidths.map(widths => zip([
-                            computedWidths,
-                            widths
-                        ], (a, b) => a - b));
-                    return zip([
-                        cells,
-                        restCellWidths
-                    ], (a, b) => zip([
-                        a,
-                        b
-                    ], (str, w) => w >= 0 ? str + ' '.repeat(w) : str.slice(0, w)).join(cfg.delimiter));
+                    var _ret = function () {
+                        var zip = function zip(arrs, f) {
+                                return arrs.reduce(function (a, b) {
+                                    return b.map(function (b, i) {
+                                        return [].concat(_toConsumableArray(a[i] || []), [b]);
+                                    });
+                                }, []).map(function (args) {
+                                    return f.apply(undefined, _toConsumableArray(args));
+                                });
+                            }, cells = rows.map(function (r) {
+                                return r.map(function (c) {
+                                    return c === undefined ? '' : String(c).replace(/\n/g, '\\n');
+                                });
+                            }), cellWidths = cells.map(function (r) {
+                                return r.map(function (c) {
+                                    return c.length;
+                                });
+                            }), maxWidths = zip(cellWidths, Math.max), cfg = O.assign({
+                                delimiter: '  ',
+                                minColumnWidths: maxWidths.map(function (x) {
+                                    return 0;
+                                }),
+                                maxTotalWidth: 0
+                            }, cfg_), totalWidth = maxWidths.reduce(function (a, b) {
+                                return a + b;
+                            }, 0), relativeWidths = maxWidths.map(function (w) {
+                                return w / totalWidth;
+                            }), maxTotalWidth = cfg.maxTotalWidth - cfg.delimiter.length * maxWidths.length, excessWidth = Math.max(0, totalWidth - maxTotalWidth), computedWidths = zip([
+                                cfg.minColumnWidths,
+                                maxWidths,
+                                relativeWidths
+                            ], function (min, max, relative) {
+                                return Math.max(min, Math.floor(max - excessWidth * relative));
+                            }), restCellWidths = cellWidths.map(function (widths) {
+                                return zip([
+                                    computedWidths,
+                                    widths
+                                ], function (a, b) {
+                                    return a - b;
+                                });
+                            });
+                        return {
+                            v: zip([
+                                cells,
+                                restCellWidths
+                            ], function (a, b) {
+                                return zip([
+                                    a,
+                                    b
+                                ], function (str, w) {
+                                    return w >= 0 ? str + ' '.repeat(w) : str.slice(0, w);
+                                }).join(cfg.delimiter);
+                            })
+                        };
+                    }();
+                    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === 'object')
+                        return _ret.v;
                 }
-            }, asTable = cfg => O.assign(arr => {
-                if (arr[0] && Array.isArray(arr[0]))
-                    return asColumns(arr, cfg).join('\n');
-                const colNames = [...new Set(arr.map(O.keys).reduce((a, b) => [
-                            ...a,
-                            ...b
-                        ], []))], columns = [
-                        colNames,
-                        ...arr.map(o => colNames.map(key => o[key]))
-                    ], lines = asColumns(columns, O.assign({ minColumnWidths: colNames.map(n => n.length) }, cfg));
-                return [
-                    lines[0],
-                    '-'.repeat(lines[0].length),
-                    ...lines.slice(1)
-                ].join('\n');
-            }, cfg, { configure: newConfig => asTable(O.assign({}, cfg, newConfig)) });
+            }, asTable = function asTable(cfg) {
+                return O.assign(function (arr) {
+                    if (arr[0] && Array.isArray(arr[0]))
+                        return asColumns(arr, cfg).join('\n');
+                    var colNames = [].concat(_toConsumableArray(new Set(arr.map(O.keys).reduce(function (a, b) {
+                            return [].concat(_toConsumableArray(a), _toConsumableArray(b));
+                        }, [])))), columns = [colNames].concat(_toConsumableArray(arr.map(function (o) {
+                            return colNames.map(function (key) {
+                                return o[key];
+                            });
+                        }))), lines = asColumns(columns, O.assign({
+                            minColumnWidths: colNames.map(function (n) {
+                                return n.length;
+                            })
+                        }, cfg));
+                    return [
+                        lines[0],
+                        '-'.repeat(lines[0].length)
+                    ].concat(_toConsumableArray(lines.slice(1))).join('\n');
+                }, cfg, {
+                    configure: function configure(newConfig) {
+                        return asTable(O.assign({}, cfg, newConfig));
+                    }
+                });
+            };
         module.exports = asTable({ maxTotalWidth: 120 });
     },
     function (module, exports, __webpack_require__) {
+        'use strict';
+        'use strict';
         module.exports = function () {
             'use strict';
-            var ownKeys = __webpack_require__(26);
+            var ownKeys = __webpack_require__(39);
             var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
             var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
             var concat = Function.bind.call(Function.call, Array.prototype.concat);
             if (!Object.values) {
                 Object.values = function values(O) {
-                    return reduce(ownKeys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []);
+                    return reduce(ownKeys(O), function (v, k) {
+                        return concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []);
+                    }, []);
                 };
             }
             if (!Object.entries) {
                 Object.entries = function entries(O) {
-                    return reduce(ownKeys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[
-                            k,
-                            O[k]
-                        ]] : []), []);
+                    return reduce(ownKeys(O), function (e, k) {
+                        return concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[
+                                k,
+                                O[k]
+                            ]] : []);
+                    }, []);
                 };
             }
             return Object;
         }();
+    },
+    function (module, exports) {
+        'use strict';
+        'use strict';
+        module.exports = function (bullet, arg) {
+            var isArray = Array.isArray(arg);
+            var lines = isArray ? arg : arg.split('\n');
+            var indent = bullet.replace(/[^\s]/g, ' ');
+            lines = lines.map(function (line, i) {
+                return i === 0 ? bullet + line : indent + line;
+            });
+            return isArray ? lines : lines.join('\n');
+        };
     },
     function (module, exports, __webpack_require__) {
         var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
@@ -6122,100 +6200,139 @@
         }));
     },
     function (module, exports) {
-        module.exports = function (bullet, arg) {
-            var isArray = Array.isArray(arg);
-            var lines = isArray ? arg : arg.split('\n');
-            var indent = bullet.replace(/[^\s]/g, ' ');
-            lines = lines.map(function (line, i) {
-                return i === 0 ? bullet + line : indent + line;
-            });
-            return isArray ? lines : lines.join('\n');
-        };
-    },
-    function (module, exports, __webpack_require__) {
-        'use strict';
-        'use strict';
-        const O = Object, isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, SourceMapConsumer = __webpack_require__(34).SourceMapConsumer, path = __webpack_require__(!function webpackMissingModule() {
-                var e = new Error('Cannot find module "./impl/path"');
-                e.code = 'MODULE_NOT_FOUND';
-                throw e;
-            }()), memoize = __webpack_require__(27), lastOf = x => x[x.length - 1];
-        const newSourceFileMemoized = memoize(file => new SourceFile(file));
-        const getSource = module.exports = file => {
-            return newSourceFileMemoized(path.resolve(file));
-        };
-        class SourceMap {
-            constructor(originalFilePath, sourceMapPath) {
-                this.file = getSource(path.relativeToFile(originalFilePath, sourceMapPath));
-                this.parsed = this.file.text && SourceMapConsumer(JSON.parse(this.file.text)) || null;
-                this.sourceFor = memoize(this.sourceFor.bind(this));
+        var process = module.exports = {};
+        var cachedSetTimeout;
+        var cachedClearTimeout;
+        (function () {
+            try {
+                cachedSetTimeout = setTimeout;
+            } catch (e) {
+                cachedSetTimeout = function () {
+                    throw new Error('setTimeout is not defined');
+                };
             }
-            sourceFor(file) {
-                const content = this.parsed.sourceContentFor(file, true);
-                const fullPath = path.relativeToFile(this.file.path, file);
-                return content ? new SourceFile(fullPath, content) : getSource(fullPath);
+            try {
+                cachedClearTimeout = clearTimeout;
+            } catch (e) {
+                cachedClearTimeout = function () {
+                    throw new Error('clearTimeout is not defined');
+                };
             }
-            resolve(loc) {
-                const originalLoc = this.parsed.originalPositionFor(loc);
-                return originalLoc.source ? this.sourceFor(originalLoc.source).resolve(O.assign({}, loc, {
-                    line: originalLoc.line,
-                    column: originalLoc.column,
-                    name: originalLoc.name
-                })) : loc;
+        }());
+        function runTimeout(fun) {
+            if (cachedSetTimeout === setTimeout) {
+                return setTimeout(fun, 0);
             }
-        }
-        class SourceFile {
-            constructor(path, text) {
-                this.path = path;
-                if (text) {
-                    this.text = text;
-                } else {
-                    try {
-                        if (isBrowser) {
-                            let xhr = new XMLHttpRequest();
-                            xhr.open('GET', path, false);
-                            xhr.send(null);
-                            this.text = xhr.responseText;
-                        } else {
-                            this.text = __webpack_require__(!function webpackMissingModule() {
-                                var e = new Error('Cannot find module "fs"');
-                                e.code = 'MODULE_NOT_FOUND';
-                                throw e;
-                            }()).readFileSync(path, { encoding: 'utf8' });
-                        }
-                    } catch (e) {
-                        this.error = e;
-                        this.text = '';
-                    }
-                }
-            }
-            get lines() {
-                return this.lines_ = this.lines_ || this.text.split('\n');
-            }
-            get sourceMap() {
+            try {
+                return cachedSetTimeout(fun, 0);
+            } catch (e) {
                 try {
-                    if (this.sourceMap_ === undefined) {
-                        let url = this.text.match(/\u0023 sourceMappingURL=(.+\.map)/);
-                        if (url = url && url[1]) {
-                            this.sourceMap_ = new SourceMap(this.path, url);
-                        } else {
-                            this.sourceMap_ = null;
-                        }
-                    }
+                    return cachedSetTimeout.call(null, fun, 0);
                 } catch (e) {
-                    this.sourceMapError = e;
-                    this.sourceMap_ = null;
+                    return cachedSetTimeout.call(this, fun, 0);
                 }
-                return this.sourceMap_;
-            }
-            resolve(loc) {
-                return this.sourceMap ? this.sourceMap.resolve(loc) : O.assign({}, loc, {
-                    sourceFile: this,
-                    sourceLine: this.lines[loc.line - 1] || '',
-                    error: this.error
-                });
             }
         }
+        function runClearTimeout(marker) {
+            if (cachedClearTimeout === clearTimeout) {
+                return clearTimeout(marker);
+            }
+            try {
+                return cachedClearTimeout(marker);
+            } catch (e) {
+                try {
+                    return cachedClearTimeout.call(null, marker);
+                } catch (e) {
+                    return cachedClearTimeout.call(this, marker);
+                }
+            }
+        }
+        var queue = [];
+        var draining = false;
+        var currentQueue;
+        var queueIndex = -1;
+        function cleanUpNextTick() {
+            if (!draining || !currentQueue) {
+                return;
+            }
+            draining = false;
+            if (currentQueue.length) {
+                queue = currentQueue.concat(queue);
+            } else {
+                queueIndex = -1;
+            }
+            if (queue.length) {
+                drainQueue();
+            }
+        }
+        function drainQueue() {
+            if (draining) {
+                return;
+            }
+            var timeout = runTimeout(cleanUpNextTick);
+            draining = true;
+            var len = queue.length;
+            while (len) {
+                currentQueue = queue;
+                queue = [];
+                while (++queueIndex < len) {
+                    if (currentQueue) {
+                        currentQueue[queueIndex].run();
+                    }
+                }
+                queueIndex = -1;
+                len = queue.length;
+            }
+            currentQueue = null;
+            draining = false;
+            runClearTimeout(timeout);
+        }
+        process.nextTick = function (fun) {
+            var args = new Array(arguments.length - 1);
+            if (arguments.length > 1) {
+                for (var i = 1; i < arguments.length; i++) {
+                    args[i - 1] = arguments[i];
+                }
+            }
+            queue.push(new Item(fun, args));
+            if (queue.length === 1 && !draining) {
+                runTimeout(drainQueue);
+            }
+        };
+        function Item(fun, array) {
+            this.fun = fun;
+            this.array = array;
+        }
+        Item.prototype.run = function () {
+            this.fun.apply(null, this.array);
+        };
+        process.title = 'browser';
+        process.browser = true;
+        process.env = {};
+        process.argv = [];
+        process.version = '';
+        process.versions = {};
+        function noop() {
+        }
+        process.on = noop;
+        process.addListener = noop;
+        process.once = noop;
+        process.off = noop;
+        process.removeListener = noop;
+        process.removeAllListeners = noop;
+        process.emit = noop;
+        process.binding = function (name) {
+            throw new Error('process.binding is not supported');
+        };
+        process.cwd = function () {
+            return '/';
+        };
+        process.chdir = function (dir) {
+            throw new Error('process.chdir is not supported');
+        };
+        process.umask = function () {
+            return 0;
+        };
     },
     function (module, exports, __webpack_require__) {
         var util = __webpack_require__(0);
@@ -6268,7 +6385,7 @@
         exports.ArraySet = ArraySet;
     },
     function (module, exports, __webpack_require__) {
-        var base64 = __webpack_require__(28);
+        var base64 = __webpack_require__(27);
         var VLQ_BASE_SHIFT = 5;
         var VLQ_BASE = 1 << VLQ_BASE_SHIFT;
         var VLQ_BASE_MASK = VLQ_BASE - 1;
@@ -6321,7 +6438,7 @@
         var base64VLQ = __webpack_require__(7);
         var util = __webpack_require__(0);
         var ArraySet = __webpack_require__(6).ArraySet;
-        var MappingList = __webpack_require__(30).MappingList;
+        var MappingList = __webpack_require__(29).MappingList;
         function SourceMapGenerator(aArgs) {
             if (!aArgs) {
                 aArgs = {};
@@ -6575,6 +6692,134 @@
         };
         exports.SourceMapGenerator = SourceMapGenerator;
     },
+    function (module, exports, __webpack_require__) {
+        'use strict';
+        'use strict';
+        var _createClass = function () {
+            function defineProperties(target, props) {
+                for (var i = 0; i < props.length; i++) {
+                    var descriptor = props[i];
+                    descriptor.enumerable = descriptor.enumerable || false;
+                    descriptor.configurable = true;
+                    if ('value' in descriptor)
+                        descriptor.writable = true;
+                    Object.defineProperty(target, descriptor.key, descriptor);
+                }
+            }
+            return function (Constructor, protoProps, staticProps) {
+                if (protoProps)
+                    defineProperties(Constructor.prototype, protoProps);
+                if (staticProps)
+                    defineProperties(Constructor, staticProps);
+                return Constructor;
+            };
+        }();
+        function _classCallCheck(instance, Constructor) {
+            if (!(instance instanceof Constructor)) {
+                throw new TypeError('Cannot call a class as a function');
+            }
+        }
+        var O = Object, isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, SourceMapConsumer = __webpack_require__(33).SourceMapConsumer, path = __webpack_require__(34), memoize = __webpack_require__(26), lastOf = function lastOf(x) {
+                return x[x.length - 1];
+            };
+        var newSourceFileMemoized = memoize(function (file) {
+            return new SourceFile(file);
+        });
+        var getSource = module.exports = function (file) {
+            return newSourceFileMemoized(path.resolve(file));
+        };
+        var SourceMap = function () {
+            function SourceMap(originalFilePath, sourceMapPath) {
+                _classCallCheck(this, SourceMap);
+                this.file = getSource(path.relativeToFile(originalFilePath, sourceMapPath));
+                this.parsed = this.file.text && SourceMapConsumer(JSON.parse(this.file.text)) || null;
+                this.sourceFor = memoize(this.sourceFor.bind(this));
+            }
+            _createClass(SourceMap, [
+                {
+                    key: 'sourceFor',
+                    value: function sourceFor(file) {
+                        var content = this.parsed.sourceContentFor(file, true);
+                        var fullPath = path.relativeToFile(this.file.path, file);
+                        return content ? new SourceFile(fullPath, content) : getSource(fullPath);
+                    }
+                },
+                {
+                    key: 'resolve',
+                    value: function resolve(loc) {
+                        var originalLoc = this.parsed.originalPositionFor(loc);
+                        return originalLoc.source ? this.sourceFor(originalLoc.source).resolve(O.assign({}, loc, {
+                            line: originalLoc.line,
+                            column: originalLoc.column,
+                            name: originalLoc.name
+                        })) : loc;
+                    }
+                }
+            ]);
+            return SourceMap;
+        }();
+        var SourceFile = function () {
+            function SourceFile(path, text) {
+                _classCallCheck(this, SourceFile);
+                this.path = path;
+                if (text) {
+                    this.text = text;
+                } else {
+                    try {
+                        if (isBrowser) {
+                            var xhr = new XMLHttpRequest();
+                            xhr.open('GET', path, false);
+                            xhr.send(null);
+                            this.text = xhr.responseText;
+                        } else {
+                            this.text = __webpack_require__(40).readFileSync(path, { encoding: 'utf8' });
+                        }
+                    } catch (e) {
+                        this.error = e;
+                        this.text = '';
+                    }
+                }
+            }
+            _createClass(SourceFile, [
+                {
+                    key: 'resolve',
+                    value: function resolve(loc) {
+                        return this.sourceMap ? this.sourceMap.resolve(loc) : O.assign({}, loc, {
+                            sourceFile: this,
+                            sourceLine: this.lines[loc.line - 1] || '',
+                            error: this.error
+                        });
+                    }
+                },
+                {
+                    key: 'lines',
+                    get: function get() {
+                        return this.lines_ = this.lines_ || this.text.split('\n');
+                    }
+                },
+                {
+                    key: 'sourceMap',
+                    get: function get() {
+                        try {
+                            if (this.sourceMap_ === undefined) {
+                                var url = this.text.match(/\u0023 sourceMappingURL=(.+\.map)/);
+                                if (url = url && url[1]) {
+                                    this.sourceMap_ = new SourceMap(this.path, url);
+                                } else {
+                                    this.sourceMap_ = null;
+                                }
+                            }
+                        } catch (e) {
+                            this.sourceMapError = e;
+                            this.sourceMap_ = null;
+                        }
+                        return this.sourceMap_;
+                    }
+                }
+            ]);
+            return SourceFile;
+        }();
+    },
     function (module, exports) {
         module.exports = function () {
             var list = [];
@@ -6616,92 +6861,6 @@
                 }
             };
             return list;
-        };
-    },
-    function (module, exports) {
-        var process = module.exports = {};
-        var queue = [];
-        var draining = false;
-        var currentQueue;
-        var queueIndex = -1;
-        function cleanUpNextTick() {
-            draining = false;
-            if (currentQueue.length) {
-                queue = currentQueue.concat(queue);
-            } else {
-                queueIndex = -1;
-            }
-            if (queue.length) {
-                drainQueue();
-            }
-        }
-        function drainQueue() {
-            if (draining) {
-                return;
-            }
-            var timeout = setTimeout(cleanUpNextTick);
-            draining = true;
-            var len = queue.length;
-            while (len) {
-                currentQueue = queue;
-                queue = [];
-                while (++queueIndex < len) {
-                    if (currentQueue) {
-                        currentQueue[queueIndex].run();
-                    }
-                }
-                queueIndex = -1;
-                len = queue.length;
-            }
-            currentQueue = null;
-            draining = false;
-            clearTimeout(timeout);
-        }
-        process.nextTick = function (fun) {
-            var args = new Array(arguments.length - 1);
-            if (arguments.length > 1) {
-                for (var i = 1; i < arguments.length; i++) {
-                    args[i - 1] = arguments[i];
-                }
-            }
-            queue.push(new Item(fun, args));
-            if (queue.length === 1 && !draining) {
-                setTimeout(drainQueue, 0);
-            }
-        };
-        function Item(fun, array) {
-            this.fun = fun;
-            this.array = array;
-        }
-        Item.prototype.run = function () {
-            this.fun.apply(null, this.array);
-        };
-        process.title = 'browser';
-        process.browser = true;
-        process.env = {};
-        process.argv = [];
-        process.version = '';
-        process.versions = {};
-        function noop() {
-        }
-        process.on = noop;
-        process.addListener = noop;
-        process.once = noop;
-        process.off = noop;
-        process.removeListener = noop;
-        process.removeAllListeners = noop;
-        process.emit = noop;
-        process.binding = function (name) {
-            throw new Error('process.binding is not supported');
-        };
-        process.cwd = function () {
-            return '/';
-        };
-        process.chdir = function (dir) {
-            throw new Error('process.chdir is not supported');
-        };
-        process.umask = function () {
-            return 0;
         };
     },
     function (module, exports) {
@@ -6935,68 +7094,10 @@
         module.exports = g;
     },
     function (module, exports, __webpack_require__) {
-        var content = __webpack_require__(35);
-        if (typeof content === 'string')
-            content = [[
-                    module.i,
-                    content,
-                    ''
-                ]];
-        var update = __webpack_require__(11)(content, {});
-        if (content.locals)
-            module.exports = content.locals;
-        if (false) {
-            if (!content.locals) {
-                module.hot.accept('!!./../../css-loader/index.js!./LogOverlay.css', function () {
-                    var newContent = require('!!./../../css-loader/index.js!./LogOverlay.css');
-                    if (typeof newContent === 'string')
-                        newContent = [[
-                                module.id,
-                                newContent,
-                                ''
-                            ]];
-                    update(newContent);
-                });
-            }
-            module.hot.dispose(function () {
-                update();
-            });
-        }
-    },
-    function (module, exports, __webpack_require__) {
-        var content = __webpack_require__(36);
-        if (typeof content === 'string')
-            content = [[
-                    module.i,
-                    content,
-                    ''
-                ]];
-        var update = __webpack_require__(11)(content, {});
-        if (content.locals)
-            module.exports = content.locals;
-        if (false) {
-            if (!content.locals) {
-                module.hot.accept('!!./../../css-loader/index.js!./Panic.css', function () {
-                    var newContent = require('!!./../../css-loader/index.js!./Panic.css');
-                    if (typeof newContent === 'string')
-                        newContent = [[
-                                module.id,
-                                newContent,
-                                ''
-                            ]];
-                    update(newContent);
-                });
-            }
-            module.hot.dispose(function () {
-                update();
-            });
-        }
-    },
-    function (module, exports, __webpack_require__) {
         'use strict';
         'use strict';
-        const O = __webpack_require__(2);
-        const bullet = __webpack_require__(4), asTable = __webpack_require__(1);
+        var O = __webpack_require__(2);
+        var bullet = __webpack_require__(3), asTable = __webpack_require__(1);
         Tags.define('shouldFail');
         Tags.define('async');
         ;
@@ -7006,7 +7107,8 @@
             get isRunning() {
                 return this.currentAssertion !== undefined;
             },
-            constructor: function () {
+            constructor: function constructor() {
+                var _this = this;
                 _.each(_.assertions, function (fn, name) {
                     this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
                         what.call(this);
@@ -7015,8 +7117,8 @@
                 (function (register) {
                     $prototype.macro('$test', register);
                     $prototype.macro('$tests', register);
-                }((def, value, name) => {
-                    this.prototypeTests.push({
+                }(function (def, value, name) {
+                    _this.prototypeTests.push({
                         proto: def.constructor,
                         tests: value
                     });
@@ -7029,15 +7131,16 @@
                 this.run = this.$(this.run);
             },
             run: _.interlocked(function (cfg_) {
+                var _this2 = this;
                 var defaults = {
                     suites: [],
                     silent: true,
                     verbose: false,
                     timeout: 2000,
                     filter: _.identity,
-                    testStarted: function (test) {
+                    testStarted: function testStarted(test) {
                     },
-                    testComplete: function (test) {
+                    testComplete: function testComplete(test) {
                     }
                 };
                 var cfg = this.runConfig = _.extend(defaults, cfg_);
@@ -7062,31 +7165,31 @@
                     }
                 });
                 this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
-                return __.each(this.runningTests, this.$(this.runTest)).then(() => {
+                return __.each(this.runningTests, this.$(this.runTest)).then(function () {
                     _.assert(cfg.done !== true);
                     cfg.done = true;
-                    this.printLog(cfg);
-                    this.failedTests = _.filter(this.runningTests, _.property('failed'));
-                    this.failed = this.failedTests.length > 0;
-                    return !this.failed;
-                }).catch(e => {
+                    _this2.printLog(cfg);
+                    _this2.failedTests = _.filter(_this2.runningTests, _.property('failed'));
+                    _this2.failed = _this2.failedTests.length > 0;
+                    return !_this2.failed;
+                }).catch(function (e) {
                     log.margin();
                     log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
                     throw e;
                 });
             }),
-            onException: function (e) {
+            onException: function onException(e) {
                 if (this.currentAssertion)
                     this.currentAssertion.onException(e);
                 else
                     throw e;
             },
-            defineAssertions: function (assertions) {
+            defineAssertions: function defineAssertions(assertions) {
                 _.each(assertions, function (fn, name) {
                     this.defineAssertion(name, fn);
                 }, this);
             },
-            runTest: function (test, i) {
+            runTest: function runTest(test, i) {
                 var self = this, runConfig = this.runConfig;
                 log.impl.configStack = [];
                 return __.then(runConfig.testStarted(test), function () {
@@ -7099,15 +7202,18 @@
                     });
                 });
             },
-            collectTests: function () {
+            collectTests: function collectTests() {
                 return _.map(_.tests, this.$(function (suite, name) {
                     return this.testSuite(name, suite);
                 }));
             },
-            collectPrototypeTests() {
-                return this.prototypeTests.map(def => this.testSuite(def.proto.$meta.name, def.tests, undefined, def.proto));
+            collectPrototypeTests: function collectPrototypeTests() {
+                var _this3 = this;
+                return this.prototypeTests.map(function (def) {
+                    return _this3.testSuite(def.proto.$meta && def.proto.$meta.name || '<prototype>', def.tests, undefined, def.proto);
+                });
             },
-            testSuite: function (name, tests, context, proto) {
+            testSuite: function testSuite(name, tests, context, proto) {
                 return {
                     name: name || '',
                     tests: _(O.entries(typeof tests === 'function' && _.fromPairs([[
@@ -7134,7 +7240,7 @@
                     })
                 };
             },
-            defineAssertion: function (name, def) {
+            defineAssertion: function defineAssertion(name, def) {
                 var self = this;
                 var fn = $untag(def);
                 delete $global['$' + name];
@@ -7147,7 +7253,7 @@
                     }
                 });
             },
-            printLog: function (cfg) {
+            printLog: function printLog(cfg) {
                 if (!cfg.supressLog) {
                     var loggedTests = _.filter(this.runningTests, function (test) {
                         return test.failed || !cfg.silent && test.hasLog;
@@ -7163,7 +7269,7 @@
             }
         });
         $global.Test = $prototype({
-            constructor: function (cfg) {
+            constructor: function constructor(cfg) {
                 _.defaults(this, cfg, {
                     name: '<< UNNAMED FOR UNKNOWN REASON >>',
                     failed: false,
@@ -7177,7 +7283,7 @@
                 });
                 this.babyAssertion = _.interlocked(this.babyAssertion);
             },
-            finalize: function () {
+            finalize: function finalize() {
                 this.babyAssertion.wait(this.$(function () {
                     if (this.canFail && this.failedAssertions.length) {
                         this.failed = true;
@@ -7185,7 +7291,7 @@
                     this.complete(true);
                 }));
             },
-            babyAssertion: function (name, def, fn, args, loc) {
+            babyAssertion: function babyAssertion(name, def, fn, args, loc) {
                 var self = this;
                 var assertion = new Test({
                     mother: this,
@@ -7239,7 +7345,7 @@
             canFail: $property(function () {
                 return !this.failed && !this.shouldFail;
             }),
-            fail: function () {
+            fail: function fail() {
                 this.failed = true;
                 this.finalize();
             },
@@ -7251,7 +7357,7 @@
                 } while (a);
                 return result;
             }),
-            onException: function (e) {
+            onException: function onException(e) {
                 if (this.canFail || this.verbose) {
                     if (_.isAssertionError(e)) {
                         if ('notMatching' in e) {
@@ -7293,7 +7399,7 @@
                     this.finalize();
                 }
             },
-            run: function () {
+            run: function run() {
                 var self = Testosterone.currentAssertion = this, routine = Tags.unwrap(this.routine);
                 return new Channel(this.$(function (then) {
                     this.shouldFail = $shouldFail.is(this.routine);
@@ -7303,7 +7409,7 @@
                     this.failureLocations = {};
                     _.withTimeout({
                         maxTime: self.timeout,
-                        expired: function () {
+                        expired: function expired() {
                             if (self.canFail) {
                                 log.ee('TIMEOUT EXPIRED');
                                 self.fail();
@@ -7343,7 +7449,7 @@
                     });
                 }));
             },
-            printLog: function () {
+            printLog: function printLog() {
                 var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
                 log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([
                     suiteName,
@@ -7351,7 +7457,7 @@
                 ]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
                 this.evalLogCalls();
             },
-            evalLogCalls: function () {
+            evalLogCalls: function evalLogCalls() {
                 _.each(this.logCalls, log.writeBackend().arity1);
             }
         });
@@ -7381,12 +7487,12 @@
             };
         };
         Testosterone.ValidatesRecursion = $trait({
-            $test: function () {
+            $test: function $test() {
                 var test = new ($component({
                     $traits: [Testosterone.ValidatesRecursion],
-                    foo: function () {
+                    foo: function foo() {
                     },
-                    bar: function () {
+                    bar: function bar() {
                         this.bar();
                     },
                     baz: $allowsRecursion({ max: 2 }, function () {
@@ -7405,7 +7511,7 @@
                 $assertThrows(test.baz, { message: 'baz: max recursion depth reached (2)' });
                 test.qux();
             },
-            $constructor: function () {
+            $constructor: function $constructor() {
                 _.each(this, function (member, name) {
                     if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
                         this[name] = Tags.modify(member, function (fn) {
@@ -7422,7 +7528,15 @@
             Tags.define('verbose');
             Testosterone.LogsMethodCalls = $trait({
                 $macroTags: {
-                    log: function (def, member, name) {
+                    log: function (_log) {
+                        function log(_x, _x2, _x3) {
+                            return _log.apply(this, arguments);
+                        }
+                        log.toString = function () {
+                            return _log.toString();
+                        };
+                        return log;
+                    }(function (def, member, name) {
                         var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
                         var meta = def.$meta || {};
                         var color = _.find2(colors, function (color) {
@@ -7460,7 +7574,7 @@
                                 });
                             };
                         });
-                    }
+                    })
                 }
             });
         }());
@@ -7471,22 +7585,22 @@
     function (module, exports, __webpack_require__) {
         'use strict';
         'use strict';
-        const O = __webpack_require__(2), bullet = __webpack_require__(4), asTable = __webpack_require__(1);
+        var O = __webpack_require__(2), bullet = __webpack_require__(3), asTable = __webpack_require__(1);
         _.hasLog = true;
         ;
         _.extend($global.log = function () {
             return log.write.apply(this, [log.config({ location: true })].concat(_.asArray(arguments)));
         }, {
             Config: $prototype(),
-            config: function (cfg) {
+            config: function config(cfg) {
                 return new log.Config(cfg);
             }
         });
         _.extend(log, {
-            indent: function (n) {
+            indent: function indent(n) {
                 return log.config({ indent: n });
             },
-            where: function (wat) {
+            where: function where(wat) {
                 return log.config({
                     location: true,
                     where: wat || undefined
@@ -7662,23 +7776,23 @@
                     });
                 });
             }),
-            writeUsingDefaultBackend: function () {
+            writeUsingDefaultBackend: function writeUsingDefaultBackend() {
                 var args = arguments;
                 log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
                     log.write.apply(null, args);
                     done();
                 });
             },
-            writeBackend: function () {
+            writeBackend: function writeBackend() {
                 return log.writeBackend.value || log.impl.defaultWriteBackend;
             },
-            withConfig: function (config, what) {
+            withConfig: function withConfig(config, what) {
                 log.impl.configStack.push(config);
                 var result = what();
                 log.impl.configStack.pop();
                 return result;
             },
-            currentConfig: function () {
+            currentConfig: function currentConfig() {
                 return log.impl.configure(log.impl.configStack);
             },
             margin: function () {
@@ -7692,7 +7806,7 @@
             impl: {
                 configStack: [],
                 numWrites: 0,
-                configure: function (configs) {
+                configure: function configure(configs) {
                     return _.reduce2({ indent: 0 }, _.nonempty(configs), function (memo, cfg) {
                         return _.extend(memo, _.nonempty(cfg), { indent: memo.indent + (cfg.indent || 0) });
                     });
@@ -7745,10 +7859,12 @@
                     });
                     return _.find(args, _.not(_.isTypeOf.$(log.Config)));
                 })),
-                findWhere: function (stack) {
-                    return stack.withSources.filter(x => !x.hide).at(2);
+                findWhere: function findWhere(stack) {
+                    return stack.withSources.filter(function (x) {
+                        return !(x.hide || x.fileName === 'underscore.js');
+                    }).at(0);
                 },
-                defaultWriteBackend: function (params) {
+                defaultWriteBackend: function defaultWriteBackend(params) {
                     var codeLocation = params.codeLocation;
                     if ($platform.NodeJS) {
                         var lines = _.map(params.lines, function (line) {
@@ -7781,12 +7897,18 @@
                         }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
                     }
                 },
-                location: where => '(' + [].concat(where.calleeShort || [], [].concat(where.fileName || [], where.line || []).join(':')).join(' @ ') + ')',
-                stringifyArguments: (args, cfg) => args.map(arg => {
-                    var x = log.impl.stringify(arg, cfg);
-                    return cfg.maxArgLength ? String.ify.limit(x, cfg.maxArgLength) : x;
-                }).join(' '),
-                stringify: (what, cfg) => typeof what === 'string' ? what : Array.isArray(what) && (cfg || {}).table ? asTable(what) : String.ify.configure(cfg || {})(what)
+                location: function location(where) {
+                    return '(' + [].concat(where.calleeShort || [], [].concat(where.fileName || [], where.line || []).join(':')).join(' @ ') + ')';
+                },
+                stringifyArguments: function stringifyArguments(args, cfg) {
+                    return args.map(function (arg) {
+                        var x = log.impl.stringify(arg, cfg);
+                        return cfg.maxArgLength ? String.ify.limit(x, cfg.maxArgLength) : x;
+                    }).join(' ');
+                },
+                stringify: function stringify(what, cfg) {
+                    return typeof what === 'string' ? what : Array.isArray(what) && (cfg || {}).table ? asTable(what) : String.ify.configure(cfg || {})(what);
+                }
             }
         });
         (function () {
@@ -7855,7 +7977,7 @@
             var timings = {};
             _.cps.each(routines, function (fn, name, then) {
                 var result = [];
-                var run = function () {
+                var run = function run() {
                     for (var i = 0; i < rounds; i++) {
                         result.push(fn());
                     }
@@ -7875,12 +7997,17 @@
         'use strict';
         (function (__filename) {
             'use strict';
-            const O = Object;
+            var _typeof = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol' ? function (obj) {
+                return typeof obj;
+            } : function (obj) {
+                return obj && typeof Symbol === 'function' && obj.constructor === Symbol ? 'symbol' : typeof obj;
+            };
+            var O = Object;
             _.hasReflection = true;
-            $global.getSource = __webpack_require__(5);
-            $global.StackTracey = O.assign(__webpack_require__(38), {
-                fromErrorWithAsync(e) {
-                    let stackEntries = new StackTracey(e), asyncContext = e.asyncContext;
+            $global.getSource = __webpack_require__(9);
+            $global.StackTracey = O.assign(__webpack_require__(36), {
+                fromErrorWithAsync: function fromErrorWithAsync(e) {
+                    var stackEntries = new StackTracey(e), asyncContext = e.asyncContext;
                     while (asyncContext) {
                         stackEntries = stackEntries.concat(new StackTracey(asyncContext.stack));
                         asyncContext = asyncContext.asyncContext;
@@ -7889,8 +8016,8 @@
                 }
             });
             _.tests.reflection = {
-                'file paths': function () {
-                    $assert(typeof $uselessPath, 'string');
+                'file paths': function filePaths() {
+                    $assert(typeof $uselessPath === 'undefined' ? 'undefined' : _typeof($uselessPath), 'string');
                     $assert($sourcePath.length > 0);
                     $assert($uselessPath.length > 0);
                 }
@@ -7903,27 +8030,31 @@
                     return local ? local + '/' : $uselessPath;
                 }());
             }());
-            const asTable = __webpack_require__(1);
+            var asTable = __webpack_require__(1);
             StackTracey.prototype[Symbol.for('String.ify')] = function (stringify) {
-                return asTable(this.map(entry => [
-                    '\t' + 'at ' + entry.calleeShort.slice(0, 30),
-                    entry.fileShort && entry.fileShort + ':' + entry.line || '',
-                    ((entry.sourceLine || '').trim() || '').slice(0, 80)
-                ]));
+                return asTable(this.map(function (entry) {
+                    return [
+                        '\t' + 'at ' + entry.calleeShort.slice(0, 30),
+                        entry.fileShort && entry.fileShort + ':' + entry.line || '',
+                        ((entry.sourceLine || '').trim() || '').slice(0, 80)
+                    ];
+                }));
             };
             Error.prototype[Symbol.for('String.ify')] = function (stringify) {
                 try {
                     var stack = StackTracey.fromErrorWithAsync(this).slice(this.stackOffset || 0).clean;
                     var why = stringify.limit((this.message || '').replace(/\r|\n/g, '').trim(), 120);
-                    return '[EXCEPTION] ' + why + (this.notMatching && [].concat(this.notMatching).map(x => '\t' + stringify(x)).join('\n') + '\n\n' || '') + '\n\n' + stringify(stack) + '\n';
+                    return '[EXCEPTION] ' + why + (this.notMatching && [].concat(this.notMatching).map(function (x) {
+                        return '\t' + stringify(x);
+                    }).join('\n') + '\n\n' || '') + '\n\n' + stringify(stack) + '\n';
                 } catch (sub) {
                     return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n';
                 }
             };
             _.tests.prototypeMeta = {
-                'Prototype.$meta': function () {
-                    const DummyProto = $prototype();
-                    const DummyTrait = $trait();
+                'Prototype.$meta': function Prototype$meta() {
+                    var DummyProto = $prototype();
+                    var DummyTrait = $trait();
                     $assertMatches(DummyProto.$meta, {
                         name: 'DummyProto',
                         type: 'prototype'
@@ -7933,20 +8064,22 @@
                         type: 'trait'
                     });
                 },
-                'String.ify': function () {
-                    const Dummy = $prototype({});
+                'String.ify': function StringIfy() {
+                    var Dummy = $prototype({});
                     $assert(String.ify(Dummy), 'Dummy ()');
                 }
             };
-            (() => {
-                const findMeta = stack => _.find2(stack.withSources.reverse(), location => {
-                    let match = location.sourceLine.match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/);
-                    return match && {
-                        name: match[1] === 'exports' ? location.fileName : match[1],
-                        type: match[2],
-                        file: location.fileShort
-                    } || false;
-                });
+            (function () {
+                var findMeta = function findMeta(stack) {
+                    return _.find2(stack.withSources.reverse(), function (location) {
+                        var match = location.sourceLine.match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/);
+                        return match && {
+                            name: match[1] === 'exports' ? location.fileName : match[1],
+                            type: match[2],
+                            file: location.fileShort
+                        } || false;
+                    });
+                };
                 $prototype.macro(function (def, base) {
                     if (typeof Symbol !== 'undefined') {
                         def.constructor[Symbol.for('String.ify')] = function () {
@@ -7954,12 +8087,16 @@
                         };
                     }
                     if (!def.$meta) {
-                        const stack = new StackTracey();
-                        def.$meta = $static($property(_.memoize(() => findMeta(stack))));
+                        (function () {
+                            var stack = new StackTracey();
+                            def.$meta = $static($property(_.memoize(function () {
+                                return findMeta(stack);
+                            })));
+                        }());
                     }
                     return def;
                 });
-            })();
+            }());
         }.call(exports, '/index.js'));
     },
     function (module, exports) {
@@ -7968,16 +8105,16 @@
         _.hasAsserts = true;
         _.extend(_, {
             tests: {},
-            withTest: function (name, test, defineSubject) {
+            withTest: function withTest(name, test, defineSubject) {
                 defineSubject();
                 _.runTest(name, test);
                 _.publishToTestsNamespace(name, test);
             },
-            deferTest: function (name, test, defineSubject) {
+            deferTest: function deferTest(name, test, defineSubject) {
                 defineSubject();
                 _.publishToTestsNamespace(name, test);
             },
-            runTest: function (name, test) {
+            runTest: function runTest(name, test) {
                 try {
                     if (_.isFunction(test)) {
                         test();
@@ -7997,7 +8134,7 @@
                     throw e;
                 }
             },
-            publishToTestsNamespace: function (name, test) {
+            publishToTestsNamespace: function publishToTestsNamespace(name, test) {
                 if (_.isArray(name)) {
                     (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test;
                 } else {
@@ -8006,7 +8143,7 @@
             }
         });
         (function () {
-            var assertImpl = function (positive) {
+            var assertImpl = function assertImpl(positive) {
                 return function (__) {
                     var args = [].splice.call(arguments, 0);
                     if (args.length === 1) {
@@ -8030,7 +8167,7 @@
             _.extend(_, _.assertions = {
                 assert: assertImpl(true),
                 assertNot: assertImpl(false),
-                assertCPS: function (fn, args, then) {
+                assertCPS: function assertCPS(fn, args, then) {
                     var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
                     fn(function () {
                         $assert([].splice.call(arguments, 0), requiredResult);
@@ -8040,7 +8177,7 @@
                         }
                     });
                 },
-                assertNotCalled: function (context) {
+                assertNotCalled: function assertNotCalled(context) {
                     var inContext = true;
                     context(function () {
                         if (inContext) {
@@ -8049,11 +8186,11 @@
                     });
                     inContext = false;
                 },
-                assertEveryCalledOnce: function (fn, then) {
+                assertEveryCalledOnce: function assertEveryCalledOnce(fn, then) {
                     return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
                 },
-                assertEveryCalled: function (fn_, then) {
-                    const fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async, once = _.hasTags ? $once.is(fn_) : fn_.once;
+                assertEveryCalled: function assertEveryCalled(fn_, then) {
+                    var fn = _.hasTags ? $untag(fn_) : fn_, async = _.hasTags ? $async.is(fn_) : fn_.async, once = _.hasTags ? $once.is(fn_) : fn_.once;
                     var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
                     var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
                         var parts = arg.trim().match(/^(.+)__(\d+)$/);
@@ -8076,19 +8213,24 @@
                         }
                     }
                 },
-                assertCalledWithArguments: function (argsPattern, generateCalls) {
+                assertCalledWithArguments: function assertCalledWithArguments(argsPattern, generateCalls) {
                     return _.assert(_.arr(generateCalls), argsPattern);
                 },
-                assertCallOrder: function (fn) {
+                assertCallOrder: function assertCallOrder(fn) {
                     var callIndex = 0;
-                    var callbacks = _.times(fn.length, i => function callee() {
-                        callee.callIndex = callIndex++;
+                    var callbacks = _.times(fn.length, function (i) {
+                        return function callee() {
+                            callee.callIndex = callIndex++;
+                        };
                     });
                     fn.apply(null, callbacks);
                     return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
                 },
-                assertMatches: function (value, ...args) {
-                    const pattern = args[0];
+                assertMatches: function assertMatches(value) {
+                    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+                        args[_key - 1] = arguments[_key];
+                    }
+                    var pattern = args[0];
                     try {
                         return _.assert(_.matches.apply(null, args)(value));
                     } catch (e) {
@@ -8100,8 +8242,11 @@
                         }) : e;
                     }
                 },
-                assertNotMatches: function (value, ...args) {
-                    const pattern = args[0];
+                assertNotMatches: function assertNotMatches(value) {
+                    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+                        args[_key2 - 1] = arguments[_key2];
+                    }
+                    var pattern = args[0];
                     try {
                         return _.assert(!_.matches.apply(null, args)(value));
                     } catch (e) {
@@ -8113,11 +8258,11 @@
                         }) : e;
                     }
                 },
-                assertType: function (value, contract) {
+                assertType: function assertType(value, contract) {
                     return _.assert(_.decideType(value), contract);
                 },
-                assertTypeMatches: function (value, contract) {
-                    const mismatches = _.typeMismatches(contract, value);
+                assertTypeMatches: function assertTypeMatches(value, contract) {
+                    var mismatches = _.typeMismatches(contract, value);
                     return _.isEmpty(mismatches) ? true : _.assertionFailed({
                         message: 'provided value type not matches required contract',
                         asColumns: true,
@@ -8128,10 +8273,10 @@
                         ]
                     });
                 },
-                assertFails: function (what) {
+                assertFails: function assertFails(what) {
                     return _.assertThrows.call(this, what, _.isAssertionError);
                 },
-                assertThrows: function (what, errorPattern) {
+                assertThrows: function assertThrows(what, errorPattern) {
                     var e = undefined, thrown = false;
                     try {
                         what.call(this);
@@ -8144,30 +8289,30 @@
                         _.assertMatches.call(this, e, errorPattern);
                     }
                 },
-                assertNotThrows: function (what) {
+                assertNotThrows: function assertNotThrows(what) {
                     return _.assertEveryCalled(function (ok) {
                         what();
                         ok();
                     });
                 },
-                fail: function () {
+                fail: function fail() {
                     _.assertionFailed();
                 },
                 fails: _.constant(function () {
                     _.assertionFailed();
                 }),
-                stub: function () {
+                stub: function stub() {
                     _.assertionFailed();
                 }
             });
             _.extend(_, {
-                assertionError: function (additionalInfo) {
+                assertionError: function assertionError(additionalInfo) {
                     return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
                 },
-                assertionFailed: function (additionalInfo) {
+                assertionFailed: function assertionFailed(additionalInfo) {
                     throw _.extend(_.assertionError(additionalInfo), { stack: new Error().stack.split('\n').slice(3).join('\n') });
                 },
-                isAssertionError: function (e) {
+                isAssertionError: function isAssertionError(e) {
                     return e && e.assertion === true;
                 }
             });
@@ -8185,6 +8330,11 @@
     function (module, exports, __webpack_require__) {
         'use strict';
         'use strict';
+        var _typeof = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol' ? function (obj) {
+            return typeof obj;
+        } : function (obj) {
+            return obj && typeof Symbol === 'function' && obj.constructor === Symbol ? 'symbol' : typeof obj;
+        };
         (function () {
             _.hasUncaught = true;
             var reThrownTag = ' [re-thrown by a hook]';
@@ -8202,7 +8352,7 @@
                                 newE.message += reThrownTag;
                                 throw newE;
                             } else {
-                                if (newE && typeof newE === 'object') {
+                                if (newE && (typeof newE === 'undefined' ? 'undefined' : _typeof(newE)) === 'object') {
                                     newE.originalError = e;
                                 }
                                 e = newE;
@@ -8228,7 +8378,7 @@
             globalUncaughtExceptionHandler.chain = [];
             switch ($platform.engine) {
             case 'node':
-                __webpack_require__(10).on('uncaughtException', globalUncaughtExceptionHandler);
+                __webpack_require__(5).on('uncaughtException', globalUncaughtExceptionHandler);
                 break;
             case 'browser':
                 window.addEventListener('error', function (e) {
@@ -8253,8 +8403,8 @@
             if ($platform.Browser) {
                 _.hasUncaughtAsync = true;
                 var globalAsyncContext = undefined;
-                var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
-                    var override = function (obj) {
+                var listenEventListeners = function listenEventListeners(genAddEventListener, genRemoveEventListener) {
+                    var override = function override(obj) {
                         obj.addEventListener = genAddEventListener(obj.addEventListener);
                         obj.removeEventListener = genRemoveEventListener(obj.removeEventListener);
                     };
@@ -8265,7 +8415,7 @@
                         override(XMLHttpRequest.prototype);
                     }
                 };
-                var asyncHook = function (originalImpl, callbackArgumentIndex) {
+                var asyncHook = function asyncHook(originalImpl, callbackArgumentIndex) {
                     return function () {
                         var asyncContext = {
                             name: name,
@@ -8305,7 +8455,7 @@
         (function ($) {
             $global.LogOverlay = $singleton(Component, {
                 $defaults: { opaque: false },
-                init: function () {
+                init: function init() {
                     log.withWriteBackend(this.write, function () {
                     });
                     $(document).keydown(this.$(function (e) {
@@ -8322,13 +8472,13 @@
                 body: $memoized($property(function () {
                     return this.el.find('.useless-log-overlay-body');
                 })),
-                toggle: function (yes) {
+                toggle: function toggle(yes) {
                     this.el.toggle(yes);
                 },
                 visible: $property(function () {
                     return this.el.is(':visible');
                 }),
-                clip: function () {
+                clip: function clip() {
                     var elHeight = this.el.height();
                     var bodyHeight = this.body.height();
                     this.body.children().filter(this.$(function (i, line) {
@@ -8338,7 +8488,7 @@
                         return lineTop > clipHeight && lineBottom > clipHeight;
                     })).remove();
                 },
-                write: function (params) {
+                write: function write(params) {
                     this.toggle(true);
                     if (params.config.clear) {
                         this.body.empty();
@@ -8350,13 +8500,13 @@
                     }
                 }
             });
-        }(__webpack_require__(3)));
+        }(__webpack_require__(4)));
     },
     function (module, exports, __webpack_require__) {
         'use strict';
         'use strict';
         (function ($) {
-            $global.Panic = (what, cfg) => {
+            $global.Panic = function (what, cfg) {
                 cfg = _.defaults(_.clone(cfg || {}), {
                     dismiss: _.identity,
                     raw: false
@@ -8372,7 +8522,7 @@
                     Panic.widget.onClose(cfg.dismiss);
                 }
             };
-            Panic.init = () => {
+            Panic.init = function () {
                 if (!Panic._initialized) {
                     Panic._initialized = true;
                     _.withUncaughtExceptionHandler(function (e) {
@@ -8414,7 +8564,7 @@
                     }
                     return el;
                 })),
-                layout() {
+                layout: function layout() {
                     var maxContentWidth = _.coerceToUndefined(_.max(_.map(this.modal.find('pre'), _.property('scrollWidth'))));
                     this.modal.css({
                         'max-height': $(window).height() - 100,
@@ -8422,7 +8572,7 @@
                     });
                     this.modalBody.scroll();
                 },
-                toggleVisibility(yes) {
+                toggleVisibility: function toggleVisibility(yes) {
                     if (yes !== !(this.el.css('display') === 'none')) {
                         if (yes) {
                             this.el.css('display', '');
@@ -8434,33 +8584,33 @@
                         }));
                     }
                 },
-                onRetry(retry) {
+                onRetry: function onRetry(retry) {
                     this.retryTriggered(retry);
                     this.btnRetry.css('display', '');
                 },
-                onClose(close) {
+                onClose: function onClose(close) {
                     this.closeTriggered(close);
                     this.btnClose.css('display', '');
                 },
-                retry() {
+                retry: function retry() {
                     this._clean();
                     this.closeTriggered.off();
                     this.toggleVisibility(false);
                     this.retryTriggered();
                 },
-                close() {
+                close: function close() {
                     this._clean();
                     this.retryTriggered.off();
                     this.toggleVisibility(false);
                     this.closeTriggered();
                 },
-                _clean() {
+                _clean: function _clean() {
                     this.modalBody.find('.panic-alert-error').remove();
                     this.modalBody.scroll();
                     this.btnRetry.css('display', 'none');
                     this.btnClose.css('display', 'none');
                 },
-                append(what, raw) {
+                append: function append(what, raw) {
                     var id = 'panic' + this.hash(what);
                     var counter = $('#' + id + ' .panic-alert-counter');
                     if (counter.length) {
@@ -8471,31 +8621,32 @@
                     this.toggleVisibility(true);
                     this.layout();
                 },
-                hash(what) {
+                hash: function hash(what) {
                     return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : String.ify(what)) || '').hash;
                 },
-                print(what, raw) {
+                print: function print(what, raw) {
                     return _.isTypeOf(Error, what) ? this.printError(what) : _.isTypeOf(Test, what) ? this.printFailedTest(what) : this.printUnknownStuff(what, raw);
                 },
-                printUnknownStuff(what, raw) {
+                printUnknownStuff: function printUnknownStuff(what, raw) {
                     return raw ? what : $('<span>').text(log.impl.stringify(what));
                 },
-                printLocation(where) {
+                printLocation: function printLocation(where) {
                     return $('<span class="location">').append([
                         $('<span class="callee">').text(where.calleeShort),
                         $('<span class="file">').text(where.fileName),
                         $('<span class="line">').text(where.line)
                     ]);
                 },
-                printFailedTest(test) {
+                printFailedTest: function printFailedTest(test) {
+                    var _this = this;
                     var logEl = $('<pre class="test-log" style="margin-top: 13px;">');
-                    log.withWriteBackend(params => {
+                    log.withWriteBackend(function (params) {
                         if (_.isTypeOf(Error, params.args.first)) {
                             console.log(params.args.first);
                         }
                         logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div class="inline-exception-entry">').append([
                             _.escape(params.indentation),
-                            $('<div class="panic-alert-error inline-exception">').append(this.printError(params.args.first))
+                            $('<div class="panic-alert-error inline-exception">').append(_this.printError(params.args.first))
                         ]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
                             return $('<div class="line">').append(_.escape(params.indentation)).append(_.map(line, function (run) {
                                 return $('<span>').attr('style', run.config.color && run.config.color.css || '').text(run.text);
@@ -8503,8 +8654,8 @@
                                 params.where && this.printLocation(params.where),
                                 params.trailNewlines.replace(/\n/g, '<br>')
                             ] : []);
-                        }, this)));
-                    }, done => {
+                        }, _this)));
+                    }, function (done) {
                         test.evalLogCalls();
                         done();
                     });
@@ -8513,7 +8664,7 @@
                         logEl
                     ];
                 },
-                printError(e) {
+                printError: function printError(e) {
                     var stackEntries = StackTracey.fromErrorWithAsync(e).withSources;
                     return [
                         $('<div class="panic-alert-error-message" style="font-weight: bold;">').text(e.message).append(_.any(stackEntries, function (e, i) {
@@ -8543,9 +8694,11 @@
                                             }
                                         });
                                     } else {
-                                        const lines = (entry.sourceFile || { lines: [] }).lines;
+                                        var lines = (entry.sourceFile || { lines: [] }).lines;
                                         dom.addClass('full');
-                                        el.html(lines.map(line => $('<div class="line">').text(line)));
+                                        el.html(lines.map(function (line) {
+                                            return $('<div class="line">').text(line);
+                                        }));
                                         var line = el.find('.line').eq(entry.line - 1).addClass('hili');
                                         if (line.length) {
                                             var offset = line.offset().top - el.offset().top;
@@ -8566,7 +8719,7 @@
                 }
             });
             $.fn.extend({
-                enableScrollFaders: function (cfg) {
+                enableScrollFaders: function enableScrollFaders(cfg) {
                     var horizontal = cfg && cfg.horizontal;
                     var faderTop, faderBottom, scroller = this.find(cfg && cfg.scroller || '.scroller');
                     this.css({ position: 'relative' });
@@ -8579,7 +8732,7 @@
                     return this;
                 }
             });
-        }(__webpack_require__(3)));
+        }(__webpack_require__(4)));
     },
     function (module, exports, __webpack_require__) {
         'use strict';
@@ -8588,7 +8741,7 @@
         (function ($) {
             var __previousMethods__ = _.clone($.fn);
             _.extend($, {
-                svg: function (tag) {
+                svg: function svg(tag) {
                     var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
                     if (tag === 'svg' && !$platform.IE) {
                         node.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -8596,21 +8749,21 @@
                     return $(node);
                 }
             }).fn.extend({
-                $: function () {
+                $: function $() {
                     return _.$.apply(null, [this].concat(_.asArray(arguments)));
                 },
-                on: function (what, method) {
+                on: function on(what, method) {
                     var el = this, method = _.find(arguments, _.isFunction);
                     if (method.queuedBy) {
                         method.queuedBy.push({
-                            remove: function () {
+                            remove: function remove() {
                                 el.off(what, method);
                             }
                         });
                     }
                     return __previousMethods__.on.apply(this, arguments);
                 },
-                item: function (value) {
+                item: function item(value) {
                     if (value) {
                         if (this.length) {
                             this[0]._item = value;
@@ -8620,18 +8773,18 @@
                         return this.length ? this[0]._item : undefined;
                     }
                 },
-                props: function (what) {
+                props: function props(what) {
                     _.extend.apply(null, [this[0]].concat(arguments));
                     return this;
                 },
-                props2: function (what) {
+                props2: function props2(what) {
                     _.extend2.apply(null, [this[0]].concat(arguments));
                     return this;
                 },
-                hasWait: function () {
+                hasWait: function hasWait() {
                     return this.hasClass('i-am-busy');
                 },
-                waitUntil: function (fn, then) {
+                waitUntil: function waitUntil(fn, then) {
                     this.addClass('i-am-busy').attr('disabled', true);
                     fn(this.$(function () {
                         this.removeClass('i-am-busy').removeAttr('disabled');
@@ -8641,7 +8794,7 @@
                     }));
                     return this;
                 },
-                hasParent: function (el) {
+                hasParent: function hasParent(el) {
                     var parent = this;
                     while (parent.length > 0) {
                         if (parent[0] == (el[0] || el)) {
@@ -8651,15 +8804,15 @@
                     }
                     return false;
                 },
-                nonemptyValue: function () {
+                nonemptyValue: function nonemptyValue() {
                     var value = $.trim(this.val());
                     return value.length == 0 ? undefined : value;
                 },
-                intValue: function () {
+                intValue: function intValue() {
                     var value = parseInt(this.nonemptyValue(), 10);
                     return isNaN(value) ? undefined : value;
                 },
-                hitTest: function (event) {
+                hitTest: function hitTest(event) {
                     var offset = this.offset();
                     var pt = {
                         x: event.clientX - offset.left,
@@ -8667,7 +8820,7 @@
                     };
                     return pt.x >= 0 && pt.y >= 0 && pt.x < $(this).width() && pt.y < $(this).height();
                 },
-                attrs: function () {
+                attrs: function attrs() {
                     return _.fromPairs(_.map(arguments, function (name) {
                         return [
                             name,
@@ -8675,31 +8828,31 @@
                         ];
                     }, this));
                 },
-                belongsTo: function (selector) {
+                belongsTo: function belongsTo(selector) {
                     return this.is(selector) || this.parents(selector).length;
                 },
-                selectClass: function (key, classes) {
+                selectClass: function selectClass(key, classes) {
                     return this.removeClass(_.values(classes).join(' ')).addClass(classes[key]);
                 },
-                attrInt: function (name) {
+                attrInt: function attrInt(name) {
                     return (this.attr(name) || '').integerValue;
                 },
-                cssInt: function (name) {
+                cssInt: function cssInt(name) {
                     return (this.css(name) || '').integerValue;
                 },
-                eachChild: function (selector, fn) {
+                eachChild: function eachChild(selector, fn) {
                     _.each(this.find(selector), function (el) {
                         fn($(el));
                     });
                     return this;
                 },
-                transitionend: function (fn) {
+                transitionend: function transitionend(fn) {
                     return this.one('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot);
                 },
-                animationend: function (fn) {
+                animationend: function animationend(fn) {
                     return this.one('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot);
                 },
-                animateWith: function (cls, done) {
+                animateWith: function animateWith(cls, done) {
                     if (cls) {
                         this.addClass(cls);
                         this.animationend(this.$(function () {
@@ -8711,7 +8864,7 @@
                     }
                     return this;
                 },
-                transitionWith: function (cls, done) {
+                transitionWith: function transitionWith(cls, done) {
                     if (cls) {
                         this.addClass(cls);
                         this.transitionend(this.$(function () {
@@ -8724,7 +8877,7 @@
                     return this;
                 },
                 drag: function () {
-                    var translateTouchEvent = function (e, desiredTarget) {
+                    var translateTouchEvent = function translateTouchEvent(e, desiredTarget) {
                         return e.originalEvent.touches && _.find(e.originalEvent.touches, function (touch) {
                             return $(touch.target).hasParent(desiredTarget);
                         }) || e;
@@ -8762,7 +8915,7 @@
                                             abort(e);
                                         }
                                     });
-                                    unbind = function () {
+                                    unbind = function unbind() {
                                         $(overlay || document.body).css(overlay ? { display: 'none' } : {}).off('mouseup touchend', end).off('mousemove touchmove', move);
                                     };
                                     end = this.$(function (e) {
@@ -8814,7 +8967,7 @@
                         });
                     };
                 }(),
-                transform: function (cfg) {
+                transform: function transform(cfg) {
                     if (arguments.length === 0) {
                         var components = (this.css('transform') || '').match(/^matrix\((.+\))$/);
                         if (components) {
@@ -8834,46 +8987,46 @@
                         return this.css('transform', _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '');
                     }
                 },
-                svgTranslate: function (pt) {
+                svgTranslate: function svgTranslate(pt) {
                     return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
                 },
-                svgTransformMatrix: function (t) {
+                svgTransformMatrix: function svgTransformMatrix(t) {
                     var m = t.components;
                     return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
                 },
-                svgTransformToElement: function (el) {
+                svgTransformToElement: function svgTransformToElement(el) {
                     return Transform.svgMatrix(this[0].getTransformToElement(el[0]));
                 },
-                svgBBox: function (bbox) {
+                svgBBox: function svgBBox(bbox) {
                     if (arguments.length === 0) {
                         return new BBox(this[0].getBBox());
                     } else {
                         return this.attr(bbox.xywh);
                     }
                 },
-                outerExtent: function () {
+                outerExtent: function outerExtent() {
                     return new Vec2(this.outerWidth(), this.outerHeight());
                 },
-                extent: function () {
+                extent: function extent() {
                     return new Vec2(this.width(), this.height());
                 },
-                innerExtent: function () {
+                innerExtent: function innerExtent() {
                     return new Vec2(this.innerWidth(), this.innerHeight());
                 },
-                outerBBox: function () {
+                outerBBox: function outerBBox() {
                     return BBox.fromLTWH(_.extend(this.offset(), this.outerExtent().asWidthHeight));
                 },
-                clientBBox: function () {
+                clientBBox: function clientBBox() {
                     return BBox.fromLTWH(this[0].getBoundingClientRect());
                 },
-                leftTop: function () {
+                leftTop: function leftTop() {
                     return new Vec2.fromLT(this.offset());
                 },
-                offsetInParent: function () {
+                offsetInParent: function offsetInParent() {
                     return Vec2.fromLeftTop(this.offset()).sub(Vec2.fromLeftTop(this.parent().offset()));
                 },
-                monitorInput: function (cfg) {
-                    var change = function () {
+                monitorInput: function monitorInput(cfg) {
+                    var change = function change() {
                         if ($.trim($(this).val()) === '') {
                             cfg.empty(true);
                         } else {
@@ -8882,22 +9035,22 @@
                     };
                     return this.keyup(change).change(change).focus(_.bind(cfg.focus || _.noop, cfg, true)).blur(_.bind(cfg.focus || _.noop, cfg, false));
                 },
-                touchClick: function (fn, cfg) {
+                touchClick: function touchClick(fn, cfg) {
                     var self = this;
                     cfg = cfg || {};
                     if (!cfg.disableTouch && $platform.touch) {
-                        var touchstartHandler = function (e) {
+                        var touchstartHandler = function touchstartHandler(e) {
                             fn.apply(this, arguments);
                             e.preventDefault();
                             return false;
                         };
-                        var clickHandler = function (e) {
+                        var clickHandler = function clickHandler(e) {
                             e.preventDefault();
                             return false;
                         };
                         if (cfg.handler) {
                             cfg.handler({
-                                unbind: function () {
+                                unbind: function unbind() {
                                     self.off('touchstart', touchstartHandler).off('click', clickHandler);
                                 }
                             });
@@ -8906,7 +9059,7 @@
                     } else {
                         if (cfg.handler) {
                             cfg.handler({
-                                unbind: function () {
+                                unbind: function unbind() {
                                     self.off('click', fn);
                                 }
                             });
@@ -8914,7 +9067,7 @@
                         return this.click(fn);
                     }
                 },
-                touchDoubleclick: function (fn) {
+                touchDoubleclick: function touchDoubleclick(fn) {
                     if ($platform.touch) {
                         var lastTime = Date.now();
                         return this.on('touchend', function () {
@@ -8928,7 +9081,7 @@
                         return this.dblclick(fn);
                     }
                 },
-                nodoubletapzoom: function () {
+                nodoubletapzoom: function nodoubletapzoom() {
                     return $(this).bind('touchstart', function preventZoom(e) {
                         var t2 = e.timeStamp;
                         var t1 = $(this).data('lastTouch') || t2;
@@ -8943,21 +9096,32 @@
                     });
                 }
             });
-        }(__webpack_require__(3)));
+        }($global.jQuery = __webpack_require__(4)));
     },
     function (module, exports, __webpack_require__) {
         'use strict';
         (function (global) {
             'use strict';
-            const O = __webpack_require__(2), bullet = __webpack_require__(4), isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, maxOf = (arr, pick) => arr.reduce((max, s) => Math.max(max, pick ? pick(s) : s), 0), isInteger = Number.isInteger || (value => typeof value === 'number' && isFinite(value) && Math.floor(value) === value);
-            const configure = cfg => {
-                const stringify = O.assign(x => {
-                    const state = O.assign({
+            var _typeof = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol' ? function (obj) {
+                return typeof obj;
+            } : function (obj) {
+                return obj && typeof Symbol === 'function' && obj.constructor === Symbol ? 'symbol' : typeof obj;
+            };
+            var O = __webpack_require__(2), bullet = __webpack_require__(3), isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, maxOf = function maxOf(arr, pick) {
+                    return arr.reduce(function (max, s) {
+                        return Math.max(max, pick ? pick(s) : s);
+                    }, 0);
+                }, isInteger = Number.isInteger || function (value) {
+                    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+                };
+            var _configure = function _configure(cfg) {
+                var stringify = O.assign(function (x) {
+                    var state = O.assign({
                         parents: new Set(),
                         siblings: new Map()
                     }, cfg);
                     if (cfg.pretty === 'auto') {
-                        const oneLine = stringify.configure({
+                        var oneLine = stringify.configure({
                             pretty: false,
                             siblings: new Map()
                         })(x);
@@ -8989,10 +9153,10 @@
                         return cfg.pure ? x.toString() : x.name ? '<function:' + x.name + '>' : '<function>';
                     } else if (typeof x === 'string') {
                         return '"' + stringify.limit(x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"';
-                    } else if (typeof x === 'object') {
+                    } else if ((typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object') {
                         state.parents.add(x);
                         state.siblings.set(x, state.siblings.size);
-                        const result = stringify.configure(O.assign({}, state, { depth: state.depth + 1 })).object(x);
+                        var result = stringify.configure(O.assign({}, state, { depth: state.depth + 1 })).object(x);
                         state.parents.delete(x);
                         return result;
                     } else if (!isInteger(x) && cfg.precision > 0) {
@@ -9001,19 +9165,27 @@
                         return String(x);
                     }
                 }, cfg, {
-                    configure: newConfig => configure(O.assign({}, cfg, newConfig)),
-                    limit: (s, n) => s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026'),
-                    rightAlign: strings => {
-                        var max = maxOf(strings, s => s.length);
-                        return strings.map(s => ' '.repeat(max - s.length) + s);
+                    configure: function configure(newConfig) {
+                        return _configure(O.assign({}, cfg, newConfig));
                     },
-                    object: x => {
+                    limit: function limit(s, n) {
+                        return s && (s.length <= n ? s : s.substr(0, n - 1) + '\u2026');
+                    },
+                    rightAlign: function rightAlign(strings) {
+                        var max = maxOf(strings, function (s) {
+                            return s.length;
+                        });
+                        return strings.map(function (s) {
+                            return ' '.repeat(max - s.length) + s;
+                        });
+                    },
+                    object: function object(x) {
                         if (x instanceof Set) {
                             x = Array.from(x.values());
                         } else if (x instanceof Map) {
                             x = Array.from(x.entries());
                         }
-                        const isArray = Array.isArray(x);
+                        var isArray = Array.isArray(x);
                         if (isBrowser) {
                             if (x instanceof Element) {
                                 return '<' + (x.tagName.toLowerCase() + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')) + '>';
@@ -9024,22 +9196,40 @@
                         if (!cfg.pure && (cfg.depth > cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
                             return isArray ? '<array[' + x.length + ']>' : '<object>';
                         }
-                        const pretty = cfg.pretty ? true : false, entries = O.entries(x), oneLine = !pretty || entries.length < 2, quoteKey = cfg.json ? k => '"' + k + '"' : k => k;
+                        var pretty = cfg.pretty ? true : false, entries = O.entries(x), oneLine = !pretty || entries.length < 2, quoteKey = cfg.json ? function (k) {
+                                return '"' + k + '"';
+                            } : function (k) {
+                                return k;
+                            };
                         if (pretty) {
-                            const values = O.values(x), printedKeys = stringify.rightAlign(O.keys(x).map(k => quoteKey(k) + ': ')), printedValues = values.map(stringify), leftPaddings = printedValues.map((x, i) => x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0), maxLeftPadding = maxOf(leftPaddings), items = leftPaddings.map((padding, i) => {
-                                    const value = ' '.repeat(maxLeftPadding - padding) + printedValues[i];
-                                    return isArray ? value : bullet(printedKeys[i], value);
-                                }), printed = bullet(isArray ? '[ ' : '{ ', items.join(',\n')), lines = printed.split('\n'), lastLine = lines[lines.length - 1];
-                            return printed + (' '.repeat(maxOf(lines, l => l.length) - lastLine.length) + (isArray ? ' ]' : ' }'));
+                            var _ret = function () {
+                                var values = O.values(x), printedKeys = stringify.rightAlign(O.keys(x).map(function (k) {
+                                        return quoteKey(k) + ': ';
+                                    })), printedValues = values.map(stringify), leftPaddings = printedValues.map(function (x, i) {
+                                        return x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0;
+                                    }), maxLeftPadding = maxOf(leftPaddings), items = leftPaddings.map(function (padding, i) {
+                                        var value = ' '.repeat(maxLeftPadding - padding) + printedValues[i];
+                                        return isArray ? value : bullet(printedKeys[i], value);
+                                    }), printed = bullet(isArray ? '[ ' : '{ ', items.join(',\n')), lines = printed.split('\n'), lastLine = lines[lines.length - 1];
+                                return {
+                                    v: printed + (' '.repeat(maxOf(lines, function (l) {
+                                        return l.length;
+                                    }) - lastLine.length) + (isArray ? ' ]' : ' }'))
+                                };
+                            }();
+                            if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === 'object')
+                                return _ret.v;
                         } else {
-                            const items = entries.map(kv => (isArray ? '' : quoteKey(kv[0]) + ': ') + stringify(kv[1])), content = items.join(', ');
+                            var _items = entries.map(function (kv) {
+                                    return (isArray ? '' : quoteKey(kv[0]) + ': ') + stringify(kv[1]);
+                                }), content = _items.join(', ');
                             return isArray ? '[' + content + ']' : '{ ' + content + ' }';
                         }
                     }
                 });
                 return stringify;
             };
-            module.exports = configure({
+            module.exports = _configure({
                 depth: 0,
                 pure: false,
                 json: false,
@@ -9053,15 +9243,62 @@
             });
         }.call(exports, __webpack_require__(12)));
     },
-    function (module, exports) {
-        if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
-            module.exports = Reflect.ownKeys;
-        } else if (typeof Object.getOwnPropertySymbols === 'function') {
-            module.exports = function Reflect_ownKeys(o) {
-                return Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o));
-            };
-        } else {
-            module.exports = Object.getOwnPropertyNames;
+    function (module, exports, __webpack_require__) {
+        var content = __webpack_require__(37);
+        if (typeof content === 'string')
+            content = [[
+                    module.i,
+                    content,
+                    ''
+                ]];
+        var update = __webpack_require__(11)(content, {});
+        if (content.locals)
+            module.exports = content.locals;
+        if (false) {
+            if (!content.locals) {
+                module.hot.accept('!!./../node_modules/css-loader/index.js!./LogOverlay.css', function () {
+                    var newContent = require('!!./../node_modules/css-loader/index.js!./LogOverlay.css');
+                    if (typeof newContent === 'string')
+                        newContent = [[
+                                module.id,
+                                newContent,
+                                ''
+                            ]];
+                    update(newContent);
+                });
+            }
+            module.hot.dispose(function () {
+                update();
+            });
+        }
+    },
+    function (module, exports, __webpack_require__) {
+        var content = __webpack_require__(38);
+        if (typeof content === 'string')
+            content = [[
+                    module.i,
+                    content,
+                    ''
+                ]];
+        var update = __webpack_require__(11)(content, {});
+        if (content.locals)
+            module.exports = content.locals;
+        if (false) {
+            if (!content.locals) {
+                module.hot.accept('!!./../node_modules/css-loader/index.js!./Panic.css', function () {
+                    var newContent = require('!!./../node_modules/css-loader/index.js!./Panic.css');
+                    if (typeof newContent === 'string')
+                        newContent = [[
+                                module.id,
+                                newContent,
+                                ''
+                            ]];
+                    update(newContent);
+                });
+            }
+            module.hot.dispose(function () {
+                update();
+            });
         }
     },
     function (module, exports, __webpack_require__) {
@@ -9444,10 +9681,10 @@
     },
     function (module, exports, __webpack_require__) {
         var util = __webpack_require__(0);
-        var binarySearch = __webpack_require__(29);
+        var binarySearch = __webpack_require__(28);
         var ArraySet = __webpack_require__(6).ArraySet;
         var base64VLQ = __webpack_require__(7);
-        var quickSort = __webpack_require__(31).quickSort;
+        var quickSort = __webpack_require__(30).quickSort;
         function SourceMapConsumer(aSourceMap) {
             var sourceMap = aSourceMap;
             if (typeof aSourceMap === 'string') {
@@ -10240,36 +10477,65 @@
     },
     function (module, exports, __webpack_require__) {
         exports.SourceMapGenerator = __webpack_require__(8).SourceMapGenerator;
-        exports.SourceMapConsumer = __webpack_require__(32).SourceMapConsumer;
-        exports.SourceNode = __webpack_require__(33).SourceNode;
+        exports.SourceMapConsumer = __webpack_require__(31).SourceMapConsumer;
+        exports.SourceNode = __webpack_require__(32).SourceNode;
     },
     function (module, exports, __webpack_require__) {
-        exports = module.exports = __webpack_require__(9)();
-        exports.push([
-            module.i,
-            '.useless-log-overlay {\tposition: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;\n\t\t\t\t\t\toverflow: hidden;\n\t\t\t\t\t\tpointer-events: none;\n\t\t\t\t\t\t-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,\n\t\t\t\t\t\t\tcolor-stop(0.00, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.50, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.60, rgba(0,0,0,0.8)),\n\t\t\t\t\t\t\tcolor-stop(1.00, rgba(0,0,0,1))); }\n\n.useless-log-overlay-body {\n\n\tfont-family: Menlo, monospace;\n\tfont-size: 11px;\n\twhite-space: pre;\n\tbackground: rgba(255,255,255,1);\n\ttext-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }',
-            ''
-        ]);
-    },
-    function (module, exports, __webpack_require__) {
-        exports = module.exports = __webpack_require__(9)();
-        exports.push([
-            module.i,
-            '@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal * { letter-spacing: 0; font-family: Helvetica, sans-serif; }\n.panic-modal { font-family: Helvetica, sans-serif; min-width: 640px; max-width: 90%; transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { font-family: Helvetica, sans-serif; color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; padding: 0; }\n.panic-alert-error .callstack * { font-family: Menlo, monospace; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \\2192   \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.hide:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after  { content: \', \'; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: \':\'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: \' \'; }\n.panic-alert-error .test-log .log-entry        .line:after { content: \' \'; }\n.panic-alert-error           .callstack-entry  .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { max-width: 640px; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n.panic-alert-error.inline-exception:not(:first-child) { margin-top: 10px; border-top: 1px solid #904C34; }\n\n',
-            ''
-        ]);
+        'use strict';
+        (function (process) {
+            'use strict';
+            var isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
+            var path = module.exports = {
+                concat: function concat(a, b) {
+                    var a_endsWithSlash = a[a.length - 1] === '/', b_startsWithSlash = b[0] === '/';
+                    return a + (a_endsWithSlash || b_startsWithSlash ? '' : '/') + (a_endsWithSlash && b_startsWithSlash ? b.substring(1) : b);
+                },
+                resolve: function resolve(x) {
+                    if (path.isAbsolute(x)) {
+                        return path.normalize(x);
+                    }
+                    if (isBrowser) {
+                        return path.normalize(path.concat(window.location.href, x));
+                    } else {
+                        return path.normalize(path.concat(process.cwd(), x));
+                    }
+                },
+                normalize: function normalize(x) {
+                    var output = [], skip = 0;
+                    x.split('/').reverse().filter(function (x) {
+                        return x !== '.';
+                    }).forEach(function (x) {
+                        if (x === '..') {
+                            skip++;
+                        } else if (skip === 0) {
+                            output.push(x);
+                        } else {
+                            skip--;
+                        }
+                    });
+                    var result = output.reverse().join('/');
+                    return (isBrowser && result[0] === '/' ? window.location.origin : '') + result;
+                },
+                isAbsolute: function isAbsolute(x) {
+                    return x[0] === '/' || /^[^\/]*:/.test(x);
+                },
+                relativeToFile: function relativeToFile(a, b) {
+                    return path.isAbsolute(b) ? path.normalize(b) : path.normalize(path.concat(a.split('/').slice(0, -1).join('/'), b));
+                }
+            };
+        }.call(exports, __webpack_require__(5)));
     },
     function (module, exports) {
         'use strict';
         'use strict';
-        module.exports = (arr_, pred) => {
-            const arr = arr_ || [], spans = [];
-            let span = {
+        module.exports = function (arr_, pred) {
+            var arr = arr_ || [], spans = [];
+            var span = {
                 label: undefined,
                 items: [arr.first]
             };
-            arr.forEach(x => {
-                const label = pred(x);
+            arr.forEach(function (x) {
+                var label = pred(x);
                 if (span.label !== label && span.items.length) {
                     spans.push(span = {
                         label: label,
@@ -10288,10 +10554,13 @@
         'use strict';
         (function (process) {
             'use strict';
-            const O = Object, isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, lastOf = x => x[x.length - 1], getSource = __webpack_require__(5), partition = __webpack_require__(37);
+            var O = Object, isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator, lastOf = function (x) {
+                    return x[x.length - 1];
+                }, getSource = __webpack_require__(9), partition = __webpack_require__(35);
             class StackTracey extends Array {
                 constructor(input, offset) {
-                    super();
+                    var _this;
+                    _this = super();
                     this.constructor = StackTracey;
                     this.__proto__ = StackTracey.prototype;
                     if (!input) {
@@ -10306,7 +10575,9 @@
                     }
                     if (Array.isArray(input)) {
                         this.length = input.length;
-                        input.forEach((x, i) => this[i] = x);
+                        input.forEach(function (x, i) {
+                            return _this[i] = x;
+                        });
                     }
                 }
                 static extractEntryMetadata(e) {
@@ -10316,7 +10587,7 @@
                     }));
                 }
                 static updateEntryFilePath(e) {
-                    const short = StackTracey.shortenPath(e.file);
+                    var short = StackTracey.shortenPath(e.file);
                     return O.assign(e, {
                         fileShort: short,
                         thirdParty: StackTracey.isThirdParty(short) && !e.index
@@ -10329,8 +10600,8 @@
                     return shortPath[0] === '~' || shortPath[0] === '/' || shortPath.indexOf('node_modules') === 0 || shortPath.indexOf('webpack/bootstrap') === 0;
                 }
                 static rawParse(str) {
-                    const lines = (str || '').split('\n');
-                    const entries = lines.map(line => {
+                    var lines = (str || '').split('\n');
+                    var entries = lines.map(function (line) {
                         line = line.trim();
                         var callee, fileLineColumn = [], native, planA, planB;
                         if ((planA = line.match(/at (.+) \((.+)\)/)) || (planA = line.match(/(.*)@(.*)/))) {
@@ -10352,7 +10623,9 @@
                             column: parseInt(fileLineColumn[2] || '', 10) || undefined
                         };
                     });
-                    return entries.filter(x => x !== undefined);
+                    return entries.filter(function (x) {
+                        return x !== undefined;
+                    });
                 }
                 withSource(i) {
                     return StackTracey.withSource(this[i]);
@@ -10361,7 +10634,7 @@
                     if (loc.sourceFile || loc.file && loc.file.indexOf('<') >= 0) {
                         return loc;
                     } else {
-                        let resolved = getSource(loc.file).resolve(loc);
+                        var resolved = getSource(loc.file).resolve(loc);
                         if (resolved.sourceFile) {
                             resolved = StackTracey.updateEntryFilePath(O.assign(resolved, { file: resolved.sourceFile.path }));
                         }
@@ -10376,8 +10649,10 @@
                     return new StackTracey(this.map(StackTracey.withSource));
                 }
                 get mergeRepeatedLines() {
-                    return new StackTracey(partition(this, e => e.file + e.line).map(group => {
-                        return group.items.slice(1).reduce((memo, entry) => {
+                    return new StackTracey(partition(this, function (e) {
+                        return e.file + e.line;
+                    }).map(function (group) {
+                        return group.items.slice(1).reduce(function (memo, entry) {
                             memo.callee = (memo.callee || '<anonymous>') + ' \u2192 ' + (entry.callee || '<anonymous>');
                             memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' \u2192 ' + (entry.calleeShort || '<anonymous>');
                             return memo;
@@ -10385,7 +10660,9 @@
                     }));
                 }
                 get clean() {
-                    return this.withSources.mergeRepeatedLines.filter((e, i) => i === 0 || !(e.thirdParty || e.hide));
+                    return this.withSources.mergeRepeatedLines.filter(function (e, i) {
+                        return i === 0 || !(e.thirdParty || e.hide);
+                    });
                 }
                 at(i) {
                     return O.assign({
@@ -10409,30 +10686,70 @@
                 'slice',
                 'concat',
                 'reverse'
-            ].forEach(name => {
-                StackTracey.prototype[name] = function (...args) {
+            ].forEach(function (name) {
+                StackTracey.prototype[name] = function () {
+                    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+                        args[_key] = arguments[_key];
+                    }
                     return new StackTracey(Array.prototype[name].apply(this, args));
                 };
             });
             StackTracey.stack = typeof Symbol !== 'undefined' ? Symbol.for('StackTracey') : '__StackTracey';
             module.exports = StackTracey;
-        }.call(exports, __webpack_require__(10)));
+        }.call(exports, __webpack_require__(5)));
     },
     function (module, exports, __webpack_require__) {
-        String.ify = __webpack_require__(25);
-        __webpack_require__(19);
-        __webpack_require__(20);
-        __webpack_require__(21);
-        __webpack_require__(18);
-        __webpack_require__(16);
-        __webpack_require__(15);
+        exports = module.exports = __webpack_require__(10)();
+        exports.push([
+            module.i,
+            '.useless-log-overlay {\tposition: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;\n\t\t\t\t\t\toverflow: hidden;\n\t\t\t\t\t\tpointer-events: none;\n\t\t\t\t\t\t-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,\n\t\t\t\t\t\t\tcolor-stop(0.00, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.50, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.60, rgba(0,0,0,0.8)),\n\t\t\t\t\t\t\tcolor-stop(1.00, rgba(0,0,0,1))); }\n\n.useless-log-overlay-body {\n\n\tfont-family: Menlo, monospace;\n\tfont-size: 11px;\n\twhite-space: pre;\n\tbackground: rgba(255,255,255,1);\n\ttext-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }',
+            ''
+        ]);
+    },
+    function (module, exports, __webpack_require__) {
+        exports = module.exports = __webpack_require__(10)();
+        exports.push([
+            module.i,
+            '@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal * { letter-spacing: 0; font-family: Helvetica, sans-serif; }\n.panic-modal { font-family: Helvetica, sans-serif; min-width: 640px; max-width: 90%; transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { font-family: Helvetica, sans-serif; color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: \'more\'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: \'less\'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; padding: 0; }\n.panic-alert-error .callstack * { font-family: Menlo, monospace; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: \' \\2192   \'; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.hide:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: \'<< SOURCE NOT LOADED >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: \'<< NATIVE CODE >>\'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: \'<< SOURCE LOADING >>\'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: \' @ \'; }\n\n.panic-alert-error .test-log .location .callee:after  { content: \', \'; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: \':\'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: \' \'; }\n.panic-alert-error .test-log .log-entry        .line:after { content: \' \'; }\n.panic-alert-error           .callstack-entry  .line:after { content: \' \'; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { max-width: 640px; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n.panic-alert-error.inline-exception:not(:first-child) { margin-top: 10px; border-top: 1px solid #904C34; }\n\n',
+            ''
+        ]);
+    },
+    function (module, exports) {
+        if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
+            module.exports = Reflect.ownKeys;
+        } else if (typeof Object.getOwnPropertySymbols === 'function') {
+            module.exports = function Reflect_ownKeys(o) {
+                return Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o));
+            };
+        } else {
+            module.exports = Object.getOwnPropertyNames;
+        }
+    },
+    function (module, exports) {
+        if (typeof fs === 'undefined') {
+            var e = new Error('Cannot find module "fs"');
+            e.code = 'MODULE_NOT_FOUND';
+            throw e;
+        }
+        module.exports = fs;
+    },
+    function (module, exports, __webpack_require__) {
+        'use strict';
+        'use strict';
+        String.ify = __webpack_require__(23);
         __webpack_require__(17);
-        __webpack_require__(24);
-        __webpack_require__(23);
-        __webpack_require__(22);
+        __webpack_require__(18);
+        __webpack_require__(19);
+        __webpack_require__(16);
         __webpack_require__(14);
         __webpack_require__(13);
-        document.ready(() => {
+        __webpack_require__(15);
+        __webpack_require__(22);
+        __webpack_require__(21);
+        __webpack_require__(20);
+        __webpack_require__(25);
+        __webpack_require__(24);
+        document.ready(function () {
             Panic.init();
         });
     }

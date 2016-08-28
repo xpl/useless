@@ -61,11 +61,15 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 39);
+/******/ 	return __webpack_require__(__webpack_require__.s = 41);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/* all exports used */
+/*!**********************************************!*\
+  !*** ../get-source/~/source-map/lib/util.js ***!
+  \**********************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -489,113 +493,204 @@ exports.compareByGeneratedPositionsInflated = compareByGeneratedPositionsInflate
 
 /***/ },
 /* 1 */
+/* all exports used */
+/*!********************************!*\
+  !*** ./~/as-table/as-table.js ***!
+  \********************************/
 /***/ function(module, exports) {
 
 "use strict";
 "use strict";
 
-const
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-O = Object,
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-asColumns = (rows, cfg_) => {
-    
+var O = Object,
+    asColumns = function asColumns(rows, cfg_) {
+
     if (rows.length === 0) {
-        return [] }
+        return [];
+    } else {
+        var _ret = function () {
+            var zip = function zip(arrs, f) {
+                return arrs.reduce(function (a, b) {
+                    return b.map(function (b, i) {
+                        return [].concat(_toConsumableArray(a[i] || []), [b]);
+                    });
+                }, []).map(function (args) {
+                    return f.apply(undefined, _toConsumableArray(args));
+                });
+            },
 
-    else { const
 
-        zip = (arrs, f) => arrs.reduce ((a, b) => b.map ((b, i) => [...a[i] || [], b]), []).map (args => f (...args)),
+            /*  Convert cell data to string (converting multiline text to singleline) */
 
-    /*  Convert cell data to string (converting multiline text to singleline) */
+            cells = rows.map(function (r) {
+                return r.map(function (c) {
+                    return c === undefined ? '' : String(c).replace(/\n/g, '\\n');
+                });
+            }),
 
-        cells           = rows.map (r => r.map (c => (c === undefined) ? '' : String (c).replace (/\n/g, '\\n'))),
 
-    /*  Compute column widths (per row) and max widths (per column)     */
+            /*  Compute column widths (per row) and max widths (per column)     */
 
-        cellWidths      = cells.map (r => r.map (c => c.length)),
-        maxWidths       = zip (cellWidths, Math.max),
+            cellWidths = cells.map(function (r) {
+                return r.map(function (c) {
+                    return c.length;
+                });
+            }),
+                maxWidths = zip(cellWidths, Math.max),
 
-    /*  Default config     */
 
-        cfg             = O.assign ({
-                            delimiter: '  ',
-                            minColumnWidths: maxWidths.map (x => 0),
-                            maxTotalWidth: 0 }, cfg_),
+            /*  Default config     */
 
-    /*  Project desired column widths, taking maxTotalWidth and minColumnWidths in account.     */
+            cfg = O.assign({
+                delimiter: '  ',
+                minColumnWidths: maxWidths.map(function (x) {
+                    return 0;
+                }),
+                maxTotalWidth: 0 }, cfg_),
 
-        totalWidth      = maxWidths.reduce ((a, b) => a + b, 0),
-        relativeWidths  = maxWidths.map (w => w / totalWidth),
-        maxTotalWidth   = cfg.maxTotalWidth - (cfg.delimiter.length * maxWidths.length),
-        excessWidth     = Math.max (0, totalWidth - maxTotalWidth),
-        computedWidths  = zip ([cfg.minColumnWidths, maxWidths, relativeWidths],
-                            (min, max, relative) => Math.max (min, Math.floor (max - excessWidth * relative))),
 
-    /*  This is how many symbols we should pad or cut (per column).  */
+            /*  Project desired column widths, taking maxTotalWidth and minColumnWidths in account.     */
 
-        restCellWidths  = cellWidths.map (widths => zip ([computedWidths, widths], (a, b) => a - b))
+            totalWidth = maxWidths.reduce(function (a, b) {
+                return a + b;
+            }, 0),
+                relativeWidths = maxWidths.map(function (w) {
+                return w / totalWidth;
+            }),
+                maxTotalWidth = cfg.maxTotalWidth - cfg.delimiter.length * maxWidths.length,
+                excessWidth = Math.max(0, totalWidth - maxTotalWidth),
+                computedWidths = zip([cfg.minColumnWidths, maxWidths, relativeWidths], function (min, max, relative) {
+                return Math.max(min, Math.floor(max - excessWidth * relative));
+            }),
 
-    /*  Perform final composition.   */
 
-        return zip ([cells, restCellWidths], (a, b) =>
-                zip ([a, b], (str, w) => (w >= 0)
-                                            ? (str + ' '.repeat (w))
-                                            : (str.slice (0, w))).join (cfg.delimiter))
+            /*  This is how many symbols we should pad or cut (per column).  */
+
+            restCellWidths = cellWidths.map(function (widths) {
+                return zip([computedWidths, widths], function (a, b) {
+                    return a - b;
+                });
+            });
+
+            /*  Perform final composition.   */
+
+            return {
+                v: zip([cells, restCellWidths], function (a, b) {
+                    return zip([a, b], function (str, w) {
+                        return w >= 0 ? str + ' '.repeat(w) : str.slice(0, w);
+                    }).join(cfg.delimiter);
+                })
+            };
+        }();
+
+        if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
     }
 },
+    asTable = function asTable(cfg) {
+    return O.assign(function (arr) {
 
-asTable = cfg => O.assign (arr => {
+        /*  Print arrays  */
 
-/*  Print arrays  */
+        if (arr[0] && Array.isArray(arr[0])) return asColumns(arr, cfg).join('\n');
 
-    if (arr[0] && Array.isArray (arr[0]))
-        return asColumns (arr, cfg).join ('\n')
+        /*  Print objects   */
 
-/*  Print objects   */
+        var colNames = [].concat(_toConsumableArray(new Set(arr.map(O.keys).reduce(function (a, b) {
+            return [].concat(_toConsumableArray(a), _toConsumableArray(b));
+        }, [])))),
+            columns = [colNames].concat(_toConsumableArray(arr.map(function (o) {
+            return colNames.map(function (key) {
+                return o[key];
+            });
+        }))),
+            lines = asColumns(columns, O.assign({ minColumnWidths: colNames.map(function (n) {
+                return n.length;
+            }) }, cfg));
 
-    const colNames = [...new Set (arr.map (O.keys).reduce ((a, b) => [...a, ...b], []))],
-          columns  = [colNames, ...arr.map (o => colNames.map (key => o[key]))],
-          lines    = asColumns (columns, O.assign ({ minColumnWidths: colNames.map (n => n.length) }, cfg))
+        return [lines[0], '-'.repeat(lines[0].length)].concat(_toConsumableArray(lines.slice(1))).join('\n');
+    }, cfg, {
 
-    return [lines[0], '-'.repeat (lines[0].length), ...lines.slice (1)].join ('\n')
+        configure: function configure(newConfig) {
+            return asTable(O.assign({}, cfg, newConfig));
+        }
+    });
+};
 
-}, cfg, {
-
-    configure: newConfig => asTable (O.assign ({}, cfg, newConfig)),
-})
-
-module.exports = asTable ({ maxTotalWidth: 120 })
-
-
-
+module.exports = asTable({ maxTotalWidth: 120 });
 
 /***/ },
 /* 2 */
+/* all exports used */
+/*!******************************************************!*\
+  !*** ./~/es7-object-polyfill/es7-object-polyfill.js ***!
+  \******************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
-module.exports = (function () {
+"use strict";
+'use strict';
+
+module.exports = function () {
 	"use strict";
 
-	var ownKeys      = __webpack_require__ (26)
-	var reduce       = Function.bind.call(Function.call, Array.prototype.reduce);
+	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 39);
+	var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
 	var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
-	var concat       = Function.bind.call(Function.call, Array.prototype.concat);
+	var concat = Function.bind.call(Function.call, Array.prototype.concat);
 
 	if (!Object.values) {
-		 Object.values = function values(O) {
-			return reduce(ownKeys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []) } }
+		Object.values = function values(O) {
+			return reduce(ownKeys(O), function (v, k) {
+				return concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []);
+			}, []);
+		};
+	}
 
 	if (!Object.entries) {
-		 Object.entries = function entries(O) {
-			return reduce(ownKeys(O), (e, k) => concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []) } }
+		Object.entries = function entries(O) {
+			return reduce(ownKeys(O), function (e, k) {
+				return concat(e, typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []);
+			}, []);
+		};
+	}
 
-	return Object
-
-}) ();
+	return Object;
+}();
 
 /***/ },
 /* 3 */
+/* all exports used */
+/*!******************************************!*\
+  !*** ./~/string.bullet/string.bullet.js ***!
+  \******************************************/
+/***/ function(module, exports) {
+
+"use strict";
+'use strict';
+
+module.exports = function (bullet, arg) {
+
+    var isArray = Array.isArray(arg);
+
+    var lines = isArray ? arg : arg.split('\n');
+
+    var indent = bullet.replace(/[^\s]/g, ' '); // replace non-whitespace with whitespace
+    lines = lines.map(function (line, i) {
+        return i === 0 ? bullet + line : indent + line;
+    });
+
+    return isArray ? lines : lines.join('\n');
+};
+
+/***/ },
+/* 4 */
+/* all exports used */
+/*!*********************************!*\
+  !*** ./~/jquery/dist/jquery.js ***!
+  \*********************************/
 /***/ function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*eslint-disable no-unused-vars*/
@@ -10675,137 +10770,181 @@ return jQuery;
 
 
 /***/ },
-/* 4 */
+/* 5 */
+/* all exports used */
+/*!**************************************************!*\
+  !*** ./~/node-libs-browser/~/process/browser.js ***!
+  \**************************************************/
 /***/ function(module, exports) {
 
-module.exports = function (bullet, arg) {
+// shim for using process in browser
+var process = module.exports = {};
 
-                    var isArray = Array.isArray (arg)
-                    
-                    var lines = isArray ? arg : arg.split ('\n')
-                    
-                    var indent = bullet.replace (/[^\s]/g, ' ') // replace non-whitespace with whitespace
-                        lines = lines.map (function (line, i) { return (i === 0) ? (bullet + line) : (indent + line) })
-                    
-                    return isArray ? lines : lines.join ('\n') }
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
 
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
+var cachedSetTimeout;
+var cachedClearTimeout;
 
-"use strict";
-"use strict";
-
-/*  ------------------------------------------------------------------------ */
-
-const O                 = Object,
-      isBrowser         = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
-      SourceMapConsumer = __webpack_require__ (34).SourceMapConsumer,
-      path              = __webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"./impl/path\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())),
-      memoize           = __webpack_require__ (27),
-      lastOf            = x => x[x.length - 1]
-
-/*  ------------------------------------------------------------------------ */
-
-const newSourceFileMemoized = memoize (file => new SourceFile (file))
-
-const getSource = module.exports = file => { return newSourceFileMemoized (path.resolve (file)) }
-
-/*  ------------------------------------------------------------------------ */
-
-class SourceMap {
-
-    constructor (originalFilePath, sourceMapPath) {
-
-        this.file      = getSource (path.relativeToFile (originalFilePath, sourceMapPath))
-        this.parsed    = (this.file.text && SourceMapConsumer (JSON.parse (this.file.text))) || null
-        this.sourceFor = memoize (this.sourceFor.bind (this))
+(function () {
+    try {
+        cachedSetTimeout = setTimeout;
+    } catch (e) {
+        cachedSetTimeout = function () {
+            throw new Error('setTimeout is not defined');
+        }
     }
-
-    sourceFor (file) {
-        const content = this.parsed.sourceContentFor (file, true /* return null on missing */)
-        const fullPath = path.relativeToFile (this.file.path, file)
-        return content ? new SourceFile (fullPath, content) : getSource (fullPath)
+    try {
+        cachedClearTimeout = clearTimeout;
+    } catch (e) {
+        cachedClearTimeout = function () {
+            throw new Error('clearTimeout is not defined');
+        }
     }
-
-    resolve (loc) {
-
-        const originalLoc = this.parsed.originalPositionFor (loc)
-        return originalLoc.source ? this.sourceFor (originalLoc.source)
-                                        .resolve (O.assign ({}, loc, {
-                                            line: originalLoc.line,
-                                            column: originalLoc.column,
-                                            name: originalLoc.name })) : loc
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
     }
-}
-
-/*  ------------------------------------------------------------------------ */
-
-class SourceFile {
-
-    constructor (path, text /* optional */) {
-
-        this.path = path
-
-        if (text) {
-            this.text = text }
-
-        else {
-            try {
-                if (isBrowser) {
-
-                    let xhr = new XMLHttpRequest ()
-
-                        xhr.open ('GET', path, false /* SYNCHRONOUS XHR FTW :) */)
-                        xhr.send (null)
-
-                    this.text = xhr.responseText }
-
-                else {
-                    this.text = __webpack_require__ (!(function webpackMissingModule() { var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).readFileSync (path, { encoding: 'utf8' }) } }
-
-            catch (e) {
-                this.error = e
-                this.text = '' } }
-    }
-
-    get lines () {
-        return (this.lines_ = this.lines_ || this.text.split ('\n'))
-    }
-
-    get sourceMap () {
-
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
         try {
-            if (this.sourceMap_ === undefined) {
-                let url = this.text.match (/\u0023 sourceMappingURL=(.+\.map)/) // escape #, otherwise it will match this exact line.. %)
-                if (url = (url && url[1])) {
-                    this.sourceMap_ = new SourceMap (this.path, url) }
-                else {
-                    this.sourceMap_ = null } } }
-
-        catch (e) {
-            this.sourceMapError = e
-            this.sourceMap_ = null }
-
-        return this.sourceMap_
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
     }
 
-    resolve (loc /* { line[, column] } */) /* → { line, column, sourceFile, sourceLine } */ {
 
-        return this.sourceMap ? this.sourceMap.resolve (loc) : O.assign ({}, loc, {
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
 
-            sourceFile:  this,
-            sourceLine: (this.lines[loc.line - 1] || ''),
-            error:       this.error
-        })
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
     }
 }
 
-/*  ------------------------------------------------------------------------ */
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
 
 
 /***/ },
 /* 6 */
+/* all exports used */
+/*!***************************************************!*\
+  !*** ../get-source/~/source-map/lib/array-set.js ***!
+  \***************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -10815,7 +10954,7 @@ class SourceFile {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(0);
+var util = __webpack_require__(/*! ./util */ 0);
 var has = Object.prototype.hasOwnProperty;
 
 /**
@@ -10916,6 +11055,10 @@ exports.ArraySet = ArraySet;
 
 /***/ },
 /* 7 */
+/* all exports used */
+/*!****************************************************!*\
+  !*** ../get-source/~/source-map/lib/base64-vlq.js ***!
+  \****************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -10955,7 +11098,7 @@ exports.ArraySet = ArraySet;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var base64 = __webpack_require__(28);
+var base64 = __webpack_require__(/*! ./base64 */ 27);
 
 // A single base 64 digit can contain 6 bits of data. For the base 64 variable
 // length quantities we use in the source map spec, the first bit is the sign,
@@ -11062,6 +11205,10 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
 
 /***/ },
 /* 8 */
+/* all exports used */
+/*!**************************************************************!*\
+  !*** ../get-source/~/source-map/lib/source-map-generator.js ***!
+  \**************************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -11071,10 +11218,10 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var base64VLQ = __webpack_require__(7);
-var util = __webpack_require__(0);
-var ArraySet = __webpack_require__(6).ArraySet;
-var MappingList = __webpack_require__(30).MappingList;
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 7);
+var util = __webpack_require__(/*! ./util */ 0);
+var ArraySet = __webpack_require__(/*! ./array-set */ 6).ArraySet;
+var MappingList = __webpack_require__(/*! ./mapping-list */ 29).MappingList;
 
 /**
  * An instance of the SourceMapGenerator represents a source map which is
@@ -11472,6 +11619,152 @@ exports.SourceMapGenerator = SourceMapGenerator;
 
 /***/ },
 /* 9 */
+/* all exports used */
+/*!***********************************!*\
+  !*** ../get-source/get-source.js ***!
+  \***********************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+"use strict";
+
+/*  ------------------------------------------------------------------------ */
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var O = Object,
+    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
+    SourceMapConsumer = __webpack_require__(/*! source-map */ 33).SourceMapConsumer,
+    path = __webpack_require__(/*! ./impl/path */ 34),
+    memoize = __webpack_require__(/*! lodash.memoize */ 26),
+    lastOf = function lastOf(x) {
+    return x[x.length - 1];
+};
+
+/*  ------------------------------------------------------------------------ */
+
+var newSourceFileMemoized = memoize(function (file) {
+    return new SourceFile(file);
+});
+
+var getSource = module.exports = function (file) {
+    return newSourceFileMemoized(path.resolve(file));
+};
+
+/*  ------------------------------------------------------------------------ */
+
+var SourceMap = function () {
+    function SourceMap(originalFilePath, sourceMapPath) {
+        _classCallCheck(this, SourceMap);
+
+        this.file = getSource(path.relativeToFile(originalFilePath, sourceMapPath));
+        this.parsed = this.file.text && SourceMapConsumer(JSON.parse(this.file.text)) || null;
+        this.sourceFor = memoize(this.sourceFor.bind(this));
+    }
+
+    _createClass(SourceMap, [{
+        key: 'sourceFor',
+        value: function sourceFor(file) {
+            var content = this.parsed.sourceContentFor(file, true /* return null on missing */);
+            var fullPath = path.relativeToFile(this.file.path, file);
+            return content ? new SourceFile(fullPath, content) : getSource(fullPath);
+        }
+    }, {
+        key: 'resolve',
+        value: function resolve(loc) {
+
+            var originalLoc = this.parsed.originalPositionFor(loc);
+            return originalLoc.source ? this.sourceFor(originalLoc.source).resolve(O.assign({}, loc, {
+                line: originalLoc.line,
+                column: originalLoc.column,
+                name: originalLoc.name })) : loc;
+        }
+    }]);
+
+    return SourceMap;
+}();
+
+/*  ------------------------------------------------------------------------ */
+
+var SourceFile = function () {
+    function SourceFile(path, text /* optional */) {
+        _classCallCheck(this, SourceFile);
+
+        this.path = path;
+
+        if (text) {
+            this.text = text;
+        } else {
+            try {
+                if (isBrowser) {
+
+                    var xhr = new XMLHttpRequest();
+
+                    xhr.open('GET', path, false /* SYNCHRONOUS XHR FTW :) */);
+                    xhr.send(null);
+
+                    this.text = xhr.responseText;
+                } else {
+                    this.text = __webpack_require__(/*! fs */ 40).readFileSync(path, { encoding: 'utf8' });
+                }
+            } catch (e) {
+                this.error = e;
+                this.text = '';
+            }
+        }
+    }
+
+    _createClass(SourceFile, [{
+        key: 'resolve',
+        value: function resolve(loc /* { line[, column] } */) /* → { line, column, sourceFile, sourceLine } */{
+
+            return this.sourceMap ? this.sourceMap.resolve(loc) : O.assign({}, loc, {
+
+                sourceFile: this,
+                sourceLine: this.lines[loc.line - 1] || '',
+                error: this.error
+            });
+        }
+    }, {
+        key: 'lines',
+        get: function get() {
+            return this.lines_ = this.lines_ || this.text.split('\n');
+        }
+    }, {
+        key: 'sourceMap',
+        get: function get() {
+
+            try {
+                if (this.sourceMap_ === undefined) {
+                    var url = this.text.match(/\u0023 sourceMappingURL=(.+\.map)/); // escape #, otherwise it will match this exact line.. %)
+                    if (url = url && url[1]) {
+                        this.sourceMap_ = new SourceMap(this.path, url);
+                    } else {
+                        this.sourceMap_ = null;
+                    }
+                }
+            } catch (e) {
+                this.sourceMapError = e;
+                this.sourceMap_ = null;
+            }
+
+            return this.sourceMap_;
+        }
+    }]);
+
+    return SourceFile;
+}();
+
+/*  ------------------------------------------------------------------------ */
+
+/***/ },
+/* 10 */
+/* all exports used */
+/*!**************************************!*\
+  !*** ./~/css-loader/lib/css-base.js ***!
+  \**************************************/
 /***/ function(module, exports) {
 
 /*
@@ -11527,104 +11820,11 @@ module.exports = function() {
 
 
 /***/ },
-/* 10 */
-/***/ function(module, exports) {
-
-// shim for using process in browser
-
-var process = module.exports = {};
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = setTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    clearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        setTimeout(drainQueue, 0);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-
-/***/ },
 /* 11 */
+/* all exports used */
+/*!*************************************!*\
+  !*** ./~/style-loader/addStyles.js ***!
+  \*************************************/
 /***/ function(module, exports) {
 
 /*
@@ -11877,6 +12077,10 @@ function updateLink(linkElement, obj) {
 
 /***/ },
 /* 12 */
+/* all exports used */
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
 /***/ function(module, exports) {
 
 var g;
@@ -11902,64 +12106,16 @@ module.exports = g;
 
 /***/ },
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(35);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(11)(content, {});
-if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../../css-loader/index.js!./LogOverlay.css", function() {
-			var newContent = require("!!./../../css-loader/index.js!./LogOverlay.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(36);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// add the styles to the DOM
-var update = __webpack_require__(11)(content, {});
-if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!./../../css-loader/index.js!./Panic.css", function() {
-			var newContent = require("!!./../../css-loader/index.js!./Panic.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
-
-/***/ },
-/* 15 */
+/* all exports used */
+/*!******************************!*\
+  !*** ./base/Testosterone.js ***!
+  \******************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
 "use strict";
 
-const O = __webpack_require__ (2)
+var O = __webpack_require__(/*! es7-object-polyfill */ 2);
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
@@ -11974,18 +12130,16 @@ Testosterone is a cross-platform unit test shell. Features:
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-const bullet  = __webpack_require__ (4),
-      asTable = __webpack_require__ (1)
+var bullet = __webpack_require__(/*! string.bullet */ 3),
+    asTable = __webpack_require__(/*! as-table */ 1);
 
 /*  A contract for test routines that says that test should fail and it's the behavior expected
  */
-Tags.define ('shouldFail')
-
+Tags.define('shouldFail');
 
 /*  A contract for custom assertions, says that assertion is asynchronous.
  */
-Tags.define ('async')
-
+Tags.define('async');
 
 /*  This is test suite for tests framework itself.
 
@@ -12000,231 +12154,274 @@ _.tests.Testosterone = {
             and if second argument is there, your routine will be considered as asynchronous,
             i.e. not completing until 'done' is explicitly triggered.
      */
-    'async': function (done) {
-        _.delay (function () {
-            done () }) },
-
+    'async': function async(done) {
+        _.delay(function () {
+            done();
+        });
+    },
 
     /*  4.  Use $tests to define unit tests on prototypes (works only on stuff in global namespace)
      */
-    '$tests': function () {
+    '$tests': function $tests() {
 
-        const DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
-        const DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
+        var DummyPrototypeWithTest = $prototype({ $test: function $test() {} });
+        var DummyPrototypeWithTests = $prototype({ $tests: { dummy: function dummy() {} } });
 
         /*  $test/$tests renders to static immutable property $tests
          */
-        $assertTypeMatches (DummyPrototypeWithTests.$tests, [{ '*': 'function' }])
-        $assertThrows (function () { DummyPrototypeWithTests.$tests = 42 })
+        $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
+        $assertThrows(function () {
+            DummyPrototypeWithTests.$tests = 42;
+        });
 
         /*  Tests are added to Testosterone.prototypeTests
          */
-        $assertMatches (_.pluck (Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest .$tests,
-                                                                         DummyPrototypeWithTests.$tests]) }
- }
+        $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest.$tests, DummyPrototypeWithTests.$tests]);
+    }
+};
 
 /*  For marking methods in internal impl that should publish themselves as global functions (like $assert)
  */
-Tags.define ('assertion')
+Tags.define('assertion');
 
-$global.Testosterone = $singleton ({
+$global.Testosterone = $singleton({
 
     prototypeTests: [],
 
-    get isRunning () {
-        return this.currentAssertion !== undefined },
+    get isRunning() {
+        return this.currentAssertion !== undefined;
+    },
 
     /*  Hook up to assertion syntax defined in common.js
      */
-    constructor: function () {
+    constructor: function constructor() {
+        var _this = this;
 
-        _.each (_.assertions, function (fn, name) {
-                                    this.defineAssertion (name, (name === 'assertFails') ?
-                                        $shouldFail (function (what) { what.call (this) }) : fn) }, this);
+        _.each(_.assertions, function (fn, name) {
+            this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
+                what.call(this);
+            }) : fn);
+        }, this);
 
         /*  For defining tests inside prototype definitions
          */
         (function (register) {
-            $prototype.macro ('$test',  register)
-            $prototype.macro ('$tests', register) }) ((def, value, name) => {
-                                                        this.prototypeTests.push ({
-                                                            proto: def.constructor,
-                                                            tests: value })
+            $prototype.macro('$test', register);
+            $prototype.macro('$tests', register);
+        })(function (def, value, name) {
+            _this.prototypeTests.push({
+                proto: def.constructor,
+                tests: value });
 
-                                                        def.$tests = $static ($property ($constant (
-                                                            (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
+            def.$tests = $static($property($constant(_.isStrictlyObject(value) && value || _.object([['test', value]]))));
 
-                                                        return def })
-        this.run = this.$ (this.run) },
+            return def;
+        });
+        this.run = this.$(this.run);
+    },
 
     /*  Entry point
      */
-    run: _.interlocked (function (cfg_) {
+    run: _.interlocked(function (cfg_) {
+        var _this2 = this;
 
         /*  Configuration
          */
         var defaults = {
             suites: [],
-            silent:  true,
+            silent: true,
             verbose: false,
             timeout: 2000,
             filter: _.identity,
-            testStarted:  function (test) {},
-            testComplete: function (test) {} }
+            testStarted: function testStarted(test) {},
+            testComplete: function testComplete(test) {} };
 
-        var cfg = this.runConfig = _.extend (defaults, cfg_)
+        var cfg = this.runConfig = _.extend(defaults, cfg_);
 
         /*  Read cfg.suites
          */
-        var suitesIsArray = _.isArray (cfg.suites) // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
-        var suites = _.map (cfg.suites, this.$ (function (suite, name) {
-            return this.testSuite (suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto) }))
+        var suitesIsArray = _.isArray(cfg.suites); // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suites = _.map(cfg.suites, this.$(function (suite, name) {
+            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto);
+        }));
 
         /*  Pick prototype tests
          */
-        var prototypeTests = cfg.codebase === false ? [] : this.collectPrototypeTests ()
+        var prototypeTests = cfg.codebase === false ? [] : this.collectPrototypeTests();
 
         /*  Gather tests
          */
-        var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
-        var allTests    = _.flatten (_.pluck (baseTests.concat (suites).concat (prototypeTests), 'tests'))
-        var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
+        var baseTests = cfg.codebase === false ? [] : this.collectTests();
+        var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
+        var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
 
         /*  Reset context (assigning indices)
          */
-        this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
+        this.runningTests = _.map(selectTests, function (test, i) {
+            return _.extend(test, { indent: cfg.indent, index: i });
+        });
 
-        _.each (this.runningTests, function (t) {
+        _.each(this.runningTests, function (t) {
             if (!(t.routine instanceof Function)) {
-                log.ee (t.suite, t.name, '– test routine is not a function:', t.routine)
-                throw new Error () } })
+                log.ee(t.suite, t.name, '– test routine is not a function:', t.routine);
+                throw new Error();
+            }
+        });
 
-        this.runningTests = _.filter (this.runningTests, cfg.filter || _.identity)
+        this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
 
         /*  Go
          */
-        return    __.each (this.runningTests, this.$ (this.runTest))
-                    .then (() => {
-                            _.assert (cfg.done !== true)
-                                      cfg.done   = true
+        return __.each(this.runningTests, this.$(this.runTest)).then(function () {
+            _.assert(cfg.done !== true);
+            cfg.done = true;
 
-                            this.printLog (cfg)
-                            this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                            this.failed = (this.failedTests.length > 0)
-                            
-                            return !this.failed })
-                    
-                    .catch (e => {
-                                log.margin ()
-                                log.ee (log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e)
-                                throw e })
+            _this2.printLog(cfg);
+            _this2.failedTests = _.filter(_this2.runningTests, _.property('failed'));
+            _this2.failed = _this2.failedTests.length > 0;
+
+            return !_this2.failed;
+        }).catch(function (e) {
+            log.margin();
+            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
+            throw e;
+        });
     }),
 
-    onException: function (e) {
-        if (this.currentAssertion) 
-            this.currentAssertion.onException (e)
-        else
-            throw e },
+    onException: function onException(e) {
+        if (this.currentAssertion) this.currentAssertion.onException(e);else throw e;
+    },
 
     /*  You may define custom assertions through this API
      */
-    defineAssertions: function (assertions) {
-        _.each (assertions, function (fn, name) {
-            this.defineAssertion (name, fn) }, this) },
+    defineAssertions: function defineAssertions(assertions) {
+        _.each(assertions, function (fn, name) {
+            this.defineAssertion(name, fn);
+        }, this);
+    },
 
     /*  Internal impl
      */
-    runTest: function (test, i) { var self = this, runConfig = this.runConfig
+    runTest: function runTest(test, i) {
+        var self = this,
+            runConfig = this.runConfig;
 
-        log.impl.configStack = [] // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
-    
-        return __.then (runConfig.testStarted (test), function () {
+        log.impl.configStack = []; // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
 
-            test.verbose = runConfig.verbose
-            test.timeout = runConfig.timeout
-            test.startTime = Date.now ()
-            return test.run ()
-                       .then (function () {
-                                test.time = (Date.now () - test.startTime)
-                                return runConfig.testComplete (test) }) }) },
+        return __.then(runConfig.testStarted(test), function () {
 
-    collectTests: function () {
-        return _.map (_.tests, this.$ (function (suite, name) {
-            return this.testSuite (name, suite) } )) },
-
-    collectPrototypeTests () {
-        return this.prototypeTests.map (def => this.testSuite (def.proto.$meta.name, def.tests, undefined, def.proto))
+            test.verbose = runConfig.verbose;
+            test.timeout = runConfig.timeout;
+            test.startTime = Date.now();
+            return test.run().then(function () {
+                test.time = Date.now() - test.startTime;
+                return runConfig.testComplete(test);
+            });
+        });
     },
 
-    testSuite: function (name, tests, context, proto) { return { 
-        name: name || '',
-        tests: _(O.entries (((typeof tests === 'function') && _.fromPairs ([[name, tests]])) || tests))
-                .map (function (keyValue) {
-                        var test = new Test ({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context })
-                            test.complete (function () {
-                                if (!(test.hasLog = (test.logCalls.length > 0))) {
-                                         if (test.failed)  { log.red   ('FAIL') }
-                                    else if (test.verbose) { log.green ('PASS') } } })
-
-                            return test }) } },
-
-    defineAssertion: function (name, def) {
-
-        var self = this
-        var fn   = $untag (def)
-
-        delete $global['$' + name]
-               $global['$' + name] = _.withSameArgs (fn, function () {
-
-                    var loc = (new StackTracey ()).withSource (($platform.Browser && !$platform.Chrome) ? 0 : 1)
-                    
-                    if (!self.currentAssertion) {
-                        return fn.apply (self, arguments) }
-                    else {
-                        return self.currentAssertion.babyAssertion (name, def, fn, arguments, loc) } })
+    collectTests: function collectTests() {
+        return _.map(_.tests, this.$(function (suite, name) {
+            return this.testSuite(name, suite);
+        }));
     },
 
-    printLog: function (cfg) { if (!cfg.supressLog) {
+    collectPrototypeTests: function collectPrototypeTests() {
+        var _this3 = this;
 
-        var loggedTests = _.filter (this.runningTests, function (test) { return test.failed || (!cfg.silent && test.hasLog) })
-        var failedTests = _.filter (this.runningTests, _.property ('failed'))
+        return this.prototypeTests.map(function (def) {
+            return _this3.testSuite(def.proto.$meta && def.proto.$meta.name || '<prototype>', def.tests, undefined, def.proto);
+        });
+    },
 
-        _.invoke (cfg.verbose ? this.runningTests : loggedTests, 'printLog')
 
-        if (failedTests.length) {
-            log.orange ('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck (failedTests, 'name').join (', '), '\n\n') }
+    testSuite: function testSuite(name, tests, context, proto) {
+        return {
+            name: name || '',
+            tests: _(O.entries(typeof tests === 'function' && _.fromPairs([[name, tests]]) || tests)).map(function (keyValue) {
+                var test = new Test({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context });
+                test.complete(function () {
+                    if (!(test.hasLog = test.logCalls.length > 0)) {
+                        if (test.failed) {
+                            log.red('FAIL');
+                        } else if (test.verbose) {
+                            log.green('PASS');
+                        }
+                    }
+                });
 
-        else if (cfg.silent !== true) {
-            log.green ('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n') } } } })
+                return test;
+            }) };
+    },
 
+    defineAssertion: function defineAssertion(name, def) {
+
+        var self = this;
+        var fn = $untag(def);
+
+        delete $global['$' + name];
+        $global['$' + name] = _.withSameArgs(fn, function () {
+
+            var loc = new StackTracey().withSource($platform.Browser && !$platform.Chrome ? 0 : 1);
+
+            if (!self.currentAssertion) {
+                return fn.apply(self, arguments);
+            } else {
+                return self.currentAssertion.babyAssertion(name, def, fn, arguments, loc);
+            }
+        });
+    },
+
+    printLog: function printLog(cfg) {
+        if (!cfg.supressLog) {
+
+            var loggedTests = _.filter(this.runningTests, function (test) {
+                return test.failed || !cfg.silent && test.hasLog;
+            });
+            var failedTests = _.filter(this.runningTests, _.property('failed'));
+
+            _.invoke(cfg.verbose ? this.runningTests : loggedTests, 'printLog');
+
+            if (failedTests.length) {
+                log.orange('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck(failedTests, 'name').join(', '), '\n\n');
+            } else if (cfg.silent !== true) {
+                log.green('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n');
+            }
+        }
+    } });
 
 /*  Encapsulates internals of test's I/O.
  */
-$global.Test = $prototype ({
+$global.Test = $prototype({
 
-    constructor: function (cfg) {
-        _.defaults (this, cfg, {
-            name:       '<< UNNAMED FOR UNKNOWN REASON >>',
-            failed:     false,
-            routine:    undefined,
-            verbose:    false,
-            depth:      1,
-            indent:     0,
+    constructor: function constructor(cfg) {
+        _.defaults(this, cfg, {
+            name: '<< UNNAMED FOR UNKNOWN REASON >>',
+            failed: false,
+            routine: undefined,
+            verbose: false,
+            depth: 1,
+            indent: 0,
             failedAssertions: [],
-            context:    this,
-            complete: _.extend (_.barrier (), { context: this }) })
+            context: this,
+            complete: _.extend(_.barrier(), { context: this }) });
 
-        this.babyAssertion = _.interlocked (this.babyAssertion) },
+        this.babyAssertion = _.interlocked(this.babyAssertion);
+    },
 
-    finalize: function () {
-        this.babyAssertion.wait (this.$ (function () {
+    finalize: function finalize() {
+        this.babyAssertion.wait(this.$(function () {
             if (this.canFail && this.failedAssertions.length) {
-                this.failed = true }
-            this.complete (true) })) },
+                this.failed = true;
+            }
+            this.complete(true);
+        }));
+    },
 
-    babyAssertion: function (name, def, fn, args, loc) { var self = this
+    babyAssertion: function babyAssertion(name, def, fn, args, loc) {
+        var self = this;
 
-        var assertion = new Test ({
+        var assertion = new Test({
             mother: this,
             name: name,
             shouldFail: def.$shouldFail || this.shouldFail,
@@ -12233,414 +12430,475 @@ $global.Test = $prototype ({
             context: this.context,
             timeout: this.timeout / 2,
             verbose: this.verbose,
-            silent:  this.silent,
-            routine: Tags.modify (def, function (fn) {
-                                            return function (done) {
-                                                    if ($async.is (args[0]) || $async.is (def)) {
-                                                        _.cps.apply (fn, self.context, args, function (args, then) {
-                                                                                                         if (then) {
-                                                                                                             then.apply (this, args) }
-                                                                                                         done () }) }
-                                                    else {
-                                                        try       { fn.apply (self.context, args); done (); }
-                                                        catch (e) { assertion.onException (e); } } } }) })
+            silent: this.silent,
+            routine: Tags.modify(def, function (fn) {
+                return function (done) {
+                    if ($async.is(args[0]) || $async.is(def)) {
+                        _.cps.apply(fn, self.context, args, function (args, then) {
+                            if (then) {
+                                then.apply(this, args);
+                            }
+                            done();
+                        });
+                    } else {
+                        try {
+                            fn.apply(self.context, args);done();
+                        } catch (e) {
+                            assertion.onException(e);
+                        }
+                    }
+                };
+            }) });
 
-        return assertion.run ()
-                        .finally (function (e, x) {
-                                Testosterone.currentAssertion = self
-                                if (assertion.failed || (assertion.verbose && assertion.logCalls.notEmpty)) {
-                                    var src = assertion.location.sourceLine.trim ()
-                                    log.red (log.config ({ location: assertion.location, where: assertion.location }), src)
-                                    assertion.evalLogCalls ()
-                                    return src } })
+        return assertion.run().finally(function (e, x) {
+            Testosterone.currentAssertion = self;
+            if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
+                var src = assertion.location.sourceLine.trim();
+                log.red(log.config({ location: assertion.location, where: assertion.location }), src);
+                assertion.evalLogCalls();
+                return src;
+            }
+        }).then(function () {
+            if (assertion.failed && self.canFail) {
+                self.failedAssertions.push(assertion);
+            }
+        }).catch(function (e) {
 
-                        .then (function () {
-                            if (assertion.failed && self.canFail) {
-                                self.failedAssertions.push (assertion) } })
+            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
+        });
+    },
 
-                        .catch (function (e) {
+    canFail: $property(function () {
+        return !this.failed && !this.shouldFail;
+    }),
 
-                            log.ee (log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e)
+    fail: function fail() {
+        this.failed = true;
+        this.finalize();
+    },
 
-                        }) },
+    assertionStack: $property(function () {
+        var result = [],
+            a = this;do {
+            result.push(a);a = a.mother;
+        } while (a);
+        return result;
+    }),
 
-    canFail: $property (function () {
-        return !this.failed && !this.shouldFail }),
+    onException: function onException(e) {
 
-    fail: function () {
-        this.failed = true
-        this.finalize () },
+        if (this.canFail || this.verbose) {
 
-    assertionStack: $property (function () { var result = [],
-                                                      a = this; do { result.push (a); a = a.mother } while (a)
-                                          return result }),
+            if (_.isAssertionError(e)) {
+                //  • a
+                //  • b
+                if ('notMatching' in e) {
+                    var notMatching = _.coerceToArray(e.notMatching);
+                    if (e.asColumns) {
+                        log.orange(asTable(_.map(notMatching, function (obj) {
+                            return ['\t• ' + _.keys(obj)[0], String.ify(_.values(obj)[0])];
+                        })));
+                    } else {
+                        var cases = _.map(notMatching, log.impl.stringify.arity1.then(bullet.$('\t• ')));
+                        var common = _.reduce2(cases, _.longestCommonSubstring) || '';
+                        if (common.length < 4) {
+                            common = undefined;
+                        }
 
-    onException: function (e) {
+                        _.each(cases, function (what) {
 
-            if (this.canFail || this.verbose) {
+                            if (common) {
+                                var where = what.indexOf(common);
+                                log.write(log.color.orange, what.substr(0, where), log.color.dark, common, log.color.orange, what.substr(where + common.length));
+                            } else {
+                                log.orange(what);
+                            }
+                        });
+                    }
+                }
+            }
 
-                if (_.isAssertionError (e)) {
-                    //  • a
-                    //  • b
-                    if ('notMatching' in e) { var notMatching = _.coerceToArray (e.notMatching)
-                        if (e.asColumns) {
-                            log.orange (
-                                asTable (_.map (notMatching, function (obj) {
-                                    return ['\t• ' + _.keys (obj)[0], String.ify (_.values (obj)[0])] }))) }
-                        else {
-                            var cases  = _.map (notMatching, log.impl.stringify.arity1.then (bullet.$ ('\t• ')))
-                            var common = _.reduce2 (cases, _.longestCommonSubstring) || ''
-                            if (common.length < 4) {
-                                common = undefined }
+            // print exception
+            else {
+                    if (this.depth > 1) {
+                        log.newline();
+                    }
+                    log.write(e);
+                }
+            log.newline();
+        }
 
-                            _.each (cases, function (what) {
+        if (this.canFail) {
+            this.fail();
+        } else {
+            this.finalize();
+        }
+    },
 
-                                    if (common) {                                  var where  = what.indexOf (common)
-                                        log.write ( log.color.orange,  what.substr (0, where),
-                                                    log.color.dark,    common,
-                                                    log.color.orange,  what.substr (where + common.length)) }
+    run: function run() {
+        var self = Testosterone.currentAssertion = this,
+            routine = Tags.unwrap(this.routine);
 
-                                    else {
-                                        log.orange (what) } }) }} }
-                        
-                    // print exception
-                else {
-                    if (this.depth > 1) { log.newline () }
-                                          log.write (e) }
-                                          log.newline () }
+        return new Channel(this.$(function (then) {
 
-            if (this.canFail) { this.fail () }
-                        else  { this.finalize () } },
+            this.shouldFail = $shouldFail.is(this.routine);
+            this.failed = false;
+            this.hasLog = false;
+            this.logCalls = [];
+            this.failureLocations = {};
 
-    run: function () { var self    = Testosterone.currentAssertion = this,
-                           routine = Tags.unwrap (this.routine)
-
-        return new Channel (this.$ (function (then) {
-
-            this.shouldFail = $shouldFail.is (this.routine)
-            this.failed = false
-            this.hasLog = false
-            this.logCalls = []
-            this.failureLocations = {}
-
-            _.withTimeout ({
+            _.withTimeout({
                 maxTime: self.timeout,
-                expired: function () { if (self.canFail) { log.ee ('TIMEOUT EXPIRED'); self.fail () } } },
-                self.complete)
+                expired: function expired() {
+                    if (self.canFail) {
+                        log.ee('TIMEOUT EXPIRED');self.fail();
+                    }
+                } }, self.complete);
 
-            _.withUncaughtExceptionHandler (self.$ (self.onException), self.complete)
+            _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
 
-            log.withWriteBackend (_.extendWith ({ indent: 1 },
-                                        function (x) { /*log.impl.defaultWriteBackend (x);*/ self.logCalls.push (x) }),
+            log.withWriteBackend(_.extendWith({ indent: 1 }, function (x) {
+                /*log.impl.defaultWriteBackend (x);*/self.logCalls.push(x);
+            }), function (doneWithLogging) {
+                self.complete(doneWithLogging.arity0);
+                if (then) {
+                    self.complete(then);
+                }
 
-                                  function (doneWithLogging)  { self.complete (doneWithLogging.arity0)
-                                                    if (then) { self.complete (then) }
+                /*  Continuation-passing style flow control
+                 */
+                if (routine.length > 0) {
+                    routine.call(self.context, self.$(self.finalize));
+                }
 
-                                        /*  Continuation-passing style flow control
-                                         */
-                                        if (routine.length > 0) {
-                                            routine.call (self.context, self.$ (self.finalize)) }
+                /*  Return-style flow control
+                 */
+                else {
 
-                                        /*  Return-style flow control
-                                         */
-                                        else {
+                        /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
+                                    leads to broken unhandled exception handling after the Testosterone run completes  */
 
-                                        /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
-                                                    leads to broken unhandled exception handling after the Testosterone run completes  */
+                        var result = undefined;
 
-                                            var result = undefined
+                        try {
+                            result = routine.call(self.context);
+                        } catch (e) {
+                            self.onException(e);
+                        }
 
-                                            try       { result = routine.call (self.context) }
-                                            catch (e) { self.onException (e) }
+                        if (_.isArrayLike(result) && result[0] instanceof Promise) {
+                            result = __.all(result);
+                        }
 
-                                            if (_.isArrayLike (result) && (result[0] instanceof Promise)) {
-                                                result = __.all (result) }
+                        if (result instanceof Promise) {
+                            result.then(function (x) {
+                                self.finalize();
+                            }.postponed, function (e) {
+                                self.onException(e);
+                            });
+                        } else {
+                            self.finalize();
+                        }
+                    }
+            });
+        }));
+    },
 
-                                            if (result instanceof Promise) {
-                                                result.then (
-                                                    function (x) { self.finalize () }.postponed,
-                                                    function (e) { self.onException (e) }) }
-                                            else {
-                                                self.finalize () } } }) })) },
-            
-    printLog: function () { var suiteName = (this.suite && (this.suite !== this.name) && (this.suite || '').quote ('[]')) || ''
+    printLog: function printLog() {
+        var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
 
-        log.write (log.color.blue,
-            '\n' + log.boldLine,
-            '\n' + _.nonempty ([suiteName, this.name]).join (' '),
-            (this.index + ' of ' + Testosterone.runningTests.length).quote ('()') +
-            (this.failed ? ' FAILED' : '') + ':',
-            '\n')
+        log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([suiteName, this.name]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
 
-        this.evalLogCalls () },
+        this.evalLogCalls();
+    },
 
-    evalLogCalls: function () {
-        _.each (this.logCalls, log.writeBackend ().arity1) } })
-
+    evalLogCalls: function evalLogCalls() {
+        _.each(this.logCalls, log.writeBackend().arity1);
+    } });
 
 /*
  */
-Tags.define ('allowsRecursion')
+Tags.define('allowsRecursion');
 
-_.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
-                        var depth       = -1
-                        var reported    = false
-                            return function () {
-                                if (!reported) {
-                                    if (depth > max) { reported = true
-                                        throw _.extendWith ({ notMatching: _.map (arguments, function (arg, i) { return 'arg' + (i + 1) + ': ' + String.ify (arg) }) },
-                                            new Error (name + ': max recursion depth reached (' + max + ')')) }
-                                    else {
-                                        var result = ((++depth), fn.apply (this, arguments)); depth--
-                                            return result } } } }
-                                            
-Testosterone.ValidatesRecursion = $trait ({
+_.limitRecursion = function (max, fn, name) {
+    if (!fn) {
+        fn = max;max = 0;
+    }
+    var depth = -1;
+    var reported = false;
+    return function () {
+        if (!reported) {
+            if (depth > max) {
+                reported = true;
+                throw _.extendWith({ notMatching: _.map(arguments, function (arg, i) {
+                        return 'arg' + (i + 1) + ': ' + String.ify(arg);
+                    }) }, new Error(name + ': max recursion depth reached (' + max + ')'));
+            } else {
+                var result = (++depth, fn.apply(this, arguments));depth--;
+                return result;
+            }
+        }
+    };
+};
 
-    $test: function () {
+Testosterone.ValidatesRecursion = $trait({
 
-        var test = new ($component ({
+    $test: function $test() {
+
+        var test = new ($component({
 
             $traits: [Testosterone.ValidatesRecursion],
 
-            foo: function () {},
-            bar: function () { this.bar () },
-            baz: $allowsRecursion ({ max: 2 }, function () { this.baz () }),
-            qux: $allowsRecursion (function () { if (!this.quxCalled) { this.quxCalled = true; this.qux () } }) }))
+            foo: function foo() {},
+            bar: function bar() {
+                this.bar();
+            },
+            baz: $allowsRecursion({ max: 2 }, function () {
+                this.baz();
+            }),
+            qux: $allowsRecursion(function () {
+                if (!this.quxCalled) {
+                    this.quxCalled = true;this.qux();
+                }
+            }) }))();
 
-                       test.foo ()
-        $assertThrows (test.bar, { message: 'bar: max recursion depth reached (0)' })
-                       test.bar () // should not report second time (to prevent overflood in case of buggy code)
-        $assertThrows (test.baz, { message: 'baz: max recursion depth reached (2)' })
-                       test.qux () },
+        test.foo();
+        $assertThrows(test.bar, { message: 'bar: max recursion depth reached (0)' });
+        test.bar(); // should not report second time (to prevent overflood in case of buggy code)
+        $assertThrows(test.baz, { message: 'baz: max recursion depth reached (2)' });
+        test.qux();
+    },
 
-    $constructor: function () {
-        _.each (this, function (member, name) {
-            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$allowsRecursion || (member.$allowsRecursion.max !== undefined))) {
-                this[name] = Tags.modify (member, function (fn) {
-                    return _.limitRecursion ((member && member.$allowsRecursion && member.$allowsRecursion.max) || 0, fn, name) }) } }, this) } })
+    $constructor: function $constructor() {
+        _.each(this, function (member, name) {
+            if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
+                this[name] = Tags.modify(member, function (fn) {
+                    return _.limitRecursion(member && member.$allowsRecursion && member.$allowsRecursion.max || 0, fn, name);
+                });
+            }
+        }, this);
+    } })
 
 /*  $log for methods
  */
-;(function () { var colors = _.keys (_.omit (log.color, 'none'))
-                    colors.each (Tags.define)
+;(function () {
+    var colors = _.keys(_.omit(log.color, 'none'));
+    colors.each(Tags.define);
 
-    var stringify = String.ify.configure ({ pretty: false })
+    var stringify = String.ify.configure({ pretty: false });
 
-    Tags.define ('verbose')
+    Tags.define('verbose');
 
-    Testosterone.LogsMethodCalls = $trait ({
+    Testosterone.LogsMethodCalls = $trait({
 
-/*
-        $test: $platform.Browser ? (function () {}) : function (testDone) {
-
-                    var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-                    var Compo = $extends (Proto, {
-                                        foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
-
-                    var compo = new Compo ()
-                    var testContext = this
-
-                    Compo.$meta (function () {
-                        $assert (compo.foo (42), 24)
-                        $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
-                        $assert (testContext.logCalls[0].color === log.color ('pink'))
-                        testDone () }) },
-*/
+        /*
+                $test: $platform.Browser ? (function () {}) : function (testDone) {
+        
+                            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+                            var Compo = $extends (Proto, {
+                                                foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
+        
+                            var compo = new Compo ()
+                            var testContext = this
+        
+                            Compo.$meta (function () {
+                                $assert (compo.foo (42), 24)
+                                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                                $assert (testContext.logCalls[0].color === log.color ('pink'))
+                                testDone () }) },
+        */
         $macroTags: {
 
-            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
-                                                var meta          = def.$meta || {}
-                                                var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
-                                                var template      = param && _.template (param, { interpolate: /\{\{(.+?)\}\}/g })
+            log: function (_log) {
+                function log(_x, _x2, _x3) {
+                    return _log.apply(this, arguments);
+                }
 
-                return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
-                                                                                                             arguments_ = _.asArray (arguments)
+                log.toString = function () {
+                    return _log.toString();
+                };
 
-                        var this_dump = (template && template.call (this, _.extend ({ $proto: meta.name }, _.map2 (this, stringify)))) || this.desc || ''
-                        var args_dump = _.map (arguments_, stringify).join (', ').quote ('()')
+                return log;
+            }(function (def, member, name) {
+                var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
+                var meta = def.$meta || {};
+                var color = _.find2(colors, function (color) {
+                    return log.color(member['$' + color] && color) || false;
+                });
+                var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
 
-                    log.write (log.config ({
-                        color: color,
-                        location: true,
-                        where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
+                return $prototype.impl.modifyMember(member, function (fn, name_) {
+                    return function () {
+                        var this_ = this,
+                            arguments_ = _.asArray(arguments);
 
-                    return log.withConfig ({ indent: 1,
-                                             color: color,
-                                             protoName: meta.name }, function () {
+                        var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, stringify))) || this.desc || '';
+                        var args_dump = _.map(arguments_, stringify).join(', ').quote('()');
 
-                                                                        var numWritesBefore = log.impl.numWrites
-                                                                        var result          = fn.apply (this_, arguments_);          
+                        log.write(log.config({
+                            color: color,
+                            location: true,
+                            where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty([this_dump, name, name_]).join('.'), args_dump);
 
-                                                                        if (result !== undefined) {
-                                                                            log.write ('→', stringify (result)) }
+                        return log.withConfig({ indent: 1,
+                            color: color,
+                            protoName: meta.name }, function () {
 
-                                                                        if ((log.currentConfig ().indent < 2) &&
-                                                                            (log.impl.numWrites - numWritesBefore) > 0) { log.newline () }
+                            var numWritesBefore = log.impl.numWrites;
+                            var result = fn.apply(this_, arguments_);
 
-                                                                        return result }) } }) } } }) }) ();
+                            if (result !== undefined) {
+                                log.write('→', stringify(result));
+                            }
 
+                            if (log.currentConfig().indent < 2 && log.impl.numWrites - numWritesBefore > 0) {
+                                log.newline();
+                            }
+
+                            return result;
+                        });
+                    };
+                });
+            }) } });
+})();
 
 if ($platform.NodeJS) {
-    module.exports = Testosterone }
+    module.exports = Testosterone;
+}
 
 /***/ },
-/* 16 */
+/* 14 */
+/* all exports used */
+/*!*********************!*\
+  !*** ./base/log.js ***!
+  \*********************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
 "use strict";
 
-const O         = __webpack_require__ (2),
-      bullet    = __webpack_require__ (4),
-      asTable   = __webpack_require__ (1)
+var O = __webpack_require__(/*! es7-object-polyfill */ 2),
+    bullet = __webpack_require__(/*! string.bullet */ 3),
+    asTable = __webpack_require__(/*! as-table */ 1);
 
-_.hasLog = true
+_.hasLog = true;
 
 _.tests.log = {
 
-    basic: function () {
+    basic: function basic() {
 
-        log            ('log (x)')         //  Basic API
+        log('log (x)'); //  Basic API
 
-        log.green      ('log.green')       //  Use for plain colored output.
-        log.boldGreen  ('log.boldGreen')
-        log.darkGreen  ('log.darkGreen')
-        log.blue       ('log.blue')
-        log.boldBlue   ('log.boldBlue')
-        log.darkBlue   ('log.darkBlue')
-        log.orange     ('log.orange')
-        log.boldOrange ('log.boldOrange')
-        log.darkOrange ('log.darkOrange')
-        log.red        ('log.red')         //  ..for more colors, see the implementation below
-        log.boldRed    ('log.boldRed')
-        log.darkRed    ('log.darkRed')
-        log.pink       ('log.pink')
-        log.boldPink   ('log.boldPink')
-        log.darkPink   ('log.darkPink')
+        log.green('log.green'); //  Use for plain colored output.
+        log.boldGreen('log.boldGreen');
+        log.darkGreen('log.darkGreen');
+        log.blue('log.blue');
+        log.boldBlue('log.boldBlue');
+        log.darkBlue('log.darkBlue');
+        log.orange('log.orange');
+        log.boldOrange('log.boldOrange');
+        log.darkOrange('log.darkOrange');
+        log.red('log.red'); //  ..for more colors, see the implementation below
+        log.boldRed('log.boldRed');
+        log.darkRed('log.darkRed');
+        log.pink('log.pink');
+        log.boldPink('log.boldPink');
+        log.darkPink('log.darkPink');
 
-        log.margin ()
-        log.margin ()  // collapses
+        log.margin();
+        log.margin(); // collapses
 
-        log.bright ('log.bright')
-        log.dark   ('log.dark')
+        log.bright('log.bright');
+        log.dark('log.dark');
 
-        log.margin ()
+        log.margin();
 
-        log.success ('log.success')     //  Use for quality production logging (logging that lasts).
-        log.ok      ('log.ok')
-        log.g       ('log.g')
-        log.gg      ('log.gg')
-        log.info    ('log.info')        //  Printed location greatly helps to find log cause in code.
-        log.i       ('log.i')
-        log.ii      ('log.ii')
-        log.warning ('log.warning')     //  For those who cant remember which one, there's plenty of aliases
-        log.warn    ('log.warn')
-        log.w       ('log.w')
-        log.ww      ('log.ww')        
-        log.error   ('log.error')
-        log.e       ('log.e')
-        log.ee      ('log.ee')
+        log.success('log.success'); //  Use for quality production logging (logging that lasts).
+        log.ok('log.ok');
+        log.g('log.g');
+        log.gg('log.gg');
+        log.info('log.info'); //  Printed location greatly helps to find log cause in code.
+        log.i('log.i');
+        log.ii('log.ii');
+        log.warning('log.warning'); //  For those who cant remember which one, there's plenty of aliases
+        log.warn('log.warn');
+        log.w('log.w');
+        log.ww('log.ww');
+        log.error('log.error');
+        log.e('log.e');
+        log.ee('log.ee');
 
-        $assert (log ('log (x) === x'), 'log (x) === x')    // Can be used for debugging of functional expressions
-                                                            // (as it returns it first argument, like in _.identity)
+        $assert(log('log (x) === x'), 'log (x) === x'); // Can be used for debugging of functional expressions
+        // (as it returns it first argument, like in _.identity)
 
-        log.write   ('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace')
+        log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
 
-        log.write (                     'Multi',
-                    log.color.red,      'Colored',
-                    log.color.green,    'Output',
-                    log.color.blue,     'For',
-                    log.color.orange,   'The',
-                    log.color.pink,     'Fucking',
-                    log.color.none,     'Win')
+        log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
 
-        log.write   (log.boldLine)  //  ASCII art <hr>
-        log.write   (log.thinLine)
-        log.write   (log.line)
+        log.write(log.boldLine); //  ASCII art <hr>
+        log.write(log.thinLine);
+        log.write(log.line);
 
-        log.write   (log.indent (1),
-                     ['You can set indentation',
-                      'that is nicely handled',
-                      'in case of multiline text'].join ('\n'))
+        log.write(log.indent(1), ['You can set indentation', 'that is nicely handled', 'in case of multiline text'].join('\n'));
 
-        log.orange  (log.indent (2), '\nCan print nice table layout view for arrays of objects:\n')
-        log.orange  (log.config ({ indent: 2, table: true }), [
-            { field: 'line',    matches: false, valueType: 'string', contractType: 'number' },
-            { field: 'column',  matches: true,  valueType: 'string', contractType: 'number' }])
+        log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
+        log.orange(log.config({ indent: 2, table: true }), [{ field: 'line', matches: false, valueType: 'string', contractType: 'number' }, { field: 'column', matches: true, valueType: 'string', contractType: 'number' }]);
 
-        log.write ('\nObject:', { foo: 1, bar: 2, qux: 3 })         //  Object printing is supported
-        log.write ('Array:', [1, 2, 3])                             //  Arrays too
-        log.write ('Function:', _.identity)                         //  Prints code of a function
+        log.write('\nObject:', { foo: 1, bar: 2, qux: 3 }); //  Object printing is supported
+        log.write('Array:', [1, 2, 3]); //  Arrays too
+        log.write('Function:', _.identity); //  Prints code of a function
 
-        log.write ('Complex object:', { foo: 1, bar: { qux: [1,2,3], garply: _.identity }}, '\n\n');
+        log.write('Complex object:', { foo: 1, bar: { qux: [1, 2, 3], garply: _.identity } }, '\n\n');
 
-        log.withConfig (log.indent (1), function () {
-            log.pink ('Config stack + scopes + higher order API test:')
-            _.each ([5,6,7], logs.pink (log.indent (1), 'item = ', log.color.blue)) })
+        log.withConfig(log.indent(1), function () {
+            log.pink('Config stack + scopes + higher order API test:');
+            _.each([5, 6, 7], logs.pink(log.indent(1), 'item = ', log.color.blue));
+        });
 
-        $assert (log (42), 42)
+        $assert(log(42), 42);
 
-        $assert (logs.red (42) (), 42)
+        $assert(logs.red(42)(), 42);
+    } };
 
-  } }
+_.extend(
 
-_.extend (
+/*  Basic API
+ */
+$global.log = function () {
+    return log.write.apply(this, [log.config({ location: true })].concat(_.asArray(arguments)));
+}, { // @hide
 
-    /*  Basic API
-     */
-    $global.log = function () {
-        return log.write.apply (this, [log.config ({ location: true })].concat (_.asArray (arguments))) }, { // @hide
-
-    Config: $prototype (),
+    Config: $prototype(),
 
     /*  Could be passed as any argument to any write function.
      */
-    config: function (cfg) {
-        return new log.Config (cfg) } })
+    config: function config(cfg) {
+        return new log.Config(cfg);
+    } });
 
-
-_.extend (log, {
+_.extend(log, {
 
     /*  Shortcut for common cases
      */
-    indent: function (n) {
-        return log.config ({ indent: n }) },
+    indent: function indent(n) {
+        return log.config({ indent: n });
+    },
 
-    where: function (wat) {
-        return log.config ({ location: true, where: wat || undefined }) },
+    where: function where(wat) {
+        return log.config({ location: true, where: wat || undefined });
+    },
 
-    color: _.extend (function (x) { return (log.color[x] || {}).color },
-
-        _.fromPairs (
-        _.map  ([['none',        '0m',           ''],
-                 ['red',         '31m',          'color:crimson'],
-                 ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
-                 ['darkRed',    ['31m', '2m'],   'color:crimson'],
-                 ['blue',        '36m',          'color:royalblue'],
-                 ['boldBlue',   ['36m', '1m'],   'color:royalblue;font-weight:bold;'],
-                 ['darkBlue',   ['36m', '2m'],   'color:rgba(65,105,225,0.5)'],
-                 ['boldOrange', ['33m', '1m'],   'color:saddlebrown;font-weight:bold;'],
-                 ['darkOrange', ['33m', '2m'],   'color:saddlebrown'],
-                 ['orange',      '33m',          'color:saddlebrown'],
-                 ['brown',      ['33m', '2m'],   'color:saddlebrown'],
-                 ['green',       '32m',          'color:forestgreen'],
-                 ['boldGreen',  ['32m', '1m'],   'color:forestgreen;font-weight:bold'],
-                 ['darkGreen',  ['32m', '2m'],   'color:forestgreen;opacity:0.5'],
-                 ['pink',        '35m',          'color:magenta'],
-                 ['boldPink',   ['35m', '1m'],   'color:magenta;font-weight:bold;'],
-                 ['darkPink',   ['35m', '2m'],   'color:magenta'],
-                 ['black',       '0m',           'color:black'],
-                 ['bright',     ['0m', '1m'],    'color:rgba(0,0,0);font-weight:bold'],
-                 ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
-
-             function (def) {
-                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
+    color: _.extend(function (x) {
+        return (log.color[x] || {}).color;
+    }, _.fromPairs(_.map([['none', '0m', ''], ['red', '31m', 'color:crimson'], ['boldRed', ['31m', '1m'], 'color:crimson;font-weight:bold'], ['darkRed', ['31m', '2m'], 'color:crimson'], ['blue', '36m', 'color:royalblue'], ['boldBlue', ['36m', '1m'], 'color:royalblue;font-weight:bold;'], ['darkBlue', ['36m', '2m'], 'color:rgba(65,105,225,0.5)'], ['boldOrange', ['33m', '1m'], 'color:saddlebrown;font-weight:bold;'], ['darkOrange', ['33m', '2m'], 'color:saddlebrown'], ['orange', '33m', 'color:saddlebrown'], ['brown', ['33m', '2m'], 'color:saddlebrown'], ['green', '32m', 'color:forestgreen'], ['boldGreen', ['32m', '1m'], 'color:forestgreen;font-weight:bold'], ['darkGreen', ['32m', '2m'], 'color:forestgreen;opacity:0.5'], ['pink', '35m', 'color:magenta'], ['boldPink', ['35m', '1m'], 'color:magenta;font-weight:bold;'], ['darkPink', ['35m', '2m'], 'color:magenta'], ['black', '0m', 'color:black'], ['bright', ['0m', '1m'], 'color:rgba(0,0,0);font-weight:bold'], ['dark', ['0m', '2m'], 'color:rgba(0,0,0,0.25)']], function (def) {
+        return [def[0], log.config({ color: { shell: _.coerceToArray(_.map2(def[1], _.prepends('\u001b['))).join(), css: def[2] } })];
+    }))),
 
     /*  Need one? Take! I have plenty of them!
      */
-    boldLine:   '======================================',
-    line:       '--------------------------------------',
-    thinLine:   '......................................',
+    boldLine: '======================================',
+    line: '--------------------------------------',
+    thinLine: '......................................',
 
     /*  Set to true to precede each log message with date and time (useful for server side logs).
      */
@@ -12648,38 +12906,51 @@ _.extend (log, {
 
     /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
      */
-    withWriteBackend: $scope (function (release, backend, contextFn, done) { var prev = log.writeBackend.value
-                                                                                        log.writeBackend.value = backend
-        contextFn (function /* release */ (then) { // @hide
-                     release (function () {                                             log.writeBackend.value = prev
-                        if (then) then ()
-                        if (done) done () }) }) }),  
+    withWriteBackend: $scope(function (release, backend, contextFn, done) {
+        var prev = log.writeBackend.value;
+        log.writeBackend.value = backend;
+        contextFn(function ( /* release */then) {
+            // @hide
+            release(function () {
+                log.writeBackend.value = prev;
+                if (then) then();
+                if (done) done();
+            });
+        });
+    }),
 
     /*  For writing with forced default backend
      */
-    writeUsingDefaultBackend: function (/* arguments */) { var args = arguments
-        log.withWriteBackend (
-            log.impl.defaultWriteBackend,
-            function (done) {
-                log.write.apply (null, args); done () }) }, // @hide
+    writeUsingDefaultBackend: function writeUsingDefaultBackend() /* arguments */{
+        var args = arguments;
+        log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
+            log.write.apply(null, args);done();
+        });
+    }, // @hide
 
-    writeBackend: function () {
-        return log.writeBackend.value || log.impl.defaultWriteBackend },
+    writeBackend: function writeBackend() {
+        return log.writeBackend.value || log.impl.defaultWriteBackend;
+    },
 
-    withConfig: function (config, what) {  log.impl.configStack.push (config)
-                     var result = what (); log.impl.configStack.pop ();
-                  return result },
+    withConfig: function withConfig(config, what) {
+        log.impl.configStack.push(config);
+        var result = what();log.impl.configStack.pop();
+        return result;
+    },
 
-    currentConfig: function () { return log.impl.configure (log.impl.configStack) },
+    currentConfig: function currentConfig() {
+        return log.impl.configure(log.impl.configStack);
+    },
 
     /*  Use instead of 'log.newline ()' for collapsing newlines
      */
-    margin: (function () {
-                var lastWrite = undefined
-                return function () {
-                    if (lastWrite !== log.impl.numWrites)
-                        log.newline ()
-                        lastWrite   = log.impl.numWrites } }) (),
+    margin: function () {
+        var lastWrite = undefined;
+        return function () {
+            if (lastWrite !== log.impl.numWrites) log.newline();
+            lastWrite = log.impl.numWrites;
+        };
+    }(),
 
     /*  Internals
      */
@@ -12688,188 +12959,168 @@ _.extend (log, {
         configStack: [],
         numWrites: 0,
 
-        configure: function (configs) {
-            return _.reduce2 (
-                { indent: 0 },
-                _.nonempty (configs), function (memo, cfg) {
-                                        return _.extend (memo, _.nonempty (cfg), { indent: memo.indent + (cfg.indent || 0) }) }) },
+        configure: function configure(configs) {
+            return _.reduce2({ indent: 0 }, _.nonempty(configs), function (memo, cfg) {
+                return _.extend(memo, _.nonempty(cfg), { indent: memo.indent + (cfg.indent || 0) });
+            });
+        },
 
         /*  Nuts & guts
          */
-        write: $restArg (_.bindable (function () { var writeBackend = log.writeBackend ()
+        write: $restArg(_.bindable(function () {
+            var writeBackend = log.writeBackend();
 
-            log.impl.numWrites++
+            log.impl.numWrites++;
 
-            var args   = _.asArray (arguments)
-            var config = log.impl.configure ([{ indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
+            var args = _.asArray(arguments);
+            var config = log.impl.configure([{ indent: writeBackend.indent || 0 }].concat(log.impl.configStack));
 
-            var runs = _.reduce2 (
+            var runs = _.reduce2(
 
-                /*  Initial memo
-                 */
-                [],
-                
-                /*  Arguments split by configs
-                 */
-                _.partition3 (args, _.isTypeOf.$ (log.Config)),
-                
-                /*  Gather function
-                 */
-                function (runs, span) {
-                    if (span.label === true) { config = log.impl.configure ([config].concat (span.items))
-                                               return runs }
-                                        else { return runs.concat ({ config: config,
-                                                                     text: log.impl.stringifyArguments (span.items, config) }) } })
+            /*  Initial memo
+             */
+            [],
 
-            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match (/(\n*)([^]*)/)
-            var trailNewlines = (trailNewlinesMatch && trailNewlinesMatch[1]) // dumb way to select trailing newlines (i'm no good at regex)
+            /*  Arguments split by configs
+             */
+            _.partition3(args, _.isTypeOf.$(log.Config)),
+
+            /*  Gather function
+             */
+            function (runs, span) {
+                if (span.label === true) {
+                    config = log.impl.configure([config].concat(span.items));
+                    return runs;
+                } else {
+                    return runs.concat({ config: config,
+                        text: log.impl.stringifyArguments(span.items, config) });
+                }
+            });
+
+            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match(/(\n*)([^]*)/);
+            var trailNewlines = trailNewlinesMatch && trailNewlinesMatch[1]; // dumb way to select trailing newlines (i'm no good at regex)
             if (trailNewlinesMatch) {
-                runs.last.text = trailNewlinesMatch[2].reversed }
-
+                runs.last.text = trailNewlinesMatch[2].reversed;
+            }
 
             /*  Split by linebreaks
              */
-            var newline = {}
-            var lines = _.pluck.with ('items',
-                            _.reject.with (_.property ('label'),
-                                _.partition3.with (_.equals (newline),
-                                    _.scatter (runs, function (run, i, emit) {
-                                                        _.each (run.text.split ('\n'), function (line, i, arr) {
-                                                                                            emit (_.extended (run, { text: line })); if (i !== arr.lastIndex) {
-                                                                                            emit (newline) } }) }))))
+            var newline = {};
+            var lines = _.pluck.with('items', _.reject.with(_.property('label'), _.partition3.with(_.equals(newline), _.scatter(runs, function (run, i, emit) {
+                _.each(run.text.split('\n'), function (line, i, arr) {
+                    emit(_.extended(run, { text: line }));if (i !== arr.lastIndex) {
+                        emit(newline);
+                    }
+                });
+            }))));
 
-            var totalText       = _.pluck (runs, 'text').join ('')
-            var where           = config.where || log.impl.findWhere (new StackTracey ()) // @hide
-            var indentation     = (config.indentPattern || '\t').repeats (config.indent)
+            var totalText = _.pluck(runs, 'text').join('');
+            var where = config.where || log.impl.findWhere(new StackTracey()); // @hide
+            var indentation = (config.indentPattern || '\t').repeats(config.indent);
 
-            writeBackend ({
-                lines:         lines,
-                config:        config,
-                color:         config.color,
-                when:          (new Date ()).toISOString (),
-                args:          _.reject (args, _.isTypeOf.$ (log.Config)),
-                indentation:   indentation,
-                indentedText:  lines.map (_.seq (_.pluck.tails2 ('text'),
-                                                 _.joinsWith (''),
-                                                 _.prepends (indentation))).join ('\n'),
-                text:          totalText,
-                codeLocation:  (config.location && log.impl.location (where)) || '',
+            writeBackend({
+                lines: lines,
+                config: config,
+                color: config.color,
+                when: new Date().toISOString(),
+                args: _.reject(args, _.isTypeOf.$(log.Config)),
+                indentation: indentation,
+                indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
+                text: totalText,
+                codeLocation: config.location && log.impl.location(where) || '',
                 trailNewlines: trailNewlines || '',
-                where:         (config.location && where) || undefined })
+                where: config.location && where || undefined });
 
-            return _.find (args, _.not (_.isTypeOf.$ (log.Config)))
+            return _.find(args, _.not(_.isTypeOf.$(log.Config)));
         })),
 
-        findWhere: function (stack) {
-            return stack.withSources.filter (x => !x.hide).at (2)
+        findWhere: function findWhere(stack) {
+            //console.log (log.impl.stringify (stack))
+            return stack.withSources.filter(function (x) {
+                return !(x.hide || x.fileName === 'underscore.js');
+            }).at(0);
         },
 
-        defaultWriteBackend: function (params) {
+        defaultWriteBackend: function defaultWriteBackend(params) {
 
-            var codeLocation = params.codeLocation
+            var codeLocation = params.codeLocation;
 
             if ($platform.NodeJS) {
 
-                var lines = _.map (params.lines, function (line) {
-                                                    return params.indentation + _.map (line, function (run) {
-                                                        return (run.config.color
-                                                                    ? (run.config.color.shell + run.text + '\u001b[0m')
-                                                                    : (                         run.text)) }).join ('') }).join ('\n')
+                var lines = _.map(params.lines, function (line) {
+                    return params.indentation + _.map(line, function (run) {
+                        return run.config.color ? run.config.color.shell + run.text + '\u001b[0m' : run.text;
+                    }).join('');
+                }).join('\n');
 
                 if (log.timestampEnabled) {
-                    lines = log.color ('dark').shell + bullet (String (params.when), log.color ('none').shell + lines) }
+                    lines = log.color('dark').shell + bullet(String(params.when), log.color('none').shell + lines);
+                }
 
-                console.log (lines,
-                             log.color ('dark').shell + codeLocation + '\u001b[0m',
-                             params.trailNewlines) }
-
-            else {
-                console.log.apply (console, _.reject.with (_.equals (undefined), [].concat (
+                console.log(lines, log.color('dark').shell + codeLocation + '\u001b[0m', params.trailNewlines);
+            } else {
+                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(
 
                 /*  Text   */
 
-                    [(log.timestampEnabled ? ('%c' + params.when + '%c') : '')
-
-                        , _.map (params.lines, function (line, i) {
-                                                return params.indentation + _.reduce2 ('', line, function (s, run) {
-                                                    return s + (run.text && ((run.config.color ? '%c' : '') +
-                                                        run.text) || '') }) }).join ('\n')
-
-                        , (codeLocation ? ('%c' + codeLocation) : '')].nonempty.join (' '),
+                [log.timestampEnabled ? '%c' + params.when + '%c' : '', _.map(params.lines, function (line, i) {
+                    return params.indentation + _.reduce2('', line, function (s, run) {
+                        return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
+                    });
+                }).join('\n'), codeLocation ? '%c' + codeLocation : ''].nonempty.join(' '),
 
                 /*  Colors */
 
-                    (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)', 'color:black'] : [])
+                (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)', 'color:black'] : []).concat(_.scatter(params.lines, function (line, i, emit) {
+                    _.each(line, function (run) {
+                        if (run.text && run.config.color) {
+                            emit(run.config.color.css);
+                        }
+                    });
+                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
+            }
+        },
 
-                        .concat ((_.scatter (params.lines, function (line, i, emit) {
-                            _.each (line, function (run) {
-                                if (run.text && run.config.color) { emit (run.config.color.css) } }) }) || []))
+        /*  Ex.: function @ source.js:321  */
 
-                        .concat (codeLocation ? 'color:rgba(0,0,0,0.25)' : []),
+        location: function location(where) {
+            return '(' + [].concat(where.calleeShort || [], [].concat(where.fileName || [], where.line || []).join(':')).join(' @ ') + ')';
+        },
 
-                    params.trailNewlines))) } },
+        stringifyArguments: function stringifyArguments(args, cfg) {
+            return args.map(function (arg) {
+                var x = log.impl.stringify(arg, cfg);
+                return cfg.maxArgLength ? String.ify.limit(x, cfg.maxArgLength) : x;
+            }).join(' ');
+        },
 
-    /*  Ex.: function @ source.js:321  */
-
-        location: where => '(' + [].concat (where.calleeShort || [],
-                                 [].concat (where.fileName || [], where.line || []).join (':')).join (' @ ') + ')',
-
-        stringifyArguments: (args, cfg) =>
-                                args.map (arg => {
-                                    var x = log.impl.stringify (arg, cfg)
-                                    return (cfg.maxArgLength ? String.ify.limit (x, cfg.maxArgLength) : x) }).join (' '),
-
-        stringify: (what, cfg) =>
-                    (typeof what === 'string') ? what :
-                    (Array.isArray (what) && (cfg || {}).table) ? asTable (what) :
-                    String.ify.configure (cfg || {}) (what)
+        stringify: function stringify(what, cfg) {
+            return typeof what === 'string' ? what : Array.isArray(what) && (cfg || {}).table ? asTable(what) : String.ify.configure(cfg || {})(what);
+        }
     }
 })
 
-
 /*  Printing API
  */
-;(function () {                                                var write = log.impl.write
-   _.extend (log,
-             log.printAPI =
-                 _.fromPairs (
-                    _.concat (            [[            'newline', write.$ (log.config ({ location: false }), '') ],
-                                           [              'write', write                                                          ]],
-                            _.flat (_.map (['red failure error e',
-                                                    'blue info i',
-                                               'darkBlue minor m',
-                                          'orange warning warn w',
-                                             'green success ok g',
-                                                   'darkGreen dg',
-                                            'pink notice alert p',
-                                                    'boldPink pp',
-                                                    'dark hint d',
-                                                   'boldGreen gg',
-                                                       'bright b',
-                                          'boldRed bloody bad ee',
-                                                    'darkPink dp',
-                                                       'brown br',
-                                                 'darkOrange wtf',
-                                                  'boldOrange ww',
-                                                     'darkRed er',
-                                                    'boldBlue ii' ],
-                                                    _.splitsWith  (' ').then (
-                                                      _.mapsWith  (
-                                                  function (name,                                   i,                         names      )  {
-                                                   return  [name,  write.$ (log.config ({ location: i !== 0, color: log.color (names.first) })) ] })))))))
+;(function () {
+    var write = log.impl.write;
+    _.extend(log, log.printAPI = _.fromPairs(_.concat([['newline', write.$(log.config({ location: false }), '')], ['write', write]], _.flat(_.map(['red failure error e', 'blue info i', 'darkBlue minor m', 'orange warning warn w', 'green success ok g', 'darkGreen dg', 'pink notice alert p', 'boldPink pp', 'dark hint d', 'boldGreen gg', 'bright b', 'boldRed bloody bad ee', 'darkPink dp', 'brown br', 'darkOrange wtf', 'boldOrange ww', 'darkRed er', 'boldBlue ii'], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
+        return [name, write.$(log.config({ location: i !== 0, color: log.color(names.first) }))];
+    })))))));
+})();
 
-}) ()
-
-$global.logs = _.higherOrder.map (log.printAPI)
+$global.logs = _.higherOrder.map(log.printAPI);
 
 if ($platform.NodeJS) {
-    module.exports = log }
-
-
-
+    module.exports = log;
+}
 
 /***/ },
-/* 17 */
+/* 15 */
+/* all exports used */
+/*!***************************!*\
+  !*** ./base/profiling.js ***!
+  \***************************/
 /***/ function(module, exports) {
 
 "use strict";
@@ -12879,53 +13130,66 @@ if ($platform.NodeJS) {
     ======================================================================== */
 
 _.measure = function (routine, then) {
-    if (then) {                             // async
-        var now = _.now ()
-        routine (function () {
-            then (_.now () - now) }) }
-    else {                                  // sync
-        var now = _.now ()
-        routine ()
-        return _.now () - now } }
-
+    if (then) {
+        // async
+        var now = _.now();
+        routine(function () {
+            then(_.now() - now);
+        });
+    } else {
+        // sync
+        var now = _.now();
+        routine();
+        return _.now() - now;
+    }
+};
 
 /*  Measures performance: perfTest (fn || { fn1: .., fn2: ... }, then)
     ======================================================================== */
 
 _.perfTest = function (arg, then) {
-    var rounds = 500
-    var routines = _.isFunction (arg) ? { test: arg } : arg
-    var timings = {}
+    var rounds = 500;
+    var routines = _.isFunction(arg) ? { test: arg } : arg;
+    var timings = {};
 
-    _.cps.each (routines, function (fn, name, then) {
+    _.cps.each(routines, function (fn, name, then) {
 
         /*  Define test routine (we store and print result, to assure our routine
             won't be throwed away by optimizing JIT)
          */
-        var result = []
-        var run = function () {
+        var result = [];
+        var run = function run() {
             for (var i = 0; i < rounds; i++) {
-                result.push (fn ()) }
-            console.log (name, result) }
+                result.push(fn());
+            }
+            console.log(name, result);
+        };
 
         /*  Warm-up run, to force JIT work its magic (not sure if 500 rounds is enough)
          */
-        run ()
+        run();
 
         /*  Measure (after some delay)
          */
-        _.delay (function () {
-            timings[name] = _.measure (run) / rounds
-            then () }, 100) },
+        _.delay(function () {
+            timings[name] = _.measure(run) / rounds;
+            then();
+        }, 100);
+    },
 
-        /*  all done
-         */
-        function () {
-            then (timings) }) }
-
+    /*  all done
+     */
+    function () {
+        then(timings);
+    });
+};
 
 /***/ },
-/* 18 */
+/* 16 */
+/* all exports used */
+/*!****************************!*\
+  !*** ./base/reflection.js ***!
+  \****************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12933,143 +13197,144 @@ _.perfTest = function (arg, then) {
 
 /*  ------------------------------------------------------------------------ */
 
-const O = Object
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+var O = Object;
 
 /*  ------------------------------------------------------------------------ */
 
-_.hasReflection = true
+_.hasReflection = true;
 
 /*  ------------------------------------------------------------------------ */
 
-$global.getSource = __webpack_require__ (5)
+$global.getSource = __webpack_require__(/*! get-source */ 9);
 
 /*  ------------------------------------------------------------------------ */
 
-$global.StackTracey = O.assign (__webpack_require__ (38), {
+$global.StackTracey = O.assign(__webpack_require__(/*! stacktracey */ 36), {
+    fromErrorWithAsync: function fromErrorWithAsync(e) {
 
-    fromErrorWithAsync (e) {
-
-        let stackEntries = new StackTracey (e),
-            asyncContext = e.asyncContext
+        var stackEntries = new StackTracey(e),
+            asyncContext = e.asyncContext;
 
         while (asyncContext) {
-            stackEntries = stackEntries.concat (new StackTracey (asyncContext.stack))
-            asyncContext = asyncContext.asyncContext }
+            stackEntries = stackEntries.concat(new StackTracey(asyncContext.stack));
+            asyncContext = asyncContext.asyncContext;
+        }
 
-        return stackEntries.mergeRepeatedLines }
-})
+        return stackEntries.mergeRepeatedLines;
+    }
+});
 
 /*  ------------------------------------------------------------------------ */
 
 _.tests.reflection = {
 
-    'file paths': function () {
-        $assert (typeof $uselessPath, 'string')
-        $assert ($sourcePath .length > 0)
-        $assert ($uselessPath.length > 0) },
-}
+    'file paths': function filePaths() {
+        $assert(typeof $uselessPath === 'undefined' ? 'undefined' : _typeof($uselessPath), 'string');
+        $assert($sourcePath.length > 0);
+        $assert($uselessPath.length > 0);
+    }
+};(function () {
 
-;(function () {
+    var currentFile = $platform.Browser ? (new StackTracey()[2] || { file: '' }).file : __filename;
 
-    var currentFile = $platform.Browser
-                        ? ((new StackTracey ())[2] || { file: '' }).file
-                        : __filename
-
-    $global.const ('$uselessPath', _.initial (currentFile.split ('/'), $platform.NodeJS ? 2 : 1).join ('/') + '/')
-    $global.const ('$sourcePath',  (function () {
-                                        var local = ($uselessPath.match (/(.+)\/node_modules\/(.+)/) || [])[1]
-                                        return local ? (local + '/') : $uselessPath }) ())
-
-}) ();
+    $global.const('$uselessPath', _.initial(currentFile.split('/'), $platform.NodeJS ? 2 : 1).join('/') + '/');
+    $global.const('$sourcePath', function () {
+        var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
+        return local ? local + '/' : $uselessPath;
+    }());
+})();
 
 /*  ------------------------------------------------------------------------ */
 
-const asTable = __webpack_require__ (1)
+var asTable = __webpack_require__(/*! as-table */ 1);
 
-StackTracey.prototype[Symbol.for ('String.ify')] = function (stringify) {
+StackTracey.prototype[Symbol.for('String.ify')] = function (stringify) {
 
-    return asTable (this.map (entry => [
-                        '\t' + 'at ' + entry.calleeShort.slice (0, 30),
-                        (entry.fileShort && (entry.fileShort + ':' + entry.line)) || '',
-                        ((entry.sourceLine || '').trim () || '').slice (0, 80) ]))
-}
+    return asTable(this.map(function (entry) {
+        return ['\t' + 'at ' + entry.calleeShort.slice(0, 30), entry.fileShort && entry.fileShort + ':' + entry.line || '', ((entry.sourceLine || '').trim() || '').slice(0, 80)];
+    }));
+};
 
-Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
+Error.prototype[Symbol.for('String.ify')] = function (stringify) {
 
-    try {        
-        var stack   = StackTracey.fromErrorWithAsync (this).slice (this.stackOffset || 0).clean
-        var why     = stringify.limit ((this.message || '').replace (/\r|\n/g, '').trim (), 120)
+    try {
+        var stack = StackTracey.fromErrorWithAsync(this).slice(this.stackOffset || 0).clean;
+        var why = stringify.limit((this.message || '').replace(/\r|\n/g, '').trim(), 120);
 
-        return ('[EXCEPTION] ' + why +
-
-                (this.notMatching && ([].concat (this.notMatching).map (x => '\t' + stringify (x)).join ('\n') + '\n\n') || '') +
-
-            '\n\n') + stringify (stack) + '\n' }
-
-    catch (sub) {
-        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack +
-            '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n' }
-}
+        return '[EXCEPTION] ' + why + (this.notMatching && [].concat(this.notMatching).map(function (x) {
+            return '\t' + stringify(x);
+        }).join('\n') + '\n\n' || '') + '\n\n' + stringify(stack) + '\n';
+    } catch (sub) {
+        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n';
+    }
+};
 
 /*  ------------------------------------------------------------------------ */
 
 _.tests.prototypeMeta = {
 
-    'Prototype.$meta': function () {
+    'Prototype.$meta': function Prototype$meta() {
 
-        const DummyProto = $prototype ()
-        const DummyTrait = $trait ()
+        var DummyProto = $prototype();
+        var DummyTrait = $trait();
 
-        $assertMatches (DummyProto.$meta, { name: 'DummyProto', type: 'prototype' })
-        $assertMatches (DummyTrait.$meta, { name: 'DummyTrait', type: 'trait' })
+        $assertMatches(DummyProto.$meta, { name: 'DummyProto', type: 'prototype' });
+        $assertMatches(DummyTrait.$meta, { name: 'DummyTrait', type: 'trait' });
     },
 
-    'String.ify': function () {
+    'String.ify': function StringIfy() {
 
-        const Dummy = $prototype ({})
+        var Dummy = $prototype({});
 
-        $assert (String.ify (Dummy), 'Dummy ()')
+        $assert(String.ify(Dummy), 'Dummy ()');
     }
-}
+};(function () {
 
-;(() => {
+    var findMeta = function findMeta(stack) {
+        return _.find2(stack.withSources.reverse(), function (location) {
 
-    const findMeta = stack => _.find2 (stack.withSources.reverse (), location => {
+            var match = location.sourceLine.match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/);
+            return match && { name: match[1] === 'exports' ? location.fileName : match[1],
+                type: match[2],
+                file: location.fileShort } || false;
+        });
+    };
 
-        let match = location.sourceLine.match (/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/)
-        return (match && { name: (match[1] === 'exports') ? location.fileName : match[1],
-                           type:  match[2],
-                           file:  location.fileShort }) || false
-    })
-
-    $prototype.macro (function (def, base) {
+    $prototype.macro(function (def, base) {
 
         if (typeof Symbol !== 'undefined') {
-            def.constructor[Symbol.for ('String.ify')] = function () {
-                return ((this.$meta && this.$meta.name) || '<prototype>') + ' ()' }
+            def.constructor[Symbol.for('String.ify')] = function () {
+                return (this.$meta && this.$meta.name || '<prototype>') + ' ()';
+            };
         }
 
-    /*  NB: memoization is here because findMeta performs slow (needs to fetch sources and sourcemaps),
-            and we dont wanna do this at construction of each prototype. Better do this on first $meta request.    */
-        
+        /*  NB: memoization is here because findMeta performs slow (needs to fetch sources and sourcemaps),
+                and we dont wanna do this at construction of each prototype. Better do this on first $meta request.    */
+
         if (!def.$meta) {
-            const stack = new StackTracey ()
-            def.$meta = $static ($property (_.memoize (() => findMeta (stack)))) }
+            (function () {
+                var stack = new StackTracey();
+                def.$meta = $static($property(_.memoize(function () {
+                    return findMeta(stack);
+                })));
+            })();
+        }
 
-        return def
-    })
-
-}) ();
+        return def;
+    });
+})();
 
 /*  ------------------------------------------------------------------------ */
-
-
-
-
 /* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
 
 /***/ },
-/* 19 */
+/* 17 */
+/* all exports used */
+/*!******************************!*\
+  !*** ./base/tier0/assert.js ***!
+  \******************************/
 /***/ function(module, exports) {
 
 "use strict";
@@ -13083,342 +13348,451 @@ Unit tests (bootstrap code)
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-_.hasAsserts = true
+_.hasAsserts = true;
 
-_.extend (_, {
+_.extend(_, {
 
-/*  a namespace where you put tests (for enumeration purposes)
-    ======================================================================== */
+    /*  a namespace where you put tests (for enumeration purposes)
+        ======================================================================== */
 
     tests: {},
 
-/*  A degenerate case of a test shell. We use it to bootstrap most critical
-    useless.js internals, where real shell (Testosterone.js) is not available,
-    as it itself depends on these utility. It takes test and test's subject as
-    arguments (test before code, embodying test-driven philosophy) and executes
-    test immediately, throwing exception if anything fails - which is simply
-    the default behavior of $assert. So expect no advanced error reporting
-    and no controlled execution by using this API.
-    ======================================================================== */
+    /*  A degenerate case of a test shell. We use it to bootstrap most critical
+        useless.js internals, where real shell (Testosterone.js) is not available,
+        as it itself depends on these utility. It takes test and test's subject as
+        arguments (test before code, embodying test-driven philosophy) and executes
+        test immediately, throwing exception if anything fails - which is simply
+        the default behavior of $assert. So expect no advanced error reporting
+        and no controlled execution by using this API.
+        ======================================================================== */
 
-    withTest:   function (name, test, defineSubject) {
-                    defineSubject ()
-                    _.runTest (name, test)
-                    _.publishToTestsNamespace (name, test) },
+    withTest: function withTest(name, test, defineSubject) {
+        defineSubject();
+        _.runTest(name, test);
+        _.publishToTestsNamespace(name, test);
+    },
 
-/*  Publishes to _.tests namespace, but does not run
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  Publishes to _.tests namespace, but does not run
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    deferTest:  function (name, test, defineSubject) {
-                    defineSubject ()
-                    _.publishToTestsNamespace (name, test) },
+    deferTest: function deferTest(name, test, defineSubject) {
+        defineSubject();
+        _.publishToTestsNamespace(name, test);
+    },
 
     /*  INTERNALS (you won't need that)
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-        runTest:    function (name, test) {
-                        try {
-                            if (_.isFunction (test)) {                               test () }
-                                                else { _.each (test, function (fn) { fn () }) } }
-                        catch (e) {
-                            if (_.isAssertionError (e)) { var printedName = ((_.isArray (name) && name) || [name]).join ('.')
-                                                          console.log (printedName + ':', e.message, '\n' + _.times (printedName.length, _.constant ('~')).join ('') + '\n')
-                                                         _.each (e.notMatching, function (x) { console.log ('  •', x) }) }
-                            throw e } },
+    runTest: function runTest(name, test) {
+        try {
+            if (_.isFunction(test)) {
+                test();
+            } else {
+                _.each(test, function (fn) {
+                    fn();
+                });
+            }
+        } catch (e) {
+            if (_.isAssertionError(e)) {
+                var printedName = (_.isArray(name) && name || [name]).join('.');
+                console.log(printedName + ':', e.message, '\n' + _.times(printedName.length, _.constant('~')).join('') + '\n');
+                _.each(e.notMatching, function (x) {
+                    console.log('  •', x);
+                });
+            }
+            throw e;
+        }
+    },
 
-        publishToTestsNamespace: function (name, test) {
-                        if (_.isArray (name)) { // [suite, name] case
-                            (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test }
-                        else {
-                            _.tests[name] = test } } })
-        
+    publishToTestsNamespace: function publishToTestsNamespace(name, test) {
+        if (_.isArray(name)) {
+            // [suite, name] case
+            (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test;
+        } else {
+            _.tests[name] = test;
+        }
+    } });
+
 /*  TEST ITSELF
     ======================================================================== */
 
-_.withTest ('assert.js bootstrap', function () {
+_.withTest('assert.js bootstrap', function () {
 
-/*  One-argument $assert (requires its argument to be strictly 'true')
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  One-argument $assert (requires its argument to be strictly 'true')
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assert (true)
+    $assert(true);
 
-    $assert (                       // public front end, may be replaced by environment)
-        _.assert ===                // member of _ namespace (original implementation, do not mess with that)
-        _.assertions.assert)        // member of _.assertions (for enumeration purposes)
+    $assert( // public front end, may be replaced by environment)
+    _.assert === // member of _ namespace (original implementation, do not mess with that)
+    _.assertions.assert); // member of _.assertions (for enumeration purposes)
 
-    $assertNot (false)
-    $assertNot (5)                  // NB: assertNot means 'assert not true', hence this will pass
+    $assertNot(false);
+    $assertNot(5); // NB: assertNot means 'assert not true', hence this will pass
 
-/*  Multi-argument assert (requires its arguments be strictly equal to each other)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  Multi-argument assert (requires its arguments be strictly equal to each other)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assert (2 + 2, 2 * 2, 4)                    // any number of arguments
-    $assert ({ foo: [1,2,3] }, { foo: [1,2,3] }) // compares objects (deep match)
-    $assert ({ foo: { bar: 1 }, baz: 2 },        // ignores order of properties
-             { baz: 2, foo: { bar: 1 } })
+    $assert(2 + 2, 2 * 2, 4); // any number of arguments
+    $assert({ foo: [1, 2, 3] }, { foo: [1, 2, 3] }); // compares objects (deep match)
+    $assert({ foo: { bar: 1 }, baz: 2 }, // ignores order of properties
+    { baz: 2, foo: { bar: 1 } });
 
-    $assertNot (2 + 2, 5)
+    $assertNot(2 + 2, 5);
 
-/*  Nonstrict matching (a wrapup over _.matches)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  Nonstrict matching (a wrapup over _.matches)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assertMatches ({ foo: 1, bar: 2 },
-                    { foo: 1 })
+    $assertMatches({ foo: 1, bar: 2 }, { foo: 1 });
 
-/*  Nonstrict matching against complex objects (stdlib.js feature)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  Nonstrict matching against complex objects (stdlib.js feature)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) { $assertMatches ( { foo: [1,2], bar: 3 },
-                                        { foo: [1] }) }
+    if (_.hasStdlib) {
+        $assertMatches({ foo: [1, 2], bar: 3 }, { foo: [1] });
+    }
 
-/*  Regex matching (stdlib.js feature)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  Regex matching (stdlib.js feature)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    if (_.hasStdlib) { $assertMatches ('123', /[0-9]+/) }
+    if (_.hasStdlib) {
+        $assertMatches('123', /[0-9]+/);
+    }
 
+    /*  Type matching (plain)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-/*  Type matching (plain)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    if (_.hasStdlib) {
+        $assertTypeMatches(42, 'number');
+        $assertFails(function () {
+            $assertTypeMatches('foo', 'number');
+        });
+    }
 
-    if (_.hasStdlib) {  $assertTypeMatches (42, 'number')
-                        $assertFails (function () {
-                            $assertTypeMatches ('foo', 'number') }) }
+    /*  Type matching (array type)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-/*  Type matching (array type)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    if (_.hasStdlib) {
+        $assertTypeMatches([1, 2], []);
+        $assertTypeMatches([], []);
+        $assertTypeMatches([1, 2, 3], ['number']);
+        $assertTypeMatches([], ['number']);
+        $assertFails(function () {
+            $assertTypeMatches([1, 2, 3], ['string']);
+            $assertTypeMatches([1, 2, 'foo'], ['number']);
+        });
+    }
 
-    if (_.hasStdlib) {  $assertTypeMatches ([1,2],   [])
-                        $assertTypeMatches ([],      [])
-                        $assertTypeMatches ([1,2,3], ['number'])
-                        $assertTypeMatches ([],      ['number'])
-                        $assertFails (function () {
-                            $assertTypeMatches ([1,2,3],     ['string'])
-                            $assertTypeMatches ([1,2,'foo'], ['number']) }) }
+    /*  Type matching (deep)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-/*  Type matching (deep)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    if (_.hasStdlib) {
+        $assertTypeMatches({
 
-    if (_.hasStdlib) {  $assertTypeMatches ({
+            /*  Input object */
 
-                            /*  Input object */
+            foo: 42,
+            bar: {
+                even: 4,
+                many: ['foo', 'bar'] } }, {
 
-                                foo: 42,
-                                bar: {
-                                    even: 4,
-                                    many: ['foo','bar'] } }, {
+            /*  Type contract */
 
-                            /*  Type contract */
+            foo: 'number', // simple type check
+            qux: 'undefined', // nonexisting match 'undefined' 
+            bar: { // breakdown of complex object 
+                even: function even(n) {
+                    return n % 2 === 0;
+                }, // custom contract predicate    
+                many: ['string'] } });
+    } // array contract (here, 'array of strings')
 
-                                foo: 'number',      // simple type check
-                                qux: 'undefined',   // nonexisting match 'undefined' 
-                                bar: {                                              // breakdown of complex object 
-                                    even: function (n) { return (n % 2) === 0 },    // custom contract predicate    
-                                    many: ['string'] } }) }                         // array contract (here, 'array of strings')
+    /*  Type matching ($prototype)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-/*  Type matching ($prototype)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    if (_.hasOOP) {
+        var Foo = $prototype(),
+            Bar = $prototype();
 
-    if (_.hasOOP) { var Foo = $prototype (),
-                        Bar = $prototype ()
+        $assertTypeMatches({ foo: new Foo(),
+            bar: new Bar() }, { foo: Foo,
+            bar: Bar });
 
-        $assertTypeMatches ({ foo: new Foo (),
-                              bar: new Bar () },
+        $assertFails(function () {
+            $assertTypeMatches(new Bar(), Foo);
+        });
+    };
 
-                            { foo: Foo,
-                              bar: Bar })
+    /*  Ensuring throw (and no throw)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-        $assertFails (function () {
-            $assertTypeMatches (new Bar (), Foo) }) };
+    $assertThrows(function () {
+        throw 42;
+    });
+    $assertNotThrows(function () {});
 
-/*  Ensuring throw (and no throw)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  Ensuring throw (strict version)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assertThrows (function () { throw 42 })
-    $assertNotThrows (function () {})
+    $assertThrows(function () {
+        throw 42;
+    }, 42); // accepts either plain value or predicate
+    $assertThrows(function () {
+        throw new Error('42');
+    }, _.matches({ message: '42' }));
 
-/*  Ensuring throw (strict version)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    $assertFails(function () {
+        $assertThrows(function () {
+            throw 42;
+        }, 24);
+        $assertThrows(function () {
+            throw new Error('42');
+        }, _.matches({ message: '24' }));
+    });
 
-    $assertThrows (     function () { throw 42 }, 42) // accepts either plain value or predicate
-    $assertThrows (     function () { throw new Error ('42') }, _.matches ({ message: '42' }))
+    /*  Ensuring execution
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    $assertFails (function () {
-        $assertThrows ( function () { throw 42 }, 24)
-        $assertThrows ( function () { throw new Error ('42') }, _.matches ({ message: '24' })) })
-
-/*  Ensuring execution
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertEveryCalled     (function (a, b, c) { a (); a (); b (); c () })
-    $assertEveryCalledOnce (function (a, b, c) { a ();       b (); c () })
-    $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); x__3 (); })
+    $assertEveryCalled(function (a, b, c) {
+        a();a();b();c();
+    });
+    $assertEveryCalledOnce(function (a, b, c) {
+        a();b();c();
+    });
+    $assertEveryCalled(function (x__3) {
+        x__3();x__3();x__3();
+    });
 
     /*$assertFails (function () {
         $assertEveryCalled     (function (a, b, c) { a (); b () })
         $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
         $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
 
-
-/*  TODO:   1) add CPS support
-            2) replace $assertCPS with this
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  TODO:   1) add CPS support
+                2) replace $assertCPS with this
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     if (_.hasStdlib) {
 
-            $assertCalledWithArguments (   ['foo',
-                                           ['foo', 'bar']], function (fn) {
+        $assertCalledWithArguments(['foo', ['foo', 'bar']], function (fn) {
 
-                                        fn ('foo')
-                                        fn ('foo', 'bar') }) }
+            fn('foo');
+            fn('foo', 'bar');
+        });
+    }
 
+    /*  Ensuring CPS routine result (DEPRECATED)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-/*  Ensuring CPS routine result (DEPRECATED)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    $assertCPS(function (then) {
+        then('foo', 'bar');
+    }, ['foo', 'bar']);
+    $assertCPS(function (then) {
+        then('foo');
+    }, 'foo');
+    $assertCPS(function (then) {
+        then();
+    });
 
-    $assertCPS (function (then) { then ('foo', 'bar') }, ['foo', 'bar'])
-    $assertCPS (function (then) { then ('foo') }, 'foo')
-    $assertCPS (function (then) { then () })
+    /*  Ensuring assertion failure
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+    $assertFails(function () {
+        $fail; // simplest way to generate assertion
+        $stub; // to mark code stubs (throws error)
+        $assert('not true'); // remember that assert is more strict than JavaScript if clauses
+        $assert({ foo: 1, bar: 2 }, { foo: 1 }); // not be confused with _.matches behavior (use $assertMatches for that)
+        $assert([1, 2, 3, 4], [1, 2, 3]); // same for arrays
+        $assert(['foo'], { 0: 'foo', length: 1 }); // array-like objects not gonna pass (regression test)
+        $assertFails(function () {});
+    }); // $assertFails fails if passed code don't
 
-/*  Ensuring assertion failure
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertFails (function () {
-        $fail                                           // simplest way to generate assertion
-        $stub                                           // to mark code stubs (throws error)
-        $assert ('not true')                            // remember that assert is more strict than JavaScript if clauses
-        $assert ({ foo: 1, bar: 2 }, { foo: 1 })        // not be confused with _.matches behavior (use $assertMatches for that)
-        $assert ([1,2,3,4], [1,2,3])                    // same for arrays
-        $assert (['foo'], { 0: 'foo', length: 1 })      // array-like objects not gonna pass (regression test)
-        $assertFails (function () {}) })                // $assertFails fails if passed code don't
-
-/*  Default fail behavior (never depend on that, as it's environment-dependent)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /*  Default fail behavior (never depend on that, as it's environment-dependent)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     if ($assert === _.assertions.assert) {
-        $assertThrows (function () { $fail }) }
+        $assertThrows(function () {
+            $fail;
+        });
+    }
 
-
-/*  IMPLEMENTATION
-    ======================================================================== */
-
+    /*  IMPLEMENTATION
+        ======================================================================== */
 }, function () {
 
-    var assertImpl = function (positive) {
-                        return function (__) {  var args = [].splice.call (arguments, 0)
+    var assertImpl = function assertImpl(positive) {
+        return function (__) {
+            var args = [].splice.call(arguments, 0);
 
-                                                if (args.length === 1) {
-                                                    if (positive && (args[0] !== true)) {
-                                                        _.assertionFailed ({ notMatching: args }) } }
+            if (args.length === 1) {
+                if (positive && args[0] !== true) {
+                    _.assertionFailed({ notMatching: args });
+                }
+            } else if (positive && _.allEqual(args) !== true) {
+                _.assertionFailed({ notMatching: args });
+            }
 
-                                                else if (positive && (_.allEqual (args) !== true)) {
-                                                    _.assertionFailed ({ notMatching: args }) }
-
-                                                return true } }
+            return true;
+        };
+    }
 
     /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
      */
     ;(function () {
-        var _matches = _.matches
-        _.matches = function (a) { return _.isObject (a) ? _matches (a) : function (b) { return a === b } } }) ();
+        var _matches = _.matches;
+        _.matches = function (a) {
+            return _.isObject(a) ? _matches(a) : function (b) {
+                return a === b;
+            };
+        };
+    })();
 
-    _.extend (_, _.assertions = {
+    _.extend(_, _.assertions = {
 
-        assert:    assertImpl (true),
-        assertNot: assertImpl (false),
+        assert: assertImpl(true),
+        assertNot: assertImpl(false),
 
-        assertCPS: function (fn, args, then) { var requiredResult = (args && (_.isArray (args) ? args : [args])) || []
-            fn (function () {
-                $assert ([].splice.call (arguments, 0), requiredResult)
-                if (then) { then (); return true; } }) },
+        assertCPS: function assertCPS(fn, args, then) {
+            var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
+            fn(function () {
+                $assert([].splice.call(arguments, 0), requiredResult);
+                if (then) {
+                    then();return true;
+                }
+            });
+        },
 
-        assertNotCalled: function (context) {
-            var inContext = true; context (function () { if (inContext) { $fail } }); inContext = false },
+        assertNotCalled: function assertNotCalled(context) {
+            var inContext = true;context(function () {
+                if (inContext) {
+                    $fail;
+                }
+            });inContext = false;
+        },
 
-        assertEveryCalledOnce: function (fn, then) {
-            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
+        assertEveryCalledOnce: function assertEveryCalledOnce(fn, then) {
+            return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
+        },
 
-        assertEveryCalled: function (fn_, then) { const fn    = _.hasTags ? $untag (fn_)    : fn_,
-                                                        async = _.hasTags ? $async.is (fn_) : fn_.async,
-                                                        once  = _.hasTags ? $once.is (fn_)  : fn_.once
+        assertEveryCalled: function assertEveryCalled(fn_, then) {
+            var fn = _.hasTags ? $untag(fn_) : fn_,
+                async = _.hasTags ? $async.is(fn_) : fn_.async,
+                once = _.hasTags ? $once.is(fn_) : fn_.once;
 
-            var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
-            var contracts = once ? _.times (fn.length, _.constant (1)) :
-                                   _.map (match[1].split (','), function (arg) {
-                                                                    var parts = (arg.trim ().match (/^(.+)__(\d+)$/))
-                                                                    var num = (parts && parseInt (parts[2], 10))
-                                                                    return _.isFinite (num) ? (num || false) : true })
-            var status    = _.times (fn.length, _.constant (false))
-            var callbacks = _.times (fn.length, function (i) {
-                                                    return function () {
-                                                        status[i] =
-                                                            _.isNumber (contracts[i]) ?
-                                                                ((status[i] || 0) + 1) : true
-                                                        if (async && _.isEqual (status, contracts))
-                                                            then () } })
-            fn.apply (null, callbacks)
+            var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
+            var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
+                var parts = arg.trim().match(/^(.+)__(\d+)$/);
+                var num = parts && parseInt(parts[2], 10);
+                return _.isFinite(num) ? num || false : true;
+            });
+            var status = _.times(fn.length, _.constant(false));
+            var callbacks = _.times(fn.length, function (i) {
+                return function () {
+                    status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
+                    if (async && _.isEqual(status, contracts)) then();
+                };
+            });
+            fn.apply(null, callbacks);
 
-            if (!async)   { _.assert (status, contracts)
-                if (then) { then () } } },
+            if (!async) {
+                _.assert(status, contracts);
+                if (then) {
+                    then();
+                }
+            }
+        },
 
-        assertCalledWithArguments: function (argsPattern, generateCalls) {
-                                        return _.assert (_.arr (generateCalls), argsPattern) },
+        assertCalledWithArguments: function assertCalledWithArguments(argsPattern, generateCalls) {
+            return _.assert(_.arr(generateCalls), argsPattern);
+        },
 
-        assertCallOrder: function (fn) {
-            var callIndex = 0
-            var callbacks = _.times (fn.length, i => function callee () { callee.callIndex = callIndex++ })
-            fn.apply (null, callbacks)
-            return _.assert (_.pluck (callbacks, 'callIndex'), _.times (callbacks.length, _.identity.arity1)) },
+        assertCallOrder: function assertCallOrder(fn) {
+            var callIndex = 0;
+            var callbacks = _.times(fn.length, function (i) {
+                return function callee() {
+                    callee.callIndex = callIndex++;
+                };
+            });
+            fn.apply(null, callbacks);
+            return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
+        },
 
-        assertMatches: function (value, ...args) {
-            const pattern = args[0]
-            try {       return _.assert (_.matches.apply (null, args) (value)) }
-            catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
+        assertMatches: function assertMatches(value) {
+            for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+                args[_key - 1] = arguments[_key];
+            }
 
-        assertNotMatches: function (value, ...args) {
-            const pattern = args[0]
-            try {       return _.assert (!_.matches.apply (null, args) (value)) }
-            catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
+            var pattern = args[0];
+            try {
+                return _.assert(_.matches.apply(null, args)(value));
+            } catch (e) {
+                throw _.isAssertionError(e) ? _.extend(e, { notMatching: [value, pattern] }) : e;
+            }
+        },
 
-        assertType: function (value, contract) {
-            return _.assert (_.decideType (value), contract) },
+        assertNotMatches: function assertNotMatches(value) {
+            for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+                args[_key2 - 1] = arguments[_key2];
+            }
 
-        assertTypeMatches: function (value, contract) { const mismatches = _.typeMismatches (contract, value)
-                                return _.isEmpty (mismatches)
-                                    ? true
-                                    : _.assertionFailed ({
-                                        message: 'provided value type not matches required contract',
-                                        asColumns: true,
-                                        notMatching: [
-                                            { provided: value },
-                                            { required: contract },
-                                            { mismatches: mismatches }] }) },
+            var pattern = args[0];
+            try {
+                return _.assert(!_.matches.apply(null, args)(value));
+            } catch (e) {
+                throw _.isAssertionError(e) ? _.extend(e, { notMatching: [value, pattern] }) : e;
+            }
+        },
 
-        assertFails: function (what) {
-            return _.assertThrows.call (this, what, _.isAssertionError) },
+        assertType: function assertType(value, contract) {
+            return _.assert(_.decideType(value), contract);
+        },
 
-        assertThrows: function (what, errorPattern) {
-                            var e = undefined, thrown = false
-                                try         { what.call (this) }
-                                catch (__)  { e = __; thrown = true }
+        assertTypeMatches: function assertTypeMatches(value, contract) {
+            var mismatches = _.typeMismatches(contract, value);
+            return _.isEmpty(mismatches) ? true : _.assertionFailed({
+                message: 'provided value type not matches required contract',
+                asColumns: true,
+                notMatching: [{ provided: value }, { required: contract }, { mismatches: mismatches }] });
+        },
 
-                            _.assert.call (this, thrown)
+        assertFails: function assertFails(what) {
+            return _.assertThrows.call(this, what, _.isAssertionError);
+        },
 
-                            if (arguments.length > 1) {
-                                _.assertMatches.call (this, e, errorPattern) } },
+        assertThrows: function assertThrows(what, errorPattern) {
+            var e = undefined,
+                thrown = false;
+            try {
+                what.call(this);
+            } catch (__) {
+                e = __;thrown = true;
+            }
 
-        assertNotThrows: function (what) {
-            return _.assertEveryCalled (function (ok) { what (); ok () }) },
+            _.assert.call(this, thrown);
 
-        fail: function () {
-                _.assertionFailed () },
+            if (arguments.length > 1) {
+                _.assertMatches.call(this, e, errorPattern);
+            }
+        },
 
-        fails: _.constant (function () {    // higher order version
-                _.assertionFailed () }),
+        assertNotThrows: function assertNotThrows(what) {
+            return _.assertEveryCalled(function (ok) {
+                what();ok();
+            });
+        },
 
-        stub: function () {
-                _.assertionFailed () } })
+        fail: function fail() {
+            _.assertionFailed();
+        },
 
+        fails: _.constant(function () {
+            // higher order version
+            _.assertionFailed();
+        }),
+
+        stub: function stub() {
+            _.assertionFailed();
+        } });
 
     /*  DEFAULT FAILURE IMPL.
         ---------------------
@@ -13427,43 +13801,46 @@ _.withTest ('assert.js bootstrap', function () {
         and logging facility. Thus a subclass is defined that way.
         ======================================================================== */
 
-    _.extend (_, {
+    _.extend(_, {
 
-        assertionError: function (additionalInfo) {
-                            return _.extend (new Error (
-                                (additionalInfo && additionalInfo.message) || 'assertion failed'), additionalInfo, { assertion: true }) },
+        assertionError: function assertionError(additionalInfo) {
+            return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
+        },
 
-        assertionFailed: function (additionalInfo) {
-                            throw _.extend (_.assertionError (additionalInfo), {
-                                        stack: (new Error ()).stack.split ('\n').slice (3).join ('\n') }) },
+        assertionFailed: function assertionFailed(additionalInfo) {
+            throw _.extend(_.assertionError(additionalInfo), {
+                stack: new Error().stack.split('\n').slice(3).join('\n') });
+        },
 
-        isAssertionError: function (e) {        
-                            return e && (e.assertion === true) } })
-
+        isAssertionError: function isAssertionError(e) {
+            return e && e.assertion === true;
+        } });
 
     /*  $assert helper
         ======================================================================== */
 
     _.allEqual = function (values) {
-                    return _.reduce (values, function (prevEqual, x) {
-                        return prevEqual && _.isEqual (values[0], x) }, true) }
+        return _.reduce(values, function (prevEqual, x) {
+            return prevEqual && _.isEqual(values[0], x);
+        }, true);
+    };
 
     /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
         thus configurable=true)
         ======================================================================== */
 
-    _.each (_.keys (_.assertions), function (name) {
-                                        var define = ((_[name].length === 0) ? $global.property : $global.const)
-                                        define ('$' + name, _[name], { configurable: true }) })
-})
-
-
-
-
-
+    _.each(_.keys(_.assertions), function (name) {
+        var define = _[name].length === 0 ? $global.property : $global.const;
+        define('$' + name, _[name], { configurable: true });
+    });
+});
 
 /***/ },
-/* 20 */
+/* 18 */
+/* all exports used */
+/*!**************************!*\
+  !*** ./base/uncaught.js ***!
+  \**************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13472,65 +13849,87 @@ _.withTest ('assert.js bootstrap', function () {
 /*  Uncaught exception handling facility
     ======================================================================== */
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 (function () {
 
-    _.hasUncaught = true
+    _.hasUncaught = true;
 
-    var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler
+    var reThrownTag = ' [re-thrown by a hook]'; // marks error as already processed by globalUncaughtExceptionHandler
 
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
 
-        var chain = globalUncaughtExceptionHandler.chain
-                    globalUncaughtExceptionHandler.chain = _.reject (chain, _.property ('catchesOnce'))
+        var chain = globalUncaughtExceptionHandler.chain;
+        globalUncaughtExceptionHandler.chain = _.reject(chain, _.property('catchesOnce'));
 
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
                 try {
-                    chain[i] (e)
-                    break }
-                catch (newE) {
-                    console.log (newE)
+                    chain[i](e);
+                    break;
+                } catch (newE) {
+                    console.log(newE);
                     if (i === n - 1) {
-                        newE.message += reThrownTag
-                        throw newE }
-                    else {
-                        if (newE && (typeof newE === 'object')) { newE.originalError = e }
-                        e = newE } } } }
-        else {
-            e.message += reThrownTag
-            console.log (e)
-            throw e } }
+                        newE.message += reThrownTag;
+                        throw newE;
+                    } else {
+                        if (newE && (typeof newE === 'undefined' ? 'undefined' : _typeof(newE)) === 'object') {
+                            newE.originalError = e;
+                        }
+                        e = newE;
+                    }
+                }
+            }
+        } else {
+            e.message += reThrownTag;
+            console.log(e);
+            throw e;
+        }
+    };
 
-    _.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity
+    _.withUncaughtExceptionHandler = function (handler, context_) {
+        var context = context_ || _.identity;
 
         if (context_) {
-            handler.catchesOnce = true }
+            handler.catchesOnce = true;
+        }
 
-                               globalUncaughtExceptionHandler.chain.unshift (handler)
-        context (function () { globalUncaughtExceptionHandler.chain.remove  (handler) }) }
+        globalUncaughtExceptionHandler.chain.unshift(handler);
+        context(function () {
+            globalUncaughtExceptionHandler.chain.remove(handler);
+        });
+    };
 
-    globalUncaughtExceptionHandler.chain = []
+    globalUncaughtExceptionHandler.chain = [];
 
     switch ($platform.engine) {
         case 'node':
-            __webpack_require__ (10).on ('uncaughtException', globalUncaughtExceptionHandler); break;
+            __webpack_require__(/*! process */ 5).on('uncaughtException', globalUncaughtExceptionHandler);break;
 
         case 'browser':
-            window.addEventListener ('error', function (e) {
+            window.addEventListener('error', function (e) {
 
-                if (e.message.indexOf (reThrownTag) < 0) { // if not already processed by async hooks
+                if (e.message.indexOf(reThrownTag) < 0) {
+                    // if not already processed by async hooks
 
                     if (e.error) {
-                        globalUncaughtExceptionHandler (e.error) }
-
-                    else { // emulate missing .error (that's Safari)
-                        globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
+                        globalUncaughtExceptionHandler(e.error);
+                    } else {
+                        // emulate missing .error (that's Safari)
+                        globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
                             stub: true,
-                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } }) }
-}) ()
+                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno }));
+                    }
+                }
+            });}
+})();
 
 /***/ },
-/* 21 */
+/* 19 */
+/* all exports used */
+/*!*******************************!*\
+  !*** ./base/uncaughtAsync.js ***!
+  \*******************************/
 /***/ function(module, exports) {
 
 "use strict";
@@ -13543,60 +13942,78 @@ _.withTest ('assert.js bootstrap', function () {
 
     if ($platform.Browser) {
 
-        _.hasUncaughtAsync = true
+        _.hasUncaughtAsync = true;
 
-        var globalAsyncContext = undefined
+        var globalAsyncContext = undefined;
 
-        var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
+        var listenEventListeners = function listenEventListeners(genAddEventListener, genRemoveEventListener) {
 
-            var override = function (obj) {
+            var override = function override(obj) {
 
-                obj.addEventListener    = genAddEventListener    (obj.addEventListener)
-                obj.removeEventListener = genRemoveEventListener (obj.removeEventListener) }
+                obj.addEventListener = genAddEventListener(obj.addEventListener);
+                obj.removeEventListener = genRemoveEventListener(obj.removeEventListener);
+            };
 
             if (window.EventTarget) {
-                override (window.EventTarget.prototype) }
+                override(window.EventTarget.prototype);
+            } else {
+                override(Node.prototype);
+                override(XMLHttpRequest.prototype);
+            }
+        };
 
-            else {
-                override (Node.prototype)
-                override (XMLHttpRequest.prototype) } }
+        var asyncHook = function asyncHook(originalImpl, callbackArgumentIndex) {
+            return function () {
+                // @hide
 
-        var asyncHook = function (originalImpl, callbackArgumentIndex) {
-            return function () { // @hide
+                var asyncContext = {
+                    name: name,
+                    stack: new Error().stack, // @hide
+                    asyncContext: globalAsyncContext };
 
-                    var asyncContext = {
-                        name: name,
-                        stack: (new Error ()).stack, // @hide
-                        asyncContext: globalAsyncContext }
+                var args = _.asArray(arguments);
+                var fn = args[callbackArgumentIndex];
 
-                    var args = _.asArray (arguments)
-                    var fn   = args[callbackArgumentIndex]
+                if (!_.isFunction(fn)) {
+                    throw new Error('[uncaughtAsync.js] callback should be a function');
+                }
 
-                    if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
+                fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = function () {
+                    // @hide
 
-                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = function () { // @hide
+                    globalAsyncContext = asyncContext;
 
-                        globalAsyncContext = asyncContext
+                    try {
+                        return fn.apply(this, arguments);
+                    } catch (e) {
+                        _.globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
+                    }
+                };
 
-                        try       { return fn.apply (this, arguments) }
-                        catch (e) { _.globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
+                return originalImpl.apply(this, args);
+            };
+        };
 
-                    return originalImpl.apply (this, args) } }
-
-        window.setTimeout = asyncHook (window.setTimeout, 0)
+        window.setTimeout = asyncHook(window.setTimeout, 0);
 
         /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
-         */ 
-        listenEventListeners (
-            function (addEventListener) { return asyncHook (addEventListener, 1) },
-            function (removeEventListener) {
-                return function (name, fn, bubble, untrusted) {
-                   return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } }) }
-
-}) ()
+         */
+        listenEventListeners(function (addEventListener) {
+            return asyncHook(addEventListener, 1);
+        }, function (removeEventListener) {
+            return function (name, fn, bubble, untrusted) {
+                return removeEventListener.call(this, name, fn.__uncaughtJS_wrapper || fn, bubble);
+            };
+        });
+    }
+})();
 
 /***/ },
-/* 22 */
+/* 20 */
+/* all exports used */
+/*!******************************!*\
+  !*** ./client/LogOverlay.js ***!
+  \******************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13612,70 +14029,80 @@ Modal overlay that renders log.js output for debugging purposes
 
 (function ($ /* JQUERY */) {
 
-	$global.LogOverlay = $singleton (Component, {
+	$global.LogOverlay = $singleton(Component, {
 
 		$defaults: {
-			opaque: false,     // disables passing of printed log messages to default write backend (console.log) 
-			/*init: false*/ }, // deferred init
+			opaque: false }, // deferred init
 
-		init: function () {
-				log.withWriteBackend (this.write, function () {})
+		init: function init() {
+			log.withWriteBackend(this.write, function () {});
 
-				$(document).keydown (this.$ (function (e) {
-					if (e.keyCode === 192) { // ~
-						this.toggle () }
-					else if (e.keyCode === 27) { // Esc
-						this.body.empty () } })) },
+			$(document).keydown(this.$(function (e) {
+				if (e.keyCode === 192) {
+					// ~
+					this.toggle();
+				} else if (e.keyCode === 27) {
+					// Esc
+					this.body.empty();
+				}
+			}));
+		},
 
-		el: $memoized ($property (function () {
-									return $('<div class="useless-log-overlay" style="display: none;">')
-												.append ('<div class="useless-log-overlay-body">')
-												.appendTo (document.body) })),
+		el: $memoized($property(function () {
+			return $('<div class="useless-log-overlay" style="display: none;">').append('<div class="useless-log-overlay-body">').appendTo(document.body);
+		})),
 
-		body: $memoized ($property (function () {
-										return this.el.find ('.useless-log-overlay-body') })),
+		body: $memoized($property(function () {
+			return this.el.find('.useless-log-overlay-body');
+		})),
 
-		toggle: function (yes) {
-					this.el.toggle (yes) },
+		toggle: function toggle(yes) {
+			this.el.toggle(yes);
+		},
 
-		visible: $property (function () {
-								return this.el.is (':visible') }),
+		visible: $property(function () {
+			return this.el.is(':visible');
+		}),
 
-		clip: function () {
-		            var elHeight   = this.el.height ()
-		            var bodyHeight = this.body.height ()
+		clip: function clip() {
+			var elHeight = this.el.height();
+			var bodyHeight = this.body.height();
 
-		            this.body.children ().filter (this.$ (function (i, line) {
+			this.body.children().filter(this.$(function (i, line) {
 
-		            	var lineTop 	= bodyHeight - $(line).offsetInParent ().y
-		            	var lineBottom  = lineTop    - $(line).height ()
-		            	var clipHeight  = elHeight / 2
+				var lineTop = bodyHeight - $(line).offsetInParent().y;
+				var lineBottom = lineTop - $(line).height();
+				var clipHeight = elHeight / 2;
 
-		            	return (lineTop    > clipHeight) &&
-		            		   (lineBottom > clipHeight) })).remove () },
+				return lineTop > clipHeight && lineBottom > clipHeight;
+			})).remove();
+		},
 
-		write: function (params) { 	this.toggle (true)
+		write: function write(params) {
+			this.toggle(true);
 
-									if (params.config.clear) {
-										this.body.empty () }
+			if (params.config.clear) {
+				this.body.empty();
+			}
 
-						            this.body.append ($('<div class="ulo-line">')
-										            	.attr ('style', (params.color && params.color.css) || '')
-										            	.append ($('<span class="ulo-line-text">') .text (params.indentedText  + ' '))
-										            	.append ($('<span class="ulo-line-where">').text (params.codeLocation  + ' '))
-										            	.append ($('<span class="ulo-line-trail">').text (params.trailNewlines)))
+			this.body.append($('<div class="ulo-line">').attr('style', params.color && params.color.css || '').append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
 
-						            this.clip.postpone ()
+			this.clip.postpone();
 
-						            if (!this.opaque) {
-										log.impl.defaultWriteBackend (params) } } })
+			if (!this.opaque) {
+				log.impl.defaultWriteBackend(params);
+			}
+		} });
 
-// -- end of namespace
-
-}) (__webpack_require__ (3));
+	// -- end of namespace
+})(__webpack_require__(/*! jquery */ 4));
 
 /***/ },
-/* 23 */
+/* 21 */
+/* all exports used */
+/*!*************************!*\
+  !*** ./client/Panic.js ***!
+  \*************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13686,245 +14113,241 @@ Modal overlay that renders log.js output for debugging purposes
 
 (function ($ /* JQUERY */) {
 
-$global.Panic = (what, cfg) => { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
+	$global.Panic = function (what, cfg) {
+		cfg = _.defaults(_.clone(cfg || {}), { dismiss: _.identity, raw: false });
 
-	if (_.isTypeOf (Error, what)) {
-		_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
+		if (_.isTypeOf(Error, what)) {
+			_.extend(cfg, _.pick(what, 'retry', 'dismiss'));
+		}
 
-	Panic.widget.append (what, cfg.raw)
+		Panic.widget.append(what, cfg.raw);
 
-	if (_.isFunction (cfg.retry)) {
-		Panic.widget.onRetry (cfg.retry) }
+		if (_.isFunction(cfg.retry)) {
+			Panic.widget.onRetry(cfg.retry);
+		}
 
-	if (_.isFunction (cfg.dismiss)) {
-		Panic.widget.onClose (cfg.dismiss) } }
+		if (_.isFunction(cfg.dismiss)) {
+			Panic.widget.onClose(cfg.dismiss);
+		}
+	};
 
-Panic.init = () => {
-	if (!Panic._initialized) {
-		 Panic._initialized = true
-	   _.withUncaughtExceptionHandler (function (e) { Panic (e); throw e /* re-throw, to make it visible in WebInspector */ }) } }
+	Panic.init = function () {
+		if (!Panic._initialized) {
+			Panic._initialized = true;
+			_.withUncaughtExceptionHandler(function (e) {
+				Panic(e);throw e; /* re-throw, to make it visible in WebInspector */
+			});
+		}
+	};
 
-Panic.widget = $singleton (Component, {
+	Panic.widget = $singleton(Component, {
 
-	retryTriggered: $triggerOnce (),
-	closeTriggered: $triggerOnce (),
+		retryTriggered: $triggerOnce(),
+		closeTriggered: $triggerOnce(),
 
-	el: $memoized ($property (function () {
+		el: $memoized($property(function () {
 
-		var el = $('<div class="panic-modal-overlay" style="z-index:5000; display:none;">').append ([
-			this.bg    = $('<div class="panic-modal-overlay-background">'),
-			this.modal = $('<div class="panic-modal">').append ([
-				this.modalBody = $('<div class="panic-modal-body">').append (
-					this.title = $('<div class="panic-modal-title">Now panic!</div>')),
-				$('<div class="panic-modal-footer">').append ([
-					this.btnRetry = $('<button type="button" class="panic-btn panic-btn-warning" style="display:none;">Try again</button>')
-						.touchClick (this.retry),
-					this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>')
-						.touchClick (this.close) ]) ]) ])
+			var el = $('<div class="panic-modal-overlay" style="z-index:5000; display:none;">').append([this.bg = $('<div class="panic-modal-overlay-background">'), this.modal = $('<div class="panic-modal">').append([this.modalBody = $('<div class="panic-modal-body">').append(this.title = $('<div class="panic-modal-title">Now panic!</div>')), $('<div class="panic-modal-footer">').append([this.btnRetry = $('<button type="button" class="panic-btn panic-btn-warning" style="display:none;">Try again</button>').touchClick(this.retry), this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>').touchClick(this.close)])])]);
 
-		el.appendTo (document.body)
-		
-		$(document).ready (function () {
-			el.appendTo (document.body) })
+			el.appendTo(document.body);
 
-		try {
-			$(window).resize (this.layout).resize ()
-			this.modal.enableScrollFaders ({ scroller: this.modalBody })
-			$(document).keydown (this.$ (function (e) { if (e.keyCode === 27) { this.close () } })) }
+			$(document).ready(function () {
+				el.appendTo(document.body);
+			});
 
-		catch (e) {
-			_.delay (function () { Panic (e) }) }
+			try {
+				$(window).resize(this.layout).resize();
+				this.modal.enableScrollFaders({ scroller: this.modalBody });
+				$(document).keydown(this.$(function (e) {
+					if (e.keyCode === 27) {
+						this.close();
+					}
+				}));
+			} catch (e) {
+				_.delay(function () {
+					Panic(e);
+				});
+			}
 
-		return el })),
+			return el;
+		})),
 
-	layout () { var maxContentWidth = _.coerceToUndefined (_.max (_.map (this.modal.find ('pre'), _.property ('scrollWidth'))))
+		layout: function layout() {
+			var maxContentWidth = _.coerceToUndefined(_.max(_.map(this.modal.find('pre'), _.property('scrollWidth'))));
 
-		this.modal.css ({ 'max-height': $(window).height () - 100,
-						  'width': maxContentWidth && (maxContentWidth + 120) })
+			this.modal.css({ 'max-height': $(window).height() - 100,
+				'width': maxContentWidth && maxContentWidth + 120 });
 
-		this.modalBody.scroll () },
+			this.modalBody.scroll();
+		},
+		toggleVisibility: function toggleVisibility(yes) {
+			if (yes !== !(this.el.css('display') === 'none')) {
+				if (yes) {
+					this.el.css('display', '');
+				}
+				this.el.animateWith(yes ? 'panic-modal-appear' : 'panic-modal-disappear', this.$(function () {
+					if (!yes) {
+						this.el.css('display', 'none');
+					}
+				}));
+			}
+		},
+		onRetry: function onRetry(retry) {
+			this.retryTriggered(retry);
+			this.btnRetry.css('display', '');
+		},
+		onClose: function onClose(close) {
+			this.closeTriggered(close);
+			this.btnClose.css('display', '');
+		},
+		retry: function retry() {
+			this._clean();
+			this.closeTriggered.off();
+			this.toggleVisibility(false);
+			this.retryTriggered();
+		},
+		close: function close() {
+			this._clean();
+			this.retryTriggered.off();
+			this.toggleVisibility(false);
+			this.closeTriggered();
+		},
+		_clean: function _clean() {
+			this.modalBody.find('.panic-alert-error').remove();
+			this.modalBody.scroll();
+			this.btnRetry.css('display', 'none');
+			this.btnClose.css('display', 'none');
+		},
+		append: function append(what, raw) {
+			var id = 'panic' + this.hash(what);
 
-	toggleVisibility (yes) {
-		if (yes !== !(this.el.css ('display') === 'none')) {
-	        if (yes) {
-	            this.el.css ('display', '') }
-	        this.el.animateWith (yes ? 'panic-modal-appear' : 'panic-modal-disappear', this.$ (function () {
-	            if (!yes) {
-	                this.el.css ('display', 'none') } })) } },
+			var counter = $('#' + id + ' .panic-alert-counter');
+			if (counter.length) {
+				counter.text((counter.text() || '1').parsedInt + 1);
+			} else {
+				$('<div class="panic-alert-error">').attr('id', id).append('<span class="panic-alert-counter">').append(this.print(what, raw)).insertAfter(this.el.find('.panic-modal-title'));
+			}
+			this.toggleVisibility(true);
+			this.layout();
+		},
+		hash: function hash(what) {
+			return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : String.ify(what)) || '').hash;
+		},
+		print: function print(what, raw) {
+			return _.isTypeOf(Error, what) ? this.printError(what) : _.isTypeOf(Test, what) ? this.printFailedTest(what) : this.printUnknownStuff(what, raw);
+		},
+		printUnknownStuff: function printUnknownStuff(what, raw) {
+			return raw ? what : $('<span>').text(log.impl.stringify(what));
+		},
+		printLocation: function printLocation(where) {
+			return $('<span class="location">').append([$('<span class="callee">').text(where.calleeShort), $('<span class="file">').text(where.fileName), $('<span class="line">').text(where.line)]);
+		},
+		printFailedTest: function printFailedTest(test) {
+			var _this = this;
 
-	onRetry (retry) {
-		this.retryTriggered (retry)
-		this.btnRetry.css ('display', '') },
+			var logEl = $('<pre class="test-log" style="margin-top: 13px;">');
 
-	onClose (close) {
-		this.closeTriggered (close)
-		this.btnClose.css ('display', '') },
+			log.withWriteBackend(function (params) {
+				if (_.isTypeOf(Error, params.args.first)) {
+					console.log(params.args.first);
+				}
 
-	retry () {
-		this._clean ()
-		this.closeTriggered.off ()
-		this.toggleVisibility (false)
-		this.retryTriggered () },
+				logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div class="inline-exception-entry">').append([_.escape(params.indentation), $('<div class="panic-alert-error inline-exception">').append(_this.printError(params.args.first))]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
+					return $('<div class="line">').append(_.escape(params.indentation)).append(_.map(line, function (run) {
+						return $('<span>').attr('style', run.config.color && run.config.color.css || '').text(run.text);
+					})).append(i === lines.lastIndex ? [params.where && this.printLocation(params.where), params.trailNewlines.replace(/\n/g, '<br>')] : []);
+				}, _this)));
+			}, function (done) {
+				test.evalLogCalls();
+				done();
+			});
 
-	close () {
-		this._clean ()
-		this.retryTriggered.off ()
-		this.toggleVisibility (false)
-		this.closeTriggered () },
+			return [$('<div class="panic-alert-error-message" style="font-weight: bold;">').text(test.name).append('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl];
+		},
+		printError: function printError(e) {
 
-   _clean () {
-		this.modalBody.find ('.panic-alert-error').remove ()
-		this.modalBody.scroll ()
-		this.btnRetry.css ('display', 'none')
-		this.btnClose.css ('display', 'none') },
+			var stackEntries = StackTracey.fromErrorWithAsync(e).withSources;
 
-	append (what, raw) { var id = 'panic' + this.hash (what)
+			return [$('<div class="panic-alert-error-message" style="font-weight: bold;">').text(e.message).append(_.any(stackEntries, function (e, i) {
+				return (e.thirdParty || e['native'] || e.hide) && i !== 0;
+			}) ? '<a class="clean-toggle" href="javascript:{}"></a>' : '').click(this.$(function (e) {
+				$(e.delegateTarget).parent().toggleClass('all-stack-entries').transitionend(this.$(function () {
+					this.modalBody.scroll();
+				}));
+			})), $('<div class="not-matching" style="margin-top: 5px; padding-left: 10px;">').append(_.map(_.coerceToArray(e.notMatching || []), function (s) {
+				return $('<pre>').text(log.impl.stringify(s));
+			})), $('<ul class="callstack">').append(_.map(stackEntries, this.$(function (entry) {
 
-		var counter = $('#' + id + ' .panic-alert-counter')
-		if (counter.length) {
-			counter.text ((counter.text () || '1').parsedInt + 1) }
-		else {
-			$('<div class="panic-alert-error">').attr ('id', id)
-												.append ('<span class="panic-alert-counter">')
-												.append (this.print (what, raw))
-												.insertAfter (this.el.find ('.panic-modal-title')) }
-		this.toggleVisibility (true)
-		this.layout ()  },
+				var dom = $('<li class="callstack-entry">').toggleClass('third-party', entry.thirdParty || false).toggleClass('hide', entry.hide || false).toggleClass('native', entry['native'] || false).append([$('<span class="file">').text(_.nonempty([entry.index ? '(index)' : entry.fileShort, entry.line]).join(':')), $('<span class="callee">').text(entry.calleeShort), $('<span class="src">').text((entry.sourceLine || '').trim()).click(this.$(function (e) {
+					var el = $(e.delegateTarget);
 
-	hash (what) {
-		return ((_.isTypeOf (Error, what) ? (what && what.stack) :
-				(_.isTypeOf (Test, what)  ? (what.suite + what.name) :
-                String.ify (what))) || '').hash },
+					if (dom.is('.full')) {
+						dom.removeClass('full');
+						dom.transitionend(function () {
+							if (!dom.is('.full')) {
+								el.text((entry.sourceLine || '').trim());
+							}
+						});
+					} else {
 
-	print (what, raw) {
-		return (_.isTypeOf (Error, what) ?
-						this.printError (what) :
-			   (_.isTypeOf (Test, what) ?
-						this.printFailedTest (what) :
-						this.printUnknownStuff (what, raw))) },
+						var lines = (entry.sourceFile || { lines: [] }).lines;
 
-	printUnknownStuff (what, raw) {
-		return raw ? what : $('<span>').text (log.impl.stringify (what)) },
+						dom.addClass('full');
+						el.html(lines.map(function (line) {
+							return $('<div class="line">').text(line);
+						}));
 
-	printLocation (where) {
-		return $('<span class="location">')
-					.append ([$('<span class="callee">').text (where.calleeShort),
-							  $('<span class="file">')  .text (where.fileName), 
-							  $('<span class="line">')  .text (where.line)]) },
+						var line = el.find('.line').eq(entry.line - 1).addClass('hili');
+						if (line.length) {
+							var offset = line.offset().top - el.offset().top;
+							el.scrollTop(offset - 100);
+						}
 
-	printFailedTest (test) { var logEl = $('<pre class="test-log" style="margin-top: 13px;">')
+						_.delay(this.$(function () {
+							var shouldScrollDownMore = el.outerBBox().bottom + 242 - this.modalBody.outerBBox().bottom;
+							if (shouldScrollDownMore > 0) {
+								this.modalBody.animate({
+									scrollTop: this.modalBody.scrollTop() + shouldScrollDownMore }, 250);
+							}
+						}));
+					}
+				}))]);
 
-		log.withWriteBackend (
-			params => { if (_.isTypeOf (Error, params.args.first)) { console.log (params.args.first) }
+				return dom;
+			})))];
+		}
+	});
 
-				logEl.append (_.isTypeOf (Error, params.args.first)
-						? ($('<div class="inline-exception-entry">')
-								.append ([_.escape (params.indentation),
-											$('<div class="panic-alert-error inline-exception">').append (
-												this.printError (params.args.first))]))
-						: $('<div class="log-entry">')
-								.append (
-									_.map (params.lines, function (line, i, lines) {
-															return $('<div class="line">')
-																		.append (_.escape (params.indentation))
-																		.append (_.map (line, function (run) {
-																								return $('<span>')
-																									.attr ('style', (run.config.color && run.config.color.css) || '')
-																									.text (run.text) }))
-																		.append ((i === lines.lastIndex) ?
-																			[params.where && this.printLocation (params.where),
-																			 params.trailNewlines.replace (/\n/g, '<br>')] : []) }, this))) },
+	$.fn.extend({
+		enableScrollFaders: function enableScrollFaders(cfg) {
+			var horizontal = cfg && cfg.horizontal;
+			var faderTop,
+			    faderBottom,
+			    scroller = this.find(cfg && cfg.scroller || '.scroller');
 
-			done => {
-				test.evalLogCalls ()
-				done () })
+			this.css({ position: 'relative' });
+			this.append(faderTop = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'left' : 'top') + '"></div>')).append(faderBottom = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'right' : 'bottom') + '"></div>'));
 
-		return [$('<div class="panic-alert-error-message" style="font-weight: bold;">')
-				    .text (test.name)
-				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
+			scroller.scroll(function () {
+				var scrollTop = horizontal ? $(this).scrollLeft() : $(this).scrollTop(),
+				    height = horizontal ? $(this).width() : $(this).height(),
+				    max = (horizontal ? this.scrollWidth : this.scrollHeight) - 1;
+				faderTop.css({ opacity: scrollTop > 0 ? 1 : 0 });
+				faderBottom.css({ opacity: scrollTop + height < max ? 1 : 0 });
+			}).scroll();
 
-	printError (e) {
+			return this;
+		} });
 
-		var stackEntries = StackTracey.fromErrorWithAsync (e).withSources
-
-		return [
-
-			$('<div class="panic-alert-error-message" style="font-weight: bold;">')
-				.text (e.message)
-				.append (_.any (stackEntries, function (e, i) { return (e.thirdParty || e['native'] || e.hide) && (i !== 0) })
-							? '<a class="clean-toggle" href="javascript:{}"></a>'
-							: '')
-				.click (this.$ (function (e) {
-					$(e.delegateTarget).parent ()
-						.toggleClass ('all-stack-entries')
-						.transitionend (this.$ (function () {
-							this.modalBody.scroll () })) })),
-
-			$('<div class="not-matching" style="margin-top: 5px; padding-left: 10px;">').append (_.map (_.coerceToArray (e.notMatching || []), function (s) {
-				return $('<pre>').text (log.impl.stringify (s)) })),
-
-			$('<ul class="callstack">').append (_.map (stackEntries, this.$ (function (entry) {
-
-				var dom = $('<li class="callstack-entry">')
-						.toggleClass ('third-party', entry.thirdParty || false)
-                        .toggleClass ('hide',        entry.hide || false)
-						.toggleClass ('native',      entry['native'] || false)
-						.append ([
-							$('<span class="file">').text (_.nonempty ([entry.index ? '(index)' : entry.fileShort,
-																		entry.line]).join (':')),
-							$('<span class="callee">').text (entry.calleeShort),
-							$('<span class="src">').text ((entry.sourceLine || '').trim ()).click (this.$ (function (e) { var el = $(e.delegateTarget)
-
-								if (dom.is ('.full')) {
-									dom.removeClass ('full')
-									dom.transitionend (function () {
-										if (!dom.is ('.full')) {
-											el.text ((entry.sourceLine || '').trim ()) } }) }
-
-								else {
-
-									const lines = (entry.sourceFile || { lines: [] }).lines
-
-									dom.addClass ('full')
-									el.html (lines.map (line => $('<div class="line">').text (line)))
-
-									var line = el.find ('.line').eq (entry.line - 1).addClass ('hili')
-									if (line.length) {
-										var offset = line.offset ().top - el.offset ().top
-										el.scrollTop (offset - 100) }
-
-									_.delay (this.$ (function () {
-										var shouldScrollDownMore = ((el.outerBBox ().bottom + 242) - this.modalBody.outerBBox ().bottom)
-										if (shouldScrollDownMore > 0) {
-											this.modalBody.animate ({
-												scrollTop: this.modalBody.scrollTop () + shouldScrollDownMore }, 250) }})) } })) ])
-
-				return dom }))) ] } })
-
-$.fn.extend ({
-	enableScrollFaders: function (cfg) {
-		var horizontal = cfg && cfg.horizontal
-		var faderTop, faderBottom, scroller = this.find ((cfg && cfg.scroller) || '.scroller')
-
-		this.css ({ position: 'relative' })
-		this.append (faderTop = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'left' : 'top') + '"></div>'))
-			.append (faderBottom = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'right' : 'bottom') + '"></div>'))
-		
-		scroller.scroll (function () {
-				var scrollTop = horizontal ? $(this).scrollLeft () : $(this).scrollTop (),
-					height = horizontal ? $(this).width () : $(this).height (),
-					max = (horizontal ? this.scrollWidth : this.scrollHeight) - 1
-				faderTop.css ({ opacity: scrollTop > 0 ? 1 : 0 })
-				faderBottom.css ({ opacity: (scrollTop + height) < max ? 1 : 0 }) }).scroll ()
-
-		return this } })
-
-// -- end of namespace
-
-}) (__webpack_require__ (3));
+	// -- end of namespace
+})(__webpack_require__(/*! jquery */ 4));
 
 /***/ },
-/* 24 */
+/* 22 */
+/* all exports used */
+/*!******************************!*\
+  !*** ./client/jQueryPlus.js ***!
+  \******************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13935,599 +14358,763 @@ $.fn.extend ({
 
 ;(function ($) {
 
-/*  We override some jQuery methods, so store previous impl. here
- */
-var __previousMethods__ = _.clone ($.fn)
-
-/*  Global functions
- */
-_.extend ($, {
-
-    /*  Instantiates svg elements
+    /*  We override some jQuery methods, so store previous impl. here
      */
-    svg: function (tag) {
-            var node = document.createElementNS ('http://www.w3.org/2000/svg', tag)
-            if ((tag === 'svg') && !$platform.IE) {
-                node.setAttribute ('xmlns', 'http://www.w3.org/2000/svg') }
-            return $(node) } })
+    var __previousMethods__ = _.clone($.fn);
 
-/*  Element methods
- */
-.fn.extend ({
-
-    /*  For this-binding
+    /*  Global functions
      */
-    $: function () { return _.$.apply (null, [this].concat (_.asArray (arguments))) },
+    _.extend($, {
 
-    /*  Provides auto-unbinding of $component $listeners from DOM events upon destroy
+        /*  Instantiates svg elements
+         */
+        svg: function svg(tag) {
+            var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+            if (tag === 'svg' && !$platform.IE) {
+                node.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            }
+            return $(node);
+        } })
+
+    /*  Element methods
      */
-    on: function (what, method) { var el = this, method = _.find (arguments, _.isFunction)
+    .fn.extend({
+
+        /*  For this-binding
+         */
+        $: function $() {
+            return _.$.apply(null, [this].concat(_.asArray(arguments)));
+        },
+
+        /*  Provides auto-unbinding of $component $listeners from DOM events upon destroy
+         */
+        on: function on(what, method) {
+            var el = this,
+                method = _.find(arguments, _.isFunction);
 
             /*  See useless/base/dynamic/stream.js for that queue/queuedBy interface.
              */
             if (method.queuedBy) {
-                method.queuedBy.push ({ remove: function () { el.off (what, method) } }) }
+                method.queuedBy.push({ remove: function remove() {
+                        el.off(what, method);
+                    } });
+            }
 
             /*  Call original impl.
              */
-            return __previousMethods__.on.apply (this, arguments) }, // @hide
+            return __previousMethods__.on.apply(this, arguments);
+        }, // @hide
 
-    /*  Links a data (or controller instance) to its DOM counterpart
-     */
-    item: function (value) {
-        if (value) {                                                // setter
-            if (this.length) {
-                this[0]._item = value }
-            return this }
-        else {                                                      // getter
-            return this.length ? this[0]._item : undefined } },
-
-    /*  Writes properties directly to DOM object
-     */
-    props: function (what) {
-        _.extend.apply (null, [this[0]].concat (arguments))
-        return this },
-    
-    props2: function (what) {
-        _.extend2.apply (null, [this[0]].concat (arguments))
-        return this },
-
-    /*  Wait semantics
-     */
-    hasWait: function () {
-        return this.hasClass ('i-am-busy') },
-
-    waitUntil: function (fn, then) { this.addClass ('i-am-busy').attr ('disabled', true)
-        fn (this.$ (function () {
-            this.removeClass ('i-am-busy').removeAttr ('disabled')
-            if (then) {
-                then.apply (null, arguments) } })); return this },
-
-    /*  Checks if has parent upwards the hierarchy
-     */
-    hasParent: function (el) {
-        var parent = this
-        while (parent.length > 0) {
-            if (parent[0] == (el[0] || el)) {
-                return true }
-            parent = parent.parent () }
-        return false },
-
-    /*  Returns a value or undefined (coercing empty values to undefined)
-     */
-    nonemptyValue: function () {
-        var value = $.trim (this.val ())
-        return (value.length == 0) ? undefined : value },
-
-    /*  Returns a valid integer value or undefined (coercing NaN to undefined)
-     */
-    intValue: function () {
-        var value = parseInt (this.nonemptyValue (), 10)
-        return isNaN (value) ? undefined : value },
-
-    /*  Checks if a mouse/touch event occured within element bounds
-     */
-    hitTest: function (event) {
-        var offset = this.offset ()
-        var pt = {
-            x: event.clientX - offset.left,
-            y: event.clientY - offset.top }
-        return (pt.x >= 0) && (pt.y >= 0) && (pt.x < $(this).width ()) && (pt.y < $(this).height ()) },
-
-    /*  Returns multiple attributes as object of { attr1: value, attr2: value, .. } form
-     */
-    attrs: function (/* name1, name2, ... */) {
-        return _.fromPairs (_.map (arguments, function (name) { return [name, this.attr (name)] }, this)) },
-
-    /*  Checks if any element upwards the hierarchy (including this element) conforms to a selector
-     */
-    belongsTo: function (selector) {
-        return (this.is (selector) || this.parents (selector).length) },
-
-    /*  Selects which classes element should have, based on a key selector
-
-        Example: btn.selectClass (state, {  loading: 'btn-wait btn-disabled',
-                                            error: 'btn-invalid',
-                                            ok: '' })
-     */
-    selectClass: function (key, classes) {
-        return this.removeClass (_.values (classes).join (' ')).addClass (classes[key]) },
-
-    /*  Returns a valid integer of an attribute (or undefined)
-     */
-    attrInt: function (name) { return (this.attr (name) || '').integerValue },
-    cssInt:  function (name) { return (this.css  (name) || '').integerValue },
-
-    /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
-     */
-    eachChild: function (selector, fn) {
-        _.each (this.find (selector), function (el) { fn ($(el)) }); return this },
-
-    /*  Calls fn when current CSS transition ends
-     */
-    transitionend: function (fn) {
-        return this.one ('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot) },
-    
-    /*  Calls fn when current CSS animation ends
-     */
-    animationend: function (fn) {
-        return this.one ('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot) },
-
-    /*  1. Adds a class (that brings CSS animation)
-        2. Waits until CSS animation done
-        3. Removes that class
-        4. Calls 'done'
-     */
-    animateWith: function (cls, done) {
-        if (cls) {
-            this.addClass (cls)
-            this.animationend (this.$ (function () { this.removeClass (cls)
-                                                     if (done) { done.call (this) } })) }
-        return this },
-
-    transitionWith: function (cls, done) {
-        if (cls) {
-            this.addClass (cls)
-            this.transitionend (this.$ (function () { this.removeClass (cls)
-                                                      if (done) { done.call (this) } })) }
-        return this },
-
-    /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
-
-        Simplest example:
-
-            $(handle).drag ({
-                start: function ()             { return this.leftTop () },                          // returns 'memo'
-                move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } }) })
-     */
-    drag: (function () {
-
-        /*  Helper routine
+        /*  Links a data (or controller instance) to its DOM counterpart
          */
-        var translateTouchEvent = function (e, desiredTarget) {
-            return (e.originalEvent.touches &&
-                    _.find (e.originalEvent.touches, function (touch) {
-                                                        return $(touch.target).hasParent (desiredTarget) })) || e }
-        /*  Impl
+        item: function item(value) {
+            if (value) {
+                // setter
+                if (this.length) {
+                    this[0]._item = value;
+                }
+                return this;
+            } else {
+                // getter
+                return this.length ? this[0]._item : undefined;
+            }
+        },
+
+        /*  Writes properties directly to DOM object
          */
-        return function (cfg) {
+        props: function props(what) {
+            _.extend.apply(null, [this[0]].concat(arguments));
+            return this;
+        },
 
-            this[0].dragConfig = cfg
+        props2: function props2(what) {
+            _.extend2.apply(null, [this[0]].concat(arguments));
+            return this;
+        },
 
-            if (!$platform.touch && !window.__globalDragOverlay) {
-                 window.__globalDragOverlay =
-                     $('<div>').css ({
+        /*  Wait semantics
+         */
+        hasWait: function hasWait() {
+            return this.hasClass('i-am-busy');
+        },
+
+        waitUntil: function waitUntil(fn, then) {
+            this.addClass('i-am-busy').attr('disabled', true);
+            fn(this.$(function () {
+                this.removeClass('i-am-busy').removeAttr('disabled');
+                if (then) {
+                    then.apply(null, arguments);
+                }
+            }));return this;
+        },
+
+        /*  Checks if has parent upwards the hierarchy
+         */
+        hasParent: function hasParent(el) {
+            var parent = this;
+            while (parent.length > 0) {
+                if (parent[0] == (el[0] || el)) {
+                    return true;
+                }
+                parent = parent.parent();
+            }
+            return false;
+        },
+
+        /*  Returns a value or undefined (coercing empty values to undefined)
+         */
+        nonemptyValue: function nonemptyValue() {
+            var value = $.trim(this.val());
+            return value.length == 0 ? undefined : value;
+        },
+
+        /*  Returns a valid integer value or undefined (coercing NaN to undefined)
+         */
+        intValue: function intValue() {
+            var value = parseInt(this.nonemptyValue(), 10);
+            return isNaN(value) ? undefined : value;
+        },
+
+        /*  Checks if a mouse/touch event occured within element bounds
+         */
+        hitTest: function hitTest(event) {
+            var offset = this.offset();
+            var pt = {
+                x: event.clientX - offset.left,
+                y: event.clientY - offset.top };
+            return pt.x >= 0 && pt.y >= 0 && pt.x < $(this).width() && pt.y < $(this).height();
+        },
+
+        /*  Returns multiple attributes as object of { attr1: value, attr2: value, .. } form
+         */
+        attrs: function attrs() /* name1, name2, ... */{
+            return _.fromPairs(_.map(arguments, function (name) {
+                return [name, this.attr(name)];
+            }, this));
+        },
+
+        /*  Checks if any element upwards the hierarchy (including this element) conforms to a selector
+         */
+        belongsTo: function belongsTo(selector) {
+            return this.is(selector) || this.parents(selector).length;
+        },
+
+        /*  Selects which classes element should have, based on a key selector
+             Example: btn.selectClass (state, {  loading: 'btn-wait btn-disabled',
+                                                error: 'btn-invalid',
+                                                ok: '' })
+         */
+        selectClass: function selectClass(key, classes) {
+            return this.removeClass(_.values(classes).join(' ')).addClass(classes[key]);
+        },
+
+        /*  Returns a valid integer of an attribute (or undefined)
+         */
+        attrInt: function attrInt(name) {
+            return (this.attr(name) || '').integerValue;
+        },
+        cssInt: function cssInt(name) {
+            return (this.css(name) || '').integerValue;
+        },
+
+        /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
+         */
+        eachChild: function eachChild(selector, fn) {
+            _.each(this.find(selector), function (el) {
+                fn($(el));
+            });return this;
+        },
+
+        /*  Calls fn when current CSS transition ends
+         */
+        transitionend: function transitionend(fn) {
+            return this.one('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot);
+        },
+
+        /*  Calls fn when current CSS animation ends
+         */
+        animationend: function animationend(fn) {
+            return this.one('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot);
+        },
+
+        /*  1. Adds a class (that brings CSS animation)
+            2. Waits until CSS animation done
+            3. Removes that class
+            4. Calls 'done'
+         */
+        animateWith: function animateWith(cls, done) {
+            if (cls) {
+                this.addClass(cls);
+                this.animationend(this.$(function () {
+                    this.removeClass(cls);
+                    if (done) {
+                        done.call(this);
+                    }
+                }));
+            }
+            return this;
+        },
+
+        transitionWith: function transitionWith(cls, done) {
+            if (cls) {
+                this.addClass(cls);
+                this.transitionend(this.$(function () {
+                    this.removeClass(cls);
+                    if (done) {
+                        done.call(this);
+                    }
+                }));
+            }
+            return this;
+        },
+
+        /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
+             Simplest example:
+                 $(handle).drag ({
+                    start: function ()             { return this.leftTop () },                          // returns 'memo'
+                    move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } }) })
+         */
+        drag: function () {
+
+            /*  Helper routine
+             */
+            var translateTouchEvent = function translateTouchEvent(e, desiredTarget) {
+                return e.originalEvent.touches && _.find(e.originalEvent.touches, function (touch) {
+                    return $(touch.target).hasParent(desiredTarget);
+                }) || e;
+            };
+            /*  Impl
+             */
+            return function (cfg) {
+
+                this[0].dragConfig = cfg;
+
+                if (!$platform.touch && !window.__globalDragOverlay) {
+                    window.__globalDragOverlay = $('<div>').css({
                         display: 'none',
                         position: 'fixed',
                         top: 0, right: 0, bottom: 0, left: 0,
-                        zIndex: 999999 }).appendTo (document.body) }
+                        zIndex: 999999 }).appendTo(document.body);
+                }
 
-            var overlay = window.__globalDragOverlay
-            var button  = cfg.button || 1
-                
-            var begin = this.$ (function (initialEvent) { var relativeTo = (cfg.relativeTo || this)
+                var overlay = window.__globalDragOverlay;
+                var button = cfg.button || 1;
 
-                this.addClass (cfg.cls || '')
-                
-                if ($platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
-                    
-                    if (!cfg.start || ((memo = cfg.start.call (cfg.context || this, new Vec2 (
-                            // position (relative to delegate target)
-                            initialEvent.pageX - offset.left,
-                            initialEvent.pageY - offset.top), initialEvent)) !== false)) /* one can cancel drag by returning false from 'start' */ {
-                        
-                        var abort = undefined, unbind = undefined, end = undefined
+                var begin = this.$(function (initialEvent) {
+                    var relativeTo = cfg.relativeTo || this;
 
-                        memo = _.clone (memo)
+                    this.addClass(cfg.cls || '');
 
-                        var move = this.$ (function (e) {
-                            if ($platform.touch || e.which === button) {
-                                e.preventDefault ()
-                                var translatedEvent = translateTouchEvent (e, this[0])
-                                var offset = relativeTo.offset ()
+                    if ($platform.touch || initialEvent.which === button) {
+                        var offset = relativeTo.offset(),
+                            memo = undefined;
 
-                                memo = cfg.move.call (cfg.context || this, memo, new Vec2 (
-                                    // offset (relative to initial event)
-                                    translatedEvent.pageX - initialEvent.pageX,
-                                    translatedEvent.pageY - initialEvent.pageY), new Vec2 (
+                        if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(
+                        // position (relative to delegate target)
+                        initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) /* one can cancel drag by returning false from 'start' */{
+
+                                var abort = undefined,
+                                    unbind = undefined,
+                                    end = undefined;
+
+                                memo = _.clone(memo);
+
+                                var move = this.$(function (e) {
+                                    if ($platform.touch || e.which === button) {
+                                        e.preventDefault();
+                                        var translatedEvent = translateTouchEvent(e, this[0]);
+                                        var offset = relativeTo.offset();
+
+                                        memo = cfg.move.call(cfg.context || this, memo, new Vec2(
+                                        // offset (relative to initial event)
+                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(
+                                        // position (relative to delegate target)
+                                        translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top),
+                                        // the event
+                                        translatedEvent) || memo;
+                                    } else {
+                                        abort(e);
+                                    }
+                                });
+
+                                unbind = function unbind() {
+                                    $(overlay || document.body).css(overlay ? { display: 'none' } : {}).off('mouseup touchend', end).off('mousemove touchmove', move);
+                                };
+
+                                end = this.$(function (e) {
+                                    unbind();
+
+                                    if (cfg.end) {
+                                        var translatedEvent = translateTouchEvent(e, this[0]);
+                                        cfg.end.call(cfg.context || this, memo, new Vec2(
+                                        // offset (relative to initial event)
+                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
+                                    }
+
+                                    this.removeClass(cfg.cls || '');
+                                });
+
+                                abort = this.$(function (e) {
+                                    unbind();end(e);
+                                });
+
+                                $(overlay || document.body).css(overlay ? { display: '', cursor: cfg.cursor || '' } : {}).on('mousemove touchmove', move).one('mouseup touchend', end);
+
+                                if (cfg.callMoveAtStart) {
+                                    cfg.move.call(cfg.context || this, memo, Vec2.zero, new Vec2(
                                     // position (relative to delegate target)
-                                    translatedEvent.pageX - offset.left,
-                                    translatedEvent.pageY - offset.top),
+                                    initialEvent.pageX - offset.left, initialEvent.pageY - offset.top),
                                     // the event
-                                    translatedEvent) || memo }
-                            else {
-                                abort (e) } })
+                                    initialEvent);
+                                }
+                            }
+                    }
+                });
 
-                        unbind = function () { $(overlay || document.body)
-                                                .css (overlay ? { display: 'none' } : {})
-                                                .off ('mouseup touchend',    end)
-                                                .off ('mousemove touchmove', move) }
+                var touchstartListener = _.$(this, function (e) {
+                    var where = _.extend({}, translateTouchEvent(e, this[0])); /* copy event, cuz on iPad it's re-used by browser */
+                    if ($platform.touch && cfg.longPress) {
+                        var cancel = undefined;
+                        var timeout = window.setTimeout(_.$(this, function () {
+                            this.off('touchmove touchend', cancel);
+                            begin(where);
+                        }), 300);
+                        cancel = this.$(function () {
+                            window.clearTimeout(timeout);
+                            this.off('touchmove touchend', cancel);
+                        });
+                        this.one('touchmove touchend', cancel);
+                    } else {
+                        begin(where);
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
 
-                        end = this.$ (function (e) { unbind ()
-                            
-                            if (cfg.end) { var translatedEvent = translateTouchEvent (e, this[0])
-                                cfg.end.call (cfg.context || this, memo, new Vec2 (
-                                    // offset (relative to initial event)
-                                    translatedEvent.pageX - initialEvent.pageX,
-                                    translatedEvent.pageY - initialEvent.pageY), translatedEvent) }
+                this.on($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
 
-                            this.removeClass (cfg.cls || '') })
+                return _.extend(this, {
+                    cancel: this.$(function () {
+                        this.off($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+                    }) });
+            };
+        }(),
 
-                        abort = this.$ (function (e) { unbind (); end (e) })
+        /*  $(el).transform ({
+                    translate: new Vec2 (a, b),
+                    scale:     new Vec2 (x, y),
+                    rotate:    180 })
+         */
+        transform: function transform(cfg) {
+            if (arguments.length === 0) {
+                var components = (this.css('transform') || '').match(/^matrix\((.+\))$/);
+                if (components) {
+                    var m = components[1].split(',').map(parseFloat);
+                    return new Transform({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
+                } else {
+                    return Transform.identity;
+                }
+            } else {
+                return this.css('transform', _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '');
+            }
+        },
 
-                        $(overlay || document.body)
-                            .css (overlay ? { display: '', cursor: cfg.cursor || '' } : {})
-                            .on ('mousemove touchmove', move)
-                            .one ('mouseup touchend', end)
+        /*  Other transform helpers
+         */
+        svgTranslate: function svgTranslate(pt) {
+            return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+        },
 
-                        if (cfg.callMoveAtStart) {
-                            cfg.move.call (cfg.context || this, memo, Vec2.zero, new Vec2 (
-                                // position (relative to delegate target)
-                                initialEvent.pageX - offset.left,
-                                initialEvent.pageY - offset.top),
-                                // the event
-                                initialEvent) } } } })
+        svgTransformMatrix: function svgTransformMatrix(t) {
+            var m = t.components;
+            return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
+        },
 
-            var touchstartListener = _.$ (this, function (e) {
-                var where = _.extend ({}, translateTouchEvent (e, this[0])) /* copy event, cuz on iPad it's re-used by browser */
-                if ($platform.touch && cfg.longPress) {
-                    var cancel = undefined
-                    var timeout = window.setTimeout (_.$ (this, function () {
-                        this.off ('touchmove touchend', cancel)
-                        begin (where) }), 300)
-                    cancel = this.$ (function () {
-                        window.clearTimeout (timeout)
-                        this.off ('touchmove touchend', cancel) })
-                    this.one ('touchmove touchend', cancel) }
-                else {
-                    begin (where)
-                    e.preventDefault ()
-                    e.stopPropagation () } })
+        svgTransformToElement: function svgTransformToElement(el) {
+            return Transform.svgMatrix(this[0].getTransformToElement(el[0]));
+        },
 
-            this.on ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
+        svgBBox: function svgBBox(bbox) {
+            if (arguments.length === 0) {
+                return new BBox(this[0].getBBox());
+            } else {
+                return this.attr(bbox.xywh);
+            }
+        },
 
-            return _.extend (this, {
-                        cancel: this.$ (function () {
-                            this.off ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener) }) }) } }) (),
+        /*  To determine display size of an element
+         */
+        outerExtent: function outerExtent() {
+            return new Vec2(this.outerWidth(), this.outerHeight());
+        },
+        extent: function extent() {
+            return new Vec2(this.width(), this.height());
+        },
+        innerExtent: function innerExtent() {
+            return new Vec2(this.innerWidth(), this.innerHeight());
+        },
 
-    /*  $(el).transform ({
-                translate: new Vec2 (a, b),
-                scale:     new Vec2 (x, y),
-                rotate:    180 })
-     */
-    transform: function (cfg) {
-        if (arguments.length === 0) { var components = (this.css ('transform') || '').match (/^matrix\((.+\))$/)
-            if (components) {
-                var m = components[1].split (',').map (parseFloat)
-                return new Transform ({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] }) }
-            else {
-                return Transform.identity } }
-        else {
-            return this.css ('transform', (_.isStrictlyObject (cfg) && (
-                (cfg.translate ? ('translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ') : '') +
-                (cfg.rotate ? ('rotate(' + cfg.rotate + 'rad) ') : '') +
-                (cfg.scale ? ('scale(' + (new Vec2 (cfg.scale).separatedWith (',')) + ')') : ''))) || '') } },
+        /*  BBox accessors
+         */
+        outerBBox: function outerBBox() {
+            return BBox.fromLTWH(_.extend(this.offset(), this.outerExtent().asWidthHeight));
+        },
+        clientBBox: function clientBBox() {
+            return BBox.fromLTWH(this[0].getBoundingClientRect());
+        },
 
-    /*  Other transform helpers
-     */
-    svgTranslate: function (pt) {
-        return this.attr ('transform', 'translate(' + pt.x + ',' + pt.y + ')') },
-    
-    svgTransformMatrix: function (t) {
-        var m = t.components
-        return this.attr ('transform', 'matrix(' +
-            m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')') },
+        /*  Position accessors
+         */
+        leftTop: function leftTop() {
+            return new Vec2.fromLT(this.offset());
+        },
+        offsetInParent: function offsetInParent() {
+            return Vec2.fromLeftTop(this.offset()).sub(Vec2.fromLeftTop(this.parent().offset()));
+        },
 
-    svgTransformToElement: function (el) {
-        return Transform.svgMatrix (this[0].getTransformToElement (el[0])) },
+        /*  $(input).monitorInput ({
+                        empty: function (yes) { ... },    // called when empty state changes
+                        focus: function (yes) { ... } })  // called when focus state changes
+         */
+        monitorInput: function monitorInput(cfg) {
+            var change = function change() {
+                if ($.trim($(this).val()) === '') {
+                    cfg.empty(true);
+                } else {
+                    cfg.empty(false);
+                }
+            };
+            return this.keyup(change).change(change).focus(_.bind(cfg.focus || _.noop, cfg, true)).blur(_.bind(cfg.focus || _.noop, cfg, false));
+        },
 
-    svgBBox: function (bbox) {
-        if (arguments.length === 0) { return new BBox (this[0].getBBox ()) }
-                               else { return this.attr (bbox.xywh) } },
+        /*  Use instead of .click for more responsive clicking on touch devices.
+            Reverts to .click on desktop
+         */
+        touchClick: function touchClick(fn, cfg) {
+            var self = this;
+            cfg = cfg || {};
+            if (!cfg.disableTouch && $platform.touch) {
+                // touch experience
+                var touchstartHandler = function touchstartHandler(e) {
+                    fn.apply(this, arguments);
+                    e.preventDefault(); // prevents nasty delayed click-focus effect on iOS
+                    return false;
+                };
 
-    /*  To determine display size of an element
-     */
-    outerExtent:    function () { return new Vec2 (this.outerWidth (), this.outerHeight ()) },
-    extent:         function () { return new Vec2 (this.width (),      this.height ()) },
-    innerExtent:    function () { return new Vec2 (this.innerWidth (), this.innerHeight ()) },
+                var clickHandler = function clickHandler(e) {
+                    e.preventDefault();
+                    return false;
+                };
 
-    /*  BBox accessors
-     */
-    outerBBox:      function () { return BBox.fromLTWH (_.extend (this.offset (), this.outerExtent ().asWidthHeight)) },
-    clientBBox:     function () { return BBox.fromLTWH (this[0].getBoundingClientRect ()) },
+                if (cfg.handler) {
+                    cfg.handler({
+                        unbind: function unbind() {
+                            self.off('touchstart', touchstartHandler).off('click', clickHandler);
+                        } });
+                }
 
-    /*  Position accessors
-     */
-    leftTop:        function () { return new Vec2.fromLT (this.offset ()) },
-    offsetInParent: function () { return Vec2.fromLeftTop (this.offset ()).sub (
-                                         Vec2.fromLeftTop (this.parent ().offset ())) },
+                return this.on('touchstart', touchstartHandler).on('click', clickHandler);
+            } else {
+                // mouse experience
+                if (cfg.handler) {
+                    cfg.handler({
+                        unbind: function unbind() {
+                            self.off('click', fn);
+                        } });
+                }
+                return this.click(fn);
+            }
+        },
 
-    /*  $(input).monitorInput ({
-                    empty: function (yes) { ... },    // called when empty state changes
-                    focus: function (yes) { ... } })  // called when focus state changes
-     */
-    monitorInput: function (cfg) {
-        var change = function () {
-            if ($.trim ($(this).val ()) === '') { cfg.empty (true) }
-            else                                { cfg.empty (false) } }
-        return this
-            .keyup (change)
-            .change (change)
-            .focus (_.bind (cfg.focus || _.noop, cfg, true))
-            .blur (_.bind (cfg.focus || _.noop, cfg, false)) },
+        /*  Use instead of .dblclick for responsive doubleclick on touch devices
+            Reverts to .dblclick on desktop
+         */
+        touchDoubleclick: function touchDoubleclick(fn) {
+            if ($platform.touch) {
+                var lastTime = Date.now();
+                return this.on('touchend', function () {
+                    var now = Date.now();
+                    if (now - lastTime < 200) {
+                        fn.apply(this, arguments);
+                    }
+                    lastTime = now;
+                });
+            } else {
+                return this.dblclick(fn);
+            }
+        },
 
-    /*  Use instead of .click for more responsive clicking on touch devices.
-        Reverts to .click on desktop
-     */
-    touchClick: function (fn, cfg) {
-        var self = this
-        cfg = cfg || {}
-        if (!cfg.disableTouch && $platform.touch) { // touch experience
-            var touchstartHandler = function (e) {
-                fn.apply (this, arguments)
-                e.preventDefault () // prevents nasty delayed click-focus effect on iOS
-                return false }
-
-            var clickHandler = function (e) {
-                e.preventDefault ()
-                return false }
-
-            if (cfg.handler) {
-                cfg.handler ({
-                    unbind: function () {
-                        self.off ('touchstart', touchstartHandler).off ('click', clickHandler) } }) }
-
-            return this.on ('touchstart', touchstartHandler).on ('click', clickHandler) }
-
-        else { // mouse experience
-            if (cfg.handler) {
-                cfg.handler ({
-                    unbind: function () {
-                        self.off ('click', fn) } }) }
-            return this.click (fn) } },
-
-    /*  Use instead of .dblclick for responsive doubleclick on touch devices
-        Reverts to .dblclick on desktop
-     */
-    touchDoubleclick: function (fn) {
-        if ($platform.touch) {
-            var lastTime = Date.now ()
-            return this.on ('touchend', function () {
-                var now = Date.now ()
-                if ((now - lastTime) < 200) {
-                    fn.apply (this, arguments) }
-                lastTime = now }) }
-        else {
-            return this.dblclick (fn) } },
-
-    /*  Taken from stackoverflow discussion on how to prevent zoom-on-double-tap behavior on iOS
-     */
-    nodoubletapzoom: function () {
-        return $(this).bind ('touchstart', function preventZoom (e) {
-            var t2 = e.timeStamp
-            var t1 = $(this).data ('lastTouch') || t2
-            var dt = t2 - t1
-            var fingers = e.originalEvent.touches.length
-            $(this).data ('lastTouch', t2)
-            if (!dt || dt > 500 || fingers > 1) {
-                return } // not double-tap
-            e.preventDefault ()                     // double tap - prevent the zoom
-            $(e.target).trigger ('click') }) }      // also synthesize click events we just swallowed up
-    })
-
-}) (__webpack_require__ (3));
-
-
-
+        /*  Taken from stackoverflow discussion on how to prevent zoom-on-double-tap behavior on iOS
+         */
+        nodoubletapzoom: function nodoubletapzoom() {
+            return $(this).bind('touchstart', function preventZoom(e) {
+                var t2 = e.timeStamp;
+                var t1 = $(this).data('lastTouch') || t2;
+                var dt = t2 - t1;
+                var fingers = e.originalEvent.touches.length;
+                $(this).data('lastTouch', t2);
+                if (!dt || dt > 500 || fingers > 1) {
+                    return;
+                } // not double-tap
+                e.preventDefault(); // double tap - prevent the zoom
+                $(e.target).trigger('click');
+            });
+        } // also synthesize click events we just swallowed up
+    });
+})($global.jQuery = __webpack_require__(/*! jquery */ 4));
 
 /***/ },
-/* 25 */
+/* 23 */
+/* all exports used */
+/*!************************************!*\
+  !*** ./~/string.ify/string.ify.js ***!
+  \************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {"use strict";
 
-const O          = __webpack_require__ (2),
-      bullet     = __webpack_require__ (4),
-      isBrowser  = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
-      maxOf      = (arr, pick) => arr.reduce ((max, s) => Math.max (max, pick ? pick (s) : s), 0),
-      isInteger  = Number.isInteger || (value => (typeof value === 'number') && isFinite (value) && (Math.floor (value) === value))
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-const configure = cfg => {
-const stringify = O.assign (x => {
+var O = __webpack_require__(/*! es7-object-polyfill */ 2),
+    bullet = __webpack_require__(/*! string.bullet */ 3),
+    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
+    maxOf = function maxOf(arr, pick) {
+    return arr.reduce(function (max, s) {
+        return Math.max(max, pick ? pick(s) : s);
+    }, 0);
+},
+    isInteger = Number.isInteger || function (value) {
+    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+};
 
-        const state = O.assign ({ parents: new Set (), siblings: new Map () }, cfg)
+var _configure = function _configure(cfg) {
+    var stringify = O.assign(function (x) {
+
+        var state = O.assign({ parents: new Set(), siblings: new Map() }, cfg);
 
         if (cfg.pretty === 'auto') {
-            const   oneLine =                         stringify.configure ({ pretty: false, siblings: new Map () }) (x)
-            return (oneLine.length <= 80) ? oneLine : stringify.configure ({ pretty: true,  siblings: new Map () }) (x) }
+            var oneLine = stringify.configure({ pretty: false, siblings: new Map() })(x);
+            return oneLine.length <= 80 ? oneLine : stringify.configure({ pretty: true, siblings: new Map() })(x);
+        }
 
-        var customFormat = cfg.formatter && cfg.formatter (x, stringify)
+        var customFormat = cfg.formatter && cfg.formatter(x, stringify);
 
         if (typeof customFormat === 'string') {
-            return customFormat }
+            return customFormat;
+        }
 
-        if ((typeof jQuery !== 'undefined') && (x instanceof jQuery)) {
-            x = x.toArray () }
+        if (typeof jQuery !== 'undefined' && x instanceof jQuery) {
+            x = x.toArray();
+        }
 
-        if (isBrowser && (x === window)) {
-            return 'window' }
+        if (isBrowser && x === window) {
+            return 'window';
+        } else if (!isBrowser && typeof global !== 'undefined' && x === global) {
+            return 'global';
+        } else if (x === null) {
+            return 'null';
+        } else if (state.parents.has(x)) {
+            return state.pure ? undefined : '<cyclic>';
+        } else if (state.siblings.has(x)) {
+            return state.pure ? undefined : '<ref:' + state.siblings.get(x) + '>';
+        } else if (x && typeof Symbol !== 'undefined' && (customFormat = x[Symbol.for('String.ify')]) && typeof (customFormat = customFormat.call(x, stringify.configure(state))) === 'string') {
+            return customFormat;
+        } else if (x instanceof Function) {
+            return cfg.pure ? x.toString() : x.name ? '<function:' + x.name + '>' : '<function>';
+        } else if (typeof x === 'string') {
+            return '"' + stringify.limit(x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"';
+        } else if ((typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object') {
 
-        else if (!isBrowser && (typeof global !== 'undefined') && (x === global)) {
-            return 'global' }
+            state.parents.add(x);
+            state.siblings.set(x, state.siblings.size);
 
-        else if (x === null) {
-            return 'null' }
+            var result = stringify.configure(O.assign({}, state, { depth: state.depth + 1 })).object(x);
 
-        else if (state.parents.has (x)) {
-            return state.pure ? undefined : '<cyclic>' }
+            state.parents.delete(x);
 
-        else if (state.siblings.has (x)) {
-            return state.pure ? undefined : '<ref:' + state.siblings.get (x) + '>' }
-
-        else if (x && (typeof Symbol !== 'undefined')
-                   && (customFormat = x[Symbol.for ('String.ify')])
-                   && (typeof (customFormat = customFormat.call (x, stringify.configure (state))) === 'string')) {
-            return customFormat }
-
-        else if (x instanceof Function) {
-            return (cfg.pure ? x.toString () : (x.name ? ('<function:' + x.name + '>') : '<function>')) }
-
-        else if (typeof x === 'string') {
-            return '"' + stringify.limit (x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"' }
-
-        else if (typeof x === 'object') {
-
-            state.parents.add (x)
-            state.siblings.set (x, state.siblings.size)
-
-            const result = stringify.configure (O.assign ({}, state, { depth: state.depth + 1 })).object (x)
-
-            state.parents.delete (x)
-
-            return result }
-
-        else if (!isInteger (x) && (cfg.precision > 0)) {
-            return x.toFixed (cfg.precision) }
-
-        else {
-            return String (x) }
-
+            return result;
+        } else if (!isInteger(x) && cfg.precision > 0) {
+            return x.toFixed(cfg.precision);
+        } else {
+            return String(x);
+        }
     }, cfg, {
 
-        configure: newConfig => configure (O.assign ({}, cfg, newConfig)),
+        configure: function configure(newConfig) {
+            return _configure(O.assign({}, cfg, newConfig));
+        },
 
-        limit: (s, n) => s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')),
+        limit: function limit(s, n) {
+            return s && (s.length <= n ? s : s.substr(0, n - 1) + '…');
+        },
 
-        rightAlign: strings => {
-                        var max = maxOf (strings, s => s.length)
-                        return strings.map (s => ' '.repeat (max - s.length) + s) },
+        rightAlign: function rightAlign(strings) {
+            var max = maxOf(strings, function (s) {
+                return s.length;
+            });
+            return strings.map(function (s) {
+                return ' '.repeat(max - s.length) + s;
+            });
+        },
 
-        object: x => {
+        object: function object(x) {
 
             if (x instanceof Set) {
-                x = Array.from (x.values ()) }
+                x = Array.from(x.values());
+            } else if (x instanceof Map) {
+                x = Array.from(x.entries());
+            }
 
-            else if (x instanceof Map) {
-                x = Array.from (x.entries ()) }
-
-            const isArray = Array.isArray (x)
+            var isArray = Array.isArray(x);
 
             if (isBrowser) {
-                
+
                 if (x instanceof Element) {
-                    return '<' + (x.tagName.toLowerCase () +
-                                ((x.id && ('#' + x.id)) || '') +
-                                ((x.className && ('.' + x.className)) || '')) + '>' }
-                
-                else if (x instanceof Text) {
-                    return '@' + stringify.limit (x.wholeText, 20) } }
+                    return '<' + (x.tagName.toLowerCase() + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')) + '>';
+                } else if (x instanceof Text) {
+                    return '@' + stringify.limit(x.wholeText, 20);
+                }
+            }
 
-            if (!cfg.pure && ((cfg.depth > cfg.maxDepth) || (isArray && (x.length > cfg.maxArrayLength)))) {
-                return isArray ? '<array[' + x.length + ']>' : '<object>' }
+            if (!cfg.pure && (cfg.depth > cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
+                return isArray ? '<array[' + x.length + ']>' : '<object>';
+            }
 
-            const pretty   = cfg.pretty ? true : false,
-                  entries  = O.entries (x),
-                  oneLine  = !pretty || (entries.length < 2),
-                  quoteKey = cfg.json ? (k => '"' + k + '"') : (k => k)
+            var pretty = cfg.pretty ? true : false,
+                entries = O.entries(x),
+                oneLine = !pretty || entries.length < 2,
+                quoteKey = cfg.json ? function (k) {
+                return '"' + k + '"';
+            } : function (k) {
+                return k;
+            };
 
             if (pretty) {
+                var _ret = function () {
 
-                const values        = O.values (x),
-                      printedKeys   = stringify.rightAlign (O.keys (x).map (k => quoteKey (k) + ': ')),
-                      printedValues = values.map (stringify),
-                      leftPaddings  = printedValues.map ((x, i) => (((x[0] === '[') ||
-                                                                     (x[0] === '{'))
-                                                                        ? 3
-                                                                        : ((typeof values[i] === 'string') ? 1 : 0))),
-                      maxLeftPadding = maxOf (leftPaddings),
+                    var values = O.values(x),
+                        printedKeys = stringify.rightAlign(O.keys(x).map(function (k) {
+                        return quoteKey(k) + ': ';
+                    })),
+                        printedValues = values.map(stringify),
+                        leftPaddings = printedValues.map(function (x, i) {
+                        return x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0;
+                    }),
+                        maxLeftPadding = maxOf(leftPaddings),
+                        items = leftPaddings.map(function (padding, i) {
+                        var value = ' '.repeat(maxLeftPadding - padding) + printedValues[i];
+                        return isArray ? value : bullet(printedKeys[i], value);
+                    }),
+                        printed = bullet(isArray ? '[ ' : '{ ', items.join(',\n')),
+                        lines = printed.split('\n'),
+                        lastLine = lines[lines.length - 1];
 
-                      items = leftPaddings.map ((padding, i) => {
-                                        const value = ' '.repeat (maxLeftPadding - padding) + printedValues[i]
-                                        return isArray ? value : bullet (printedKeys[i], value) }),
+                    return {
+                        v: printed + (' '.repeat(maxOf(lines, function (l) {
+                            return l.length;
+                        }) - lastLine.length) + (isArray ? ' ]' : ' }'))
+                    };
+                }();
 
-                      printed = bullet (isArray ? '[ ' :
-                                                  '{ ', items.join (',\n')),
+                if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+            } else {
 
-                      lines    = printed.split ('\n'),
-                      lastLine = lines[lines.length - 1]
+                var _items = entries.map(function (kv) {
+                    return (isArray ? '' : quoteKey(kv[0]) + ': ') + stringify(kv[1]);
+                }),
+                    content = _items.join(', ');
 
-                return printed +  (' '.repeat (maxOf (lines, l => l.length) - lastLine.length) + (isArray ? ' ]' : ' }')) }
-
-            else {
-
-                const items   = entries.map (kv => (isArray ? '' : (quoteKey (kv[0]) + ': ')) + stringify (kv[1])),
-                      content = items.join (', ')
-
-                return isArray
-                        ? ('['  + content +  ']')
-                        : ('{ ' + content + ' }')
+                return isArray ? '[' + content + ']' : '{ ' + content + ' }';
             }
         }
-    })
+    });
 
-    return stringify
+    return stringify;
+};
+
+module.exports = _configure({
+
+    depth: 0,
+    pure: false,
+    json: false,
+    color: false, // not supported yet
+    maxDepth: 5,
+    maxArrayLength: 60,
+    maxStringLength: 60,
+    precision: undefined,
+    formatter: undefined,
+    pretty: 'auto'
+
+});
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! (webpack)/buildin/global.js */ 12)))
+
+/***/ },
+/* 24 */
+/* all exports used */
+/*!*******************************!*\
+  !*** ./client/LogOverlay.css ***!
+  \*******************************/
+/***/ function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(/*! !./../~/css-loader!./LogOverlay.css */ 37);
+if(typeof content === 'string') content = [[module.i, content, '']];
+// add the styles to the DOM
+var update = __webpack_require__(/*! ./../~/style-loader/addStyles.js */ 11)(content, {});
+if(content.locals) module.exports = content.locals;
+// Hot Module Replacement
+if(false) {
+	// When the styles change, update the <style> tags
+	if(!content.locals) {
+		module.hot.accept("!!./../node_modules/css-loader/index.js!./LogOverlay.css", function() {
+			var newContent = require("!!./../node_modules/css-loader/index.js!./LogOverlay.css");
+			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+			update(newContent);
+		});
+	}
+	// When the module is disposed, remove the <style> tags
+	module.hot.dispose(function() { update(); });
 }
 
-module.exports = configure ({
+/***/ },
+/* 25 */
+/* all exports used */
+/*!**************************!*\
+  !*** ./client/Panic.css ***!
+  \**************************/
+/***/ function(module, exports, __webpack_require__) {
 
-                    depth:           0,
-                    pure:            false,
-                    json:            false,
-                    color:           false, // not supported yet
-                    maxDepth:        5,
-                    maxArrayLength:  60,
-                    maxStringLength: 60,
-                    precision:       undefined,
-                    formatter:       undefined,
-                    pretty:         'auto'
+// style-loader: Adds some css to the DOM by adding a <style> tag
 
-                })
-
-
-
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12)))
+// load the styles
+var content = __webpack_require__(/*! !./../~/css-loader!./Panic.css */ 38);
+if(typeof content === 'string') content = [[module.i, content, '']];
+// add the styles to the DOM
+var update = __webpack_require__(/*! ./../~/style-loader/addStyles.js */ 11)(content, {});
+if(content.locals) module.exports = content.locals;
+// Hot Module Replacement
+if(false) {
+	// When the styles change, update the <style> tags
+	if(!content.locals) {
+		module.hot.accept("!!./../node_modules/css-loader/index.js!./Panic.css", function() {
+			var newContent = require("!!./../node_modules/css-loader/index.js!./Panic.css");
+			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+			update(newContent);
+		});
+	}
+	// When the module is disposed, remove the <style> tags
+	module.hot.dispose(function() { update(); });
+}
 
 /***/ },
 /* 26 */
-/***/ function(module, exports) {
-
-if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
-  module.exports = Reflect.ownKeys;
-} else if (typeof Object.getOwnPropertySymbols === 'function') {
-  module.exports = function Reflect_ownKeys(o) {
-    return (
-      Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o))
-    );
-  }
-} else {
-  module.exports = Object.getOwnPropertyNames;
-}
-
-
-/***/ },
-/* 27 */
+/* all exports used */
+/*!***********************************************!*\
+  !*** ../get-source/~/lodash.memoize/index.js ***!
+  \***********************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -15207,10 +15794,14 @@ function isObject(value) {
 
 module.exports = memoize;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! (webpack)/buildin/global.js */ 12)))
 
 /***/ },
-/* 28 */
+/* 27 */
+/* all exports used */
+/*!************************************************!*\
+  !*** ../get-source/~/source-map/lib/base64.js ***!
+  \************************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -15283,7 +15874,11 @@ exports.decode = function (charCode) {
 
 
 /***/ },
-/* 29 */
+/* 28 */
+/* all exports used */
+/*!*******************************************************!*\
+  !*** ../get-source/~/source-map/lib/binary-search.js ***!
+  \*******************************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -15400,7 +15995,11 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
 
 
 /***/ },
-/* 30 */
+/* 29 */
+/* all exports used */
+/*!******************************************************!*\
+  !*** ../get-source/~/source-map/lib/mapping-list.js ***!
+  \******************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -15410,7 +16009,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(0);
+var util = __webpack_require__(/*! ./util */ 0);
 
 /**
  * Determine whether mappingB is after mappingA with respect to generated
@@ -15485,7 +16084,11 @@ exports.MappingList = MappingList;
 
 
 /***/ },
-/* 31 */
+/* 30 */
+/* all exports used */
+/*!****************************************************!*\
+  !*** ../get-source/~/source-map/lib/quick-sort.js ***!
+  \****************************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -15605,7 +16208,11 @@ exports.quickSort = function (ary, comparator) {
 
 
 /***/ },
-/* 32 */
+/* 31 */
+/* all exports used */
+/*!*************************************************************!*\
+  !*** ../get-source/~/source-map/lib/source-map-consumer.js ***!
+  \*************************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -15615,11 +16222,11 @@ exports.quickSort = function (ary, comparator) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(0);
-var binarySearch = __webpack_require__(29);
-var ArraySet = __webpack_require__(6).ArraySet;
-var base64VLQ = __webpack_require__(7);
-var quickSort = __webpack_require__(31).quickSort;
+var util = __webpack_require__(/*! ./util */ 0);
+var binarySearch = __webpack_require__(/*! ./binary-search */ 28);
+var ArraySet = __webpack_require__(/*! ./array-set */ 6).ArraySet;
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 7);
+var quickSort = __webpack_require__(/*! ./quick-sort */ 30).quickSort;
 
 function SourceMapConsumer(aSourceMap) {
   var sourceMap = aSourceMap;
@@ -16693,7 +17300,11 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 
 
 /***/ },
-/* 33 */
+/* 32 */
+/* all exports used */
+/*!*****************************************************!*\
+  !*** ../get-source/~/source-map/lib/source-node.js ***!
+  \*****************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -16703,8 +17314,8 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var SourceMapGenerator = __webpack_require__(8).SourceMapGenerator;
-var util = __webpack_require__(0);
+var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 8).SourceMapGenerator;
+var util = __webpack_require__(/*! ./util */ 0);
 
 // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
 // operating systems these days (capturing the result).
@@ -17106,7 +17717,11 @@ exports.SourceNode = SourceNode;
 
 
 /***/ },
-/* 34 */
+/* 33 */
+/* all exports used */
+/*!************************************************!*\
+  !*** ../get-source/~/source-map/source-map.js ***!
+  \************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /*
@@ -17114,16 +17729,352 @@ exports.SourceNode = SourceNode;
  * Licensed under the New BSD license. See LICENSE.txt or:
  * http://opensource.org/licenses/BSD-3-Clause
  */
-exports.SourceMapGenerator = __webpack_require__(8).SourceMapGenerator;
-exports.SourceMapConsumer = __webpack_require__(32).SourceMapConsumer;
-exports.SourceNode = __webpack_require__(33).SourceNode;
+exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 8).SourceMapGenerator;
+exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 31).SourceMapConsumer;
+exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 32).SourceNode;
 
 
 /***/ },
-/* 35 */
+/* 34 */
+/* all exports used */
+/*!**********************************!*\
+  !*** ../get-source/impl/path.js ***!
+  \**********************************/
 /***/ function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(9)();
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {"use strict";
+
+/*  ------------------------------------------------------------------------ */
+
+var isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
+
+/*  ------------------------------------------------------------------------ */
+
+var path = module.exports = {
+	concat: function concat(a, b) {
+
+		var a_endsWithSlash = a[a.length - 1] === '/',
+		    b_startsWithSlash = b[0] === '/';
+
+		return a + (a_endsWithSlash || b_startsWithSlash ? '' : '/') + (a_endsWithSlash && b_startsWithSlash ? b.substring(1) : b);
+	},
+	resolve: function resolve(x) {
+
+		if (path.isAbsolute(x)) {
+			return path.normalize(x);
+		}
+
+		if (isBrowser) {
+			return path.normalize(path.concat(window.location.href, x));
+		} else {
+			return path.normalize(path.concat(process.cwd(), x));
+		}
+	},
+	normalize: function normalize(x) {
+
+		var output = [],
+		    skip = 0;
+
+		x.split('/').reverse().filter(function (x) {
+			return x !== '.';
+		}).forEach(function (x) {
+
+			if (x === '..') {
+				skip++;
+			} else if (skip === 0) {
+				output.push(x);
+			} else {
+				skip--;
+			}
+		});
+
+		var result = output.reverse().join('/');
+
+		return (isBrowser && result[0] === '/' ? window.location.origin : '') + result;
+	},
+
+
+	isAbsolute: function isAbsolute(x) {
+		return x[0] === '/' || /^[^\/]*:/.test(x);
+	},
+
+	relativeToFile: function relativeToFile(a, b) {
+
+		return path.isAbsolute(b) ? path.normalize(b) : path.normalize(path.concat(a.split('/').slice(0, -1).join('/'), b));
+	}
+};
+
+/*  ------------------------------------------------------------------------ */
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/node-libs-browser/~/process/browser.js */ 5)))
+
+/***/ },
+/* 35 */
+/* all exports used */
+/*!****************************************!*\
+  !*** ../stacktracey/impl/partition.js ***!
+  \****************************************/
+/***/ function(module, exports) {
+
+"use strict";
+"use strict";
+
+module.exports = function (arr_, pred) {
+
+    var arr = arr_ || [],
+        spans = [];
+
+    var span = { label: undefined,
+        items: [arr.first] };
+
+    arr.forEach(function (x) {
+
+        var label = pred(x);
+
+        if (span.label !== label && span.items.length) {
+            spans.push(span = { label: label, items: [x] });
+        } else {
+            span.items.push(x);
+        }
+    });
+
+    if (span.length) spans.push(span);
+
+    return spans;
+};
+
+/***/ },
+/* 36 */
+/* all exports used */
+/*!*************************************!*\
+  !*** ../stacktracey/stacktracey.js ***!
+  \*************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {"use strict";
+
+/*  ------------------------------------------------------------------------ */
+
+var O = Object,
+    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
+    lastOf = function (x) {
+    return x[x.length - 1];
+},
+    getSource = __webpack_require__(/*! get-source */ 9),
+    partition = __webpack_require__(/*! ./impl/partition */ 35);
+
+/*  ------------------------------------------------------------------------ */
+
+class StackTracey extends Array {
+
+    constructor(input, offset) {
+        var _this;
+
+        _this = super();
+
+        /*  Fixes for Safari    */
+
+        this.constructor = StackTracey;
+        this.__proto__ = StackTracey.prototype;
+
+        /*  new StackTracey ()            */
+
+        if (!input) {
+            input = new Error();
+            offset = offset === undefined ? 1 : offset;
+        }
+
+        /*  new StackTracey (Error)      */
+
+        if (input instanceof Error) {
+            input = input[StackTracey.stack] || input.stack || '';
+        }
+
+        /*  new StackTracey (string)     */
+
+        if (typeof input === 'string') {
+            input = StackTracey.rawParse(input).slice(offset).map(StackTracey.extractEntryMetadata);
+        }
+
+        /*  new StackTracey (array)      */
+
+        if (Array.isArray(input)) {
+
+            this.length = input.length;
+            input.forEach(function (x, i) {
+                return _this[i] = x;
+            });
+        }
+    }
+
+    static extractEntryMetadata(e) {
+
+        return StackTracey.updateEntryFilePath(O.assign(e, {
+
+            calleeShort: lastOf(e.callee.split('.')),
+            fileName: lastOf(e.file.split('/')) }));
+    }
+
+    static updateEntryFilePath(e) {
+        var short = StackTracey.shortenPath(e.file);
+
+        return O.assign(e, {
+            fileShort: short,
+            thirdParty: StackTracey.isThirdParty(short) && !e.index
+        });
+    }
+
+    static shortenPath(s) {
+        return s.replace(isBrowser ? window.location.href : process.cwd() + '/', '').replace(/^.*\:\/\/?\/?/, '');
+    }
+
+    static isThirdParty(shortPath) {
+        return shortPath[0] === '~' || // webpack-specific heuristic
+        shortPath[0] === '/' || // external source
+        shortPath.indexOf('node_modules') === 0 || shortPath.indexOf('webpack/bootstrap') === 0;
+    }
+
+    static rawParse(str) {
+
+        var lines = (str || '').split('\n');
+
+        var entries = lines.map(function (line) {
+            line = line.trim();
+
+            var callee,
+                fileLineColumn = [],
+                native,
+                planA,
+                planB;
+
+            if ((planA = line.match(/at (.+) \((.+)\)/)) || (planA = line.match(/(.*)@(.*)/))) {
+
+                callee = planA[1];
+                native = planA[2] === 'native';
+                fileLineColumn = (planA[2].match(/(.*):(.+):(.+)/) || []).slice(1);
+            } else if (planB = line.match(/^(at\s+)*(.+):([0-9]+):([0-9]+)/)) {
+                fileLineColumn = planB.slice(2);
+            } else {
+                return undefined;
+            }
+
+            return {
+                beforeParse: line,
+                callee: callee || '',
+                index: isBrowser && fileLineColumn[0] === window.location.href,
+                native: native || false,
+                file: fileLineColumn[0] || '',
+                line: parseInt(fileLineColumn[1] || '', 10) || undefined,
+                column: parseInt(fileLineColumn[2] || '', 10) || undefined };
+        });
+
+        return entries.filter(function (x) {
+            return x !== undefined;
+        });
+    }
+
+    withSource(i) {
+        return StackTracey.withSource(this[i]);
+    }
+
+    static withSource(loc) {
+
+        if (loc.sourceFile || loc.file && loc.file.indexOf('<') >= 0) {
+            // skip things like <anonymous> and stuff that was already fetched
+            return loc;
+        } else {
+            var resolved = getSource(loc.file).resolve(loc);
+
+            if (resolved.sourceFile) {
+                resolved = StackTracey.updateEntryFilePath(O.assign(resolved, { file: resolved.sourceFile.path }));
+            }
+
+            if (resolved.sourceLine && resolved.sourceLine.includes('// @hide')) {
+                resolved.sourceLine = resolved.sourceLine.replace('// @hide', '');
+                resolved.hide = true;
+            }
+
+            return O.assign({ sourceLine: '' }, loc, resolved);
+        }
+    }
+
+    get withSources() {
+        return new StackTracey(this.map(StackTracey.withSource));
+    }
+
+    get mergeRepeatedLines() {
+        return new StackTracey(partition(this, function (e) {
+            return e.file + e.line;
+        }).map(function (group) {
+            return group.items.slice(1).reduce(function (memo, entry) {
+                memo.callee = (memo.callee || '<anonymous>') + ' → ' + (entry.callee || '<anonymous>');
+                memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>');
+                return memo;
+            }, O.assign({}, group.items[0]));
+        }));
+    }
+
+    get clean() {
+        return this.withSources.mergeRepeatedLines.filter(function (e, i) {
+            return i === 0 || !(e.thirdParty || e.hide);
+        });
+    }
+
+    at(i) {
+        return O.assign({
+
+            beforeParse: '',
+            callee: '<???>',
+            index: false,
+            native: false,
+            file: '<???>',
+            line: 0,
+            column: 0
+
+        }, this[i]);
+    }
+
+    static locationsEqual(a, b) {
+        return a.file === b.file && a.line === b.line && a.column === b.column;
+    }
+}
+
+/*  Array methods
+    ------------------------------------------------------------------------ */
+
+;['map', 'filter', 'slice', 'concat', 'reverse'].forEach(function (name) {
+
+    StackTracey.prototype[name] = function () {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return new StackTracey(Array.prototype[name].apply(this, args));
+    };
+});
+
+/*  A private field that an Error instance can expose
+    ------------------------------------------------------------------------ */
+
+StackTracey.stack = typeof Symbol !== 'undefined' ? Symbol.for('StackTracey') : '__StackTracey';
+
+/*  ------------------------------------------------------------------------ */
+
+module.exports = StackTracey;
+
+/*  ------------------------------------------------------------------------ */
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/node-libs-browser/~/process/browser.js */ 5)))
+
+/***/ },
+/* 37 */
+/* all exports used */
+/*!**********************************************!*\
+  !*** ./~/css-loader!./client/LogOverlay.css ***!
+  \**********************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 10)();
 // imports
 
 
@@ -17134,10 +18085,14 @@ exports.push([module.i, ".useless-log-overlay {\tposition: fixed; bottom: 10px; 
 
 
 /***/ },
-/* 36 */
+/* 38 */
+/* all exports used */
+/*!*****************************************!*\
+  !*** ./~/css-loader!./client/Panic.css ***!
+  \*****************************************/
 /***/ function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(9)();
+exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 10)();
 // imports
 
 
@@ -17148,263 +18103,71 @@ exports.push([module.i, "@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-tran
 
 
 /***/ },
-/* 37 */
+/* 39 */
+/* all exports used */
+/*!************************************!*\
+  !*** ./~/reflect.ownkeys/index.js ***!
+  \************************************/
 /***/ function(module, exports) {
 
-"use strict";
-"use strict";
-
-module.exports = (arr_, pred) => {
-
-    const arr   = arr_ || [],
-          spans = []
-    
-    let span = { label: undefined,
-                 items: [arr.first] }
-
-    arr.forEach (x => {
-
-        const label = pred (x)
-
-        if ((span.label !== label) && span.items.length) {
-            spans.push (span = { label: label, items: [x] }) }
-
-        else {
-            span.items.push (x) } })
-
-    if (span.length)
-        spans.push (span)
-
-    return spans
+if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
+  module.exports = Reflect.ownKeys;
+} else if (typeof Object.getOwnPropertySymbols === 'function') {
+  module.exports = function Reflect_ownKeys(o) {
+    return (
+      Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o))
+    );
+  }
+} else {
+  module.exports = Object.getOwnPropertyNames;
 }
 
+
 /***/ },
-/* 38 */
+/* 40 */
+/* all exports used */
+/*!*********************!*\
+  !*** external "fs" ***!
+  \*********************/
+/***/ function(module, exports) {
+
+if(typeof fs === 'undefined') {var e = new Error("Cannot find module \"fs\""); e.code = 'MODULE_NOT_FOUND'; throw e;}
+module.exports = fs;
+
+/***/ },
+/* 41 */
+/* all exports used */
+/*!*****************************!*\
+  !*** ./useless.devtools.js ***!
+  \*****************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {"use strict";
+'use strict';
+
+String.ify = __webpack_require__(/*! string.ify */ 23);
+
+__webpack_require__(/*! ./base/tier0/assert */ 17);
+__webpack_require__(/*! ./base/uncaught */ 18);
+__webpack_require__(/*! ./base/uncaughtAsync */ 19);
+__webpack_require__(/*! ./base/reflection */ 16);
+__webpack_require__(/*! ./base/log */ 14);
+__webpack_require__(/*! ./base/Testosterone */ 13);
+__webpack_require__(/*! ./base/profiling */ 15);
+
+__webpack_require__(/*! ./client/jQueryPlus */ 22);
+
+__webpack_require__(/*! ./client/Panic */ 21);
+__webpack_require__(/*! ./client/LogOverlay */ 20);
+__webpack_require__(/*! ./client/Panic.css */ 25);
+__webpack_require__(/*! ./client/LogOverlay.css */ 24);
 
 /*  ------------------------------------------------------------------------ */
 
-const O            = Object,
-      isBrowser    = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
-      lastOf       = x => x[x.length - 1],
-      getSource    = __webpack_require__ (5),
-      partition    = __webpack_require__ (37)
+document.ready(function () {
 
-/*  ------------------------------------------------------------------------ */
-
-class StackTracey extends Array {
-
-    constructor (input, offset) {
-
-        super ()
-
-    /*  Fixes for Safari    */
-
-        this.constructor = StackTracey
-        this.__proto__   = StackTracey.prototype
-
-    /*  new StackTracey ()            */
-
-        if (!input) {
-             input = new Error ()
-             offset = (offset === undefined) ? 1 : offset }
-
-    /*  new StackTracey (Error)      */
-
-        if (input instanceof Error) {
-            input = input[StackTracey.stack] || input.stack || '' }
-
-    /*  new StackTracey (string)     */
-
-        if (typeof input === 'string') {
-            input = StackTracey.rawParse (input).slice (offset).map (StackTracey.extractEntryMetadata) }
-
-    /*  new StackTracey (array)      */
-
-        if (Array.isArray (input)) {
-
-            this.length = input.length
-            input.forEach ((x, i) => this[i] = x) }
-    }
-
-    static extractEntryMetadata (e) {
-
-        return StackTracey.updateEntryFilePath (O.assign (e, {
-
-            calleeShort:    lastOf (e.callee.split ('.')),
-            fileName:       lastOf (e.file  .split ('/')) }))
-    }
-
-    static updateEntryFilePath (e) { const short = StackTracey.shortenPath (e.file)
-
-        return O.assign (e, {
-            fileShort:  short,
-            thirdParty: StackTracey.isThirdParty (short) && !e.index
-        })
-    }
-
-    static shortenPath (s) {
-        return s.replace (isBrowser ? window.location.href : (process.cwd () + '/'), '')
-                .replace (/^.*\:\/\/?\/?/, '')
-    }
-
-    static isThirdParty (shortPath) {
-        return (shortPath[0] === '~')                          || // webpack-specific heuristic
-               (shortPath[0] === '/')                          || // external source
-               (shortPath.indexOf ('node_modules')      === 0) ||
-               (shortPath.indexOf ('webpack/bootstrap') === 0)
-    }
-
-    static rawParse (str) {
-
-        const lines = (str || '').split ('\n')
-
-        const entries = lines.map (line => { line = line.trim ()
-
-            var callee, fileLineColumn = [], native, planA, planB
-
-            if ((planA = line.match (/at (.+) \((.+)\)/)) ||
-                (planA = line.match (/(.*)@(.*)/))) {
-
-                callee         =  planA[1]
-                native         = (planA[2] === 'native')
-                fileLineColumn = (planA[2].match (/(.*):(.+):(.+)/) || []).slice (1) }
-
-            else if ((planB = line.match (/^(at\s+)*(.+):([0-9]+):([0-9]+)/) )) {
-                fileLineColumn = (planB).slice (2) }
-
-            else {
-                return undefined }
-
-            return {
-                beforeParse: line,
-                callee:      callee || '',
-                index:       isBrowser && (fileLineColumn[0] === window.location.href),
-                native:      native || false,
-                file:        fileLineColumn[0] || '',
-                line:        parseInt (fileLineColumn[1] || '', 10) || undefined,
-                column:      parseInt (fileLineColumn[2] || '', 10) || undefined } })
-
-        return entries.filter (x => (x !== undefined))
-    }
-
-    withSource (i) {
-        return StackTracey.withSource (this[i])
-    }
-
-    static withSource (loc) {
-
-        if (loc.sourceFile || (loc.file && loc.file.indexOf ('<') >= 0)) { // skip things like <anonymous> and stuff that was already fetched
-            return loc }
-
-        else {
-            let resolved = getSource (loc.file).resolve (loc)
-
-            if (resolved.sourceFile) {
-                resolved = StackTracey.updateEntryFilePath (O.assign (resolved, { file: resolved.sourceFile.path }))
-            }
-
-            if (resolved.sourceLine && resolved.sourceLine.includes ('// @hide')) {
-                resolved.sourceLine  = resolved.sourceLine.replace  ('// @hide', '')
-                resolved.hide = true }
-
-            return O.assign ({ sourceLine: '' }, loc, resolved)
-        }
-    }
-
-    get withSources () {
-        return new StackTracey (this.map (StackTracey.withSource))
-    }
-
-    get mergeRepeatedLines () {
-        return new StackTracey (
-            partition (this, e => e.file + e.line).map (
-                group => {
-                    return group.items.slice (1).reduce ((memo, entry) => {
-                        memo.callee      = (memo.callee      || '<anonymous>') + ' → ' + (entry.callee      || '<anonymous>')
-                        memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>')
-                        return memo }, O.assign ({}, group.items[0])) }))
-    }
-
-    get clean () {
-        return this.withSources.mergeRepeatedLines.filter ((e, i) => (i === 0) || !(e.thirdParty || e.hide))
-    }
-
-    at (i) {
-        return O.assign ({
-
-            beforeParse: '',
-            callee:      '<???>',
-            index:       false,
-            native:      false,
-            file:        '<???>',
-            line:        0,
-            column:      0
-
-        }, this[i])
-    }
-
-    static locationsEqual (a, b) {
-        return (a.file   === b.file) &&
-               (a.line   === b.line) &&
-               (a.column === b.column)
-    }
-}
-
-/*  Array methods
-    ------------------------------------------------------------------------ */
-
-;['map', 'filter', 'slice', 'concat', 'reverse'].forEach (name => {
-
-    StackTracey.prototype[name] = function (...args) {
-        return new StackTracey (Array.prototype[name].apply (this, args))
-    }
-})
-
-/*  A private field that an Error instance can expose
-    ------------------------------------------------------------------------ */
-
-StackTracey.stack = (typeof Symbol !== 'undefined') ? Symbol.for ('StackTracey') : '__StackTracey'
-
-/*  ------------------------------------------------------------------------ */
-
-module.exports = StackTracey
-
-/*  ------------------------------------------------------------------------ */
-
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10)))
-
-/***/ },
-/* 39 */
-/***/ function(module, exports, __webpack_require__) {
-
-String.ify = __webpack_require__ (25)
-
-__webpack_require__ (19)
-__webpack_require__ (20)
-__webpack_require__ (21)
-__webpack_require__ (18)
-__webpack_require__ (16)
-__webpack_require__ (15)
-__webpack_require__ (17)
-
-__webpack_require__ (24)
-
-__webpack_require__ (23)
-__webpack_require__ (22)
-__webpack_require__ (14)
-__webpack_require__ (13)
-
-/*  ------------------------------------------------------------------------ */
-
-document.ready (() => {
-	
-	Panic.init ()
-})
+	Panic.init();
+});
 
 /***/ }
 /******/ ]);
