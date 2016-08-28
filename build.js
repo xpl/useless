@@ -1,18 +1,20 @@
+"use strict";
+
 require ('./useless')
 
-var fs          = require ('fs'),
-    util        = require ('./server/base/util'),
-    webpack     = require ('./server/base/webpack')
-    querystring = require ('querystring'),
-    http        = require ('http'),
-    process     = require ('process'),
-    path        = require ('path'),
-    esprima     = require ('esprima'),
-    escodegen   = require ('escodegen')
+const   fs          = require ('fs'),
+        util        = require ('./server/base/util'),
+        webpack     = require ('./server/base/webpack'),
+        querystring = require ('querystring'),
+        http        = require ('http'),
+        process     = require ('process'),
+        path        = require ('path'),
+        esprima     = require ('esprima'),
+        escodegen   = require ('escodegen')
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-BuildApp = $singleton (Component, {
+const BuildApp = $singleton (Component, {
 
     deferAppComponentTests: false,
 
@@ -31,9 +33,9 @@ BuildApp = $singleton (Component, {
         var directories =   args.values.groupBy (
                                 fs.lstatSync.catches (null,
                                     _.method ('isDirectory')))
-                                                           
-        this.inputFiles =                    _.coerceToUndefined (directories['false']) || this.inputFiles
-        this.buildPath  =  path.resolve (process.cwd (), _.first (directories['true'])  || this.buildPath)
+
+        this.inputFiles =         _.coerceToUndefined (   directories['false'])  || this.inputFiles
+        this.buildPath  =  path.resolve (process.cwd (), (directories['true'] || [])[0] || this.buildPath)
 
         if (!this.args.spawnedBySupervisor) {
             log.pink (log.config ({ pretty: true }),

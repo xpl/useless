@@ -1,55 +1,25 @@
+"use strict";
+
 /*  DEPRECATED. Don't add new utility here. Will be refactored:
 
     1.  Http utils will go to /base/http.js (cross-platform)
     2.  Filesystem utils will go to base/fs.js
-    3.  Script compiler will go to separate project
  */
 
-var path        = require ('path'),
-    fs          = require ('fs'),
-    process     = require ('process'),
-    http        = require ('http'),
-    https       = require ('https'),
-    exec        = require ('child_process').exec,
-    Buffer      = require ('buffer').Buffer,
-    _           = require ('underscore'),
-    jsStrEscape = require ('js-string-escape')
+const   path        = require ('path'),
+        fs          = require ('fs'),
+        process     = require ('process'),
+        http        = require ('http'),
+        https       = require ('https'),
+        exec        = require ('child_process').exec,
+        Buffer      = require ('buffer').Buffer,
+        jsStrEscape = require ('js-string-escape')
 
 path.joins     = _.higherOrder (path.join)
 path.joinWith  = _.flipN       (path.join)
 path.joinsWith = _.higherOrder (path.joinWith)
 
 module.exports = {
-
-    compileScript: function (cfg) { var util = module.exports
-
-                        if (!cfg.source && !cfg.sourceFile) {
-                            util.fatalError ('no sourceFile specified') }
-
-                        var source = cfg.source || util.readFile (cfg.sourceFile, cfg.includePaths)
-                        var includePaths = (cfg.sourceFile && [path.dirname (cfg.sourceFile)] || []).concat (cfg.includePaths || [])
-
-                        var read = (what => util.compileScript ({
-                                                    sourceFile: util.locateFile (what, includePaths),
-                                                    includePaths: includePaths }))
-
-                        var result = _.map (source.split ('\n'), line => {
-
-                            var includeStrMatch = line.match (/^(.*)\$includeStr \(\'(.+)\'\)(.*)$/)
-                            if (includeStrMatch) {
-                                return includeStrMatch[1] + '\"' +
-                                    jsStrEscape (read (includeStrMatch[2])) + '\"' + includeStrMatch[3] }
-
-                            var moduleName = (line.match (/\$include \(\'(.+)\'\).*/) || [])[1]
-                            if (moduleName) {
-                                return line.match (/^\s*\/\/.*/) ? '' : (read (moduleName + '.js') + ';') }
-                            else {
-                                return line } }).join ('\n')
-
-                        if (cfg.outputFile) {
-                            module.exports.writeFile (cfg.outputFile, result) }
-
-                        return result },
 
     fatalError: function (explain) {
                     log.error.apply (null, _.cons (log.config ({ stackOffset: 1 }), _.asArray (arguments).concat ('\n')))

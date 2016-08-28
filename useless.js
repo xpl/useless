@@ -1,29 +1,10 @@
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-   ------------------------------------------------------------------- */
+"use strict";
 
-$uselessFile = 'useless.js'
+const $global = (typeof window === 'undefined' ? global : window)
 
-/* -------------------------------------------------------------------
-   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+$global.$uselessFile = 'useless.js'
 
-_ = require ('underscore')
-
-
-/*  Bootstrap code (couple of absolutely urgent fixes to underscore.js)
-    ======================================================================== */
-
-_ = (function () {
-
-    _.mixin ({
-        zipWith: function (rows, zippo) {
-                    return _.reduce (_.rest (rows), function (memo, row) {
-                        return _.times (Math.max ((memo && memo.length) || 0, (row && row.length) || 0), function (i) {
-                            return zippo (memo && memo[i], row && row[i]) }) }, _.first (rows)) } })
-
-    if ('a1 b2 c3' !== _.zipWith ([['a','b','c'], [1,2,3]], function (a, b) { return a + b }).join (' ')) {
-        throw new Error ('_.zipWith broken') }
-
-    return _ }) ()
+$global._ = module.exports = require ('./base/3rd/underscore-fix') // latest underscore from GitHub, fixes strict-mode issue
 
 
 /*  Internal dependencies
@@ -107,20 +88,7 @@ _ = (function () {
     require ('./base/Androgene')       // a "promising" evolution of Testosterone.js (SKETCH)
 
 
-/*  Experimental stuff
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    require ('./base/AOP')
-
-
 /*  Networking
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     require ('./base/http')
-
-
-/*  ==================================================================== */
-
-    if ($platform.NodeJS) {
-        module.exports = _ }
-

@@ -1,7 +1,6 @@
-/*  Sorting utilities (TODO: REFACTOR)
-    ======================================================================== */
+"use strict";
 
-Sort = {
+$global.Sort = {
     Ascending: 1,
     Descending: -1,
     strings: function (a, b) {

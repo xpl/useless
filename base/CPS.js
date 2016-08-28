@@ -1,3 +1,5 @@
+"use strict";
+
 /*  CPS primitives module
     ======================================================================== */
 
@@ -95,7 +97,7 @@ _.withTest (['cps', 'each'], function () {
 
 function () { _.extend (_.cps, {
 
-    each: function (obj, elem_, complete_, index_, length_, keys_) {
+    each: function each (obj, elem_, complete_, index_, length_, keys_) {
 
                 var complete = complete_ || _.noop
                 var elem     = function (x, k, next) {
@@ -120,7 +122,7 @@ function () { _.extend (_.cps, {
                     else {
                         var key = keys ? keys[index] : index
 
-                        elem (obj[key], key, arguments.callee.bind (this, obj, elem_, complete_, index + 1, length, keys)) } } } })} )
+                        elem (obj[key], key, each.bind (this, obj, elem_, complete_, index + 1, length, keys)) } } } })} )
 
 
 /*  map

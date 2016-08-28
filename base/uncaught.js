@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Uncaught exception handling facility
     ======================================================================== */
 
@@ -9,8 +11,8 @@
 
     var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
 
-        var chain = arguments.callee.chain
-                    arguments.callee.chain = _.reject (chain, _.property ('catchesOnce'))
+        var chain = globalUncaughtExceptionHandler.chain
+                    globalUncaughtExceptionHandler.chain = _.reject (chain, _.property ('catchesOnce'))
 
         if (chain.length) {
             for (var i = 0, n = chain.length; i < n; i++) {
@@ -27,6 +29,7 @@
                         e = newE } } } }
         else {
             e.message += reThrownTag
+            console.log (e)
             throw e } }
 
     _.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity

@@ -1,7 +1,7 @@
-/*	Base64 utility
-	======================================================================== */
+const $global = (typeof window === 'undefined' ? global : window)
 
-Base64 = {
+$global.Base64 = {
+	
 	// private property
 	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
 

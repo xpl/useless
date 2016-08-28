@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
 

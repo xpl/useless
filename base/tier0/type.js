@@ -1,3 +1,7 @@
+"use strict";
+
+const O = require ('es7-object-polyfill')
+
 /*  isTypeOf
     ======================================================================== */
 
@@ -102,7 +106,7 @@ _.deferTest (['type', 'matches(regex)'], function () {
             return _.every (pattern, _.propertyOf (_.index (a))) },
          
         objectMatch: function (a, pattern) {
-                            return _.reduce (_.pairs (pattern),
+                            return _.reduce (O.entries (pattern),
                                 function (result, kv) {
                                     return result && _.match (a[kv[0]], kv[1]) }, true) } }) })
 

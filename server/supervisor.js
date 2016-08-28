@@ -1,11 +1,13 @@
-var fs              = require ('fs'),
-    path            = require ('path'),
-    process         = require ('process'),
-    chokidar        = require ('chokidar'),
-    foreverMonitor  = require ('forever-monitor'),
-    util            = require ('./base/util')
+"use strict";
 
-module.exports = Supervisor = $trait ({
+const fs              = require ('fs'),
+      path            = require ('path'),
+      process         = require ('process'),
+      chokidar        = require ('chokidar'),
+      foreverMonitor  = require ('forever-monitor'),
+      util            = require ('./base/util')
+
+const Supervisor = module.exports = $trait ({
 
     $depends: [require ('./args'),
                require ('./ipc')],
@@ -37,9 +39,11 @@ module.exports = Supervisor = $trait ({
     /*  Other traits can vote via subscribing to this trigger
      */
     shouldRestartOnSourceChange: $trigger (function (action, file, yes, no) {
-                                    if ((action !== 'add') && (action !== 'addDir')) {
-                                        if (!(file.contains (path.resolve (this.buildPath || path.join (process.cwd (), './build')).concatPath ('/')) ||
-                                              file.contains ('.DS_Store'))) { yes () } } }),
+
+                                    if (file in require.cache) {
+                                        yes ()
+                                    }
+                                }),
 
     voteForRestartOnSourceChange: $callableFromMasterProcess (function (action, file) {
 

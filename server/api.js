@@ -1,4 +1,6 @@
- module.exports = ServerAPI = $trait ({
+ "use strict";
+
+ module.exports = $trait ({
 
     tests: {
 
@@ -10,7 +12,7 @@
             These notations can be intermixed freely. While former is more comfortable to humans,
             the latter is more usable for programmatic generation.
          */
-        canonicalize: function () {
+        canonicalize () {
 
             var input = {
                 'echo':             { post: _.identity },
@@ -39,7 +41,7 @@
 
         /*  This algorithm allows incremental updates to API schema
          */
-        collapse: function () {
+        collapse () {
 
             $assert (APISchema.collapse ([['foo', { get: _.identity } ]]),
                                          [['foo', { get: _.identity } ]])
@@ -69,21 +71,21 @@
 
             $assert (APISchema.collapse (input), result) } },
 
-    beforeInit: function () { log.minor ('Reading API schema')
+    beforeInit () { log.minor ('Reading API schema')
 
         this.apiSchema = APISchema.validate (
                          APISchema.collapse (
                             _.flat (_.filter2 ((this.constructor.$traits || []).reversed, this.$ (function (Trait) {
                                 return (Trait.prototype.api ? APISchema.canonicalize (Trait.prototype.api.call (this)) : false) }))))) },
 
-    afterInit: function () {
-                    if (_.isFunction (this.api)) {
-                        this.defineAPIs (this.api ()) } },
+    afterInit () {
+        if (_.isFunction (this.api)) {
+            this.defineAPIs (this.api ()) } },
 
-    defineAPIs: function (schemaPart) {
+    defineAPIs (schemaPart) {
         return (this.apiSchema = APISchema.collapse (this.apiSchema.concat (this.normalizeAPIs (schemaPart)))) },
 
-    normalizeAPIs: function (routes) {
+    normalizeAPIs (routes) {
         return APISchema.validate (APISchema.collapse (APISchema.canonicalize (routes))) } })
 
 
@@ -91,10 +93,10 @@
 
 Implementation */
 
-APISchema = {
+$global.APISchema = {
 
-    prettyPrint: function (routes, depth) { depth = depth || 0
-        _.each (routes, function (route) {
+    prettyPrint (routes, depth) { depth = depth || 0
+        _.each (routes, route => {
             if (APISchema.isHandler (route[1])) {
                 log.green (log.indent (depth), route[0] || '(empty)',
                     _.nonempty ([route[1].get && 'GET', route[1].post && 'POST']).join (' ')) }
@@ -103,7 +105,7 @@ APISchema = {
                 APISchema.prettyPrint (route[1], depth + 1)
                 log.write ('') } }) },
 
-    debugTrace: function (routes, method, path) {
+    debugTrace (routes, method, path) {
                     return this.match (routes, method, path, true) },
 
 
@@ -111,7 +113,7 @@ APISchema = {
     errors when evaluating something like [this.nonexistentFunction, ...], because __.seq allows
     constants as chain elements.                                                                        */
 
-    validate: function (routes, /* optional */ path) {
+    validate (routes, /* optional */ path) {
 
                     _.each (routes, route => { var subpath = (path || '') + '/' + route[0],
                                                    subj    = route[1]
@@ -126,7 +128,7 @@ APISchema = {
 
                     return routes },
 
-    match: function (routes, method, path, /* optional */ debug, depth, vars, virtualTrailSlashCase) {
+    match (routes, method, path, /* optional */ debug, depth, vars, virtualTrailSlashCase) {
 
         var trace = (debug === true)
                         ? (function () { log.write.apply (log,
@@ -203,53 +205,53 @@ APISchema = {
 
 /*  PRIVATE */
 
-    isHandler: function (obj) {
+    isHandler (obj) {
         return obj && (APISchema.isFunctionOrChain (obj.get) ||
                        APISchema.isFunctionOrChain (obj.post)) },
 
-    isFunctionOrChain: function (obj) {
+    isFunctionOrChain (obj) {
         return (obj instanceof Function) || (_.isArray (obj) && !(obj.isEmpty || _.isString (obj[0]) || _.isArray (obj[0]))) },
 
-    isCanonicalRoute: function (obj) {
+    isCanonicalRoute (obj) {
         return _.isArray (obj) && (typeof obj[0] === 'string') },
 
-    map: function (obj, fn) {
+    map (obj, fn) {
         if (APISchema.isCanonicalRoute (obj)) {
             return [fn (obj[1], obj[0])] }
         return _.map (obj, _.isArray (obj) ?
             function (route) { return fn (route[1], route[0]) } : fn) },
 
-    canonicalize: function (obj) {
+    canonicalize (obj) {
         if (!obj) {
             return [] }
         else if (APISchema.isFunctionOrChain (obj)) {
             return { get: obj } }
         else if (APISchema.isHandler (obj)) {
             return obj }
-        return APISchema.map (obj, function (value, key) {
+        return APISchema.map (obj, (value, key) => {
             var subpaths = key.split ('/')
             if (subpaths.length > 1) {
-                return _.reduceRight (subpaths, function (memo, path) {
+                return _.reduceRight (subpaths, (memo, path) => {
                     return [path, _.isArray (memo) ? [memo] : memo] }, APISchema.canonicalize (value)) }
             return [key, APISchema.canonicalize (value)] }, this) },
 
-    collapse: function (routes) {
+    collapse (routes) {
 
         var handlers = _.filter (routes, APISchema.isHandler)
         if (handlers.length) {
             return _.extend.apply (null, [{}].concat (handlers)) }
 
-        var groups = _.groupBy (routes, function (route) {
+        var groups = _.groupBy (routes, route => {
             return route[0] })
 
-        return _.reversed (_.filter2 (routes.reversed, function (route) {
+        return _.reversed (_.filter2 (routes.reversed, route => {
             if (!_.isArray (route)) {
                 return route }
             var name = route[0]
             var group = groups[name]
             if (group) {
                 delete groups[name]
-                var merged = _.flatten (_.map (group, function (route) { return route[1] }), true)
+                var merged = _.flatten (_.map (group, route => route[1]), true)
                 return [name, APISchema.collapse (merged)] }
             return false })) } }
 

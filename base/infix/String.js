@@ -1,3 +1,5 @@
+"use strict";
+
 /*  String extensions
     ======================================================================== */
 
@@ -98,6 +100,9 @@ _.deferTest ('String extensions', function () {
              'foo/'.concatPath ( 'bar'),
              'foo' .concatPath ( 'bar'), 'foo/bar')
 
+    $assert ('123456'.first (2), '12')
+    $assert ('123456'.last  (2), '56')
+
 }, function () { $extensionMethods (String, {
 
     quote: _.quote,
@@ -155,10 +160,10 @@ _.deferTest ('String extensions', function () {
         return s + other },
 
     first: function (s, n) {
-        return _.first (s, n).join ('') },
+        return s.slice (0, n) },
 
     last: function (s, n) {
-        return _.last (s, n).join ('') },
+        return s.slice (-2) },
 
     reversed: function (s) {
         return s.split ('').reverse ().join ('') },
@@ -213,7 +218,7 @@ _.deferTest ('String extensions', function () {
             'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ь': '',
             'ъ': '', 'ы': 'y', 'э': 'e', 'ю': 'yu', 'я': 'ya' },
 
-            _.object (_.map ('_-1234567890qwertyuiopasdfghjklzxcvbnm', function (x) { return [x,x] })))
+            _.fromPairs (_.map ('_-1234567890qwertyuiopasdfghjklzxcvbnm', function (x) { return [x,x] })))
         
         return function (s) {
             var result = ''

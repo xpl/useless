@@ -1,8 +1,10 @@
+"use strict";
+
 require ('./useless')
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-BuildApp = $singleton (Component, {
+const BuildApp = $singleton (Component, {
 
     $defaults: {
         argKeys: { verbose: 1 } },
@@ -11,12 +13,12 @@ BuildApp = $singleton (Component, {
         require ('./server/args'),
         require ('./server/supervisor') ],
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-    init: function () {
+    init () {
             Testosterone.run ({
                      verbose: this.args.verbose,
                       silent: false,
                       filter: t => this.args.values.isEmpty ||
                                    this.args.values.contains (t.name) ||
-                                   this.args.values.contains (t.suite) }).then (function () { process.exit () }) } })
+                                   this.args.values.contains (t.suite) }).then (() => { process.exit () }) } })

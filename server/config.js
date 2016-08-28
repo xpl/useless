@@ -1,13 +1,16 @@
-var util    = require ('./base/util'),
-    process = require ('process'),
-    path    = require ('path'),
-    fs      = require ('fs')
+ "use strict";
+
+const util    = require ('./base/util'),
+      process = require ('process'),
+      path    = require ('path'),
+      fs      = require ('fs')
 
 module.exports = $trait ({
 
     $depends: [require ('./args')],
 
     $defaults: {
+        
         configPath:
             path.join (process.cwd (), '/config.json'),
 
@@ -16,7 +19,7 @@ module.exports = $trait ({
 
     /*  Configures 'supervisor' trait.
      */
-    shouldRestartOnSourceChange: function (action, file, yes, no) {
+    shouldRestartOnSourceChange (action, file, yes, no) {
 
                                     if (file.contains (this.configPath)) {
 
@@ -33,26 +36,28 @@ module.exports = $trait ({
                                             log.pp (log.config ({ pretty: true }), this.config)
                                             yes () } } },
 
-    readConfig: function () {
+    readConfig () {
+
               try { return JSON.parse (fs.readFileSync (this.configPath, { encoding: 'utf-8' })) }
         catch (e) { return {} } },
 
-    applyConfig: function (cfg) {
+    applyConfig (cfg) {
+
         _.extend (this.config, cfg)
         log.timestampEnabled = this.config.logTimestamps
         return this.config },
 
-    beforeInit: function () {
+    beforeInit () { log.info ('Reading config...')
 
-                    /*  Re-write config at startup (with default values and pretty printed).
-                     */
-                    util.writeFile (this.configPath,
-                        String.ify.configure ({ pretty: true, json: true }) (this.applyConfig (this.readConfig ())))
+        /*  Re-write config at startup (with default values and pretty printed).
+         */
+        util.writeFile (this.configPath,
+            String.ify.configure ({ pretty: true, json: true }) (this.applyConfig (this.readConfig ())))
 
-                    /*  Supresses double-reporting when running under supervisor.
-                     */
-                    if (!this.args.spawnedBySupervisor) {
-                        log.p (log.config ({ pretty: true }), this.config) } } })
+        /*  Supresses double-reporting when running under supervisor.
+         */
+        if (!this.args.spawnedBySupervisor) {
+            log.p (log.config ({ pretty: true }), this.config) } } })
 
 
 

@@ -1,8 +1,10 @@
-var util = require ('./base/util')
+ "use strict";
 
-/*  ======================================================================== */
+const util = require ('./base/util')
 
-module.exports = CommandLineArguments = $trait ({
+/*  ------------------------------------------------------------------------ */
+
+module.exports = $trait ({
 
     $defaults: {
         argKeys: { /* 'example-option': 1 */ },
@@ -11,18 +13,18 @@ module.exports = CommandLineArguments = $trait ({
 
     argsReady: $barrier (),
 
-    beforeInit: function () {
+    beforeInit () {
         this.argsReady (this.args = this.parseProcessArgs (_.keys (this.argKeys))) },
 
     $private: {
-        parseProcessArgs: function (proposedKeys) {
-            var arguments     = _.rest (process.argv, 2)
-            var incomingKeys  = _.intersection (arguments, _.map (proposedKeys, _.camelCaseToDashes))
-            var keysCamelCase =                            _.map (incomingKeys, _.dashesToCamelCase)
+        parseProcessArgs (proposedKeys) {
+            var args          = process.argv.slice (2)
+            var incomingKeys  = _.intersection (args, _.map (proposedKeys, _.camelCaseToDashes))
+            var keysCamelCase =                       _.map (incomingKeys, _.dashesToCamelCase)
             return _.extend (
                     _.index (keysCamelCase), { keys:            keysCamelCase,
                                                keysDashed:      incomingKeys,
-                                               all:             arguments,
-                                               values:        _.without.apply (null, [arguments].concat (incomingKeys)) }) } } })
+                                               all:             args,
+                                               values:        _.without.apply (null, [args].concat (incomingKeys)) }) } } })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */

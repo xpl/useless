@@ -1,3 +1,5 @@
+"use strict";
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -153,18 +155,6 @@ _.withTest ('assert.js bootstrap', function () {
         $assertFails (function () {
             $assertTypeMatches (new Bar (), Foo) }) };
 
-
-/*  Argument contracts
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-if (_.hasStdlib) {
-
-    var testF = function (_777, _foo_bar_baz, notInvolved) { $assertArguments (arguments) }
-
-                    testF (777, 'foo bar baz')
-
-    $assertFails (function () { testF (777, 42) }) }
-
 /*  Ensuring throw (and no throw)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -273,9 +263,9 @@ if (_.hasStdlib) {
         assertEveryCalledOnce: function (fn, then) {
             return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
 
-        assertEveryCalled: function (fn_, then) { var fn    = _.hasTags ? $untag (fn_)    : fn_,
-                                                      async = _.hasTags ? $async.is (fn_) : fn_.async
-                                                      once  = _.hasTags ? $once.is (fn_)  : fn_.once
+        assertEveryCalled: function (fn_, then) { const fn    = _.hasTags ? $untag (fn_)    : fn_,
+                                                        async = _.hasTags ? $async.is (fn_) : fn_.async,
+                                                        once  = _.hasTags ? $once.is (fn_)  : fn_.once
 
             var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
             var contracts = once ? _.times (fn.length, _.constant (1)) :
@@ -301,23 +291,25 @@ if (_.hasStdlib) {
 
         assertCallOrder: function (fn) {
             var callIndex = 0
-            var callbacks = _.times (fn.length, function (i) { return function () { arguments.callee.callIndex = callIndex++ } })
+            var callbacks = _.times (fn.length, i => function callee () { callee.callIndex = callIndex++ })
             fn.apply (null, callbacks)
             return _.assert (_.pluck (callbacks, 'callIndex'), _.times (callbacks.length, _.identity.arity1)) },
 
-        assertMatches: function (value, pattern) {
-            try {       return _.assert (_.matches.apply (null, _.rest (arguments)) (value)) }
+        assertMatches: function (value, ...args) {
+            const pattern = args[0]
+            try {       return _.assert (_.matches.apply (null, args) (value)) }
             catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
 
-        assertNotMatches: function (value, pattern) {
-            try {       return _.assert (!_.matches.apply (null, _.rest (arguments)) (value)) }
+        assertNotMatches: function (value, ...args) {
+            const pattern = args[0]
+            try {       return _.assert (!_.matches.apply (null, args) (value)) }
             catch (e) { throw _.isAssertionError (e) ? _.extend (e, { notMatching: [value, pattern] }) : e } },
 
         assertType: function (value, contract) {
             return _.assert (_.decideType (value), contract) },
 
-        assertTypeMatches: function (value, contract) { 
-                                return _.isEmpty (mismatches = _.typeMismatches (contract, value))
+        assertTypeMatches: function (value, contract) { const mismatches = _.typeMismatches (contract, value)
+                                return _.isEmpty (mismatches)
                                     ? true
                                     : _.assertionFailed ({
                                         message: 'provided value type not matches required contract',
@@ -342,23 +334,6 @@ if (_.hasStdlib) {
 
         assertNotThrows: function (what) {
             return _.assertEveryCalled (function (ok) { what (); ok () }) },
-
-        assertArguments: function (args, callee, name) {
-            var fn    = (callee || args.callee).toString ()
-            var match = fn.match (/.*function[^\(]\(([^\)]+)\)/)
-            if (match) {
-                var valuesPassed   = _.asArray (args);
-                var valuesNeeded   = _.map (match[1].split (','),
-                                            function (_s) {
-                                                var s = (_s.trim ()[0] === '_') ? _s.replace (/_/g, ' ').trim () : undefined
-                                                var n = parseInt (s, 10)
-                                                return _.isFinite (n) ? n : s })
-
-                var zap = _.zipWith ([valuesNeeded, valuesPassed], function (a, b) {
-                                return (a === undefined) ? true : (a === b) })
-
-                if (!_.every (zap)) {
-                    _.assertionFailed ({ notMatching: _.nonempty ([[name, fn].join (': '), valuesNeeded, valuesPassed]) }) } } },
 
         fail: function () {
                 _.assertionFailed () },
@@ -385,7 +360,7 @@ if (_.hasStdlib) {
 
         assertionFailed: function (additionalInfo) {
                             throw _.extend (_.assertionError (additionalInfo), {
-                                        stack: _.rest ((new Error ()).stack.split ('\n'), 3).join ('\n') }) },
+                                        stack: (new Error ()).stack.split ('\n').slice (3).join ('\n') }) },
 
         isAssertionError: function (e) {        
                             return e && (e.assertion === true) } })

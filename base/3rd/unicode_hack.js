@@ -9,7 +9,10 @@
     notice and this notice are preserved.  This file is offered as-is,
     without any warranty.
 */
-unicode_hack = (function() {
+
+const $global = (typeof window === 'undefined' ? global : window)
+
+$global.unicode_hack = (function() {
     /* Regexps to match characters in the BMP according to their Unicode category.
        Extracted from running all characters (code units) against Java's
        Character.getType. Source:

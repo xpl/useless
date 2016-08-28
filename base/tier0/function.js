@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Useful for debugging and tests
     ======================================================================== */
 
@@ -7,13 +9,13 @@ _.debugEcho = function () { return [this].concat (_.asArray (arguments)) }
 /*  Context-free version of fn.call (for consistency)
     ======================================================================== */
 
-_.call = function (fn, this_, args) { return fn.apply (this_, _.rest (arguments, 2)) }
+_.call = function (fn, this_, ...args) { return fn.apply (this_, args) }
 
 /*  Limits function to given number of arguments
     ======================================================================== */
 
-_.arity = function (N, fn) { return function () {
-                                        return fn.apply (this, _.first (arguments, N)) }}
+_.arity = function (N, fn) { return function (...args) {
+                                        return fn.apply (this, args.slice (0, N)) }}
 
 _.arity0 = function (fn) { return function () {
                                     return fn.call (this) }}
@@ -33,15 +35,15 @@ _.arityFn = function (N) { return _['arity' + N] }
 /*  A version of _.partial that binds to tail of argument list
     ======================================================================== */
 
-_.tails = $restArg (function (fn) { var tailArgs = _.rest (arguments)
+_.tails = $restArg (function (fn, ...tailArgs) {
                                         return function () {
                                             return fn.apply (this, _.asArray (arguments).concat (tailArgs)) }})
 
-_.tails2 = $restArg (function (fn) { var tailArgs = _.rest (arguments)
+_.tails2 = $restArg (function (fn, ...tailArgs) {
                                         return function (a) {
                                             return fn.apply (this, [a].concat (tailArgs)) }})
 
-_.tails3 = $restArg (function (fn) { var tailArgs = _.rest (arguments)
+_.tails3 = $restArg (function (fn, ...tailArgs) {
                                         return function (a, b) {
                                             return fn.apply (this, [a, b].concat (tailArgs)) }})
 
@@ -251,9 +253,9 @@ _.deferTest (['function', 'eval/evals'], function () {
             value3: _.property ('number')
         }
 
-        var eval = _.evals ({ number: 42 }) // higher order
+        var evl = _.evals ({ number: 42 }) // higher order
 
-        $assert (_.eval (cfg.value1), _.eval (cfg.value2), eval (cfg.value3), 42) }, function () {
+        $assert (_.eval (cfg.value1), _.eval (cfg.value2), evl (cfg.value3), 42) }, function () {
 
     _.eval = function (x) {
                 return _.isFunction (x) ? x.call (this) : x  }
@@ -266,16 +268,15 @@ _.deferTest (['function', 'eval/evals'], function () {
 /*  in rhyme with _.property, this one calls a method
     ======================================================================== */
 
-_.method = function (name) {
-                var args = _.rest (arguments)
+_.method = function (name, ...args) {
                     return function (obj) {
                         return obj[name].apply (obj, args) } }
 
 /*  Converts between calling conventions
     ======================================================================== */
 
-_.asFreeFunction = function (fn) { return function (this_, restArg) {
-                                            return fn.apply (this_, _.rest (arguments)) } }
+_.asFreeFunction = function (fn) { return function (this_, ...args) {
+                                            return fn.apply (this_, args) } }
 
 _.asMethod = function (fn) { return function () {
                                         return fn.apply (undefined, [this].concat (_.asArray (arguments))) } } // @hide

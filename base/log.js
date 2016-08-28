@@ -121,7 +121,7 @@ _.extend (log, {
 
     color: _.extend (function (x) { return (log.color[x] || {}).color },
 
-        _.object (
+        _.fromPairs (
         _.map  ([['none',        '0m',           ''],
                  ['red',         '31m',          'color:crimson'],
                  ['boldRed',    ['31m', '1m'],   'color:crimson;font-weight:bold'],
@@ -249,7 +249,7 @@ _.extend (log, {
                                                                                             emit (newline) } }) }))))
 
             var totalText       = _.pluck (runs, 'text').join ('')
-            var where           = config.where || (new StackTracey ()).withSources.clean[1]
+            var where           = config.where || log.impl.findWhere (new StackTracey ()) // @hide
             var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 
             writeBackend ({
@@ -267,7 +267,12 @@ _.extend (log, {
                 trailNewlines: trailNewlines || '',
                 where:         (config.location && where) || undefined })
 
-            return _.find (args, _.not (_.isTypeOf.$ (log.Config))) })),
+            return _.find (args, _.not (_.isTypeOf.$ (log.Config)))
+        })),
+
+        findWhere: function (stack) {
+            return stack.withSources.filter (x => !x.hide).at (2)
+        },
 
         defaultWriteBackend: function (params) {
 
@@ -326,8 +331,8 @@ _.extend (log, {
 
         stringify: (what, cfg) =>
                     (typeof what === 'string') ? what :
-                    (Array.isArray (what) && cfg.table) ? asTable (what) :
-                    String.ify.configure (cfg) (what)
+                    (Array.isArray (what) && (cfg || {}).table) ? asTable (what) :
+                    String.ify.configure (cfg || {}) (what)
     }
 })
 
@@ -337,7 +342,7 @@ _.extend (log, {
 ;(function () {                                                var write = log.impl.write
    _.extend (log,
              log.printAPI =
-                    _.object (
+                 _.fromPairs (
                     _.concat (            [[            'newline', write.$ (log.config ({ location: false }), '') ],
                                            [              'write', write                                                          ]],
                             _.flat (_.map (['red failure error e',

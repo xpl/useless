@@ -531,7 +531,7 @@ _.withTest ('OOP', {
                         _.or ($builtin.matches, _.key (_.equals ('constructor'))))) }) },
 
             extendWithTags: function (def) {                    
-                return _.extendWith ($untag (def), _.mapObject (Tags.get (def), $static.arity1)) },
+                return _.extendWith ($untag (def), _.mapValues (Tags.get (def), $static.arity1)) },
 
             callStaticConstructor: function (def) { 
                 if (!def.isTraitOf) { 
@@ -722,15 +722,10 @@ _.withTest ('OOP', {
 /*  Context-free implementation of this.$
     ======================================================================== */
 
-    _.$ = function (this_, fn) { var arguments_ = _.rest (arguments, 2)
-
-        var result = (arguments_.length) ?
-                        _.bind.apply (undefined, [fn, this_].concat (_.rest (arguments, 2))) :
-                        _.withSameArgs (fn, function () { return fn.apply (this_, arguments) }) // @hide
-        
-        //result.context = this_
-
-        return result }
+    _.$ = (this_, fn, ...args) =>
+            (args.length) ?
+                _.bind.apply (undefined, [fn, this_].concat (args)) :
+                _.withSameArgs (fn, (...args) => fn.apply (this_, args)) // @hide
 
 
 /*  $const (xxx) as convenient alias for $static ($property (xxx))

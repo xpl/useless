@@ -140,11 +140,9 @@ $global.TimeoutError = class extends Error {
 /*  ------------------------------------------------------------------------ */
 
 $global.__ =
-Promise.eval = function (x) { var this_ = this,
-                                  args = _.rest (arguments)
-
+Promise.eval = function (x, ...args) {
                     return ((x instanceof Promise)   ?  x :
-                           ((x instanceof Function)  ?  new Promise (function (resolve) { resolve (x.apply (this_, args)) }) : // @hide
+                           ((x instanceof Function)  ?  new Promise (resolve => { resolve (x.apply (this, args)) }) : // @hide
                                                             Promise.resolve (x))) }
 
 Promise.coerce = function (x) {

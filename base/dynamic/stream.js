@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Generic functional primitives for dynamic code binding
     ======================================================================== */
 
@@ -224,10 +226,10 @@ _.tests.stream = {
 
 _.extend (_, {
 
-    gatherChanges: function (observables_) {
+    gatherChanges: function (...args) {
 
-        var observables = _.isArray (observables_) ? observables_ : _.initial (arguments)
-        var accept      = _.last (arguments)
+        var observables = _.isArray (args[0]) ? args[0] : _.initial (args)
+        var accept      = _.last (args)
         var gather      =   function (value) {
                                 accept.apply (this, _.pluck (observables, 'value')) }
 
@@ -246,15 +248,15 @@ _.extend (_, {
                         else {
                             then () } },
 
-    observableRef: function (value) {
-        return _.extend (_.observable.apply (this, arguments), { trackReference: true }) },
+    observableRef: function (...args) {
+        return _.extend (_.observable.apply (this, args), { trackReference: true }) },
 
-    observable: function (value) {
+    observable: function (...args) { const value = args[0]
         var stream = _.stream ({
 
                         isObservable: true,
-                        hasValue: arguments.length > 0,
-                        value:    _.isFunction (value) ? undefined : value,
+                        hasValue:     args.length > 0,
+                        value:      _.isFunction (value) ? undefined : value,
 
                         read: function (schedule) {
                                 return function (returnResult) {
@@ -284,8 +286,8 @@ _.extend (_, {
                                             else {
                                                 returnResult.call (this, false /* flush */, stream.value) } } } } })
 
-        if (arguments.length) {
-            stream.apply (this, arguments) }
+        if (args.length) {
+            stream.apply (this, args) }
 
         return _.extend (stream, {
 
@@ -329,12 +331,12 @@ _.extend (_, {
 
             when: function (match, then) { var matchFn       = _.isFunction (match) ? match : _.equals (match),
                                                alreadyCalled = false
-                stream (function (val) {
-                    if (matchFn (val)) {
+                stream (function callee (...args) {
+                    if (matchFn (args[0])) {
                         if (!alreadyCalled) {
                              alreadyCalled = true
-                             stream.off (arguments.callee)
-                             then.apply (this, arguments) }
+                             stream.off (callee)
+                             then.apply (this, args) }
                         else { 
                             /* log.w ('WTF') */ } } }) } }) },
 
@@ -379,25 +381,26 @@ _.extend (_, {
         return barrier },
 
 
-    triggerOnce: $restArg (function () {
+    triggerOnce: $restArg (function (...args) {
                 var stream = _.stream ({
                                 read: function (schedule) {
                                             return function (listener) {
                                                 if (stream.queue.indexOf (listener) < 0) {
                                                     schedule.call (this, listener) } } },
                                 write: function (writes) {
-                                    return writes.partial (true) } }).apply (this, arguments); return stream }),
+                                    return writes.partial (true) } }).apply (this, args); return stream }),
 
-    trigger: $restArg (function () {
+    trigger: $restArg (function (...args) {
                 return _.stream ({
                             read: _.identity,
                             write: function (writes) {
-                                return writes.partial (false) } }).apply (this, arguments) }),
+                                return writes.partial (false) } }).apply (this, args) }),
 
-    off: function (fn, what) {
+    off: function (...args) { const fn = args[0], what = args[1]
+
         if (fn.queue) {
-            if (arguments.length === 1) { fn.queue.off ()     }
-            else                        { fn.queue.off (what) } }
+            if (args.length === 1) { fn.queue.off ()     }
+            else                   { fn.queue.off (what) } }
         if (fn.queuedBy) {
             _.each (fn.queuedBy, function (queue) { queue.remove (fn) })
              delete fn.queuedBy } },
@@ -405,15 +408,17 @@ _.extend (_, {
     stream: function (cfg_) {
 
                 var cfg         = cfg_ || {}
-                var queue       = _.extend ([], { off: function (fn) { if (this.length) {
-                                                    if (arguments.length === 0) {
-                                                        _.each (this, function (fn) {
-                                                            fn.queuedBy.remove (this) }, this)
-                                                        this.removeAll () }
-                                                    else {
-                                                        if (fn.queuedBy) {
-                                                            fn.queuedBy.remove (this)
-                                                            this.remove (fn) } } } } })
+                var queue       = _.extend ([], { off: function (...args) { const fn = args[0]
+
+                                                    if (this.length) {
+                                                        if (args.length === 0) {
+                                                            _.each (this, function (fn) {
+                                                                fn.queuedBy.remove (this) }, this)
+                                                            this.removeAll () }
+                                                        else {
+                                                            if (fn.queuedBy) {
+                                                                fn.queuedBy.remove (this)
+                                                                this.remove (fn) } } } } })
 
                 var self = undefined
 
@@ -425,9 +430,8 @@ _.extend (_, {
                             fn.queuedBy = [queue] }
                         queue.push (fn) } }
 
-                var commitPendingReads = function (flush, __args__) {
-                    var args        = _.rest (arguments),
-                        context     = self.context || this,
+                var commitPendingReads = function (flush, ...args) {
+                    var context     = self.context || this,
                         schedule    = queue.copy
 
                     if (flush) {
@@ -445,20 +449,21 @@ _.extend (_, {
 
                 /*  I/O API (two-way)
                  */
-                var frontEnd  = function (fn) {
+                var frontEnd  = function (...args) { const fn = args[0]
+
                                     if (_.isFunction (fn)) {
                                         read.call (this, fn) }
 
                                     else {
-                                        write.apply (this, arguments) }
+                                        write.apply (this, args) }
 
-                                    return arguments.callee }
+                                    return frontEnd }
 
                 /*  Once semantics
                  */
                 var once = function (then) {
                                 if (!_.find (queue, function (f) { return f.onceWrapped_ === then })) {
-                                    read (_.extend (function (v) { _.off (self, arguments.callee); then (v) }, { onceWrapped_: then })) } }
+                                    read (_.extend (function callee (v) { _.off (self, callee); then (v) }, { onceWrapped_: then })) } }
 
                 /*  Constructor
                  */
@@ -468,7 +473,7 @@ _.extend (_, {
                     off:    _.off.asMethod,
                     read:     read,
                     write:    write,
-                    postpone: function () { this.postponed.apply (self.context, arguments) } })) } })
+                    postpone: (...args) => { this.postponed.apply (self.context, args) } })) } })
 
 
 /*  Observable.map (experimental)

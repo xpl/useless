@@ -1,8 +1,8 @@
-/*  Implementation
- */
-R = $singleton ({
+"use strict";
 
-    $test: function () {
+$global.R = $singleton ({
+
+    $test () {
 
         var $assertExpr = function (a, b) { $assert (a, _.quote (b.str, '//')) }
 
@@ -41,8 +41,8 @@ R = $singleton ({
 
         this.initDSL () },
 
-    expr: function (expr, subexprs) { subexprs = subexprs || []
-            return new R.Expr (R.reduce ('', expr, function (memo, s) {
+    expr (expr, subexprs) { subexprs = subexprs || []
+            return new R.Expr (R.reduce ('', expr, (memo, s) => {
                                                         if (R.isSubexpr (s)) { subexprs.push (s)
                                                             return memo + R.expr (R.root (s.value), subexprs).str }
                                                         else {
@@ -56,82 +56,82 @@ R = $singleton ({
                         this.str = str
                         this.subexprs = subexprs },
 
-        parse: function (str) {
+        parse (str) {
                 var match = str.match (this.rx)
             return (match && _.extend.apply (null,
-                                _.zipWith ([_.rest (match), this.subexprs], function (match, subexpr) {
-                                                                                return _.object ([[ subexpr.name, match ]]) }))) || {} } }),
+                                _.zipWith ([match.slice (1), this.subexprs], (match, subexpr) => _.fromPairs ([[ subexpr.name, match ]]) ))) || {} } }),
 
-    metacharacters: $property (_.index ('\\^$.|?*+()[{')),
+    escape: s => _.map (s, x => R.metacharacters[x] ? ('\\' + x) : x).join (''),
 
-    escape:       function (s)    { return _.map (s, function (x) { return R.metacharacters[x] ? ('\\' + x) : x }).join ('') },
+    text: $alias ('escape'),
 
-    text:         $alias ('escape'),
-
-    subexpr:      function (name, s) { return { name: name, value: ['(', s, ')'] } },
+    subexpr: (name, s) => ({ name: name, value: ['(', s, ')'] }),
  
-    maybe:        function (s)    { return [s, '?'] },
+    maybe:  s => [s, '?'],
+    anyOf:  s => [s, '*'],
+    someOf: s => [s, '+'],
 
-    anyOf:        function (s)    { return [s, '*'] },
-    someOf:       function (s)    { return [s, '+'] },
+    oneOf:  s => ['[',  s, ']'],
+    except: s => ['[^', s, ']'],
 
-    oneOf:        function (s)    { return ['[',  s, ']'] },
-    except:       function (s)    { return ['[^', s, ']'] },
+    or: (a, b) => [a, '|', b],
 
-    or:           function (a, b) { return [a, '|', b] },
+    $property: {
 
-    begin:       $property ('^'),
-    end:         $property ('$'),
-    space:       $property ('\\s'),
-    maybeSpaces: $property ('\\s*'),
-    spaces:      $property ('\\s+'),
-    anything:    $property ('.*'),
-    something:   $property ('.+'),
-    comma:       $property (','),
+        metacharacters: _.index ('\\^$.|?*+()[{'),
 
-    parentheses: function (s) { return ['\\(', s, '\\)'] },
-    brackets:    function (s) { return ['\\[', s, '\\]'] },
+        begin:       '^',
+        end:         '$',
+        space:       '\\s',
+        maybeSpaces: '\\s*',
+        spaces:      '\\s+',
+        anything:    '.*',
+        something:   '.+',
+        comma:       ','
+    },
 
-    isSubexpr: function (s) { return (_.isStrictlyObject (s) && !_.isArray (s)) ? true : false },
+    parentheses: s => ['\\(', s, '\\)'],
+    brackets:    s => ['\\[', s, '\\]'],
 
-    root: function (r) { return (r && r.$$) ? r.$$ : r },
+    isSubexpr:   s => (_.isStrictlyObject (s) && !_.isArray (s)) ? true : false,
 
-    initDSL: function () {
+    root: r => (r && r.$$) ? r.$$ : r,
 
-        $global.property ('$r',  function () { return $$r ([]) })
-        $global.const    ('$$r', function (cursor) {
+    initDSL () {
 
-            var shift = function (x) { cursor.push (x); return cursor.forward }
+        $global.property ('$r',  () => $$r ([]))
+        $global.const    ('$$r', cursor => {
 
-            _.defineHiddenProperty (cursor, 'then', function (x)    { cursor.push (R.root (x));                return cursor })
-            _.defineHiddenProperty (cursor, 'text', function (x)    { cursor.push (R.text (x));                return cursor })
-            _.defineHiddenProperty (cursor, 'expr', function (x, s) { cursor.push (R.subexpr (x, R.root (s))); return cursor })
+            const shift = x => (cursor.push (x), cursor.forward)
+            const def   = _.defineHiddenProperty
 
-            _.defineHiddenProperty (cursor, 'forward', function () {
-                return cursor.next || ((cursor.next = $r).prev = cursor).next })
+            def (cursor, 'then', x =>      { cursor.push (R.root (x));                return cursor })
+            def (cursor, 'text', x =>      { cursor.push (R.text (x));                return cursor })
+            def (cursor, 'expr', (x, s) => { cursor.push (R.subexpr (x, R.root (s))); return cursor })
+
+            def (cursor, 'forward', () => cursor.next || ((cursor.next = $r).prev = cursor).next)
 
             _.each (['maybe', 'anyOf', 'someOf', 'oneOf', 'except'], function (key) {
-                _.defineHiddenProperty (cursor, key, function () {
-                    return shift (R[key] (cursor.forward)) }) })
+                def (cursor, key, () => shift (R[key] (cursor.forward))) })
 
-            _.each (['parentheses', 'brackets'], function (key) {
-                _.defineHiddenProperty (cursor, 'in' + key.capitalized, function () {
-                    return (cursor.$$.prev = $$r (R[key] (cursor.$$))) }) })
+            _.each (['parentheses', 'brackets'], key =>
+                def (cursor, 'in' + key.capitalized, () =>
+                    (cursor.$$.prev = $$r (R[key] (cursor.$$)))))
 
-            _.each (['or'], function (key) {
-                _.defineHiddenProperty (cursor, key, function () { var next = $r
-                    return (next.prev = (cursor.$$.prev = $$r (R[key] (cursor.$$, next)))).next = next }) })
+            _.each (['or'], key =>
+                def (cursor, key, () => {
+                    let next = $r
+                    return (next.prev = (cursor.$$.prev = $$r (R[key] (cursor.$$, next)))).next = next }))
 
-            _.each (['begin', 'end', 'space', 'anything', 'something'], function (key) {
-                _.defineHiddenProperty (cursor, key, function () {
-                    return shift ([R[key], cursor.forward]); }) })
+            _.each (['begin', 'end', 'space', 'anything', 'something'], key =>
+                def (cursor, key, () => shift ([R[key], cursor.forward])))
 
-            _.defineHiddenProperty (cursor, '$$', function () { var root = cursor
+            def (cursor, '$$', () => {
+                let root = cursor
                 while (root.prev) { root = root.prev }
                 return root })
 
-            _.defineHiddenProperty (cursor, '$', function () {
-                return R.expr (cursor.$$) })
+            def (cursor, '$', () => R.expr (cursor.$$))
 
             return cursor
         })

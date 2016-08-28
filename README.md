@@ -60,22 +60,20 @@ You may want to look into these projects (built upon Useless.js):
 
 [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
 
-- **$prototype** / **$extends**
-- Smart property declarations
-- **$static** methods / properties
-- **$memoized** properties
-- Tag groups on members (`$static: { ... }`)
-- RTTI
-- Pluggable macros for custom syntax
-- Member aliases
-- **$final**
-- [**$traits**](https://github.com/xpl/useless/wiki/$trait) / a.k.a. mixins / combinatoric-style alternative to inheritance
-- [**$aspect**](https://github.com/xpl/useless/wiki/$aspect) / Aspect Oriented Programming / declarative method binding
-- **$singleton**
-- [Reflection](https://github.com/xpl/useless/wiki/$prototype#reflection) (can read prototype name and file, via Prototype.**$meta**)
-
 ```javascript
 Vec2 = $prototype ({
+
+    /*  Constructor
+     */
+    constructor (x, y) { this.x = x; this.y = y },
+
+    /*  Instance method
+     */
+    add (other) { return new Vec2 (this.x + other.x, this.y + other.y) }
+
+    /*  Instance property (.length)
+     */
+    get length () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
 
     /*  Static property: Vec2.zero
      */
@@ -90,18 +88,7 @@ Vec2 = $prototype ({
     $static: {
         unit: $property (function () { return new Vec2 (1, 1) }),
         one:  $alias ('unit') }, // member aliases
-
-    /*  Constructor
-     */
-    constructor: function (x, y) { this.x = x; this.y = y },
-
-    /*  Instance property (.length)
-     */
-    length: $property (function () { return Math.sqrt (this.x * this.x + this.y * this.y) }),
-
-    /*  Instance method
-     */
-    add: function (other) { return new Vec2 (this.x + other.x, this.y + other.y) } })
+})
 
 /*  Inheritance (relies on native JavaScript prototype semantics)
  */
@@ -198,24 +185,6 @@ button = new Button ()
 button.layout.onceBefore (function () { log ("I'm called before next layout()") })
 button.layout ()
 button.layout () // won't print anything
-```
-
-Using [$aspect](https://github.com/xpl/useless/wiki/$aspect):
-```javascript
-AddsLoggingToButton = $aspect (Button, {
-
-    beforeCreate: function () { log.green ('Button is about to be created') },
-    afterDestroy: function () { log.red   ('Button is now destroyed') } })
-```
-
-Adds CORS proxy to existing XMLHttpRequest prototype:
-
-```javascript
-XMLHttpRequestWithCORS = $aspect (XMLHttpRequest, {
-    open: function (method, path, async, impl) {
-                return impl.call (this, method, (!path.contains ('cors.io') &&
-                                                 !path.contains (window.location.host))
-                                                    ? ('http://cors.io/?u=' + path) : path, async) } })
 ```
 
 ## Math utility for front-end works

@@ -1,3 +1,5 @@
+"use strict";
+
 /*  How-to / spec / test
     ============================================================================ */
 
@@ -132,7 +134,7 @@ _.tests['DOMReference + DOMEvents'] = {
 /*  Impl.
     ======================================================================== */
 
-DOMReference = $trait ({
+$global.DOMReference = $trait ({
 
         domReady: $barrier (function (dom) {
                                 this.dom = dom
@@ -149,17 +151,17 @@ DOMReference = $trait ({
 
         this.domReady.reset () } })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-DOMReferenceWeak = $trait ({
+$global.DOMReferenceWeak = $trait ({
     
     domReady: $barrier (function (dom) { this.dom = dom }),
     afterDestroy:       function ()    { this.dom = undefined } })
 
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-DOMEvents = $trait ({
+$global.DOMEvents = $trait ({
 
     /*  TODO: configuration
      */
@@ -195,9 +197,9 @@ DOMEvents = $trait ({
                                                                                                 on_def.e,
                                                                                            this[on_def.fn]) }, this) }) } })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-HideOnEscape = $trait ({
+$global.HideOnEscape = $trait ({
 
     hideOnEscape: $on ({ what: 'keydown', target: document }, function (e) {
                                                                 if (e.keyCode === 27) {
@@ -205,6 +207,6 @@ HideOnEscape = $trait ({
                                                                     e.preventDefault () } })
 })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 

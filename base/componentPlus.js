@@ -1,3 +1,5 @@
+"use strict";
+
 _.tests['component+'] = {
 
     '$observableEnum': function () {
@@ -31,9 +33,9 @@ $prototype.macroTag ('observableEnum', function (def, value, name, base) { var o
 
     /*  Static enum
      */
-    def[name.capitalized] = $static (_.object (
-                                        _.map (options, function (name,             i) {
-                                                          return [name.capitalized, i] })))
+    def[name.capitalized] = $static (_.fromPairs (
+                                           _.map (options, function (name,             i) {
+                                                             return [name.capitalized, i] })))
     /*  A trigger and predicate for each option
      */
     _.each (options, function (option, i) {

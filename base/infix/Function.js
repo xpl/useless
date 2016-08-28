@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Function extensions
     ======================================================================== */
 
@@ -84,7 +86,6 @@ $extensionMethods (Function, {
     applies:        _.applies,
     compose:        _.compose,
     then:           _.then,
-    flip:           _.flip,
     with:           _.flipN,
     flip2:          _.flip2,
     flip3:          _.flip3,

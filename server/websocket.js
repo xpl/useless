@@ -1,13 +1,15 @@
-var stringify = require ('string.ify')
+"use strict";
 
-ServerWebsocket = module.exports = $trait ({
+const stringify = require ('string.ify')
+
+module.exports = $trait ({
 
     $defaults: {
         peers: [] },
 
     /*  Override this to specify who can connect via WebSocket
      */
-    websocketAuth: function (msg, authorize, drop) {
+    websocketAuth (msg, authorize, drop) {
 
         if (!this.db) {
             log.warn ('Add `auth` trait to restrict incoming WebSocket connections')
@@ -16,26 +18,26 @@ ServerWebsocket = module.exports = $trait ({
         else {
             var credentials = _.pick (msg, 'email', 'password')
             if (credentials.email && credentials.password) {
-                this.db.users.findOne (_.extend ({ isAdmin: true }, credentials), this.$ (function (e, user) {
+                this.db.users.findOne (_.extend ({ isAdmin: true }, credentials), (e, user) => {
                     if (user) {
                         authorize (user) }
                     else {
-                        drop ('invalid auth credentials') } })) }
+                        drop ('invalid auth credentials') } }) }
             else {
                 drop ('missing auth credentials') } } },
 
-    websocketStringifyUser: function (user) {
+    websocketStringifyUser (user) {
         return ((this.entitySchema && this.entitySchema.users && this.entitySchema.users.text) || stringify) (user) },
 
     /*  Sends a message to connected peers via WebSocket
      */
-    messageToPeers: function (obj, filterPredicate) {
+    messageToPeers (obj, filterPredicate) {
         var msg = JSON.stringify (obj)
-        var peers = (filterPredicate && this.peers.filter (function (peer) { return filterPredicate (peer.user) })) || this.peers
+        var peers = (filterPredicate && this.peers.filter (peer => filterPredicate (peer.user))) || this.peers
 
         _.invoke (peers, 'send', msg) },
 
-    afterInit: function () { log.minor ('Starting WebSocket...')
+    afterInit () { log.minor ('Starting WebSocket...')
 
         var websocket = require ('websocket')
         

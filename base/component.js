@@ -1,3 +1,5 @@
+"use strict";
+
 /*  What for:
 
     -   Hierarchy management (parent-child relationship)
@@ -687,7 +689,7 @@ $prototype.macroTag ('extendable',
                       def[name] = $builtin ($const (value))
                return def })
 
-Component = $prototype ({
+$global.Component = $prototype ({
 
     $defaults:  $extendable ({}),
     $requires:  $extendable ({}),
@@ -994,8 +996,8 @@ Component = $prototype ({
          */
         if (_.hasAsserts) {
             _.each (this.constructor.$requires, function (contract, name) {
-                $assertTypeMatches (_.object ([[name, this[name]]]),
-                                    _.object ([[name, contract]])) }, this) }
+                $assertTypeMatches (_.fromPairs ([[name, this[name]]]),
+                                    _.fromPairs ([[name, contract]])) }, this) }
 
 
         /*  Subscribe default listeners
@@ -1015,8 +1017,8 @@ Component = $prototype ({
     callChainMethod: function (name) { var self = this
         return __.seq (
                 _.filter2 (this.constructor.$traits || [], function (Trait) {
-                                                              var method = Trait.prototype[name]
-                                                              return (method && method.bind (self)) || false })) },
+                                                            var method = Trait.prototype[name]
+                                                            return (method && method.bind (self)) || false })) },
 
     /*  Lifecycle
      */

@@ -1,13 +1,15 @@
-(function () { var is = function (tag) { return function () { return this.tagName === tag } }
+"use strict";
+
+var is = function (tag) { return function () { return this.tagName === tag } }
 
 /*  Constructors
     ======================================================================== */
 
 /*  N (tag)                                                                  */
 
-    N = function (tag, children) {
-            var n = document.createElement (tag.uppercase)
-                return children ? n.append (children) : n }
+    $global.N = function (tag, children) {
+                    var n = document.createElement (tag.uppercase)
+                        return children ? n.append (children) : n }
 
 /*  N.text                                                                   */
 
@@ -450,7 +452,7 @@
     _.defineProperties (document, {
 
                             bbox: function () {
-                                    return this.clientBBox.offset (Vec2.y (document.body.scrollTop)) },
+                                    return this.clientBBox.offset (Vec2.xy (window.pageXOffset, window.pageYOffset)) },
                                     
                             clientBBox: function () {
                                             return BBox.fromLTWH (0, 0,
@@ -463,7 +465,7 @@
     document.on ('DOMContentLoaded', document.ready = _.barrier ())
 
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 _.tests.NodePlus = {
 
@@ -503,9 +505,8 @@ _.tests.NodePlus = {
 
 }
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-}) ()
 
 
 

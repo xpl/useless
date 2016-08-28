@@ -1,11 +1,13 @@
+"use strict";
+
 /*  Extensions methods
     ======================================================================== */
 
 ;['method', 'property', 'flipped', 'forceOverride'].forEach (Tags.define)
     
-$extensionMethods = function (Type, methods) {
+$global.$extensionMethods = (Type, methods) => {
 
-    _.each (methods, function (tags, name) { var fn = Tags.unwrap (tags)
+    _.each (methods, (tags, name) => { var fn = Tags.unwrap (tags)
 
         /*  define as _.method (this, ...)
          */
@@ -16,8 +18,7 @@ $extensionMethods = function (Type, methods) {
          */
         if (!tags.$method && (tags.$property || (_.oneArg (fn)))) {
             if (!(name in Type.prototype) || tags.$forceOverride) {
-                _.defineHiddenProperty (Type.prototype, name, function () {
-                    return fn (this) }) } }
+                _.defineHiddenProperty (Type.prototype, name, function () { return fn (this) }) } }
 
         /*  define as method
          */

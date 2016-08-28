@@ -1,3 +1,5 @@
+"use strict";
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -8,7 +10,7 @@ Modal overlay that renders log.js output for debugging purposes
 
 (function ($ /* JQUERY */) {
 
-	LogOverlay = $singleton (Component, {
+	$global.LogOverlay = $singleton (Component, {
 
 		$defaults: {
 			opaque: false,     // disables passing of printed log messages to default write backend (console.log) 
@@ -68,4 +70,4 @@ Modal overlay that renders log.js output for debugging purposes
 
 // -- end of namespace
 
-}) (jQuery);
+}) (require ('jquery'));

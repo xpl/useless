@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Properties
     ======================================================================== */
 
@@ -20,8 +22,7 @@ _.withTest ('properties', function () { var obj = {}
     delete obj.fourtyTwo_eitherWay                              // can be deleted if configurable:true
     $assert (obj.fourtyTwo_eitherWay === undefined)
 
-    delete obj.fourtyTwo                                        // cannot be deleted (as default behavior)
-    $assert (obj.fourtyTwo === 42)
+    $assertThrows (() => delete obj.fourtyTwo) // cannot be deleted (as default behavior)
 
     _.defineHiddenProperty (obj, 'hiddenAndDangerous', 42)      // shortut for enumerable:false
     $assert (_.keys (obj).indexOf ('hiddenAndDangerous') < 0)

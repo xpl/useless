@@ -1,44 +1,46 @@
+"use strict";
+
 Tags.define ('callableFromMasterProcess')
 
 module.exports = $trait ({
 
-    beforeInit: function () {
+    beforeInit () {
 
-                    var lastId = 1
+            var lastId = 1
 
-                /*  Setup send  */
+        /*  Setup send  */
 
-                    if (this.supervisorState === 'supervisor') {
-                        this.mapMethods ((fn, name, def) => {
-                            if (def && def.$callableFromMasterProcess) {
+            if (this.supervisorState === 'supervisor') {
+                this.mapMethods ((fn, name, def) => {
+                    if (def && def.$callableFromMasterProcess) {
 
-                                return function () { var args = _.asArray (arguments)
+                        return function () { var args = _.asArray (arguments)
+                            
+                            return new Promise (resolve => {
+
+                                if (this.supervisedProcess.child && this.supervisedProcess.child.connected) {
+
+                                    var id = lastId++,
+                                        waitForReturnValue = msg => {
+                                            if (msg.id === id) { 
+                                                this.supervisedProcess.child.removeListener ('message', waitForReturnValue)
+                                                resolve (msg.returnValue) } }
+
+                                    this.supervisedProcess.child.setMaxListeners (100)
+                                    this.supervisedProcess.child.on ('message', waitForReturnValue)
+                                    this.supervisedProcess.child.send ({
+                                        id: id,
+                                        methodName: name,
+                                        methodArgs: args }) }
+
+                                else {
                                     
-                                    return new Promise (resolve => {
- 
-                                                            if (this.supervisedProcess.child && this.supervisedProcess.child.connected) {
+                                    resolve (fn.apply (null, args)) } }) } } }) }
 
-                                                                var id = lastId++,
-                                                                    waitForReturnValue = msg => {
-                                                                        if (msg.id === id) { 
-                                                                            this.supervisedProcess.child.removeListener ('message', waitForReturnValue)
-                                                                            resolve (msg.returnValue) } }
+        /*  Setup receive   */
 
-                                                                this.supervisedProcess.child.setMaxListeners (100)
-                                                                this.supervisedProcess.child.on ('message', waitForReturnValue)
-                                                                this.supervisedProcess.child.send ({
-                                                                    id: id,
-                                                                    methodName: name,
-                                                                    methodArgs: args }) }
-
-                                                            else {
-                                                                
-                                                                resolve (fn.apply (null, args)) } }) } } }) }
-
-                /*  Setup receive   */
-
-                    process.on ('message', msg => {
-                        if (msg.methodName) {
-                            __.then (this[msg.methodName].apply (this, msg.methodArgs), returnValue => {
-                                process.send (_.extended (msg, { returnValue: returnValue })) }) } }) }
+            process.on ('message', msg => {
+                if (msg.methodName) {
+                    __.then (this[msg.methodName].apply (this, msg.methodArgs), returnValue => {
+                        process.send (_.extended (msg, { returnValue: returnValue })) }) } }) }
 })

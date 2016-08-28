@@ -60,7 +60,7 @@ StackTracey.prototype[Symbol.for ('String.ify')] = function (stringify) {
     return asTable (this.map (entry => [
                         '\t' + 'at ' + entry.calleeShort.slice (0, 30),
                         (entry.fileShort && (entry.fileShort + ':' + entry.line)) || '',
-                        (entry.sourceLine.trim () || '').slice (0, 80) ]))
+                        ((entry.sourceLine || '').trim () || '').slice (0, 80) ]))
 }
 
 Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
@@ -84,64 +84,51 @@ Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
 
 _.tests.prototypeMeta = {
 
-    'Prototype.$meta': function (done) {
-        var Dummy = $prototype ()
+    'Prototype.$meta': function () {
 
-        Dummy.$meta (function (meta) {
-            $assertMatches (meta, { name: 'Dummy', type: 'prototype' })
-            done () }) },
+        const DummyProto = $prototype ()
+        const DummyTrait = $trait ()
 
-    'Trait.$meta': function (done) {
-        var Dummy = $trait ()
-        Dummy.$meta (function (meta) {
-            $assertMatches (meta, { name: 'Dummy', type: 'trait' })
-            done () }) },
+        $assertMatches (DummyProto.$meta, { name: 'DummyProto', type: 'prototype' })
+        $assertMatches (DummyTrait.$meta, { name: 'DummyTrait', type: 'trait' })
+    },
 
     'String.ify': function () {
 
-        var Proto = $prototype ({})
+        const Dummy = $prototype ({})
 
-        $assert (String.ify (Proto), $platform.NodeJS ? 'Proto ()' : '<prototype>')
+        $assert (String.ify (Dummy), 'Dummy ()')
     }
 }
 
-$prototype.impl.findMeta = stack => then => {
+;(() => {
 
-    for (let location of stack.withSources.reverse ()) {
+    const findMeta = stack => _.find2 (stack.withSources.reverse (), location => {
 
         let match = location.sourceLine.match (/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/)
-            match = match && { name: match[1], type: match[2], file: location.fileShort }
+        return (match && { name: (match[1] === 'exports') ? location.fileName : match[1],
+                           type:  match[2],
+                           file:  location.fileShort }) || false
+    })
 
-        if (match) {
-            then (match)
+    $prototype.macro (function (def, base) {
+
+        if (typeof Symbol !== 'undefined') {
+            def.constructor[Symbol.for ('String.ify')] = function () {
+                return ((this.$meta && this.$meta.name) || '<prototype>') + ' ()' }
         }
-    }
-}
 
-$prototype.macro (function (def, base) {
+    /*  NB: memoization is here because findMeta performs slow (needs to fetch sources and sourcemaps),
+            and we dont wanna do this at construction of each prototype. Better do this on first $meta request.    */
+        
+        if (!def.$meta) {
+            const stack = new StackTracey ()
+            def.$meta = $static ($property (_.memoize (() => findMeta (stack)))) }
 
-    if (typeof Symbol !== 'undefined') {
+        return def
+    })
 
-        def.constructor[Symbol.for ('String.ify')] = function (ctx) {
-
-            if ($platform.NodeJS) {
-                var name = ''
-                this.$meta (function (values) { name = ((values.name === 'exports') ? values.file : values.name) })
-                return name && (name + ' ()') }
-
-            else {
-                return '<prototype>' } } }
-
-    if (!def.$meta) {
-
-        var findMeta = _.cps.memoize ($prototype.impl.findMeta (new StackTracey ()))
-
-        _.defineMemoizedProperty (findMeta, 'promise', function () {
-              return new Promise (findMeta) })
-
-        def.$meta = $static (findMeta) }
-
-    return def })
+}) ();
 
 /*  ------------------------------------------------------------------------ */
 

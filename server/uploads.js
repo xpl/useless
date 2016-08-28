@@ -1,19 +1,21 @@
-var imagemagick = require ('./base/imagemagick'),
-    util        = require ('./base/util'),
-    path        = require ('path')
+"use strict";
 
-ServerUploads = module.exports = $trait ({
+const imagemagick = require ('./base/imagemagick'),
+      util        = require ('./base/util'),
+      path        = require ('path')
 
-    uploadImageTo: function (path) {
+module.exports = $trait ({
+
+    uploadImageTo (path) {
                         return this.uploadImageAsJPEG (this.genFileName (path)) },
 
-    genFileName: function (dir, ext) { dir = path.join (process.cwd (), dir)
+    genFileName (dir, ext) { dir = path.join (process.cwd (), dir)
                     return () => {
                         return { dir: dir,
                                 name: util.uniqueFileName (dir, String.randomHex (8), ext),
                                  ext: ext } } },
 
-    uploadImageAsJPEG: function (getTargetPath) {
+    uploadImageAsJPEG (getTargetPath) {
 
         var fileType = ($http.request.headers['x-file-type'] || 'unknown/unknown')
         if (fileType.split ('/').first !== 'image') {

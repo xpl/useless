@@ -1,9 +1,9 @@
 require ('./useless')
 require ('./base/Testicles')
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-App = $singleton (Component, {
+const App = $singleton (Component, {
 
     $defaults: {
         argKeys: { verbose: 1 } },
@@ -13,9 +13,9 @@ App = $singleton (Component, {
         require ('./server/args'),
         require ('./server/supervisor') ],
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-    init: function () {
+    init () {
             Testicles ({
                      verbose: this.args.verbose,
                       silent: false,

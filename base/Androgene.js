@@ -14,7 +14,7 @@
                                     return this.then (function () { throw new AndrogeneError () },
                                                       function () {}) }) })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
     var AndrogeneError = class extends Error { constructor (msg) { super (msg || 'assertion failed') } }
     var OriginalPromise = Promise
@@ -184,7 +184,7 @@
                        ((x instanceof Function)         ? new AndrogenePromise (function (resolve) { resolve (x ()) }) : // @hide
                                                           AndrogenePromise.resolve (x))) } }
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
     var assertion = function (fn) {
                         return function () {
@@ -308,6 +308,6 @@
                                             if (e) { throw e } })
     }*/
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 }) ();

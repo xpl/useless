@@ -162,7 +162,10 @@ Panic.widget = $singleton (Component, {
 				    .text (test.name)
 				    .append ('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl] },
 
-	printError (e) { var stackEntries = StackTracey.fromErrorWithAsync (e).withSources
+	printError (e) {
+
+		var stackEntries = StackTracey.fromErrorWithAsync (e).withSources
+
 		return [
 
 			$('<div class="panic-alert-error-message" style="font-weight: bold;">')

@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Provides call stack persistence across async call boundaries.
     ======================================================================== */
 

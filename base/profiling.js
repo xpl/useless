@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Measures run time of a routine (either sync or async)
     ======================================================================== */
 

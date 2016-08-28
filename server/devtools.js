@@ -1,11 +1,13 @@
+ "use strict";
+
 /*var git  = require ('nodegit'),
     exec = require ('child_process').exec
 */
 
-var fs        = require ('fs'),
-    path      = require ('path'),
-    process   = require ('process'),
-    getSource = require ('get-source')
+const fs        = require ('fs'),
+      path      = require ('path'),
+      process   = require ('process'),
+      getSource = require ('get-source')
 
 module.exports = $trait ({
 
@@ -21,7 +23,7 @@ module.exports = $trait ({
 
     devHint: log.warn,
 
-    api: function () {
+    api () {
 
         if (!this.requireDeveloper) {
              this.requireDeveloper = _.identity
@@ -44,14 +46,14 @@ module.exports = $trait ({
                 'git-pull':     { post: [this.requireDeveloper, this.gitPull] }*/ } } },
 
 
-    afterInit: function () { // remote logging
+    afterInit () { // remote logging
         if (this.messageToPeers) {
             _.onAfter (log.impl, 'defaultWriteBackend', params => {
                 this.messageToPeers ({ what: 'log', params: params }, who => who.isAdmin && who.isDeveloper) }) } },
 
     /*  Access to the source code of server (requires developer privileges)
      */
-    readSource: function () {
+    readSource () {
 
                     $http.headers['Content-Type'] =
                         $http.mime.guessFromFileName ($http.env.file)

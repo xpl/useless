@@ -1,6 +1,6 @@
  module.exports = $trait ({
 
-    beforeInit: function () { log.minor ('Setting up exception handling')
+    beforeInit () { log.minor ('Setting up exception handling')
 
         _.withUncaughtExceptionHandler (this.$ (function (e) {
 

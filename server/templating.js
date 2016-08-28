@@ -1,5 +1,7 @@
-var fs   = require ('./base/fs'),
-    path = require ('path')
+"use strict";
+
+const fs   = require ('./base/fs'),
+      path = require ('path')
 
 module.exports = $trait ({
 
@@ -7,28 +9,24 @@ module.exports = $trait ({
         require ('./http')],
 
     $defaults: {
-        templatesDir: path.join (process.cwd (), 'templates') },
+        templatesDir: '' },
 
-    template: function (file, args) {
+    template (file, args) {
 
-                $http.headers['Content-Type'] =
-                    $http.mime.guessFromFileName (file)
+            $http.headers['Content-Type'] =
+                $http.mime.guessFromFileName (file)
 
-                return this.compiledTemplate (file).call (this, _.extend ({ env: $http.env }, args)) },
+            const fullPath = path.resolve (path.join (this.templatesDir, file))
+
+            return this.compiledTemplate (fullPath).call (this, _.extend ({ env: $http.env }, args)) },
 
     compiledTemplate: $memoize (function (file) {
-                                    return  _.template (fs.readFileSync (path.join (this.templatesDir, file), { encoding: 'utf-8' })) }),
+                                    return  _.template (fs.readFileSync (file, { encoding: 'utf-8' })) }),
 
-
-/*  Prevents restart when template changes (for speed) */
-
-    shouldRestartOnSourceChange: function (action, file, yes, no) {
-                                    if (file.contains (this.templatesDir)) {
-                                        this.resetTemplateCache ()
-                                        no () } },
-
-    resetTemplateCache: function () {
-                            log.w ('Resetting template cache... ', log.color.boldOrange, _.keys (this.compiledTemplate.cache))
-                            this.compiledTemplate.cache = {} },
-
+    shouldRestartOnSourceChange (action, file) {
+        if (file in this.compiledTemplate.cache) {
+            log.w ('Resetting template cache for ', log.color.boldOrange, file)
+            delete this.compiledTemplate.cache[file]
+        }
+    },
 })

@@ -8,14 +8,14 @@ var http      = require ('http'),
     path      = require ('path'),
     stringify = require ('string.ify')
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 module.exports = $trait ({
 
     $depends: [require ('./api')],
 
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
     $defaults: {
         config: {
@@ -25,7 +25,7 @@ module.exports = $trait ({
 
 
 /*  The $http thing prototype
-    ======================================================================== */
+    ------------------------------------------------------------------------ */
 
     HttpContext: $component ({
 
@@ -50,13 +50,13 @@ module.exports = $trait ({
             'ico'        : 'image/x-icon',
             'appcache'   : 'text/cache-manifest',
 
-            guess: function (x) {
-                        return _.isString (x) ? this.text : this.json },
+            guess (x) {
+                return _.isString (x) ? this.text : this.json },
 
-            guessFromFileName: function (x) {
-                                    return this[path.extname (x).split ('.')[1]] },
+            guessFromFileName (x) {
+                return this[path.extname (x).split ('.')[1]] },
 
-            addUTF8: function (x) {
+            addUTF8 (x) {
                     return x && (x + (((x.split ('/')[0] === 'text') ||
                                              (x === 'application/json'))
                                                     ? '; charset=utf-8'
@@ -81,7 +81,7 @@ module.exports = $trait ({
                                                                     ? cfg.data
                                                                     : JSON.stringify (cfg.data))) || '') }) }),
 
-        init: function () {
+        init () {
 
             _.defaults (this, {
 
@@ -89,9 +89,9 @@ module.exports = $trait ({
                 timeout: undefined,
                 headers: {},
                 nonce: String.randomHex (6),
-                cookies: _.object (_.map ((this.request.headers &&
-                                           this.request.headers.cookie &&
-                                           this.request.headers.cookie.split (';')) || [], cookie => cookie.split ('=').map (
+                cookies: _.fromPairs (_.map ((this.request.headers &&
+                                              this.request.headers.cookie &&
+                                              this.request.headers.cookie.split (';')) || [], cookie => cookie.split ('=').map (
                                                                                                         val => (val || '').trimmed))),
                 env: _.extend ({ when: Date.now (), who: null }, $env, this.env) })
 
@@ -103,27 +103,27 @@ module.exports = $trait ({
             if (this.method === 'POST') {
                 this.request.pause () } }, // pauses incoming data receiving, until explicitly resumed
 
-        setCode: function (code) {
+        setCode (code) {
                 this.code = code; return this },
 
-        setHeaders: function (headers) {
+        setHeaders (headers) {
                         _.extend (this.headers, headers); return this },
 
-        redirect: function (to) {
+        redirect (to) {
                         return this.setCode (302)
                                    .setHeaders ({ 'Location': to }) },
 
-        setCookies: function (cookies) {
+        setCookies (cookies) {
                         return _.extend2 (this, {
                                             cookies: cookies,
                                             headers: {
                                                 'Set-Cookie': _.map (cookies, (value, name) =>
                                                     name + '=' + (value || '<<deleted>>') + '; Expires=Wed, 13-Jan-2100 22:23:01 GMT; Path=/') } } ) },
 
-        removeCookies: function (cookies) {
-                            return this.cookies (_.object (cookies.map (x => [x, undefined]))) },
+        removeCookies (cookies) {
+                        return this.cookies (_.fromPairs (cookies.map (x => [x, undefined]))) },
 
-        receiveData: function () {
+        receiveData () {
                         return new Promise ((then, err) => {
                                                 var data = ''
                                                 this.request.on ('data', chunk => { data += chunk })
@@ -131,12 +131,12 @@ module.exports = $trait ({
                                                 this.request.on ('error', err)
                                                 this.request.resume () }) },
 
-        nocache: function () { // iOS aggressively caches even POST requests, so this is needed to prevent that
+        nocache () { // iOS aggressively caches even POST requests, so this is needed to prevent that
                     return this.setHeaders ({
                                 'Pragma': 'no-cache',
                                 'Cache-control': 'no-cache' }) },
 
-        writeHead: function () {
+        writeHead () {
                     if (!this.headWritten) {
                          this.headWritten = true
                          this.response.writeHead (this.code || 200,
@@ -144,18 +144,18 @@ module.exports = $trait ({
                                                                 this.headers, {
                                                                     'Content-Type': this.mime.addUTF8 (this.headers['Content-Type']) }))) }; return this },
 
-        write: function (x) {
+        write (x) {
                     if (!this.headWritten) {
                          this.writeHead () }
                     if (!this.ended) {
                          this.response.write (_.isString (x) ? x : JSON.stringify (x)) }; return this },
 
-        end: function () {
+        end () {
                 if (!this.ended) {
                      this.ended = true
                      this.response.end () }; return this },
 
-        file: function (file) {
+        file (file) {
 
                 return fs.stat (file)
                          .then (stat => {   if (!stat.isFile ()) {
@@ -174,25 +174,10 @@ module.exports = $trait ({
 
                     .catch (e => { throw this.NotFoundError }) } }),
 
-/*  ======================================================================== */
-
-    $assertion: {
-        $async: {
-
-            assertRequest: function (url, ctx, then) {
-                                this.serveRequest (_.extend ({}, ctx, { url: url,
-                                    success: function (result) { then (this, result) },
-                                    failure: function (result) { log.ee (result); $fail; then () } })) },
-
-            assertRequestFails: function (url, ctx, desiredResult, then) {
-                                    this.serveRequest (_.extend ({}, ctx, { url: url,
-                                        success: function (result) { $fail; then () },
-                                        failure: function (result) { $assert (result, desiredResult); then () } })) } } },
-
 /*  Entry point
-    ======================================================================== */
+    ------------------------------------------------------------------------ */
 
-    beforeInit: function () {
+    beforeInit () {
 
         log.ii ('Starting HTTP @ localhost:' + this.config.port)
 
@@ -221,9 +206,9 @@ module.exports = $trait ({
 
 /*  Entry point for all requests, now accepting either actual Context or
     it's config for ad-hoc evaluation.
-    ======================================================================== */
+    ------------------------------------------------------------------------ */
 
-    serveRequest: function (context) { context = this.HttpContext.coerce (context)
+    serveRequest (context) { context = this.HttpContext.coerce (context)
         
         var result = new AndrogenePromise (resolve => { $global.$http = context
                                                         resolve (this.callAPIHandler ()
@@ -313,51 +298,51 @@ module.exports = $trait ({
 
 
 /*  REQUEST PROCESSING PRIMITIVES
-    ======================================================================== */
+    ------------------------------------------------------------------------ */
 
-    interlocked: function (then) {
+    interlocked (then) {
                     return _.interlocked (releaseLock => { _.onAfter ($http, 'end', releaseLock); then () }) },
 
-    allowOrigin: function (value) {
+    allowOrigin (value) {
                     return x => ($http.headers['Access-Control-Allow-Origin'] = value, x) },
 
-    jsVariable: function (rvalue, lvalue) {
+    jsVariable (rvalue, lvalue) {
                     $http.contentType ($http.mime.javascript)
                     return 'var ' + rvalue +
                             ' = ' + stringify (lvalue, { pure: true, pretty: true }) },
 
-    receiveJSON: function () {
-                    return $http.receiveData ()
-                                .then (log.ii)
-                                .then (JSON.parse) },
+    receiveJSON () {
+            return $http.receiveData ()
+                        .then (log.ii)
+                        .then (JSON.parse) },
 
-    receiveForm: function () {
-                    return $http.receiveData ()
-                                .then (data => {
-                                    return log.i ('POST vars:',
-                                                    _.object (
-                                                    _.map (data.split ('&'), kv => kv.split ('=').map (decodeURIComponent)))) }) },
+    receiveForm () {
+            return $http.receiveData ()
+                        .then (data => {
+                            return log.i ('POST vars:',
+                                            _.fromPairs (
+                                            _.map (data.split ('&'), kv => kv.split ('=').map (decodeURIComponent)))) }) },
 
-    receiveFile: function () {
+    receiveFile () {
 
-                    if ($http.request.headers['content-type'] !== $http.mime.binary) {
-                        throw new Error ('Content-Type should be ' + $http.mime.binary + ' (found ' + $http.request.headers['content-type'] + ')') }
+            if ($http.request.headers['content-type'] !== $http.mime.binary) {
+                throw new Error ('Content-Type should be ' + $http.mime.binary + ' (found ' + $http.request.headers['content-type'] + ')') }
 
-                    var maxFileSize = this.config.maxFileSize
-                    var fileSize = parseInt ($http.request.headers['x-file-size'], 10)
-                    
-                    if (fileSize <= 0) {
-                        throw new Error ('file is empty') }
-                    
-                    else if (fileSize > maxFileSize) {
-                        throw new Error ('file is too big') }
+            var maxFileSize = this.config.maxFileSize
+            var fileSize = parseInt ($http.request.headers['x-file-size'], 10)
+            
+            if (fileSize <= 0) {
+                throw new Error ('file is empty') }
+            
+            else if (fileSize > maxFileSize) {
+                throw new Error ('file is too big') }
 
-                    else {
-                        return util.writeRequestDataToFile ({
-                            request: $http.request,
-                            filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
+            else {
+                return util.writeRequestDataToFile ({
+                    request: $http.request,
+                    filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
-    file: function (location) { var location    = path.join (process.cwd (), location),
+    file (location) { var location    = path.join (process.cwd (), location),
                                     isDirectory = fs.lstatSync (location).isDirectory ()
             return () => {
                 var file = isDirectory ? $env.file : ''
@@ -366,9 +351,9 @@ module.exports = $trait ({
                 else {
                     return $http.file (path.join (location, file)) } } },
 
-    redirect: function (to) {
+    redirect (to) {
                 return x => ($http.redirect (to), x) }
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 })

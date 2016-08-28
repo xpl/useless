@@ -1,5 +1,4 @@
-/*  Concurrency primitives
- */
+"use strict";
 
 /*  Unit test / documentation / specification / how-to.
     ======================================================================== */
@@ -33,41 +32,40 @@ _.tests.concurrency = {
 
 /*  Mutex/lock (now supports stand-alone operation, and it's re-usable).
  */
-Lock = $prototype ({
-    acquire: function (then) {
-        this.wait (this.$ (function () {
+$global.Lock = class {
+
+    acquire (then) {
+        this.wait (() => {
             if (!this.waitQueue) {
                  this.waitQueue = [] }
-            then () })) },
+            then () }) }
 
-    acquired: function () {
-        return this.waitQueue !== undefined },
+    acquired () {
+        return this.waitQueue !== undefined }
 
-    wait: function (then) {
+    wait (then) {
         if (this.acquired ()) {     
             this.waitQueue.push (then) }
         else {
-            then () }},
+            then () }}
 
-    release: function () {
+    release () {
         if (this.waitQueue.length) {
-            var queueFirst = _.first (this.waitQueue)
-            this.waitQueue = _.rest (this.waitQueue)
+            var queueFirst = this.waitQueue[0]
+            this.waitQueue = this.waitQueue.slice (1)
             queueFirst () }
         else
-            delete this.waitQueue } })
+            delete this.waitQueue } }
 
 _.interlocked = function (fn) { var lock = new Lock (),
                                     fn   = $untag (fn)
     return _.extendWith ({
                 lock: lock,
-                wait: lock.$ (lock.wait) }, function () { var this_ = this,
-                                                              args_ = arguments;
-                                                return new Promise (function (resolve) {
-                                                                        lock.acquire (function () {
-                                                                                        __.then (fn.apply (this_, args_),
-                                                                                            function (x) {
-                                                                                                lock.release (); resolve (x) }) }) }) }) }
+                wait: lock.wait.bind (lock) }, function (...args) {
+                                                return new Promise (resolve => {
+                                                                        lock.acquire (() => {
+                                                                            __.then (fn.apply (this, args),
+                                                                                     x => { lock.release (); resolve (x) }) }) }) }) }
 /*  EXPERIMENTAL (TBD)
  */
 $global.$scope = function (fn) { var releaseStack = undefined
@@ -87,6 +85,3 @@ $global.$scope = function (fn) { var releaseStack = undefined
                                                                    if ((releaseStack = _.initial (releaseStack)).isEmpty) {
                                                                         releaseStack = undefined }
                                                              trigger () } }) }) }
-
-if ($platform.NodeJS) {
-    module.exports = _ }

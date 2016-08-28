@@ -1,3 +1,5 @@
+"use strict";
+
 require ('./base/assertion_syntax.js')
 
 /*  The protocol:
@@ -8,7 +10,7 @@ require ('./base/assertion_syntax.js')
     It also accounts 'supervisor' trait mechanics, so that it does not run tests if they're already
     executed at master process (and code didn't change since then). This is needed for faster start-up.
  */
-ServerTests = module.exports = $trait ({
+const ServerTests = module.exports = $trait ({
 
     $depends: [require ('./args'),
                require ('./exceptions')],
@@ -70,8 +72,7 @@ ServerTests = module.exports = $trait ({
 
     /*  Impl
      */
-    beforeInit: function () {
-
+    beforeInit () {
         this.testsFailed = this.args.testsFailed ? true : false
 
         var skip = (this.testsAlreadyExecutedAtMasterProcess = (this.args.spawnedBySupervisor && !this.args.respawnedBecauseCodeChange)) ||
@@ -85,7 +86,7 @@ ServerTests = module.exports = $trait ({
             return Testosterone.run ({ verbose: false, silent:  true })
                                .then (okay => { this.testsFailed = this.testsFailed || !okay })} },
 
-    afterInit: function () {
+    afterInit () {
 
         var skip =  this.args.noTests ||
                     this.supressAppComponentTests ||
@@ -99,38 +100,31 @@ ServerTests = module.exports = $trait ({
              */
             Testosterone.defineAssertions (this.constructor.$membersByTag.assertion || {})
 
-            /*  Init test environment and run tests within that context.
-             */
-            return //this.withTestEnvironment (() =>
+            const suites = _.map (this.constructor.$traits || [], 
 
-                __.map (this.constructor.$traits || [], 
+                /*  Extract test suite from $trait
+                    Gather tests from 'test', 'tests' and $withTest-tagged methods.
+                 */
+                Trait => ({
+                    name: Trait.$meta.name,
+                    proto: Trait,
+                    tests: _.nonempty (_.extended (Trait.prototype.tests || {},
+                                                   Trait.prototype.test ? { '': Trait.prototype.test } : {},
 
-                    /*  Extract test suite from $trait
-                     */
-                    Trait =>
-                    Trait.$meta.promise.then (meta => {
+                                       _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest'))))
+                    })
+            )
 
-                        /*  Gather tests from 'test', 'tests' and $withTest-tagged methods.
-                         */
-                        return    { name: (meta.name === 'exports' ? meta.file : meta.name),
-                                   proto: Trait,
-                                   tests: _.nonempty (_.extended (Trait.prototype.tests || {},
-                                                                  Trait.prototype.test ? { '': Trait.prototype.test } : {},
-                                                          _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest'))))} }))
+            return Testosterone.run ({    
 
-                    .then (
-                        suites => {
-
-                            return Testosterone.run ({    
-
-                                 context: this,
-                                codebase: false,
-                                 verbose: false,
-                                  silent: false,
-                                  suites: _.nonempty (suites) }).then (okay => {
-                                                                        this.testsFailed = this.testsFailed || !okay }) })
-            //)
-        } },    
+                 context: this,
+                codebase: false,
+                 verbose: false,
+                  silent: false,
+                  suites: _.nonempty (suites) }).then (okay => {
+                                                        this.testsFailed = this.testsFailed || !okay })
+        }
+    },    
 })
 
 

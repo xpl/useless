@@ -1,3 +1,7 @@
+"use strict";
+
+const O = require ('es7-object-polyfill')
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
 
@@ -11,8 +15,8 @@ Testosterone is a cross-platform unit test shell. Features:
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-var bullet  = require ('string.bullet'),
-    asTable = require ('as-table')
+const bullet  = require ('string.bullet'),
+      asTable = require ('as-table')
 
 /*  A contract for test routines that says that test should fail and it's the behavior expected
  */
@@ -46,8 +50,8 @@ _.tests.Testosterone = {
      */
     '$tests': function () {
 
-        DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
-        DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
+        const DummyPrototypeWithTest  = $prototype ({ $test: function () {} })
+        const DummyPrototypeWithTests = $prototype ({ $tests: { dummy: function () {} } })
 
         /*  $test/$tests renders to static immutable property $tests
          */
@@ -64,12 +68,12 @@ _.tests.Testosterone = {
  */
 Tags.define ('assertion')
 
-Testosterone = $singleton ({
+$global.Testosterone = $singleton ({
 
     prototypeTests: [],
 
-    isRunning: $property (function () {
-        return this.currentAssertion !== undefined }),
+    get isRunning () {
+        return this.currentAssertion !== undefined },
 
     /*  Hook up to assertion syntax defined in common.js
      */
@@ -83,7 +87,7 @@ Testosterone = $singleton ({
          */
         (function (register) {
             $prototype.macro ('$test',  register)
-            $prototype.macro ('$tests', register) }) (this.$ (function (def, value, name) {
+            $prototype.macro ('$tests', register) }) ((def, value, name) => {
                                                         this.prototypeTests.push ({
                                                             proto: def.constructor,
                                                             tests: value })
@@ -91,7 +95,7 @@ Testosterone = $singleton ({
                                                         def.$tests = $static ($property ($constant (
                                                             (_.isStrictlyObject (value) && value) || _.object ([['test', value]]))))
 
-                                                        return def }))
+                                                        return def })
         this.run = this.$ (this.run) },
 
     /*  Entry point
@@ -119,42 +123,43 @@ Testosterone = $singleton ({
 
         /*  Pick prototype tests
          */
-        var result = ((cfg.codebase === false) ? __([]) : this.collectPrototypeTests ()).then (this.$ (function (prototypeTests) {
+        var prototypeTests = cfg.codebase === false ? [] : this.collectPrototypeTests ()
 
-            /*  Gather tests
-             */
-            var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
-            var allTests    = _.flatten (_.pluck (baseTests.concat (suites).concat (prototypeTests), 'tests'))
-            var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
+        /*  Gather tests
+         */
+        var baseTests   = cfg.codebase === false ? [] : this.collectTests ()
+        var allTests    = _.flatten (_.pluck (baseTests.concat (suites).concat (prototypeTests), 'tests'))
+        var selectTests = _.filter (allTests, cfg.shouldRun || _.constant (true))
 
-            /*  Reset context (assigning indices)
-             */
-            this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
+        /*  Reset context (assigning indices)
+         */
+        this.runningTests = _.map (selectTests, function (test, i) { return _.extend (test, { indent: cfg.indent, index: i }) })
 
-            _.each (this.runningTests, function (t) {
-                if (!(t.routine instanceof Function)) {
-                    log.ee (t.suite, t.name, '– test routine is not a function:', t.routine)
-                    throw new Error () } })
+        _.each (this.runningTests, function (t) {
+            if (!(t.routine instanceof Function)) {
+                log.ee (t.suite, t.name, '– test routine is not a function:', t.routine)
+                throw new Error () } })
 
-            this.runningTests = _.filter (this.runningTests, cfg.filter || _.identity)
+        this.runningTests = _.filter (this.runningTests, cfg.filter || _.identity)
 
-            /*  Go
-             */
-            return __ .each (this.runningTests, this.$ (this.runTest))
-                      .then (this.$ (function () {
-                                _.assert (cfg.done !== true)
-                                          cfg.done   = true
+        /*  Go
+         */
+        return    __.each (this.runningTests, this.$ (this.runTest))
+                    .then (() => {
+                            _.assert (cfg.done !== true)
+                                      cfg.done   = true
 
-                                this.printLog (cfg)
-                                this.failedTests = _.filter (this.runningTests, _.property ('failed'))
-                                this.failed = (this.failedTests.length > 0)
-                                
-                                return !this.failed })) }))
-
-        return result.catch (function (e) {
+                            this.printLog (cfg)
+                            this.failedTests = _.filter (this.runningTests, _.property ('failed'))
+                            this.failed = (this.failedTests.length > 0)
+                            
+                            return !this.failed })
+                    
+                    .catch (e => {
                                 log.margin ()
                                 log.ee (log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e)
-                                throw e }) }),
+                                throw e })
+    }),
 
     onException: function (e) {
         if (this.currentAssertion) 
@@ -188,14 +193,13 @@ Testosterone = $singleton ({
         return _.map (_.tests, this.$ (function (suite, name) {
             return this.testSuite (name, suite) } )) },
 
-    collectPrototypeTests: function () { var self = this
-        return __.map (this.prototypeTests, function (def, then) {
-                                                return def.proto.$meta.promise.then (function (meta) {
-                                                    return self.testSuite (meta.name, def.tests, undefined, def.proto) }) }) },
+    collectPrototypeTests () {
+        return this.prototypeTests.map (def => this.testSuite (def.proto.$meta.name, def.tests, undefined, def.proto))
+    },
 
     testSuite: function (name, tests, context, proto) { return { 
         name: name || '',
-        tests: _(_.pairs (((typeof tests === 'function') && _.object ([[name, tests]])) || tests))
+        tests: _(O.entries (((typeof tests === 'function') && _.fromPairs ([[name, tests]])) || tests))
                 .map (function (keyValue) {
                         var test = new Test ({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context })
                             test.complete (function () {
@@ -237,7 +241,7 @@ Testosterone = $singleton ({
 
 /*  Encapsulates internals of test's I/O.
  */
-Test = $prototype ({
+$global.Test = $prototype ({
 
     constructor: function (cfg) {
         _.defaults (this, cfg, {
@@ -486,11 +490,9 @@ Testosterone.ValidatesRecursion = $trait ({
         $macroTags: {
 
             log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
-                                                var meta          = {}
+                                                var meta          = def.$meta || {}
                                                 var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
                                                 var template      = param && _.template (param, { interpolate: /\{\{(.+?)\}\}/g })
-
-                $untag (def.$meta) (function (x) { meta = x }) // fetch prototype name
 
                 return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
                                                                                                              arguments_ = _.asArray (arguments)

@@ -1,3 +1,5 @@
+"use strict";
+
 /*  converts 'arguments' (and any other array mimick) to real Array
     ======================================================================== */
 
@@ -69,9 +71,9 @@ _.withTest ('argcount tracking', function () {
 
     /*  Setting
      */
-    withRestArg: $restArg = function (fn) {
-                                Object.defineProperty (fn, '_ra', { enumerable: false, writable: true, value: true })
-                                return fn },
+    withRestArg: $global.$restArg = function (fn) {
+                                        Object.defineProperty (fn, '_ra', { enumerable: false, writable: true, value: true })
+                                        return fn },
 
     withArgs: function (numArgs, restArg, fn) {
                         if (numArgs !== undefined) {

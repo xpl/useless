@@ -1,3 +1,7 @@
+"use strict";
+
+const O = require ('es7-object-polyfill')
+
 _.hasStdlib = true
 
 /*  _.throwsError
@@ -65,7 +69,7 @@ _.withTest (['stdlib', 'map2'], function () {
 }, function () { _.mixin ({     map2: function (value,                       fn,      context) { return (
                                  _.isArrayLike (value) ? _.map       (value, fn,      context) : (
                                 (value instanceof Set) ? _.mapSet    (value, fn,      context) : (
-                            _.isStrictlyObject (value) ? _.mapObject (value, fn,      context) :
+                            _.isStrictlyObject (value) ? _.mapValues (value, fn,      context) :
                                                                              fn.call (context, value)))) } })
 
                 _.mapSet = function (set, fn, ctx) { var out = new Set ()
@@ -129,7 +133,7 @@ _.withTest (['stdlib', 'mapKeys'], function () {
                         if (_.isArrayLike (x)) {
                             return _.map (x, _.tails2 (_.mapKeys, fn)) }
                         else if (_.isStrictlyObject (x)) {
-                            return _.object (_.map (_.pairs (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
+                            return _.fromPairs (_.map (O.entries (x), function (kv) { return [fn (kv[0]), _.mapKeys (kv[1], fn)] })) }
                         else {
                             return x } } })              
 
@@ -269,7 +273,7 @@ _.withTest (['stdlib', 'filter 2.0'], function () { var foo = _.equals ('foo')
                                                             opa }) }
 })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 _.withTest (['stdlib', 'each 2.0'], function () {
 
@@ -348,8 +352,8 @@ _.withTest (['stdlib', 'concat2'], function () {
 }, function () { 
 
     _.concat = function (a, b) { var      first,          rest
-            if (arguments.length === 1) { first = a[0];   rest =  _.rest (a) }
-            else {                        first = a;      rest =  _.rest (arguments) }
+            if (arguments.length === 1) { first = a[0];   rest =  a.slice (1) }
+            else {                        first = a;      rest =  [].slice.call (arguments, 1) }
 
             return _.isArrayLike (first)
                           ? first.concat.apply (first, rest)
@@ -402,7 +406,7 @@ _.deferTest (['stdlib', 'zip2'], function () {
 }, function () { _.mixin ({
 
     zipSetsWith: function (sets, fn) {
-                    return _.reduce (_.rest (sets), function (memo, obj) {
+                    return _.reduce (sets.slice (1), function (memo, obj) {
                         _.each (_.union (( obj && Array.from ( obj.values ())) || [],
                                          (memo && Array.from (memo.values ())) || []), function (k) {
 
@@ -414,7 +418,7 @@ _.deferTest (['stdlib', 'zip2'], function () {
                                 memo.add (zipped) } }); return memo }, new Set (sets[0])) },
 
     zipObjectsWith: function (objects, fn) {
-        return _.reduce (_.rest (objects), function (memo, obj) {
+        return _.reduce (objects.slice (1), function (memo, obj) {
             _.each (_.union (_.keys (obj), _.keys (memo)), function (k) {
                 var zipped = fn (memo && memo[k], obj && obj[k])
                 if (zipped === undefined) {
@@ -528,14 +532,14 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
 
     _.extend2 = $restArg (function (what) { 
                                 return _.extend (what, _.reduceRight (arguments, function (right, left) {
-                                    return _.object (_.map (_.union (_.keys (left), _.keys (right)),
-                                                            function (key) {
-                                                                var lvalue = left[key]
-                                                                return [key, (key in right) ?
-                                                                                (typeof lvalue === 'object' ?
-                                                                                    _.extend (lvalue, right[key]) :
-                                                                                    right[key]) :
-                                                                                lvalue] }))}, {})) }) })
+                                    return _.fromPairs (_.map (_.union (_.keys (left), _.keys (right)),
+                                                                function (key) {
+                                                                    var lvalue = left[key]
+                                                                    return [key, (key in right) ?
+                                                                                    (typeof lvalue === 'object' ?
+                                                                                        _.extend (lvalue, right[key]) :
+                                                                                        right[key]) :
+                                                                                    lvalue] }))}, {})) }) })
 
 /*  Find 2.0 + Hyperfind
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -798,16 +802,6 @@ _.key = function (fn) {
             return function (value, key) {
                 return fn (key) } }
 
-_.filterKeys = function (arr, predicate) {
-                    return _.filter (arr, function (v, k) { return predicate (k) }) }
-
-_.rejectKeys = function (arr, predicate) {
-                    return _.reject (arr, function (v, k) { return predicate (k) }) }
-
 _.pickKeys = function (obj, predicate) {
                     return _.pick (obj, function (v, k) { return predicate (k) }) }
-
-_.omitKeys = function (obj, predicate) {
-                    return _.omit (obj, function (v, k) { return predicate (k) }) }
-
 

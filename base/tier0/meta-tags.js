@@ -1,4 +1,6 @@
-var O = Object
+"use strict";
+
+const O = Object
 
 /*  For checking whether the module is available
     ======================================================================== */
@@ -159,9 +161,9 @@ _.withTest ('meta-tags', function () {
 
     O.assign (Tags, {
 
-        omit: $restArg (function (what, ___) {
+        omit: $restArg (function (what, ...args) {
 
-            if (what instanceof Tags) {                   var keysToOmit = _.index (_.rest (arguments))
+            if (what instanceof Tags) {                   var keysToOmit = _.index (args)
                                                           var keysLeft   = _.pick (what, function (v, k) { return (k[0] === '$') && !(k in keysToOmit) })
                         return (!_.isEmptyObject (            keysLeft)
                                     ? new Tags (what.subject, keysLeft)
@@ -207,7 +209,7 @@ _.withTest ('meta-tags', function () {
                                                             return op (v, k, (t instanceof Tags) ? t : undefined) }) }) }) },
 
         add: function (name, toWhat, additionalData) {
-                return Tags.wrap.apply (null, _.rest (arguments, 1)).add (name, additionalData) },
+                return Tags.wrap.apply (null, [].slice.call (arguments, 1)).add (name, additionalData) },
 
         all: new Set (),
 

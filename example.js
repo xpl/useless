@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Run this file with this command in console
 
     > node example.js
@@ -5,30 +7,41 @@
 
 require ('./useless')
 
-Examples = $singleton (Component, {
+const Examples = $singleton (Component, {
 
-    api: function () { return {
+    $defaults: {
+        runCodeBaseTests: false,
+        config: {
+            webpack: {
+                entry: {
+                    'example/shared': {
+                        'example/useless.client':   "./useless.client.js",
+                        'example/useless.devtools': "./useless.devtools.js",
+                        'example/index':            "./example/index.js",
+                    }
+                },
+                hotReload: false
+            }
+        }
+    },
 
-        '/':               this.file ('./example/index.html'),
-        'build/:file':     this.file ('./build/'),
-        'client/:file':    this.file ('./client/'),
-        'example/:file':   this.file ('./example/'),
-
-        'api/erroneous-method': { post: this.erroneousMethod } } },
+    api () {
+        return {
+            '/': this.template.$ ('./example/index.html'),
+            'api/erroneous-method': { post: this.erroneousMethod } } },
 
     $depends: [
         
         require ('./server/supervisor'),
         require ('./server/tests'),
         require ('./server/webpack'),
-        require ('./server/http'),
         require ('./server/templating'),
         require ('./server/websocket'),
         require ('./server/devtools'),
         require ('./server/uptime') ],
 
-    erroneousMethod: function () {
-                        unknownFunction () },
-
-    init: function () {
-                log.green ('Example app is running at http://localhost:1333') } })
+    erroneousMethod () {
+        unknownFunction () },
+                                        
+    init () {
+        log.green ('Example app is running at http://localhost:1333') } })

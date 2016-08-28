@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Interceptable/observable methods
     ======================================================================== */
 
@@ -115,8 +117,8 @@ _.deferTest ('bindable', function () {
 
                                 /*  .onBefore, .onAfter, .intercept (API methods)
                                  */
-                                _.object (_.map (hooks, function (name) { var queueName = ('_' + name)
-                                                                          var once      = (name.indexOf ('once') >= 0)
+                                _.fromPairs (_.map (hooks, function (name) { var queueName = ('_' + name)
+                                                                             var once      = (name.indexOf ('once') >= 0)
 
                                                             return [name, function (fn) {
                                                                             if (!_.isBindable (this)) {
@@ -130,12 +132,12 @@ _.deferTest ('bindable', function () {
 
                                 /*  ._onBefore, ._onAfter, ._intercept (queues)
                                  */
-                                _.object (_.map (hooks, function (name) {
+                                _.fromPairs (_.map (hooks, function (name) {
                                                             return ['_' + name, []] }))) }
 
     /*  Public API
      */
-    _.extend (_, _.mapObject (_.invert (hooks), hookProc.flip2), {
+    _.extend (_, _.mapValues (_.invert (hooks), hookProc.flip2), {
 
         unbind: function (obj, targetMethod, delegate) {
                 var method = obj[targetMethod]
@@ -147,9 +149,9 @@ _.deferTest ('bindable', function () {
             return (fn && fn._bindable) ? true : false },
 
         bindable: _.extendWith ({ hooks: hooks, hooksShort: hooksShort }, function (method, context) {
-            return _.withSameArgs (method, _.extendWith (mixin (method, context), function () {   
 
-                var wrapper     = arguments.callee
+            return _.withSameArgs (method, _.extendWith (mixin (method, context), function wrapper (...args) {   
+
                 var onceBefore  = wrapper._onceBefore
                 var onceAfter   = wrapper._onceAfter
                 var before      = wrapper._onBefore
@@ -162,30 +164,30 @@ _.deferTest ('bindable', function () {
                  */
                 if (onceBefore.length) {
                     for (i = 0, ni = onceBefore.length; i < ni; i++) {
-                        onceBefore[i].apply (this_, arguments) }
+                        onceBefore[i].apply (this_, args) }
                     onceBefore.removeAll () }
 
                 /*  Call before
                  */
                 for (i = 0, ni = before.length; i < ni; i++) {
-                    before[i].apply (this_, arguments) }
+                    before[i].apply (this_, args) }
 
                 /*  Call intercept
                  */
-                var result = (intercept.length ? _.cps.compose ([method].concat (intercept)) : method).apply (this_, arguments) // @hide
+                var result = (intercept.length ? _.cps.compose ([method].concat (intercept)) : method).apply (this_, args) // @hide
 
-                if (after.length || onceAfter.length) { var args = _.asArray (arguments).concat (result)
+                if (after.length || onceAfter.length) { var newArgs = args.concat (result)
 
                     /*  Call after
                      */
                     for (i = 0, ni = after.length; i < ni; i++) {
-                        after[i].apply (this_, args) }
+                        after[i].apply (this_, newArgs) }
 
                     /*  Call onceAfter
                      */
                     if (onceAfter.length) { var arr = onceAfter.copy
                                                       onceAfter.removeAll ()
                         for (i = 0, ni = arr.length; i < ni; i++) {
-                            arr[i].apply (this_, args) } } }
+                            arr[i].apply (this_, newArgs) } } }
 
                 return result } )) }) }) })

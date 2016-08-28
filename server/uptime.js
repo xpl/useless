@@ -1,9 +1,11 @@
-var exec = require ('child_process').exec
+"use strict";
 
-ServerUptime = module.exports = $trait ({
+const exec = require ('child_process').exec
 
-    afterInit: function () {
+module.exports = $trait ({
+
+    afterInit () {
         this.birthdate = Date.now () },
 
-    uptime: function () {
+    uptime () {
         return Date.now () - (this.birthdate || Date.now ()) } })

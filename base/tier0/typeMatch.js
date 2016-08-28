@@ -1,3 +1,5 @@
+"use strict";
+
 _.hasTypeMatch = true
 
 /*  Type matching for arbitrary complex structures (TODO: test)
@@ -113,14 +115,14 @@ _.deferTest (['type', 'type matching'], function () {
 
     var unifyType = function (value) {
         if (_.isArray (value)) {
-            return _.nonempty ([_.reduce (_.rest (value), function (a, b) { return _.undiff (a, b) }, _.first (value) || undefined)]) }
+            return _.nonempty ([_.reduce (value.slice (1), function (a, b) { return _.undiff (a, b) }, _.first (value) || undefined)]) }
         
         else if (_.isStrictlyObject (value)) {
             var pairs = _.pairs (value)
-            var unite = _.map ( _.reduce (_.rest (pairs), function (a, b) { return _.undiff (a, b) }, _.first (pairs) || [undefined, undefined]),
+            var unite = _.map ( _.reduce (pairs.slice (1), function (a, b) { return _.undiff (a, b) }, _.first (pairs) || [undefined, undefined]),
                                 _.nonempty)
 
-            return (_.isEmpty (unite) || _.isEmpty (unite[1])) ? value : _.object ([[unite[0] || '*', unite[1]]]) }
+            return (_.isEmpty (unite) || _.isEmpty (unite[1])) ? value : _.fromPairs ([[unite[0] || '*', unite[1]]]) }
         
         else {
             return value } }

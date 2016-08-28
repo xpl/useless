@@ -1,4 +1,6 @@
- module.exports = function (input, output) {
+"use strict";
+
+ module.exports = (input, output) => {
     
     var webpack = require ('webpack'),
         path    = require ('path'),

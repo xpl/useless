@@ -1,3 +1,5 @@
+"use strict";
+
 /*  TODO:   UNIT TEST DAT MUTHAFUCKA
  */
 
@@ -29,7 +31,7 @@ if (!Math.sign) {
 /*  Intersections (draft)
     ======================================================================== */
 
-Intersect = {
+$global.Intersect = {
 
     rayCircle: function (origin, d, center, r) {
 
@@ -64,7 +66,7 @@ Intersect = {
 /*  2-dimensional vector
     ======================================================================== */
 
-Vec2 = $prototype ({
+$global.Vec2 = $prototype ({
 
     $static: {
         xx:          function (x)   { return new Vec2 (x,x) },
@@ -195,7 +197,7 @@ if (typeof Symbol !== 'undefined') {
 /*  Cubic bezier
     ======================================================================== */
 
-Bezier = {
+$global.Bezier = {
 
     cubic: function (t, p0, p1, p2, p3) {
         var cube = t * t * t
@@ -222,7 +224,7 @@ Bezier = {
 /*  Bounding box (2D)
     ======================================================================== */
 
-BBox = $prototype ({
+$global.BBox = $prototype ({
 
     $static: {
 
@@ -455,7 +457,7 @@ if (typeof Symbol !== 'undefined') {
 /*  3x3 affine transform matrix, encoding scale/offset/rotate/skew in 2D
     ======================================================================== */
 
-Transform = $prototype ({
+$global.Transform = $prototype ({
 
     $static: {
 
@@ -656,7 +658,7 @@ _.extend (Math, (function (decimalAdjust) {
     return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }))
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 ;(function () {
 
@@ -666,7 +668,7 @@ _.extend (Math, (function (decimalAdjust) {
 
 }) ();
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 _.withTest (['Array', 'topomerge'], function () {
 
@@ -677,7 +679,7 @@ _.withTest (['Array', 'topomerge'], function () {
                /* -------------------------------------- */
                  ['all','your','base','belong','to','us'])
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 }, function () {
 
@@ -692,9 +694,9 @@ _.withTest (['Array', 'topomerge'], function () {
     }
 })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
-_.withTest (['DAG', 'squash'], function () {
+_.withTest (['DAG', 'sortedSubgraphOf'], function () {
 
     var modules = {
         
@@ -712,11 +714,11 @@ _.withTest (['DAG', 'squash'], function () {
         DAG.sortedSubgraphOf ('root', { nodes: function (x) { return modules[x].requires } }),
         ["0", "1", "11", "2", "12", "10", "100", "111"]  )
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 
 }, function () {
 
-    DAG = function (cfg) {
+    $global.DAG = function (cfg) {
                     this.cfg   = cfg       || {},
                     this.nodes = cfg.nodes || _.noop },
 
@@ -748,5 +750,5 @@ _.withTest (['DAG', 'squash'], function () {
 
 })
 
-/*  ======================================================================== */
+/*  ------------------------------------------------------------------------ */
 

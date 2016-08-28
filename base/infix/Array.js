@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Array extensions
     ======================================================================== */
 
@@ -69,7 +71,7 @@ _.withTest ('Array extensions', function () {
         filter:      _.filter,
         reject:      $method (_.reject),
         flat:        _.flatten.tails2 (true),
-        object:      _.object,
+        object:      _.fromPairs,
         shuffle:     _.shuffle,
         nonempty:    _.nonempty,
         pluck:       $method (_.pluck),
@@ -87,7 +89,7 @@ _.withTest ('Array extensions', function () {
         top:    function (arr) { return arr[arr.length - 1] },        
         first:  function (arr) { return arr[0] },
         second: function (arr) { return arr[1] },
-        rest:   function (arr) { return _.rest (arr) },
+        rest:   function (arr) { return arr.slice (1) },
         last:   function (arr) { return arr[arr.length - 1] },
         
         /*  TODO: refactor

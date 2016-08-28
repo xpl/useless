@@ -1,3 +1,5 @@
+"use strict";
+
 /*  Some handy jQuery extensions
     ======================================================================== */
 
@@ -105,7 +107,7 @@ _.extend ($, {
     /*  Returns multiple attributes as object of { attr1: value, attr2: value, .. } form
      */
     attrs: function (/* name1, name2, ... */) {
-        return _.object (_.map (arguments, function (name) { return [name, this.attr (name)] }, this)) },
+        return _.fromPairs (_.map (arguments, function (name) { return [name, this.attr (name)] }, this)) },
 
     /*  Checks if any element upwards the hierarchy (including this element) conforms to a selector
      */

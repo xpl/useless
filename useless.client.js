@@ -1,29 +1,8 @@
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-   ------------------------------------------------------------------- */
+const $global = (typeof window === 'undefined' ? global : window)
 
-$uselessFile = 'useless.client.js'
+$global.$uselessFile = 'useless.client.js'
 
-/* -------------------------------------------------------------------
-   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-_ = require ('underscore')
-
-/*  Bootstrap code (couple of absolutely urgent fixes to underscore.js)
-    ======================================================================== */
-
-_ = (function () {
-
-    _.mixin ({
-        zipWith: function (rows, zippo) {
-                    return _.reduce (_.rest (rows), function (memo, row) {
-                        return _.times (Math.max ((memo && memo.length) || 0, (row && row.length) || 0), function (i) {
-                            return zippo (memo && memo[i], row && row[i]) }) }, _.first (rows)) } })
-
-    if ('a1 b2 c3' !== _.zipWith ([['a','b','c'], [1,2,3]], function (a, b) { return a + b }).join (' ')) {
-        throw new Error ('_.zipWith broken') }
-
-    return _ }) ()
-
+$global._ = module.exports = require ('./base/3rd/underscore-fix') // latest underscore from GitHub, fixes strict-mode issue
 
 /*  Tests stub
  */
@@ -33,7 +12,7 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 /*  Internal dependencies
     ======================================================================== */
 
-    require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
+    //require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
     require ('./base/3rd/Base64')        // Base64 encoder/decoder
 
     require ('./base/tier0/platform')    // platform abstraction layer
@@ -74,7 +53,6 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 /*  Experimental stuff
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-    require ('./base/AOP')
     require ('./base/Promise+')
     require ('./base/Channel')
 
