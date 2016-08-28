@@ -15,6 +15,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Upcoming features
 
+- Working on **webpack** and **babel** integration for building front-end code (see the [webpack.js](https://github.com/xpl/useless/blob/master/server/webpack.js) server trait and the [example](https://github.com/xpl/useless/blob/master/example.js) app). Will feature continuous builds, hot module replacement, CSS imports and shared code extraction.
+
 - New unit test system based on Promises (will replace the old buggy `Testosterone` thing).
 
 - Splitting of distinct framework parts to separate projects (finally, _useful_ ones).
