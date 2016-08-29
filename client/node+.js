@@ -221,21 +221,27 @@ var is = function (tag) { return function () { return this.tagName === tag } }
     /*  Events
         ======================================================================== */
 
-        on:   function (e, fn) { this.addEventListener (e, fn); return this },
-        once: function (e) {
-                    var node = this, finalize, finalized = false
-                    var p = new Promise (function (resolve) {
-                                            node.addEventListener (e, finalize =
-                                                function (e) {
-                                                    if (!finalized) {
-                                                        finalized = true
-                                                        node.removeEventListener (e, finalize)
-                                                        resolve (e) } }) })
-                    p.finalize = finalize
-                    return p },
+        on (e, fn) { this.addEventListener (e, fn); return this },
 
-        touched: function (fn) {
-                    return this.on ($platform.touch ? 'touchstart' : 'click', fn) },
+        once (e) {
+
+            let finalize,
+                finalized = false
+            
+            const p = new Channel (resolve => { // use Channel instead of Promise because Channel is synchronous, while Promise's "then" is called on next event loop iteration
+                                        this.addEventListener (e, finalize =
+                                            e => {
+                                                if (!finalized) {
+                                                    finalized = true
+                                                    this.removeEventListener (e, finalize)
+                                                    resolve (e) } }) })
+            p.finalize = finalize
+
+            return p
+        },
+
+        touched (fn) {
+            return this.on ($platform.touch ? 'touchstart' : 'click', fn) },
 
     /*  Properties
         ======================================================================== */

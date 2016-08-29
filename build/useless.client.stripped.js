@@ -5985,12 +5985,13 @@
                 return this;
             },
             once: function once(e) {
-                var node = this, _finalize, finalized = false;
-                var p = new Promise(function (resolve) {
-                    node.addEventListener(e, _finalize = function finalize(e) {
+                var _this = this;
+                var _finalize = void 0, finalized = false;
+                var p = new Channel(function (resolve) {
+                    _this.addEventListener(e, _finalize = function finalize(e) {
                         if (!finalized) {
                             finalized = true;
-                            node.removeEventListener(e, _finalize);
+                            _this.removeEventListener(e, _finalize);
                             resolve(e);
                         }
                     });

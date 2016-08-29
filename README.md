@@ -23,13 +23,13 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 - Working on **webpack** and **babel** integration for building front-end code (see the [webpack](https://github.com/xpl/useless/blob/master/server/webpack.js) server trait and the [example](https://github.com/xpl/useless/blob/master/example.js) app). Will feature continuous builds, hot module replacement, CSS imports and shared code extraction — all configurable from server's config.
 
-- More NPM modules to come: [StackTracey](https://www.npmjs.com/package/stacktracey) and [get-source](https://www.npmjs.com/package/get-source).
+- More NPM modules to come: [StackTracey](https://github.com/xpl/stacktracey) and [get-source](https://github.com/xpl/get-source).
 
-- ANSI color management now available as separate NPM module: [ansicolor](https://www.npmjs.com/package/ansicolor).
+- ANSI color management now available as separate NPM module: [ansicolor](https://github.com/xpl/ansicolor).
 
-- `asTable` function now available as a separate NPM module: [as-table](https://www.npmjs.com/package/as-table).
+- `asTable` function now available as a separate NPM module: [as-table](https://github.com/xpl/as-table).
 
-- `String.ify` function now available as a separate NPM module: [string.ify](https://www.npmjs.com/package/string.ify).
+- `String.ify` function now available as a separate NPM module: [string.ify](https://github.com/xpl/string.ify).
 
 - A wiki entry explaining the [Stream concept](https://github.com/xpl/useless/wiki/Stream). Thanks to @kroitor for the translation/adaptation from Russian!
 

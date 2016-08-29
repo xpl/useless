@@ -1,9 +1,10 @@
 <html>
     <head>
         <meta charset="utf-8"></meta>
-        <title>InertialValue test</title>
+        <title>Node+ animation test</title>
 
-        <script src="../build/useless.client.min.js"></script>
+        <script src="../build/useless.client.js"></script>
+        <script src="../build/useless.devtools.js"></script>
 
     </head>
     <style>
@@ -18,33 +19,6 @@
     </style>
     <script>
 
-        $mixin (Node, {
-
-            animateWithAttribute: function (attr) {
-
-            /*  If already animating with this attribute — return previously allocated promise    */
-
-                if (this.hasAttribute (attr) && this._onceAnimationEnd) {
-                    return this._onceAnimationEnd }
-
-            /*  If already animating — finalize the existing promise */
-
-                if (this._onceAnimationEnd) {
-                    this._onceAnimationEnd.finalize () }
-
-            /*  Allocate new promise    */
-
-                this.setAttribute (attr, true)
-
-                this._onceAnimationEnd = this.onceAnimationEnd
-
-                return this._onceAnimationEnd.then (this.$ (function () {
-                        this.removeAttribute (attr)
-                        this.getBoundingClientRect () // forces layout recalc, otherwise new animation (if set in callback) may not start
-                        this._onceAnimationEnd = undefined })) },
-
-        })
-        
         document.ready (function () {
 
             var div =
