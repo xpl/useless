@@ -17968,19 +17968,14 @@ class StackTracey extends Array {
     }
 
     static extractEntryMetadata(e) {
-
-        return StackTracey.updateEntryFilePath(O.assign(e, {
-
-            calleeShort: lastOf(e.callee.split('.')),
-            fileName: lastOf(e.file.split('/')) }));
-    }
-
-    static updateEntryFilePath(e) {
-        var short = StackTracey.shortenPath(e.file);
+        var fileShort = StackTracey.shortenPath(e.file);
 
         return O.assign(e, {
-            fileShort: short,
-            thirdParty: StackTracey.isThirdParty(short) && !e.index
+
+            calleeShort: e.calleeShort || lastOf(e.callee.split('.')),
+            fileShort: fileShort,
+            fileName: lastOf(e.file.split('/')),
+            thirdParty: StackTracey.isThirdParty(fileShort) && !e.index
         });
     }
 
@@ -18046,7 +18041,8 @@ class StackTracey extends Array {
             var resolved = getSource(loc.file).resolve(loc);
 
             if (resolved.sourceFile) {
-                resolved = StackTracey.updateEntryFilePath(O.assign(resolved, { file: resolved.sourceFile.path }));
+                resolved.file = resolved.sourceFile.path;
+                resolved = StackTracey.extractEntryMetadata(resolved);
             }
 
             if (resolved.sourceLine && resolved.sourceLine.includes('// @hide')) {

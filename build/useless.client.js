@@ -11038,6 +11038,7 @@ $mixin(Node, {
             finalized = false;
 
         var p = new Channel(function (resolve) {
+            // use Channel instead of Promise because Channel is synchronous, while Promise's "then" is called on next event loop iteration
             _this.addEventListener(e, _finalize = function finalize(e) {
                 if (!finalized) {
                     finalized = true;
