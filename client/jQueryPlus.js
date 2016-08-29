@@ -405,6 +405,6 @@ _.extend ($, {
             $(e.target).trigger ('click') }) }      // also synthesize click events we just swallowed up
     })
 
-}) ($global.jQuery = require ('jquery'));
+}) (module.exports = $global.jQuery = require ('jquery'));
 
 
