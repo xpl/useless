@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- You can now use ES6 getter syntax for defining properties in components/traits: `get something () { ... }`
+
 - Working on **webpack** and **babel** integration for building front-end code (see the [webpack](https://github.com/xpl/useless/blob/master/server/webpack.js) server trait and the [example](https://github.com/xpl/useless/blob/master/example.js) app). Will feature continuous builds, hot module replacement, CSS imports and shared code extraction — all configurable from server's config.
 
 - More NPM modules to come: [StackTracey](https://github.com/xpl/stacktracey) and [get-source](https://github.com/xpl/get-source).
@@ -67,7 +69,7 @@ Vec2 = $prototype ({
 
     /*  Constructor
      */
-    constructor (x, y) { this.x = x; this.y = y },
+    constructor: function (x, y) { this.x = x; this.y = y },
 
     /*  Instance method
      */
