@@ -69,7 +69,7 @@ Vec2 = $prototype ({
 
     /*  Constructor
      */
-    constructor (x, y) { this.x = x; this.y = y },
+    constructor: function (x, y) { this.x = x; this.y = y },
 
     /*  Instance method
      */
