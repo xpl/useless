@@ -4,7 +4,7 @@
   "description": "Use Less. Do More. JavaScript on steroids.",
   "main": "useless.js",
   "engines": {
-    "node": ">=5.0.0"
+    "node": ">=6.0.0"
   },
   "directories": {
     "base": "platform-independent part",
