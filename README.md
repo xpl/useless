@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Working on **webpack** and **babel** integration for building front-end code (see the [webpack](https://github.com/xpl/useless/blob/master/server/webpack.js) server trait and the [example](https://github.com/xpl/useless/blob/master/example.js) app). Will feature continuous builds, hot module replacement, CSS imports and shared code extraction — all configurable from server's config.
+
 - More NPM modules to come: [StackTracey](https://www.npmjs.com/package/stacktracey) and [get-source](https://www.npmjs.com/package/get-source).
 
 - ANSI color management now available as separate NPM module: [ansicolor](https://www.npmjs.com/package/ansicolor).
