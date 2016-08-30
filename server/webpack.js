@@ -126,6 +126,8 @@ module.exports = $trait ({
 
     beforeInit () { log.blue ('Building with WebPack...')
 
+        try { fs.mkdirSync (path.resolve ('./build')) } catch (e) {}
+
         const config = this.config.webpack,
               input  = this.webpackInput = this.transformEntries (config.entry)
 

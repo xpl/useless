@@ -288,7 +288,7 @@ _.extend (log, {
                                                                     : (                         run.text)) }).join ('') }).join ('\n')
 
                 if (log.timestampEnabled) {
-                    lines = log.color ('dark').shell + bullet (String (params.when), log.color ('none').shell + lines) }
+                    lines = log.color ('dark').shell + bullet (String (params.when) + ' ', log.color ('none').shell + lines) }
 
                 console.log (lines,
                              log.color ('dark').shell + codeLocation + '\u001b[0m',
