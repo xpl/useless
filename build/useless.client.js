@@ -5830,6 +5830,8 @@ $global.JSONAPI = $singleton(Component, {
 
     request: function request(type, path, cfg_) {
 
+        var isAbsolutePath = /^[^\/]*:/.test(path);
+
         var cfg = _.extend2({ headers: {
                 'Cache-Control': 'no-cache',
                 'Content-Type': 'application/json; charset=utf-8' } }, cfg_);
@@ -5840,7 +5842,7 @@ $global.JSONAPI = $singleton(Component, {
 
         var stackBeforeCall = _.hasReflection && new StackTracey(); // @hide 
 
-        return Http.request(type, '/api/' + path, cfg).finally(function (e, response) {
+        return Http.request(type, isAbsolutePath ? path : '/api/' + path, cfg).finally(function (e, response) {
 
             if (response) {
                 return JSON.parse(response);

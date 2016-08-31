@@ -8018,7 +8018,7 @@
                             }).join('');
                         }).join('\n');
                         if (log.timestampEnabled) {
-                            lines = log.color('dark').shell + bullet(String(params.when), log.color('none').shell + lines);
+                            lines = log.color('dark').shell + bullet(String(params.when) + ' ', log.color('none').shell + lines);
                         }
                         console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
                     } else {
