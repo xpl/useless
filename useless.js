@@ -15,7 +15,6 @@ $global._ = module.exports = require ('./base/3rd/underscore-fix') // latest und
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-    require ('./base/3rd/Base64')        // Base64 encoder/decoder
 
 
 /*  Basics of basics

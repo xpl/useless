@@ -13,7 +13,6 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
     ======================================================================== */
 
     //require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-    require ('./base/3rd/Base64')        // Base64 encoder/decoder
 
     require ('./base/tier0/platform')    // platform abstraction layer
     require ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)

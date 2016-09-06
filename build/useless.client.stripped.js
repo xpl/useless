@@ -39,7 +39,7 @@
         return Object.prototype.hasOwnProperty.call(object, property);
     };
     __webpack_require__.p = '';
-    return __webpack_require__(__webpack_require__.s = 37);
+    return __webpack_require__(__webpack_require__.s = 36);
 }([
     function (module, exports) {
         var g;
@@ -59,7 +59,7 @@
         'use strict';
         module.exports = function () {
             'use strict';
-            var ownKeys = __webpack_require__(34);
+            var ownKeys = __webpack_require__(33);
             var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
             var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
             var concat = Function.bind.call(Function.call, Array.prototype.concat);
@@ -85,105 +85,8 @@
     },
     function (module, exports, __webpack_require__) {
         'use strict';
-        (function (global) {
-            'use strict';
-            var $global = typeof window === 'undefined' ? global : window;
-            $global.Base64 = {
-                _keyStr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
-                encode: function encode(input) {
-                    var output = '';
-                    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-                    var i = 0;
-                    input = Base64._utf8_encode(input);
-                    while (i < input.length) {
-                        chr1 = input.charCodeAt(i++);
-                        chr2 = input.charCodeAt(i++);
-                        chr3 = input.charCodeAt(i++);
-                        enc1 = chr1 >> 2;
-                        enc2 = (chr1 & 3) << 4 | chr2 >> 4;
-                        enc3 = (chr2 & 15) << 2 | chr3 >> 6;
-                        enc4 = chr3 & 63;
-                        if (isNaN(chr2)) {
-                            enc3 = enc4 = 64;
-                        } else if (isNaN(chr3)) {
-                            enc4 = 64;
-                        }
-                        output = output + Base64._keyStr.charAt(enc1) + Base64._keyStr.charAt(enc2) + Base64._keyStr.charAt(enc3) + Base64._keyStr.charAt(enc4);
-                    }
-                    return output;
-                },
-                decode: function decode(input) {
-                    var output = '';
-                    var chr1, chr2, chr3;
-                    var enc1, enc2, enc3, enc4;
-                    var i = 0;
-                    input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
-                    while (i < input.length) {
-                        enc1 = Base64._keyStr.indexOf(input.charAt(i++));
-                        enc2 = Base64._keyStr.indexOf(input.charAt(i++));
-                        enc3 = Base64._keyStr.indexOf(input.charAt(i++));
-                        enc4 = Base64._keyStr.indexOf(input.charAt(i++));
-                        chr1 = enc1 << 2 | enc2 >> 4;
-                        chr2 = (enc2 & 15) << 4 | enc3 >> 2;
-                        chr3 = (enc3 & 3) << 6 | enc4;
-                        output = output + String.fromCharCode(chr1);
-                        if (enc3 != 64) {
-                            output = output + String.fromCharCode(chr2);
-                        }
-                        if (enc4 != 64) {
-                            output = output + String.fromCharCode(chr3);
-                        }
-                    }
-                    output = Base64._utf8_decode(output);
-                    return output;
-                },
-                _utf8_encode: function _utf8_encode(string) {
-                    string = string.replace(/\r\n/g, '\n');
-                    var utftext = '';
-                    for (var n = 0; n < string.length; n++) {
-                        var c = string.charCodeAt(n);
-                        if (c < 128) {
-                            utftext += String.fromCharCode(c);
-                        } else if (c > 127 && c < 2048) {
-                            utftext += String.fromCharCode(c >> 6 | 192);
-                            utftext += String.fromCharCode(c & 63 | 128);
-                        } else {
-                            utftext += String.fromCharCode(c >> 12 | 224);
-                            utftext += String.fromCharCode(c >> 6 & 63 | 128);
-                            utftext += String.fromCharCode(c & 63 | 128);
-                        }
-                    }
-                    return utftext;
-                },
-                _utf8_decode: function _utf8_decode(utftext) {
-                    var string = '';
-                    var i = 0;
-                    var c = c1 = c2 = 0;
-                    while (i < utftext.length) {
-                        c = utftext.charCodeAt(i);
-                        if (c < 128) {
-                            string += String.fromCharCode(c);
-                            i++;
-                        } else if (c > 191 && c < 224) {
-                            c2 = utftext.charCodeAt(i + 1);
-                            string += String.fromCharCode((c & 31) << 6 | c2 & 63);
-                            i += 2;
-                        } else {
-                            c2 = utftext.charCodeAt(i + 1);
-                            c3 = utftext.charCodeAt(i + 2);
-                            string += String.fromCharCode((c & 15) << 12 | (c2 & 63) << 6 | c3 & 63);
-                            i += 3;
-                        }
-                    }
-                    return string;
-                }
-            };
-        }.call(exports, __webpack_require__(0)));
-    },
-    function (module, exports, __webpack_require__) {
         'use strict';
-        'use strict';
-        var _ = module.exports = __webpack_require__(36);
+        var _ = module.exports = __webpack_require__(35);
         _.fromPairs = _.object;
         _.mapValues = _.mapObject;
         _.zipWith = function (rows, zippo) {
@@ -4006,7 +3909,7 @@
             return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
         }));
         (function () {
-            var toposort = __webpack_require__(35);
+            var toposort = __webpack_require__(34);
             Array.prototype.topoSort = function () {
                 return toposort(this);
             };
@@ -4726,7 +4629,7 @@
             ].forEach(Tags.define);
         }
         if (typeof Symbol !== 'undefined') {
-            var bullet = __webpack_require__(33);
+            var bullet = __webpack_require__(32);
             Tags.prototype[Symbol.for('String.ify')] = function (stringify) {
                 if (stringify.json) {
                     return stringify($untag(this));
@@ -6103,6 +6006,7 @@
             all: Element.prototype.querySelectorAll,
             one: Element.prototype.querySelector,
             append: Node.prototype.append,
+            replaceWith: Node.prototype.replaceWith,
             clientBBox: $property(function () {
                 return BBox.fromLTWH(this.getBoundingClientRect());
             }),
@@ -6158,6 +6062,7 @@
                     var placeholder = document.createElement('PROMISE');
                     this.appendChild(placeholder);
                     nodes.then(function (nodes) {
+                        console.log(nodes, placeholder.replaceWith);
                         placeholder.replaceWith(nodes);
                     }).panic;
                 } else {
@@ -7465,41 +7370,40 @@
             'use strict';
             var $global = typeof window === 'undefined' ? global : window;
             $global.$uselessFile = 'useless.client.js';
-            $global._ = module.exports = __webpack_require__(3);
+            $global._ = module.exports = __webpack_require__(2);
             _.tests = {};
             _.deferTest = _.withTest = function (name, test, subj) {
                 subj();
             };
-            __webpack_require__(2);
-            __webpack_require__(25);
-            __webpack_require__(21);
-            __webpack_require__(23);
+            __webpack_require__(24);
+            __webpack_require__(20);
             __webpack_require__(22);
-            __webpack_require__(28);
+            __webpack_require__(21);
             __webpack_require__(27);
             __webpack_require__(26);
-            __webpack_require__(24);
-            __webpack_require__(29);
-            __webpack_require__(4);
-            __webpack_require__(19);
-            __webpack_require__(17);
-            __webpack_require__(16);
+            __webpack_require__(25);
+            __webpack_require__(23);
+            __webpack_require__(28);
+            __webpack_require__(3);
             __webpack_require__(18);
-            __webpack_require__(13);
-            __webpack_require__(14);
-            __webpack_require__(6);
-            __webpack_require__(20);
-            __webpack_require__(7);
-            __webpack_require__(10);
-            __webpack_require__(12);
-            __webpack_require__(11);
-            __webpack_require__(9);
-            __webpack_require__(8);
-            __webpack_require__(5);
+            __webpack_require__(16);
             __webpack_require__(15);
-            __webpack_require__(32);
-            __webpack_require__(30);
+            __webpack_require__(17);
+            __webpack_require__(12);
+            __webpack_require__(13);
+            __webpack_require__(5);
+            __webpack_require__(19);
+            __webpack_require__(6);
+            __webpack_require__(9);
+            __webpack_require__(11);
+            __webpack_require__(10);
+            __webpack_require__(8);
+            __webpack_require__(7);
+            __webpack_require__(4);
+            __webpack_require__(14);
             __webpack_require__(31);
+            __webpack_require__(29);
+            __webpack_require__(30);
         }.call(exports, __webpack_require__(0)));
     }
 ]));

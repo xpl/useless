@@ -106,7 +106,7 @@ module.exports = $trait ({
 
     get webpackServerURL () {
             return this.config.webpack.hotReload
-                        ? (`http://localhost:${this.config.webpack.port}`)
+                        ? (`http://${(this.config.serverName || 'localhost')}:${this.config.webpack.port}`)
                         : '' },
 
     webpackURL (path) {
@@ -213,7 +213,7 @@ module.exports = $trait ({
                     chunkModules: false
                 }
 
-            }).listen (config.port, 'localhost', (err, result) => {
+            }).listen (config.port, this.config.serverName || 'localhost', (err, result) => {
 
                 if (err) {
                     log ('Webpack error:', err) }

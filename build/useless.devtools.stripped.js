@@ -8572,7 +8572,8 @@
                         if (!_.isFunction(fn)) {
                             throw new Error('[uncaughtAsync.js] callback should be a function');
                         }
-                        fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = function () {
+                        var wrappers = fn.__uncaughtJS_wrappers = fn.__uncaughtJS_wrappers || [];
+                        var wrapper = args[callbackArgumentIndex] = function () {
                             globalAsyncContext = asyncContext;
                             try {
                                 return fn.apply(this, arguments);
@@ -8580,6 +8581,7 @@
                                 _.globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
                             }
                         };
+                        wrappers.push(wrapper);
                         return originalImpl.apply(this, args);
                     };
                 };
@@ -8588,7 +8590,28 @@
                     return asyncHook(addEventListener, 1);
                 }, function (removeEventListener) {
                     return function (name, fn, bubble, untrusted) {
-                        return removeEventListener.call(this, name, fn.__uncaughtJS_wrapper || fn, bubble);
+                        var _iteratorNormalCompletion = true;
+                        var _didIteratorError = false;
+                        var _iteratorError = undefined;
+                        try {
+                            for (var _iterator = (fn.__uncaughtJS_wrappers || [fn])[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                                var x = _step.value;
+                                removeEventListener.call(this, name, x, bubble);
+                            }
+                        } catch (err) {
+                            _didIteratorError = true;
+                            _iteratorError = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion && _iterator.return) {
+                                    _iterator.return();
+                                }
+                            } finally {
+                                if (_didIteratorError) {
+                                    throw _iteratorError;
+                                }
+                            }
+                        }
                     };
                 });
             }

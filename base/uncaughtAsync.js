@@ -38,12 +38,15 @@
 
                     if (!_.isFunction (fn)) { throw new Error ('[uncaughtAsync.js] callback should be a function')}
 
-                    fn.__uncaughtJS_wrapper = args[callbackArgumentIndex] = function () { // @hide
+                    var wrappers = (fn.__uncaughtJS_wrappers = (fn.__uncaughtJS_wrappers || []))
+                    var wrapper = args[callbackArgumentIndex] = function () { // @hide
 
                         globalAsyncContext = asyncContext
 
                         try       { return fn.apply (this, arguments) }
                         catch (e) { _.globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
+
+                    wrappers.push (wrapper)
 
                     return originalImpl.apply (this, args) } }
 
@@ -55,6 +58,9 @@
             function (addEventListener) { return asyncHook (addEventListener, 1) },
             function (removeEventListener) {
                 return function (name, fn, bubble, untrusted) {
-                   return removeEventListener.call (this, name, fn.__uncaughtJS_wrapper || fn, bubble) } }) }
+                    for (var x of (fn.__uncaughtJS_wrappers || [fn])) {
+                        removeEventListener.call (this, name, x, bubble) } } }) }
 
 }) ()
+
+

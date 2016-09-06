@@ -61,7 +61,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 37);
+/******/ 	return __webpack_require__(__webpack_require__.s = 36);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -107,7 +107,7 @@ module.exports = g;
 module.exports = function () {
 	"use strict";
 
-	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 34);
+	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 33);
 	var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
 	var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
 	var concat = Function.bind.call(Function.call, Array.prototype.concat);
@@ -134,143 +134,6 @@ module.exports = function () {
 /***/ },
 /* 2 */
 /* all exports used */
-/*!****************************!*\
-  !*** ./base/3rd/Base64.js ***!
-  \****************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(global) {"use strict";
-
-var $global = typeof window === 'undefined' ? global : window;
-
-$global.Base64 = {
-
-	// private property
-	_keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
-
-	// public method for encoding
-	encode: function encode(input) {
-		var output = "";
-		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-		var i = 0;
-
-		input = Base64._utf8_encode(input);
-
-		while (i < input.length) {
-
-			chr1 = input.charCodeAt(i++);
-			chr2 = input.charCodeAt(i++);
-			chr3 = input.charCodeAt(i++);
-
-			enc1 = chr1 >> 2;
-			enc2 = (chr1 & 3) << 4 | chr2 >> 4;
-			enc3 = (chr2 & 15) << 2 | chr3 >> 6;
-			enc4 = chr3 & 63;
-
-			if (isNaN(chr2)) {
-				enc3 = enc4 = 64;
-			} else if (isNaN(chr3)) {
-				enc4 = 64;
-			}
-
-			output = output + Base64._keyStr.charAt(enc1) + Base64._keyStr.charAt(enc2) + Base64._keyStr.charAt(enc3) + Base64._keyStr.charAt(enc4);
-		}
-
-		return output;
-	},
-
-	// public method for decoding
-	decode: function decode(input) {
-		var output = "";
-		var chr1, chr2, chr3;
-		var enc1, enc2, enc3, enc4;
-		var i = 0;
-
-		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-
-		while (i < input.length) {
-
-			enc1 = Base64._keyStr.indexOf(input.charAt(i++));
-			enc2 = Base64._keyStr.indexOf(input.charAt(i++));
-			enc3 = Base64._keyStr.indexOf(input.charAt(i++));
-			enc4 = Base64._keyStr.indexOf(input.charAt(i++));
-
-			chr1 = enc1 << 2 | enc2 >> 4;
-			chr2 = (enc2 & 15) << 4 | enc3 >> 2;
-			chr3 = (enc3 & 3) << 6 | enc4;
-
-			output = output + String.fromCharCode(chr1);
-
-			if (enc3 != 64) {
-				output = output + String.fromCharCode(chr2);
-			}
-			if (enc4 != 64) {
-				output = output + String.fromCharCode(chr3);
-			}
-		}
-
-		output = Base64._utf8_decode(output);
-
-		return output;
-	},
-
-	// private method for UTF-8 encoding
-	_utf8_encode: function _utf8_encode(string) {
-		string = string.replace(/\r\n/g, "\n");
-		var utftext = "";
-
-		for (var n = 0; n < string.length; n++) {
-
-			var c = string.charCodeAt(n);
-
-			if (c < 128) {
-				utftext += String.fromCharCode(c);
-			} else if (c > 127 && c < 2048) {
-				utftext += String.fromCharCode(c >> 6 | 192);
-				utftext += String.fromCharCode(c & 63 | 128);
-			} else {
-				utftext += String.fromCharCode(c >> 12 | 224);
-				utftext += String.fromCharCode(c >> 6 & 63 | 128);
-				utftext += String.fromCharCode(c & 63 | 128);
-			}
-		}
-
-		return utftext;
-	},
-
-	// private method for UTF-8 decoding
-	_utf8_decode: function _utf8_decode(utftext) {
-		var string = "";
-		var i = 0;
-		var c = c1 = c2 = 0;
-
-		while (i < utftext.length) {
-
-			c = utftext.charCodeAt(i);
-
-			if (c < 128) {
-				string += String.fromCharCode(c);
-				i++;
-			} else if (c > 191 && c < 224) {
-				c2 = utftext.charCodeAt(i + 1);
-				string += String.fromCharCode((c & 31) << 6 | c2 & 63);
-				i += 2;
-			} else {
-				c2 = utftext.charCodeAt(i + 1);
-				c3 = utftext.charCodeAt(i + 2);
-				string += String.fromCharCode((c & 15) << 12 | (c2 & 63) << 6 | c3 & 63);
-				i += 3;
-			}
-		}
-		return string;
-	}
-};
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! (webpack)/buildin/global.js */ 0)))
-
-/***/ },
-/* 3 */
-/* all exports used */
 /*!************************************!*\
   !*** ./base/3rd/underscore-fix.js ***!
   \************************************/
@@ -279,7 +142,7 @@ $global.Base64 = {
 "use strict";
 'use strict';
 
-var _ = module.exports = __webpack_require__(/*! underscore */ 36);
+var _ = module.exports = __webpack_require__(/*! underscore */ 35);
 
 _.fromPairs = _.object; // was trying to migrate to lodash, but had no luck, these ones had left as an migration artifact...
 _.mapValues = _.mapObject;
@@ -299,7 +162,7 @@ if ('a1 b2 c3' !== _.zipWith([['a', 'b', 'c'], [1, 2, 3]], function (a, b) {
 }
 
 /***/ },
-/* 4 */
+/* 3 */
 /* all exports used */
 /*!*********************!*\
   !*** ./base/CPS.js ***!
@@ -879,7 +742,7 @@ _.deferTest(['cps', 'trySequence'], function () {
 });
 
 /***/ },
-/* 5 */
+/* 4 */
 /* all exports used */
 /*!*************************!*\
   !*** ./base/Channel.js ***!
@@ -1185,7 +1048,7 @@ $prototype.macroTag('channel', function (def, value, name) {
 /*  ------------------------------------------------------------------------ */
 
 /***/ },
-/* 6 */
+/* 5 */
 /* all exports used */
 /*!*********************!*\
   !*** ./base/OOP.js ***!
@@ -2232,7 +2095,7 @@ _.withTest(['OOP', '$singleton'], function () {
 });
 
 /***/ },
-/* 7 */
+/* 6 */
 /* all exports used */
 /*!***********************!*\
   !*** ./base/Parse.js ***!
@@ -2265,7 +2128,7 @@ $global.Parse = {
 };
 
 /***/ },
-/* 8 */
+/* 7 */
 /* all exports used */
 /*!**************************!*\
   !*** ./base/Promise+.js ***!
@@ -2828,7 +2691,7 @@ $mixin(Function, {
     })) });
 
 /***/ },
-/* 9 */
+/* 8 */
 /* all exports used */
 /*!********************!*\
   !*** ./base/Rx.js ***!
@@ -3037,7 +2900,7 @@ $global.R = $singleton({
 });
 
 /***/ },
-/* 10 */
+/* 9 */
 /* all exports used */
 /*!**********************!*\
   !*** ./base/Sort.js ***!
@@ -3096,7 +2959,7 @@ $global.Sort = {
 };
 
 /***/ },
-/* 11 */
+/* 10 */
 /* all exports used */
 /*!***************************!*\
   !*** ./base/component.js ***!
@@ -4531,7 +4394,7 @@ $global.Component = $prototype({
     } });
 
 /***/ },
-/* 12 */
+/* 11 */
 /* all exports used */
 /*!*****************************!*\
   !*** ./base/concurrency.js ***!
@@ -4683,7 +4546,7 @@ $global.$scope = function (fn) {
 };
 
 /***/ },
-/* 13 */
+/* 12 */
 /* all exports used */
 /*!**********************************!*\
   !*** ./base/dynamic/bindable.js ***!
@@ -4947,7 +4810,7 @@ _.deferTest('bindable', function () {
 });
 
 /***/ },
-/* 14 */
+/* 13 */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/dynamic/stream.js ***!
@@ -5682,7 +5545,7 @@ _.deferTest(['stream', 'observable.map'], function () {
 });
 
 /***/ },
-/* 15 */
+/* 14 */
 /* all exports used */
 /*!**********************!*\
   !*** ./base/http.js ***!
@@ -5880,7 +5743,7 @@ $global.JSONAPI = $singleton(Component, {
 });
 
 /***/ },
-/* 16 */
+/* 15 */
 /* all exports used */
 /*!*****************************!*\
   !*** ./base/infix/Array.js ***!
@@ -6068,7 +5931,7 @@ _.withTest('Array extensions', function () {
 });
 
 /***/ },
-/* 17 */
+/* 16 */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/infix/Function.js ***!
@@ -6389,7 +6252,7 @@ $extensionMethods(Function, { catch_: function catch_(fn, _catch_, then, finally
     } });
 
 /***/ },
-/* 18 */
+/* 17 */
 /* all exports used */
 /*!******************************!*\
   !*** ./base/infix/String.js ***!
@@ -6704,7 +6567,7 @@ _.loDashesToCamelCase = function (x) {
 };
 
 /***/ },
-/* 19 */
+/* 18 */
 /* all exports used */
 /*!****************************************!*\
   !*** ./base/infix/extensionMethods.js ***!
@@ -6753,7 +6616,7 @@ $global.$extensionMethods = function (Type, methods) {
 };
 
 /***/ },
-/* 20 */
+/* 19 */
 /* all exports used */
 /*!**********************!*\
   !*** ./base/math.js ***!
@@ -7522,7 +7385,7 @@ _.extend(Math, function (decimalAdjust) {
 
 ;(function () {
 
-    var toposort = __webpack_require__(/*! toposort */ 35);
+    var toposort = __webpack_require__(/*! toposort */ 34);
 
     Array.prototype.topoSort = function () {
         return toposort(this);
@@ -7612,7 +7475,7 @@ _.withTest(['DAG', 'sortedSubgraphOf'], function () {
 /*  ------------------------------------------------------------------------ */
 
 /***/ },
-/* 21 */
+/* 20 */
 /* all exports used */
 /*!*********************************!*\
   !*** ./base/tier0/arguments.js ***!
@@ -7753,7 +7616,7 @@ _.withTest('argcount tracking', function () {
 })();
 
 /***/ },
-/* 22 */
+/* 21 */
 /* all exports used */
 /*!*******************************!*\
   !*** ./base/tier0/busybox.js ***!
@@ -7897,7 +7760,7 @@ _.oneOf = $restArg(function () {
 });
 
 /***/ },
-/* 23 */
+/* 22 */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/tier0/function.js ***!
@@ -8484,7 +8347,7 @@ _.withTest(['function', 'sequence / then'], function () {
 });
 
 /***/ },
-/* 24 */
+/* 23 */
 /* all exports used */
 /*!*********************************!*\
   !*** ./base/tier0/meta-tags.js ***!
@@ -8799,7 +8662,7 @@ _.withTest('meta-tags', function () {
 
 if (typeof Symbol !== 'undefined') {
 
-    var bullet = __webpack_require__(/*! string.bullet */ 33);
+    var bullet = __webpack_require__(/*! string.bullet */ 32);
 
     Tags.prototype[Symbol.for('String.ify')] = function (stringify) {
 
@@ -8817,7 +8680,7 @@ if (typeof Symbol !== 'undefined') {
 }
 
 /***/ },
-/* 25 */
+/* 24 */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/tier0/platform.js ***!
@@ -8891,7 +8754,7 @@ if (typeof Symbol !== 'undefined') {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! (webpack)/buildin/global.js */ 0)))
 
 /***/ },
-/* 26 */
+/* 25 */
 /* all exports used */
 /*!**********************************!*\
   !*** ./base/tier0/properties.js ***!
@@ -9009,7 +8872,7 @@ _.withTest('properties', function () {
 });
 
 /***/ },
-/* 27 */
+/* 26 */
 /* all exports used */
 /*!******************************!*\
   !*** ./base/tier0/stdlib.js ***!
@@ -9962,7 +9825,7 @@ _.pickKeys = function (obj, predicate) {
 };
 
 /***/ },
-/* 28 */
+/* 27 */
 /* all exports used */
 /*!****************************!*\
   !*** ./base/tier0/type.js ***!
@@ -10229,7 +10092,7 @@ _.withTest(['type', 'empty-centric routines'], function () {
 });
 
 /***/ },
-/* 29 */
+/* 28 */
 /* all exports used */
 /*!*********************************!*\
   !*** ./base/tier0/typeMatch.js ***!
@@ -10388,7 +10251,7 @@ _.deferTest(['type', 'type matching'], function () {
 }); // TODO: fix hyperOperator to remove additional check for []
 
 /***/ },
-/* 30 */
+/* 29 */
 /* all exports used */
 /*!********************************!*\
   !*** ./client/DOMReference.js ***!
@@ -10624,7 +10487,7 @@ $global.HideOnEscape = $trait({
 /*  ------------------------------------------------------------------------ */
 
 /***/ },
-/* 31 */
+/* 30 */
 /* all exports used */
 /*!************************!*\
   !*** ./client/anim.js ***!
@@ -10729,7 +10592,7 @@ $global.Easing = {
 };
 
 /***/ },
-/* 32 */
+/* 31 */
 /* all exports used */
 /*!*************************!*\
   !*** ./client/node+.js ***!
@@ -11211,6 +11074,10 @@ $mixin(Element, {
 
     append: Node.prototype.append,
 
+    /*  Chrome Canary defines .replaceWith on Element...   */
+
+    replaceWith: Node.prototype.replaceWith,
+
     /*  Metrics
         ======================================================================== */
 
@@ -11275,6 +11142,7 @@ $mixin(Element, {
             var placeholder = document.createElement('PROMISE');
             this.appendChild(placeholder);
             nodes.then(function (nodes) {
+                console.log(nodes, placeholder.replaceWith);
                 placeholder.replaceWith(nodes);
             }).panic;
         } else {
@@ -11359,7 +11227,7 @@ _.tests.NodePlus = {
 };
 
 /***/ },
-/* 33 */
+/* 32 */
 /* all exports used */
 /*!*****************************************!*\
   !*** ../string.bullet/string.bullet.js ***!
@@ -11384,7 +11252,7 @@ module.exports = function (bullet, arg) {
 };
 
 /***/ },
-/* 34 */
+/* 33 */
 /* all exports used */
 /*!************************************!*\
   !*** ./~/reflect.ownkeys/index.js ***!
@@ -11405,7 +11273,7 @@ if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
 
 
 /***/ },
-/* 35 */
+/* 34 */
 /* all exports used */
 /*!*****************************!*\
   !*** ./~/toposort/index.js ***!
@@ -11478,7 +11346,7 @@ function uniqueNodes(arr){
 
 
 /***/ },
-/* 36 */
+/* 35 */
 /* all exports used */
 /*!************************************!*\
   !*** ./~/underscore/underscore.js ***!
@@ -13036,7 +12904,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 
 /***/ },
-/* 37 */
+/* 36 */
 /* all exports used */
 /*!***************************!*\
   !*** ./useless.client.js ***!
@@ -13050,7 +12918,7 @@ var $global = typeof window === 'undefined' ? global : window;
 
 $global.$uselessFile = 'useless.client.js';
 
-$global._ = module.exports = __webpack_require__(/*! ./base/3rd/underscore-fix */ 3); // latest underscore from GitHub, fixes strict-mode issue
+$global._ = module.exports = __webpack_require__(/*! ./base/3rd/underscore-fix */ 2); // latest underscore from GitHub, fixes strict-mode issue
 
 /*  Tests stub
  */
@@ -13063,60 +12931,59 @@ _.deferTest = _.withTest = function (name, test, subj) {
     ======================================================================== */
 
 //require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-__webpack_require__(/*! ./base/3rd/Base64 */ 2); // Base64 encoder/decoder
 
-__webpack_require__(/*! ./base/tier0/platform */ 25); // platform abstraction layer
-__webpack_require__(/*! ./base/tier0/arguments */ 21); // argument count tracking utility (to streamline metaprogramming utilities)
-__webpack_require__(/*! ./base/tier0/function */ 23); // function-centric utilities
-__webpack_require__(/*! ./base/tier0/busybox */ 22); // a vocabulary for functional expressions that process real stuff
-__webpack_require__(/*! ./base/tier0/type */ 28); // type system extensions
-__webpack_require__(/*! ./base/tier0/stdlib */ 27); // consider it as underscore 2.0
-__webpack_require__(/*! ./base/tier0/properties */ 26); // properties 2.0
-__webpack_require__(/*! ./base/tier0/meta-tags */ 24); // metaprogramming utility
-__webpack_require__(/*! ./base/tier0/typeMatch */ 29); // advanced type system extensions
+__webpack_require__(/*! ./base/tier0/platform */ 24); // platform abstraction layer
+__webpack_require__(/*! ./base/tier0/arguments */ 20); // argument count tracking utility (to streamline metaprogramming utilities)
+__webpack_require__(/*! ./base/tier0/function */ 22); // function-centric utilities
+__webpack_require__(/*! ./base/tier0/busybox */ 21); // a vocabulary for functional expressions that process real stuff
+__webpack_require__(/*! ./base/tier0/type */ 27); // type system extensions
+__webpack_require__(/*! ./base/tier0/stdlib */ 26); // consider it as underscore 2.0
+__webpack_require__(/*! ./base/tier0/properties */ 25); // properties 2.0
+__webpack_require__(/*! ./base/tier0/meta-tags */ 23); // metaprogramming utility
+__webpack_require__(/*! ./base/tier0/typeMatch */ 28); // advanced type system extensions
 
-__webpack_require__(/*! ./base/CPS */ 4);
+__webpack_require__(/*! ./base/CPS */ 3);
 
-__webpack_require__(/*! ./base/infix/extensionMethods */ 19); // bootstrap
-__webpack_require__(/*! ./base/infix/Function */ 17); // extends Function
-__webpack_require__(/*! ./base/infix/Array */ 16); // extends Array
-__webpack_require__(/*! ./base/infix/String */ 18); // extends String
+__webpack_require__(/*! ./base/infix/extensionMethods */ 18); // bootstrap
+__webpack_require__(/*! ./base/infix/Function */ 16); // extends Function
+__webpack_require__(/*! ./base/infix/Array */ 15); // extends Array
+__webpack_require__(/*! ./base/infix/String */ 17); // extends String
 
-__webpack_require__(/*! ./base/dynamic/bindable */ 13); // for ad-hoc dependency injection in any object's method
-__webpack_require__(/*! ./base/dynamic/stream */ 14); // a generalization of Event (multicast model for function calls)
+__webpack_require__(/*! ./base/dynamic/bindable */ 12); // for ad-hoc dependency injection in any object's method
+__webpack_require__(/*! ./base/dynamic/stream */ 13); // a generalization of Event (multicast model for function calls)
 
-__webpack_require__(/*! ./base/OOP */ 6);
+__webpack_require__(/*! ./base/OOP */ 5);
 
-__webpack_require__(/*! ./base/math */ 20); // clumsy math utils
-__webpack_require__(/*! ./base/Parse */ 7); // clumsy parsing utils
-__webpack_require__(/*! ./base/Sort */ 10); // (this one is normal)
+__webpack_require__(/*! ./base/math */ 19); // clumsy math utils
+__webpack_require__(/*! ./base/Parse */ 6); // clumsy parsing utils
+__webpack_require__(/*! ./base/Sort */ 9); // (this one is normal)
 
 
 /*  Otherwise basic utility
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-__webpack_require__(/*! ./base/concurrency */ 12); // concurrency utility
-__webpack_require__(/*! ./base/component */ 11); // component model
-__webpack_require__(/*! ./base/Rx */ 9); // regular expressions helper
+__webpack_require__(/*! ./base/concurrency */ 11); // concurrency utility
+__webpack_require__(/*! ./base/component */ 10); // component model
+__webpack_require__(/*! ./base/Rx */ 8); // regular expressions helper
 
 
 /*  Experimental stuff
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-__webpack_require__(/*! ./base/Promise+ */ 8);
-__webpack_require__(/*! ./base/Channel */ 5);
+__webpack_require__(/*! ./base/Promise+ */ 7);
+__webpack_require__(/*! ./base/Channel */ 4);
 
 /*  Networking
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-__webpack_require__(/*! ./base/http */ 15);
+__webpack_require__(/*! ./base/http */ 14);
 
 /*  Browser-related code
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-__webpack_require__(/*! ./client/node+ */ 32);
-__webpack_require__(/*! ./client/DOMReference */ 30);
-__webpack_require__(/*! ./client/anim */ 31);
+__webpack_require__(/*! ./client/node+ */ 31);
+__webpack_require__(/*! ./client/DOMReference */ 29);
+__webpack_require__(/*! ./client/anim */ 30);
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! (webpack)/buildin/global.js */ 0)))
 
 /***/ }
