@@ -172,7 +172,9 @@ module.exports = $trait ({
                                                                         .on ('close', then.arity0)
                                                                         .pipe (this.response)) })
 
-                    .catch (e => { throw this.NotFoundError }) } }),
+                    .catch (e => {
+                        log.ee ('file not found: ', log.color.bright, file, '\n')
+                        throw this.NotFoundError }) } }),
 
 /*  Entry point
     ------------------------------------------------------------------------ */
@@ -343,7 +345,8 @@ module.exports = $trait ({
                     filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
     file (location) { var location    = path.join (process.cwd (), location),
-                                    isDirectory = fs.lstatSync (location).isDirectory ()
+                          isDirectory = fs.statSync (location).isDirectory ()
+
             return () => {
                 var file = isDirectory ? $env.file : ''
                 if (file.split ('/').find (x => (x === '.') || (x === '..'))) {
