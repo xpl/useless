@@ -5220,7 +5220,7 @@ _.extend(_, {
 
             force: function force(value) {
                 stream.hasValue = false;
-                stream(value || stream.value);
+                stream(arguments.length ? value : stream.value);
             },
 
             then: function then(fn) {
@@ -10527,6 +10527,13 @@ $global.InertialValue = $component({
             }
         });
     },
+    abort: function abort() {
+        if (this.animFrame !== undefined) {
+            cancelAnimationFrame(this.animFrame);
+            this.animFrame = undefined;
+        }
+        this.animating = false;
+    },
     step: function step() {
 
         var now = Date.now();
@@ -10535,8 +10542,7 @@ $global.InertialValue = $component({
 
             this.animating = true;
             this.value = this.easing(this.start, this.target, travel);
-
-            requestAnimationFrame(this.step);
+            this.animFrame = requestAnimationFrame(this.step);
         } else {
             this.value = this.target;
             this.animating = false;

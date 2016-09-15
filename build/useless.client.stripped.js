@@ -2276,7 +2276,7 @@
                 return _.extend(stream, {
                     force: function force(value) {
                         stream.hasValue = false;
-                        stream(value || stream.value);
+                        stream(arguments.length ? value : stream.value);
                     },
                     then: function then(fn) {
                         var next = _.observable();
@@ -5598,13 +5598,20 @@
                     }
                 });
             },
+            abort: function abort() {
+                if (this.animFrame !== undefined) {
+                    cancelAnimationFrame(this.animFrame);
+                    this.animFrame = undefined;
+                }
+                this.animating = false;
+            },
             step: function step() {
                 var now = Date.now();
                 var travel = Math.min(1, ((this.lastTime = now) - this.startTime) / (this.duration * 1000));
                 if (travel < 1) {
                     this.animating = true;
                     this.value = this.easing(this.start, this.target, travel);
-                    requestAnimationFrame(this.step);
+                    this.animFrame = requestAnimationFrame(this.step);
                 } else {
                     this.value = this.target;
                     this.animating = false;

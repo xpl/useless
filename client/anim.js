@@ -27,6 +27,14 @@ $global.InertialValue = $component ({
                     this.start      = this.value
                     /*this.startTime  = this.lastTime*/     } } })  },
 
+    abort () {
+        if (this.animFrame !== undefined) {
+            cancelAnimationFrame (this.animFrame)
+            this.animFrame = undefined
+        }
+        this.animating = false
+    },
+
     step () {
 
         var now    = Date.now ()
@@ -35,8 +43,7 @@ $global.InertialValue = $component ({
 
             this.animating = true
             this.value     = this.easing (this.start, this.target, travel)
-
-            requestAnimationFrame (this.step) }
+            this.animFrame = requestAnimationFrame (this.step) }
 
         else {
             this.value     = this.target

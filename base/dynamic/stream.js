@@ -293,7 +293,7 @@ _.extend (_, {
 
             force: function (value) {
                 stream.hasValue = false
-                stream (value || stream.value) },
+                stream (arguments.length ? value : stream.value) },
 
             then: function (fn) {
                         var next = _.observable ()
