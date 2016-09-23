@@ -20,7 +20,7 @@ const Examples = $singleton (Component, {
                         'example/index':            "./example/index.js",
                     }
                 },
-                hotReload: false
+                hotReload: true
             }
         }
     },

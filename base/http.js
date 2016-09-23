@@ -65,22 +65,25 @@ $global.Http = $singleton (Component, {
                         /*  Bind events
                          */
                         if (cfg.progress) {
-                            xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress) }
+                            xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress)
+                        }
 
-                            xhr.onreadystatechange = () => {
+                        xhr.onload =
+                        xhr.onerror = () => {
 
-                                if (xhr.readyState === 4) {
-                                    if (cfg.progress) {
-                                        cfg.progress (1) }
+                            if (cfg.progress) {
+                                cfg.progress (1) }
 
-                                    const response = (xhr.responseType === 'arraybuffer')
-                                                        ? xhr.response
-                                                        : xhr.responseText
+                            const response = (xhr.responseType === 'arraybuffer')
+                                                ? xhr.response
+                                                : xhr.responseText
 
-                                    if (xhr.status === 200) { resolve (response) }
-                                                       else { reject  (_.extend (new Error (xhr.statusText), {
-                                                                                        httpResponse: response,
-                                                                                        httpStatus: xhr.status })) } } }
+                            if (xhr.status === 200) { resolve (response) }
+                                               else { reject  (_.extend (new Error (xhr.statusText), {
+                                                                                httpResponse: response,
+                                                                                httpStatus: xhr.status })) }
+                        }
+
                         /*  Set up the abort method
                          */
                         abort = () => {

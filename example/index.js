@@ -1,5 +1,7 @@
 const $ = require ('jquery')
 
+require ('./index.css')
+
 log.timestampEnabled = true
 
 /*  Bind Panic as default exception handler
