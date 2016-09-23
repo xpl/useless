@@ -21,7 +21,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- Webpack Hot Module Replacement now works (see the example app, should live-reload changes to `example/index.css`).
+- Webpack Hot Module Replacement now works (run the example app and try change `example/index.css`). It was previously broken due to `webpack-dev-server` incompatilibity with Webpack 2. This is solved by introducing [`webpack-hot-fix.js`](https://github.com/xpl/useless/blob/master/client/webpack-hot-fix.js).
 
 - You can now use ES6 getter syntax for defining properties in components/traits: `get something () { ... }`
 
