@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- Webpack Hot Module Replacement now works (see the example app, should live-reload changes to `example/index.css`).
+
 - You can now use ES6 getter syntax for defining properties in components/traits: `get something () { ... }`
 
 - Working on **webpack** and **babel** integration for building front-end code (see the [webpack](https://github.com/xpl/useless/blob/master/server/webpack.js) server trait and the [example](https://github.com/xpl/useless/blob/master/example.js) app). Will feature continuous builds, hot module replacement, CSS imports and shared code extraction — all configurable from server's config.
