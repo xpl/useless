@@ -16,6 +16,11 @@ const locator = module.exports = {
 
         return hasBabelrc },
 
+    modulePath (name, searchFrom) {
+        var basePath = locator.locate (name, searchFrom)
+        return basePath && path.join (basePath, 'node_modules', name)
+    },
+
     locateFromFile (file) {
         return _.find (locator.parentDirsOf (file),
                     dir => locator.isFile (path.join (dir, 'package.json')))
@@ -23,8 +28,8 @@ const locator = module.exports = {
 
 /*  Locates NPM module path     */
 
-    locate (name) {
-        return _.find (locator.parentDirsOf (process.cwd ()),
+    locate (name, where) {
+        return _.find (locator.parentDirsOf (where || process.cwd ()),
                     dir => locator.isDirectory (path.join (dir, 'node_modules', name)))
     },
 

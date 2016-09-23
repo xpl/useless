@@ -134,6 +134,13 @@ module.exports = $trait ({
         const outputPath = path.resolve (config.buildPath),
               publicPath = this.webpackServerURL.concatPath ('build')
 
+        const dirs = moduleLocator.parentDirsOf (__filename)
+
+    /*  Locate absolute paths to modules. We do this because webpack fails to locate them when Useless is symlinked    */
+
+        const webpackPath          = moduleLocator.modulePath ('webpack', __filename),
+              webpackDevServerPath = moduleLocator.modulePath ('webpack-dev-server', __filename)
+
     /*  Full path here is for handling modules that are symlinked with `npm link`.
         Otherwise babel blames with `Error: Couldn't find preset "es2015" relative to
         directory <symlinked module path>`                                              */
@@ -148,8 +155,8 @@ module.exports = $trait ({
             entry: _.map2 (input.entry, location =>
                                             [path.resolve (location),
                                              ...(config.hotReload ? [
-                                                    'webpack/hot/only-dev-server',
-                                                    `webpack-dev-server/client?${this.webpackServerURL}`,
+                                                    webpackPath + '/hot/only-dev-server',
+                                                    webpackDevServerPath + '/client?' + this.webpackServerURL,
                                                     path.join (__dirname, '../client/webpack-hot-fix')] : []) ]),
 
             devtool: 'source-map',
