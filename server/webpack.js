@@ -143,12 +143,14 @@ module.exports = $trait ({
 
         const compiler = webpack (this.generatedWebpackConfig = {
 
-            entry: log.pp (_.map2 (input.entry, location =>
+        /*  TODO:   extract webpack-dev-server and webpack-hot-fix to separate entry (speeds up build)    */
+
+            entry: _.map2 (input.entry, location =>
                                             [path.resolve (location),
                                              ...(config.hotReload ? [
                                                     'webpack/hot/only-dev-server',
                                                     `webpack-dev-server/client?${this.webpackServerURL}`,
-                                                    path.resolve ('./client/webpack-hot-fix')] : []) ])),
+                                                    path.join (__dirname, '../client/webpack-hot-fix')] : []) ]),
 
             devtool: 'source-map',
 
