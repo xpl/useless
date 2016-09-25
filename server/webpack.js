@@ -24,7 +24,7 @@ module.exports = $trait ({
     $defaults: {
 
         compressedWebpackEntries: {},
-        
+
         config: { webpack: {
 
             buildPath: './build',
@@ -256,15 +256,18 @@ module.exports = $trait ({
 
                 if (config.compress) {
 
-                    return __.each (input.entry, (v, entry) => {
+                    const names = [...Object.keys (input.entry), ...input.commons.map (x => x.name)]
 
-                        const inputFile = path.join (outputPath, entry + '.js')
+                    return __.each (names, name => {
+
+                        const inputFile = path.join (outputPath, name + '.js')
                         const text = fs.readFileSync (inputFile, { encoding: 'utf-8' })
 
                         if (!text.includes ('__NO_COMPRESS__')) {
+
                             return this.compress (this.stripTests (inputFile, text)).then (compressedFile => {
 
-                                this.compressedWebpackEntries[entry] = path.parse (compressedFile).name
+                                this.compressedWebpackEntries[name] = path.parse (compressedFile).name
                             })
                         }
                     })
