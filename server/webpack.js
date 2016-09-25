@@ -8,6 +8,11 @@ const fs                 = require ('fs'),
       WebpackServer      = require ('webpack-dev-server'),
       ExtractTextPlugin  = require ('extract-text-webpack-plugin'),
       CommonsChunkPlugin = require ('webpack/lib/optimize/CommonsChunkPlugin'),
+      esprima            = require ('esprima'),
+      escodegen          = require ('escodegen'),
+      querystring        = require ('querystring'),
+      http               = require ('http'),
+      util               = require ('./base/util'),
       moduleLocator      = require ('./base/module-locator')
 
 module.exports = $trait ({
@@ -16,20 +21,24 @@ module.exports = $trait ({
         require ('./api'),
         require ('./http')],
 
-    $defaults: { config: { webpack: {
+    $defaults: {
 
-        buildPath: './build',
-        entry: {},
-        hotReload: false,
-        port: 3000,
-        separateCSS: false, // will be disabled if webpackHotReload=true (not compatible)
-        compress: false,
-        externals: {
-            fs:   true,
-            path: true
-        },
+        compressedWebpackEntries: {},
+        
+        config: { webpack: {
 
-    } } },
+            buildPath: './build',
+            entry: {},
+            hotReload: false,   // for development use only! enables Webpack HotModuleReplacement
+            port: 3000,
+            separateCSS: false, // meaningless when hotReload = true
+            compress: false,    // meaningless when hotReload = true
+            externals: {
+                fs:   true,
+                path: true
+            },
+
+        } } },
 
     api () {
         return {
@@ -118,13 +127,15 @@ module.exports = $trait ({
 
         const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}"></link>` : ''
         
+        const scriptName = (this.compressedWebpackEntries[name] || name) + '.js'
+
         const script = (this.config.webpack.hotReload ? '<!-- HOT RELOAD ENABLED -->' : '') +
-                       `<script type="text/javascript" src="${this.webpackURL (name + '.js')}"></script>`
+                       `<script type="text/javascript" src="${this.webpackURL (scriptName)}"></script>`
 
         return style + script
     },
 
-    beforeInit () { log.blue ('Building with WebPack...')
+    beforeInit () { log.gg ('Building with WebPack...')
 
         try { fs.mkdirSync (path.resolve ('./build')) } catch (e) {}
 
@@ -157,7 +168,7 @@ module.exports = $trait ({
                                              ...(config.hotReload ? [
                                                     webpackPath + '/hot/only-dev-server',
                                                     webpackDevServerPath + '/client?' + this.webpackServerURL,
-                                                    path.join (__dirname, '../client/webpack-hot-fix')] : []) ]),
+                                                    path.join (__dirname, '../client/webpack-hot-fix')] : []) ]), // fixes webpack2 and webpack-dev-server incompatiblility
 
             devtool: 'source-map',
 
@@ -172,12 +183,6 @@ module.exports = $trait ({
                         ...input.commons.map (def => new CommonsChunkPlugin (def)),
                         ...(this.shouldExtractStyles ? [new ExtractTextPlugin ('[name].css')] : []),
                      ],
-
-            // resolveLoader: {
-            //     alias: {
-            //         'strip-tests-loader': path.join (__dirname, "./base/strip-tests-loader")
-            //     }
-            // },
 
             module: {
                 loaders: [
@@ -238,16 +243,149 @@ module.exports = $trait ({
 
             return compiler.run ().then (stats => { 
 
-                console.log (stats.toString({
+                console.log (stats.toString ({
+
                     colors: true,
                     children: false,
                     timings: true,
-                }))
+
+                }), '\n')
 
                 if (stats.toJson ('normal').errors.length > 0) {
                     throw new Error ('webpack failure') }
+
+                if (config.compress) {
+
+                    return __.each (input.entry, (v, entry) => {
+
+                        const inputFile = path.join (outputPath, entry + '.js')
+                        const text = fs.readFileSync (inputFile, { encoding: 'utf-8' })
+
+                        if (!text.includes ('__NO_COMPRESS__')) {
+                            return this.compress (this.stripTests (inputFile, text)).then (compressedFile => {
+
+                                this.compressedWebpackEntries[entry] = path.parse (compressedFile).name
+                            })
+                        }
+                    })
+                }
+
             })
         }
+    },
+
+    compress (file) {
+
+        const parsedPath = path.parse (file)
+
+        log.g ('Compressing with Google Closure Compiler: ', log.color.boldOrange, parsedPath.base)
+
+        return this.callGoogleClosureCompiler (fs.readFileSync (file, { encoding: 'utf-8' })).then (compressedText => {
+
+            const outputFile = path.join (parsedPath.dir, parsedPath.name + '.min.js')
+
+            fs.writeFileSync (outputFile, compressedText, { 'encoding': 'utf-8' })
+
+            return outputFile
+        })
+    },
+
+    callGoogleClosureCompiler (src) {
+
+        return new Promise ((resolve, reject) => {
+
+            var post_data = querystring.stringify ({
+                'compilation_level' : 'SIMPLE_OPTIMIZATIONS',
+                'output_format': 'text',
+                'output_info': 'compiled_code',
+                'language_out': 'ecmascript5',
+                'warning_level' : 'QUIET',
+                'js_code' : src })
+
+            var post_options = {
+                host: 'closure-compiler.appspot.com',
+                port: '80',
+                path: '/compile',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Length': post_data.length } };
+
+            var post_req = http.request(post_options, util.readHttpResponse ('utf-8',
+                                                            response => {
+                                                                if (response.trimmed.length) {
+                                                                    resolve (response) }
+                                                                else {
+                                                                    reject (new Error ('Google Closure Compiler replied with empty response'))  } }))
+
+            post_req.write (post_data)
+            post_req.end ()
+        })
+    },
+
+    stripTests (file, src) {
+
+        const parsedPath = path.parse (file)
+
+        const sourceAST = esprima.parse (src, { loc: true, sourceType: 'module' })
+
+        const
+
+            testExpr = fnName => { return { expression: {
+                                                callee:    {
+                                                    object:   { name: "_" },
+                                                    property: { name: fnName } } } } },
+
+            matchesTestsDefExpr = _.matches ({ expression:  {
+                                                    operator: "=",
+                                                    left:     {
+                                                        object:   {
+                                                            object:   { name: "_"  },
+                                                            property: { name: "tests"  }  }  } } }),
+
+            matchesTestsDefExpr2 = _.matches ({ expression:  {
+                                                    operator: "=",
+                                                    left:     {
+                                                        object:   {
+                                                            object:   { object:   { name: "_"  },
+                                                                        property: { name: "tests"  } },
+                                                            property: {}  }  } } }),
+
+            matchesTest = _.matches (testExpr ('deferTest')).or (
+                          _.matches (testExpr ('withTest'))),
+
+            hasVarDeclarations = body => (_.find (body, _.matches ({ type: 'VariableDeclaration' })) || false)
+
+        const replace = expr => {
+
+            /*  _.withTest or _.deferTest   */
+
+                if (matchesTestsDefExpr  (expr) ||
+                    matchesTestsDefExpr2 (expr)) { return { "type": "EmptyStatement" } }
+
+            /*  _.tests.foo = { ... } or _.tests['foo'] = { ... }    */
+
+                else if (matchesTest (expr)) {
+
+                    var fn = expr.expression.arguments[2]
+
+                    if (hasVarDeclarations (fn.body.body)) {
+                        return {
+                            type: "ExpressionStatement",
+                            expression: { type: "CallExpression", callee: fn, arguments: [] }  } }
+
+                    else {
+                        return fn.body } } }
+
+        sourceAST.body = _.hyperMap (sourceAST.body, replace)
+
+    /*  TODO: source maps   */
+
+        const outputFile = path.join (parsedPath.dir, parsedPath.name + '.stripped.js')
+
+        fs.writeFileSync (outputFile, escodegen.generate (sourceAST), { encoding: 'utf-8' })
+
+        return outputFile
     }
 })
 

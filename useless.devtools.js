@@ -1,3 +1,5 @@
+/*	__NO_COMPRESS__	*/
+
 String.ify = require ('string.ify')
 
 require ('./base/tier0/assert')
