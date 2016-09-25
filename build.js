@@ -101,13 +101,19 @@ const BuildApp = $singleton (Component, {
 
         return this.webpack (file, path.join (this.buildPath, name + '.js')).then (compiledSrc => {
 
-            var strippedSrc = this.stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name,
-                                    !this.args.noStripped &&
-                                     this.buildPath)
+            if (!compiledSrc.includes ('__NO_COMPRESS__')) {
 
-            if (!this.args.noCompress) {
-                return this.compileWithGoogle (strippedSrc).then (
-                       this.writeCompiled.$ (name + '.min.js', this.buildPath)) } }) },
+                var strippedSrc = this.stripCommentsAndTests (compiledSrc.replace (/_\.withTest \(/g, '_.deferTest ('), name,
+                                        !this.args.noStripped &&
+                                         this.buildPath)
+
+                if (!this.args.noCompress) {
+                    return this.compileWithGoogle (strippedSrc).then (
+                           this.writeCompiled.$ (name + '.min.js', this.buildPath))
+                }
+            }
+        })
+    },
 
     stripCommentsAndTests: function (src, name, path) { log.hint ('Stripping tests...')
 
