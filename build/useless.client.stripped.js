@@ -59,7 +59,7 @@
         'use strict';
         module.exports = function () {
             'use strict';
-            var ownKeys = __webpack_require__(33);
+            var ownKeys = __webpack_require__(32);
             var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
             var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
             var concat = Function.bind.call(Function.call, Array.prototype.concat);
@@ -2574,20 +2574,18 @@
                         if (cfg.progress) {
                             xhr.onprogress = Http.progressCallbackWithSimulation(cfg.progress);
                         }
-                        xhr.onreadystatechange = function () {
-                            if (xhr.readyState === 4) {
-                                if (cfg.progress) {
-                                    cfg.progress(1);
-                                }
-                                var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
-                                if (xhr.status === 200) {
-                                    resolve(response);
-                                } else {
-                                    reject(_.extend(new Error(xhr.statusText), {
-                                        httpResponse: response,
-                                        httpStatus: xhr.status
-                                    }));
-                                }
+                        xhr.onload = xhr.onerror = function () {
+                            if (cfg.progress) {
+                                cfg.progress(1);
+                            }
+                            var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
+                            if (xhr.status === 200) {
+                                resolve(response);
+                            } else {
+                                reject(_.extend(new Error(xhr.statusText), {
+                                    httpResponse: response,
+                                    httpStatus: xhr.status
+                                }));
                             }
                         };
                         abort = function abort() {
@@ -3020,7 +3018,7 @@
                     return s.replace(/[^a-z0-9]/gi, '');
                 },
                 alphanumericValue: function alphanumericValue(s) {
-                    return s.replace(unicode_hack(/[^0-9\p{L}|^0-9\p{N}|^0-9\p{Pc}|^0-9\p{M}]/g), '');
+                    return s.replace(/[^a-zа-я0-9]/gi, '');
                 },
                 numericValue: function numericValue(s) {
                     return s.replace(/[^0-9]/g, '');
@@ -4629,7 +4627,7 @@
             ].forEach(Tags.define);
         }
         if (typeof Symbol !== 'undefined') {
-            var bullet = __webpack_require__(32);
+            var bullet = __webpack_require__(33);
             Tags.prototype[Symbol.for('String.ify')] = function (stringify) {
                 if (stringify.json) {
                     return stringify($untag(this));
@@ -6117,6 +6115,17 @@
         ;
     },
     function (module, exports) {
+        if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
+            module.exports = Reflect.ownKeys;
+        } else if (typeof Object.getOwnPropertySymbols === 'function') {
+            module.exports = function Reflect_ownKeys(o) {
+                return Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o));
+            };
+        } else {
+            module.exports = Object.getOwnPropertyNames;
+        }
+    },
+    function (module, exports) {
         'use strict';
         'use strict';
         module.exports = function (bullet, arg) {
@@ -6128,17 +6137,6 @@
             });
             return isArray ? lines : lines.join('\n');
         };
-    },
-    function (module, exports) {
-        if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
-            module.exports = Reflect.ownKeys;
-        } else if (typeof Object.getOwnPropertySymbols === 'function') {
-            module.exports = function Reflect_ownKeys(o) {
-                return Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o));
-            };
-        } else {
-            module.exports = Object.getOwnPropertyNames;
-        }
     },
     function (module, exports) {
         module.exports = exports = function (edges) {

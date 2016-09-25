@@ -178,7 +178,7 @@ _.deferTest ('String extensions', function () {
         return s.replace (/[^a-z0-9]/gi, '') },
 
     alphanumericValue: function (s) {
-        return s.replace (unicode_hack (/[^0-9\p{L}|^0-9\p{N}|^0-9\p{Pc}|^0-9\p{M}]/g), '') }, // utilizes unicode regexp hack (defined at the end of file)
+        return s.replace (/[^a-zа-я0-9]/gi, '') },
 
     numericValue: function (s) {
         return s.replace (/[^0-9]/g, '') },

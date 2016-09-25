@@ -12,8 +12,6 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 /*  Internal dependencies
     ======================================================================== */
 
-    //require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-
     require ('./base/tier0/platform')    // platform abstraction layer
     require ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)
     require ('./base/tier0/function')    // function-centric utilities

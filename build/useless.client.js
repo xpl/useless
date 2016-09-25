@@ -66,6 +66,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
+/* unknown exports provided */
 /* all exports used */
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!
@@ -95,10 +96,11 @@ module.exports = g;
 
 /***/ },
 /* 1 */
+/* unknown exports provided */
 /* all exports used */
-/*!******************************************************!*\
-  !*** ./~/es7-object-polyfill/es7-object-polyfill.js ***!
-  \******************************************************/
+/*!*****************************************************!*\
+  !*** ../es7-object-polyfill/es7-object-polyfill.js ***!
+  \*****************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -107,7 +109,7 @@ module.exports = g;
 module.exports = function () {
 	"use strict";
 
-	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 33);
+	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 32);
 	var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
 	var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
 	var concat = Function.bind.call(Function.call, Array.prototype.concat);
@@ -133,6 +135,7 @@ module.exports = function () {
 
 /***/ },
 /* 2 */
+/* unknown exports provided */
 /* all exports used */
 /*!************************************!*\
   !*** ./base/3rd/underscore-fix.js ***!
@@ -163,6 +166,7 @@ if ('a1 b2 c3' !== _.zipWith([['a', 'b', 'c'], [1, 2, 3]], function (a, b) {
 
 /***/ },
 /* 3 */
+/* unknown exports provided */
 /* all exports used */
 /*!*********************!*\
   !*** ./base/CPS.js ***!
@@ -743,6 +747,7 @@ _.deferTest(['cps', 'trySequence'], function () {
 
 /***/ },
 /* 4 */
+/* unknown exports provided */
 /* all exports used */
 /*!*************************!*\
   !*** ./base/Channel.js ***!
@@ -1049,6 +1054,7 @@ $prototype.macroTag('channel', function (def, value, name) {
 
 /***/ },
 /* 5 */
+/* unknown exports provided */
 /* all exports used */
 /*!*********************!*\
   !*** ./base/OOP.js ***!
@@ -2096,6 +2102,7 @@ _.withTest(['OOP', '$singleton'], function () {
 
 /***/ },
 /* 6 */
+/* unknown exports provided */
 /* all exports used */
 /*!***********************!*\
   !*** ./base/Parse.js ***!
@@ -2129,6 +2136,7 @@ $global.Parse = {
 
 /***/ },
 /* 7 */
+/* unknown exports provided */
 /* all exports used */
 /*!**************************!*\
   !*** ./base/Promise+.js ***!
@@ -2692,6 +2700,7 @@ $mixin(Function, {
 
 /***/ },
 /* 8 */
+/* unknown exports provided */
 /* all exports used */
 /*!********************!*\
   !*** ./base/Rx.js ***!
@@ -2901,6 +2910,7 @@ $global.R = $singleton({
 
 /***/ },
 /* 9 */
+/* unknown exports provided */
 /* all exports used */
 /*!**********************!*\
   !*** ./base/Sort.js ***!
@@ -2960,6 +2970,7 @@ $global.Sort = {
 
 /***/ },
 /* 10 */
+/* unknown exports provided */
 /* all exports used */
 /*!***************************!*\
   !*** ./base/component.js ***!
@@ -4395,6 +4406,7 @@ $global.Component = $prototype({
 
 /***/ },
 /* 11 */
+/* unknown exports provided */
 /* all exports used */
 /*!*****************************!*\
   !*** ./base/concurrency.js ***!
@@ -4547,6 +4559,7 @@ $global.$scope = function (fn) {
 
 /***/ },
 /* 12 */
+/* unknown exports provided */
 /* all exports used */
 /*!**********************************!*\
   !*** ./base/dynamic/bindable.js ***!
@@ -4811,6 +4824,7 @@ _.deferTest('bindable', function () {
 
 /***/ },
 /* 13 */
+/* unknown exports provided */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/dynamic/stream.js ***!
@@ -5546,6 +5560,7 @@ _.deferTest(['stream', 'observable.map'], function () {
 
 /***/ },
 /* 14 */
+/* unknown exports provided */
 /* all exports used */
 /*!**********************!*\
   !*** ./base/http.js ***!
@@ -5624,24 +5639,23 @@ $global.Http = $singleton(Component, {
                     xhr.onprogress = Http.progressCallbackWithSimulation(cfg.progress);
                 }
 
-                xhr.onreadystatechange = function () {
+                xhr.onload = xhr.onerror = function () {
 
-                    if (xhr.readyState === 4) {
-                        if (cfg.progress) {
-                            cfg.progress(1);
-                        }
+                    if (cfg.progress) {
+                        cfg.progress(1);
+                    }
 
-                        var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
+                    var response = xhr.responseType === 'arraybuffer' ? xhr.response : xhr.responseText;
 
-                        if (xhr.status === 200) {
-                            resolve(response);
-                        } else {
-                            reject(_.extend(new Error(xhr.statusText), {
-                                httpResponse: response,
-                                httpStatus: xhr.status }));
-                        }
+                    if (xhr.status === 200) {
+                        resolve(response);
+                    } else {
+                        reject(_.extend(new Error(xhr.statusText), {
+                            httpResponse: response,
+                            httpStatus: xhr.status }));
                     }
                 };
+
                 /*  Set up the abort method
                  */
                 abort = function abort() {
@@ -5744,6 +5758,7 @@ $global.JSONAPI = $singleton(Component, {
 
 /***/ },
 /* 15 */
+/* unknown exports provided */
 /* all exports used */
 /*!*****************************!*\
   !*** ./base/infix/Array.js ***!
@@ -5932,6 +5947,7 @@ _.withTest('Array extensions', function () {
 
 /***/ },
 /* 16 */
+/* unknown exports provided */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/infix/Function.js ***!
@@ -6253,6 +6269,7 @@ $extensionMethods(Function, { catch_: function catch_(fn, _catch_, then, finally
 
 /***/ },
 /* 17 */
+/* unknown exports provided */
 /* all exports used */
 /*!******************************!*\
   !*** ./base/infix/String.js ***!
@@ -6447,8 +6464,8 @@ _.deferTest('String extensions', function () {
         },
 
         alphanumericValue: function alphanumericValue(s) {
-            return s.replace(unicode_hack(/[^0-9\p{L}|^0-9\p{N}|^0-9\p{Pc}|^0-9\p{M}]/g), '');
-        }, // utilizes unicode regexp hack (defined at the end of file)
+            return s.replace(/[^a-zа-я0-9]/gi, '');
+        },
 
         numericValue: function numericValue(s) {
             return s.replace(/[^0-9]/g, '');
@@ -6568,6 +6585,7 @@ _.loDashesToCamelCase = function (x) {
 
 /***/ },
 /* 18 */
+/* unknown exports provided */
 /* all exports used */
 /*!****************************************!*\
   !*** ./base/infix/extensionMethods.js ***!
@@ -6617,6 +6635,7 @@ $global.$extensionMethods = function (Type, methods) {
 
 /***/ },
 /* 19 */
+/* unknown exports provided */
 /* all exports used */
 /*!**********************!*\
   !*** ./base/math.js ***!
@@ -7476,6 +7495,7 @@ _.withTest(['DAG', 'sortedSubgraphOf'], function () {
 
 /***/ },
 /* 20 */
+/* unknown exports provided */
 /* all exports used */
 /*!*********************************!*\
   !*** ./base/tier0/arguments.js ***!
@@ -7617,6 +7637,7 @@ _.withTest('argcount tracking', function () {
 
 /***/ },
 /* 21 */
+/* unknown exports provided */
 /* all exports used */
 /*!*******************************!*\
   !*** ./base/tier0/busybox.js ***!
@@ -7761,6 +7782,7 @@ _.oneOf = $restArg(function () {
 
 /***/ },
 /* 22 */
+/* unknown exports provided */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/tier0/function.js ***!
@@ -8348,6 +8370,7 @@ _.withTest(['function', 'sequence / then'], function () {
 
 /***/ },
 /* 23 */
+/* unknown exports provided */
 /* all exports used */
 /*!*********************************!*\
   !*** ./base/tier0/meta-tags.js ***!
@@ -8662,7 +8685,7 @@ _.withTest('meta-tags', function () {
 
 if (typeof Symbol !== 'undefined') {
 
-    var bullet = __webpack_require__(/*! string.bullet */ 32);
+    var bullet = __webpack_require__(/*! string.bullet */ 33);
 
     Tags.prototype[Symbol.for('String.ify')] = function (stringify) {
 
@@ -8681,6 +8704,7 @@ if (typeof Symbol !== 'undefined') {
 
 /***/ },
 /* 24 */
+/* unknown exports provided */
 /* all exports used */
 /*!********************************!*\
   !*** ./base/tier0/platform.js ***!
@@ -8755,6 +8779,7 @@ if (typeof Symbol !== 'undefined') {
 
 /***/ },
 /* 25 */
+/* unknown exports provided */
 /* all exports used */
 /*!**********************************!*\
   !*** ./base/tier0/properties.js ***!
@@ -8873,6 +8898,7 @@ _.withTest('properties', function () {
 
 /***/ },
 /* 26 */
+/* unknown exports provided */
 /* all exports used */
 /*!******************************!*\
   !*** ./base/tier0/stdlib.js ***!
@@ -9826,6 +9852,7 @@ _.pickKeys = function (obj, predicate) {
 
 /***/ },
 /* 27 */
+/* unknown exports provided */
 /* all exports used */
 /*!****************************!*\
   !*** ./base/tier0/type.js ***!
@@ -10093,6 +10120,7 @@ _.withTest(['type', 'empty-centric routines'], function () {
 
 /***/ },
 /* 28 */
+/* unknown exports provided */
 /* all exports used */
 /*!*********************************!*\
   !*** ./base/tier0/typeMatch.js ***!
@@ -10252,6 +10280,7 @@ _.deferTest(['type', 'type matching'], function () {
 
 /***/ },
 /* 29 */
+/* unknown exports provided */
 /* all exports used */
 /*!********************************!*\
   !*** ./client/DOMReference.js ***!
@@ -10488,6 +10517,7 @@ $global.HideOnEscape = $trait({
 
 /***/ },
 /* 30 */
+/* unknown exports provided */
 /* all exports used */
 /*!************************!*\
   !*** ./client/anim.js ***!
@@ -10599,6 +10629,7 @@ $global.Easing = {
 
 /***/ },
 /* 31 */
+/* unknown exports provided */
 /* all exports used */
 /*!*************************!*\
   !*** ./client/node+.js ***!
@@ -11234,6 +11265,29 @@ _.tests.NodePlus = {
 
 /***/ },
 /* 32 */
+/* unknown exports provided */
+/* all exports used */
+/*!*********************************************************!*\
+  !*** ../es7-object-polyfill/~/reflect.ownkeys/index.js ***!
+  \*********************************************************/
+/***/ function(module, exports) {
+
+if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
+  module.exports = Reflect.ownKeys;
+} else if (typeof Object.getOwnPropertySymbols === 'function') {
+  module.exports = function Reflect_ownKeys(o) {
+    return (
+      Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o))
+    );
+  }
+} else {
+  module.exports = Object.getOwnPropertyNames;
+}
+
+
+/***/ },
+/* 33 */
+/* unknown exports provided */
 /* all exports used */
 /*!*****************************************!*\
   !*** ../string.bullet/string.bullet.js ***!
@@ -11258,28 +11312,8 @@ module.exports = function (bullet, arg) {
 };
 
 /***/ },
-/* 33 */
-/* all exports used */
-/*!************************************!*\
-  !*** ./~/reflect.ownkeys/index.js ***!
-  \************************************/
-/***/ function(module, exports) {
-
-if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
-  module.exports = Reflect.ownKeys;
-} else if (typeof Object.getOwnPropertySymbols === 'function') {
-  module.exports = function Reflect_ownKeys(o) {
-    return (
-      Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o))
-    );
-  }
-} else {
-  module.exports = Object.getOwnPropertyNames;
-}
-
-
-/***/ },
 /* 34 */
+/* unknown exports provided */
 /* all exports used */
 /*!*****************************!*\
   !*** ./~/toposort/index.js ***!
@@ -11353,6 +11387,7 @@ function uniqueNodes(arr){
 
 /***/ },
 /* 35 */
+/* unknown exports provided */
 /* all exports used */
 /*!************************************!*\
   !*** ./~/underscore/underscore.js ***!
@@ -12911,6 +12946,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 
 /***/ },
 /* 36 */
+/* unknown exports provided */
 /* all exports used */
 /*!***************************!*\
   !*** ./useless.client.js ***!
@@ -12935,8 +12971,6 @@ _.deferTest = _.withTest = function (name, test, subj) {
 
 /*  Internal dependencies
     ======================================================================== */
-
-//require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
 
 __webpack_require__(/*! ./base/tier0/platform */ 24); // platform abstraction layer
 __webpack_require__(/*! ./base/tier0/arguments */ 20); // argument count tracking utility (to streamline metaprogramming utilities)

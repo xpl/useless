@@ -10,13 +10,6 @@ $global._ = module.exports = require ('./base/3rd/underscore-fix') // latest und
 /*  Internal dependencies
     ======================================================================== */
 
-
-/*  Third party (free-licensed)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    require ('./base/3rd/unicode_hack')  // provides missing unicode regexp syntax
-
-
 /*  Basics of basics
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 

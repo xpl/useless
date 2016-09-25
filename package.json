@@ -14,7 +14,7 @@
     "example": "examples"
   },
   "scripts": {
-    "test": "node test.js",
+    "test": "node test.js no-supervisor",
     "build": "node build.js"
   },
   "repository": {
