@@ -4671,6 +4671,13 @@
                         return {};
                     }
                 }();
+                if (p.system === 'iOS') {
+                    var match = navigator.userAgent.match(/OS (\d)_(\d)/);
+                    p.systemVersion = {
+                        major: match[1],
+                        minor: match[2]
+                    };
+                }
                 var $global = p.engine === 'browser' ? window : p.engine === 'node' ? global : undefined;
                 $global.property = function (name, v, cfg) {
                     if (name in $global) {
@@ -4706,7 +4713,8 @@
                     NodeJS: p.engine === 'node',
                     iPad: p.device === 'iPad',
                     iPhone: p.device === 'iPhone',
-                    iOS: p.system === 'iOS'
+                    iOS: p.system === 'iOS',
+                    systemVersion: p.systemVersion
                 });
             }());
         }.call(exports, __webpack_require__(0)));
