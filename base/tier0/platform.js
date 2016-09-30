@@ -36,8 +36,10 @@
                     return {} } }) ()
 
     if (p.system === 'iOS') {
-        var match = navigator.userAgent.match (/OS (\d)_(\d)/)
-        p.systemVersion = { major: match[1], minor: match[2] }
+        var match = navigator.userAgent.match (/OS (\d+)_(\d+)/)
+        if (match) {
+            p.systemVersion = { major: Number (match[1]), minor: Number (match[2]) }
+        }
     }
 
     var $global = (p.engine === 'browser') ? window :

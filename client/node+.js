@@ -422,7 +422,6 @@ var is = function (tag) { return function () { return this.tagName === tag } }
                     var placeholder = document.createElement ('PROMISE')
                         this.appendChild (placeholder)
                         nodes.then (function (nodes) {
-                            console.log (nodes, placeholder.replaceWith)
                             placeholder.replaceWith (nodes) }).panic }
                 else {
                     this.add (nodes) }
