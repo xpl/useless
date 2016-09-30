@@ -9,6 +9,10 @@ $global._ = module.exports = require ('./base/3rd/underscore-fix') // latest und
 _.tests = {}
 _.deferTest = _.withTest = function (name, test, subj) { subj () }
 
+/*  Polyfills   */
+
+    require ('es6-object-assign').polyfill ()
+
 /*  Internal dependencies
     ======================================================================== */
 

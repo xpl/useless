@@ -76,6 +76,8 @@
                                     iPhone:  p.device === 'iPhone',
                                     iOS:     p.system === 'iOS',
 
+                                    iPhone4: (p.device === 'iPhone') && (window.screen.height === 480),
+
                                     systemVersion: p.systemVersion
                                 })
 
