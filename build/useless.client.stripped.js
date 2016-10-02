@@ -6084,7 +6084,21 @@
                     this.add(nodes);
                 }
                 return this;
-            }
+            },
+            $mouseEntered: $property(function () {
+                var _this2 = this;
+                if (!this._mouseEntered) {
+                    this._mouseEntered = _.observable(false);
+                    this._mouseEntered.context = this;
+                    this.on('mouseenter', function () {
+                        _this2._mouseEntered(true);
+                    });
+                    this.on('mouseleave', function () {
+                        _this2._mouseEntered(false);
+                    });
+                }
+                return this._mouseEntered;
+            })
         });
         $mixin(HTMLInputElement, {
             $value: $property(function () {

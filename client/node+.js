@@ -426,7 +426,21 @@ var is = function (tag) { return function () { return this.tagName === tag } }
                 else {
                     this.add (nodes) }
 
-                return this }
+                return this },
+
+        $mouseEntered: $property (function () {
+
+            if (!this._mouseEntered) {
+                 
+                 this._mouseEntered = _.observable (false)
+                 this._mouseEntered.context = this
+
+                 this.on ('mouseenter', () => { this._mouseEntered (true) })
+                 this.on ('mouseleave', () => { this._mouseEntered (false) })
+             }
+
+            return this._mouseEntered
+        })
     })
 
 /*  ========================================================================= */
