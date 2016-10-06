@@ -211,6 +211,11 @@ module.exports = $trait ({
     ------------------------------------------------------------------------ */
 
     serveRequest (context) { context = this.HttpContext.coerce (context)
+
+        if (!this.initialized.already) {
+            context.setCode (500).write ('Starting up...').end ()
+            return
+        }
         
         var result = new AndrogenePromise (resolve => { $global.$http = context
                                                         resolve (this.callAPIHandler ()
