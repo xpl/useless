@@ -11,6 +11,8 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 
 /*  Polyfills   */
 
+    require ('babel-polyfill')
+
     require ('es6-object-assign').polyfill ()
 
 /*  Internal dependencies
