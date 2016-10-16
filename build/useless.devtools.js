@@ -11806,67 +11806,53 @@ exports.SourceMapGenerator = SourceMapGenerator;
 
 /*  ------------------------------------------------------------------------ */
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var O = Object,
-    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
-    SourceMapConsumer = __webpack_require__(/*! source-map */ 34).SourceMapConsumer,
-    path = __webpack_require__(/*! ./impl/path */ 35),
-    memoize = __webpack_require__(/*! lodash.memoize */ 27),
-    lastOf = function lastOf(x) {
-    return x[x.length - 1];
-};
+const O = Object,
+      isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
+      SourceMapConsumer = __webpack_require__(/*! source-map */ 34).SourceMapConsumer,
+      path = __webpack_require__(/*! ./impl/path */ 35),
+      memoize = __webpack_require__(/*! lodash.memoize */ 27),
+      lastOf = x => x[x.length - 1];
 
 /*  ------------------------------------------------------------------------ */
 
-var newSourceFileMemoized = memoize(function (file) {
-    return new SourceFile(file);
-});
+const newSourceFileMemoized = memoize(file => new SourceFile(file));
 
-var getSource = module.exports = function (file) {
+const getSource = module.exports = file => {
     return newSourceFileMemoized(path.resolve(file));
 };
 
 /*  ------------------------------------------------------------------------ */
 
-var SourceMap = function () {
-    function SourceMap(originalFilePath, sourceMapPath) {
-        _classCallCheck(this, SourceMap);
+class SourceMap {
+
+    constructor(originalFilePath, sourceMapPath) {
 
         this.file = getSource(path.relativeToFile(originalFilePath, sourceMapPath));
         this.parsed = this.file.text && SourceMapConsumer(JSON.parse(this.file.text)) || null;
         this.sourceFor = memoize(this.sourceFor.bind(this));
     }
 
-    _createClass(SourceMap, [{
-        key: 'sourceFor',
-        value: function sourceFor(file) {
-            var content = this.parsed.sourceContentFor(file, true /* return null on missing */);
-            var fullPath = path.relativeToFile(this.file.path, file);
-            return content ? new SourceFile(fullPath, content) : getSource(fullPath);
-        }
-    }, {
-        key: 'resolve',
-        value: function resolve(loc) {
+    sourceFor(file) {
+        const content = this.parsed.sourceContentFor(file, true /* return null on missing */);
+        const fullPath = path.relativeToFile(this.file.path, file);
+        return content ? new SourceFile(fullPath, content) : getSource(fullPath);
+    }
 
-            var originalLoc = this.parsed.originalPositionFor(loc);
-            return originalLoc.source ? this.sourceFor(originalLoc.source).resolve(O.assign({}, loc, {
-                line: originalLoc.line,
-                column: originalLoc.column,
-                name: originalLoc.name })) : loc;
-        }
-    }]);
+    resolve(loc) {
 
-    return SourceMap;
-}();
+        const originalLoc = this.parsed.originalPositionFor(loc);
+        return originalLoc.source ? this.sourceFor(originalLoc.source).resolve(O.assign({}, loc, {
+            line: originalLoc.line,
+            column: originalLoc.column,
+            name: originalLoc.name })) : loc;
+    }
+}
 
 /*  ------------------------------------------------------------------------ */
 
-var SourceFile = function () {
-    function SourceFile(path, text /* optional */) {
-        _classCallCheck(this, SourceFile);
+class SourceFile {
+
+    constructor(path, text /* optional */) {
 
         this.path = path;
 
@@ -11876,7 +11862,7 @@ var SourceFile = function () {
             try {
                 if (isBrowser) {
 
-                    var xhr = new XMLHttpRequest();
+                    let xhr = new XMLHttpRequest();
 
                     xhr.open('GET', path, false /* SYNCHRONOUS XHR FTW :) */);
                     xhr.send(null);
@@ -11892,46 +11878,42 @@ var SourceFile = function () {
         }
     }
 
-    _createClass(SourceFile, [{
-        key: 'resolve',
-        value: function resolve(loc /* { line[, column] } */) /* → { line, column, sourceFile, sourceLine } */{
+    get lines() {
+        return this.lines_ = this.lines_ || this.text.split('\n');
+    }
 
-            return this.sourceMap ? this.sourceMap.resolve(loc) : O.assign({}, loc, {
+    get sourceMap() {
 
-                sourceFile: this,
-                sourceLine: this.lines[loc.line - 1] || '',
-                error: this.error
-            });
-        }
-    }, {
-        key: 'lines',
-        get: function get() {
-            return this.lines_ = this.lines_ || this.text.split('\n');
-        }
-    }, {
-        key: 'sourceMap',
-        get: function get() {
-
-            try {
-                if (this.sourceMap_ === undefined) {
-                    var url = this.text.match(/\u0023 sourceMappingURL=(.+\.map)/); // escape #, otherwise it will match this exact line.. %)
-                    if (url = url && url[1]) {
-                        this.sourceMap_ = new SourceMap(this.path, url);
-                    } else {
-                        this.sourceMap_ = null;
+        try {
+            if (this.sourceMap_ === undefined) {
+                let url = this.text.match(/\u0023 sourceMappingURL=(.+\.map)/); // escape #, otherwise it will match this exact line.. %)
+                if (url = url && url[1]) {
+                    const sourceMap = new SourceMap(this.path, url);
+                    if (sourceMap.parsed) {
+                        this.sourceMap_ = sourceMap;
                     }
+                } else {
+                    this.sourceMap_ = null;
                 }
-            } catch (e) {
-                this.sourceMapError = e;
-                this.sourceMap_ = null;
             }
-
-            return this.sourceMap_;
+        } catch (e) {
+            this.sourceMapError = e;
+            this.sourceMap_ = null;
         }
-    }]);
 
-    return SourceFile;
-}();
+        return this.sourceMap_;
+    }
+
+    resolve(loc /* { line[, column] } */) /* → { line, column, sourceFile, sourceLine } */{
+
+        return this.sourceMap ? this.sourceMap.resolve(loc) : O.assign({}, loc, {
+
+            sourceFile: this,
+            sourceLine: this.lines[loc.line - 1] || '',
+            error: this.error
+        });
+    }
+}
 
 /*  ------------------------------------------------------------------------ */
 
@@ -17996,19 +17978,21 @@ exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 33).SourceNode
 
 /*  ------------------------------------------------------------------------ */
 
-var isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
+const isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
 
 /*  ------------------------------------------------------------------------ */
 
-var path = module.exports = {
-	concat: function concat(a, b) {
+const path = module.exports = {
 
-		var a_endsWithSlash = a[a.length - 1] === '/',
-		    b_startsWithSlash = b[0] === '/';
+	concat(a, b) {
+
+		const a_endsWithSlash = a[a.length - 1] === '/',
+		      b_startsWithSlash = b[0] === '/';
 
 		return a + (a_endsWithSlash || b_startsWithSlash ? '' : '/') + (a_endsWithSlash && b_startsWithSlash ? b.substring(1) : b);
 	},
-	resolve: function resolve(x) {
+
+	resolve(x) {
 
 		if (path.isAbsolute(x)) {
 			return path.normalize(x);
@@ -18020,14 +18004,13 @@ var path = module.exports = {
 			return path.normalize(path.concat(process.cwd(), x));
 		}
 	},
-	normalize: function normalize(x) {
 
-		var output = [],
+	normalize(x) {
+
+		let output = [],
 		    skip = 0;
 
-		x.split('/').reverse().filter(function (x) {
-			return x !== '.';
-		}).forEach(function (x) {
+		x.split('/').reverse().filter(x => x !== '.').forEach(x => {
 
 			if (x === '..') {
 				skip++;
@@ -18038,17 +18021,14 @@ var path = module.exports = {
 			}
 		});
 
-		var result = output.reverse().join('/');
+		const result = output.reverse().join('/');
 
 		return (isBrowser && result[0] === '/' ? window.location.origin : '') + result;
 	},
 
+	isAbsolute: x => x[0] === '/' || /^[^\/]*:/.test(x),
 
-	isAbsolute: function isAbsolute(x) {
-		return x[0] === '/' || /^[^\/]*:/.test(x);
-	},
-
-	relativeToFile: function relativeToFile(a, b) {
+	relativeToFile(a, b) {
 
 		return path.isAbsolute(b) ? path.normalize(b) : path.normalize(path.concat(a.split('/').slice(0, -1).join('/'), b));
 	}
