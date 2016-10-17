@@ -11806,18 +11806,22 @@ exports.SourceMapGenerator = SourceMapGenerator;
 
 /*  ------------------------------------------------------------------------ */
 
-const O = Object,
-      isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
-      SourceMapConsumer = __webpack_require__(/*! source-map */ 34).SourceMapConsumer,
-      path = __webpack_require__(/*! ./impl/path */ 35),
-      memoize = __webpack_require__(/*! lodash.memoize */ 27),
-      lastOf = x => x[x.length - 1];
+var O = Object,
+    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
+    SourceMapConsumer = __webpack_require__(/*! source-map */ 34).SourceMapConsumer,
+    path = __webpack_require__(/*! ./impl/path */ 35),
+    memoize = __webpack_require__(/*! lodash.memoize */ 27),
+    lastOf = function (x) {
+    return x[x.length - 1];
+};
 
 /*  ------------------------------------------------------------------------ */
 
-const newSourceFileMemoized = memoize(file => new SourceFile(file));
+var newSourceFileMemoized = memoize(function (file) {
+    return new SourceFile(file);
+});
 
-const getSource = module.exports = file => {
+var getSource = module.exports = function (file) {
     return newSourceFileMemoized(path.resolve(file));
 };
 
@@ -11833,14 +11837,14 @@ class SourceMap {
     }
 
     sourceFor(file) {
-        const content = this.parsed.sourceContentFor(file, true /* return null on missing */);
-        const fullPath = path.relativeToFile(this.file.path, file);
+        var content = this.parsed.sourceContentFor(file, true /* return null on missing */);
+        var fullPath = path.relativeToFile(this.file.path, file);
         return content ? new SourceFile(fullPath, content) : getSource(fullPath);
     }
 
     resolve(loc) {
 
-        const originalLoc = this.parsed.originalPositionFor(loc);
+        var originalLoc = this.parsed.originalPositionFor(loc);
         return originalLoc.source ? this.sourceFor(originalLoc.source).resolve(O.assign({}, loc, {
             line: originalLoc.line,
             column: originalLoc.column,
@@ -11862,7 +11866,7 @@ class SourceFile {
             try {
                 if (isBrowser) {
 
-                    let xhr = new XMLHttpRequest();
+                    var xhr = new XMLHttpRequest();
 
                     xhr.open('GET', path, false /* SYNCHRONOUS XHR FTW :) */);
                     xhr.send(null);
@@ -11886,9 +11890,9 @@ class SourceFile {
 
         try {
             if (this.sourceMap_ === undefined) {
-                let url = this.text.match(/\u0023 sourceMappingURL=(.+\.map)/); // escape #, otherwise it will match this exact line.. %)
+                var url = this.text.match(/\u0023 sourceMappingURL=(.+\.map)/); // escape #, otherwise it will match this exact line.. %)
                 if (url = url && url[1]) {
-                    const sourceMap = new SourceMap(this.path, url);
+                    var sourceMap = new SourceMap(this.path, url);
                     if (sourceMap.parsed) {
                         this.sourceMap_ = sourceMap;
                     }
@@ -17978,16 +17982,16 @@ exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 33).SourceNode
 
 /*  ------------------------------------------------------------------------ */
 
-const isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
+var isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
 
 /*  ------------------------------------------------------------------------ */
 
-const path = module.exports = {
+var path = module.exports = {
 
 	concat(a, b) {
 
-		const a_endsWithSlash = a[a.length - 1] === '/',
-		      b_startsWithSlash = b[0] === '/';
+		var a_endsWithSlash = a[a.length - 1] === '/',
+		    b_startsWithSlash = b[0] === '/';
 
 		return a + (a_endsWithSlash || b_startsWithSlash ? '' : '/') + (a_endsWithSlash && b_startsWithSlash ? b.substring(1) : b);
 	},
@@ -18007,10 +18011,12 @@ const path = module.exports = {
 
 	normalize(x) {
 
-		let output = [],
+		var output = [],
 		    skip = 0;
 
-		x.split('/').reverse().filter(x => x !== '.').forEach(x => {
+		x.split('/').reverse().filter(function (x) {
+			return x !== '.';
+		}).forEach(function (x) {
 
 			if (x === '..') {
 				skip++;
@@ -18021,12 +18027,14 @@ const path = module.exports = {
 			}
 		});
 
-		const result = output.reverse().join('/');
+		var result = output.reverse().join('/');
 
 		return (isBrowser && result[0] === '/' ? window.location.origin : '') + result;
 	},
 
-	isAbsolute: x => x[0] === '/' || /^[^\/]*:/.test(x),
+	isAbsolute: function (x) {
+		return x[0] === '/' || /^[^\/]*:/.test(x);
+	},
 
 	relativeToFile(a, b) {
 
