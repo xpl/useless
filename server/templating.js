@@ -1,5 +1,7 @@
 "use strict";
 
+const _  = require ('underscore')
+
 const fs   = require ('./base/fs'),
       path = require ('path')
 

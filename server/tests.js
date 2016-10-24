@@ -1,5 +1,7 @@
 "use strict";
 
+const _  = require ('underscore')
+
 require ('./base/assertion_syntax.js')
 
 /*  The protocol:

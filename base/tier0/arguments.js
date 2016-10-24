@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  converts 'arguments' (and any other array mimick) to real Array
     ======================================================================== */
 

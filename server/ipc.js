@@ -1,5 +1,7 @@
 "use strict";
 
+const _  = require ('underscore')
+
 Tags.define ('callableFromMasterProcess')
 
 module.exports = $trait ({

@@ -5,6 +5,8 @@
 
 (function () {
 
+    const _ = require ('underscore')
+
     $mixin (Promise, {
 
         shouldBe: function (x) {

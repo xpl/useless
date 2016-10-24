@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 const O = require ('es7-object-polyfill')
 
 _.hasStdlib = true

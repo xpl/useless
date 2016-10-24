@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  Interceptable/observable methods
     ======================================================================== */
 

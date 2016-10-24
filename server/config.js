@@ -1,5 +1,7 @@
  "use strict";
 
+const _  = require ('underscore')
+
 const util    = require ('./base/util'),
       process = require ('process'),
       path    = require ('path'),

@@ -5,6 +5,8 @@
 
 (function () {
 
+    const _ = require ('underscore')
+
     if ($platform.Browser) {
 
         _.hasUncaughtAsync = true

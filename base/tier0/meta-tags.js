@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 const O = Object
 
 /*  For checking whether the module is available

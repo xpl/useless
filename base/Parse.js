@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  Parsers (TODO: REFACTOR)
     ======================================================================== */
 

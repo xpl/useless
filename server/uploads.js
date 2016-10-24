@@ -1,5 +1,7 @@
 "use strict";
 
+const _  = require ('underscore')
+
 const imagemagick = require ('./base/imagemagick'),
       util        = require ('./base/util'),
       path        = require ('path')

@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 _.hasTypeMatch = true
 
 /*  Type matching for arbitrary complex structures (TODO: test)

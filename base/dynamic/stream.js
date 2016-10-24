@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  Generic functional primitives for dynamic code binding
     ======================================================================== */
 

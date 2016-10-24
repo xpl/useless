@@ -1,5 +1,7 @@
 "use strict";
 
+const _  = require ('underscore')
+
 //var OriginalSource = require('webpack/lib/OriginalSource');
 
 const path      = require ('path'),

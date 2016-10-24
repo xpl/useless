@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 $global.Sort = {
     Ascending: 1,
     Descending: -1,

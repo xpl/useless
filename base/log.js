@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 const O         = require ('es7-object-polyfill'),
       bullet    = require ('string.bullet'),
       asTable   = require ('as-table')

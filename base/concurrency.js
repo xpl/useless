@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  Unit test / documentation / specification / how-to.
     ======================================================================== */
 

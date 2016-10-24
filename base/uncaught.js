@@ -5,6 +5,8 @@
 
 (function () {
 
+    const _ = require ('underscore')
+
     _.hasUncaught = true
 
     var reThrownTag = ' [re-thrown by a hook]' // marks error as already processed by globalUncaughtExceptionHandler

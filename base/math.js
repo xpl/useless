@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  TODO:   UNIT TEST DAT MUTHAFUCKA
  */
 

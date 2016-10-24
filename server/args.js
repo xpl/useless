@@ -1,5 +1,6 @@
  "use strict";
 
+const _  = require ('underscore')
 const util = require ('./base/util')
 
 /*  ------------------------------------------------------------------------ */

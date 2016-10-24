@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  DEPRECATED. Don't add new utility here. Will be refactored:
 
     1.  Http utils will go to /base/http.js (cross-platform)

@@ -1,5 +1,7 @@
 "use strict";
 
+const _  = require ('underscore')
+
 var http      = require ('http'),
     util      = require ('./base/util'),
     ass       = require ('./base/assertion_syntax'),

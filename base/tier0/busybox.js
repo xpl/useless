@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 /*  Basic utility for writing data-crunching functional expressions.
     ======================================================================== */
 

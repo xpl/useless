@@ -1,3 +1,5 @@
+const _  = require ('underscore')
+
  module.exports = $trait ({
 
     beforeInit () { log.minor ('Setting up exception handling')

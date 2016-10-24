@@ -1,5 +1,7 @@
 "use strict";
 
+const _  = require ('underscore')
+
 const stringify = require ('string.ify')
 
 module.exports = $trait ({

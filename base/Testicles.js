@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require ('underscore')
+
 var bullet = require ('string.bullet')
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

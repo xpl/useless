@@ -1,5 +1,7 @@
  "use strict";
 
+const _  = require ('underscore')
+
 /*var git  = require ('nodegit'),
     exec = require ('child_process').exec
 */
