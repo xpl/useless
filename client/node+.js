@@ -143,6 +143,15 @@ var is = function (tag) { return function () { return this.tagName === tag } }
         add:    $alias ('appendChildren'),
         append: $alias ('appendChildren'),
 
+        addClass (cls) {
+            this.classList.add (cls)
+            return this
+        },
+
+        appendHTML (html) {
+            return this.appendChildren (N.div.html (html).childNodesArray)
+        },
+
         appendChildren: function (arg1, arg2) {
                             for (var arr = (arg2 === undefined ? _.coerceToArray (arg1) : arguments), i = 0, len = arr.length; i < len; i++) {
                                 var n = arr[i]

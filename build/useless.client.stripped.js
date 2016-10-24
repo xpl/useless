@@ -8164,6 +8164,13 @@
             }),
             add: $alias('appendChildren'),
             append: $alias('appendChildren'),
+            addClass: function addClass(cls) {
+                this.classList.add(cls);
+                return this;
+            },
+            appendHTML: function appendHTML(html) {
+                return this.appendChildren(N.div.html(html).childNodesArray);
+            },
             appendChildren: function appendChildren(arg1, arg2) {
                 for (var arr = arg2 === undefined ? _.coerceToArray(arg1) : arguments, i = 0, len = arr.length; i < len; i++) {
                     var n = arr[i];
