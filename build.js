@@ -1,6 +1,6 @@
 "use strict";
 
-require ('./useless')
+const _ = require ('./useless')
 
 const   fs            = require ('fs'),
         util          = require ('./server/base/util'),
