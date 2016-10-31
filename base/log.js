@@ -146,7 +146,7 @@ _.extend (log, {
                  ['dark',       ['0m', '2m'],    'color:rgba(0,0,0,0.25)']],
 
              function (def) {
-                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (), css: def[2] }})] }))),
+                return [def[0], log.config ({ color: { shell: _.coerceToArray (_.map2 (def[1], _.prepends ('\u001B['))).join (''), css: def[2] }})] }))),
 
     /*  Need one? Take! I have plenty of them!
      */

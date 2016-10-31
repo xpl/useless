@@ -11176,8 +11176,6 @@ _.withTest('Array extensions', function () {
     $assert([].random === undefined);
 
     $assert([{ foo: 'bar' }, { foo: 'qux' }].pluck('foo'), ['bar', 'qux']);
-
-    $assert([['foo', 'bar'].join(), ['foo', 'bar'].join('.'), ['foo', 'bar'].join(777), ['foo'].join(777), ['bar'].join('.')], ['foobar', 'foo.bar', ['foo', 777, 'bar'], 'foo', 'bar']);
 }, function () {
 
     /*  TODO: rewrite using new $mixin facility
@@ -11202,20 +11200,6 @@ _.withTest('Array extensions', function () {
         nonempty: _.nonempty,
         pluck: $method(_.pluck),
         without: $method(_.without),
-
-        join: function (strJoin) {
-            return $forceOverride(function (arr, delim) {
-                delim = arguments.length < 2 ? '' : delim;
-                if ( /*_.isString (arr[0]) && */ // semantically correct, but breaks compat
-                _.isString(delim)) {
-                    return strJoin.call(arr, delim);
-                } else {
-                    return _.reduce2(arr, function (a, b) {
-                        return [a].concat([delim, b]);
-                    });
-                }
-            });
-        }(Array.prototype.join),
 
         contains: function contains(arr, item) {
             return arr.indexOf(item) >= 0;
@@ -12135,7 +12119,12 @@ $global.Vec2 = $prototype((_$prototype = {
         },
         clamp: function clamp(n, a, b) {
             return new Vec2(_.clamp(n.x, a.x, b.x), _.clamp(n.y, a.y, b.y));
-        } },
+        },
+
+        random: $property(function () {
+            return new Vec2(Math.random(), Math.random());
+        })
+    },
 
     constructor: function constructor(x, y) {
         if (arguments.length === 1) {
@@ -12182,7 +12171,9 @@ $global.Vec2 = $prototype((_$prototype = {
 
 }, _defineProperty(_$prototype, 'aspect', $property(function () {
     return this.w / this.h;
-})), _defineProperty(_$prototype, 'dot', function dot(other) {
+})), _defineProperty(_$prototype, 'jitter', function jitter(amount) {
+    return this.add(Vec2.random.scale(amount));
+}), _defineProperty(_$prototype, 'dot', function dot(other) {
     return this.x * other.x + this.y * other.y;
 }), _defineProperty(_$prototype, 'sub', function sub(other) {
     return new Vec2(this.x - other.x, this.y - other.y);
@@ -12484,6 +12475,10 @@ $global.BBox = $prototype({
 
     rightBottom: $property(function () {
         return new Vec2(this.right, this.bottom);
+    }),
+
+    rightCenter: $property(function () {
+        return new Vec2(this.right, this.center.y);
     }),
 
     rightTop: $property(function () {

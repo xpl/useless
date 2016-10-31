@@ -14807,7 +14807,7 @@ _.extend(log, {
     color: _.extend(function (x) {
         return (log.color[x] || {}).color;
     }, _.fromPairs(_.map([['none', '0m', ''], ['red', '31m', 'color:crimson'], ['boldRed', ['31m', '1m'], 'color:crimson;font-weight:bold'], ['darkRed', ['31m', '2m'], 'color:crimson'], ['blue', '36m', 'color:royalblue'], ['boldBlue', ['36m', '1m'], 'color:royalblue;font-weight:bold;'], ['darkBlue', ['36m', '2m'], 'color:rgba(65,105,225,0.5)'], ['boldOrange', ['33m', '1m'], 'color:saddlebrown;font-weight:bold;'], ['darkOrange', ['33m', '2m'], 'color:saddlebrown'], ['orange', '33m', 'color:saddlebrown'], ['brown', ['33m', '2m'], 'color:saddlebrown'], ['green', '32m', 'color:forestgreen'], ['boldGreen', ['32m', '1m'], 'color:forestgreen;font-weight:bold'], ['darkGreen', ['32m', '2m'], 'color:forestgreen;opacity:0.5'], ['pink', '35m', 'color:magenta'], ['boldPink', ['35m', '1m'], 'color:magenta;font-weight:bold;'], ['darkPink', ['35m', '2m'], 'color:magenta'], ['black', '0m', 'color:black'], ['bright', ['0m', '1m'], 'color:rgba(0,0,0);font-weight:bold'], ['dark', ['0m', '2m'], 'color:rgba(0,0,0,0.25)']], function (def) {
-        return [def[0], log.config({ color: { shell: _.coerceToArray(_.map2(def[1], _.prepends('\u001b['))).join(), css: def[2] } })];
+        return [def[0], log.config({ color: { shell: _.coerceToArray(_.map2(def[1], _.prepends('\u001b['))).join(''), css: def[2] } })];
     }))),
 
     /*  Need one? Take! I have plenty of them!

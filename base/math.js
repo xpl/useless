@@ -85,7 +85,10 @@ $global.Vec2 = $prototype ({
         fromLeftTop:     $alias ('fromLT'),
         fromWidthHeight: $alias ('fromWH'),
         lerp:        function (t, a, b) { return new Vec2 (_.lerp (t, a.x, b.x), _.lerp (t, a.y, b.y)) },
-        clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) } },
+        clamp:       function (n, a, b) { return new Vec2 (_.clamp (n.x, a.x, b.x), _.clamp (n.y, a.y, b.y)) },
+
+        random: $property (function () { return new Vec2 (Math.random (), Math.random ()) })
+    },
 
     constructor: function (x, y) {
         if (arguments.length === 1) {
@@ -120,6 +123,10 @@ $global.Vec2 = $prototype ({
             return new Vec2 (this.x + a, this.y + b) } },
 
     aspect: $property (function () { return this.w / this.h }),
+
+    jitter: function (amount) {
+        return this.add (Vec2.random.scale (amount))
+    },
 
     dot: function (other) {
         return this.x * other.x + this.y * other.y },
@@ -400,6 +407,10 @@ $global.BBox = $prototype ({
 
     rightBottom: $property (function () {
         return new Vec2 (this.right, this.bottom) }),
+
+    rightCenter: $property (function () {
+        return new Vec2 (this.right, this.center.y)
+    }),
     
     rightTop: $property (function () {
         return new Vec2 (this.right, this.top) }),
