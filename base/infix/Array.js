@@ -32,6 +32,8 @@ _.withTest ('Array extensions', function () {
     $assert (['a','c'].insertAt ('b', 1),   ['a','b','c'])  // NOTE: mutates original
 
     $assert ([0,1,2].itemAtWrappedIndex (4) === 1)
+    $assert ([0,1,2].itemAtWrappedIndex (-1) === 2)
+    $assert ([0,1,2].itemAtWrappedIndex (-5) === 1)
 
              arr =         [1,2,3]
     $assert (arr.reversed, [3,2,1])
@@ -117,7 +119,8 @@ _.withTest ('Array extensions', function () {
             arr.splice (index, 0, item); return arr },
 
         itemAtWrappedIndex: function (arr, i) {
-            return arr[i % arr.length] },
+            return arr[(i < 0) ? (arr.length - (-i % arr.length)) : (i % arr.length)]
+        },
 
         reversed: function (arr) {
             return arr.slice ().reverse () },

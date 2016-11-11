@@ -172,7 +172,7 @@ __.rejects = function (e) { return function () { return Promise.reject (e) } }
 __.then = function (a, b) { b = _.coerceToFunction (b)
                 try {
                     var x = (a instanceof Function) ? a () : a
-                    return  (x instanceof Promise)  ? x.then (b) : b (x) }
+                    return  (x instanceof Promise)  ? x.then (b) : b (x) } // @hide
                 catch (e) {
                     return Promise.reject (e) } }
 

@@ -89,12 +89,13 @@
             log.margin ()
 
             for (var loc of new StackTracey (this.where)
+                                    .withSources
                                     .slice (3)
                                     .clean
                                     .filter (x => !x.native)
                                     .reverse ()) {
                 
-                log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', loc.sourceLine.trim ()) }
+                log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) }
 
             log.margin () },
 

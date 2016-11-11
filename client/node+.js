@@ -105,7 +105,9 @@ var is = function (tag) { return function () { return this.tagName === tag } }
             while (n.grandParentNode && (n.parentNode !== container) && n.isLastInParent) { n = n.parentNode }
             return n },
 
-        matchUpwards: function (pred) { var n = this
+        matchUpwards: function (x) { const pred = (typeof x === 'function') ? x : (n => n.matches (x))
+
+                                        var n = this
                    while (n && !pred (n)) { n = n.parentNode }
                                      return n },
 
