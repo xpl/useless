@@ -19,10 +19,6 @@ const fs                 = require ('fs'),
 
 module.exports = $trait ({
 
-    $depends: [
-        require ('./api'),
-        require ('./http')],
-
     $defaults: {
 
         compressedWebpackEntries: {},
@@ -43,8 +39,10 @@ module.exports = $trait ({
         } } },
 
     api () {
-        return {
-            'build/:file': this.file ('./build/')
+        if (this.file) {
+            return {
+                'build/:file': this.file (this.config.webpack.buildPath)
+            }
         }
     },
 
@@ -125,7 +123,9 @@ module.exports = $trait ({
 
     webpackEmbed (name) {
 
-        const hasStyle = this.shouldExtractStyles && fs.existsSync (path.resolve (`./build/${name}.css`))
+        const cssFile = path.join (this.config.webpack.buildPath, name + '.css')
+
+        const hasStyle = this.shouldExtractStyles && fs.existsSync (path.resolve (cssFile))
 
         const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}"></link>` : ''
         
@@ -139,10 +139,10 @@ module.exports = $trait ({
 
     beforeInit () { log.gg ('Building with WebPack...')
 
-        try { fs.mkdirSync (path.resolve ('./build')) } catch (e) {}
-
         const config = this.config.webpack,
               input  = this.webpackInput = this.transformEntries (config.entry)
+
+        try { fs.mkdirSync (path.resolve (config.buildPath)) } catch (e) {}
 
         const outputPath = path.resolve (config.buildPath),
               publicPath = this.webpackServerURL.concatPath ('build')
