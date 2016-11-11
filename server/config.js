@@ -45,7 +45,8 @@ module.exports = $trait ({
 
     applyConfig (cfg) {
 
-        _.extend (this.config, cfg)
+        this.config = _.extendedDeep (this.config, cfg)
+
         log.timestampEnabled = this.config.logTimestamps
         return this.config },
 
