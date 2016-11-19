@@ -26,9 +26,15 @@ Modal overlay that renders log.js output for debugging purposes
 						this.body.empty () } })) },
 
 		el: $memoized ($property (function () {
-									return $('<div class="useless-log-overlay" style="display: none;">')
+									var el = $('<div class="useless-log-overlay" style="display: none;">')
 												.append ('<div class="useless-log-overlay-body">')
-												.appendTo (document.body) })),
+
+									$(document).ready (function () {
+										el.appendTo (document.body)
+									})
+
+									return el
+		})),
 
 		body: $memoized ($property (function () {
 										return this.el.find ('.useless-log-overlay-body') })),

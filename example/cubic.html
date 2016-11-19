@@ -1,15 +1,10 @@
 <html>
 	<head>
 		<title>Cubic</title>
-		<script src="lib/underscore-min.js"></script>
-		<script src="lib/jquery-2.0.3.min.js"></script>
-		<script src="../build/useless.js"></script>
-		<script src="../client/jQueryPlus.js"></script>
 
-		<script src="../client/Panic.js"></script>
-		<link rel="stylesheet" href="../client/Panic.css" type="text/css">
+		<script src="../build/useless.client.js"></script>
+		<script src="../build/useless.devtools.js"></script>
 
-		<script src="../client/boot.js"></script>
 	</head>
 	<style>
 		.rect { position: relative; background: #cccccc; width: 200px; height: 200px; }
@@ -19,7 +14,11 @@
 		.handle2 { top:  10%;  left: 90%; background: blue;  }
 	</style>
 	<script>
+
+		$ = jQuery
+
 		$(document).ready (function () {
+
 			var cnv = $('canvas')[0]
 			var ctx = $('canvas')[0].getContext ('2d')
 

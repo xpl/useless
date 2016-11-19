@@ -1,7 +1,5 @@
 "use strict";
 
-const _ = require ('underscore')
-
 /*  Measures run time of a routine (either sync or async)
     ======================================================================== */
 

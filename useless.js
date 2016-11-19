@@ -4,7 +4,7 @@ const $global = (typeof window === 'undefined' ? global : window)
 
 $global.$uselessFile = 'useless.js'
 
-const _ = module.exports = require ('./base/3rd/underscore-fix') // latest underscore from GitHub, fixes strict-mode issue
+const _ = $global._ = module.exports = require ('./base/3rd/underscore-fix') // latest underscore from GitHub, fixes strict-mode issue
 
 /*  Internal dependencies
     ======================================================================== */
