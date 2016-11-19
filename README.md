@@ -382,8 +382,6 @@ Go to [`/build`](https://github.com/xpl/useless/tree/master/build) folder and pi
 - [useless.client.js](https://github.com/xpl/useless/blob/master/build/useless.client.js) for everything, except devtools
 - [useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.client.js) for logging / stacktraces / assertions / Panic.js
 
-There also exist a compressed (minified) version of each file.
-
 # Building
 
 Build command:
