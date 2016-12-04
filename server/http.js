@@ -98,7 +98,7 @@ module.exports = $trait ({
                 env: _.extend ({ when: Date.now (), who: null }, $env, this.env) })
 
             this.uri       = this.request && this.request.url && url.parse (this.request.url)
-            this.path      = this.uri && this.uri.path.split ('/')
+            this.path      = this.uri && this.uri.pathname.split ('/')
             this.method    = this.request.method
             this.isJSONAPI = (this.path && this.path[1]) === 'api'
 
