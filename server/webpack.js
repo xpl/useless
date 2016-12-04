@@ -121,18 +121,33 @@ module.exports = $trait ({
     webpackURL (path) {
             return this.webpackServerURL.concatPath ('build').concatPath (path) },
 
+    webpackFileTimestamp: $memoize (function (file) {
+
+        try {
+            const stat = fs.statSync (path.resolve (file))            
+            return stat && stat.mtime.getTime ()
+
+        } catch (e) {
+            log.ww (e)
+            return undefined
+        }
+    }),
+
     webpackEmbed (name) {
 
         const cssFile = path.join (this.config.webpack.buildPath, name + '.css')
+        const cssTimestamp = this.webpackFileTimestamp (cssFile)
 
-        const hasStyle = this.shouldExtractStyles && fs.existsSync (path.resolve (cssFile))
+        const hasStyle = this.shouldExtractStyles && (cssTimestamp !== undefined)
 
-        const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}"></link>` : ''
+        const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}?${cssTimestamp}"></link>` : ''
         
         const scriptName = (this.compressedWebpackEntries[name] || name) + '.js'
+        const scriptFile = path.join (this.config.webpack.buildPath, scriptName)
+        const scriptTimestamp = this.webpackFileTimestamp (scriptFile)
 
         const script = (this.config.webpack.hotReload ? '<!-- HOT RELOAD ENABLED -->' : '') +
-                       `<script type="text/javascript" src="${this.webpackURL (scriptName)}"></script>`
+                       `<script type="text/javascript" src="${this.webpackURL (scriptName)}?${scriptTimestamp}"></script>`
 
         return style + script
     },
