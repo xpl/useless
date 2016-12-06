@@ -9392,6 +9392,12 @@
     function (module, exports) {
         'use strict';
         'use strict';
+        var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (frame) {
+            return window.setTimeout(frame, 0);
+        };
+        var cancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || window.oCancelAnimationFrame || window.msCancelAnimationFrame || function (id) {
+            return window.clearTimeout(id);
+        };
         $global.InertialValue = $component({
             $defaults: {
                 duration: 0.2,

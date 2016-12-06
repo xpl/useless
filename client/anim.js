@@ -1,5 +1,19 @@
 "use strict";
 
+const requestAnimationFrame =
+    window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame || function (frame) { return window.setTimeout (frame, 0) }
+
+const cancelAnimationFrame =
+    window.cancelAnimationFrame ||
+    window.webkitCancelAnimationFrame ||
+    window.mozCancelAnimationFrame ||
+    window.oCancelAnimationFrame ||
+    window.msCancelAnimationFrame || function (id) { return window.clearTimeout (id) }
+
 $global.InertialValue = $component ({
 
     $defaults: { duration:  0.2,
