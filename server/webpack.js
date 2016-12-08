@@ -123,6 +123,10 @@ module.exports = $trait ({
 
     webpackFileTimestamp: $memoize (function (file) {
 
+        if (this.config.webpack.hotReload) {
+            return undefined
+        }
+
         try {
             const stat = fs.statSync (path.resolve (file))            
             return stat && stat.mtime.getTime ()
