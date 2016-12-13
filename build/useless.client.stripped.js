@@ -4277,7 +4277,10 @@
                     return $prototype(base, def || {});
                 },
                 $mixin: function $mixin(constructor, def) {
-                    return $prototype.impl.compileMixin(_.extend(def, { constructor: constructor }));
+                    return constructor === Array ? $prototype.impl.compileMixin({
+                        constructor: constructor,
+                        $hidden: def
+                    }) : $prototype.impl.compileMixin(_.extend(def, { constructor: constructor }));
                 }
             });
             _.extend($prototype, {
@@ -4527,14 +4530,14 @@
                     },
                     defineMember: function defineMember(targetObject, def, key) {
                         if (def && def.$property) {
-                            if (def.$memoized) {
-                                _.defineMemoizedProperty(targetObject, key, def);
-                            } else {
-                                _.defineProperty(targetObject, key, def, def.$hidden ? { enumerable: false } : {});
-                            }
+                            (def.$memoized ? _.defineMemoizedProperty : _.defineProperty)(targetObject, key, def, def.$hidden ? { enumerable: false } : {});
                         } else {
-                            var what = $untag(def);
-                            targetObject[key] = what;
+                            Object.defineProperty(targetObject, key, {
+                                value: $untag(def),
+                                configurable: true,
+                                writable: true,
+                                enumerable: def && def.$hidden ? false : true
+                            });
                         }
                     },
                     ensureFinalContracts: function ensureFinalContracts(base) {
@@ -6949,7 +6952,10 @@
                     }
                 } else if (!tags.$property) {
                     if (!(name in Type.prototype) || tags.$forceOverride) {
-                        Type.prototype[name] = _.asMethod(tags.$flipped ? _.flip(fn) : fn);
+                        Object.defineProperty(Type.prototype, name, {
+                            writable: true,
+                            value: _.asMethod(tags.$flipped ? _.flip(fn) : fn)
+                        });
                     }
                 } else {
                     throw new Error('$extensionMethods: crazy input, unable to match');
@@ -7702,24 +7708,28 @@
         }));
         (function () {
             var toposort = __webpack_require__(370);
-            Array.prototype.topoSort = function () {
-                return toposort(this);
-            };
+            $mixin(Array, {
+                topoSort: function topoSort() {
+                    return toposort(this);
+                }
+            });
         }());
         {
-            Array.prototype.topoMerge = function () {
-                var edges = [];
-                for (var i = 0, ni = this.length; i < ni; i++) {
-                    var sequence = this[i];
-                    for (var j = 0, nj = sequence.length - 1; j < nj; j++) {
-                        edges.push([
-                            sequence[j],
-                            sequence[j + 1]
-                        ]);
+            $mixin(Array, {
+                topoMerge: function topoMerge() {
+                    var edges = [];
+                    for (var i = 0, ni = this.length; i < ni; i++) {
+                        var sequence = this[i];
+                        for (var j = 0, nj = sequence.length - 1; j < nj; j++) {
+                            edges.push([
+                                sequence[j],
+                                sequence[j + 1]
+                            ]);
+                        }
                     }
+                    return edges.topoSort();
                 }
-                return edges.topoSort();
-            };
+            });
         }
         {
             $global.DAG = function (cfg) {

@@ -677,7 +677,9 @@ _.extend (Math, (function (decimalAdjust) {
 
     var toposort = require ('toposort')
 
-    Array.prototype.topoSort = function () { return toposort (this) }
+    $mixin (Array, {
+        topoSort () { return toposort (this) }
+    })
 
 }) ();
 
@@ -696,15 +698,18 @@ _.withTest (['Array', 'topomerge'], function () {
 
 }, function () {
 
-    Array.prototype.topoMerge = function () {                    var edges    = []
-        for (var i = 0, ni = this.length;         i < ni; i++) { var sequence = this[i]
-        for (var j = 0, nj = sequence.length - 1; j < nj; j++) {
-            edges.push ([
-                sequence[j    ],
-                sequence[j + 1]]) } }
+    $mixin (Array, {
 
-        return edges.topoSort ()
-    }
+        topoMerge () {                                               var edges    = []
+            for (var i = 0, ni = this.length;         i < ni; i++) { var sequence = this[i]
+            for (var j = 0, nj = sequence.length - 1; j < nj; j++) {
+                edges.push ([
+                    sequence[j    ],
+                    sequence[j + 1]]) } }
+
+            return edges.topoSort ()
+        }
+    })
 })
 
 /*  ------------------------------------------------------------------------ */

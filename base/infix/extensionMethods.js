@@ -26,7 +26,7 @@ $global.$extensionMethods = (Type, methods) => {
          */
         else if (!tags.$property) {
             if (!(name in Type.prototype) || tags.$forceOverride) {
-                Type.prototype[name] = _.asMethod (tags.$flipped ? _.flip (fn) : fn) } }
+                Object.defineProperty (Type.prototype, name, { writable: true, value: _.asMethod (tags.$flipped ? _.flip (fn) : fn) }) } }
 
         else {
             throw new Error ('$extensionMethods: crazy input, unable to match') } })}
