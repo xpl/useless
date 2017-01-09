@@ -4963,6 +4963,11 @@
                 });
             }, cfg);
         };
+        __.map.configure = function (Cfg) {
+            return function (x, fn, cfg) {
+                return __.map(x, fn, Object.assign({}, Cfg, cfg));
+            };
+        };
         __.filter = function (x, fn, cfg) {
             return __.scatter(x, function (v, k, x) {
                 return __.then(fn.$(v, k, x), function (decision) {
@@ -4985,6 +4990,7 @@
                 });
             });
         };
+        __.parallelEach = __.map;
         __.seq = function (arr) {
             return _.reduce2(arr, __.then);
         };
@@ -9800,11 +9806,18 @@
                 this.removeAttribute(name);
                 return this;
             },
+            copyAttributes: function copyAttributes(node) {
+                for (var i = 0, attrs = node.attributes, n = attrs.length; i < n; i++) {
+                    var a = attrs[i];
+                    this.setAttribute(a.name, a.value);
+                }
+                return this;
+            },
             splitSubtreeBefore: function splitSubtreeBefore(node) {
                 if (!node || node.parentNode === this) {
                     return node;
                 } else {
-                    return this.splitSubtreeBefore(!node.previousSibling ? node.parentNode : document.createElement(node.parentNode.tagName).insertMeBefore(node.parentNode).appendChildren(node.prevSiblings).nextSibling);
+                    return this.splitSubtreeBefore(!node.previousSibling ? node.parentNode : document.createElement(node.parentNode.tagName).copyAttributes(node.parentNode).insertMeBefore(node.parentNode).appendChildren(node.prevSiblings).nextSibling);
                 }
             },
             splitSubtreeAt: function splitSubtreeAt(location) {

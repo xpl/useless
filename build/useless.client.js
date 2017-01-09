@@ -8324,6 +8324,12 @@ __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
     }, cfg);
 };
 
+__.map.configure = function (Cfg) {
+    return function (x, fn, cfg) {
+        return __.map(x, fn, Object.assign({}, Cfg, cfg));
+    };
+};
+
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
     return __.scatter(x, function (v, k, x) {
         return __.then(fn.$(v, k, x), function (decision) {
@@ -8340,6 +8346,8 @@ __.each = function (obj, fn) {
         });
     });
 };
+
+__.parallelEach = __.map;
 
 __.seq = function (arr) {
     return _.reduce2(arr, __.then);
@@ -16791,6 +16799,15 @@ $mixin(Node, {
         this.removeAttribute(name);return this;
     },
 
+    copyAttributes: function copyAttributes(node) {
+        for (var i = 0, attrs = node.attributes, n = attrs.length; i < n; i++) {
+            var a = attrs[i];
+            this.setAttribute(a.name, a.value);
+        }
+        return this;
+    },
+
+
     /*  Splitting
         ======================================================================== */
 
@@ -16800,7 +16817,7 @@ $mixin(Node, {
             return node;
         } else {
             return this.splitSubtreeBefore(!node.previousSibling // if first node in parent, nothing to split – simply proceed to parent
-            ? node.parentNode : document.createElement(node.parentNode.tagName).insertMeBefore(node.parentNode).appendChildren(node.prevSiblings).nextSibling);
+            ? node.parentNode : document.createElement(node.parentNode.tagName).copyAttributes(node.parentNode).insertMeBefore(node.parentNode).appendChildren(node.prevSiblings).nextSibling);
         }
     },
 
@@ -17053,8 +17070,9 @@ _.tests.NodePlus = {
                 node.splitSubtreeBefore(node.one('br'));
                 return _.assert(node.innerHTML, desiredResult);
             } });
+
         $assertSplitAtBr('<b><br>foo</b>', '<b><br>foo</b>');
-        $assertSplitAtBr('<b>foo<br></b>', '<b>foo</b><b><br></b>');
+        $assertSplitAtBr('<b color="red">foo<br></b>', '<b color="red">foo</b><b color="red"><br></b>');
         $assertSplitAtBr('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>');
     }
 

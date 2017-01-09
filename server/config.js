@@ -23,24 +23,24 @@ module.exports = $trait ({
      */
     shouldRestartOnSourceChange (action, file, yes, no) {
 
-                                    if (file.contains (this.configPath)) {
+        if (file.contains (this.configPath)) {
 
-                                        /*  If nothing changed actually, supress restart. This is needed because we
-                                            over-write config at startup, and we don't want restart loops.
-                                         */
-                                        if (_.isEqual (this.readConfig (), this.config)) {
-                                            no () }
+            /*  If nothing changed actually, supress restart. This is needed because we
+                over-write config at startup, and we don't want restart loops.
+             */
+            if (_.isEqual (this.readConfig (), this.config)) {
+                no () }
 
-                                        /*  Config changed: apply, report and restart.
-                                         */
-                                        else {
-                                            this.applyConfig (this.readConfig ())
-                                            log.pp (log.config ({ pretty: true }), this.config)
-                                            yes () } } },
+            /*  Config changed: apply, report and restart.
+             */
+            else {
+                this.applyConfig (this.readConfig ())
+                log.pp (log.config ({ pretty: true }), this.config)
+                yes () } } },
 
     readConfig () {
 
-              try { return JSON.parse (fs.readFileSync (this.configPath, { encoding: 'utf-8' })) }
+        try       { return JSON.parse (fs.readFileSync (this.configPath, { encoding: 'utf-8' })) }
         catch (e) { return {} } },
 
     applyConfig (cfg) {
@@ -60,7 +60,9 @@ module.exports = $trait ({
         /*  Supresses double-reporting when running under supervisor.
          */
         if (!this.args.spawnedBySupervisor) {
-            log.p (log.config ({ pretty: true }), this.config) } } })
+            log.p (log.config ({ pretty: true }), this.config) }
+    }
+})
 
 
 

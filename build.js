@@ -11,10 +11,11 @@ const BuildApp = $singleton (Component, {
     deferAppComponentTests: false,
 
     $defaults: {
-        argKeys: { noCompress: 1, noStripped: 1 },
+        argKeys: { noCompress: 1, noStripped: 1, webpackWatch: 1 },
         inputFiles: ['./useless.client.js', './useless.devtools.js'],
         config: {
             webpack: {
+                devServer: false,
                 hotReload: false,
                 separateCSS: false,
                 compress: true
@@ -28,7 +29,15 @@ const BuildApp = $singleton (Component, {
         require ('./server/supervisor'),
         require ('./server/webpack')],
 
-    argsReady: function (args) {
+    argsReady (args) {
+
+        if (args.noCompress) {
+            this.config.webpack.compress = false
+        }
+
+        if (args.webpackWatch) {
+            this.config.webpack.devServer = true
+        }
 
         var directories =   args.values.groupBy (
                                 fs.lstatSync.catches (null,
@@ -38,14 +47,18 @@ const BuildApp = $singleton (Component, {
 
         this.config.webpack.entry = _.object (_.map (inputFiles, file => [path.parse (file).name, file]))
 
-        log.pp (this.config.webpack, '\n')
+        if (this.supervisorState !== 'spawnedBySupervisor') {
+            log.pp (this.config.webpack, '\n')
+        }
 
         if (!this.config.webpack.buildPath) {
              this.config.webpack.buildPath = path.resolve (process.cwd (), (directories['true'] || [])[0])
         }
     },
 
-    init: function () {
-        process.exit ()
+    init () {
+        if (!this.config.webpack.devServer) {
+            process.exit ()
+        }
     }
 })

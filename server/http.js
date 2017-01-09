@@ -23,7 +23,10 @@ module.exports = $trait ({
         config: {
             port: 1333,
             maxFileSize: 16 * 1024 * 1024,
-            requestTimeout: 2000 } },
+            requestTimeout: 2000,
+            production: false
+        }
+    },
 
 
 /*  The $http thing prototype
@@ -362,7 +365,14 @@ module.exports = $trait ({
                     return $http.file (path.join (location, file)) } } },
 
     redirect (to) {
-                return x => ($http.redirect (to), x) }
+                return x => ($http.redirect (to), x) },
+
+    hideFromProduction () {
+
+        if (this.config.production === true) {
+            throw $http.NotFoundError
+        }
+    }
 
 /*  ------------------------------------------------------------------------ */
 

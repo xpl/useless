@@ -287,6 +287,14 @@ var is = function (tag) { return function () { return this.tagName === tag } }
 
         removeAttr: function (name) { this.removeAttribute (name); return this },
 
+        copyAttributes (node) {
+            for (var i = 0, attrs = node.attributes, n = attrs.length; i < n; i++) {
+                var a = attrs[i]
+                this.setAttribute (a.name, a.value)
+            }
+            return this
+        },
+
 
     /*  Splitting
         ======================================================================== */
@@ -299,6 +307,7 @@ var is = function (tag) { return function () { return this.tagName === tag } }
                                     !node.previousSibling // if first node in parent, nothing to split – simply proceed to parent
                                         ? node.parentNode
                                         : document.createElement  (node.parentNode.tagName)
+                                                  .copyAttributes (node.parentNode)
                                                   .insertMeBefore (node.parentNode)
                                                   .appendChildren (node.prevSiblings)
                                                   .nextSibling) } },
@@ -511,9 +520,11 @@ _.tests.NodePlus = {
             assertSplitAtBr: function (html, desiredResult) {   var node = N.div.html (html)
                                                                     node.splitSubtreeBefore (node.one ('br'))
                                                                     return _.assert (node.innerHTML, desiredResult) } })
+        
         $assertSplitAtBr ('<b><br>foo</b>', '<b><br>foo</b>')
-        $assertSplitAtBr ('<b>foo<br></b>', '<b>foo</b><b><br></b>')
-        $assertSplitAtBr ('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>') },
+        $assertSplitAtBr ('<b color="red">foo<br></b>', '<b color="red">foo</b><b color="red"><br></b>')
+        $assertSplitAtBr ('<b>foo<i>bar<br>baz</i>qux</b>', '<b>foo<i>bar</i></b>' + '<b><i><br>baz</i>qux</b>')
+    },
 
     /*'animateWithAttribute': function () {
 

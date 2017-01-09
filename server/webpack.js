@@ -9,6 +9,7 @@ const fs                 = require ('fs'),
       webpack            = require ('webpack'),
       WebpackServer      = require ('webpack-dev-server'),
       ExtractTextPlugin  = require ('extract-text-webpack-plugin'),
+      WriteFilePlugin    = require ('write-file-webpack-plugin'),
       CommonsChunkPlugin = require ('webpack/lib/optimize/CommonsChunkPlugin'),
       esprima            = require ('esprima'),
       escodegen          = require ('escodegen'),
@@ -27,6 +28,7 @@ module.exports = $trait ({
 
             buildPath: './build',
             entry: {},
+            devServer: false,
             hotReload: false,   // for development use only! enables Webpack HotModuleReplacement
             port: 3000,
             separateCSS: false, // meaningless when hotReload = true
@@ -203,6 +205,10 @@ module.exports = $trait ({
             plugins: [  ...(config.hotReload ? [new webpack.HotModuleReplacementPlugin ()] : []),
                         ...input.commons.map (def => new CommonsChunkPlugin (def)),
                         ...(this.shouldExtractStyles ? [new ExtractTextPlugin ('[name].css')] : []),
+
+                    /*  Writes devServer builds to filesystem   */
+
+                        ...((config.devServer && !config.hotReload) ? [new WriteFilePlugin ()] : [])
                      ],
 
             module: {
@@ -229,10 +235,11 @@ module.exports = $trait ({
             },
         })
 
-        if (config.hotReload) {
+        if (config.devServer || config.hotReload) {
 
             this.webpackServer = new WebpackServer (compiler, {
 
+                outputPath: outputPath,
                 publicPath: publicPath,
                 hot: config.hotReload,
                 historyApiFallback: true,

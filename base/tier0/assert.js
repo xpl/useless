@@ -15,7 +15,7 @@ _.extend (_, {
 /*  a namespace where you put tests (for enumeration purposes)
     ======================================================================== */
 
-    tests: {},
+    tests: _.tests || {},
 
 /*  A degenerate case of a test shell. We use it to bootstrap most critical
     useless.js internals, where real shell (Testosterone.js) is not available,

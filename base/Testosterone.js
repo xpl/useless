@@ -101,7 +101,7 @@ $global.Testosterone = $singleton ({
     /*  Entry point
      */
     run: _.interlocked (function (cfg_) {
-
+        
         /*  Configuration
          */
         var defaults = {
