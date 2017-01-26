@@ -105,7 +105,7 @@ var is = function (tag) { return function () { return this.tagName === tag } }
             while (n.grandParentNode && (n.parentNode !== container) && n.isLastInParent) { n = n.parentNode }
             return n },
 
-        matchUpwards: function (x) { const pred = (typeof x === 'function') ? x : (n => n.matches (x))
+        matchUpwards: function (x) { const pred = (typeof x === 'function') ? x : (n => n.matches && n.matches (x))
 
                                         var n = this
                    while (n && !pred (n)) { n = n.parentNode }
@@ -283,7 +283,14 @@ var is = function (tag) { return function () { return this.tagName === tag } }
 
         intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
 
-        attr: $alias ('setAttributes'),
+        attr (a, b) {
+            if (typeof a === 'string') {
+                this.setAttribute (a, b)
+                return this
+            } else {
+                return this.setAttributes (a)
+            }
+        },
 
         removeAttr: function (name) { this.removeAttribute (name); return this },
 

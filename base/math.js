@@ -409,11 +409,22 @@ $global.BBox = $prototype ({
         return new Vec2 (this.right, this.bottom) }),
 
     rightCenter: $property (function () {
-        return new Vec2 (this.right, this.center.y)
-    }),
+        return new Vec2 (this.right, this.center.y) }),
     
     rightTop: $property (function () {
         return new Vec2 (this.right, this.top) }),
+
+    setLeftTop (pt) {
+        return BBox.fromLTRB (pt.x, pt.y, this.right, this.bottom) },
+
+    setRightTop (pt) {
+        return BBox.fromLTRB (this.left, pt.y, pt.x, this.bottom) },
+
+    setRightBottom (pt) {
+        return BBox.fromLTRB (this.left, this.top, pt.x, pt.y) },
+
+    setLeftBottom (pt) {
+        return BBox.fromLTRB (pt.x, this.top, this.right, pt.y) },
 
     left: $property (function () {
         return this.x - this.width / 2.0 }),
@@ -450,6 +461,9 @@ $global.BBox = $prototype ({
     mul: function (z) {
             return new BBox (this.x * z, this.y * z, this.width * z, this.height * z) },
 
+    scale (v) {
+        return new BBox (this.x * v.x, this.y * v.y, this.width * v.x, this.height * v.y) },
+
     area: $property (function () {
         return Math.abs (this.width * this.height) }),
 
@@ -458,6 +472,10 @@ $global.BBox = $prototype ({
                              (this.left > other.right) ||
                              (this.bottom < other.top) ||
                              (this.top > other.bottom)) },
+
+    equals (other) {
+        return (this.x !== other.x) || (this.y !== other.y) || (this.width !== other.width) || (this.height !== other.height)
+    }
 })
 
 /*  ------------------------------------------------------------------------ */

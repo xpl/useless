@@ -18,6 +18,7 @@ const imagemagick = module.exports = {
 
     convert (cfg) {
         return exec (_.nonempty (['convert',
+                                    cfg.crop && ('-crop ' + cfg.crop.width + 'x' + cfg.crop.height + '+' + cfg.crop.left + '+' + cfg.crop.top),
                                     (cfg.width || cfg.height) && ('-resize ' + [cfg.width || '', cfg.height || ''].join ('x')),
                                      cfg.quality && ('-quality ' + cfg.quality),
                                     _.quote (cfg.srcPath),
