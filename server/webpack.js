@@ -18,14 +18,19 @@ const fs                 = require ('fs'),
       util               = require ('./base/util'),
       moduleLocator      = require ('./base/module-locator')
 
+if (!$global.$callAtMasterProcess) {
+    Tags.define ('callAtMasterProcess')
+}
+
 module.exports = $trait ({
 
     $defaults: {
 
-        compressedWebpackEntries: {},
+        argKeys: { 'webpack-build-and-quit': 1 }, // pass this arg to build everything and quit
 
         config: { webpack: {
 
+            offline: false,     // supresses WebPack from building everything at server's startup
             buildPath: './build',
             entry: {},
             devServer: false,
@@ -111,12 +116,20 @@ module.exports = $trait ({
         return result
     },
 
+    get isWebpackBuildAndQuitEnabled () {
+        return this.args && this.args.webpackBuildAndQuit
+    },
+
+    get isWebpackHotReloadEnabled () {
+        return (this.config.webpack.hotReload && !this.config.webpack.offline && !this.isWebpackBuildAndQuitEnabled) || false
+    },
+
     get shouldExtractStyles () {
             return this.config.webpack.separateCSS &&
-                  !this.config.webpack.hotReload }, 
+                  !this.isWebpackHotReloadEnabled }, 
 
     get webpackServerURL () {
-            return this.config.webpack.hotReload
+            return this.isWebpackHotReloadEnabled
                         ? (`http://${(this.config.serverName || 'localhost')}:${this.config.webpack.port}`)
                         : '' },
 
@@ -125,7 +138,7 @@ module.exports = $trait ({
 
     webpackFileTimestamp: $memoize (function (file) {
 
-        if (this.config.webpack.hotReload) {
+        if (this.isWebpackHotReloadEnabled) {
             return undefined
         }
 
@@ -134,9 +147,18 @@ module.exports = $trait ({
             return stat && stat.mtime.getTime ()
 
         } catch (e) {
-            log.ww (e)
             return undefined
         }
+    }),
+
+    webpackScriptFile: $memoized (function (name) {
+
+        const buildDir = this.config.webpack.buildPath
+
+        const compressedFile = path.join (buildDir, name + '.min.js'),
+                        file = path.join (buildDir, name + '.js')
+
+        return (this.config.webpack.compress && fs.existsSync (compressedFile)) ? compressedFile : file
     }),
 
     webpackEmbed (name) {
@@ -148,17 +170,26 @@ module.exports = $trait ({
 
         const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}?${cssTimestamp}"></link>` : ''
         
-        const scriptName = (this.compressedWebpackEntries[name] || name) + '.js'
-        const scriptFile = path.join (this.config.webpack.buildPath, scriptName)
-        const scriptTimestamp = this.webpackFileTimestamp (scriptFile)
+        const scriptFile      = this.webpackScriptFile (name),
+              scriptName      = path.basename (scriptFile),
+              scriptTimestamp = this.webpackFileTimestamp (scriptFile),
+              urlParams       = scriptTimestamp ? ('?' + scriptTimestamp) : ''
 
-        const script = (this.config.webpack.hotReload ? '<!-- HOT RELOAD ENABLED -->' : '') +
-                       `<script type="text/javascript" src="${this.webpackURL (scriptName)}?${scriptTimestamp}"></script>`
+        const script = (this.isWebpackHotReloadEnabled ? '<!-- HOT RELOAD ENABLED -->' : '') +
+                       `<script type="text/javascript" src="${this.webpackURL (scriptName)}${urlParams || ''}"></script>`
 
         return style + script
     },
 
-    beforeInit () { log.gg ('Building with WebPack...')
+/*  We want this method called BEFORE supervisor (i.e. at master process), so we can restart supervised process
+    independently of the WebPack process.                                                                           */
+
+    beforeInit: $callAtMasterProcess (function () {
+
+        if (!this.isWebpackBuildAndQuitEnabled && this.config.webpack.offline) {
+            log.i ('WebPack in running in offline mode')
+            return
+        }
 
         const config = this.config.webpack,
               input  = this.webpackInput = this.transformEntries (config.entry)
@@ -188,7 +219,7 @@ module.exports = $trait ({
 
             entry: _.map2 (input.entry, location =>
                                             [path.resolve (location),
-                                             ...(config.hotReload ? [
+                                             ...(this.isWebpackHotReloadEnabled ? [
                                                     webpackPath + '/hot/only-dev-server',
                                                     webpackDevServerPath + '/client?' + this.webpackServerURL,
                                                     path.join (__dirname, '../client/webpack-hot-fix')] : []) ]), // fixes webpack2 and webpack-dev-server incompatiblility
@@ -202,13 +233,13 @@ module.exports = $trait ({
 
             externals: config.externals, // ignores them
 
-            plugins: [  ...(config.hotReload ? [new webpack.HotModuleReplacementPlugin ()] : []),
+            plugins: [  ...(this.isWebpackHotReloadEnabled ? [new webpack.HotModuleReplacementPlugin ()] : []),
                         ...input.commons.map (def => new CommonsChunkPlugin (def)),
                         ...(this.shouldExtractStyles ? [new ExtractTextPlugin ('[name].css')] : []),
 
                     /*  Writes devServer builds to filesystem   */
 
-                        ...((config.devServer && !config.hotReload) ? [new WriteFilePlugin ()] : [])
+                        ...((config.devServer && !this.isWebpackHotReloadEnabled) ? [new WriteFilePlugin ()] : [])
                      ],
 
             module: {
@@ -235,13 +266,15 @@ module.exports = $trait ({
             },
         })
 
-        if (config.devServer || config.hotReload) {
+        if (!this.isWebpackBuildAndQuitEnabled && (config.devServer || this.isWebpackHotReloadEnabled)) {
+
+            log.ww ('Spawning WebPack server...')
 
             this.webpackServer = new WebpackServer (compiler, {
 
                 outputPath: outputPath,
                 publicPath: publicPath,
-                hot: config.hotReload,
+                hot: this.isWebpackHotReloadEnabled,
                 historyApiFallback: true,
                 quiet: false,
                 noInfo: false,
@@ -266,6 +299,8 @@ module.exports = $trait ({
             })
 
         } else {
+
+            log.ww ('Building with WebPack (offline mode)...')
 
             compiler.run = compiler.run.promisify
 
@@ -292,18 +327,19 @@ module.exports = $trait ({
                         const text = fs.readFileSync (inputFile, { encoding: 'utf-8' })
 
                         if (!text.includes ('__NO_COMPRESS__')) {
-
-                            return this.compress (this.stripTests (inputFile, text)).then (compressedFile => {
-
-                                this.compressedWebpackEntries[name] = path.parse (compressedFile).name
-                            })
+                            return this.compress (this.stripTests (inputFile, text))
                         }
                     })
                 }
 
+            }).then (() => {
+
+                if (this.isWebpackBuildAndQuitEnabled) {
+                    process.exit ()
+                }
             })
         }
-    },
+    }),
 
     compress (file) {
 

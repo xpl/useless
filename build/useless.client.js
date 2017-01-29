@@ -12845,6 +12845,20 @@ $global.BBox = $prototype({
         return new Vec2(this.right, this.top);
     }),
 
+    setLeftTop: function setLeftTop(pt) {
+        return BBox.fromLTRB(pt.x, pt.y, this.right, this.bottom);
+    },
+    setRightTop: function setRightTop(pt) {
+        return BBox.fromLTRB(this.left, pt.y, pt.x, this.bottom);
+    },
+    setRightBottom: function setRightBottom(pt) {
+        return BBox.fromLTRB(this.left, this.top, pt.x, pt.y);
+    },
+    setLeftBottom: function setLeftBottom(pt) {
+        return BBox.fromLTRB(pt.x, this.top, this.right, pt.y);
+    },
+
+
     left: $property(function () {
         return this.x - this.width / 2.0;
     }),
@@ -12891,12 +12905,21 @@ $global.BBox = $prototype({
         return new BBox(this.x * z, this.y * z, this.width * z, this.height * z);
     },
 
+    scale: function scale(v) {
+        return new BBox(this.x * v.x, this.y * v.y, this.width * v.x, this.height * v.y);
+    },
+
+
     area: $property(function () {
         return Math.abs(this.width * this.height);
     }),
 
     intersects: function intersects(other) {
         return !(this.right < other.left || this.left > other.right || this.bottom < other.top || this.top > other.bottom);
+    },
+
+    equals: function equals(other) {
+        return this.x !== other.x || this.y !== other.y || this.width !== other.width || this.height !== other.height;
     }
 });
 
@@ -16538,7 +16561,7 @@ $mixin(Node, {
 
     matchUpwards: function matchUpwards(x) {
         var pred = typeof x === 'function' ? x : function (n) {
-            return n.matches(x);
+            return n.matches && n.matches(x);
         };
 
         var n = this;
@@ -16793,7 +16816,15 @@ $mixin(Node, {
         return (this.getAttribute(name) || '').parsedInt;
     },
 
-    attr: $alias('setAttributes'),
+    attr: function attr(a, b) {
+        if (typeof a === 'string') {
+            this.setAttribute(a, b);
+            return this;
+        } else {
+            return this.setAttributes(a);
+        }
+    },
+
 
     removeAttr: function removeAttr(name) {
         this.removeAttribute(name);return this;
