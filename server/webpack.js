@@ -158,7 +158,9 @@ module.exports = $trait ({
         const compressedFile = path.join (buildDir, name + '.stripped.min.js'),
                         file = path.join (buildDir, name + '.js')
 
-        return (this.config.webpack.compress && fs.existsSync (compressedFile)) ? compressedFile : file
+        const compress = this.config.webpack.compress && !this.isWebpackHotReloadEnabled
+
+        return (compress && fs.existsSync (compressedFile)) ? compressedFile : file
     }),
 
     webpackEmbed (name) {
