@@ -7462,7 +7462,7 @@
                 return !(this.right < other.left || this.left > other.right || this.bottom < other.top || this.top > other.bottom);
             },
             equals: function equals(other) {
-                return this.x !== other.x || this.y !== other.y || this.width !== other.width || this.height !== other.height;
+                return this.x === other.x && this.y === other.y && this.width === other.width && this.height === other.height;
             }
         });
         if (typeof Symbol !== 'undefined') {

@@ -474,7 +474,10 @@ $global.BBox = $prototype ({
                              (this.top > other.bottom)) },
 
     equals (other) {
-        return (this.x !== other.x) || (this.y !== other.y) || (this.width !== other.width) || (this.height !== other.height)
+        return (this.x === other.x) &&
+               (this.y === other.y) &&
+               (this.width === other.width) &&
+               (this.height === other.height)
     }
 })
 

@@ -12919,7 +12919,7 @@ $global.BBox = $prototype({
     },
 
     equals: function equals(other) {
-        return this.x !== other.x || this.y !== other.y || this.width !== other.width || this.height !== other.height;
+        return this.x === other.x && this.y === other.y && this.width === other.width && this.height === other.height;
     }
 });
 
