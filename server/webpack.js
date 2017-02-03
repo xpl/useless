@@ -188,15 +188,19 @@ module.exports = $trait ({
 
     beforeInit: $callAtMasterProcess (function () {
 
-        if (!this.isWebpackBuildAndQuitEnabled && this.config.webpack.offline) {
+        const config = this.config.webpack
+
+        try {
+            fs.mkdirSync (path.resolve (config.buildPath))
+            log.g ('Created ', log.color.boldOrange, config.buildPath)
+        } catch (e) {}
+
+        if (!this.isWebpackBuildAndQuitEnabled && config.offline) {
             log.i ('WebPack in running in offline mode')
             return
         }
 
-        const config = this.config.webpack,
-              input  = this.webpackInput = this.transformEntries (config.entry)
-
-        try { fs.mkdirSync (path.resolve (config.buildPath)) } catch (e) {}
+        const input = this.webpackInput = this.transformEntries (config.entry)
 
         const outputPath = path.resolve (config.buildPath),
               publicPath = this.webpackServerURL.concatPath ('build')
