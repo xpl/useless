@@ -66,7 +66,7 @@
 /************************************************************************/
 /******/ ({
 
-/***/ 123:
+/***/ 126:
 /* all exports used */
 /*!**************************************!*\
   !*** ./~/css-loader/lib/css-base.js ***!
@@ -123,687 +123,6 @@ module.exports = function() {
 	};
 	return list;
 };
-
-
-/***/ },
-
-/***/ 124:
-/* all exports used */
-/*!***************************************!*\
-  !*** ./~/source-map/lib/array-set.js ***!
-  \***************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-
-var util = __webpack_require__(/*! ./util */ 53);
-var has = Object.prototype.hasOwnProperty;
-
-/**
- * A data structure which is a combination of an array and a set. Adding a new
- * member is O(1), testing for membership is O(1), and finding the index of an
- * element is O(1). Removing elements from the set is not supported. Only
- * strings are supported for membership.
- */
-function ArraySet() {
-  this._array = [];
-  this._set = Object.create(null);
-}
-
-/**
- * Static method for creating ArraySet instances from an existing array.
- */
-ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
-  var set = new ArraySet();
-  for (var i = 0, len = aArray.length; i < len; i++) {
-    set.add(aArray[i], aAllowDuplicates);
-  }
-  return set;
-};
-
-/**
- * Return how many unique items are in this ArraySet. If duplicates have been
- * added, than those do not count towards the size.
- *
- * @returns Number
- */
-ArraySet.prototype.size = function ArraySet_size() {
-  return Object.getOwnPropertyNames(this._set).length;
-};
-
-/**
- * Add the given string to this set.
- *
- * @param String aStr
- */
-ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
-  var sStr = util.toSetString(aStr);
-  var isDuplicate = has.call(this._set, sStr);
-  var idx = this._array.length;
-  if (!isDuplicate || aAllowDuplicates) {
-    this._array.push(aStr);
-  }
-  if (!isDuplicate) {
-    this._set[sStr] = idx;
-  }
-};
-
-/**
- * Is the given string a member of this set?
- *
- * @param String aStr
- */
-ArraySet.prototype.has = function ArraySet_has(aStr) {
-  var sStr = util.toSetString(aStr);
-  return has.call(this._set, sStr);
-};
-
-/**
- * What is the index of the given string in the array?
- *
- * @param String aStr
- */
-ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
-  var sStr = util.toSetString(aStr);
-  if (has.call(this._set, sStr)) {
-    return this._set[sStr];
-  }
-  throw new Error('"' + aStr + '" is not in the set.');
-};
-
-/**
- * What is the element at the given index?
- *
- * @param Number aIdx
- */
-ArraySet.prototype.at = function ArraySet_at(aIdx) {
-  if (aIdx >= 0 && aIdx < this._array.length) {
-    return this._array[aIdx];
-  }
-  throw new Error('No element indexed by ' + aIdx);
-};
-
-/**
- * Returns the array representation of this set (which has the proper indices
- * indicated by indexOf). Note that this is a copy of the internal array used
- * for storing the members so that no one can mess with internal state.
- */
-ArraySet.prototype.toArray = function ArraySet_toArray() {
-  return this._array.slice();
-};
-
-exports.ArraySet = ArraySet;
-
-
-/***/ },
-
-/***/ 125:
-/* all exports used */
-/*!****************************************!*\
-  !*** ./~/source-map/lib/base64-vlq.js ***!
-  \****************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- *
- * Based on the Base 64 VLQ implementation in Closure Compiler:
- * https://code.google.com/p/closure-compiler/source/browse/trunk/src/com/google/debugging/sourcemap/Base64VLQ.java
- *
- * Copyright 2011 The Closure Compiler Authors. All rights reserved.
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  * Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
- *    with the distribution.
- *  * Neither the name of Google Inc. nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-var base64 = __webpack_require__(/*! ./base64 */ 361);
-
-// A single base 64 digit can contain 6 bits of data. For the base 64 variable
-// length quantities we use in the source map spec, the first bit is the sign,
-// the next four bits are the actual value, and the 6th bit is the
-// continuation bit. The continuation bit tells us whether there are more
-// digits in this value following this digit.
-//
-//   Continuation
-//   |    Sign
-//   |    |
-//   V    V
-//   101011
-
-var VLQ_BASE_SHIFT = 5;
-
-// binary: 100000
-var VLQ_BASE = 1 << VLQ_BASE_SHIFT;
-
-// binary: 011111
-var VLQ_BASE_MASK = VLQ_BASE - 1;
-
-// binary: 100000
-var VLQ_CONTINUATION_BIT = VLQ_BASE;
-
-/**
- * Converts from a two-complement value to a value where the sign bit is
- * placed in the least significant bit.  For example, as decimals:
- *   1 becomes 2 (10 binary), -1 becomes 3 (11 binary)
- *   2 becomes 4 (100 binary), -2 becomes 5 (101 binary)
- */
-function toVLQSigned(aValue) {
-  return aValue < 0
-    ? ((-aValue) << 1) + 1
-    : (aValue << 1) + 0;
-}
-
-/**
- * Converts to a two-complement value from a value where the sign bit is
- * placed in the least significant bit.  For example, as decimals:
- *   2 (10 binary) becomes 1, 3 (11 binary) becomes -1
- *   4 (100 binary) becomes 2, 5 (101 binary) becomes -2
- */
-function fromVLQSigned(aValue) {
-  var isNegative = (aValue & 1) === 1;
-  var shifted = aValue >> 1;
-  return isNegative
-    ? -shifted
-    : shifted;
-}
-
-/**
- * Returns the base 64 VLQ encoded value.
- */
-exports.encode = function base64VLQ_encode(aValue) {
-  var encoded = "";
-  var digit;
-
-  var vlq = toVLQSigned(aValue);
-
-  do {
-    digit = vlq & VLQ_BASE_MASK;
-    vlq >>>= VLQ_BASE_SHIFT;
-    if (vlq > 0) {
-      // There are still more digits in this value, so we must make sure the
-      // continuation bit is marked.
-      digit |= VLQ_CONTINUATION_BIT;
-    }
-    encoded += base64.encode(digit);
-  } while (vlq > 0);
-
-  return encoded;
-};
-
-/**
- * Decodes the next base 64 VLQ value from the given string and returns the
- * value and the rest of the string via the out parameter.
- */
-exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
-  var strLen = aStr.length;
-  var result = 0;
-  var shift = 0;
-  var continuation, digit;
-
-  do {
-    if (aIndex >= strLen) {
-      throw new Error("Expected more digits in base 64 VLQ value.");
-    }
-
-    digit = base64.decode(aStr.charCodeAt(aIndex++));
-    if (digit === -1) {
-      throw new Error("Invalid base64 digit: " + aStr.charAt(aIndex - 1));
-    }
-
-    continuation = !!(digit & VLQ_CONTINUATION_BIT);
-    digit &= VLQ_BASE_MASK;
-    result = result + (digit << shift);
-    shift += VLQ_BASE_SHIFT;
-  } while (continuation);
-
-  aOutParam.value = fromVLQSigned(result);
-  aOutParam.rest = aIndex;
-};
-
-
-/***/ },
-
-/***/ 126:
-/* all exports used */
-/*!**************************************************!*\
-  !*** ./~/source-map/lib/source-map-generator.js ***!
-  \**************************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-/* -*- Mode: js; js-indent-level: 2; -*- */
-/*
- * Copyright 2011 Mozilla Foundation and contributors
- * Licensed under the New BSD license. See LICENSE or:
- * http://opensource.org/licenses/BSD-3-Clause
- */
-
-var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 125);
-var util = __webpack_require__(/*! ./util */ 53);
-var ArraySet = __webpack_require__(/*! ./array-set */ 124).ArraySet;
-var MappingList = __webpack_require__(/*! ./mapping-list */ 363).MappingList;
-
-/**
- * An instance of the SourceMapGenerator represents a source map which is
- * being built incrementally. You may pass an object with the following
- * properties:
- *
- *   - file: The filename of the generated source.
- *   - sourceRoot: A root for all relative URLs in this source map.
- */
-function SourceMapGenerator(aArgs) {
-  if (!aArgs) {
-    aArgs = {};
-  }
-  this._file = util.getArg(aArgs, 'file', null);
-  this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
-  this._skipValidation = util.getArg(aArgs, 'skipValidation', false);
-  this._sources = new ArraySet();
-  this._names = new ArraySet();
-  this._mappings = new MappingList();
-  this._sourcesContents = null;
-}
-
-SourceMapGenerator.prototype._version = 3;
-
-/**
- * Creates a new SourceMapGenerator based on a SourceMapConsumer
- *
- * @param aSourceMapConsumer The SourceMap.
- */
-SourceMapGenerator.fromSourceMap =
-  function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
-    var sourceRoot = aSourceMapConsumer.sourceRoot;
-    var generator = new SourceMapGenerator({
-      file: aSourceMapConsumer.file,
-      sourceRoot: sourceRoot
-    });
-    aSourceMapConsumer.eachMapping(function (mapping) {
-      var newMapping = {
-        generated: {
-          line: mapping.generatedLine,
-          column: mapping.generatedColumn
-        }
-      };
-
-      if (mapping.source != null) {
-        newMapping.source = mapping.source;
-        if (sourceRoot != null) {
-          newMapping.source = util.relative(sourceRoot, newMapping.source);
-        }
-
-        newMapping.original = {
-          line: mapping.originalLine,
-          column: mapping.originalColumn
-        };
-
-        if (mapping.name != null) {
-          newMapping.name = mapping.name;
-        }
-      }
-
-      generator.addMapping(newMapping);
-    });
-    aSourceMapConsumer.sources.forEach(function (sourceFile) {
-      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-      if (content != null) {
-        generator.setSourceContent(sourceFile, content);
-      }
-    });
-    return generator;
-  };
-
-/**
- * Add a single mapping from original source line and column to the generated
- * source's line and column for this source map being created. The mapping
- * object should have the following properties:
- *
- *   - generated: An object with the generated line and column positions.
- *   - original: An object with the original line and column positions.
- *   - source: The original source file (relative to the sourceRoot).
- *   - name: An optional original token name for this mapping.
- */
-SourceMapGenerator.prototype.addMapping =
-  function SourceMapGenerator_addMapping(aArgs) {
-    var generated = util.getArg(aArgs, 'generated');
-    var original = util.getArg(aArgs, 'original', null);
-    var source = util.getArg(aArgs, 'source', null);
-    var name = util.getArg(aArgs, 'name', null);
-
-    if (!this._skipValidation) {
-      this._validateMapping(generated, original, source, name);
-    }
-
-    if (source != null) {
-      source = String(source);
-      if (!this._sources.has(source)) {
-        this._sources.add(source);
-      }
-    }
-
-    if (name != null) {
-      name = String(name);
-      if (!this._names.has(name)) {
-        this._names.add(name);
-      }
-    }
-
-    this._mappings.add({
-      generatedLine: generated.line,
-      generatedColumn: generated.column,
-      originalLine: original != null && original.line,
-      originalColumn: original != null && original.column,
-      source: source,
-      name: name
-    });
-  };
-
-/**
- * Set the source content for a source file.
- */
-SourceMapGenerator.prototype.setSourceContent =
-  function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
-    var source = aSourceFile;
-    if (this._sourceRoot != null) {
-      source = util.relative(this._sourceRoot, source);
-    }
-
-    if (aSourceContent != null) {
-      // Add the source content to the _sourcesContents map.
-      // Create a new _sourcesContents map if the property is null.
-      if (!this._sourcesContents) {
-        this._sourcesContents = Object.create(null);
-      }
-      this._sourcesContents[util.toSetString(source)] = aSourceContent;
-    } else if (this._sourcesContents) {
-      // Remove the source file from the _sourcesContents map.
-      // If the _sourcesContents map is empty, set the property to null.
-      delete this._sourcesContents[util.toSetString(source)];
-      if (Object.keys(this._sourcesContents).length === 0) {
-        this._sourcesContents = null;
-      }
-    }
-  };
-
-/**
- * Applies the mappings of a sub-source-map for a specific source file to the
- * source map being generated. Each mapping to the supplied source file is
- * rewritten using the supplied source map. Note: The resolution for the
- * resulting mappings is the minimium of this map and the supplied map.
- *
- * @param aSourceMapConsumer The source map to be applied.
- * @param aSourceFile Optional. The filename of the source file.
- *        If omitted, SourceMapConsumer's file property will be used.
- * @param aSourceMapPath Optional. The dirname of the path to the source map
- *        to be applied. If relative, it is relative to the SourceMapConsumer.
- *        This parameter is needed when the two source maps aren't in the same
- *        directory, and the source map to be applied contains relative source
- *        paths. If so, those relative source paths need to be rewritten
- *        relative to the SourceMapGenerator.
- */
-SourceMapGenerator.prototype.applySourceMap =
-  function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile, aSourceMapPath) {
-    var sourceFile = aSourceFile;
-    // If aSourceFile is omitted, we will use the file property of the SourceMap
-    if (aSourceFile == null) {
-      if (aSourceMapConsumer.file == null) {
-        throw new Error(
-          'SourceMapGenerator.prototype.applySourceMap requires either an explicit source file, ' +
-          'or the source map\'s "file" property. Both were omitted.'
-        );
-      }
-      sourceFile = aSourceMapConsumer.file;
-    }
-    var sourceRoot = this._sourceRoot;
-    // Make "sourceFile" relative if an absolute Url is passed.
-    if (sourceRoot != null) {
-      sourceFile = util.relative(sourceRoot, sourceFile);
-    }
-    // Applying the SourceMap can add and remove items from the sources and
-    // the names array.
-    var newSources = new ArraySet();
-    var newNames = new ArraySet();
-
-    // Find mappings for the "sourceFile"
-    this._mappings.unsortedForEach(function (mapping) {
-      if (mapping.source === sourceFile && mapping.originalLine != null) {
-        // Check if it can be mapped by the source map, then update the mapping.
-        var original = aSourceMapConsumer.originalPositionFor({
-          line: mapping.originalLine,
-          column: mapping.originalColumn
-        });
-        if (original.source != null) {
-          // Copy mapping
-          mapping.source = original.source;
-          if (aSourceMapPath != null) {
-            mapping.source = util.join(aSourceMapPath, mapping.source)
-          }
-          if (sourceRoot != null) {
-            mapping.source = util.relative(sourceRoot, mapping.source);
-          }
-          mapping.originalLine = original.line;
-          mapping.originalColumn = original.column;
-          if (original.name != null) {
-            mapping.name = original.name;
-          }
-        }
-      }
-
-      var source = mapping.source;
-      if (source != null && !newSources.has(source)) {
-        newSources.add(source);
-      }
-
-      var name = mapping.name;
-      if (name != null && !newNames.has(name)) {
-        newNames.add(name);
-      }
-
-    }, this);
-    this._sources = newSources;
-    this._names = newNames;
-
-    // Copy sourcesContents of applied map.
-    aSourceMapConsumer.sources.forEach(function (sourceFile) {
-      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
-      if (content != null) {
-        if (aSourceMapPath != null) {
-          sourceFile = util.join(aSourceMapPath, sourceFile);
-        }
-        if (sourceRoot != null) {
-          sourceFile = util.relative(sourceRoot, sourceFile);
-        }
-        this.setSourceContent(sourceFile, content);
-      }
-    }, this);
-  };
-
-/**
- * A mapping can have one of the three levels of data:
- *
- *   1. Just the generated position.
- *   2. The Generated position, original position, and original source.
- *   3. Generated and original position, original source, as well as a name
- *      token.
- *
- * To maintain consistency, we validate that any new mapping being added falls
- * in to one of these categories.
- */
-SourceMapGenerator.prototype._validateMapping =
-  function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
-                                              aName) {
-    if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-        && aGenerated.line > 0 && aGenerated.column >= 0
-        && !aOriginal && !aSource && !aName) {
-      // Case 1.
-      return;
-    }
-    else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
-             && aOriginal && 'line' in aOriginal && 'column' in aOriginal
-             && aGenerated.line > 0 && aGenerated.column >= 0
-             && aOriginal.line > 0 && aOriginal.column >= 0
-             && aSource) {
-      // Cases 2 and 3.
-      return;
-    }
-    else {
-      throw new Error('Invalid mapping: ' + JSON.stringify({
-        generated: aGenerated,
-        source: aSource,
-        original: aOriginal,
-        name: aName
-      }));
-    }
-  };
-
-/**
- * Serialize the accumulated mappings in to the stream of base 64 VLQs
- * specified by the source map format.
- */
-SourceMapGenerator.prototype._serializeMappings =
-  function SourceMapGenerator_serializeMappings() {
-    var previousGeneratedColumn = 0;
-    var previousGeneratedLine = 1;
-    var previousOriginalColumn = 0;
-    var previousOriginalLine = 0;
-    var previousName = 0;
-    var previousSource = 0;
-    var result = '';
-    var next;
-    var mapping;
-    var nameIdx;
-    var sourceIdx;
-
-    var mappings = this._mappings.toArray();
-    for (var i = 0, len = mappings.length; i < len; i++) {
-      mapping = mappings[i];
-      next = ''
-
-      if (mapping.generatedLine !== previousGeneratedLine) {
-        previousGeneratedColumn = 0;
-        while (mapping.generatedLine !== previousGeneratedLine) {
-          next += ';';
-          previousGeneratedLine++;
-        }
-      }
-      else {
-        if (i > 0) {
-          if (!util.compareByGeneratedPositionsInflated(mapping, mappings[i - 1])) {
-            continue;
-          }
-          next += ',';
-        }
-      }
-
-      next += base64VLQ.encode(mapping.generatedColumn
-                                 - previousGeneratedColumn);
-      previousGeneratedColumn = mapping.generatedColumn;
-
-      if (mapping.source != null) {
-        sourceIdx = this._sources.indexOf(mapping.source);
-        next += base64VLQ.encode(sourceIdx - previousSource);
-        previousSource = sourceIdx;
-
-        // lines are stored 0-based in SourceMap spec version 3
-        next += base64VLQ.encode(mapping.originalLine - 1
-                                   - previousOriginalLine);
-        previousOriginalLine = mapping.originalLine - 1;
-
-        next += base64VLQ.encode(mapping.originalColumn
-                                   - previousOriginalColumn);
-        previousOriginalColumn = mapping.originalColumn;
-
-        if (mapping.name != null) {
-          nameIdx = this._names.indexOf(mapping.name);
-          next += base64VLQ.encode(nameIdx - previousName);
-          previousName = nameIdx;
-        }
-      }
-
-      result += next;
-    }
-
-    return result;
-  };
-
-SourceMapGenerator.prototype._generateSourcesContent =
-  function SourceMapGenerator_generateSourcesContent(aSources, aSourceRoot) {
-    return aSources.map(function (source) {
-      if (!this._sourcesContents) {
-        return null;
-      }
-      if (aSourceRoot != null) {
-        source = util.relative(aSourceRoot, source);
-      }
-      var key = util.toSetString(source);
-      return Object.prototype.hasOwnProperty.call(this._sourcesContents, key)
-        ? this._sourcesContents[key]
-        : null;
-    }, this);
-  };
-
-/**
- * Externalize the source map.
- */
-SourceMapGenerator.prototype.toJSON =
-  function SourceMapGenerator_toJSON() {
-    var map = {
-      version: this._version,
-      sources: this._sources.toArray(),
-      names: this._names.toArray(),
-      mappings: this._serializeMappings()
-    };
-    if (this._file != null) {
-      map.file = this._file;
-    }
-    if (this._sourceRoot != null) {
-      map.sourceRoot = this._sourceRoot;
-    }
-    if (this._sourcesContents) {
-      map.sourcesContent = this._generateSourcesContent(map.sources, map.sourceRoot);
-    }
-
-    return map;
-  };
-
-/**
- * Render the source map being generated to a string.
- */
-SourceMapGenerator.prototype.toString =
-  function SourceMapGenerator_toString() {
-    return JSON.stringify(this.toJSON());
-  };
-
-exports.SourceMapGenerator = SourceMapGenerator;
 
 
 /***/ },
@@ -1077,20 +396,20 @@ function updateLink(linkElement, obj) {
 
 /*	__NO_COMPRESS__	*/
 
-String.ify = __webpack_require__(/*! string.ify */ 173);
+String.ify = __webpack_require__(/*! string.ify */ 141);
 
-__webpack_require__(/*! ./base/tier0/assert */ 153);
-__webpack_require__(/*! ./base/uncaught */ 162);
-__webpack_require__(/*! ./base/uncaughtAsync */ 163);
-__webpack_require__(/*! ./base/reflection */ 151);
-__webpack_require__(/*! ./base/log */ 148);
-__webpack_require__(/*! ./base/Testosterone */ 138);
-__webpack_require__(/*! ./base/profiling */ 150);
+__webpack_require__(/*! ./base/tier0/assert */ 165);
+__webpack_require__(/*! ./base/uncaught */ 174);
+__webpack_require__(/*! ./base/uncaughtAsync */ 175);
+__webpack_require__(/*! ./base/reflection */ 163);
+__webpack_require__(/*! ./base/log */ 160);
+__webpack_require__(/*! ./base/Testosterone */ 150);
+__webpack_require__(/*! ./base/profiling */ 162);
 
-__webpack_require__(/*! ./client/jQueryPlus */ 168);
+__webpack_require__(/*! ./client/jQueryPlus */ 180);
 
-__webpack_require__(/*! ./client/Panic */ 166);
-__webpack_require__(/*! ./client/LogOverlay */ 165);
+__webpack_require__(/*! ./client/Panic */ 178);
+__webpack_require__(/*! ./client/LogOverlay */ 177);
 __webpack_require__(/*! ./client/Panic.css */ 369);
 __webpack_require__(/*! ./client/LogOverlay.css */ 368);
 
@@ -1103,3370 +422,11 @@ document.ready(function () {
 
 /***/ },
 
-/***/ 138:
+/***/ 130:
 /* all exports used */
-/*!******************************!*\
-  !*** ./base/Testosterone.js ***!
-  \******************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-"use strict";
-
-var O = __webpack_require__(/*! es7-object-polyfill */ 42);
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-------------------------------------------------------------------------
-
-Testosterone is a cross-platform unit test shell. Features:
-
-    - asynchronous tests
-    - asynchronous assertions
-    - log handling (log.xxx calls are scheduled to current test log)
-    - exception handling (uncaught exceptions are nicely handled)
-
-------------------------------------------------------------------------
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-var bullet = __webpack_require__(/*! string.bullet */ 48),
-    asTable = __webpack_require__(/*! as-table */ 65);
-
-/*  A contract for test routines that says that test should fail and it's the behavior expected
- */
-Tags.define('shouldFail');
-
-/*  A contract for custom assertions, says that assertion is asynchronous.
- */
-Tags.define('async');
-
-/*  This is test suite for tests framework itself.
-
-    As you can see, tests are defined as _.tests.xxx. So, if you have module called 'foo',
-    place tests for that module in _.tests.foo — it will be picked up by tests framework
-    automagically ©
- */
-_.tests.Testosterone = {
-
-    /*  3.  To write asynchronous tests, define second argument in your test routine, which
-            is 'done' callback. The framework will look into argument count of your routine,
-            and if second argument is there, your routine will be considered as asynchronous,
-            i.e. not completing until 'done' is explicitly triggered.
-     */
-    'async': function async(done) {
-        _.delay(function () {
-            done();
-        });
-    },
-
-    /*  4.  Use $tests to define unit tests on prototypes (works only on stuff in global namespace)
-     */
-    '$tests': function $tests() {
-
-        var DummyPrototypeWithTest = $prototype({ $test: function $test() {} });
-        var DummyPrototypeWithTests = $prototype({ $tests: { dummy: function dummy() {} } });
-
-        /*  $test/$tests renders to static immutable property $tests
-         */
-        $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
-        $assertThrows(function () {
-            DummyPrototypeWithTests.$tests = 42;
-        });
-
-        /*  Tests are added to Testosterone.prototypeTests
-         */
-        $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest.$tests, DummyPrototypeWithTests.$tests]);
-    }
-};
-
-/*  For marking methods in internal impl that should publish themselves as global functions (like $assert)
- */
-Tags.define('assertion');
-
-$global.Testosterone = $singleton({
-
-    prototypeTests: [],
-
-    get isRunning() {
-        return this.currentAssertion !== undefined;
-    },
-
-    /*  Hook up to assertion syntax defined in common.js
-     */
-    constructor: function constructor() {
-        var _this = this;
-
-        _.each(_.assertions, function (fn, name) {
-            this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
-                what.call(this);
-            }) : fn);
-        }, this);
-
-        /*  For defining tests inside prototype definitions
-         */
-        (function (register) {
-            $prototype.macro('$test', register);
-            $prototype.macro('$tests', register);
-        })(function (def, value, name) {
-            _this.prototypeTests.push({
-                proto: def.constructor,
-                tests: value });
-
-            def.$tests = $static($property($constant(_.isStrictlyObject(value) && value || _.object([['test', value]]))));
-
-            return def;
-        });
-        this.run = this.$(this.run);
-    },
-
-    /*  Entry point
-     */
-    run: _.interlocked(function (cfg_) {
-        var _this2 = this;
-
-        /*  Configuration
-         */
-        var defaults = {
-            suites: [],
-            silent: true,
-            verbose: false,
-            timeout: 2000,
-            filter: _.identity,
-            testStarted: function testStarted(test) {},
-            testComplete: function testComplete(test) {} };
-
-        var cfg = this.runConfig = _.extend(defaults, cfg_);
-
-        /*  Read cfg.suites
-         */
-        var suitesIsArray = _.isArray(cfg.suites); // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
-        var suites = _.map(cfg.suites, this.$(function (suite, name) {
-            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto);
-        }));
-
-        /*  Pick prototype tests
-         */
-        var prototypeTests = cfg.codebase === false ? [] : this.collectPrototypeTests();
-
-        /*  Gather tests
-         */
-        var baseTests = cfg.codebase === false ? [] : this.collectTests();
-        var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
-        var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
-
-        /*  Reset context (assigning indices)
-         */
-        this.runningTests = _.map(selectTests, function (test, i) {
-            return _.extend(test, { indent: cfg.indent, index: i });
-        });
-
-        _.each(this.runningTests, function (t) {
-            if (!(t.routine instanceof Function)) {
-                log.ee(t.suite, t.name, '– test routine is not a function:', t.routine);
-                throw new Error();
-            }
-        });
-
-        this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
-
-        /*  Go
-         */
-        return __.each(this.runningTests, this.$(this.runTest)).then(function () {
-            _.assert(cfg.done !== true);
-            cfg.done = true;
-
-            _this2.printLog(cfg);
-            _this2.failedTests = _.filter(_this2.runningTests, _.property('failed'));
-            _this2.failed = _this2.failedTests.length > 0;
-
-            return !_this2.failed;
-        }).catch(function (e) {
-            log.margin();
-            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
-            throw e;
-        });
-    }),
-
-    onException: function onException(e) {
-        if (this.currentAssertion) this.currentAssertion.onException(e);else throw e;
-    },
-
-    /*  You may define custom assertions through this API
-     */
-    defineAssertions: function defineAssertions(assertions) {
-        _.each(assertions, function (fn, name) {
-            this.defineAssertion(name, fn);
-        }, this);
-    },
-
-    /*  Internal impl
-     */
-    runTest: function runTest(test, i) {
-        var self = this,
-            runConfig = this.runConfig;
-
-        log.impl.configStack = []; // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
-
-        return __.then(runConfig.testStarted(test), function () {
-
-            test.verbose = runConfig.verbose;
-            test.timeout = runConfig.timeout;
-            test.startTime = Date.now();
-            return test.run().then(function () {
-                test.time = Date.now() - test.startTime;
-                return runConfig.testComplete(test);
-            });
-        });
-    },
-
-    collectTests: function collectTests() {
-        return _.map(_.tests, this.$(function (suite, name) {
-            return this.testSuite(name, suite);
-        }));
-    },
-
-    collectPrototypeTests: function collectPrototypeTests() {
-        var _this3 = this;
-
-        return this.prototypeTests.map(function (def) {
-            return _this3.testSuite(def.proto.$meta && def.proto.$meta.name || '<prototype>', def.tests, undefined, def.proto);
-        });
-    },
-
-
-    testSuite: function testSuite(name, tests, context, proto) {
-        return {
-            name: name || '',
-            tests: _(O.entries(typeof tests === 'function' && _.fromPairs([[name, tests]]) || tests)).map(function (keyValue) {
-                var test = new Test({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context });
-                test.complete(function () {
-                    if (!(test.hasLog = test.logCalls.length > 0)) {
-                        if (test.failed) {
-                            log.red('FAIL');
-                        } else if (test.verbose) {
-                            log.green('PASS');
-                        }
-                    }
-                });
-
-                return test;
-            }) };
-    },
-
-    defineAssertion: function defineAssertion(name, def) {
-
-        var self = this;
-        var fn = $untag(def);
-
-        delete $global['$' + name];
-        $global['$' + name] = _.withSameArgs(fn, function () {
-
-            var loc = new StackTracey().withSource($platform.Browser && !$platform.Chrome ? 0 : 1);
-
-            if (!self.currentAssertion) {
-                return fn.apply(self, arguments);
-            } else {
-                return self.currentAssertion.babyAssertion(name, def, fn, arguments, loc);
-            }
-        });
-    },
-
-    printLog: function printLog(cfg) {
-        if (!cfg.supressLog) {
-
-            var loggedTests = _.filter(this.runningTests, function (test) {
-                return test.failed || !cfg.silent && test.hasLog;
-            });
-            var failedTests = _.filter(this.runningTests, _.property('failed'));
-
-            _.invoke(cfg.verbose ? this.runningTests : loggedTests, 'printLog');
-
-            if (failedTests.length) {
-                log.orange('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck(failedTests, 'name').join(', '), '\n\n');
-            } else if (cfg.silent !== true) {
-                log.green('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n');
-            }
-        }
-    } });
-
-/*  Encapsulates internals of test's I/O.
- */
-$global.Test = $prototype({
-
-    constructor: function constructor(cfg) {
-        _.defaults(this, cfg, {
-            name: '<< UNNAMED FOR UNKNOWN REASON >>',
-            failed: false,
-            routine: undefined,
-            verbose: false,
-            depth: 1,
-            indent: 0,
-            failedAssertions: [],
-            context: this,
-            complete: _.extend(_.barrier(), { context: this }) });
-
-        this.babyAssertion = _.interlocked(this.babyAssertion);
-    },
-
-    finalize: function finalize() {
-        this.babyAssertion.wait(this.$(function () {
-            if (this.canFail && this.failedAssertions.length) {
-                this.failed = true;
-            }
-            this.complete(true);
-        }));
-    },
-
-    babyAssertion: function babyAssertion(name, def, fn, args, loc) {
-        var self = this;
-
-        var assertion = new Test({
-            mother: this,
-            name: name,
-            shouldFail: def.$shouldFail || this.shouldFail,
-            depth: this.depth + 1,
-            location: loc,
-            context: this.context,
-            timeout: this.timeout / 2,
-            verbose: this.verbose,
-            silent: this.silent,
-            routine: Tags.modify(def, function (fn) {
-                return function (done) {
-                    if ($async.is(args[0]) || $async.is(def)) {
-                        _.cps.apply(fn, self.context, args, function (args, then) {
-                            if (then) {
-                                then.apply(this, args);
-                            }
-                            done();
-                        });
-                    } else {
-                        try {
-                            fn.apply(self.context, args);done();
-                        } catch (e) {
-                            assertion.onException(e);
-                        }
-                    }
-                };
-            }) });
-
-        return assertion.run().finally(function (e, x) {
-            Testosterone.currentAssertion = self;
-            if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
-                var src = assertion.location.sourceLine.trim();
-                log.red(log.config({ location: assertion.location, where: assertion.location }), src);
-                assertion.evalLogCalls();
-                return src;
-            }
-        }).then(function () {
-            if (assertion.failed && self.canFail) {
-                self.failedAssertions.push(assertion);
-            }
-        }).catch(function (e) {
-
-            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
-        });
-    },
-
-    canFail: $property(function () {
-        return !this.failed && !this.shouldFail;
-    }),
-
-    fail: function fail() {
-        this.failed = true;
-        this.finalize();
-    },
-
-    assertionStack: $property(function () {
-        var result = [],
-            a = this;do {
-            result.push(a);a = a.mother;
-        } while (a);
-        return result;
-    }),
-
-    onException: function onException(e) {
-
-        if (this.canFail || this.verbose) {
-
-            if (_.isAssertionError(e)) {
-                //  • a
-                //  • b
-                if ('notMatching' in e) {
-                    var notMatching = _.coerceToArray(e.notMatching);
-                    if (e.asColumns) {
-                        log.orange(asTable(_.map(notMatching, function (obj) {
-                            return ['\t• ' + _.keys(obj)[0], String.ify(_.values(obj)[0])];
-                        })));
-                    } else {
-                        var cases = _.map(notMatching, log.impl.stringify.arity1.then(bullet.$('\t• ')));
-                        var common = _.reduce2(cases, _.longestCommonSubstring) || '';
-                        if (common.length < 4) {
-                            common = undefined;
-                        }
-
-                        _.each(cases, function (what) {
-
-                            if (common) {
-                                var where = what.indexOf(common);
-                                log.write(log.color.orange, what.substr(0, where), log.color.dark, common, log.color.orange, what.substr(where + common.length));
-                            } else {
-                                log.orange(what);
-                            }
-                        });
-                    }
-                }
-            }
-
-            // print exception
-            else {
-                    if (this.depth > 1) {
-                        log.newline();
-                    }
-                    log.write(e);
-                }
-            log.newline();
-        }
-
-        if (this.canFail) {
-            this.fail();
-        } else {
-            this.finalize();
-        }
-    },
-
-    run: function run() {
-        var self = Testosterone.currentAssertion = this,
-            routine = Tags.unwrap(this.routine);
-
-        return new Channel(this.$(function (then) {
-
-            this.shouldFail = $shouldFail.is(this.routine);
-            this.failed = false;
-            this.hasLog = false;
-            this.logCalls = [];
-            this.failureLocations = {};
-
-            _.withTimeout({
-                maxTime: self.timeout,
-                expired: function expired() {
-                    if (self.canFail) {
-                        log.ee('TIMEOUT EXPIRED');self.fail();
-                    }
-                } }, self.complete);
-
-            _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
-
-            log.withWriteBackend(_.extendWith({ indent: 1 }, function (x) {
-                /*log.impl.defaultWriteBackend (x);*/self.logCalls.push(x);
-            }), function (doneWithLogging) {
-                self.complete(doneWithLogging.arity0);
-                if (then) {
-                    self.complete(then);
-                }
-
-                /*  Continuation-passing style flow control
-                 */
-                if (routine.length > 0) {
-                    routine.call(self.context, self.$(self.finalize));
-                }
-
-                /*  Return-style flow control
-                 */
-                else {
-
-                        /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
-                                    leads to broken unhandled exception handling after the Testosterone run completes  */
-
-                        var result = undefined;
-
-                        try {
-                            result = routine.call(self.context);
-                        } catch (e) {
-                            self.onException(e);
-                        }
-
-                        if (_.isArrayLike(result) && result[0] instanceof Promise) {
-                            result = __.all(result);
-                        }
-
-                        if (result instanceof Promise) {
-                            result.then(function (x) {
-                                self.finalize();
-                            }.postponed, function (e) {
-                                self.onException(e);
-                            });
-                        } else {
-                            self.finalize();
-                        }
-                    }
-            });
-        }));
-    },
-
-    printLog: function printLog() {
-        var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
-
-        log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([suiteName, this.name]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
-
-        this.evalLogCalls();
-    },
-
-    evalLogCalls: function evalLogCalls() {
-        _.each(this.logCalls, log.writeBackend().arity1);
-    } });
-
-/*
- */
-Tags.define('allowsRecursion');
-
-_.limitRecursion = function (max, fn, name) {
-    if (!fn) {
-        fn = max;max = 0;
-    }
-    var depth = -1;
-    var reported = false;
-    return function () {
-        if (!reported) {
-            if (depth > max) {
-                reported = true;
-                throw _.extendWith({ notMatching: _.map(arguments, function (arg, i) {
-                        return 'arg' + (i + 1) + ': ' + String.ify(arg);
-                    }) }, new Error(name + ': max recursion depth reached (' + max + ')'));
-            } else {
-                var result = (++depth, fn.apply(this, arguments));depth--;
-                return result;
-            }
-        }
-    };
-};
-
-Testosterone.ValidatesRecursion = $trait({
-
-    $test: function $test() {
-
-        var test = new ($component({
-
-            $traits: [Testosterone.ValidatesRecursion],
-
-            foo: function foo() {},
-            bar: function bar() {
-                this.bar();
-            },
-            baz: $allowsRecursion({ max: 2 }, function () {
-                this.baz();
-            }),
-            qux: $allowsRecursion(function () {
-                if (!this.quxCalled) {
-                    this.quxCalled = true;this.qux();
-                }
-            }) }))();
-
-        test.foo();
-        $assertThrows(test.bar, { message: 'bar: max recursion depth reached (0)' });
-        test.bar(); // should not report second time (to prevent overflood in case of buggy code)
-        $assertThrows(test.baz, { message: 'baz: max recursion depth reached (2)' });
-        test.qux();
-    },
-
-    $constructor: function $constructor() {
-        _.each(this, function (member, name) {
-            if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
-                this[name] = Tags.modify(member, function (fn) {
-                    return _.limitRecursion(member && member.$allowsRecursion && member.$allowsRecursion.max || 0, fn, name);
-                });
-            }
-        }, this);
-    } })
-
-/*  $log for methods
- */
-;(function () {
-    var colors = _.keys(_.omit(log.color, 'none'));
-    colors.each(Tags.define);
-
-    var stringify = String.ify.configure({ pretty: false });
-
-    Tags.define('verbose');
-
-    Testosterone.LogsMethodCalls = $trait({
-
-        /*
-                $test: $platform.Browser ? (function () {}) : function (testDone) {
-        
-                            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
-                            var Compo = $extends (Proto, {
-                                                foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
-        
-                            var compo = new Compo ()
-                            var testContext = this
-        
-                            Compo.$meta (function () {
-                                $assert (compo.foo (42), 24)
-                                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
-                                $assert (testContext.logCalls[0].color === log.color ('pink'))
-                                testDone () }) },
-        */
-        $macroTags: {
-
-            log: function (_log) {
-                function log(_x, _x2, _x3) {
-                    return _log.apply(this, arguments);
-                }
-
-                log.toString = function () {
-                    return _log.toString();
-                };
-
-                return log;
-            }(function (def, member, name) {
-                var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
-                var meta = def.$meta || {};
-                var color = _.find2(colors, function (color) {
-                    return log.color(member['$' + color] && color) || false;
-                });
-                var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
-
-                return $prototype.impl.modifyMember(member, function (fn, name_) {
-                    return function () {
-                        var this_ = this,
-                            arguments_ = _.asArray(arguments);
-
-                        var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, stringify))) || this.desc || '';
-                        var args_dump = _.map(arguments_, stringify).join(', ').quote('()');
-
-                        log.write(log.config({
-                            color: color,
-                            location: true,
-                            where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty([this_dump, name, name_]).join('.'), args_dump);
-
-                        return log.withConfig({ indent: 1,
-                            color: color,
-                            protoName: meta.name }, function () {
-
-                            var numWritesBefore = log.impl.numWrites;
-                            var result = fn.apply(this_, arguments_);
-
-                            if (result !== undefined) {
-                                log.write('→', stringify(result));
-                            }
-
-                            if (log.currentConfig().indent < 2 && log.impl.numWrites - numWritesBefore > 0) {
-                                log.newline();
-                            }
-
-                            return result;
-                        });
-                    };
-                });
-            }) } });
-})();
-
-if ($platform.NodeJS) {
-    module.exports = Testosterone;
-}
-
-/***/ },
-
-/***/ 148:
-/* all exports used */
-/*!*********************!*\
-  !*** ./base/log.js ***!
-  \*********************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-"use strict";
-
-var O = __webpack_require__(/*! es7-object-polyfill */ 42),
-    bullet = __webpack_require__(/*! string.bullet */ 48),
-    asTable = __webpack_require__(/*! as-table */ 65);
-
-_.hasLog = true;
-
-_.tests.log = {
-
-    basic: function basic() {
-
-        log('log (x)'); //  Basic API
-
-        log.green('log.green'); //  Use for plain colored output.
-        log.boldGreen('log.boldGreen');
-        log.darkGreen('log.darkGreen');
-        log.blue('log.blue');
-        log.boldBlue('log.boldBlue');
-        log.darkBlue('log.darkBlue');
-        log.orange('log.orange');
-        log.boldOrange('log.boldOrange');
-        log.darkOrange('log.darkOrange');
-        log.red('log.red'); //  ..for more colors, see the implementation below
-        log.boldRed('log.boldRed');
-        log.darkRed('log.darkRed');
-        log.pink('log.pink');
-        log.boldPink('log.boldPink');
-        log.darkPink('log.darkPink');
-
-        log.margin();
-        log.margin(); // collapses
-
-        log.bright('log.bright');
-        log.dark('log.dark');
-
-        log.margin();
-
-        log.success('log.success'); //  Use for quality production logging (logging that lasts).
-        log.ok('log.ok');
-        log.g('log.g');
-        log.gg('log.gg');
-        log.info('log.info'); //  Printed location greatly helps to find log cause in code.
-        log.i('log.i');
-        log.ii('log.ii');
-        log.warning('log.warning'); //  For those who cant remember which one, there's plenty of aliases
-        log.warn('log.warn');
-        log.w('log.w');
-        log.ww('log.ww');
-        log.error('log.error');
-        log.e('log.e');
-        log.ee('log.ee');
-
-        $assert(log('log (x) === x'), 'log (x) === x'); // Can be used for debugging of functional expressions
-        // (as it returns it first argument, like in _.identity)
-
-        log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
-
-        log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
-
-        log.write(log.boldLine); //  ASCII art <hr>
-        log.write(log.thinLine);
-        log.write(log.line);
-
-        log.write(log.indent(1), ['You can set indentation', 'that is nicely handled', 'in case of multiline text'].join('\n'));
-
-        log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
-        log.orange(log.config({ indent: 2, table: true }), [{ field: 'line', matches: false, valueType: 'string', contractType: 'number' }, { field: 'column', matches: true, valueType: 'string', contractType: 'number' }]);
-
-        log.write('\nObject:', { foo: 1, bar: 2, qux: 3 }); //  Object printing is supported
-        log.write('Array:', [1, 2, 3]); //  Arrays too
-        log.write('Function:', _.identity); //  Prints code of a function
-
-        log.write('Complex object:', { foo: 1, bar: { qux: [1, 2, 3], garply: _.identity } }, '\n\n');
-
-        log.withConfig(log.indent(1), function () {
-            log.pink('Config stack + scopes + higher order API test:');
-            _.each([5, 6, 7], logs.pink(log.indent(1), 'item = ', log.color.blue));
-        });
-
-        $assert(log(42), 42);
-
-        $assert(logs.red(42)(), 42);
-    } };
-
-_.extend(
-
-/*  Basic API
- */
-$global.log = function () {
-    return log.write.apply(this, [log.config({ location: true })].concat(_.asArray(arguments)));
-}, { // @hide
-
-    Config: $prototype(),
-
-    /*  Could be passed as any argument to any write function.
-     */
-    config: function config(cfg) {
-        return new log.Config(cfg);
-    } });
-
-_.extend(log, {
-
-    /*  Shortcut for common cases
-     */
-    indent: function indent(n) {
-        return log.config({ indent: n });
-    },
-
-    where: function where(wat) {
-        return log.config({ location: true, where: wat || undefined });
-    },
-
-    color: _.extend(function (x) {
-        return (log.color[x] || {}).color;
-    }, _.fromPairs(_.map([['none', '0m', ''], ['red', '31m', 'color:crimson'], ['boldRed', ['31m', '1m'], 'color:crimson;font-weight:bold'], ['darkRed', ['31m', '2m'], 'color:crimson'], ['blue', '36m', 'color:royalblue'], ['boldBlue', ['36m', '1m'], 'color:royalblue;font-weight:bold;'], ['darkBlue', ['36m', '2m'], 'color:rgba(65,105,225,0.5)'], ['boldOrange', ['33m', '1m'], 'color:saddlebrown;font-weight:bold;'], ['darkOrange', ['33m', '2m'], 'color:saddlebrown'], ['orange', '33m', 'color:saddlebrown'], ['brown', ['33m', '2m'], 'color:saddlebrown'], ['green', '32m', 'color:forestgreen'], ['boldGreen', ['32m', '1m'], 'color:forestgreen;font-weight:bold'], ['darkGreen', ['32m', '2m'], 'color:forestgreen;opacity:0.5'], ['pink', '35m', 'color:magenta'], ['boldPink', ['35m', '1m'], 'color:magenta;font-weight:bold;'], ['darkPink', ['35m', '2m'], 'color:magenta'], ['black', '0m', 'color:black'], ['bright', ['0m', '1m'], 'color:rgba(0,0,0);font-weight:bold'], ['dark', ['0m', '2m'], 'color:rgba(0,0,0,0.25)']], function (def) {
-        return [def[0], log.config({ color: { shell: _.coerceToArray(_.map2(def[1], _.prepends('\x1B['))).join(''), css: def[2] } })];
-    }))),
-
-    /*  Need one? Take! I have plenty of them!
-     */
-    boldLine: '======================================',
-    line: '--------------------------------------',
-    thinLine: '......................................',
-
-    /*  Set to true to precede each log message with date and time (useful for server side logs).
-     */
-    timestampEnabled: false,
-
-    /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
-     */
-    withWriteBackend: $scope(function (release, backend, contextFn, done) {
-        var prev = log.writeBackend.value;
-        log.writeBackend.value = backend;
-        contextFn(function ( /* release */then) {
-            // @hide
-            release(function () {
-                log.writeBackend.value = prev;
-                if (then) then();
-                if (done) done();
-            });
-        });
-    }),
-
-    /*  For writing with forced default backend
-     */
-    writeUsingDefaultBackend: function writeUsingDefaultBackend() /* arguments */{
-        var args = arguments;
-        log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
-            log.write.apply(null, args);done();
-        });
-    }, // @hide
-
-    writeBackend: function writeBackend() {
-        return log.writeBackend.value || log.impl.defaultWriteBackend;
-    },
-
-    withConfig: function withConfig(config, what) {
-        log.impl.configStack.push(config);
-        var result = what();log.impl.configStack.pop();
-        return result;
-    },
-
-    currentConfig: function currentConfig() {
-        return log.impl.configure(log.impl.configStack);
-    },
-
-    /*  Use instead of 'log.newline ()' for collapsing newlines
-     */
-    margin: function () {
-        var lastWrite = undefined;
-        return function () {
-            if (lastWrite !== log.impl.numWrites) log.newline();
-            lastWrite = log.impl.numWrites;
-        };
-    }(),
-
-    /*  Internals
-     */
-    impl: {
-
-        configStack: [],
-        numWrites: 0,
-
-        configure: function configure(configs) {
-            return _.reduce2({ indent: 0 }, _.nonempty(configs), function (memo, cfg) {
-                return _.extend(memo, _.nonempty(cfg), { indent: memo.indent + (cfg.indent || 0) });
-            });
-        },
-
-        /*  Nuts & guts
-         */
-        write: $restArg(_.bindable(function () {
-            var writeBackend = log.writeBackend();
-
-            log.impl.numWrites++;
-
-            var args = _.asArray(arguments);
-            var config = log.impl.configure([{ indent: writeBackend.indent || 0 }].concat(log.impl.configStack));
-
-            var runs = _.reduce2(
-
-            /*  Initial memo
-             */
-            [],
-
-            /*  Arguments split by configs
-             */
-            _.partition3(args, _.isTypeOf.$(log.Config)),
-
-            /*  Gather function
-             */
-            function (runs, span) {
-                if (span.label === true) {
-                    config = log.impl.configure([config].concat(span.items));
-                    return runs;
-                } else {
-                    return runs.concat({ config: config,
-                        text: log.impl.stringifyArguments(span.items, config) });
-                }
-            });
-
-            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match(/(\n*)([^]*)/);
-            var trailNewlines = trailNewlinesMatch && trailNewlinesMatch[1]; // dumb way to select trailing newlines (i'm no good at regex)
-            if (trailNewlinesMatch) {
-                runs.last.text = trailNewlinesMatch[2].reversed;
-            }
-
-            /*  Split by linebreaks
-             */
-            var newline = {};
-            var lines = _.pluck.with('items', _.reject.with(_.property('label'), _.partition3.with(_.equals(newline), _.scatter(runs, function (run, i, emit) {
-                _.each(run.text.split('\n'), function (line, i, arr) {
-                    emit(_.extended(run, { text: line }));if (i !== arr.lastIndex) {
-                        emit(newline);
-                    }
-                });
-            }))));
-
-            var totalText = _.pluck(runs, 'text').join('');
-            var where = config.where || log.impl.findWhere(new StackTracey()); // @hide
-            var indentation = (config.indentPattern || '\t').repeats(config.indent);
-
-            writeBackend({
-                lines: lines,
-                config: config,
-                color: config.color,
-                when: new Date().toISOString(),
-                args: _.reject(args, _.isTypeOf.$(log.Config)),
-                indentation: indentation,
-                indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
-                text: totalText,
-                codeLocation: config.location && log.impl.location(where) || '',
-                trailNewlines: trailNewlines || '',
-                where: config.location && where || undefined });
-
-            return _.find(args, _.not(_.isTypeOf.$(log.Config)));
-        })),
-
-        findWhere: function findWhere(stack) {
-            //console.log (log.impl.stringify (stack))
-            return stack.withSources.filter(function (x) {
-                return !(x.hide || x.fileName === 'underscore.js');
-            }).at(0);
-        },
-
-        defaultWriteBackend: function defaultWriteBackend(params) {
-
-            var codeLocation = params.codeLocation;
-
-            if ($platform.NodeJS) {
-
-                var lines = _.map(params.lines, function (line) {
-                    return params.indentation + _.map(line, function (run) {
-                        return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
-                    }).join('');
-                }).join('\n');
-
-                if (log.timestampEnabled) {
-                    lines = log.color('dark').shell + bullet(String(params.when) + ' ', log.color('none').shell + lines);
-                }
-
-                console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
-            } else {
-                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(
-
-                /*  Text   */
-
-                [log.timestampEnabled ? '%c' + params.when + '%c' : '', _.map(params.lines, function (line, i) {
-                    return params.indentation + _.reduce2('', line, function (s, run) {
-                        return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
-                    });
-                }).join('\n'), codeLocation ? '%c' + codeLocation : ''].nonempty.join(' '),
-
-                /*  Colors */
-
-                (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)', 'color:black'] : []).concat(_.scatter(params.lines, function (line, i, emit) {
-                    _.each(line, function (run) {
-                        if (run.text && run.config.color) {
-                            emit(run.config.color.css);
-                        }
-                    });
-                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
-            }
-        },
-
-        /*  Ex.: function @ source.js:321  */
-
-        location: function location(where) {
-            return '(' + [].concat(where.calleeShort || [], [].concat(where.fileName || [], where.line || []).join(':')).join(' @ ') + ')';
-        },
-
-        stringifyArguments: function stringifyArguments(args, cfg) {
-            return args.map(function (arg) {
-                var x = log.impl.stringify(arg, cfg);
-                return cfg.maxArgLength ? String.ify.limit(x, cfg.maxArgLength) : x;
-            }).join(' ');
-        },
-
-        stringify: function stringify(what, cfg) {
-            return typeof what === 'string' ? what : Array.isArray(what) && (cfg || {}).table ? asTable(what) : String.ify.configure(cfg || {})(what);
-        }
-    }
-})
-
-/*  Printing API
- */
-;(function () {
-    var write = log.impl.write;
-    _.extend(log, log.printAPI = _.fromPairs(_.concat([['newline', write.$(log.config({ location: false }), '')], ['write', write]], _.flat(_.map(['red failure error e', 'blue info i', 'darkBlue minor m', 'orange warning warn w', 'green success ok g', 'darkGreen dg', 'pink notice alert p', 'boldPink pp', 'dark hint d', 'boldGreen gg', 'bright b', 'boldRed bloody bad ee', 'darkPink dp', 'brown br', 'darkOrange wtf', 'boldOrange ww', 'darkRed er', 'boldBlue ii'], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
-        return [name, write.$(log.config({ location: i !== 0, color: log.color(names.first) }))];
-    })))))));
-})();
-
-$global.logs = _.higherOrder.map(log.printAPI);
-
-if ($platform.NodeJS) {
-    module.exports = log;
-}
-
-/***/ },
-
-/***/ 150:
-/* all exports used */
-/*!***************************!*\
-  !*** ./base/profiling.js ***!
-  \***************************/
-/***/ function(module, exports) {
-
-"use strict";
-"use strict";
-
-/*  Measures run time of a routine (either sync or async)
-    ======================================================================== */
-
-_.measure = function (routine, then) {
-    if (then) {
-        // async
-        var now = _.now();
-        routine(function () {
-            then(_.now() - now);
-        });
-    } else {
-        // sync
-        var now = _.now();
-        routine();
-        return _.now() - now;
-    }
-};
-
-/*  Measures performance: perfTest (fn || { fn1: .., fn2: ... }, then)
-    ======================================================================== */
-
-_.perfTest = function (arg, then) {
-    var rounds = 500;
-    var routines = _.isFunction(arg) ? { test: arg } : arg;
-    var timings = {};
-
-    _.cps.each(routines, function (fn, name, then) {
-
-        /*  Define test routine (we store and print result, to assure our routine
-            won't be throwed away by optimizing JIT)
-         */
-        var result = [];
-        var run = function run() {
-            for (var i = 0; i < rounds; i++) {
-                result.push(fn());
-            }
-            console.log(name, result);
-        };
-
-        /*  Warm-up run, to force JIT work its magic (not sure if 500 rounds is enough)
-         */
-        run();
-
-        /*  Measure (after some delay)
-         */
-        _.delay(function () {
-            timings[name] = _.measure(run) / rounds;
-            then();
-        }, 100);
-    },
-
-    /*  all done
-     */
-    function () {
-        then(timings);
-    });
-};
-
-/***/ },
-
-/***/ 151:
-/* all exports used */
-/*!****************************!*\
-  !*** ./base/reflection.js ***!
-  \****************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(__filename) {"use strict";
-
-/*  ------------------------------------------------------------------------ */
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var O = Object;
-
-/*  ------------------------------------------------------------------------ */
-
-_.hasReflection = true;
-
-/*  ------------------------------------------------------------------------ */
-
-$global.getSource = __webpack_require__(/*! get-source */ 94);
-
-/*  ------------------------------------------------------------------------ */
-
-$global.StackTracey = O.assign(__webpack_require__(/*! stacktracey */ 172), {
-    fromErrorWithAsync: function fromErrorWithAsync(e) {
-
-        var stackEntries = new StackTracey(e),
-            asyncContext = e.asyncContext;
-
-        while (asyncContext) {
-            stackEntries = stackEntries.concat(new StackTracey(asyncContext.stack));
-            asyncContext = asyncContext.asyncContext;
-        }
-
-        return stackEntries.mergeRepeatedLines;
-    }
-});
-
-/*  ------------------------------------------------------------------------ */
-
-_.tests.reflection = {
-
-    'file paths': function filePaths() {
-        $assert(typeof $uselessPath === 'undefined' ? 'undefined' : _typeof($uselessPath), 'string');
-        $assert($sourcePath.length > 0);
-        $assert($uselessPath.length > 0);
-    }
-};(function () {
-
-    var currentFile = $platform.Browser ? (new StackTracey()[2] || { file: '' }).file : __filename;
-
-    $global.const('$uselessPath', _.initial(currentFile.split('/'), $platform.NodeJS ? 2 : 1).join('/') + '/');
-    $global.const('$sourcePath', function () {
-        var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
-        return local ? local + '/' : $uselessPath;
-    }());
-})();
-
-/*  ------------------------------------------------------------------------ */
-
-var asTable = __webpack_require__(/*! as-table */ 65);
-
-StackTracey.prototype[Symbol.for('String.ify')] = function (stringify) {
-
-    return asTable(this.map(function (entry) {
-        return ['\t' + 'at ' + entry.calleeShort.slice(0, 30), entry.fileShort && entry.fileShort + ':' + entry.line || '', ((entry.sourceLine || '').trim() || '').slice(0, 80)];
-    }));
-};
-
-Error.prototype[Symbol.for('String.ify')] = function (stringify) {
-
-    try {
-        var stack = StackTracey.fromErrorWithAsync(this).slice(this.stackOffset || 0).clean;
-        var why = stringify.limit((this.message || '').replace(/\r|\n/g, '').trim(), 120);
-
-        return '[EXCEPTION] ' + why + (this.notMatching && [].concat(this.notMatching).map(function (x) {
-            return '\t' + stringify(x);
-        }).join('\n') + '\n\n' || '') + '\n\n' + stringify(stack) + '\n';
-    } catch (sub) {
-        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n';
-    }
-};
-
-/*  ------------------------------------------------------------------------ */
-
-_.tests.prototypeMeta = {
-
-    'Prototype.$meta': function Prototype$meta() {
-
-        var DummyProto = $prototype();
-        var DummyTrait = $trait();
-
-        $assertMatches(DummyProto.$meta, { name: 'DummyProto', type: 'prototype' });
-        $assertMatches(DummyTrait.$meta, { name: 'DummyTrait', type: 'trait' });
-    },
-
-    'String.ify': function StringIfy() {
-
-        var Dummy = $prototype({});
-
-        $assert(String.ify(Dummy), 'Dummy ()');
-    }
-};(function () {
-
-    var findMeta = function findMeta(stack) {
-        return _.find2(stack.withSources.reverse(), function (location) {
-
-            var match = location.sourceLine.match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/);
-            return match && { name: match[1] === 'exports' ? location.fileName : match[1],
-                type: match[2],
-                file: location.fileShort } || false;
-        });
-    };
-
-    $prototype.macro(function (def, base) {
-
-        if (typeof Symbol !== 'undefined') {
-            def.constructor[Symbol.for('String.ify')] = function () {
-                return (this.$meta && this.$meta.name || '<prototype>') + ' ()';
-            };
-        }
-
-        /*  NB: memoization is here because findMeta performs slow (needs to fetch sources and sourcemaps),
-                and we dont wanna do this at construction of each prototype. Better do this on first $meta request.    */
-
-        if (!def.$meta) {
-            (function () {
-                var stack = new StackTracey();
-                def.$meta = $static($property(_.memoize(function () {
-                    return findMeta(stack);
-                })));
-            })();
-        }
-
-        return def;
-    });
-})();
-
-/*  ------------------------------------------------------------------------ */
-/* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
-
-/***/ },
-
-/***/ 153:
-/* all exports used */
-/*!******************************!*\
-  !*** ./base/tier0/assert.js ***!
-  \******************************/
-/***/ function(module, exports) {
-
-"use strict";
-"use strict";
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-------------------------------------------------------------------------
-
-Unit tests (bootstrap code)
-
-------------------------------------------------------------------------
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-_.hasAsserts = true;
-
-_.extend(_, {
-
-    /*  a namespace where you put tests (for enumeration purposes)
-        ======================================================================== */
-
-    tests: _.tests || {},
-
-    /*  A degenerate case of a test shell. We use it to bootstrap most critical
-        useless.js internals, where real shell (Testosterone.js) is not available,
-        as it itself depends on these utility. It takes test and test's subject as
-        arguments (test before code, embodying test-driven philosophy) and executes
-        test immediately, throwing exception if anything fails - which is simply
-        the default behavior of $assert. So expect no advanced error reporting
-        and no controlled execution by using this API.
-        ======================================================================== */
-
-    withTest: function withTest(name, test, defineSubject) {
-        defineSubject();
-        _.runTest(name, test);
-        _.publishToTestsNamespace(name, test);
-    },
-
-    /*  Publishes to _.tests namespace, but does not run
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    deferTest: function deferTest(name, test, defineSubject) {
-        defineSubject();
-        _.publishToTestsNamespace(name, test);
-    },
-
-    /*  INTERNALS (you won't need that)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    runTest: function runTest(name, test) {
-        try {
-            if (_.isFunction(test)) {
-                test();
-            } else {
-                _.each(test, function (fn) {
-                    fn();
-                });
-            }
-        } catch (e) {
-            if (_.isAssertionError(e)) {
-                var printedName = (_.isArray(name) && name || [name]).join('.');
-                console.log(printedName + ':', e.message, '\n' + _.times(printedName.length, _.constant('~')).join('') + '\n');
-                _.each(e.notMatching, function (x) {
-                    console.log('  •', x);
-                });
-            }
-            throw e;
-        }
-    },
-
-    publishToTestsNamespace: function publishToTestsNamespace(name, test) {
-        if (_.isArray(name)) {
-            // [suite, name] case
-            (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test;
-        } else {
-            _.tests[name] = test;
-        }
-    } });
-
-/*  TEST ITSELF
-    ======================================================================== */
-
-_.withTest('assert.js bootstrap', function () {
-
-    /*  One-argument $assert (requires its argument to be strictly 'true')
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assert(true);
-
-    $assert( // public front end, may be replaced by environment)
-    _.assert === // member of _ namespace (original implementation, do not mess with that)
-    _.assertions.assert); // member of _.assertions (for enumeration purposes)
-
-    $assertNot(false);
-    $assertNot(5); // NB: assertNot means 'assert not true', hence this will pass
-
-    /*  Multi-argument assert (requires its arguments be strictly equal to each other)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assert(2 + 2, 2 * 2, 4); // any number of arguments
-    $assert({ foo: [1, 2, 3] }, { foo: [1, 2, 3] }); // compares objects (deep match)
-    $assert({ foo: { bar: 1 }, baz: 2 }, // ignores order of properties
-    { baz: 2, foo: { bar: 1 } });
-
-    $assertNot(2 + 2, 5);
-
-    /*  Nonstrict matching (a wrapup over _.matches)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertMatches({ foo: 1, bar: 2 }, { foo: 1 });
-
-    /*  Nonstrict matching against complex objects (stdlib.js feature)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if (_.hasStdlib) {
-        $assertMatches({ foo: [1, 2], bar: 3 }, { foo: [1] });
-    }
-
-    /*  Regex matching (stdlib.js feature)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if (_.hasStdlib) {
-        $assertMatches('123', /[0-9]+/);
-    }
-
-    /*  Type matching (plain)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if (_.hasStdlib) {
-        $assertTypeMatches(42, 'number');
-        $assertFails(function () {
-            $assertTypeMatches('foo', 'number');
-        });
-    }
-
-    /*  Type matching (array type)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if (_.hasStdlib) {
-        $assertTypeMatches([1, 2], []);
-        $assertTypeMatches([], []);
-        $assertTypeMatches([1, 2, 3], ['number']);
-        $assertTypeMatches([], ['number']);
-        $assertFails(function () {
-            $assertTypeMatches([1, 2, 3], ['string']);
-            $assertTypeMatches([1, 2, 'foo'], ['number']);
-        });
-    }
-
-    /*  Type matching (deep)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if (_.hasStdlib) {
-        $assertTypeMatches({
-
-            /*  Input object */
-
-            foo: 42,
-            bar: {
-                even: 4,
-                many: ['foo', 'bar'] } }, {
-
-            /*  Type contract */
-
-            foo: 'number', // simple type check
-            qux: 'undefined', // nonexisting match 'undefined' 
-            bar: { // breakdown of complex object 
-                even: function even(n) {
-                    return n % 2 === 0;
-                }, // custom contract predicate    
-                many: ['string'] } });
-    } // array contract (here, 'array of strings')
-
-    /*  Type matching ($prototype)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if (_.hasOOP) {
-        var Foo = $prototype(),
-            Bar = $prototype();
-
-        $assertTypeMatches({ foo: new Foo(),
-            bar: new Bar() }, { foo: Foo,
-            bar: Bar });
-
-        $assertFails(function () {
-            $assertTypeMatches(new Bar(), Foo);
-        });
-    };
-
-    /*  Ensuring throw (and no throw)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertThrows(function () {
-        throw 42;
-    });
-    $assertNotThrows(function () {});
-
-    /*  Ensuring throw (strict version)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertThrows(function () {
-        throw 42;
-    }, 42); // accepts either plain value or predicate
-    $assertThrows(function () {
-        throw new Error('42');
-    }, _.matches({ message: '42' }));
-
-    $assertFails(function () {
-        $assertThrows(function () {
-            throw 42;
-        }, 24);
-        $assertThrows(function () {
-            throw new Error('42');
-        }, _.matches({ message: '24' }));
-    });
-
-    /*  Ensuring execution
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertEveryCalled(function (a, b, c) {
-        a();a();b();c();
-    });
-    $assertEveryCalledOnce(function (a, b, c) {
-        a();b();c();
-    });
-    $assertEveryCalled(function (x__3) {
-        x__3();x__3();x__3();
-    });
-
-    /*$assertFails (function () {
-        $assertEveryCalled     (function (a, b, c) { a (); b () })
-        $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
-        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
-
-    /*  TODO:   1) add CPS support
-                2) replace $assertCPS with this
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if (_.hasStdlib) {
-
-        $assertCalledWithArguments(['foo', ['foo', 'bar']], function (fn) {
-
-            fn('foo');
-            fn('foo', 'bar');
-        });
-    }
-
-    /*  Ensuring CPS routine result (DEPRECATED)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertCPS(function (then) {
-        then('foo', 'bar');
-    }, ['foo', 'bar']);
-    $assertCPS(function (then) {
-        then('foo');
-    }, 'foo');
-    $assertCPS(function (then) {
-        then();
-    });
-
-    /*  Ensuring assertion failure
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    $assertFails(function () {
-        $fail; // simplest way to generate assertion
-        $stub; // to mark code stubs (throws error)
-        $assert('not true'); // remember that assert is more strict than JavaScript if clauses
-        $assert({ foo: 1, bar: 2 }, { foo: 1 }); // not be confused with _.matches behavior (use $assertMatches for that)
-        $assert([1, 2, 3, 4], [1, 2, 3]); // same for arrays
-        $assert(['foo'], { 0: 'foo', length: 1 }); // array-like objects not gonna pass (regression test)
-        $assertFails(function () {});
-    }); // $assertFails fails if passed code don't
-
-    /*  Default fail behavior (never depend on that, as it's environment-dependent)
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-
-    if ($assert === _.assertions.assert) {
-        $assertThrows(function () {
-            $fail;
-        });
-    }
-
-    /*  IMPLEMENTATION
-        ======================================================================== */
-}, function () {
-
-    var assertImpl = function assertImpl(positive) {
-        return function (__) {
-            var args = [].splice.call(arguments, 0);
-
-            if (args.length === 1) {
-                if (positive && args[0] !== true) {
-                    _.assertionFailed({ notMatching: args });
-                }
-            } else if (positive && _.allEqual(args) !== true) {
-                _.assertionFailed({ notMatching: args });
-            }
-
-            return true;
-        };
-    }
-
-    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
-     */
-    ;(function () {
-        var _matches = _.matches;
-        _.matches = function (a) {
-            return _.isObject(a) ? _matches(a) : function (b) {
-                return a === b;
-            };
-        };
-    })();
-
-    _.extend(_, _.assertions = {
-
-        assert: assertImpl(true),
-        assertNot: assertImpl(false),
-
-        assertCPS: function assertCPS(fn, args, then) {
-            var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
-            fn(function () {
-                $assert([].splice.call(arguments, 0), requiredResult);
-                if (then) {
-                    then();return true;
-                }
-            });
-        },
-
-        assertNotCalled: function assertNotCalled(context) {
-            var inContext = true;context(function () {
-                if (inContext) {
-                    $fail;
-                }
-            });inContext = false;
-        },
-
-        assertEveryCalledOnce: function assertEveryCalledOnce(fn, then) {
-            return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
-        },
-
-        assertEveryCalled: function assertEveryCalled(fn_, then) {
-            var fn = _.hasTags ? $untag(fn_) : fn_,
-                async = _.hasTags ? $async.is(fn_) : fn_.async,
-                once = _.hasTags ? $once.is(fn_) : fn_.once;
-
-            var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
-            var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
-                var parts = arg.trim().match(/^(.+)__(\d+)$/);
-                var num = parts && parseInt(parts[2], 10);
-                return _.isFinite(num) ? num || false : true;
-            });
-            var status = _.times(fn.length, _.constant(false));
-            var callbacks = _.times(fn.length, function (i) {
-                return function () {
-                    status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
-                    if (async && _.isEqual(status, contracts)) then();
-                };
-            });
-            fn.apply(null, callbacks);
-
-            if (!async) {
-                _.assert(status, contracts);
-                if (then) {
-                    then();
-                }
-            }
-        },
-
-        assertCalledWithArguments: function assertCalledWithArguments(argsPattern, generateCalls) {
-            return _.assert(_.arr(generateCalls), argsPattern);
-        },
-
-        assertCallOrder: function assertCallOrder(fn) {
-            var callIndex = 0;
-            var callbacks = _.times(fn.length, function (i) {
-                return function callee() {
-                    callee.callIndex = callIndex++;
-                };
-            });
-            fn.apply(null, callbacks);
-            return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
-        },
-
-        assertMatches: function assertMatches(value) {
-            for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-                args[_key - 1] = arguments[_key];
-            }
-
-            var pattern = args[0];
-            try {
-                return _.assert(_.matches.apply(null, args)(value));
-            } catch (e) {
-                throw _.isAssertionError(e) ? _.extend(e, { notMatching: [value, pattern] }) : e;
-            }
-        },
-
-        assertNotMatches: function assertNotMatches(value) {
-            for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-                args[_key2 - 1] = arguments[_key2];
-            }
-
-            var pattern = args[0];
-            try {
-                return _.assert(!_.matches.apply(null, args)(value));
-            } catch (e) {
-                throw _.isAssertionError(e) ? _.extend(e, { notMatching: [value, pattern] }) : e;
-            }
-        },
-
-        assertType: function assertType(value, contract) {
-            return _.assert(_.decideType(value), contract);
-        },
-
-        assertTypeMatches: function assertTypeMatches(value, contract) {
-            var mismatches = _.typeMismatches(contract, value);
-            return _.isEmpty(mismatches) ? true : _.assertionFailed({
-                message: 'provided value type not matches required contract',
-                asColumns: true,
-                notMatching: [{ provided: value }, { required: contract }, { mismatches: mismatches }] });
-        },
-
-        assertFails: function assertFails(what) {
-            return _.assertThrows.call(this, what, _.isAssertionError);
-        },
-
-        assertThrows: function assertThrows(what, errorPattern) {
-            var e = undefined,
-                thrown = false;
-            try {
-                what.call(this);
-            } catch (__) {
-                e = __;thrown = true;
-            }
-
-            _.assert.call(this, thrown);
-
-            if (arguments.length > 1) {
-                _.assertMatches.call(this, e, errorPattern);
-            }
-        },
-
-        assertNotThrows: function assertNotThrows(what) {
-            return _.assertEveryCalled(function (ok) {
-                what();ok();
-            });
-        },
-
-        fail: function fail() {
-            _.assertionFailed();
-        },
-
-        fails: _.constant(function () {
-            // higher order version
-            _.assertionFailed();
-        }),
-
-        stub: function stub() {
-            _.assertionFailed();
-        } });
-
-    /*  DEFAULT FAILURE IMPL.
-        ---------------------
-        We do not subclass Error, because _.isTypeOf currently does not support
-        inhertitance (UPDATE: now does) and it would cause troubles in test shell
-        and logging facility. Thus a subclass is defined that way.
-        ======================================================================== */
-
-    _.extend(_, {
-
-        assertionError: function assertionError(additionalInfo) {
-            return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
-        },
-
-        assertionFailed: function assertionFailed(additionalInfo) {
-            throw _.extend(_.assertionError(additionalInfo), {
-                stack: new Error().stack.split('\n').slice(3).join('\n') });
-        },
-
-        isAssertionError: function isAssertionError(e) {
-            return e && e.assertion === true;
-        } });
-
-    /*  $assert helper
-        ======================================================================== */
-
-    _.allEqual = function (values) {
-        return _.reduce(values, function (prevEqual, x) {
-            return prevEqual && _.isEqual(values[0], x);
-        }, true);
-    };
-
-    /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
-        thus configurable=true)
-        ======================================================================== */
-
-    _.each(_.keys(_.assertions), function (name) {
-        var define = _[name].length === 0 ? $global.property : $global.const;
-        define('$' + name, _[name], { configurable: true });
-    });
-});
-
-/***/ },
-
-/***/ 162:
-/* all exports used */
-/*!**************************!*\
-  !*** ./base/uncaught.js ***!
-  \**************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-"use strict";
-
-/*  Uncaught exception handling facility
-    ======================================================================== */
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-(function () {
-
-    _.hasUncaught = true;
-
-    var reThrownTag = ' [re-thrown by a hook]'; // marks error as already processed by globalUncaughtExceptionHandler
-
-    var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
-
-        var chain = globalUncaughtExceptionHandler.chain;
-        globalUncaughtExceptionHandler.chain = _.reject(chain, _.property('catchesOnce'));
-
-        if (chain.length) {
-            for (var i = 0, n = chain.length; i < n; i++) {
-                try {
-                    chain[i](e);
-                    break;
-                } catch (newE) {
-                    console.log(newE);
-                    if (i === n - 1) {
-                        newE.message += reThrownTag;
-                        throw newE;
-                    } else {
-                        if (newE && (typeof newE === 'undefined' ? 'undefined' : _typeof(newE)) === 'object') {
-                            newE.originalError = e;
-                        }
-                        e = newE;
-                    }
-                }
-            }
-        } else {
-            e.message += reThrownTag;
-            console.log(e);
-            throw e;
-        }
-    };
-
-    _.withUncaughtExceptionHandler = function (handler, context_) {
-        var context = context_ || _.identity;
-
-        if (context_) {
-            handler.catchesOnce = true;
-        }
-
-        globalUncaughtExceptionHandler.chain.unshift(handler);
-        context(function () {
-            globalUncaughtExceptionHandler.chain.remove(handler);
-        });
-    };
-
-    globalUncaughtExceptionHandler.chain = [];
-
-    switch ($platform.engine) {
-        case 'node':
-            __webpack_require__(/*! process */ 52).on('uncaughtException', globalUncaughtExceptionHandler);break;
-
-        case 'browser':
-            window.addEventListener('error', function (e) {
-
-                if (e.message.indexOf(reThrownTag) < 0) {
-                    // if not already processed by async hooks
-
-                    if (e.error) {
-                        globalUncaughtExceptionHandler(e.error);
-                    } else {
-                        // emulate missing .error (that's Safari)
-                        globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
-                            stub: true,
-                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno }));
-                    }
-                }
-            });}
-})();
-
-/***/ },
-
-/***/ 163:
-/* all exports used */
-/*!*******************************!*\
-  !*** ./base/uncaughtAsync.js ***!
-  \*******************************/
-/***/ function(module, exports) {
-
-"use strict";
-"use strict";
-
-/*  Provides call stack persistence across async call boundaries.
-    ======================================================================== */
-
-(function () {
-
-    if ($platform.Browser) {
-
-        _.hasUncaughtAsync = true;
-
-        var globalAsyncContext = undefined;
-
-        var listenEventListeners = function listenEventListeners(genAddEventListener, genRemoveEventListener) {
-
-            var override = function override(obj) {
-
-                obj.addEventListener = genAddEventListener(obj.addEventListener);
-                obj.removeEventListener = genRemoveEventListener(obj.removeEventListener);
-            };
-
-            if (window.EventTarget) {
-                override(window.EventTarget.prototype);
-            } else {
-                override(Node.prototype);
-                override(XMLHttpRequest.prototype);
-            }
-        };
-
-        var asyncHook = function asyncHook(originalImpl, callbackArgumentIndex) {
-            return function () {
-                // @hide
-
-                var asyncContext = {
-                    name: name,
-                    stack: new Error().stack, // @hide
-                    asyncContext: globalAsyncContext };
-
-                var args = _.asArray(arguments);
-                var fn = args[callbackArgumentIndex];
-
-                if (!_.isFunction(fn)) {
-                    throw new Error('[uncaughtAsync.js] callback should be a function');
-                }
-
-                var wrappers = fn.__uncaughtJS_wrappers = fn.__uncaughtJS_wrappers || [];
-                var wrapper = args[callbackArgumentIndex] = function () {
-                    // @hide
-
-                    globalAsyncContext = asyncContext;
-
-                    try {
-                        return fn.apply(this, arguments);
-                    } catch (e) {
-                        _.globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
-                    }
-                };
-
-                wrappers.push(wrapper);
-
-                return originalImpl.apply(this, args);
-            };
-        };
-
-        window.setTimeout = asyncHook(window.setTimeout, 0);
-
-        /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
-         */
-        listenEventListeners(function (addEventListener) {
-            return asyncHook(addEventListener, 1);
-        }, function (removeEventListener) {
-            return function (name, fn, bubble, untrusted) {
-                var _iteratorNormalCompletion = true;
-                var _didIteratorError = false;
-                var _iteratorError = undefined;
-
-                try {
-                    for (var _iterator = (fn.__uncaughtJS_wrappers || [fn])[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                        var x = _step.value;
-
-                        removeEventListener.call(this, name, x, bubble);
-                    }
-                } catch (err) {
-                    _didIteratorError = true;
-                    _iteratorError = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion && _iterator.return) {
-                            _iterator.return();
-                        }
-                    } finally {
-                        if (_didIteratorError) {
-                            throw _iteratorError;
-                        }
-                    }
-                }
-            };
-        });
-    }
-})();
-
-/***/ },
-
-/***/ 165:
-/* all exports used */
-/*!******************************!*\
-  !*** ./client/LogOverlay.js ***!
-  \******************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-"use strict";
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-------------------------------------------------------------------------
-
-Modal overlay that renders log.js output for debugging purposes
-
-------------------------------------------------------------------------
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-(function ($ /* JQUERY */) {
-
-	$global.LogOverlay = $singleton(Component, {
-
-		$defaults: {
-			opaque: false }, // deferred init
-
-		init: function init() {
-			log.withWriteBackend(this.write, function () {});
-
-			$(document).keydown(this.$(function (e) {
-				if (e.keyCode === 192) {
-					// ~
-					this.toggle();
-				} else if (e.keyCode === 27) {
-					// Esc
-					this.body.empty();
-				}
-			}));
-		},
-
-		el: $memoized($property(function () {
-			var el = $('<div class="useless-log-overlay" style="display: none;">').append('<div class="useless-log-overlay-body">');
-
-			$(document).ready(function () {
-				el.appendTo(document.body);
-			});
-
-			return el;
-		})),
-
-		body: $memoized($property(function () {
-			return this.el.find('.useless-log-overlay-body');
-		})),
-
-		toggle: function toggle(yes) {
-			this.el.toggle(yes);
-		},
-
-		visible: $property(function () {
-			return this.el.is(':visible');
-		}),
-
-		clip: function clip() {
-			var elHeight = this.el.height();
-			var bodyHeight = this.body.height();
-
-			this.body.children().filter(this.$(function (i, line) {
-
-				var lineTop = bodyHeight - $(line).offsetInParent().y;
-				var lineBottom = lineTop - $(line).height();
-				var clipHeight = elHeight / 2;
-
-				return lineTop > clipHeight && lineBottom > clipHeight;
-			})).remove();
-		},
-
-		write: function write(params) {
-			this.toggle(true);
-
-			if (params.config.clear) {
-				this.body.empty();
-			}
-
-			this.body.append($('<div class="ulo-line">').attr('style', params.color && params.color.css || '').append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
-
-			this.clip.postpone();
-
-			if (!this.opaque) {
-				log.impl.defaultWriteBackend(params);
-			}
-		} });
-
-	// -- end of namespace
-})(__webpack_require__(/*! jquery */ 92));
-
-/***/ },
-
-/***/ 166:
-/* all exports used */
-/*!*************************!*\
-  !*** ./client/Panic.js ***!
-  \*************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-"use strict";
-
-/*  TODO: REWRITE THIS MESS WITH REACT
-	======================================================================== */
-
-(function ($ /* JQUERY */) {
-
-	$global.Panic = function (what, cfg) {
-		cfg = _.defaults(_.clone(cfg || {}), { dismiss: _.identity, raw: false });
-
-		if (_.isTypeOf(Error, what)) {
-			_.extend(cfg, _.pick(what, 'retry', 'dismiss'));
-		}
-
-		Panic.widget.append(what, cfg.raw);
-
-		if (_.isFunction(cfg.retry)) {
-			Panic.widget.onRetry(cfg.retry);
-		}
-
-		if (_.isFunction(cfg.dismiss)) {
-			Panic.widget.onClose(cfg.dismiss);
-		}
-	};
-
-	Panic.init = function () {
-		if (!Panic._initialized) {
-			Panic._initialized = true;
-			_.withUncaughtExceptionHandler(function (e) {
-				Panic(e);throw e; /* re-throw, to make it visible in WebInspector */
-			});
-		}
-	};
-
-	Panic.widget = $singleton(Component, {
-
-		retryTriggered: $triggerOnce(),
-		closeTriggered: $triggerOnce(),
-
-		el: $memoized($property(function () {
-
-			var el = $('<div class="panic-modal-overlay" style="z-index:5000; display:none;">').append([this.bg = $('<div class="panic-modal-overlay-background">'), this.modal = $('<div class="panic-modal">').append([this.modalBody = $('<div class="panic-modal-body">').append(this.title = $('<div class="panic-modal-title">Now panic!</div>')), $('<div class="panic-modal-footer">').append([this.btnRetry = $('<button type="button" class="panic-btn panic-btn-warning" style="display:none;">Try again</button>').touchClick(this.retry), this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>').touchClick(this.close)])])]);
-
-			el.appendTo(document.body);
-
-			$(document).ready(function () {
-				el.appendTo(document.body);
-			});
-
-			try {
-				$(window).resize(this.layout).resize();
-				this.modal.enableScrollFaders({ scroller: this.modalBody });
-				$(document).keydown(this.$(function (e) {
-					if (e.keyCode === 27) {
-						this.close();
-					}
-				}));
-			} catch (e) {
-				_.delay(function () {
-					Panic(e);
-				});
-			}
-
-			return el;
-		})),
-
-		layout: function layout() {
-			var maxContentWidth = _.coerceToUndefined(_.max(_.map(this.modal.find('pre'), _.property('scrollWidth'))));
-
-			this.modal.css({ 'max-height': $(window).height() - 100,
-				'width': maxContentWidth && maxContentWidth + 120 });
-
-			this.modalBody.scroll();
-		},
-		toggleVisibility: function toggleVisibility(yes) {
-			if (yes !== !(this.el.css('display') === 'none')) {
-				if (yes) {
-					this.el.css('display', '');
-				}
-				this.el.animateWith(yes ? 'panic-modal-appear' : 'panic-modal-disappear', this.$(function () {
-					if (!yes) {
-						this.el.css('display', 'none');
-					}
-				}));
-			}
-		},
-		onRetry: function onRetry(retry) {
-			this.retryTriggered(retry);
-			this.btnRetry.css('display', '');
-		},
-		onClose: function onClose(close) {
-			this.closeTriggered(close);
-			this.btnClose.css('display', '');
-		},
-		retry: function retry() {
-			this._clean();
-			this.closeTriggered.off();
-			this.toggleVisibility(false);
-			this.retryTriggered();
-		},
-		close: function close() {
-			this._clean();
-			this.retryTriggered.off();
-			this.toggleVisibility(false);
-			this.closeTriggered();
-		},
-		_clean: function _clean() {
-			this.modalBody.find('.panic-alert-error').remove();
-			this.modalBody.scroll();
-			this.btnRetry.css('display', 'none');
-			this.btnClose.css('display', 'none');
-		},
-		append: function append(what, raw) {
-			var id = 'panic' + this.hash(what);
-
-			var counter = $('#' + id + ' .panic-alert-counter');
-			if (counter.length) {
-				counter.text((counter.text() || '1').parsedInt + 1);
-			} else {
-				$('<div class="panic-alert-error">').attr('id', id).append('<span class="panic-alert-counter">').append(this.print(what, raw)).insertAfter(this.el.find('.panic-modal-title'));
-			}
-			this.toggleVisibility(true);
-			this.layout();
-		},
-		hash: function hash(what) {
-			return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : String.ify(what)) || '').hash;
-		},
-		print: function print(what, raw) {
-			return _.isTypeOf(Error, what) ? this.printError(what) : _.isTypeOf(Test, what) ? this.printFailedTest(what) : this.printUnknownStuff(what, raw);
-		},
-		printUnknownStuff: function printUnknownStuff(what, raw) {
-			return raw ? what : $('<span>').text(log.impl.stringify(what));
-		},
-		printLocation: function printLocation(where) {
-			return $('<span class="location">').append([$('<span class="callee">').text(where.calleeShort), $('<span class="file">').text(where.fileName), $('<span class="line">').text(where.line)]);
-		},
-		printFailedTest: function printFailedTest(test) {
-			var _this = this;
-
-			var logEl = $('<pre class="test-log" style="margin-top: 13px;">');
-
-			log.withWriteBackend(function (params) {
-				if (_.isTypeOf(Error, params.args.first)) {
-					console.log(params.args.first);
-				}
-
-				logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div class="inline-exception-entry">').append([_.escape(params.indentation), $('<div class="panic-alert-error inline-exception">').append(_this.printError(params.args.first))]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
-					return $('<div class="line">').append(_.escape(params.indentation)).append(_.map(line, function (run) {
-						return $('<span>').attr('style', run.config.color && run.config.color.css || '').text(run.text);
-					})).append(i === lines.lastIndex ? [params.where && this.printLocation(params.where), params.trailNewlines.replace(/\n/g, '<br>')] : []);
-				}, _this)));
-			}, function (done) {
-				test.evalLogCalls();
-				done();
-			});
-
-			return [$('<div class="panic-alert-error-message" style="font-weight: bold;">').text(test.name).append('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl];
-		},
-		printError: function printError(e) {
-
-			var stackEntries = StackTracey.fromErrorWithAsync(e).withSources;
-
-			return [$('<div class="panic-alert-error-message" style="font-weight: bold;">').text(e.message).append(_.any(stackEntries, function (e, i) {
-				return (e.thirdParty || e['native'] || e.hide) && i !== 0;
-			}) ? '<a class="clean-toggle" href="javascript:{}"></a>' : '').click(this.$(function (e) {
-				$(e.delegateTarget).parent().toggleClass('all-stack-entries').transitionend(this.$(function () {
-					this.modalBody.scroll();
-				}));
-			})), $('<div class="not-matching" style="margin-top: 5px; padding-left: 10px;">').append(_.map(_.coerceToArray(e.notMatching || []), function (s) {
-				return $('<pre>').text(log.impl.stringify(s));
-			})), $('<ul class="callstack">').append(_.map(stackEntries, this.$(function (entry) {
-
-				var dom = $('<li class="callstack-entry">').toggleClass('third-party', entry.thirdParty || false).toggleClass('hide', entry.hide || false).toggleClass('native', entry['native'] || false).append([$('<span class="file">').text(_.nonempty([entry.index ? '(index)' : entry.fileShort, entry.line]).join(':')), $('<span class="callee">').text(entry.calleeShort), $('<span class="src">').text((entry.sourceLine || '').trim()).click(this.$(function (e) {
-					var el = $(e.delegateTarget);
-
-					if (dom.is('.full')) {
-						dom.removeClass('full');
-						dom.transitionend(function () {
-							if (!dom.is('.full')) {
-								el.text((entry.sourceLine || '').trim());
-							}
-						});
-					} else {
-
-						var lines = (entry.sourceFile || { lines: [] }).lines;
-
-						dom.addClass('full');
-						el.html(lines.map(function (line) {
-							return $('<div class="line">').text(line);
-						}));
-
-						var line = el.find('.line').eq(entry.line - 1).addClass('hili');
-						if (line.length) {
-							var offset = line.offset().top - el.offset().top;
-							el.scrollTop(offset - 100);
-						}
-
-						_.delay(this.$(function () {
-							var shouldScrollDownMore = el.outerBBox().bottom + 242 - this.modalBody.outerBBox().bottom;
-							if (shouldScrollDownMore > 0) {
-								this.modalBody.animate({
-									scrollTop: this.modalBody.scrollTop() + shouldScrollDownMore }, 250);
-							}
-						}));
-					}
-				}))]);
-
-				return dom;
-			})))];
-		}
-	});
-
-	$.fn.extend({
-		enableScrollFaders: function enableScrollFaders(cfg) {
-			var horizontal = cfg && cfg.horizontal;
-			var faderTop,
-			    faderBottom,
-			    scroller = this.find(cfg && cfg.scroller || '.scroller');
-
-			this.css({ position: 'relative' });
-			this.append(faderTop = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'left' : 'top') + '"></div>')).append(faderBottom = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'right' : 'bottom') + '"></div>'));
-
-			scroller.scroll(function () {
-				var scrollTop = horizontal ? $(this).scrollLeft() : $(this).scrollTop(),
-				    height = horizontal ? $(this).width() : $(this).height(),
-				    max = (horizontal ? this.scrollWidth : this.scrollHeight) - 1;
-				faderTop.css({ opacity: scrollTop > 0 ? 1 : 0 });
-				faderBottom.css({ opacity: scrollTop + height < max ? 1 : 0 });
-			}).scroll();
-
-			return this;
-		} });
-
-	// -- end of namespace
-})(__webpack_require__(/*! jquery */ 92));
-
-/***/ },
-
-/***/ 168:
-/* all exports used */
-/*!******************************!*\
-  !*** ./client/jQueryPlus.js ***!
-  \******************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-"use strict";
-
-/*  Some handy jQuery extensions
-    ======================================================================== */
-
-;(function ($) {
-
-    /*  We override some jQuery methods, so store previous impl. here
-     */
-    var __previousMethods__ = _.clone($.fn);
-
-    /*  Global functions
-     */
-    _.extend($, {
-
-        /*  Instantiates svg elements
-         */
-        svg: function svg(tag) {
-            var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
-            if (tag === 'svg' && !$platform.IE) {
-                node.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-            }
-            return $(node);
-        } })
-
-    /*  Element methods
-     */
-    .fn.extend({
-
-        /*  For this-binding
-         */
-        $: function $() {
-            return _.$.apply(null, [this].concat(_.asArray(arguments)));
-        },
-
-        /*  Provides auto-unbinding of $component $listeners from DOM events upon destroy
-         */
-        on: function on(what, method) {
-            var el = this,
-                method = _.find(arguments, _.isFunction);
-
-            /*  See useless/base/dynamic/stream.js for that queue/queuedBy interface.
-             */
-            if (method.queuedBy) {
-                method.queuedBy.push({ remove: function remove() {
-                        el.off(what, method);
-                    } });
-            }
-
-            /*  Call original impl.
-             */
-            return __previousMethods__.on.apply(this, arguments);
-        }, // @hide
-
-        /*  Links a data (or controller instance) to its DOM counterpart
-         */
-        item: function item(value) {
-            if (value) {
-                // setter
-                if (this.length) {
-                    this[0]._item = value;
-                }
-                return this;
-            } else {
-                // getter
-                return this.length ? this[0]._item : undefined;
-            }
-        },
-
-        /*  Writes properties directly to DOM object
-         */
-        props: function props(what) {
-            _.extend.apply(null, [this[0]].concat(arguments));
-            return this;
-        },
-
-        props2: function props2(what) {
-            _.extend2.apply(null, [this[0]].concat(arguments));
-            return this;
-        },
-
-        /*  Wait semantics
-         */
-        hasWait: function hasWait() {
-            return this.hasClass('i-am-busy');
-        },
-
-        waitUntil: function waitUntil(fn, then) {
-            this.addClass('i-am-busy').attr('disabled', true);
-            fn(this.$(function () {
-                this.removeClass('i-am-busy').removeAttr('disabled');
-                if (then) {
-                    then.apply(null, arguments);
-                }
-            }));return this;
-        },
-
-        /*  Checks if has parent upwards the hierarchy
-         */
-        hasParent: function hasParent(el) {
-            var parent = this;
-            while (parent.length > 0) {
-                if (parent[0] == (el[0] || el)) {
-                    return true;
-                }
-                parent = parent.parent();
-            }
-            return false;
-        },
-
-        /*  Returns a value or undefined (coercing empty values to undefined)
-         */
-        nonemptyValue: function nonemptyValue() {
-            var value = $.trim(this.val());
-            return value.length == 0 ? undefined : value;
-        },
-
-        /*  Returns a valid integer value or undefined (coercing NaN to undefined)
-         */
-        intValue: function intValue() {
-            var value = parseInt(this.nonemptyValue(), 10);
-            return isNaN(value) ? undefined : value;
-        },
-
-        /*  Checks if a mouse/touch event occured within element bounds
-         */
-        hitTest: function hitTest(event) {
-            var offset = this.offset();
-            var pt = {
-                x: event.clientX - offset.left,
-                y: event.clientY - offset.top };
-            return pt.x >= 0 && pt.y >= 0 && pt.x < $(this).width() && pt.y < $(this).height();
-        },
-
-        /*  Returns multiple attributes as object of { attr1: value, attr2: value, .. } form
-         */
-        attrs: function attrs() /* name1, name2, ... */{
-            return _.fromPairs(_.map(arguments, function (name) {
-                return [name, this.attr(name)];
-            }, this));
-        },
-
-        /*  Checks if any element upwards the hierarchy (including this element) conforms to a selector
-         */
-        belongsTo: function belongsTo(selector) {
-            return this.is(selector) || this.parents(selector).length;
-        },
-
-        /*  Selects which classes element should have, based on a key selector
-             Example: btn.selectClass (state, {  loading: 'btn-wait btn-disabled',
-                                                error: 'btn-invalid',
-                                                ok: '' })
-         */
-        selectClass: function selectClass(key, classes) {
-            return this.removeClass(_.values(classes).join(' ')).addClass(classes[key]);
-        },
-
-        /*  Returns a valid integer of an attribute (or undefined)
-         */
-        attrInt: function attrInt(name) {
-            return (this.attr(name) || '').integerValue;
-        },
-        cssInt: function cssInt(name) {
-            return (this.css(name) || '').integerValue;
-        },
-
-        /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
-         */
-        eachChild: function eachChild(selector, fn) {
-            _.each(this.find(selector), function (el) {
-                fn($(el));
-            });return this;
-        },
-
-        /*  Calls fn when current CSS transition ends
-         */
-        transitionend: function transitionend(fn) {
-            return this.one('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot);
-        },
-
-        /*  Calls fn when current CSS animation ends
-         */
-        animationend: function animationend(fn) {
-            return this.one('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot);
-        },
-
-        /*  1. Adds a class (that brings CSS animation)
-            2. Waits until CSS animation done
-            3. Removes that class
-            4. Calls 'done'
-         */
-        animateWith: function animateWith(cls, done) {
-            if (cls) {
-                this.addClass(cls);
-                this.animationend(this.$(function () {
-                    this.removeClass(cls);
-                    if (done) {
-                        done.call(this);
-                    }
-                }));
-            }
-            return this;
-        },
-
-        transitionWith: function transitionWith(cls, done) {
-            if (cls) {
-                this.addClass(cls);
-                this.transitionend(this.$(function () {
-                    this.removeClass(cls);
-                    if (done) {
-                        done.call(this);
-                    }
-                }));
-            }
-            return this;
-        },
-
-        /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
-             Simplest example:
-                 $(handle).drag ({
-                    start: function ()             { return this.leftTop () },                          // returns 'memo'
-                    move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } }) })
-         */
-        drag: function () {
-
-            /*  Helper routine
-             */
-            var translateTouchEvent = function translateTouchEvent(e, desiredTarget) {
-                return e.originalEvent.touches && _.find(e.originalEvent.touches, function (touch) {
-                    return $(touch.target).hasParent(desiredTarget);
-                }) || e;
-            };
-            /*  Impl
-             */
-            return function (cfg) {
-
-                this[0].dragConfig = cfg;
-
-                if (!$platform.touch && !window.__globalDragOverlay) {
-                    window.__globalDragOverlay = $('<div>').css({
-                        display: 'none',
-                        position: 'fixed',
-                        top: 0, right: 0, bottom: 0, left: 0,
-                        zIndex: 999999 }).appendTo(document.body);
-                }
-
-                var overlay = window.__globalDragOverlay;
-                var button = cfg.button || 1;
-
-                var begin = this.$(function (initialEvent) {
-                    var relativeTo = cfg.relativeTo || this;
-
-                    this.addClass(cfg.cls || '');
-
-                    if ($platform.touch || initialEvent.which === button) {
-                        var offset = relativeTo.offset(),
-                            memo = undefined;
-
-                        if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(
-                        // position (relative to delegate target)
-                        initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) /* one can cancel drag by returning false from 'start' */{
-
-                                var abort = undefined,
-                                    unbind = undefined,
-                                    end = undefined;
-
-                                memo = _.clone(memo);
-
-                                var move = this.$(function (e) {
-                                    if ($platform.touch || e.which === button) {
-                                        e.preventDefault();
-                                        var translatedEvent = translateTouchEvent(e, this[0]);
-                                        var offset = relativeTo.offset();
-
-                                        memo = cfg.move.call(cfg.context || this, memo, new Vec2(
-                                        // offset (relative to initial event)
-                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(
-                                        // position (relative to delegate target)
-                                        translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top),
-                                        // the event
-                                        translatedEvent) || memo;
-                                    } else {
-                                        abort(e);
-                                    }
-                                });
-
-                                unbind = function unbind() {
-                                    $(overlay || document.body).css(overlay ? { display: 'none' } : {}).off('mouseup touchend', end).off('mousemove touchmove', move);
-                                };
-
-                                end = this.$(function (e) {
-                                    unbind();
-
-                                    if (cfg.end) {
-                                        var translatedEvent = translateTouchEvent(e, this[0]);
-                                        cfg.end.call(cfg.context || this, memo, new Vec2(
-                                        // offset (relative to initial event)
-                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
-                                    }
-
-                                    this.removeClass(cfg.cls || '');
-                                });
-
-                                abort = this.$(function (e) {
-                                    unbind();end(e);
-                                });
-
-                                $(overlay || document.body).css(overlay ? { display: '', cursor: cfg.cursor || '' } : {}).on('mousemove touchmove', move).one('mouseup touchend', end);
-
-                                if (cfg.callMoveAtStart) {
-                                    cfg.move.call(cfg.context || this, memo, Vec2.zero, new Vec2(
-                                    // position (relative to delegate target)
-                                    initialEvent.pageX - offset.left, initialEvent.pageY - offset.top),
-                                    // the event
-                                    initialEvent);
-                                }
-                            }
-                    }
-                });
-
-                var touchstartListener = _.$(this, function (e) {
-                    var where = _.extend({}, translateTouchEvent(e, this[0])); /* copy event, cuz on iPad it's re-used by browser */
-                    if ($platform.touch && cfg.longPress) {
-                        var cancel = undefined;
-                        var timeout = window.setTimeout(_.$(this, function () {
-                            this.off('touchmove touchend', cancel);
-                            begin(where);
-                        }), 300);
-                        cancel = this.$(function () {
-                            window.clearTimeout(timeout);
-                            this.off('touchmove touchend', cancel);
-                        });
-                        this.one('touchmove touchend', cancel);
-                    } else {
-                        begin(where);
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                });
-
-                this.on($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
-
-                return _.extend(this, {
-                    cancel: this.$(function () {
-                        this.off($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
-                    }) });
-            };
-        }(),
-
-        /*  $(el).transform ({
-                    translate: new Vec2 (a, b),
-                    scale:     new Vec2 (x, y),
-                    rotate:    180 })
-         */
-        transform: function transform(cfg) {
-            if (arguments.length === 0) {
-                var components = (this.css('transform') || '').match(/^matrix\((.+\))$/);
-                if (components) {
-                    var m = components[1].split(',').map(parseFloat);
-                    return new Transform({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
-                } else {
-                    return Transform.identity;
-                }
-            } else {
-                return this.css('transform', _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '');
-            }
-        },
-
-        /*  Other transform helpers
-         */
-        svgTranslate: function svgTranslate(pt) {
-            return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
-        },
-
-        svgTransformMatrix: function svgTransformMatrix(t) {
-            var m = t.components;
-            return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
-        },
-
-        svgTransformToElement: function svgTransformToElement(el) {
-            return Transform.svgMatrix(this[0].getTransformToElement(el[0]));
-        },
-
-        svgBBox: function svgBBox(bbox) {
-            if (arguments.length === 0) {
-                return new BBox(this[0].getBBox());
-            } else {
-                return this.attr(bbox.xywh);
-            }
-        },
-
-        /*  To determine display size of an element
-         */
-        outerExtent: function outerExtent() {
-            return new Vec2(this.outerWidth(), this.outerHeight());
-        },
-        extent: function extent() {
-            return new Vec2(this.width(), this.height());
-        },
-        innerExtent: function innerExtent() {
-            return new Vec2(this.innerWidth(), this.innerHeight());
-        },
-
-        /*  BBox accessors
-         */
-        outerBBox: function outerBBox() {
-            return BBox.fromLTWH(_.extend(this.offset(), this.outerExtent().asWidthHeight));
-        },
-        clientBBox: function clientBBox() {
-            return BBox.fromLTWH(this[0].getBoundingClientRect());
-        },
-
-        /*  Position accessors
-         */
-        leftTop: function leftTop() {
-            return new Vec2.fromLT(this.offset());
-        },
-        offsetInParent: function offsetInParent() {
-            return Vec2.fromLeftTop(this.offset()).sub(Vec2.fromLeftTop(this.parent().offset()));
-        },
-
-        /*  $(input).monitorInput ({
-                        empty: function (yes) { ... },    // called when empty state changes
-                        focus: function (yes) { ... } })  // called when focus state changes
-         */
-        monitorInput: function monitorInput(cfg) {
-            var change = function change() {
-                if ($.trim($(this).val()) === '') {
-                    cfg.empty(true);
-                } else {
-                    cfg.empty(false);
-                }
-            };
-            return this.keyup(change).change(change).focus(_.bind(cfg.focus || _.noop, cfg, true)).blur(_.bind(cfg.focus || _.noop, cfg, false));
-        },
-
-        /*  Use instead of .click for more responsive clicking on touch devices.
-            Reverts to .click on desktop
-         */
-        touchClick: function touchClick(fn, cfg) {
-            var self = this;
-            cfg = cfg || {};
-            if (!cfg.disableTouch && $platform.touch) {
-                // touch experience
-                var touchstartHandler = function touchstartHandler(e) {
-                    fn.apply(this, arguments);
-                    e.preventDefault(); // prevents nasty delayed click-focus effect on iOS
-                    return false;
-                };
-
-                var clickHandler = function clickHandler(e) {
-                    e.preventDefault();
-                    return false;
-                };
-
-                if (cfg.handler) {
-                    cfg.handler({
-                        unbind: function unbind() {
-                            self.off('touchstart', touchstartHandler).off('click', clickHandler);
-                        } });
-                }
-
-                return this.on('touchstart', touchstartHandler).on('click', clickHandler);
-            } else {
-                // mouse experience
-                if (cfg.handler) {
-                    cfg.handler({
-                        unbind: function unbind() {
-                            self.off('click', fn);
-                        } });
-                }
-                return this.click(fn);
-            }
-        },
-
-        /*  Use instead of .dblclick for responsive doubleclick on touch devices
-            Reverts to .dblclick on desktop
-         */
-        touchDoubleclick: function touchDoubleclick(fn) {
-            if ($platform.touch) {
-                var lastTime = Date.now();
-                return this.on('touchend', function () {
-                    var now = Date.now();
-                    if (now - lastTime < 200) {
-                        fn.apply(this, arguments);
-                    }
-                    lastTime = now;
-                });
-            } else {
-                return this.dblclick(fn);
-            }
-        },
-
-        /*  Taken from stackoverflow discussion on how to prevent zoom-on-double-tap behavior on iOS
-         */
-        nodoubletapzoom: function nodoubletapzoom() {
-            return $(this).bind('touchstart', function preventZoom(e) {
-                var t2 = e.timeStamp;
-                var t1 = $(this).data('lastTouch') || t2;
-                var dt = t2 - t1;
-                var fingers = e.originalEvent.touches.length;
-                $(this).data('lastTouch', t2);
-                if (!dt || dt > 500 || fingers > 1) {
-                    return;
-                } // not double-tap
-                e.preventDefault(); // double tap - prevent the zoom
-                $(e.target).trigger('click');
-            });
-        } // also synthesize click events we just swallowed up
-    });
-})(module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 92));
-
-/***/ },
-
-/***/ 170:
-/* all exports used */
-/*!***********************************!*\
-  !*** ./~/get-source/impl/path.js ***!
-  \***********************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {"use strict";
-
-/*  ------------------------------------------------------------------------ */
-
-var isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
-
-/*  ------------------------------------------------------------------------ */
-
-var path = module.exports = {
-
-	concat(a, b) {
-
-		var a_endsWithSlash = a[a.length - 1] === '/',
-		    b_startsWithSlash = b[0] === '/';
-
-		return a + (a_endsWithSlash || b_startsWithSlash ? '' : '/') + (a_endsWithSlash && b_startsWithSlash ? b.substring(1) : b);
-	},
-
-	resolve(x) {
-
-		if (path.isAbsolute(x)) {
-			return path.normalize(x);
-		}
-
-		if (isBrowser) {
-			return path.normalize(path.concat(window.location.href, x));
-		} else {
-			return path.normalize(path.concat(process.cwd(), x));
-		}
-	},
-
-	normalize(x) {
-
-		var output = [],
-		    skip = 0;
-
-		x.split('/').reverse().filter(function (x) {
-			return x !== '.';
-		}).forEach(function (x) {
-
-			if (x === '..') {
-				skip++;
-			} else if (skip === 0) {
-				output.push(x);
-			} else {
-				skip--;
-			}
-		});
-
-		var result = output.reverse().join('/');
-
-		return (isBrowser && result[0] === '/' ? window.location.origin : '') + result;
-	},
-
-	isAbsolute: function (x) {
-		return x[0] === '/' || /^[^\/]*:/.test(x);
-	},
-
-	relativeToFile(a, b) {
-
-		return path.isAbsolute(b) ? path.normalize(b) : path.normalize(path.concat(a.split('/').slice(0, -1).join('/'), b));
-	}
-};
-
-/*  ------------------------------------------------------------------------ */
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/process/browser.js */ 52)))
-
-/***/ },
-
-/***/ 171:
-/* all exports used */
-/*!*****************************************!*\
-  !*** ./~/stacktracey/impl/partition.js ***!
-  \*****************************************/
-/***/ function(module, exports) {
-
-"use strict";
-"use strict";
-
-module.exports = function (arr_, pred) {
-
-    var arr = arr_ || [],
-        spans = [];
-
-    var span = { label: undefined,
-        items: [arr.first] };
-
-    arr.forEach(function (x) {
-
-        var label = pred(x);
-
-        if (span.label !== label && span.items.length) {
-            spans.push(span = { label: label, items: [x] });
-        } else {
-            span.items.push(x);
-        }
-    });
-
-    if (span.length) spans.push(span);
-
-    return spans;
-};
-
-/***/ },
-
-/***/ 172:
-/* all exports used */
-/*!**************************************!*\
-  !*** ./~/stacktracey/stacktracey.js ***!
-  \**************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {"use strict";
-
-/*  ------------------------------------------------------------------------ */
-
-var O = Object,
-    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
-    lastOf = function (x) {
-    return x[x.length - 1];
-},
-    getSource = __webpack_require__(/*! get-source */ 94),
-    partition = __webpack_require__(/*! ./impl/partition */ 171);
-
-/*  ------------------------------------------------------------------------ */
-
-class StackTracey extends Array {
-
-    constructor(input, offset) {
-        var _this;
-
-        _this = super();
-
-        /*  Fixes for Safari    */
-
-        this.constructor = StackTracey;
-        this.__proto__ = StackTracey.prototype;
-
-        /*  new StackTracey ()            */
-
-        if (!input) {
-            input = new Error();
-            offset = offset === undefined ? 1 : offset;
-        }
-
-        /*  new StackTracey (Error)      */
-
-        if (input instanceof Error) {
-            input = input[StackTracey.stack] || input.stack || '';
-        }
-
-        /*  new StackTracey (string)     */
-
-        if (typeof input === 'string') {
-            input = StackTracey.rawParse(input).slice(offset).map(StackTracey.extractEntryMetadata);
-        }
-
-        /*  new StackTracey (array)      */
-
-        if (Array.isArray(input)) {
-
-            this.length = input.length;
-            input.forEach(function (x, i) {
-                return _this[i] = x;
-            });
-        }
-    }
-
-    static extractEntryMetadata(e) {
-        var fileShort = StackTracey.shortenPath(e.file);
-
-        return O.assign(e, {
-
-            calleeShort: e.calleeShort || lastOf(e.callee.split('.')),
-            fileShort: fileShort,
-            fileName: lastOf(e.file.split('/')),
-            thirdParty: StackTracey.isThirdParty(fileShort) && !e.index
-        });
-    }
-
-    static shortenPath(s) {
-        return s.replace(isBrowser ? window.location.href : process.cwd() + '/', '').replace(/^.*\:\/\/?\/?/, '');
-    }
-
-    static isThirdParty(shortPath) {
-        return shortPath[0] === '~' || // webpack-specific heuristic
-        shortPath[0] === '/' || // external source
-        shortPath.indexOf('node_modules') === 0 || shortPath.indexOf('webpack/bootstrap') === 0;
-    }
-
-    static rawParse(str) {
-
-        var lines = (str || '').split('\n');
-
-        var entries = lines.map(function (line) {
-            line = line.trim();
-
-            var callee,
-                fileLineColumn = [],
-                native,
-                planA,
-                planB;
-
-            if ((planA = line.match(/at (.+) \((.+)\)/)) || (planA = line.match(/(.*)@(.*)/))) {
-
-                callee = planA[1];
-                native = planA[2] === 'native';
-                fileLineColumn = (planA[2].match(/(.*):(.+):(.+)/) || []).slice(1);
-            } else if (planB = line.match(/^(at\s+)*(.+):([0-9]+):([0-9]+)/)) {
-                fileLineColumn = planB.slice(2);
-            } else {
-                return undefined;
-            }
-
-            return {
-                beforeParse: line,
-                callee: callee || '',
-                index: isBrowser && fileLineColumn[0] === window.location.href,
-                native: native || false,
-                file: fileLineColumn[0] || '',
-                line: parseInt(fileLineColumn[1] || '', 10) || undefined,
-                column: parseInt(fileLineColumn[2] || '', 10) || undefined };
-        });
-
-        return entries.filter(function (x) {
-            return x !== undefined;
-        });
-    }
-
-    withSource(i) {
-        return StackTracey.withSource(this[i]);
-    }
-
-    static withSource(loc) {
-
-        if (loc.sourceFile || loc.file && loc.file.indexOf('<') >= 0) {
-            // skip things like <anonymous> and stuff that was already fetched
-            return loc;
-        } else {
-            var resolved = getSource(loc.file).resolve(loc);
-
-            if (resolved.sourceFile) {
-                resolved.file = resolved.sourceFile.path;
-                resolved = StackTracey.extractEntryMetadata(resolved);
-            }
-
-            if (resolved.sourceLine && resolved.sourceLine.indexOf('// @hide') !== -1) {
-                resolved.sourceLine = resolved.sourceLine.replace('// @hide', '');
-                resolved.hide = true;
-            }
-
-            return O.assign({ sourceLine: '' }, loc, resolved);
-        }
-    }
-
-    get withSources() {
-        return new StackTracey(this.map(StackTracey.withSource));
-    }
-
-    get mergeRepeatedLines() {
-        return new StackTracey(partition(this, function (e) {
-            return e.file + e.line;
-        }).map(function (group) {
-            return group.items.slice(1).reduce(function (memo, entry) {
-                memo.callee = (memo.callee || '<anonymous>') + ' → ' + (entry.callee || '<anonymous>');
-                memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>');
-                return memo;
-            }, O.assign({}, group.items[0]));
-        }));
-    }
-
-    get clean() {
-        return this.withSources.mergeRepeatedLines.filter(function (e, i) {
-            return i === 0 || !(e.thirdParty || e.hide);
-        });
-    }
-
-    at(i) {
-        return O.assign({
-
-            beforeParse: '',
-            callee: '<???>',
-            index: false,
-            native: false,
-            file: '<???>',
-            line: 0,
-            column: 0
-
-        }, this[i]);
-    }
-
-    static locationsEqual(a, b) {
-        return a.file === b.file && a.line === b.line && a.column === b.column;
-    }
-}
-
-/*  Array methods
-    ------------------------------------------------------------------------ */
-
-;['map', 'filter', 'slice', 'concat', 'reverse'].forEach(function (name) {
-
-    StackTracey.prototype[name] = function () {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-        }
-
-        return new StackTracey(Array.prototype[name].apply(this, args));
-    };
-});
-
-/*  A private field that an Error instance can expose
-    ------------------------------------------------------------------------ */
-
-StackTracey.stack = typeof Symbol !== 'undefined' ? Symbol.for('StackTracey') : '__StackTracey';
-
-/*  ------------------------------------------------------------------------ */
-
-module.exports = StackTracey;
-
-/*  ------------------------------------------------------------------------ */
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/process/browser.js */ 52)))
-
-/***/ },
-
-/***/ 173:
-/* all exports used */
-/*!************************************!*\
-  !*** ./~/string.ify/string.ify.js ***!
-  \************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(global) {"use strict";
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var O = __webpack_require__(/*! es7-object-polyfill */ 42),
-    bullet = __webpack_require__(/*! string.bullet */ 48),
-    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
-    maxOf = function maxOf(arr, pick) {
-    return arr.reduce(function (max, s) {
-        return Math.max(max, pick ? pick(s) : s);
-    }, 0);
-},
-    isInteger = Number.isInteger || function (value) {
-    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
-};
-
-var _configure = function _configure(cfg) {
-    var stringify = O.assign(function (x) {
-
-        var state = O.assign({ parents: new Set(), siblings: new Map() }, cfg);
-
-        if (cfg.pretty === 'auto') {
-            var oneLine = stringify.configure({ pretty: false, siblings: new Map() })(x);
-            return oneLine.length <= 80 ? oneLine : stringify.configure({ pretty: true, siblings: new Map() })(x);
-        }
-
-        var customFormat = cfg.formatter && cfg.formatter(x, stringify);
-
-        if (typeof customFormat === 'string') {
-            return customFormat;
-        }
-
-        if (typeof jQuery !== 'undefined' && x instanceof jQuery) {
-            x = x.toArray();
-        }
-
-        if (isBrowser && x === window) {
-            return 'window';
-        } else if (!isBrowser && typeof global !== 'undefined' && x === global) {
-            return 'global';
-        } else if (x === null) {
-            return 'null';
-        } else if (state.parents.has(x)) {
-            return state.pure ? undefined : '<cyclic>';
-        } else if (state.siblings.has(x)) {
-            return state.pure ? undefined : '<ref:' + state.siblings.get(x) + '>';
-        } else if (x && typeof Symbol !== 'undefined' && (customFormat = x[Symbol.for('String.ify')]) && typeof (customFormat = customFormat.call(x, stringify.configure(state))) === 'string') {
-            return customFormat;
-        } else if (x instanceof Function) {
-            return cfg.pure ? x.toString() : x.name ? '<function:' + x.name + '>' : '<function>';
-        } else if (typeof x === 'string') {
-            return '"' + stringify.limit(x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"';
-        } else if ((typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object') {
-
-            state.parents.add(x);
-            state.siblings.set(x, state.siblings.size);
-
-            var result = stringify.configure(O.assign({}, state, { depth: state.depth + 1 })).object(x);
-
-            state.parents.delete(x);
-
-            return result;
-        } else if (!isInteger(x) && cfg.precision > 0) {
-            return x.toFixed(cfg.precision);
-        } else {
-            return String(x);
-        }
-    }, cfg, {
-
-        configure: function configure(newConfig) {
-            return _configure(O.assign({}, cfg, newConfig));
-        },
-
-        limit: function limit(s, n) {
-            return s && (s.length <= n ? s : s.substr(0, n - 1) + '…');
-        },
-
-        rightAlign: function rightAlign(strings) {
-            var max = maxOf(strings, function (s) {
-                return s.length;
-            });
-            return strings.map(function (s) {
-                return ' '.repeat(max - s.length) + s;
-            });
-        },
-
-        object: function object(x) {
-
-            if (x instanceof Set) {
-                x = Array.from(x.values());
-            } else if (x instanceof Map) {
-                x = Array.from(x.entries());
-            }
-
-            var isArray = Array.isArray(x);
-
-            if (isBrowser) {
-
-                if (x instanceof Element) {
-                    return '<' + (x.tagName.toLowerCase() + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')) + '>';
-                } else if (x instanceof Text) {
-                    return '@' + stringify.limit(x.wholeText, 20);
-                }
-            }
-
-            if (!cfg.pure && (cfg.depth > cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
-                return isArray ? '<array[' + x.length + ']>' : '<object>';
-            }
-
-            var pretty = cfg.pretty ? true : false,
-                entries = O.entries(x),
-                oneLine = !pretty || entries.length < 2,
-                quoteKey = cfg.json ? function (k) {
-                return '"' + k + '"';
-            } : function (k) {
-                return k;
-            };
-
-            if (pretty) {
-                var _ret = function () {
-
-                    var values = O.values(x),
-                        printedKeys = stringify.rightAlign(O.keys(x).map(function (k) {
-                        return quoteKey(k) + ': ';
-                    })),
-                        printedValues = values.map(stringify),
-                        leftPaddings = printedValues.map(function (x, i) {
-                        return x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0;
-                    }),
-                        maxLeftPadding = maxOf(leftPaddings),
-                        items = leftPaddings.map(function (padding, i) {
-                        var value = ' '.repeat(maxLeftPadding - padding) + printedValues[i];
-                        return isArray ? value : bullet(printedKeys[i], value);
-                    }),
-                        printed = bullet(isArray ? '[ ' : '{ ', items.join(',\n')),
-                        lines = printed.split('\n'),
-                        lastLine = lines[lines.length - 1];
-
-                    return {
-                        v: printed + (' '.repeat(maxOf(lines, function (l) {
-                            return l.length;
-                        }) - lastLine.length) + (isArray ? ' ]' : ' }'))
-                    };
-                }();
-
-                if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-            } else {
-
-                var items = entries.map(function (kv) {
-                    return (isArray ? '' : quoteKey(kv[0]) + ': ') + stringify(kv[1]);
-                }),
-                    content = items.join(', ');
-
-                return isArray ? '[' + content + ']' : '{ ' + content + ' }';
-            }
-        }
-    });
-
-    return stringify;
-};
-
-module.exports = _configure({
-
-    depth: 0,
-    pure: false,
-    json: false,
-    color: false, // not supported yet
-    maxDepth: 5,
-    maxArrayLength: 60,
-    maxStringLength: 60,
-    precision: undefined,
-    formatter: undefined,
-    pretty: 'auto'
-
-});
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! (webpack)/buildin/global.js */ 41)))
-
-/***/ },
-
-/***/ 356:
-/* all exports used */
-/*!***************************************************!*\
-  !*** ./~/css-loader?-url!./client/LogOverlay.css ***!
-  \***************************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 123)();
-// imports
-
-
-// module
-exports.push([module.i, ".useless-log-overlay {\tposition: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;\n\t\t\t\t\t\toverflow: hidden;\n\t\t\t\t\t\tpointer-events: none;\n\t\t\t\t\t\t-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,\n\t\t\t\t\t\t\tcolor-stop(0.00, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.50, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.60, rgba(0,0,0,0.8)),\n\t\t\t\t\t\t\tcolor-stop(1.00, rgba(0,0,0,1))); }\n\n.useless-log-overlay-body {\n\n\tfont-family: Menlo, monospace;\n\tfont-size: 11px;\n\twhite-space: pre;\n\tbackground: rgba(255,255,255,1);\n\ttext-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }", ""]);
-
-// exports
-
-
-/***/ },
-
-/***/ 357:
-/* all exports used */
-/*!**********************************************!*\
-  !*** ./~/css-loader?-url!./client/Panic.css ***!
-  \**********************************************/
-/***/ function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 123)();
-// imports
-
-
-// module
-exports.push([module.i, "@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal * { letter-spacing: 0; font-family: Helvetica, sans-serif; }\n.panic-modal { font-family: Helvetica, sans-serif; min-width: 640px; max-width: 90%; transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { font-family: Helvetica, sans-serif; color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: 'more'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: 'less'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; padding: 0; }\n.panic-alert-error .callstack * { font-family: Menlo, monospace; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: ' \\2192   '; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.hide:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: '<< SOURCE NOT LOADED >>'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: '<< NATIVE CODE >>'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: '<< SOURCE LOADING >>'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: ' @ '; }\n\n.panic-alert-error .test-log .location .callee:after  { content: ', '; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: ':'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: ' '; }\n.panic-alert-error .test-log .log-entry        .line:after { content: ' '; }\n.panic-alert-error           .callstack-entry  .line:after { content: ' '; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { max-width: 640px; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n.panic-alert-error.inline-exception:not(:first-child) { margin-top: 10px; border-top: 1px solid #904C34; }\n\n", ""]);
-
-// exports
-
-
-/***/ },
-
-/***/ 359:
-/* all exports used */
-/*!***********************************!*\
-  !*** ./~/lodash.memoize/index.js ***!
-  \***********************************/
+/*!***********************************************!*\
+  !*** ../get-source/~/lodash.memoize/index.js ***!
+  \***********************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -5150,11 +1110,11 @@ module.exports = memoize;
 
 /***/ },
 
-/***/ 361:
+/***/ 131:
 /* all exports used */
-/*!************************************!*\
-  !*** ./~/source-map/lib/base64.js ***!
-  \************************************/
+/*!************************************************!*\
+  !*** ../get-source/~/source-map/lib/base64.js ***!
+  \************************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5228,11 +1188,11 @@ exports.decode = function (charCode) {
 
 /***/ },
 
-/***/ 362:
+/***/ 132:
 /* all exports used */
-/*!*******************************************!*\
-  !*** ./~/source-map/lib/binary-search.js ***!
-  \*******************************************/
+/*!*******************************************************!*\
+  !*** ../get-source/~/source-map/lib/binary-search.js ***!
+  \*******************************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5350,11 +1310,11 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
 
 /***/ },
 
-/***/ 363:
+/***/ 133:
 /* all exports used */
-/*!******************************************!*\
-  !*** ./~/source-map/lib/mapping-list.js ***!
-  \******************************************/
+/*!******************************************************!*\
+  !*** ../get-source/~/source-map/lib/mapping-list.js ***!
+  \******************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5364,7 +1324,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 53);
+var util = __webpack_require__(/*! ./util */ 48);
 
 /**
  * Determine whether mappingB is after mappingA with respect to generated
@@ -5440,11 +1400,11 @@ exports.MappingList = MappingList;
 
 /***/ },
 
-/***/ 364:
+/***/ 134:
 /* all exports used */
-/*!****************************************!*\
-  !*** ./~/source-map/lib/quick-sort.js ***!
-  \****************************************/
+/*!****************************************************!*\
+  !*** ../get-source/~/source-map/lib/quick-sort.js ***!
+  \****************************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5565,11 +1525,11 @@ exports.quickSort = function (ary, comparator) {
 
 /***/ },
 
-/***/ 365:
+/***/ 135:
 /* all exports used */
-/*!*************************************************!*\
-  !*** ./~/source-map/lib/source-map-consumer.js ***!
-  \*************************************************/
+/*!*************************************************************!*\
+  !*** ../get-source/~/source-map/lib/source-map-consumer.js ***!
+  \*************************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5579,11 +1539,11 @@ exports.quickSort = function (ary, comparator) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 53);
-var binarySearch = __webpack_require__(/*! ./binary-search */ 362);
-var ArraySet = __webpack_require__(/*! ./array-set */ 124).ArraySet;
-var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 125);
-var quickSort = __webpack_require__(/*! ./quick-sort */ 364).quickSort;
+var util = __webpack_require__(/*! ./util */ 48);
+var binarySearch = __webpack_require__(/*! ./binary-search */ 132);
+var ArraySet = __webpack_require__(/*! ./array-set */ 94).ArraySet;
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 95);
+var quickSort = __webpack_require__(/*! ./quick-sort */ 134).quickSort;
 
 function SourceMapConsumer(aSourceMap) {
   var sourceMap = aSourceMap;
@@ -6658,11 +2618,11 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 
 /***/ },
 
-/***/ 366:
+/***/ 136:
 /* all exports used */
-/*!*****************************************!*\
-  !*** ./~/source-map/lib/source-node.js ***!
-  \*****************************************/
+/*!*****************************************************!*\
+  !*** ../get-source/~/source-map/lib/source-node.js ***!
+  \*****************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -6672,8 +2632,8 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 126).SourceMapGenerator;
-var util = __webpack_require__(/*! ./util */ 53);
+var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 96).SourceMapGenerator;
+var util = __webpack_require__(/*! ./util */ 48);
 
 // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
 // operating systems these days (capturing the result).
@@ -7076,11 +3036,11 @@ exports.SourceNode = SourceNode;
 
 /***/ },
 
-/***/ 367:
+/***/ 137:
 /* all exports used */
-/*!************************************!*\
-  !*** ./~/source-map/source-map.js ***!
-  \************************************/
+/*!************************************************!*\
+  !*** ../get-source/~/source-map/source-map.js ***!
+  \************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 /*
@@ -7088,9 +3048,3368 @@ exports.SourceNode = SourceNode;
  * Licensed under the New BSD license. See LICENSE.txt or:
  * http://opensource.org/licenses/BSD-3-Clause
  */
-exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 126).SourceMapGenerator;
-exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 365).SourceMapConsumer;
-exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 366).SourceNode;
+exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 96).SourceMapGenerator;
+exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 135).SourceMapConsumer;
+exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 136).SourceNode;
+
+
+/***/ },
+
+/***/ 138:
+/* all exports used */
+/*!**********************************!*\
+  !*** ../get-source/impl/path.js ***!
+  \**********************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {"use strict";
+
+/*  ------------------------------------------------------------------------ */
+
+var isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator;
+
+/*  ------------------------------------------------------------------------ */
+
+var path = module.exports = {
+
+	concat(a, b) {
+
+		var a_endsWithSlash = a[a.length - 1] === '/',
+		    b_startsWithSlash = b[0] === '/';
+
+		return a + (a_endsWithSlash || b_startsWithSlash ? '' : '/') + (a_endsWithSlash && b_startsWithSlash ? b.substring(1) : b);
+	},
+
+	resolve(x) {
+
+		if (path.isAbsolute(x)) {
+			return path.normalize(x);
+		}
+
+		if (isBrowser) {
+			return path.normalize(path.concat(window.location.href, x));
+		} else {
+			return path.normalize(path.concat(process.cwd(), x));
+		}
+	},
+
+	normalize(x) {
+
+		var output = [],
+		    skip = 0;
+
+		x.split('/').reverse().filter(function (x) {
+			return x !== '.';
+		}).forEach(function (x) {
+
+			if (x === '..') {
+				skip++;
+			} else if (skip === 0) {
+				output.push(x);
+			} else {
+				skip--;
+			}
+		});
+
+		var result = output.reverse().join('/');
+
+		return (isBrowser && result[0] === '/' ? window.location.origin : '') + result;
+	},
+
+	isAbsolute: function (x) {
+		return x[0] === '/' || /^[^\/]*:/.test(x);
+	},
+
+	relativeToFile(a, b) {
+
+		return path.isAbsolute(b) ? path.normalize(b) : path.normalize(path.concat(a.split('/').slice(0, -1).join('/'), b));
+	}
+};
+
+/*  ------------------------------------------------------------------------ */
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/process/browser.js */ 53)))
+
+/***/ },
+
+/***/ 139:
+/* all exports used */
+/*!****************************************!*\
+  !*** ../stacktracey/impl/partition.js ***!
+  \****************************************/
+/***/ function(module, exports) {
+
+"use strict";
+"use strict";
+
+module.exports = function (arr_, pred) {
+
+    var arr = arr_ || [],
+        spans = [];
+
+    var span = { label: undefined,
+        items: [arr.first] };
+
+    arr.forEach(function (x) {
+
+        var label = pred(x);
+
+        if (span.label !== label && span.items.length) {
+            spans.push(span = { label: label, items: [x] });
+        } else {
+            span.items.push(x);
+        }
+    });
+
+    if (span.length) spans.push(span);
+
+    return spans;
+};
+
+/***/ },
+
+/***/ 140:
+/* all exports used */
+/*!*************************************!*\
+  !*** ../stacktracey/stacktracey.js ***!
+  \*************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {"use strict";
+
+/*  ------------------------------------------------------------------------ */
+
+var O = Object,
+    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
+    lastOf = function (x) {
+    return x[x.length - 1];
+},
+    getSource = __webpack_require__(/*! get-source */ 97),
+    partition = __webpack_require__(/*! ./impl/partition */ 139);
+
+/*  ------------------------------------------------------------------------ */
+
+class StackTracey extends Array {
+
+    constructor(input, offset) {
+        var _this;
+
+        _this = super();
+
+        /*  Fixes for Safari    */
+
+        this.constructor = StackTracey;
+        this.__proto__ = StackTracey.prototype;
+
+        /*  new StackTracey ()            */
+
+        if (!input) {
+            input = new Error();
+            offset = offset === undefined ? 1 : offset;
+        }
+
+        /*  new StackTracey (Error)      */
+
+        if (input instanceof Error) {
+            input = input[StackTracey.stack] || input.stack || '';
+        }
+
+        /*  new StackTracey (string)     */
+
+        if (typeof input === 'string') {
+            input = StackTracey.rawParse(input).slice(offset).map(StackTracey.extractEntryMetadata);
+        }
+
+        /*  new StackTracey (array)      */
+
+        if (Array.isArray(input)) {
+
+            this.length = input.length;
+            input.forEach(function (x, i) {
+                return _this[i] = x;
+            });
+        }
+    }
+
+    static extractEntryMetadata(e) {
+        var fileShort = StackTracey.shortenPath(e.file);
+
+        return O.assign(e, {
+
+            calleeShort: e.calleeShort || lastOf(e.callee.split('.')),
+            fileShort: fileShort,
+            fileName: lastOf(e.file.split('/')),
+            thirdParty: StackTracey.isThirdParty(fileShort) && !e.index
+        });
+    }
+
+    static shortenPath(s) {
+        return s.replace(isBrowser ? window.location.href : process.cwd() + '/', '').replace(/^.*\:\/\/?\/?/, '');
+    }
+
+    static isThirdParty(shortPath) {
+        return shortPath[0] === '~' || // webpack-specific heuristic
+        shortPath[0] === '/' || // external source
+        shortPath.indexOf('node_modules') === 0 || shortPath.indexOf('webpack/bootstrap') === 0;
+    }
+
+    static rawParse(str) {
+
+        var lines = (str || '').split('\n');
+
+        var entries = lines.map(function (line) {
+            line = line.trim();
+
+            var callee,
+                fileLineColumn = [],
+                native,
+                planA,
+                planB;
+
+            if ((planA = line.match(/at (.+) \((.+)\)/)) || (planA = line.match(/(.*)@(.*)/))) {
+
+                callee = planA[1];
+                native = planA[2] === 'native';
+                fileLineColumn = (planA[2].match(/(.*):(.+):(.+)/) || []).slice(1);
+            } else if (planB = line.match(/^(at\s+)*(.+):([0-9]+):([0-9]+)/)) {
+                fileLineColumn = planB.slice(2);
+            } else {
+                return undefined;
+            }
+
+            return {
+                beforeParse: line,
+                callee: callee || '',
+                index: isBrowser && fileLineColumn[0] === window.location.href,
+                native: native || false,
+                file: fileLineColumn[0] || '',
+                line: parseInt(fileLineColumn[1] || '', 10) || undefined,
+                column: parseInt(fileLineColumn[2] || '', 10) || undefined };
+        });
+
+        return entries.filter(function (x) {
+            return x !== undefined;
+        });
+    }
+
+    withSource(i) {
+        return StackTracey.withSource(this[i]);
+    }
+
+    static withSource(loc) {
+
+        if (loc.sourceFile || loc.file && loc.file.indexOf('<') >= 0) {
+            // skip things like <anonymous> and stuff that was already fetched
+            return loc;
+        } else {
+            var resolved = getSource(loc.file).resolve(loc);
+
+            if (resolved.sourceFile) {
+                resolved.file = resolved.sourceFile.path;
+                resolved = StackTracey.extractEntryMetadata(resolved);
+            }
+
+            if (resolved.sourceLine && resolved.sourceLine.includes('// @hide')) {
+                resolved.sourceLine = resolved.sourceLine.replace('// @hide', '');
+                resolved.hide = true;
+            }
+
+            return O.assign({ sourceLine: '' }, loc, resolved);
+        }
+    }
+
+    get withSources() {
+        return new StackTracey(this.map(StackTracey.withSource));
+    }
+
+    get mergeRepeatedLines() {
+        return new StackTracey(partition(this, function (e) {
+            return e.file + e.line;
+        }).map(function (group) {
+            return group.items.slice(1).reduce(function (memo, entry) {
+                memo.callee = (memo.callee || '<anonymous>') + ' → ' + (entry.callee || '<anonymous>');
+                memo.calleeShort = (memo.calleeShort || '<anonymous>') + ' → ' + (entry.calleeShort || '<anonymous>');
+                return memo;
+            }, O.assign({}, group.items[0]));
+        }));
+    }
+
+    get clean() {
+        return this.withSources.mergeRepeatedLines.filter(function (e, i) {
+            return i === 0 || !(e.thirdParty || e.hide);
+        });
+    }
+
+    at(i) {
+        return O.assign({
+
+            beforeParse: '',
+            callee: '<???>',
+            index: false,
+            native: false,
+            file: '<???>',
+            line: 0,
+            column: 0
+
+        }, this[i]);
+    }
+
+    static locationsEqual(a, b) {
+        return a.file === b.file && a.line === b.line && a.column === b.column;
+    }
+}
+
+/*  Array methods
+    ------------------------------------------------------------------------ */
+
+;['map', 'filter', 'slice', 'concat', 'reverse'].forEach(function (name) {
+
+    StackTracey.prototype[name] = function () {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return new StackTracey(Array.prototype[name].apply(this, args));
+    };
+});
+
+/*  A private field that an Error instance can expose
+    ------------------------------------------------------------------------ */
+
+StackTracey.stack = typeof Symbol !== 'undefined' ? Symbol.for('StackTracey') : '__StackTracey';
+
+/*  ------------------------------------------------------------------------ */
+
+module.exports = StackTracey;
+
+/*  ------------------------------------------------------------------------ */
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/process/browser.js */ 53)))
+
+/***/ },
+
+/***/ 141:
+/* all exports used */
+/*!***********************************!*\
+  !*** ../string.ify/string.ify.js ***!
+  \***********************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var O = __webpack_require__(/*! es7-object-polyfill */ 42),
+    bullet = __webpack_require__(/*! string.bullet */ 49),
+    isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
+    maxOf = function maxOf(arr, pick) {
+    return arr.reduce(function (max, s) {
+        return Math.max(max, pick ? pick(s) : s);
+    }, 0);
+},
+    isInteger = Number.isInteger || function (value) {
+    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+};
+
+var _configure = function _configure(cfg) {
+    var stringify = O.assign(function (x) {
+
+        var state = O.assign({ parents: new Set(), siblings: new Map() }, cfg);
+
+        if (cfg.pretty === 'auto') {
+            var oneLine = stringify.configure({ pretty: false, siblings: new Map() })(x);
+            return oneLine.length <= 80 ? oneLine : stringify.configure({ pretty: true, siblings: new Map() })(x);
+        }
+
+        var customFormat = cfg.formatter && cfg.formatter(x, stringify);
+
+        if (typeof customFormat === 'string') {
+            return customFormat;
+        }
+
+        if (typeof jQuery !== 'undefined' && x instanceof jQuery) {
+            x = x.toArray();
+        }
+
+        if (isBrowser && x === window) {
+            return 'window';
+        } else if (!isBrowser && typeof global !== 'undefined' && x === global) {
+            return 'global';
+        } else if (x === null) {
+            return 'null';
+        } else if (state.parents.has(x)) {
+            return state.pure ? undefined : '<cyclic>';
+        } else if (state.siblings.has(x)) {
+            return state.pure ? undefined : '<ref:' + state.siblings.get(x) + '>';
+        } else if (x && typeof Symbol !== 'undefined' && (customFormat = x[Symbol.for('String.ify')]) && typeof (customFormat = customFormat.call(x, stringify.configure(state))) === 'string') {
+            return customFormat;
+        } else if (x instanceof Function) {
+            return cfg.pure ? x.toString() : x.name ? '<function:' + x.name + '>' : '<function>';
+        } else if (typeof x === 'string') {
+            return '"' + stringify.limit(x, cfg.pure ? Number.MAX_SAFE_INTEGER : cfg.maxStringLength) + '"';
+        } else if ((typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object') {
+
+            state.parents.add(x);
+            state.siblings.set(x, state.siblings.size);
+
+            var result = stringify.configure(O.assign({}, state, { depth: state.depth + 1 })).object(x);
+
+            state.parents.delete(x);
+
+            return result;
+        } else if (!isInteger(x) && cfg.precision > 0) {
+            return x.toFixed(cfg.precision);
+        } else {
+            return String(x);
+        }
+    }, cfg, {
+
+        configure: function configure(newConfig) {
+            return _configure(O.assign({}, cfg, newConfig));
+        },
+
+        limit: function limit(s, n) {
+            return s && (s.length <= n ? s : s.substr(0, n - 1) + '…');
+        },
+
+        rightAlign: function rightAlign(strings) {
+            var max = maxOf(strings, function (s) {
+                return s.length;
+            });
+            return strings.map(function (s) {
+                return ' '.repeat(max - s.length) + s;
+            });
+        },
+
+        object: function object(x) {
+
+            if (x instanceof Set) {
+                x = Array.from(x.values());
+            } else if (x instanceof Map) {
+                x = Array.from(x.entries());
+            }
+
+            var isArray = Array.isArray(x);
+
+            if (isBrowser) {
+
+                if (x instanceof Element) {
+                    return '<' + (x.tagName.toLowerCase() + (x.id && '#' + x.id || '') + (x.className && '.' + x.className || '')) + '>';
+                } else if (x instanceof Text) {
+                    return '@' + stringify.limit(x.wholeText, 20);
+                }
+            }
+
+            if (!cfg.pure && (cfg.depth > cfg.maxDepth || isArray && x.length > cfg.maxArrayLength)) {
+                return isArray ? '<array[' + x.length + ']>' : '<object>';
+            }
+
+            var pretty = cfg.pretty ? true : false,
+                entries = O.entries(x),
+                oneLine = !pretty || entries.length < 2,
+                quoteKey = cfg.json ? function (k) {
+                return '"' + k + '"';
+            } : function (k) {
+                return k;
+            };
+
+            if (pretty) {
+                var _ret = function () {
+
+                    var values = O.values(x),
+                        printedKeys = stringify.rightAlign(O.keys(x).map(function (k) {
+                        return quoteKey(k) + ': ';
+                    })),
+                        printedValues = values.map(stringify),
+                        leftPaddings = printedValues.map(function (x, i) {
+                        return x[0] === '[' || x[0] === '{' ? 3 : typeof values[i] === 'string' ? 1 : 0;
+                    }),
+                        maxLeftPadding = maxOf(leftPaddings),
+                        items = leftPaddings.map(function (padding, i) {
+                        var value = ' '.repeat(maxLeftPadding - padding) + printedValues[i];
+                        return isArray ? value : bullet(printedKeys[i], value);
+                    }),
+                        printed = bullet(isArray ? '[ ' : '{ ', items.join(',\n')),
+                        lines = printed.split('\n'),
+                        lastLine = lines[lines.length - 1];
+
+                    return {
+                        v: printed + (' '.repeat(maxOf(lines, function (l) {
+                            return l.length;
+                        }) - lastLine.length) + (isArray ? ' ]' : ' }'))
+                    };
+                }();
+
+                if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+            } else {
+
+                var _items = entries.map(function (kv) {
+                    return (isArray ? '' : quoteKey(kv[0]) + ': ') + stringify(kv[1]);
+                }),
+                    content = _items.join(', ');
+
+                return isArray ? '[' + content + ']' : '{ ' + content + ' }';
+            }
+        }
+    });
+
+    return stringify;
+};
+
+module.exports = _configure({
+
+    depth: 0,
+    pure: false,
+    json: false,
+    color: false, // not supported yet
+    maxDepth: 5,
+    maxArrayLength: 60,
+    maxStringLength: 60,
+    precision: undefined,
+    formatter: undefined,
+    pretty: 'auto'
+
+});
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! (webpack)/buildin/global.js */ 41)))
+
+/***/ },
+
+/***/ 150:
+/* all exports used */
+/*!******************************!*\
+  !*** ./base/Testosterone.js ***!
+  \******************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+"use strict";
+
+var O = __webpack_require__(/*! es7-object-polyfill */ 42);
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+------------------------------------------------------------------------
+
+Testosterone is a cross-platform unit test shell. Features:
+
+    - asynchronous tests
+    - asynchronous assertions
+    - log handling (log.xxx calls are scheduled to current test log)
+    - exception handling (uncaught exceptions are nicely handled)
+
+------------------------------------------------------------------------
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+var bullet = __webpack_require__(/*! string.bullet */ 49),
+    asTable = __webpack_require__(/*! as-table */ 66);
+
+/*  A contract for test routines that says that test should fail and it's the behavior expected
+ */
+Tags.define('shouldFail');
+
+/*  A contract for custom assertions, says that assertion is asynchronous.
+ */
+Tags.define('async');
+
+/*  This is test suite for tests framework itself.
+
+    As you can see, tests are defined as _.tests.xxx. So, if you have module called 'foo',
+    place tests for that module in _.tests.foo — it will be picked up by tests framework
+    automagically ©
+ */
+_.tests.Testosterone = {
+
+    /*  3.  To write asynchronous tests, define second argument in your test routine, which
+            is 'done' callback. The framework will look into argument count of your routine,
+            and if second argument is there, your routine will be considered as asynchronous,
+            i.e. not completing until 'done' is explicitly triggered.
+     */
+    'async': function async(done) {
+        _.delay(function () {
+            done();
+        });
+    },
+
+    /*  4.  Use $tests to define unit tests on prototypes (works only on stuff in global namespace)
+     */
+    '$tests': function $tests() {
+
+        var DummyPrototypeWithTest = $prototype({ $test: function $test() {} });
+        var DummyPrototypeWithTests = $prototype({ $tests: { dummy: function dummy() {} } });
+
+        /*  $test/$tests renders to static immutable property $tests
+         */
+        $assertTypeMatches(DummyPrototypeWithTests.$tests, [{ '*': 'function' }]);
+        $assertThrows(function () {
+            DummyPrototypeWithTests.$tests = 42;
+        });
+
+        /*  Tests are added to Testosterone.prototypeTests
+         */
+        $assertMatches(_.pluck(Testosterone.prototypeTests, 'tests'), [DummyPrototypeWithTest.$tests, DummyPrototypeWithTests.$tests]);
+    }
+};
+
+/*  For marking methods in internal impl that should publish themselves as global functions (like $assert)
+ */
+Tags.define('assertion');
+
+$global.Testosterone = $singleton({
+
+    prototypeTests: [],
+
+    get isRunning() {
+        return this.currentAssertion !== undefined;
+    },
+
+    /*  Hook up to assertion syntax defined in common.js
+     */
+    constructor: function constructor() {
+        var _this = this;
+
+        _.each(_.assertions, function (fn, name) {
+            this.defineAssertion(name, name === 'assertFails' ? $shouldFail(function (what) {
+                what.call(this);
+            }) : fn);
+        }, this);
+
+        /*  For defining tests inside prototype definitions
+         */
+        (function (register) {
+            $prototype.macro('$test', register);
+            $prototype.macro('$tests', register);
+        })(function (def, value, name) {
+            _this.prototypeTests.push({
+                proto: def.constructor,
+                tests: value });
+
+            def.$tests = $static($property($constant(_.isStrictlyObject(value) && value || _.object([['test', value]]))));
+
+            return def;
+        });
+        this.run = this.$(this.run);
+    },
+
+    /*  Entry point
+     */
+    run: _.interlocked(function (cfg_) {
+        var _this2 = this;
+
+        /*  Configuration
+         */
+        var defaults = {
+            suites: [],
+            silent: true,
+            verbose: false,
+            timeout: 2000,
+            filter: _.identity,
+            testStarted: function testStarted(test) {},
+            testComplete: function testComplete(test) {} };
+
+        var cfg = this.runConfig = _.extend(defaults, cfg_);
+
+        /*  Read cfg.suites
+         */
+        var suitesIsArray = _.isArray(cfg.suites); // accept either [{ name: xxx, tests: yyy }, ...] or { name: tests, ... }
+        var suites = _.map(cfg.suites, this.$(function (suite, name) {
+            return this.testSuite(suitesIsArray ? suite.name : name, suitesIsArray ? suite.tests : suite, cfg.context, suite.proto);
+        }));
+
+        /*  Pick prototype tests
+         */
+        var prototypeTests = cfg.codebase === false ? [] : this.collectPrototypeTests();
+
+        /*  Gather tests
+         */
+        var baseTests = cfg.codebase === false ? [] : this.collectTests();
+        var allTests = _.flatten(_.pluck(baseTests.concat(suites).concat(prototypeTests), 'tests'));
+        var selectTests = _.filter(allTests, cfg.shouldRun || _.constant(true));
+
+        /*  Reset context (assigning indices)
+         */
+        this.runningTests = _.map(selectTests, function (test, i) {
+            return _.extend(test, { indent: cfg.indent, index: i });
+        });
+
+        _.each(this.runningTests, function (t) {
+            if (!(t.routine instanceof Function)) {
+                log.ee(t.suite, t.name, '– test routine is not a function:', t.routine);
+                throw new Error();
+            }
+        });
+
+        this.runningTests = _.filter(this.runningTests, cfg.filter || _.identity);
+
+        /*  Go
+         */
+        return __.each(this.runningTests, this.$(this.runTest)).then(function () {
+            _.assert(cfg.done !== true);
+            cfg.done = true;
+
+            _this2.printLog(cfg);
+            _this2.failedTests = _.filter(_this2.runningTests, _.property('failed'));
+            _this2.failed = _this2.failedTests.length > 0;
+
+            return !_this2.failed;
+        }).catch(function (e) {
+            log.margin();
+            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
+            throw e;
+        });
+    }),
+
+    onException: function onException(e) {
+        if (this.currentAssertion) this.currentAssertion.onException(e);else throw e;
+    },
+
+    /*  You may define custom assertions through this API
+     */
+    defineAssertions: function defineAssertions(assertions) {
+        _.each(assertions, function (fn, name) {
+            this.defineAssertion(name, fn);
+        }, this);
+    },
+
+    /*  Internal impl
+     */
+    runTest: function runTest(test, i) {
+        var self = this,
+            runConfig = this.runConfig;
+
+        log.impl.configStack = []; // reset log config stack, to prevent stack pollution due to exceptions raised within log.withConfig (..)
+
+        return __.then(runConfig.testStarted(test), function () {
+
+            test.verbose = runConfig.verbose;
+            test.timeout = runConfig.timeout;
+            test.startTime = Date.now();
+            return test.run().then(function () {
+                test.time = Date.now() - test.startTime;
+                return runConfig.testComplete(test);
+            });
+        });
+    },
+
+    collectTests: function collectTests() {
+        return _.map(_.tests, this.$(function (suite, name) {
+            return this.testSuite(name, suite);
+        }));
+    },
+
+    collectPrototypeTests: function collectPrototypeTests() {
+        var _this3 = this;
+
+        return this.prototypeTests.map(function (def) {
+            return _this3.testSuite(def.proto.$meta && def.proto.$meta.name || '<prototype>', def.tests, undefined, def.proto);
+        });
+    },
+
+
+    testSuite: function testSuite(name, tests, context, proto) {
+        return {
+            name: name || '',
+            tests: _(O.entries(typeof tests === 'function' && _.fromPairs([[name, tests]]) || tests)).map(function (keyValue) {
+                var test = new Test({ proto: proto, name: keyValue[0], routine: keyValue[1], suite: name, context: context });
+                test.complete(function () {
+                    if (!(test.hasLog = test.logCalls.length > 0)) {
+                        if (test.failed) {
+                            log.red('FAIL');
+                        } else if (test.verbose) {
+                            log.green('PASS');
+                        }
+                    }
+                });
+
+                return test;
+            }) };
+    },
+
+    defineAssertion: function defineAssertion(name, def) {
+
+        var self = this;
+        var fn = $untag(def);
+
+        delete $global['$' + name];
+        $global['$' + name] = _.withSameArgs(fn, function () {
+
+            var loc = new StackTracey().withSource($platform.Browser && !$platform.Chrome ? 0 : 1);
+
+            if (!self.currentAssertion) {
+                return fn.apply(self, arguments);
+            } else {
+                return self.currentAssertion.babyAssertion(name, def, fn, arguments, loc);
+            }
+        });
+    },
+
+    printLog: function printLog(cfg) {
+        if (!cfg.supressLog) {
+
+            var loggedTests = _.filter(this.runningTests, function (test) {
+                return test.failed || !cfg.silent && test.hasLog;
+            });
+            var failedTests = _.filter(this.runningTests, _.property('failed'));
+
+            _.invoke(cfg.verbose ? this.runningTests : loggedTests, 'printLog');
+
+            if (failedTests.length) {
+                log.orange('\n' + log.boldLine + '\n' + 'SOME TESTS FAILED:', _.pluck(failedTests, 'name').join(', '), '\n\n');
+            } else if (cfg.silent !== true) {
+                log.green('\n' + log.boldLine + '\n' + 'ALL TESTS PASS\n\n');
+            }
+        }
+    } });
+
+/*  Encapsulates internals of test's I/O.
+ */
+$global.Test = $prototype({
+
+    constructor: function constructor(cfg) {
+        _.defaults(this, cfg, {
+            name: '<< UNNAMED FOR UNKNOWN REASON >>',
+            failed: false,
+            routine: undefined,
+            verbose: false,
+            depth: 1,
+            indent: 0,
+            failedAssertions: [],
+            context: this,
+            complete: _.extend(_.barrier(), { context: this }) });
+
+        this.babyAssertion = _.interlocked(this.babyAssertion);
+    },
+
+    finalize: function finalize() {
+        this.babyAssertion.wait(this.$(function () {
+            if (this.canFail && this.failedAssertions.length) {
+                this.failed = true;
+            }
+            this.complete(true);
+        }));
+    },
+
+    babyAssertion: function babyAssertion(name, def, fn, args, loc) {
+        var self = this;
+
+        var assertion = new Test({
+            mother: this,
+            name: name,
+            shouldFail: def.$shouldFail || this.shouldFail,
+            depth: this.depth + 1,
+            location: loc,
+            context: this.context,
+            timeout: this.timeout / 2,
+            verbose: this.verbose,
+            silent: this.silent,
+            routine: Tags.modify(def, function (fn) {
+                return function (done) {
+                    if ($async.is(args[0]) || $async.is(def)) {
+                        _.cps.apply(fn, self.context, args, function (args, then) {
+                            if (then) {
+                                then.apply(this, args);
+                            }
+                            done();
+                        });
+                    } else {
+                        try {
+                            fn.apply(self.context, args);done();
+                        } catch (e) {
+                            assertion.onException(e);
+                        }
+                    }
+                };
+            }) });
+
+        return assertion.run().finally(function (e, x) {
+            Testosterone.currentAssertion = self;
+            if (assertion.failed || assertion.verbose && assertion.logCalls.notEmpty) {
+                var src = assertion.location.sourceLine.trim();
+                log.red(log.config({ location: assertion.location, where: assertion.location }), src);
+                assertion.evalLogCalls();
+                return src;
+            }
+        }).then(function () {
+            if (assertion.failed && self.canFail) {
+                self.failedAssertions.push(assertion);
+            }
+        }).catch(function (e) {
+
+            log.ee(log.boldLine, 'TESTOSTERONE CRASHED', log.boldLine, '\n\n', e);
+        });
+    },
+
+    canFail: $property(function () {
+        return !this.failed && !this.shouldFail;
+    }),
+
+    fail: function fail() {
+        this.failed = true;
+        this.finalize();
+    },
+
+    assertionStack: $property(function () {
+        var result = [],
+            a = this;do {
+            result.push(a);a = a.mother;
+        } while (a);
+        return result;
+    }),
+
+    onException: function onException(e) {
+
+        if (this.canFail || this.verbose) {
+
+            if (_.isAssertionError(e)) {
+                //  • a
+                //  • b
+                if ('notMatching' in e) {
+                    var notMatching = _.coerceToArray(e.notMatching);
+                    if (e.asColumns) {
+                        log.orange(asTable(_.map(notMatching, function (obj) {
+                            return ['\t• ' + _.keys(obj)[0], String.ify(_.values(obj)[0])];
+                        })));
+                    } else {
+                        var cases = _.map(notMatching, log.impl.stringify.arity1.then(bullet.$('\t• ')));
+                        var common = _.reduce2(cases, _.longestCommonSubstring) || '';
+                        if (common.length < 4) {
+                            common = undefined;
+                        }
+
+                        _.each(cases, function (what) {
+
+                            if (common) {
+                                var where = what.indexOf(common);
+                                log.write(log.color.orange, what.substr(0, where), log.color.dark, common, log.color.orange, what.substr(where + common.length));
+                            } else {
+                                log.orange(what);
+                            }
+                        });
+                    }
+                }
+            }
+
+            // print exception
+            else {
+                    if (this.depth > 1) {
+                        log.newline();
+                    }
+                    log.write(e);
+                }
+            log.newline();
+        }
+
+        if (this.canFail) {
+            this.fail();
+        } else {
+            this.finalize();
+        }
+    },
+
+    run: function run() {
+        var self = Testosterone.currentAssertion = this,
+            routine = Tags.unwrap(this.routine);
+
+        return new Channel(this.$(function (then) {
+
+            this.shouldFail = $shouldFail.is(this.routine);
+            this.failed = false;
+            this.hasLog = false;
+            this.logCalls = [];
+            this.failureLocations = {};
+
+            _.withTimeout({
+                maxTime: self.timeout,
+                expired: function expired() {
+                    if (self.canFail) {
+                        log.ee('TIMEOUT EXPIRED');self.fail();
+                    }
+                } }, self.complete);
+
+            _.withUncaughtExceptionHandler(self.$(self.onException), self.complete);
+
+            log.withWriteBackend(_.extendWith({ indent: 1 }, function (x) {
+                /*log.impl.defaultWriteBackend (x);*/self.logCalls.push(x);
+            }), function (doneWithLogging) {
+                self.complete(doneWithLogging.arity0);
+                if (then) {
+                    self.complete(then);
+                }
+
+                /*  Continuation-passing style flow control
+                 */
+                if (routine.length > 0) {
+                    routine.call(self.context, self.$(self.finalize));
+                }
+
+                /*  Return-style flow control
+                 */
+                else {
+
+                        /*  TODO:   investigate why Promise.resolve ().then (self.$ (self.finalize))
+                                    leads to broken unhandled exception handling after the Testosterone run completes  */
+
+                        var result = undefined;
+
+                        try {
+                            result = routine.call(self.context);
+                        } catch (e) {
+                            self.onException(e);
+                        }
+
+                        if (_.isArrayLike(result) && result[0] instanceof Promise) {
+                            result = __.all(result);
+                        }
+
+                        if (result instanceof Promise) {
+                            result.then(function (x) {
+                                self.finalize();
+                            }.postponed, function (e) {
+                                self.onException(e);
+                            });
+                        } else {
+                            self.finalize();
+                        }
+                    }
+            });
+        }));
+    },
+
+    printLog: function printLog() {
+        var suiteName = this.suite && this.suite !== this.name && (this.suite || '').quote('[]') || '';
+
+        log.write(log.color.blue, '\n' + log.boldLine, '\n' + _.nonempty([suiteName, this.name]).join(' '), (this.index + ' of ' + Testosterone.runningTests.length).quote('()') + (this.failed ? ' FAILED' : '') + ':', '\n');
+
+        this.evalLogCalls();
+    },
+
+    evalLogCalls: function evalLogCalls() {
+        _.each(this.logCalls, log.writeBackend().arity1);
+    } });
+
+/*
+ */
+Tags.define('allowsRecursion');
+
+_.limitRecursion = function (max, fn, name) {
+    if (!fn) {
+        fn = max;max = 0;
+    }
+    var depth = -1;
+    var reported = false;
+    return function () {
+        if (!reported) {
+            if (depth > max) {
+                reported = true;
+                throw _.extendWith({ notMatching: _.map(arguments, function (arg, i) {
+                        return 'arg' + (i + 1) + ': ' + String.ify(arg);
+                    }) }, new Error(name + ': max recursion depth reached (' + max + ')'));
+            } else {
+                var result = (++depth, fn.apply(this, arguments));depth--;
+                return result;
+            }
+        }
+    };
+};
+
+Testosterone.ValidatesRecursion = $trait({
+
+    $test: function $test() {
+
+        var test = new ($component({
+
+            $traits: [Testosterone.ValidatesRecursion],
+
+            foo: function foo() {},
+            bar: function bar() {
+                this.bar();
+            },
+            baz: $allowsRecursion({ max: 2 }, function () {
+                this.baz();
+            }),
+            qux: $allowsRecursion(function () {
+                if (!this.quxCalled) {
+                    this.quxCalled = true;this.qux();
+                }
+            }) }))();
+
+        test.foo();
+        $assertThrows(test.bar, { message: 'bar: max recursion depth reached (0)' });
+        test.bar(); // should not report second time (to prevent overflood in case of buggy code)
+        $assertThrows(test.baz, { message: 'baz: max recursion depth reached (2)' });
+        test.qux();
+    },
+
+    $constructor: function $constructor() {
+        _.each(this, function (member, name) {
+            if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
+                this[name] = Tags.modify(member, function (fn) {
+                    return _.limitRecursion(member && member.$allowsRecursion && member.$allowsRecursion.max || 0, fn, name);
+                });
+            }
+        }, this);
+    } })
+
+/*  $log for methods
+ */
+;(function () {
+    var colors = _.keys(_.omit(log.color, 'none'));
+    colors.each(Tags.define);
+
+    var stringify = String.ify.configure({ pretty: false });
+
+    Tags.define('verbose');
+
+    Testosterone.LogsMethodCalls = $trait({
+
+        /*
+                $test: $platform.Browser ? (function () {}) : function (testDone) {
+        
+                            var Proto = $prototype ({ $traits: [Testosterone.LogsMethodCalls] })
+                            var Compo = $extends (Proto, {
+                                                foo: $log ($pink ($verbose (function (_42) { $assert (_42, 42); return 24 }))) })
+        
+                            var compo = new Compo ()
+                            var testContext = this
+        
+                            Compo.$meta (function () {
+                                $assert (compo.foo (42), 24)
+                                $assert (_.pluck (testContext.logCalls, 'text'), ['Compo.foo (42)', '→ 24', ''])
+                                $assert (testContext.logCalls[0].color === log.color ('pink'))
+                                testDone () }) },
+        */
+        $macroTags: {
+
+            log: function (_log) {
+                function log(_x, _x2, _x3) {
+                    return _log.apply(this, arguments);
+                }
+
+                log.toString = function () {
+                    return _log.toString();
+                };
+
+                return log;
+            }(function (def, member, name) {
+                var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
+                var meta = def.$meta || {};
+                var color = _.find2(colors, function (color) {
+                    return log.color(member['$' + color] && color) || false;
+                });
+                var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
+
+                return $prototype.impl.modifyMember(member, function (fn, name_) {
+                    return function () {
+                        var this_ = this,
+                            arguments_ = _.asArray(arguments);
+
+                        var this_dump = template && template.call(this, _.extend({ $proto: meta.name }, _.map2(this, stringify))) || this.desc || '';
+                        var args_dump = _.map(arguments_, stringify).join(', ').quote('()');
+
+                        log.write(log.config({
+                            color: color,
+                            location: true,
+                            where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty([this_dump, name, name_]).join('.'), args_dump);
+
+                        return log.withConfig({ indent: 1,
+                            color: color,
+                            protoName: meta.name }, function () {
+
+                            var numWritesBefore = log.impl.numWrites;
+                            var result = fn.apply(this_, arguments_);
+
+                            if (result !== undefined) {
+                                log.write('→', stringify(result));
+                            }
+
+                            if (log.currentConfig().indent < 2 && log.impl.numWrites - numWritesBefore > 0) {
+                                log.newline();
+                            }
+
+                            return result;
+                        });
+                    };
+                });
+            }) } });
+})();
+
+if ($platform.NodeJS) {
+    module.exports = Testosterone;
+}
+
+/***/ },
+
+/***/ 160:
+/* all exports used */
+/*!*********************!*\
+  !*** ./base/log.js ***!
+  \*********************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+"use strict";
+
+var O = __webpack_require__(/*! es7-object-polyfill */ 42),
+    bullet = __webpack_require__(/*! string.bullet */ 49),
+    asTable = __webpack_require__(/*! as-table */ 66);
+
+_.hasLog = true;
+
+_.tests.log = {
+
+    basic: function basic() {
+
+        log('log (x)'); //  Basic API
+
+        log.green('log.green'); //  Use for plain colored output.
+        log.boldGreen('log.boldGreen');
+        log.darkGreen('log.darkGreen');
+        log.blue('log.blue');
+        log.boldBlue('log.boldBlue');
+        log.darkBlue('log.darkBlue');
+        log.orange('log.orange');
+        log.boldOrange('log.boldOrange');
+        log.darkOrange('log.darkOrange');
+        log.red('log.red'); //  ..for more colors, see the implementation below
+        log.boldRed('log.boldRed');
+        log.darkRed('log.darkRed');
+        log.pink('log.pink');
+        log.boldPink('log.boldPink');
+        log.darkPink('log.darkPink');
+
+        log.margin();
+        log.margin(); // collapses
+
+        log.bright('log.bright');
+        log.dark('log.dark');
+
+        log.margin();
+
+        log.success('log.success'); //  Use for quality production logging (logging that lasts).
+        log.ok('log.ok');
+        log.g('log.g');
+        log.gg('log.gg');
+        log.info('log.info'); //  Printed location greatly helps to find log cause in code.
+        log.i('log.i');
+        log.ii('log.ii');
+        log.warning('log.warning'); //  For those who cant remember which one, there's plenty of aliases
+        log.warn('log.warn');
+        log.w('log.w');
+        log.ww('log.ww');
+        log.error('log.error');
+        log.e('log.e');
+        log.ee('log.ee');
+
+        $assert(log('log (x) === x'), 'log (x) === x'); // Can be used for debugging of functional expressions
+        // (as it returns it first argument, like in _.identity)
+
+        log.write('Consequent', 'arguments', log.color.red, ' joins', 'with', 'whitespace');
+
+        log.write('Multi', log.color.red, 'Colored', log.color.green, 'Output', log.color.blue, 'For', log.color.orange, 'The', log.color.pink, 'Fucking', log.color.none, 'Win');
+
+        log.write(log.boldLine); //  ASCII art <hr>
+        log.write(log.thinLine);
+        log.write(log.line);
+
+        log.write(log.indent(1), ['You can set indentation', 'that is nicely handled', 'in case of multiline text'].join('\n'));
+
+        log.orange(log.indent(2), '\nCan print nice table layout view for arrays of objects:\n');
+        log.orange(log.config({ indent: 2, table: true }), [{ field: 'line', matches: false, valueType: 'string', contractType: 'number' }, { field: 'column', matches: true, valueType: 'string', contractType: 'number' }]);
+
+        log.write('\nObject:', { foo: 1, bar: 2, qux: 3 }); //  Object printing is supported
+        log.write('Array:', [1, 2, 3]); //  Arrays too
+        log.write('Function:', _.identity); //  Prints code of a function
+
+        log.write('Complex object:', { foo: 1, bar: { qux: [1, 2, 3], garply: _.identity } }, '\n\n');
+
+        log.withConfig(log.indent(1), function () {
+            log.pink('Config stack + scopes + higher order API test:');
+            _.each([5, 6, 7], logs.pink(log.indent(1), 'item = ', log.color.blue));
+        });
+
+        $assert(log(42), 42);
+
+        $assert(logs.red(42)(), 42);
+    } };
+
+_.extend(
+
+/*  Basic API
+ */
+$global.log = function () {
+    return log.write.apply(this, [log.config({ location: true })].concat(_.asArray(arguments)));
+}, { // @hide
+
+    Config: $prototype(),
+
+    /*  Could be passed as any argument to any write function.
+     */
+    config: function config(cfg) {
+        return new log.Config(cfg);
+    } });
+
+_.extend(log, {
+
+    /*  Shortcut for common cases
+     */
+    indent: function indent(n) {
+        return log.config({ indent: n });
+    },
+
+    where: function where(wat) {
+        return log.config({ location: true, where: wat || undefined });
+    },
+
+    color: _.extend(function (x) {
+        return (log.color[x] || {}).color;
+    }, _.fromPairs(_.map([['none', '0m', ''], ['red', '31m', 'color:crimson'], ['boldRed', ['31m', '1m'], 'color:crimson;font-weight:bold'], ['darkRed', ['31m', '2m'], 'color:crimson'], ['blue', '36m', 'color:royalblue'], ['boldBlue', ['36m', '1m'], 'color:royalblue;font-weight:bold;'], ['darkBlue', ['36m', '2m'], 'color:rgba(65,105,225,0.5)'], ['boldOrange', ['33m', '1m'], 'color:saddlebrown;font-weight:bold;'], ['darkOrange', ['33m', '2m'], 'color:saddlebrown'], ['orange', '33m', 'color:saddlebrown'], ['brown', ['33m', '2m'], 'color:saddlebrown'], ['green', '32m', 'color:forestgreen'], ['boldGreen', ['32m', '1m'], 'color:forestgreen;font-weight:bold'], ['darkGreen', ['32m', '2m'], 'color:forestgreen;opacity:0.5'], ['pink', '35m', 'color:magenta'], ['boldPink', ['35m', '1m'], 'color:magenta;font-weight:bold;'], ['darkPink', ['35m', '2m'], 'color:magenta'], ['black', '0m', 'color:black'], ['bright', ['0m', '1m'], 'color:rgba(0,0,0);font-weight:bold'], ['dark', ['0m', '2m'], 'color:rgba(0,0,0,0.25)']], function (def) {
+        return [def[0], log.config({ color: { shell: _.coerceToArray(_.map2(def[1], _.prepends('\x1B['))).join(''), css: def[2] } })];
+    }))),
+
+    /*  Need one? Take! I have plenty of them!
+     */
+    boldLine: '======================================',
+    line: '--------------------------------------',
+    thinLine: '......................................',
+
+    /*  Set to true to precede each log message with date and time (useful for server side logs).
+     */
+    timestampEnabled: false,
+
+    /*  For hacking log output (contextFn should be conformant to CPS interface, e.g. have 'then' as last argument)
+     */
+    withWriteBackend: $scope(function (release, backend, contextFn, done) {
+        var prev = log.writeBackend.value;
+        log.writeBackend.value = backend;
+        contextFn(function ( /* release */then) {
+            // @hide
+            release(function () {
+                log.writeBackend.value = prev;
+                if (then) then();
+                if (done) done();
+            });
+        });
+    }),
+
+    /*  For writing with forced default backend
+     */
+    writeUsingDefaultBackend: function writeUsingDefaultBackend() /* arguments */{
+        var args = arguments;
+        log.withWriteBackend(log.impl.defaultWriteBackend, function (done) {
+            log.write.apply(null, args);done();
+        });
+    }, // @hide
+
+    writeBackend: function writeBackend() {
+        return log.writeBackend.value || log.impl.defaultWriteBackend;
+    },
+
+    withConfig: function withConfig(config, what) {
+        log.impl.configStack.push(config);
+        var result = what();log.impl.configStack.pop();
+        return result;
+    },
+
+    currentConfig: function currentConfig() {
+        return log.impl.configure(log.impl.configStack);
+    },
+
+    /*  Use instead of 'log.newline ()' for collapsing newlines
+     */
+    margin: function () {
+        var lastWrite = undefined;
+        return function () {
+            if (lastWrite !== log.impl.numWrites) log.newline();
+            lastWrite = log.impl.numWrites;
+        };
+    }(),
+
+    /*  Internals
+     */
+    impl: {
+
+        configStack: [],
+        numWrites: 0,
+
+        configure: function configure(configs) {
+            return _.reduce2({ indent: 0 }, _.nonempty(configs), function (memo, cfg) {
+                return _.extend(memo, _.nonempty(cfg), { indent: memo.indent + (cfg.indent || 0) });
+            });
+        },
+
+        /*  Nuts & guts
+         */
+        write: $restArg(_.bindable(function () {
+            var writeBackend = log.writeBackend();
+
+            log.impl.numWrites++;
+
+            var args = _.asArray(arguments);
+            var config = log.impl.configure([{ indent: writeBackend.indent || 0 }].concat(log.impl.configStack));
+
+            var runs = _.reduce2(
+
+            /*  Initial memo
+             */
+            [],
+
+            /*  Arguments split by configs
+             */
+            _.partition3(args, _.isTypeOf.$(log.Config)),
+
+            /*  Gather function
+             */
+            function (runs, span) {
+                if (span.label === true) {
+                    config = log.impl.configure([config].concat(span.items));
+                    return runs;
+                } else {
+                    return runs.concat({ config: config,
+                        text: log.impl.stringifyArguments(span.items, config) });
+                }
+            });
+
+            var trailNewlinesMatch = runs.last && runs.last.text.reversed.match(/(\n*)([^]*)/);
+            var trailNewlines = trailNewlinesMatch && trailNewlinesMatch[1]; // dumb way to select trailing newlines (i'm no good at regex)
+            if (trailNewlinesMatch) {
+                runs.last.text = trailNewlinesMatch[2].reversed;
+            }
+
+            /*  Split by linebreaks
+             */
+            var newline = {};
+            var lines = _.pluck.with('items', _.reject.with(_.property('label'), _.partition3.with(_.equals(newline), _.scatter(runs, function (run, i, emit) {
+                _.each(run.text.split('\n'), function (line, i, arr) {
+                    emit(_.extended(run, { text: line }));if (i !== arr.lastIndex) {
+                        emit(newline);
+                    }
+                });
+            }))));
+
+            var totalText = _.pluck(runs, 'text').join('');
+            var where = config.where || log.impl.findWhere(new StackTracey()); // @hide
+            var indentation = (config.indentPattern || '\t').repeats(config.indent);
+
+            writeBackend({
+                lines: lines,
+                config: config,
+                color: config.color,
+                when: new Date().toISOString(),
+                args: _.reject(args, _.isTypeOf.$(log.Config)),
+                indentation: indentation,
+                indentedText: lines.map(_.seq(_.pluck.tails2('text'), _.joinsWith(''), _.prepends(indentation))).join('\n'),
+                text: totalText,
+                codeLocation: config.location && log.impl.location(where) || '',
+                trailNewlines: trailNewlines || '',
+                where: config.location && where || undefined });
+
+            return _.find(args, _.not(_.isTypeOf.$(log.Config)));
+        })),
+
+        findWhere: function findWhere(stack) {
+            //console.log (log.impl.stringify (stack))
+            return stack.withSources.filter(function (x) {
+                return !(x.hide || x.fileName === 'underscore.js');
+            }).at(0);
+        },
+
+        defaultWriteBackend: function defaultWriteBackend(params) {
+
+            var codeLocation = params.codeLocation;
+
+            if ($platform.NodeJS) {
+
+                var lines = _.map(params.lines, function (line) {
+                    return params.indentation + _.map(line, function (run) {
+                        return run.config.color ? run.config.color.shell + run.text + '\x1B[0m' : run.text;
+                    }).join('');
+                }).join('\n');
+
+                if (log.timestampEnabled) {
+                    lines = log.color('dark').shell + bullet(String(params.when) + ' ', log.color('none').shell + lines);
+                }
+
+                console.log(lines, log.color('dark').shell + codeLocation + '\x1B[0m', params.trailNewlines);
+            } else {
+                console.log.apply(console, _.reject.with(_.equals(undefined), [].concat(
+
+                /*  Text   */
+
+                [log.timestampEnabled ? '%c' + params.when + '%c' : '', _.map(params.lines, function (line, i) {
+                    return params.indentation + _.reduce2('', line, function (s, run) {
+                        return s + (run.text && (run.config.color ? '%c' : '') + run.text || '');
+                    });
+                }).join('\n'), codeLocation ? '%c' + codeLocation : ''].nonempty.join(' '),
+
+                /*  Colors */
+
+                (log.timestampEnabled ? ['color:rgba(0,0,0,0.4)', 'color:black'] : []).concat(_.scatter(params.lines, function (line, i, emit) {
+                    _.each(line, function (run) {
+                        if (run.text && run.config.color) {
+                            emit(run.config.color.css);
+                        }
+                    });
+                }) || []).concat(codeLocation ? 'color:rgba(0,0,0,0.25)' : []), params.trailNewlines)));
+            }
+        },
+
+        /*  Ex.: function @ source.js:321  */
+
+        location: function location(where) {
+            return '(' + [].concat(where.calleeShort || [], [].concat(where.fileName || [], where.line || []).join(':')).join(' @ ') + ')';
+        },
+
+        stringifyArguments: function stringifyArguments(args, cfg) {
+            return args.map(function (arg) {
+                var x = log.impl.stringify(arg, cfg);
+                return cfg.maxArgLength ? String.ify.limit(x, cfg.maxArgLength) : x;
+            }).join(' ');
+        },
+
+        stringify: function stringify(what, cfg) {
+            return typeof what === 'string' ? what : Array.isArray(what) && (cfg || {}).table ? asTable(what) : String.ify.configure(cfg || {})(what);
+        }
+    }
+})
+
+/*  Printing API
+ */
+;(function () {
+    var write = log.impl.write;
+    _.extend(log, log.printAPI = _.fromPairs(_.concat([['newline', write.$(log.config({ location: false }), '')], ['write', write]], _.flat(_.map(['red failure error e', 'blue info i', 'darkBlue minor m', 'orange warning warn w', 'green success ok g', 'darkGreen dg', 'pink notice alert p', 'boldPink pp', 'dark hint d', 'boldGreen gg', 'bright b', 'boldRed bloody bad ee', 'darkPink dp', 'brown br', 'darkOrange wtf', 'boldOrange ww', 'darkRed er', 'boldBlue ii'], _.splitsWith(' ').then(_.mapsWith(function (name, i, names) {
+        return [name, write.$(log.config({ location: i !== 0, color: log.color(names.first) }))];
+    })))))));
+})();
+
+$global.logs = _.higherOrder.map(log.printAPI);
+
+if ($platform.NodeJS) {
+    module.exports = log;
+}
+
+/***/ },
+
+/***/ 162:
+/* all exports used */
+/*!***************************!*\
+  !*** ./base/profiling.js ***!
+  \***************************/
+/***/ function(module, exports) {
+
+"use strict";
+"use strict";
+
+/*  Measures run time of a routine (either sync or async)
+    ======================================================================== */
+
+_.measure = function (routine, then) {
+    if (then) {
+        // async
+        var now = _.now();
+        routine(function () {
+            then(_.now() - now);
+        });
+    } else {
+        // sync
+        var now = _.now();
+        routine();
+        return _.now() - now;
+    }
+};
+
+/*  Measures performance: perfTest (fn || { fn1: .., fn2: ... }, then)
+    ======================================================================== */
+
+_.perfTest = function (arg, then) {
+    var rounds = 500;
+    var routines = _.isFunction(arg) ? { test: arg } : arg;
+    var timings = {};
+
+    _.cps.each(routines, function (fn, name, then) {
+
+        /*  Define test routine (we store and print result, to assure our routine
+            won't be throwed away by optimizing JIT)
+         */
+        var result = [];
+        var run = function run() {
+            for (var i = 0; i < rounds; i++) {
+                result.push(fn());
+            }
+            console.log(name, result);
+        };
+
+        /*  Warm-up run, to force JIT work its magic (not sure if 500 rounds is enough)
+         */
+        run();
+
+        /*  Measure (after some delay)
+         */
+        _.delay(function () {
+            timings[name] = _.measure(run) / rounds;
+            then();
+        }, 100);
+    },
+
+    /*  all done
+     */
+    function () {
+        then(timings);
+    });
+};
+
+/***/ },
+
+/***/ 163:
+/* all exports used */
+/*!****************************!*\
+  !*** ./base/reflection.js ***!
+  \****************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(__filename) {"use strict";
+
+/*  ------------------------------------------------------------------------ */
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var O = Object;
+
+/*  ------------------------------------------------------------------------ */
+
+_.hasReflection = true;
+
+/*  ------------------------------------------------------------------------ */
+
+$global.getSource = __webpack_require__(/*! get-source */ 97);
+
+/*  ------------------------------------------------------------------------ */
+
+$global.StackTracey = O.assign(__webpack_require__(/*! stacktracey */ 140), {
+    fromErrorWithAsync: function fromErrorWithAsync(e) {
+
+        var stackEntries = new StackTracey(e),
+            asyncContext = e.asyncContext;
+
+        while (asyncContext) {
+            stackEntries = stackEntries.concat(new StackTracey(asyncContext.stack));
+            asyncContext = asyncContext.asyncContext;
+        }
+
+        return stackEntries.mergeRepeatedLines;
+    }
+});
+
+/*  ------------------------------------------------------------------------ */
+
+_.tests.reflection = {
+
+    'file paths': function filePaths() {
+        $assert(typeof $uselessPath === 'undefined' ? 'undefined' : _typeof($uselessPath), 'string');
+        $assert($sourcePath.length > 0);
+        $assert($uselessPath.length > 0);
+    }
+};(function () {
+
+    var currentFile = $platform.Browser ? (new StackTracey()[2] || { file: '' }).file : __filename;
+
+    $global.const('$uselessPath', _.initial(currentFile.split('/'), $platform.NodeJS ? 2 : 1).join('/') + '/');
+    $global.const('$sourcePath', function () {
+        var local = ($uselessPath.match(/(.+)\/node_modules\/(.+)/) || [])[1];
+        return local ? local + '/' : $uselessPath;
+    }());
+})();
+
+/*  ------------------------------------------------------------------------ */
+
+var asTable = __webpack_require__(/*! as-table */ 66);
+
+StackTracey.prototype[Symbol.for('String.ify')] = function (stringify) {
+
+    return asTable(this.map(function (entry) {
+        return ['\t' + 'at ' + entry.calleeShort.slice(0, 30), entry.fileShort && entry.fileShort + ':' + entry.line || '', ((entry.sourceLine || '').trim() || '').slice(0, 80)];
+    }));
+};
+
+Error.prototype[Symbol.for('String.ify')] = function (stringify) {
+
+    try {
+        var stack = StackTracey.fromErrorWithAsync(this).slice(this.stackOffset || 0).clean;
+        var why = stringify.limit((this.message || '').replace(/\r|\n/g, '').trim(), 120);
+
+        return '[EXCEPTION] ' + why + (this.notMatching && [].concat(this.notMatching).map(function (x) {
+            return '\t' + stringify(x);
+        }).join('\n') + '\n\n' || '') + '\n\n' + stringify(stack) + '\n';
+    } catch (sub) {
+        return 'YO DAWG I HEARD YOU LIKE EXCEPTIONS... SO WE THREW EXCEPTION WHILE PRINTING YOUR EXCEPTION:\n\n' + sub.stack + '\n\nORIGINAL EXCEPTION:\n\n' + this.stack + '\n\n';
+    }
+};
+
+/*  ------------------------------------------------------------------------ */
+
+_.tests.prototypeMeta = {
+
+    'Prototype.$meta': function Prototype$meta() {
+
+        var DummyProto = $prototype();
+        var DummyTrait = $trait();
+
+        $assertMatches(DummyProto.$meta, { name: 'DummyProto', type: 'prototype' });
+        $assertMatches(DummyTrait.$meta, { name: 'DummyTrait', type: 'trait' });
+    },
+
+    'String.ify': function StringIfy() {
+
+        var Dummy = $prototype({});
+
+        $assert(String.ify(Dummy), 'Dummy ()');
+    }
+};(function () {
+
+    var findMeta = function findMeta(stack) {
+        return _.find2(stack.withSources.reverse(), function (location) {
+
+            var match = location.sourceLine.match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/);
+            return match && { name: match[1] === 'exports' ? location.fileName : match[1],
+                type: match[2],
+                file: location.fileShort } || false;
+        });
+    };
+
+    $prototype.macro(function (def, base) {
+
+        if (typeof Symbol !== 'undefined') {
+            def.constructor[Symbol.for('String.ify')] = function () {
+                return (this.$meta && this.$meta.name || '<prototype>') + ' ()';
+            };
+        }
+
+        /*  NB: memoization is here because findMeta performs slow (needs to fetch sources and sourcemaps),
+                and we dont wanna do this at construction of each prototype. Better do this on first $meta request.    */
+
+        if (!def.$meta) {
+            (function () {
+                var stack = new StackTracey();
+                def.$meta = $static($property(_.memoize(function () {
+                    return findMeta(stack);
+                })));
+            })();
+        }
+
+        return def;
+    });
+})();
+
+/*  ------------------------------------------------------------------------ */
+/* WEBPACK VAR INJECTION */}.call(exports, "/index.js"))
+
+/***/ },
+
+/***/ 165:
+/* all exports used */
+/*!******************************!*\
+  !*** ./base/tier0/assert.js ***!
+  \******************************/
+/***/ function(module, exports) {
+
+"use strict";
+"use strict";
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+------------------------------------------------------------------------
+
+Unit tests (bootstrap code)
+
+------------------------------------------------------------------------
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+_.hasAsserts = true;
+
+_.extend(_, {
+
+    /*  a namespace where you put tests (for enumeration purposes)
+        ======================================================================== */
+
+    tests: _.tests || {},
+
+    /*  A degenerate case of a test shell. We use it to bootstrap most critical
+        useless.js internals, where real shell (Testosterone.js) is not available,
+        as it itself depends on these utility. It takes test and test's subject as
+        arguments (test before code, embodying test-driven philosophy) and executes
+        test immediately, throwing exception if anything fails - which is simply
+        the default behavior of $assert. So expect no advanced error reporting
+        and no controlled execution by using this API.
+        ======================================================================== */
+
+    withTest: function withTest(name, test, defineSubject) {
+        defineSubject();
+        _.runTest(name, test);
+        _.publishToTestsNamespace(name, test);
+    },
+
+    /*  Publishes to _.tests namespace, but does not run
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    deferTest: function deferTest(name, test, defineSubject) {
+        defineSubject();
+        _.publishToTestsNamespace(name, test);
+    },
+
+    /*  INTERNALS (you won't need that)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    runTest: function runTest(name, test) {
+        try {
+            if (_.isFunction(test)) {
+                test();
+            } else {
+                _.each(test, function (fn) {
+                    fn();
+                });
+            }
+        } catch (e) {
+            if (_.isAssertionError(e)) {
+                var printedName = (_.isArray(name) && name || [name]).join('.');
+                console.log(printedName + ':', e.message, '\n' + _.times(printedName.length, _.constant('~')).join('') + '\n');
+                _.each(e.notMatching, function (x) {
+                    console.log('  •', x);
+                });
+            }
+            throw e;
+        }
+    },
+
+    publishToTestsNamespace: function publishToTestsNamespace(name, test) {
+        if (_.isArray(name)) {
+            // [suite, name] case
+            (_.tests[name[0]] || (_.tests[name[0]] = {}))[name[1]] = test;
+        } else {
+            _.tests[name] = test;
+        }
+    } });
+
+/*  TEST ITSELF
+    ======================================================================== */
+
+_.withTest('assert.js bootstrap', function () {
+
+    /*  One-argument $assert (requires its argument to be strictly 'true')
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assert(true);
+
+    $assert( // public front end, may be replaced by environment)
+    _.assert === // member of _ namespace (original implementation, do not mess with that)
+    _.assertions.assert); // member of _.assertions (for enumeration purposes)
+
+    $assertNot(false);
+    $assertNot(5); // NB: assertNot means 'assert not true', hence this will pass
+
+    /*  Multi-argument assert (requires its arguments be strictly equal to each other)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assert(2 + 2, 2 * 2, 4); // any number of arguments
+    $assert({ foo: [1, 2, 3] }, { foo: [1, 2, 3] }); // compares objects (deep match)
+    $assert({ foo: { bar: 1 }, baz: 2 }, // ignores order of properties
+    { baz: 2, foo: { bar: 1 } });
+
+    $assertNot(2 + 2, 5);
+
+    /*  Nonstrict matching (a wrapup over _.matches)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assertMatches({ foo: 1, bar: 2 }, { foo: 1 });
+
+    /*  Nonstrict matching against complex objects (stdlib.js feature)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+        $assertMatches({ foo: [1, 2], bar: 3 }, { foo: [1] });
+    }
+
+    /*  Regex matching (stdlib.js feature)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+        $assertMatches('123', /[0-9]+/);
+    }
+
+    /*  Type matching (plain)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+        $assertTypeMatches(42, 'number');
+        $assertFails(function () {
+            $assertTypeMatches('foo', 'number');
+        });
+    }
+
+    /*  Type matching (array type)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+        $assertTypeMatches([1, 2], []);
+        $assertTypeMatches([], []);
+        $assertTypeMatches([1, 2, 3], ['number']);
+        $assertTypeMatches([], ['number']);
+        $assertFails(function () {
+            $assertTypeMatches([1, 2, 3], ['string']);
+            $assertTypeMatches([1, 2, 'foo'], ['number']);
+        });
+    }
+
+    /*  Type matching (deep)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+        $assertTypeMatches({
+
+            /*  Input object */
+
+            foo: 42,
+            bar: {
+                even: 4,
+                many: ['foo', 'bar'] } }, {
+
+            /*  Type contract */
+
+            foo: 'number', // simple type check
+            qux: 'undefined', // nonexisting match 'undefined' 
+            bar: { // breakdown of complex object 
+                even: function even(n) {
+                    return n % 2 === 0;
+                }, // custom contract predicate    
+                many: ['string'] } });
+    } // array contract (here, 'array of strings')
+
+    /*  Type matching ($prototype)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasOOP) {
+        var Foo = $prototype(),
+            Bar = $prototype();
+
+        $assertTypeMatches({ foo: new Foo(),
+            bar: new Bar() }, { foo: Foo,
+            bar: Bar });
+
+        $assertFails(function () {
+            $assertTypeMatches(new Bar(), Foo);
+        });
+    };
+
+    /*  Ensuring throw (and no throw)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assertThrows(function () {
+        throw 42;
+    });
+    $assertNotThrows(function () {});
+
+    /*  Ensuring throw (strict version)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assertThrows(function () {
+        throw 42;
+    }, 42); // accepts either plain value or predicate
+    $assertThrows(function () {
+        throw new Error('42');
+    }, _.matches({ message: '42' }));
+
+    $assertFails(function () {
+        $assertThrows(function () {
+            throw 42;
+        }, 24);
+        $assertThrows(function () {
+            throw new Error('42');
+        }, _.matches({ message: '24' }));
+    });
+
+    /*  Ensuring execution
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assertEveryCalled(function (a, b, c) {
+        a();a();b();c();
+    });
+    $assertEveryCalledOnce(function (a, b, c) {
+        a();b();c();
+    });
+    $assertEveryCalled(function (x__3) {
+        x__3();x__3();x__3();
+    });
+
+    /*$assertFails (function () {
+        $assertEveryCalled     (function (a, b, c) { a (); b () })
+        $assertEveryCalledOnce (function (a, b, c) { a (); b (); b (); c (); })
+        $assertEveryCalled     (function (x__3) { x__3 (); x__3 (); }) })*/
+
+    /*  TODO:   1) add CPS support
+                2) replace $assertCPS with this
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if (_.hasStdlib) {
+
+        $assertCalledWithArguments(['foo', ['foo', 'bar']], function (fn) {
+
+            fn('foo');
+            fn('foo', 'bar');
+        });
+    }
+
+    /*  Ensuring CPS routine result (DEPRECATED)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assertCPS(function (then) {
+        then('foo', 'bar');
+    }, ['foo', 'bar']);
+    $assertCPS(function (then) {
+        then('foo');
+    }, 'foo');
+    $assertCPS(function (then) {
+        then();
+    });
+
+    /*  Ensuring assertion failure
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    $assertFails(function () {
+        $fail; // simplest way to generate assertion
+        $stub; // to mark code stubs (throws error)
+        $assert('not true'); // remember that assert is more strict than JavaScript if clauses
+        $assert({ foo: 1, bar: 2 }, { foo: 1 }); // not be confused with _.matches behavior (use $assertMatches for that)
+        $assert([1, 2, 3, 4], [1, 2, 3]); // same for arrays
+        $assert(['foo'], { 0: 'foo', length: 1 }); // array-like objects not gonna pass (regression test)
+        $assertFails(function () {});
+    }); // $assertFails fails if passed code don't
+
+    /*  Default fail behavior (never depend on that, as it's environment-dependent)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    if ($assert === _.assertions.assert) {
+        $assertThrows(function () {
+            $fail;
+        });
+    }
+
+    /*  IMPLEMENTATION
+        ======================================================================== */
+}, function () {
+
+    var assertImpl = function assertImpl(positive) {
+        return function (__) {
+            var args = [].splice.call(arguments, 0);
+
+            if (args.length === 1) {
+                if (positive && args[0] !== true) {
+                    _.assertionFailed({ notMatching: args });
+                }
+            } else if (positive && _.allEqual(args) !== true) {
+                _.assertionFailed({ notMatching: args });
+            }
+
+            return true;
+        };
+    }
+
+    /*  Fix for _.matches semantics (should not be true for _.matches (42) (24))
+     */
+    ;(function () {
+        var _matches = _.matches;
+        _.matches = function (a) {
+            return _.isObject(a) ? _matches(a) : function (b) {
+                return a === b;
+            };
+        };
+    })();
+
+    _.extend(_, _.assertions = {
+
+        assert: assertImpl(true),
+        assertNot: assertImpl(false),
+
+        assertCPS: function assertCPS(fn, args, then) {
+            var requiredResult = args && (_.isArray(args) ? args : [args]) || [];
+            fn(function () {
+                $assert([].splice.call(arguments, 0), requiredResult);
+                if (then) {
+                    then();return true;
+                }
+            });
+        },
+
+        assertNotCalled: function assertNotCalled(context) {
+            var inContext = true;context(function () {
+                if (inContext) {
+                    $fail;
+                }
+            });inContext = false;
+        },
+
+        assertEveryCalledOnce: function assertEveryCalledOnce(fn, then) {
+            return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
+        },
+
+        assertEveryCalled: function assertEveryCalled(fn_, then) {
+            var fn = _.hasTags ? $untag(fn_) : fn_,
+                async = _.hasTags ? $async.is(fn_) : fn_.async,
+                once = _.hasTags ? $once.is(fn_) : fn_.once;
+
+            var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
+            var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
+                var parts = arg.trim().match(/^(.+)__(\d+)$/);
+                var num = parts && parseInt(parts[2], 10);
+                return _.isFinite(num) ? num || false : true;
+            });
+            var status = _.times(fn.length, _.constant(false));
+            var callbacks = _.times(fn.length, function (i) {
+                return function () {
+                    status[i] = _.isNumber(contracts[i]) ? (status[i] || 0) + 1 : true;
+                    if (async && _.isEqual(status, contracts)) then();
+                };
+            });
+            fn.apply(null, callbacks);
+
+            if (!async) {
+                _.assert(status, contracts);
+                if (then) {
+                    then();
+                }
+            }
+        },
+
+        assertCalledWithArguments: function assertCalledWithArguments(argsPattern, generateCalls) {
+            return _.assert(_.arr(generateCalls), argsPattern);
+        },
+
+        assertCallOrder: function assertCallOrder(fn) {
+            var callIndex = 0;
+            var callbacks = _.times(fn.length, function (i) {
+                return function callee() {
+                    callee.callIndex = callIndex++;
+                };
+            });
+            fn.apply(null, callbacks);
+            return _.assert(_.pluck(callbacks, 'callIndex'), _.times(callbacks.length, _.identity.arity1));
+        },
+
+        assertMatches: function assertMatches(value) {
+            for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+                args[_key - 1] = arguments[_key];
+            }
+
+            var pattern = args[0];
+            try {
+                return _.assert(_.matches.apply(null, args)(value));
+            } catch (e) {
+                throw _.isAssertionError(e) ? _.extend(e, { notMatching: [value, pattern] }) : e;
+            }
+        },
+
+        assertNotMatches: function assertNotMatches(value) {
+            for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+                args[_key2 - 1] = arguments[_key2];
+            }
+
+            var pattern = args[0];
+            try {
+                return _.assert(!_.matches.apply(null, args)(value));
+            } catch (e) {
+                throw _.isAssertionError(e) ? _.extend(e, { notMatching: [value, pattern] }) : e;
+            }
+        },
+
+        assertType: function assertType(value, contract) {
+            return _.assert(_.decideType(value), contract);
+        },
+
+        assertTypeMatches: function assertTypeMatches(value, contract) {
+            var mismatches = _.typeMismatches(contract, value);
+            return _.isEmpty(mismatches) ? true : _.assertionFailed({
+                message: 'provided value type not matches required contract',
+                asColumns: true,
+                notMatching: [{ provided: value }, { required: contract }, { mismatches: mismatches }] });
+        },
+
+        assertFails: function assertFails(what) {
+            return _.assertThrows.call(this, what, _.isAssertionError);
+        },
+
+        assertThrows: function assertThrows(what, errorPattern) {
+            var e = undefined,
+                thrown = false;
+            try {
+                what.call(this);
+            } catch (__) {
+                e = __;thrown = true;
+            }
+
+            _.assert.call(this, thrown);
+
+            if (arguments.length > 1) {
+                _.assertMatches.call(this, e, errorPattern);
+            }
+        },
+
+        assertNotThrows: function assertNotThrows(what) {
+            return _.assertEveryCalled(function (ok) {
+                what();ok();
+            });
+        },
+
+        fail: function fail() {
+            _.assertionFailed();
+        },
+
+        fails: _.constant(function () {
+            // higher order version
+            _.assertionFailed();
+        }),
+
+        stub: function stub() {
+            _.assertionFailed();
+        } });
+
+    /*  DEFAULT FAILURE IMPL.
+        ---------------------
+        We do not subclass Error, because _.isTypeOf currently does not support
+        inhertitance (UPDATE: now does) and it would cause troubles in test shell
+        and logging facility. Thus a subclass is defined that way.
+        ======================================================================== */
+
+    _.extend(_, {
+
+        assertionError: function assertionError(additionalInfo) {
+            return _.extend(new Error(additionalInfo && additionalInfo.message || 'assertion failed'), additionalInfo, { assertion: true });
+        },
+
+        assertionFailed: function assertionFailed(additionalInfo) {
+            throw _.extend(_.assertionError(additionalInfo), {
+                stack: new Error().stack.split('\n').slice(3).join('\n') });
+        },
+
+        isAssertionError: function isAssertionError(e) {
+            return e && e.assertion === true;
+        } });
+
+    /*  $assert helper
+        ======================================================================== */
+
+    _.allEqual = function (values) {
+        return _.reduce(values, function (prevEqual, x) {
+            return prevEqual && _.isEqual(values[0], x);
+        }, true);
+    };
+
+    /*  Publish asserts as $-things (will be replaced by Testosterone.js onwards,
+        thus configurable=true)
+        ======================================================================== */
+
+    _.each(_.keys(_.assertions), function (name) {
+        var define = _[name].length === 0 ? $global.property : $global.const;
+        define('$' + name, _[name], { configurable: true });
+    });
+});
+
+/***/ },
+
+/***/ 174:
+/* all exports used */
+/*!**************************!*\
+  !*** ./base/uncaught.js ***!
+  \**************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+"use strict";
+
+/*  Uncaught exception handling facility
+    ======================================================================== */
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+(function () {
+
+    _.hasUncaught = true;
+
+    var reThrownTag = ' [re-thrown by a hook]'; // marks error as already processed by globalUncaughtExceptionHandler
+
+    var globalUncaughtExceptionHandler = _.globalUncaughtExceptionHandler = function (e) {
+
+        var chain = globalUncaughtExceptionHandler.chain;
+        globalUncaughtExceptionHandler.chain = _.reject(chain, _.property('catchesOnce'));
+
+        if (chain.length) {
+            for (var i = 0, n = chain.length; i < n; i++) {
+                try {
+                    chain[i](e);
+                    break;
+                } catch (newE) {
+                    console.log(newE);
+                    if (i === n - 1) {
+                        newE.message += reThrownTag;
+                        throw newE;
+                    } else {
+                        if (newE && (typeof newE === 'undefined' ? 'undefined' : _typeof(newE)) === 'object') {
+                            newE.originalError = e;
+                        }
+                        e = newE;
+                    }
+                }
+            }
+        } else {
+            e.message += reThrownTag;
+            console.log(e);
+            throw e;
+        }
+    };
+
+    _.withUncaughtExceptionHandler = function (handler, context_) {
+        var context = context_ || _.identity;
+
+        if (context_) {
+            handler.catchesOnce = true;
+        }
+
+        globalUncaughtExceptionHandler.chain.unshift(handler);
+        context(function () {
+            globalUncaughtExceptionHandler.chain.remove(handler);
+        });
+    };
+
+    globalUncaughtExceptionHandler.chain = [];
+
+    switch ($platform.engine) {
+        case 'node':
+            __webpack_require__(/*! process */ 53).on('uncaughtException', globalUncaughtExceptionHandler);break;
+
+        case 'browser':
+            window.addEventListener('error', function (e) {
+
+                if (e.message.indexOf(reThrownTag) < 0) {
+                    // if not already processed by async hooks
+
+                    if (e.error) {
+                        globalUncaughtExceptionHandler(e.error);
+                    } else {
+                        // emulate missing .error (that's Safari)
+                        globalUncaughtExceptionHandler(_.extend(new Error(e.message), {
+                            stub: true,
+                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno }));
+                    }
+                }
+            });}
+})();
+
+/***/ },
+
+/***/ 175:
+/* all exports used */
+/*!*******************************!*\
+  !*** ./base/uncaughtAsync.js ***!
+  \*******************************/
+/***/ function(module, exports) {
+
+"use strict";
+"use strict";
+
+/*  Provides call stack persistence across async call boundaries.
+    ======================================================================== */
+
+(function () {
+
+    if ($platform.Browser) {
+
+        _.hasUncaughtAsync = true;
+
+        var globalAsyncContext = undefined;
+
+        var listenEventListeners = function listenEventListeners(genAddEventListener, genRemoveEventListener) {
+
+            var override = function override(obj) {
+
+                obj.addEventListener = genAddEventListener(obj.addEventListener);
+                obj.removeEventListener = genRemoveEventListener(obj.removeEventListener);
+            };
+
+            if (window.EventTarget) {
+                override(window.EventTarget.prototype);
+            } else {
+                override(Node.prototype);
+                override(XMLHttpRequest.prototype);
+            }
+        };
+
+        var asyncHook = function asyncHook(originalImpl, callbackArgumentIndex) {
+            return function () {
+                // @hide
+
+                var asyncContext = {
+                    name: name,
+                    stack: new Error().stack, // @hide
+                    asyncContext: globalAsyncContext };
+
+                var args = _.asArray(arguments);
+                var fn = args[callbackArgumentIndex];
+
+                if (!_.isFunction(fn)) {
+                    throw new Error('[uncaughtAsync.js] callback should be a function');
+                }
+
+                var wrappers = fn.__uncaughtJS_wrappers = fn.__uncaughtJS_wrappers || [];
+                var wrapper = args[callbackArgumentIndex] = function () {
+                    // @hide
+
+                    globalAsyncContext = asyncContext;
+
+                    try {
+                        return fn.apply(this, arguments);
+                    } catch (e) {
+                        _.globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
+                    }
+                };
+
+                wrappers.push(wrapper);
+
+                return originalImpl.apply(this, args);
+            };
+        };
+
+        window.setTimeout = asyncHook(window.setTimeout, 0);
+
+        /*  Manually catch uncaught exceptions at async call boundaries (providing missing .error for Safari)
+         */
+        listenEventListeners(function (addEventListener) {
+            return asyncHook(addEventListener, 1);
+        }, function (removeEventListener) {
+            return function (name, fn, bubble, untrusted) {
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                    for (var _iterator = (fn.__uncaughtJS_wrappers || [fn])[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var x = _step.value;
+
+                        removeEventListener.call(this, name, x, bubble);
+                    }
+                } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+                    } finally {
+                        if (_didIteratorError) {
+                            throw _iteratorError;
+                        }
+                    }
+                }
+            };
+        });
+    }
+})();
+
+/***/ },
+
+/***/ 177:
+/* all exports used */
+/*!******************************!*\
+  !*** ./client/LogOverlay.js ***!
+  \******************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+"use strict";
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+------------------------------------------------------------------------
+
+Modal overlay that renders log.js output for debugging purposes
+
+------------------------------------------------------------------------
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+(function ($ /* JQUERY */) {
+
+	$global.LogOverlay = $singleton(Component, {
+
+		$defaults: {
+			opaque: false }, // deferred init
+
+		init: function init() {
+			log.withWriteBackend(this.write, function () {});
+
+			$(document).keydown(this.$(function (e) {
+				if (e.keyCode === 192) {
+					// ~
+					this.toggle();
+				} else if (e.keyCode === 27) {
+					// Esc
+					this.body.empty();
+				}
+			}));
+		},
+
+		el: $memoized($property(function () {
+			var el = $('<div class="useless-log-overlay" style="display: none;">').append('<div class="useless-log-overlay-body">');
+
+			$(document).ready(function () {
+				el.appendTo(document.body);
+			});
+
+			return el;
+		})),
+
+		body: $memoized($property(function () {
+			return this.el.find('.useless-log-overlay-body');
+		})),
+
+		toggle: function toggle(yes) {
+			this.el.toggle(yes);
+		},
+
+		visible: $property(function () {
+			return this.el.is(':visible');
+		}),
+
+		clip: function clip() {
+			var elHeight = this.el.height();
+			var bodyHeight = this.body.height();
+
+			this.body.children().filter(this.$(function (i, line) {
+
+				var lineTop = bodyHeight - $(line).offsetInParent().y;
+				var lineBottom = lineTop - $(line).height();
+				var clipHeight = elHeight / 2;
+
+				return lineTop > clipHeight && lineBottom > clipHeight;
+			})).remove();
+		},
+
+		write: function write(params) {
+			this.toggle(true);
+
+			if (params.config.clear) {
+				this.body.empty();
+			}
+
+			this.body.append($('<div class="ulo-line">').attr('style', params.color && params.color.css || '').append($('<span class="ulo-line-text">').text(params.indentedText + ' ')).append($('<span class="ulo-line-where">').text(params.codeLocation + ' ')).append($('<span class="ulo-line-trail">').text(params.trailNewlines)));
+
+			this.clip.postpone();
+
+			if (!this.opaque) {
+				log.impl.defaultWriteBackend(params);
+			}
+		} });
+
+	// -- end of namespace
+})(__webpack_require__(/*! jquery */ 93));
+
+/***/ },
+
+/***/ 178:
+/* all exports used */
+/*!*************************!*\
+  !*** ./client/Panic.js ***!
+  \*************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+"use strict";
+
+/*  TODO: REWRITE THIS MESS WITH REACT
+	======================================================================== */
+
+(function ($ /* JQUERY */) {
+
+	$global.Panic = function (what, cfg) {
+		cfg = _.defaults(_.clone(cfg || {}), { dismiss: _.identity, raw: false });
+
+		if (_.isTypeOf(Error, what)) {
+			_.extend(cfg, _.pick(what, 'retry', 'dismiss'));
+		}
+
+		Panic.widget.append(what, cfg.raw);
+
+		if (_.isFunction(cfg.retry)) {
+			Panic.widget.onRetry(cfg.retry);
+		}
+
+		if (_.isFunction(cfg.dismiss)) {
+			Panic.widget.onClose(cfg.dismiss);
+		}
+	};
+
+	Panic.init = function () {
+		if (!Panic._initialized) {
+			Panic._initialized = true;
+			_.withUncaughtExceptionHandler(function (e) {
+				Panic(e);throw e; /* re-throw, to make it visible in WebInspector */
+			});
+		}
+	};
+
+	Panic.widget = $singleton(Component, {
+
+		retryTriggered: $triggerOnce(),
+		closeTriggered: $triggerOnce(),
+
+		el: $memoized($property(function () {
+
+			var el = $('<div class="panic-modal-overlay" style="z-index:5000; display:none;">').append([this.bg = $('<div class="panic-modal-overlay-background">'), this.modal = $('<div class="panic-modal">').append([this.modalBody = $('<div class="panic-modal-body">').append(this.title = $('<div class="panic-modal-title">Now panic!</div>')), $('<div class="panic-modal-footer">').append([this.btnRetry = $('<button type="button" class="panic-btn panic-btn-warning" style="display:none;">Try again</button>').touchClick(this.retry), this.btnClose = $('<button type="button" class="panic-btn panic-btn-danger" style="display:none;">Close</button>').touchClick(this.close)])])]);
+
+			el.appendTo(document.body);
+
+			$(document).ready(function () {
+				el.appendTo(document.body);
+			});
+
+			try {
+				$(window).resize(this.layout).resize();
+				this.modal.enableScrollFaders({ scroller: this.modalBody });
+				$(document).keydown(this.$(function (e) {
+					if (e.keyCode === 27) {
+						this.close();
+					}
+				}));
+			} catch (e) {
+				_.delay(function () {
+					Panic(e);
+				});
+			}
+
+			return el;
+		})),
+
+		layout: function layout() {
+			var maxContentWidth = _.coerceToUndefined(_.max(_.map(this.modal.find('pre'), _.property('scrollWidth'))));
+
+			this.modal.css({ 'max-height': $(window).height() - 100,
+				'width': maxContentWidth && maxContentWidth + 120 });
+
+			this.modalBody.scroll();
+		},
+		toggleVisibility: function toggleVisibility(yes) {
+			if (yes !== !(this.el.css('display') === 'none')) {
+				if (yes) {
+					this.el.css('display', '');
+				}
+				this.el.animateWith(yes ? 'panic-modal-appear' : 'panic-modal-disappear', this.$(function () {
+					if (!yes) {
+						this.el.css('display', 'none');
+					}
+				}));
+			}
+		},
+		onRetry: function onRetry(retry) {
+			this.retryTriggered(retry);
+			this.btnRetry.css('display', '');
+		},
+		onClose: function onClose(close) {
+			this.closeTriggered(close);
+			this.btnClose.css('display', '');
+		},
+		retry: function retry() {
+			this._clean();
+			this.closeTriggered.off();
+			this.toggleVisibility(false);
+			this.retryTriggered();
+		},
+		close: function close() {
+			this._clean();
+			this.retryTriggered.off();
+			this.toggleVisibility(false);
+			this.closeTriggered();
+		},
+		_clean: function _clean() {
+			this.modalBody.find('.panic-alert-error').remove();
+			this.modalBody.scroll();
+			this.btnRetry.css('display', 'none');
+			this.btnClose.css('display', 'none');
+		},
+		append: function append(what, raw) {
+			var id = 'panic' + this.hash(what);
+
+			var counter = $('#' + id + ' .panic-alert-counter');
+			if (counter.length) {
+				counter.text((counter.text() || '1').parsedInt + 1);
+			} else {
+				$('<div class="panic-alert-error">').attr('id', id).append('<span class="panic-alert-counter">').append(this.print(what, raw)).insertAfter(this.el.find('.panic-modal-title'));
+			}
+			this.toggleVisibility(true);
+			this.layout();
+		},
+		hash: function hash(what) {
+			return ((_.isTypeOf(Error, what) ? what && what.stack : _.isTypeOf(Test, what) ? what.suite + what.name : String.ify(what)) || '').hash;
+		},
+		print: function print(what, raw) {
+			return _.isTypeOf(Error, what) ? this.printError(what) : _.isTypeOf(Test, what) ? this.printFailedTest(what) : this.printUnknownStuff(what, raw);
+		},
+		printUnknownStuff: function printUnknownStuff(what, raw) {
+			return raw ? what : $('<span>').text(log.impl.stringify(what));
+		},
+		printLocation: function printLocation(where) {
+			return $('<span class="location">').append([$('<span class="callee">').text(where.calleeShort), $('<span class="file">').text(where.fileName), $('<span class="line">').text(where.line)]);
+		},
+		printFailedTest: function printFailedTest(test) {
+			var _this = this;
+
+			var logEl = $('<pre class="test-log" style="margin-top: 13px;">');
+
+			log.withWriteBackend(function (params) {
+				if (_.isTypeOf(Error, params.args.first)) {
+					console.log(params.args.first);
+				}
+
+				logEl.append(_.isTypeOf(Error, params.args.first) ? $('<div class="inline-exception-entry">').append([_.escape(params.indentation), $('<div class="panic-alert-error inline-exception">').append(_this.printError(params.args.first))]) : $('<div class="log-entry">').append(_.map(params.lines, function (line, i, lines) {
+					return $('<div class="line">').append(_.escape(params.indentation)).append(_.map(line, function (run) {
+						return $('<span>').attr('style', run.config.color && run.config.color.css || '').text(run.text);
+					})).append(i === lines.lastIndex ? [params.where && this.printLocation(params.where), params.trailNewlines.replace(/\n/g, '<br>')] : []);
+				}, _this)));
+			}, function (done) {
+				test.evalLogCalls();
+				done();
+			});
+
+			return [$('<div class="panic-alert-error-message" style="font-weight: bold;">').text(test.name).append('<span style="float:right; opacity: 0.25;">test failed</span>'), logEl];
+		},
+		printError: function printError(e) {
+
+			var stackEntries = StackTracey.fromErrorWithAsync(e).withSources;
+
+			return [$('<div class="panic-alert-error-message" style="font-weight: bold;">').text(e.message).append(_.any(stackEntries, function (e, i) {
+				return (e.thirdParty || e['native'] || e.hide) && i !== 0;
+			}) ? '<a class="clean-toggle" href="javascript:{}"></a>' : '').click(this.$(function (e) {
+				$(e.delegateTarget).parent().toggleClass('all-stack-entries').transitionend(this.$(function () {
+					this.modalBody.scroll();
+				}));
+			})), $('<div class="not-matching" style="margin-top: 5px; padding-left: 10px;">').append(_.map(_.coerceToArray(e.notMatching || []), function (s) {
+				return $('<pre>').text(log.impl.stringify(s));
+			})), $('<ul class="callstack">').append(_.map(stackEntries, this.$(function (entry) {
+
+				var dom = $('<li class="callstack-entry">').toggleClass('third-party', entry.thirdParty || false).toggleClass('hide', entry.hide || false).toggleClass('native', entry['native'] || false).append([$('<span class="file">').text(_.nonempty([entry.index ? '(index)' : entry.fileShort, entry.line]).join(':')), $('<span class="callee">').text(entry.calleeShort), $('<span class="src">').text((entry.sourceLine || '').trim()).click(this.$(function (e) {
+					var el = $(e.delegateTarget);
+
+					if (dom.is('.full')) {
+						dom.removeClass('full');
+						dom.transitionend(function () {
+							if (!dom.is('.full')) {
+								el.text((entry.sourceLine || '').trim());
+							}
+						});
+					} else {
+
+						var lines = (entry.sourceFile || { lines: [] }).lines;
+
+						dom.addClass('full');
+						el.html(lines.map(function (line) {
+							return $('<div class="line">').text(line);
+						}));
+
+						var line = el.find('.line').eq(entry.line - 1).addClass('hili');
+						if (line.length) {
+							var offset = line.offset().top - el.offset().top;
+							el.scrollTop(offset - 100);
+						}
+
+						_.delay(this.$(function () {
+							var shouldScrollDownMore = el.outerBBox().bottom + 242 - this.modalBody.outerBBox().bottom;
+							if (shouldScrollDownMore > 0) {
+								this.modalBody.animate({
+									scrollTop: this.modalBody.scrollTop() + shouldScrollDownMore }, 250);
+							}
+						}));
+					}
+				}))]);
+
+				return dom;
+			})))];
+		}
+	});
+
+	$.fn.extend({
+		enableScrollFaders: function enableScrollFaders(cfg) {
+			var horizontal = cfg && cfg.horizontal;
+			var faderTop,
+			    faderBottom,
+			    scroller = this.find(cfg && cfg.scroller || '.scroller');
+
+			this.css({ position: 'relative' });
+			this.append(faderTop = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'left' : 'top') + '"></div>')).append(faderBottom = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'right' : 'bottom') + '"></div>'));
+
+			scroller.scroll(function () {
+				var scrollTop = horizontal ? $(this).scrollLeft() : $(this).scrollTop(),
+				    height = horizontal ? $(this).width() : $(this).height(),
+				    max = (horizontal ? this.scrollWidth : this.scrollHeight) - 1;
+				faderTop.css({ opacity: scrollTop > 0 ? 1 : 0 });
+				faderBottom.css({ opacity: scrollTop + height < max ? 1 : 0 });
+			}).scroll();
+
+			return this;
+		} });
+
+	// -- end of namespace
+})(__webpack_require__(/*! jquery */ 93));
+
+/***/ },
+
+/***/ 180:
+/* all exports used */
+/*!******************************!*\
+  !*** ./client/jQueryPlus.js ***!
+  \******************************/
+/***/ function(module, exports, __webpack_require__) {
+
+"use strict";
+"use strict";
+
+/*  Some handy jQuery extensions
+    ======================================================================== */
+
+;(function ($) {
+
+    /*  We override some jQuery methods, so store previous impl. here
+     */
+    var __previousMethods__ = _.clone($.fn);
+
+    /*  Global functions
+     */
+    _.extend($, {
+
+        /*  Instantiates svg elements
+         */
+        svg: function svg(tag) {
+            var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+            if (tag === 'svg' && !$platform.IE) {
+                node.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            }
+            return $(node);
+        } })
+
+    /*  Element methods
+     */
+    .fn.extend({
+
+        /*  For this-binding
+         */
+        $: function $() {
+            return _.$.apply(null, [this].concat(_.asArray(arguments)));
+        },
+
+        /*  Provides auto-unbinding of $component $listeners from DOM events upon destroy
+         */
+        on: function on(what, method) {
+            var el = this,
+                method = _.find(arguments, _.isFunction);
+
+            /*  See useless/base/dynamic/stream.js for that queue/queuedBy interface.
+             */
+            if (method.queuedBy) {
+                method.queuedBy.push({ remove: function remove() {
+                        el.off(what, method);
+                    } });
+            }
+
+            /*  Call original impl.
+             */
+            return __previousMethods__.on.apply(this, arguments);
+        }, // @hide
+
+        /*  Links a data (or controller instance) to its DOM counterpart
+         */
+        item: function item(value) {
+            if (value) {
+                // setter
+                if (this.length) {
+                    this[0]._item = value;
+                }
+                return this;
+            } else {
+                // getter
+                return this.length ? this[0]._item : undefined;
+            }
+        },
+
+        /*  Writes properties directly to DOM object
+         */
+        props: function props(what) {
+            _.extend.apply(null, [this[0]].concat(arguments));
+            return this;
+        },
+
+        props2: function props2(what) {
+            _.extend2.apply(null, [this[0]].concat(arguments));
+            return this;
+        },
+
+        /*  Wait semantics
+         */
+        hasWait: function hasWait() {
+            return this.hasClass('i-am-busy');
+        },
+
+        waitUntil: function waitUntil(fn, then) {
+            this.addClass('i-am-busy').attr('disabled', true);
+            fn(this.$(function () {
+                this.removeClass('i-am-busy').removeAttr('disabled');
+                if (then) {
+                    then.apply(null, arguments);
+                }
+            }));return this;
+        },
+
+        /*  Checks if has parent upwards the hierarchy
+         */
+        hasParent: function hasParent(el) {
+            var parent = this;
+            while (parent.length > 0) {
+                if (parent[0] == (el[0] || el)) {
+                    return true;
+                }
+                parent = parent.parent();
+            }
+            return false;
+        },
+
+        /*  Returns a value or undefined (coercing empty values to undefined)
+         */
+        nonemptyValue: function nonemptyValue() {
+            var value = $.trim(this.val());
+            return value.length == 0 ? undefined : value;
+        },
+
+        /*  Returns a valid integer value or undefined (coercing NaN to undefined)
+         */
+        intValue: function intValue() {
+            var value = parseInt(this.nonemptyValue(), 10);
+            return isNaN(value) ? undefined : value;
+        },
+
+        /*  Checks if a mouse/touch event occured within element bounds
+         */
+        hitTest: function hitTest(event) {
+            var offset = this.offset();
+            var pt = {
+                x: event.clientX - offset.left,
+                y: event.clientY - offset.top };
+            return pt.x >= 0 && pt.y >= 0 && pt.x < $(this).width() && pt.y < $(this).height();
+        },
+
+        /*  Returns multiple attributes as object of { attr1: value, attr2: value, .. } form
+         */
+        attrs: function attrs() /* name1, name2, ... */{
+            return _.fromPairs(_.map(arguments, function (name) {
+                return [name, this.attr(name)];
+            }, this));
+        },
+
+        /*  Checks if any element upwards the hierarchy (including this element) conforms to a selector
+         */
+        belongsTo: function belongsTo(selector) {
+            return this.is(selector) || this.parents(selector).length;
+        },
+
+        /*  Selects which classes element should have, based on a key selector
+             Example: btn.selectClass (state, {  loading: 'btn-wait btn-disabled',
+                                                error: 'btn-invalid',
+                                                ok: '' })
+         */
+        selectClass: function selectClass(key, classes) {
+            return this.removeClass(_.values(classes).join(' ')).addClass(classes[key]);
+        },
+
+        /*  Returns a valid integer of an attribute (or undefined)
+         */
+        attrInt: function attrInt(name) {
+            return (this.attr(name) || '').integerValue;
+        },
+        cssInt: function cssInt(name) {
+            return (this.css(name) || '').integerValue;
+        },
+
+        /*  Enumerates children, returning each child as jQuery object (a handy thing that default .each lacks)
+         */
+        eachChild: function eachChild(selector, fn) {
+            _.each(this.find(selector), function (el) {
+                fn($(el));
+            });return this;
+        },
+
+        /*  Calls fn when current CSS transition ends
+         */
+        transitionend: function transitionend(fn) {
+            return this.one('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd', fn.oneShot);
+        },
+
+        /*  Calls fn when current CSS animation ends
+         */
+        animationend: function animationend(fn) {
+            return this.one('animationend webkitAnimationEnd oAnimationEnd oanimation MSAnimationEnd', fn.oneShot);
+        },
+
+        /*  1. Adds a class (that brings CSS animation)
+            2. Waits until CSS animation done
+            3. Removes that class
+            4. Calls 'done'
+         */
+        animateWith: function animateWith(cls, done) {
+            if (cls) {
+                this.addClass(cls);
+                this.animationend(this.$(function () {
+                    this.removeClass(cls);
+                    if (done) {
+                        done.call(this);
+                    }
+                }));
+            }
+            return this;
+        },
+
+        transitionWith: function transitionWith(cls, done) {
+            if (cls) {
+                this.addClass(cls);
+                this.transitionend(this.$(function () {
+                    this.removeClass(cls);
+                    if (done) {
+                        done.call(this);
+                    }
+                }));
+            }
+            return this;
+        },
+
+        /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
+             Simplest example:
+                 $(handle).drag ({
+                    start: function ()             { return this.leftTop () },                          // returns 'memo'
+                    move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } }) })
+         */
+        drag: function () {
+
+            /*  Helper routine
+             */
+            var translateTouchEvent = function translateTouchEvent(e, desiredTarget) {
+                return e.originalEvent.touches && _.find(e.originalEvent.touches, function (touch) {
+                    return $(touch.target).hasParent(desiredTarget);
+                }) || e;
+            };
+            /*  Impl
+             */
+            return function (cfg) {
+
+                this[0].dragConfig = cfg;
+
+                if (!$platform.touch && !window.__globalDragOverlay) {
+                    window.__globalDragOverlay = $('<div>').css({
+                        display: 'none',
+                        position: 'fixed',
+                        top: 0, right: 0, bottom: 0, left: 0,
+                        zIndex: 999999 }).appendTo(document.body);
+                }
+
+                var overlay = window.__globalDragOverlay;
+                var button = cfg.button || 1;
+
+                var begin = this.$(function (initialEvent) {
+                    var relativeTo = cfg.relativeTo || this;
+
+                    this.addClass(cfg.cls || '');
+
+                    if ($platform.touch || initialEvent.which === button) {
+                        var offset = relativeTo.offset(),
+                            memo = undefined;
+
+                        if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(
+                        // position (relative to delegate target)
+                        initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) /* one can cancel drag by returning false from 'start' */{
+
+                                var abort = undefined,
+                                    unbind = undefined,
+                                    end = undefined;
+
+                                memo = _.clone(memo);
+
+                                var move = this.$(function (e) {
+                                    if ($platform.touch || e.which === button) {
+                                        e.preventDefault();
+                                        var translatedEvent = translateTouchEvent(e, this[0]);
+                                        var offset = relativeTo.offset();
+
+                                        memo = cfg.move.call(cfg.context || this, memo, new Vec2(
+                                        // offset (relative to initial event)
+                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(
+                                        // position (relative to delegate target)
+                                        translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top),
+                                        // the event
+                                        translatedEvent) || memo;
+                                    } else {
+                                        abort(e);
+                                    }
+                                });
+
+                                unbind = function unbind() {
+                                    $(overlay || document.body).css(overlay ? { display: 'none' } : {}).off('mouseup touchend', end).off('mousemove touchmove', move);
+                                };
+
+                                end = this.$(function (e) {
+                                    unbind();
+
+                                    if (cfg.end) {
+                                        var translatedEvent = translateTouchEvent(e, this[0]);
+                                        cfg.end.call(cfg.context || this, memo, new Vec2(
+                                        // offset (relative to initial event)
+                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
+                                    }
+
+                                    this.removeClass(cfg.cls || '');
+                                });
+
+                                abort = this.$(function (e) {
+                                    unbind();end(e);
+                                });
+
+                                $(overlay || document.body).css(overlay ? { display: '', cursor: cfg.cursor || '' } : {}).on('mousemove touchmove', move).one('mouseup touchend', end);
+
+                                if (cfg.callMoveAtStart) {
+                                    cfg.move.call(cfg.context || this, memo, Vec2.zero, new Vec2(
+                                    // position (relative to delegate target)
+                                    initialEvent.pageX - offset.left, initialEvent.pageY - offset.top),
+                                    // the event
+                                    initialEvent);
+                                }
+                            }
+                    }
+                });
+
+                var touchstartListener = _.$(this, function (e) {
+                    var where = _.extend({}, translateTouchEvent(e, this[0])); /* copy event, cuz on iPad it's re-used by browser */
+                    if ($platform.touch && cfg.longPress) {
+                        var cancel = undefined;
+                        var timeout = window.setTimeout(_.$(this, function () {
+                            this.off('touchmove touchend', cancel);
+                            begin(where);
+                        }), 300);
+                        cancel = this.$(function () {
+                            window.clearTimeout(timeout);
+                            this.off('touchmove touchend', cancel);
+                        });
+                        this.one('touchmove touchend', cancel);
+                    } else {
+                        begin(where);
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
+
+                this.on($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+
+                return _.extend(this, {
+                    cancel: this.$(function () {
+                        this.off($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+                    }) });
+            };
+        }(),
+
+        /*  $(el).transform ({
+                    translate: new Vec2 (a, b),
+                    scale:     new Vec2 (x, y),
+                    rotate:    180 })
+         */
+        transform: function transform(cfg) {
+            if (arguments.length === 0) {
+                var components = (this.css('transform') || '').match(/^matrix\((.+\))$/);
+                if (components) {
+                    var m = components[1].split(',').map(parseFloat);
+                    return new Transform({ a: m[0], b: m[1], c: m[2], d: m[3], e: m[4], f: m[5] });
+                } else {
+                    return Transform.identity;
+                }
+            } else {
+                return this.css('transform', _.isStrictlyObject(cfg) && (cfg.translate ? 'translate(' + cfg.translate.x + 'px,' + cfg.translate.y + 'px) ' : '') + (cfg.rotate ? 'rotate(' + cfg.rotate + 'rad) ' : '') + (cfg.scale ? 'scale(' + new Vec2(cfg.scale).separatedWith(',') + ')' : '') || '');
+            }
+        },
+
+        /*  Other transform helpers
+         */
+        svgTranslate: function svgTranslate(pt) {
+            return this.attr('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+        },
+
+        svgTransformMatrix: function svgTransformMatrix(t) {
+            var m = t.components;
+            return this.attr('transform', 'matrix(' + m[0][0] + ',' + m[1][0] + ',' + m[0][1] + ',' + m[1][1] + ',' + m[0][2] + ',' + m[1][2] + ')');
+        },
+
+        svgTransformToElement: function svgTransformToElement(el) {
+            return Transform.svgMatrix(this[0].getTransformToElement(el[0]));
+        },
+
+        svgBBox: function svgBBox(bbox) {
+            if (arguments.length === 0) {
+                return new BBox(this[0].getBBox());
+            } else {
+                return this.attr(bbox.xywh);
+            }
+        },
+
+        /*  To determine display size of an element
+         */
+        outerExtent: function outerExtent() {
+            return new Vec2(this.outerWidth(), this.outerHeight());
+        },
+        extent: function extent() {
+            return new Vec2(this.width(), this.height());
+        },
+        innerExtent: function innerExtent() {
+            return new Vec2(this.innerWidth(), this.innerHeight());
+        },
+
+        /*  BBox accessors
+         */
+        outerBBox: function outerBBox() {
+            return BBox.fromLTWH(_.extend(this.offset(), this.outerExtent().asWidthHeight));
+        },
+        clientBBox: function clientBBox() {
+            return BBox.fromLTWH(this[0].getBoundingClientRect());
+        },
+
+        /*  Position accessors
+         */
+        leftTop: function leftTop() {
+            return new Vec2.fromLT(this.offset());
+        },
+        offsetInParent: function offsetInParent() {
+            return Vec2.fromLeftTop(this.offset()).sub(Vec2.fromLeftTop(this.parent().offset()));
+        },
+
+        /*  $(input).monitorInput ({
+                        empty: function (yes) { ... },    // called when empty state changes
+                        focus: function (yes) { ... } })  // called when focus state changes
+         */
+        monitorInput: function monitorInput(cfg) {
+            var change = function change() {
+                if ($.trim($(this).val()) === '') {
+                    cfg.empty(true);
+                } else {
+                    cfg.empty(false);
+                }
+            };
+            return this.keyup(change).change(change).focus(_.bind(cfg.focus || _.noop, cfg, true)).blur(_.bind(cfg.focus || _.noop, cfg, false));
+        },
+
+        /*  Use instead of .click for more responsive clicking on touch devices.
+            Reverts to .click on desktop
+         */
+        touchClick: function touchClick(fn, cfg) {
+            var self = this;
+            cfg = cfg || {};
+            if (!cfg.disableTouch && $platform.touch) {
+                // touch experience
+                var touchstartHandler = function touchstartHandler(e) {
+                    fn.apply(this, arguments);
+                    e.preventDefault(); // prevents nasty delayed click-focus effect on iOS
+                    return false;
+                };
+
+                var clickHandler = function clickHandler(e) {
+                    e.preventDefault();
+                    return false;
+                };
+
+                if (cfg.handler) {
+                    cfg.handler({
+                        unbind: function unbind() {
+                            self.off('touchstart', touchstartHandler).off('click', clickHandler);
+                        } });
+                }
+
+                return this.on('touchstart', touchstartHandler).on('click', clickHandler);
+            } else {
+                // mouse experience
+                if (cfg.handler) {
+                    cfg.handler({
+                        unbind: function unbind() {
+                            self.off('click', fn);
+                        } });
+                }
+                return this.click(fn);
+            }
+        },
+
+        /*  Use instead of .dblclick for responsive doubleclick on touch devices
+            Reverts to .dblclick on desktop
+         */
+        touchDoubleclick: function touchDoubleclick(fn) {
+            if ($platform.touch) {
+                var lastTime = Date.now();
+                return this.on('touchend', function () {
+                    var now = Date.now();
+                    if (now - lastTime < 200) {
+                        fn.apply(this, arguments);
+                    }
+                    lastTime = now;
+                });
+            } else {
+                return this.dblclick(fn);
+            }
+        },
+
+        /*  Taken from stackoverflow discussion on how to prevent zoom-on-double-tap behavior on iOS
+         */
+        nodoubletapzoom: function nodoubletapzoom() {
+            return $(this).bind('touchstart', function preventZoom(e) {
+                var t2 = e.timeStamp;
+                var t1 = $(this).data('lastTouch') || t2;
+                var dt = t2 - t1;
+                var fingers = e.originalEvent.touches.length;
+                $(this).data('lastTouch', t2);
+                if (!dt || dt > 500 || fingers > 1) {
+                    return;
+                } // not double-tap
+                e.preventDefault(); // double tap - prevent the zoom
+                $(e.target).trigger('click');
+            });
+        } // also synthesize click events we just swallowed up
+    });
+})(module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 93));
+
+/***/ },
+
+/***/ 364:
+/* all exports used */
+/*!***************************************************!*\
+  !*** ./~/css-loader?-url!./client/LogOverlay.css ***!
+  \***************************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 126)();
+// imports
+
+
+// module
+exports.push([module.i, ".useless-log-overlay {\tposition: fixed; bottom: 10px; left: 10px; right: 10px; top: 10px; z-index: 5000;\n\t\t\t\t\t\toverflow: hidden;\n\t\t\t\t\t\tpointer-events: none;\n\t\t\t\t\t\t-webkit-mask-image: -webkit-gradient(linear, left top, left bottom,\n\t\t\t\t\t\t\tcolor-stop(0.00, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.50, rgba(0,0,0,0)),\n\t\t\t\t\t\t\tcolor-stop(0.60, rgba(0,0,0,0.8)),\n\t\t\t\t\t\t\tcolor-stop(1.00, rgba(0,0,0,1))); }\n\n.useless-log-overlay-body {\n\n\tfont-family: Menlo, monospace;\n\tfont-size: 11px;\n\twhite-space: pre;\n\tbackground: rgba(255,255,255,1);\n\ttext-shadow: 1px 1px 0px rgba(0,0,0,0.07); position: absolute; bottom: 0; left: 0; right: 0; }\n\n.ulo-line \t\t{ white-space: pre; word-wrap: normal; }\n.ulo-line-where { color: black; opacity: 0.25; }", ""]);
+
+// exports
+
+
+/***/ },
+
+/***/ 365:
+/* all exports used */
+/*!**********************************************!*\
+  !*** ./~/css-loader?-url!./client/Panic.css ***!
+  \**********************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 126)();
+// imports
+
+
+// module
+exports.push([module.i, "@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-transform: scale(0); }\n  80%  { -webkit-transform: scale(1.2); }\n  100% { -webkit-transform: scale(1); } }\n\n@keyframes bombo-jumbo {\n  0%   { transform: scale(0); }\n  80%  { transform: scale(1.2); }\n  100% { transform: scale(1); } }\n\n@-webkit-keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n@keyframes pulse-opacity {\n  0% { opacity: 0.5; }\n  50% { opacity: 0.25; }\n  100% { opacity: 0.5; } }\n\n.i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }\n\n.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }\n.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }\n.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }\n\n.panic-modal-appear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); }\n\n.panic-modal-disappear {\n  -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); -webkit-animation-direction: reverse;\n  animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1); animation-direction: reverse; }\n\n.panic-modal-overlay {\n          display: -ms-flexbox; display: -moz-flex; display: -webkit-flex; display: flex;\n          -ms-flex-direction: column; -moz-flex-direction: column; -webkit-flex-direction: column; flex-direction: column;\n          -ms-align-items: center; -moz-align-items: center; -webkit-align-items: center; align-items: center;\n          -ms-flex-pack: center; -ms-align-content: center; -moz-align-content: center; -webkit-align-content: center; align-content: center;\n          -ms-justify-content: center; -moz-justify-content: center; -webkit-justify-content: center; justify-content: center;\n          position: fixed; left: 0; right: 0; top: 0; bottom: 0; }\n\n.panic-modal-overlay-background { z-index: 1; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: white; opacity: 0.75; }\n\n.panic-modal * { letter-spacing: 0; font-family: Helvetica, sans-serif; }\n.panic-modal { font-family: Helvetica, sans-serif; min-width: 640px; max-width: 90%; transition: 0.25s width ease-in-out; box-sizing: border-box; display: -webkit-flex; display: flex; position: relative; border-radius: 4px; z-index: 2; width: 640px; background: white; padding: 36px 42px 128px 42px; box-shadow: 0px 30px 80px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15); }\n.panic-alert-counter { float: left; background: #904C34; border-radius: 8px; width: 17px; height: 17px; display: inline-block; text-align: center; line-height: 16px; margin-right: 1em; margin-left: -2px; font-size: 10px; color: white; font-weight: bold; }\n.panic-alert-counter:empty { display: none; }\n\n.panic-modal-title { font-family: Helvetica, sans-serif; color: black; font-weight: 300; font-size: 30px; opacity: 0.5; margin-bottom: 1em; }\n.panic-modal-body { overflow-y: auto; width: 100%; }\n.panic-modal-footer { text-align: right; position: absolute; left: 0; right: 0; bottom: 0; padding: 42px; }\n\n.panic-btn { margin-left: 1em; font-weight: 300; font-family: Helvetica, sans-serif; -webkit-user-select: none; user-select: none; cursor: pointer; display: inline-block; padding: 1em 1.5em; border-radius: 4px; font-size: 14px; border: 1px solid black; color: white; }\n.panic-btn:focus { outline: none; }\n.panic-btn:focus { box-shadow: inset 0px 2px 10px rgba(0,0,0,0.25); }\n\n.panic-btn-danger       { background-color: #d9534f; border-color: #d43f3a; }\n.panic-btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }\n\n.panic-btn-warning       { background-color: #f0ad4e; border-color: #eea236; }\n.panic-btn-warning:hover { background-color: #ec971f; border-color: #d58512; }\n\n.panic-alert-error { border-radius: 4px; background: #FFE8E2; color: #904C34; padding: 1em 1.2em 1.2em 1.2em; margin-bottom: 1em; font-size: 14px; }\n\n.panic-alert-error { position: relative; text-shadow: 0px 1px 0px rgba(255,255,255,0.25); }\n\n.panic-alert-error .clean-toggle { height: 2em; text-decoration: none; font-weight: 300; position: absolute; color: black; opacity: 0.25; right: 0; top: 0; display: block; text-align: right; }\n.panic-alert-error .clean-toggle:hover { text-decoration: underline; }\n.panic-alert-error .clean-toggle:before,\n.panic-alert-error .clean-toggle:after { position: absolute; right: 0; transition: all 0.25s ease-in-out; display: inline-block; overflow: hidden; }\n.panic-alert-error .clean-toggle:before { -webkit-transform-origin: center left; transform-origin: center left; content: 'more'; }\n.panic-alert-error .clean-toggle:after { -webkit-transform-origin: center left; transform-origin: center right; content: 'less'; }\n.panic-alert-error.all-stack-entries .clean-toggle:before { -webkit-transform: scale(0); transform: scale(0); }\n.panic-alert-error:not(.all-stack-entries) .clean-toggle:after { -webkit-transform: scale(0); transform: scale(0); }\n\n.panic-alert-error:last-child { margin-bottom: 0; }\n\n.panic-alert-error-message { line-height: 1.2em; position: relative; }\n\n.panic-alert-error .callstack { font-size: 12px; margin: 2em 0 0.1em 0; padding: 0; }\n.panic-alert-error .callstack * { font-family: Menlo, monospace; }\n\n.panic-alert-error .callstack-entry { white-space: nowrap; opacity: 1; transition: all 0.25s ease-in-out; margin-top: 10px; list-style-type: none; max-height: 38px; overflow: hidden; }\n.panic-alert-error .callstack-entry .file { }\n.panic-alert-error .callstack-entry .file:not(:empty) + .callee:not(:empty):before { content: ' \\2192   '; }\n\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.third-party:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.hide:not(:first-child),\n.panic-alert-error:not(.all-stack-entries) > .callstack > .callstack-entry.native:not(:first-child) { max-height: 0; margin-top: 0; opacity: 0; }\n\n.panic-alert-error .callstack-entry,\n.panic-alert-error .callstack-entry * { line-height: initial; }\n.panic-alert-error .callstack-entry .src { overflow: hidden; transition: height 0.25s ease-in-out; height: 22px; border-radius: 2px; cursor: pointer; margin-top: 2px; white-space: pre; display: block; color: black; background: rgba(255,255,255,0.75); padding: 4px; }\n.panic-alert-error .callstack-entry.full .src { font-size: 12px; height: 200px; overflow: scroll; }\n.panic-alert-error .callstack-entry.full .src .line.hili { background: yellow; }\n.panic-alert-error .callstack-entry.full { max-height: 220px; }\n\n.panic-alert-error .callstack-entry .src.i-am-busy { background: white; }\n\n.panic-alert-error .callstack-entry        .src:empty                  { pointer-events: none; }\n.panic-alert-error .callstack-entry        .src:empty:before           { content: '<< SOURCE NOT LOADED >>'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry.native .src:empty:before           { content: '<< NATIVE CODE >>'; color: rgba(0,0,0,0.25); }\n.panic-alert-error .callstack-entry        .src.i-am-busy:empty:before { content: '<< SOURCE LOADING >>'; color: rgba(0,0,0,0.5); }\n\n.panic-alert-error .test-log .location { transition: opacity 0.25s ease-in-out; color: black; opacity: 0.25; display: inline-block; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }\n.panic-alert-error .test-log .location:hover { opacity: 1; }\n\n.panic-alert-error .test-log .location:before { content: ' @ '; }\n\n.panic-alert-error .test-log .location .callee:after  { content: ', '; }\n.panic-alert-error .test-log .location .file          { opacity: 0.5; }\n.panic-alert-error .test-log .location .line:before   { content: ':'; }\n.panic-alert-error .test-log .location .line          { opacity: 0.25; }\n\n/*  Hack to prevent inline-blocked divs from wrapping within white-space: pre;\n */\n.panic-alert-error .test-log .inline-exception-entry:after { content: ' '; }\n.panic-alert-error .test-log .log-entry        .line:after { content: ' '; }\n.panic-alert-error           .callstack-entry  .line:after { content: ' '; }\n\n.panic-alert-error pre { overflow: scroll; border-radius: 2px; color: black; background: rgba(255,255,255,0.75); padding: 4px; margin: 0; }\n.panic-alert-error pre,\n.panic-alert-error pre * { font-family: Menlo, monospace; font-size: 11px; white-space: pre !important; }\n\n.panic-alert-error.inline-exception { max-width: 640px; border-radius: 0; margin: 0; background: none; display: inline-block; transform-origin: 0 0; transform: scale(0.95); }\n.panic-alert-error.inline-exception .panic-alert-error-message { cursor: pointer; }\n.panic-alert-error.inline-exception:not(:first-child) { margin-top: 10px; border-top: 1px solid #904C34; }\n\n", ""]);
+
+// exports
 
 
 /***/ },
@@ -7105,7 +6424,7 @@ exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 366).SourceNod
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !./../~/css-loader?-url!./LogOverlay.css */ 356);
+var content = __webpack_require__(/*! !./../~/css-loader?-url!./LogOverlay.css */ 364);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
 var update = __webpack_require__(/*! ./../~/style-loader/addStyles.js */ 127)(content, {});
@@ -7136,7 +6455,7 @@ if(false) {
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !./../~/css-loader?-url!./Panic.css */ 357);
+var content = __webpack_require__(/*! !./../~/css-loader?-url!./Panic.css */ 365);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
 var update = __webpack_require__(/*! ./../~/style-loader/addStyles.js */ 127)(content, {});
@@ -7157,7 +6476,7 @@ if(false) {
 
 /***/ },
 
-/***/ 372:
+/***/ 371:
 /* all exports used */
 /*!*********************!*\
   !*** external "fs" ***!
@@ -7176,7 +6495,7 @@ module.exports = fs;
   \******************************/
 /***/ function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /Users/igorkroitor/useless/useless.devtools.js */129);
+module.exports = __webpack_require__(/*! /Users/mac/useless/useless.devtools.js */129);
 
 
 /***/ },
@@ -7213,9 +6532,9 @@ module.exports = g;
 
 /***/ 42:
 /* all exports used */
-/*!******************************************************!*\
-  !*** ./~/es7-object-polyfill/es7-object-polyfill.js ***!
-  \******************************************************/
+/*!*****************************************************!*\
+  !*** ../es7-object-polyfill/es7-object-polyfill.js ***!
+  \*****************************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7224,7 +6543,7 @@ module.exports = g;
 module.exports = function () {
 	"use strict";
 
-	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 93);
+	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 65);
 	var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
 	var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
 	var concat = Function.bind.call(Function.call, Array.prototype.concat);
@@ -7252,226 +6571,9 @@ module.exports = function () {
 
 /***/ 48:
 /* all exports used */
-/*!******************************************!*\
-  !*** ./~/string.bullet/string.bullet.js ***!
-  \******************************************/
-/***/ function(module, exports) {
-
-"use strict";
-'use strict';
-
-module.exports = function (bullet, arg) {
-
-    var isArray = Array.isArray(arg);
-
-    var lines = isArray ? arg : arg.split('\n');
-
-    var indent = bullet.replace(/[^\s]/g, ' '); // replace non-whitespace with whitespace
-    lines = lines.map(function (line, i) {
-        return i === 0 ? bullet + line : indent + line;
-    });
-
-    return isArray ? lines : lines.join('\n');
-};
-
-/***/ },
-
-/***/ 52:
-/* all exports used */
-/*!******************************!*\
-  !*** ./~/process/browser.js ***!
-  \******************************/
-/***/ function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-
-/***/ },
-
-/***/ 53:
-/* all exports used */
-/*!**********************************!*\
-  !*** ./~/source-map/lib/util.js ***!
-  \**********************************/
+/*!**********************************************!*\
+  !*** ../get-source/~/source-map/lib/util.js ***!
+  \**********************************************/
 /***/ function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -7895,11 +6997,250 @@ exports.compareByGeneratedPositionsInflated = compareByGeneratedPositionsInflate
 
 /***/ },
 
+/***/ 49:
+/* all exports used */
+/*!*****************************************!*\
+  !*** ../string.bullet/string.bullet.js ***!
+  \*****************************************/
+/***/ function(module, exports) {
+
+"use strict";
+'use strict';
+
+module.exports = function (bullet, arg) {
+
+    var isArray = Array.isArray(arg);
+
+    var lines = isArray ? arg : arg.split('\n');
+
+    var indent = bullet.replace(/[^\s]/g, ' '); // replace non-whitespace with whitespace
+    lines = lines.map(function (line, i) {
+        return i === 0 ? bullet + line : indent + line;
+    });
+
+    return isArray ? lines : lines.join('\n');
+};
+
+/***/ },
+
+/***/ 53:
+/* all exports used */
+/*!******************************!*\
+  !*** ./~/process/browser.js ***!
+  \******************************/
+/***/ function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ },
+
 /***/ 65:
 /* all exports used */
-/*!********************************!*\
-  !*** ./~/as-table/as-table.js ***!
-  \********************************/
+/*!*********************************************************!*\
+  !*** ../es7-object-polyfill/~/reflect.ownkeys/index.js ***!
+  \*********************************************************/
+/***/ function(module, exports) {
+
+if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
+  module.exports = Reflect.ownKeys;
+} else if (typeof Object.getOwnPropertySymbols === 'function') {
+  module.exports = function Reflect_ownKeys(o) {
+    return (
+      Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o))
+    );
+  }
+} else {
+  module.exports = Object.getOwnPropertyNames;
+}
+
+
+/***/ },
+
+/***/ 66:
+/* all exports used */
+/*!*******************************!*\
+  !*** ../as-table/as-table.js ***!
+  \*******************************/
 /***/ function(module, exports) {
 
 "use strict";
@@ -8027,7 +7368,7 @@ module.exports = asTable({ maxTotalWidth: 120 });
 
 /***/ },
 
-/***/ 92:
+/***/ 93:
 /* all exports used */
 /*!*********************************!*\
   !*** ./~/jquery/dist/jquery.js ***!
@@ -18258,33 +17599,692 @@ return jQuery;
 
 /***/ },
 
-/***/ 93:
+/***/ 94:
 /* all exports used */
-/*!************************************!*\
-  !*** ./~/reflect.ownkeys/index.js ***!
-  \************************************/
-/***/ function(module, exports) {
+/*!***************************************************!*\
+  !*** ../get-source/~/source-map/lib/array-set.js ***!
+  \***************************************************/
+/***/ function(module, exports, __webpack_require__) {
 
-if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
-  module.exports = Reflect.ownKeys;
-} else if (typeof Object.getOwnPropertySymbols === 'function') {
-  module.exports = function Reflect_ownKeys(o) {
-    return (
-      Object.getOwnPropertyNames(o).concat(Object.getOwnPropertySymbols(o))
-    );
-  }
-} else {
-  module.exports = Object.getOwnPropertyNames;
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+
+var util = __webpack_require__(/*! ./util */ 48);
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * A data structure which is a combination of an array and a set. Adding a new
+ * member is O(1), testing for membership is O(1), and finding the index of an
+ * element is O(1). Removing elements from the set is not supported. Only
+ * strings are supported for membership.
+ */
+function ArraySet() {
+  this._array = [];
+  this._set = Object.create(null);
 }
+
+/**
+ * Static method for creating ArraySet instances from an existing array.
+ */
+ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
+  var set = new ArraySet();
+  for (var i = 0, len = aArray.length; i < len; i++) {
+    set.add(aArray[i], aAllowDuplicates);
+  }
+  return set;
+};
+
+/**
+ * Return how many unique items are in this ArraySet. If duplicates have been
+ * added, than those do not count towards the size.
+ *
+ * @returns Number
+ */
+ArraySet.prototype.size = function ArraySet_size() {
+  return Object.getOwnPropertyNames(this._set).length;
+};
+
+/**
+ * Add the given string to this set.
+ *
+ * @param String aStr
+ */
+ArraySet.prototype.add = function ArraySet_add(aStr, aAllowDuplicates) {
+  var sStr = util.toSetString(aStr);
+  var isDuplicate = has.call(this._set, sStr);
+  var idx = this._array.length;
+  if (!isDuplicate || aAllowDuplicates) {
+    this._array.push(aStr);
+  }
+  if (!isDuplicate) {
+    this._set[sStr] = idx;
+  }
+};
+
+/**
+ * Is the given string a member of this set?
+ *
+ * @param String aStr
+ */
+ArraySet.prototype.has = function ArraySet_has(aStr) {
+  var sStr = util.toSetString(aStr);
+  return has.call(this._set, sStr);
+};
+
+/**
+ * What is the index of the given string in the array?
+ *
+ * @param String aStr
+ */
+ArraySet.prototype.indexOf = function ArraySet_indexOf(aStr) {
+  var sStr = util.toSetString(aStr);
+  if (has.call(this._set, sStr)) {
+    return this._set[sStr];
+  }
+  throw new Error('"' + aStr + '" is not in the set.');
+};
+
+/**
+ * What is the element at the given index?
+ *
+ * @param Number aIdx
+ */
+ArraySet.prototype.at = function ArraySet_at(aIdx) {
+  if (aIdx >= 0 && aIdx < this._array.length) {
+    return this._array[aIdx];
+  }
+  throw new Error('No element indexed by ' + aIdx);
+};
+
+/**
+ * Returns the array representation of this set (which has the proper indices
+ * indicated by indexOf). Note that this is a copy of the internal array used
+ * for storing the members so that no one can mess with internal state.
+ */
+ArraySet.prototype.toArray = function ArraySet_toArray() {
+  return this._array.slice();
+};
+
+exports.ArraySet = ArraySet;
 
 
 /***/ },
 
-/***/ 94:
+/***/ 95:
 /* all exports used */
-/*!************************************!*\
-  !*** ./~/get-source/get-source.js ***!
-  \************************************/
+/*!****************************************************!*\
+  !*** ../get-source/~/source-map/lib/base64-vlq.js ***!
+  \****************************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ *
+ * Based on the Base 64 VLQ implementation in Closure Compiler:
+ * https://code.google.com/p/closure-compiler/source/browse/trunk/src/com/google/debugging/sourcemap/Base64VLQ.java
+ *
+ * Copyright 2011 The Closure Compiler Authors. All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above
+ *    copyright notice, this list of conditions and the following
+ *    disclaimer in the documentation and/or other materials provided
+ *    with the distribution.
+ *  * Neither the name of Google Inc. nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+var base64 = __webpack_require__(/*! ./base64 */ 131);
+
+// A single base 64 digit can contain 6 bits of data. For the base 64 variable
+// length quantities we use in the source map spec, the first bit is the sign,
+// the next four bits are the actual value, and the 6th bit is the
+// continuation bit. The continuation bit tells us whether there are more
+// digits in this value following this digit.
+//
+//   Continuation
+//   |    Sign
+//   |    |
+//   V    V
+//   101011
+
+var VLQ_BASE_SHIFT = 5;
+
+// binary: 100000
+var VLQ_BASE = 1 << VLQ_BASE_SHIFT;
+
+// binary: 011111
+var VLQ_BASE_MASK = VLQ_BASE - 1;
+
+// binary: 100000
+var VLQ_CONTINUATION_BIT = VLQ_BASE;
+
+/**
+ * Converts from a two-complement value to a value where the sign bit is
+ * placed in the least significant bit.  For example, as decimals:
+ *   1 becomes 2 (10 binary), -1 becomes 3 (11 binary)
+ *   2 becomes 4 (100 binary), -2 becomes 5 (101 binary)
+ */
+function toVLQSigned(aValue) {
+  return aValue < 0
+    ? ((-aValue) << 1) + 1
+    : (aValue << 1) + 0;
+}
+
+/**
+ * Converts to a two-complement value from a value where the sign bit is
+ * placed in the least significant bit.  For example, as decimals:
+ *   2 (10 binary) becomes 1, 3 (11 binary) becomes -1
+ *   4 (100 binary) becomes 2, 5 (101 binary) becomes -2
+ */
+function fromVLQSigned(aValue) {
+  var isNegative = (aValue & 1) === 1;
+  var shifted = aValue >> 1;
+  return isNegative
+    ? -shifted
+    : shifted;
+}
+
+/**
+ * Returns the base 64 VLQ encoded value.
+ */
+exports.encode = function base64VLQ_encode(aValue) {
+  var encoded = "";
+  var digit;
+
+  var vlq = toVLQSigned(aValue);
+
+  do {
+    digit = vlq & VLQ_BASE_MASK;
+    vlq >>>= VLQ_BASE_SHIFT;
+    if (vlq > 0) {
+      // There are still more digits in this value, so we must make sure the
+      // continuation bit is marked.
+      digit |= VLQ_CONTINUATION_BIT;
+    }
+    encoded += base64.encode(digit);
+  } while (vlq > 0);
+
+  return encoded;
+};
+
+/**
+ * Decodes the next base 64 VLQ value from the given string and returns the
+ * value and the rest of the string via the out parameter.
+ */
+exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
+  var strLen = aStr.length;
+  var result = 0;
+  var shift = 0;
+  var continuation, digit;
+
+  do {
+    if (aIndex >= strLen) {
+      throw new Error("Expected more digits in base 64 VLQ value.");
+    }
+
+    digit = base64.decode(aStr.charCodeAt(aIndex++));
+    if (digit === -1) {
+      throw new Error("Invalid base64 digit: " + aStr.charAt(aIndex - 1));
+    }
+
+    continuation = !!(digit & VLQ_CONTINUATION_BIT);
+    digit &= VLQ_BASE_MASK;
+    result = result + (digit << shift);
+    shift += VLQ_BASE_SHIFT;
+  } while (continuation);
+
+  aOutParam.value = fromVLQSigned(result);
+  aOutParam.rest = aIndex;
+};
+
+
+/***/ },
+
+/***/ 96:
+/* all exports used */
+/*!**************************************************************!*\
+  !*** ../get-source/~/source-map/lib/source-map-generator.js ***!
+  \**************************************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+/* -*- Mode: js; js-indent-level: 2; -*- */
+/*
+ * Copyright 2011 Mozilla Foundation and contributors
+ * Licensed under the New BSD license. See LICENSE or:
+ * http://opensource.org/licenses/BSD-3-Clause
+ */
+
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 95);
+var util = __webpack_require__(/*! ./util */ 48);
+var ArraySet = __webpack_require__(/*! ./array-set */ 94).ArraySet;
+var MappingList = __webpack_require__(/*! ./mapping-list */ 133).MappingList;
+
+/**
+ * An instance of the SourceMapGenerator represents a source map which is
+ * being built incrementally. You may pass an object with the following
+ * properties:
+ *
+ *   - file: The filename of the generated source.
+ *   - sourceRoot: A root for all relative URLs in this source map.
+ */
+function SourceMapGenerator(aArgs) {
+  if (!aArgs) {
+    aArgs = {};
+  }
+  this._file = util.getArg(aArgs, 'file', null);
+  this._sourceRoot = util.getArg(aArgs, 'sourceRoot', null);
+  this._skipValidation = util.getArg(aArgs, 'skipValidation', false);
+  this._sources = new ArraySet();
+  this._names = new ArraySet();
+  this._mappings = new MappingList();
+  this._sourcesContents = null;
+}
+
+SourceMapGenerator.prototype._version = 3;
+
+/**
+ * Creates a new SourceMapGenerator based on a SourceMapConsumer
+ *
+ * @param aSourceMapConsumer The SourceMap.
+ */
+SourceMapGenerator.fromSourceMap =
+  function SourceMapGenerator_fromSourceMap(aSourceMapConsumer) {
+    var sourceRoot = aSourceMapConsumer.sourceRoot;
+    var generator = new SourceMapGenerator({
+      file: aSourceMapConsumer.file,
+      sourceRoot: sourceRoot
+    });
+    aSourceMapConsumer.eachMapping(function (mapping) {
+      var newMapping = {
+        generated: {
+          line: mapping.generatedLine,
+          column: mapping.generatedColumn
+        }
+      };
+
+      if (mapping.source != null) {
+        newMapping.source = mapping.source;
+        if (sourceRoot != null) {
+          newMapping.source = util.relative(sourceRoot, newMapping.source);
+        }
+
+        newMapping.original = {
+          line: mapping.originalLine,
+          column: mapping.originalColumn
+        };
+
+        if (mapping.name != null) {
+          newMapping.name = mapping.name;
+        }
+      }
+
+      generator.addMapping(newMapping);
+    });
+    aSourceMapConsumer.sources.forEach(function (sourceFile) {
+      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+      if (content != null) {
+        generator.setSourceContent(sourceFile, content);
+      }
+    });
+    return generator;
+  };
+
+/**
+ * Add a single mapping from original source line and column to the generated
+ * source's line and column for this source map being created. The mapping
+ * object should have the following properties:
+ *
+ *   - generated: An object with the generated line and column positions.
+ *   - original: An object with the original line and column positions.
+ *   - source: The original source file (relative to the sourceRoot).
+ *   - name: An optional original token name for this mapping.
+ */
+SourceMapGenerator.prototype.addMapping =
+  function SourceMapGenerator_addMapping(aArgs) {
+    var generated = util.getArg(aArgs, 'generated');
+    var original = util.getArg(aArgs, 'original', null);
+    var source = util.getArg(aArgs, 'source', null);
+    var name = util.getArg(aArgs, 'name', null);
+
+    if (!this._skipValidation) {
+      this._validateMapping(generated, original, source, name);
+    }
+
+    if (source != null) {
+      source = String(source);
+      if (!this._sources.has(source)) {
+        this._sources.add(source);
+      }
+    }
+
+    if (name != null) {
+      name = String(name);
+      if (!this._names.has(name)) {
+        this._names.add(name);
+      }
+    }
+
+    this._mappings.add({
+      generatedLine: generated.line,
+      generatedColumn: generated.column,
+      originalLine: original != null && original.line,
+      originalColumn: original != null && original.column,
+      source: source,
+      name: name
+    });
+  };
+
+/**
+ * Set the source content for a source file.
+ */
+SourceMapGenerator.prototype.setSourceContent =
+  function SourceMapGenerator_setSourceContent(aSourceFile, aSourceContent) {
+    var source = aSourceFile;
+    if (this._sourceRoot != null) {
+      source = util.relative(this._sourceRoot, source);
+    }
+
+    if (aSourceContent != null) {
+      // Add the source content to the _sourcesContents map.
+      // Create a new _sourcesContents map if the property is null.
+      if (!this._sourcesContents) {
+        this._sourcesContents = Object.create(null);
+      }
+      this._sourcesContents[util.toSetString(source)] = aSourceContent;
+    } else if (this._sourcesContents) {
+      // Remove the source file from the _sourcesContents map.
+      // If the _sourcesContents map is empty, set the property to null.
+      delete this._sourcesContents[util.toSetString(source)];
+      if (Object.keys(this._sourcesContents).length === 0) {
+        this._sourcesContents = null;
+      }
+    }
+  };
+
+/**
+ * Applies the mappings of a sub-source-map for a specific source file to the
+ * source map being generated. Each mapping to the supplied source file is
+ * rewritten using the supplied source map. Note: The resolution for the
+ * resulting mappings is the minimium of this map and the supplied map.
+ *
+ * @param aSourceMapConsumer The source map to be applied.
+ * @param aSourceFile Optional. The filename of the source file.
+ *        If omitted, SourceMapConsumer's file property will be used.
+ * @param aSourceMapPath Optional. The dirname of the path to the source map
+ *        to be applied. If relative, it is relative to the SourceMapConsumer.
+ *        This parameter is needed when the two source maps aren't in the same
+ *        directory, and the source map to be applied contains relative source
+ *        paths. If so, those relative source paths need to be rewritten
+ *        relative to the SourceMapGenerator.
+ */
+SourceMapGenerator.prototype.applySourceMap =
+  function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile, aSourceMapPath) {
+    var sourceFile = aSourceFile;
+    // If aSourceFile is omitted, we will use the file property of the SourceMap
+    if (aSourceFile == null) {
+      if (aSourceMapConsumer.file == null) {
+        throw new Error(
+          'SourceMapGenerator.prototype.applySourceMap requires either an explicit source file, ' +
+          'or the source map\'s "file" property. Both were omitted.'
+        );
+      }
+      sourceFile = aSourceMapConsumer.file;
+    }
+    var sourceRoot = this._sourceRoot;
+    // Make "sourceFile" relative if an absolute Url is passed.
+    if (sourceRoot != null) {
+      sourceFile = util.relative(sourceRoot, sourceFile);
+    }
+    // Applying the SourceMap can add and remove items from the sources and
+    // the names array.
+    var newSources = new ArraySet();
+    var newNames = new ArraySet();
+
+    // Find mappings for the "sourceFile"
+    this._mappings.unsortedForEach(function (mapping) {
+      if (mapping.source === sourceFile && mapping.originalLine != null) {
+        // Check if it can be mapped by the source map, then update the mapping.
+        var original = aSourceMapConsumer.originalPositionFor({
+          line: mapping.originalLine,
+          column: mapping.originalColumn
+        });
+        if (original.source != null) {
+          // Copy mapping
+          mapping.source = original.source;
+          if (aSourceMapPath != null) {
+            mapping.source = util.join(aSourceMapPath, mapping.source)
+          }
+          if (sourceRoot != null) {
+            mapping.source = util.relative(sourceRoot, mapping.source);
+          }
+          mapping.originalLine = original.line;
+          mapping.originalColumn = original.column;
+          if (original.name != null) {
+            mapping.name = original.name;
+          }
+        }
+      }
+
+      var source = mapping.source;
+      if (source != null && !newSources.has(source)) {
+        newSources.add(source);
+      }
+
+      var name = mapping.name;
+      if (name != null && !newNames.has(name)) {
+        newNames.add(name);
+      }
+
+    }, this);
+    this._sources = newSources;
+    this._names = newNames;
+
+    // Copy sourcesContents of applied map.
+    aSourceMapConsumer.sources.forEach(function (sourceFile) {
+      var content = aSourceMapConsumer.sourceContentFor(sourceFile);
+      if (content != null) {
+        if (aSourceMapPath != null) {
+          sourceFile = util.join(aSourceMapPath, sourceFile);
+        }
+        if (sourceRoot != null) {
+          sourceFile = util.relative(sourceRoot, sourceFile);
+        }
+        this.setSourceContent(sourceFile, content);
+      }
+    }, this);
+  };
+
+/**
+ * A mapping can have one of the three levels of data:
+ *
+ *   1. Just the generated position.
+ *   2. The Generated position, original position, and original source.
+ *   3. Generated and original position, original source, as well as a name
+ *      token.
+ *
+ * To maintain consistency, we validate that any new mapping being added falls
+ * in to one of these categories.
+ */
+SourceMapGenerator.prototype._validateMapping =
+  function SourceMapGenerator_validateMapping(aGenerated, aOriginal, aSource,
+                                              aName) {
+    if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+        && aGenerated.line > 0 && aGenerated.column >= 0
+        && !aOriginal && !aSource && !aName) {
+      // Case 1.
+      return;
+    }
+    else if (aGenerated && 'line' in aGenerated && 'column' in aGenerated
+             && aOriginal && 'line' in aOriginal && 'column' in aOriginal
+             && aGenerated.line > 0 && aGenerated.column >= 0
+             && aOriginal.line > 0 && aOriginal.column >= 0
+             && aSource) {
+      // Cases 2 and 3.
+      return;
+    }
+    else {
+      throw new Error('Invalid mapping: ' + JSON.stringify({
+        generated: aGenerated,
+        source: aSource,
+        original: aOriginal,
+        name: aName
+      }));
+    }
+  };
+
+/**
+ * Serialize the accumulated mappings in to the stream of base 64 VLQs
+ * specified by the source map format.
+ */
+SourceMapGenerator.prototype._serializeMappings =
+  function SourceMapGenerator_serializeMappings() {
+    var previousGeneratedColumn = 0;
+    var previousGeneratedLine = 1;
+    var previousOriginalColumn = 0;
+    var previousOriginalLine = 0;
+    var previousName = 0;
+    var previousSource = 0;
+    var result = '';
+    var next;
+    var mapping;
+    var nameIdx;
+    var sourceIdx;
+
+    var mappings = this._mappings.toArray();
+    for (var i = 0, len = mappings.length; i < len; i++) {
+      mapping = mappings[i];
+      next = ''
+
+      if (mapping.generatedLine !== previousGeneratedLine) {
+        previousGeneratedColumn = 0;
+        while (mapping.generatedLine !== previousGeneratedLine) {
+          next += ';';
+          previousGeneratedLine++;
+        }
+      }
+      else {
+        if (i > 0) {
+          if (!util.compareByGeneratedPositionsInflated(mapping, mappings[i - 1])) {
+            continue;
+          }
+          next += ',';
+        }
+      }
+
+      next += base64VLQ.encode(mapping.generatedColumn
+                                 - previousGeneratedColumn);
+      previousGeneratedColumn = mapping.generatedColumn;
+
+      if (mapping.source != null) {
+        sourceIdx = this._sources.indexOf(mapping.source);
+        next += base64VLQ.encode(sourceIdx - previousSource);
+        previousSource = sourceIdx;
+
+        // lines are stored 0-based in SourceMap spec version 3
+        next += base64VLQ.encode(mapping.originalLine - 1
+                                   - previousOriginalLine);
+        previousOriginalLine = mapping.originalLine - 1;
+
+        next += base64VLQ.encode(mapping.originalColumn
+                                   - previousOriginalColumn);
+        previousOriginalColumn = mapping.originalColumn;
+
+        if (mapping.name != null) {
+          nameIdx = this._names.indexOf(mapping.name);
+          next += base64VLQ.encode(nameIdx - previousName);
+          previousName = nameIdx;
+        }
+      }
+
+      result += next;
+    }
+
+    return result;
+  };
+
+SourceMapGenerator.prototype._generateSourcesContent =
+  function SourceMapGenerator_generateSourcesContent(aSources, aSourceRoot) {
+    return aSources.map(function (source) {
+      if (!this._sourcesContents) {
+        return null;
+      }
+      if (aSourceRoot != null) {
+        source = util.relative(aSourceRoot, source);
+      }
+      var key = util.toSetString(source);
+      return Object.prototype.hasOwnProperty.call(this._sourcesContents, key)
+        ? this._sourcesContents[key]
+        : null;
+    }, this);
+  };
+
+/**
+ * Externalize the source map.
+ */
+SourceMapGenerator.prototype.toJSON =
+  function SourceMapGenerator_toJSON() {
+    var map = {
+      version: this._version,
+      sources: this._sources.toArray(),
+      names: this._names.toArray(),
+      mappings: this._serializeMappings()
+    };
+    if (this._file != null) {
+      map.file = this._file;
+    }
+    if (this._sourceRoot != null) {
+      map.sourceRoot = this._sourceRoot;
+    }
+    if (this._sourcesContents) {
+      map.sourcesContent = this._generateSourcesContent(map.sources, map.sourceRoot);
+    }
+
+    return map;
+  };
+
+/**
+ * Render the source map being generated to a string.
+ */
+SourceMapGenerator.prototype.toString =
+  function SourceMapGenerator_toString() {
+    return JSON.stringify(this.toJSON());
+  };
+
+exports.SourceMapGenerator = SourceMapGenerator;
+
+
+/***/ },
+
+/***/ 97:
+/* all exports used */
+/*!***********************************!*\
+  !*** ../get-source/get-source.js ***!
+  \***********************************/
 /***/ function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18294,9 +18294,9 @@ if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
 
 var O = Object,
     isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
-    SourceMapConsumer = __webpack_require__(/*! source-map */ 367).SourceMapConsumer,
-    path = __webpack_require__(/*! ./impl/path */ 170),
-    memoize = __webpack_require__(/*! lodash.memoize */ 359),
+    SourceMapConsumer = __webpack_require__(/*! source-map */ 137).SourceMapConsumer,
+    path = __webpack_require__(/*! ./impl/path */ 138),
+    memoize = __webpack_require__(/*! lodash.memoize */ 130),
     lastOf = function (x) {
     return x[x.length - 1];
 };
@@ -18359,7 +18359,7 @@ class SourceFile {
 
                     this.text = xhr.responseText;
                 } else {
-                    this.text = __webpack_require__(/*! fs */ 372).readFileSync(path, { encoding: 'utf8' });
+                    this.text = __webpack_require__(/*! fs */ 371).readFileSync(path, { encoding: 'utf8' });
                 }
             } catch (e) {
                 this.error = e;

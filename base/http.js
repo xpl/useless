@@ -7,8 +7,9 @@ const O = Object
 
 /*  ------------------------------------------------------------------------ */
 
-if (XMLHttpRequest == undefined && $platform.NodeJS)
-    var XMLHttpRequest = require ('xhr2')
+if (!$global.XMLHttpRequest) {
+     $global.XMLHttpRequest = require ('xhr2')
+}
 
 /*  ------------------------------------------------------------------------ */
 

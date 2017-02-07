@@ -40,7 +40,8 @@ module.exports = $trait ({
             compress: false,    // meaningless when hotReload = true
             externals: {
                 fs:   true,
-                path: true
+                path: true,
+                xhr2: true
             },
 
         } } },
@@ -173,7 +174,7 @@ module.exports = $trait ({
         const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}?${cssTimestamp}"></link>` : ''
         
         const scriptFile      = this.webpackScriptFile (name),
-              scriptName      = path.basename (scriptFile),
+              scriptName      = path.relative (this.config.webpack.buildPath, scriptFile),
               scriptTimestamp = this.webpackFileTimestamp (scriptFile),
               urlParams       = scriptTimestamp ? ('?' + scriptTimestamp) : ''
 
