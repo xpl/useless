@@ -7,6 +7,11 @@ const O = Object
 
 /*  ------------------------------------------------------------------------ */
 
+if (XMLHttpRequest == undefined && $platform.NodeJS)
+    var XMLHttpRequest = require ('xhr2')
+
+/*  ------------------------------------------------------------------------ */
+
 $global.Http = $singleton (Component, {
 
 /*  You can re-use the HttpMethods trait to build API-specific layers over Http */
@@ -41,63 +46,60 @@ $global.Http = $singleton (Component, {
 
                 const p = new Promise ((resolve, reject) => {
 
-                    if ($platform.Browser) {
+                    var prePath = ($platform.Browser && (cfg.protocol || cfg.hostname || cfg.port)) ?
+                                 ((cfg.protocol || window.location.protocol) + '//' +
+                                  (cfg.hostname || window.location.hostname) + ':' +
+                                  (cfg.port     || window.location.port)) : ''
 
-                        var prePath = (cfg.protocol || cfg.hostname || cfg.port) ?
-                                     ((cfg.protocol || window.location.protocol) + '//' +
-                                      (cfg.hostname || window.location.hostname) + ':' +
-                                      (cfg.port     || window.location.port)) : ''
+                    /*  Init XMLHttpRequest
+                     */
+                    var xhr = new XMLHttpRequest ()
+                        xhr.open (type, prePath + path, true)
 
-                        /*  Init XMLHttpRequest
-                         */
-                        var xhr = new XMLHttpRequest ()
-                            xhr.open (type, prePath + path, true)
+                    /*  Set to 'arraybuffer' to receive binary data
+                     */
+                    if (cfg.responseType)
+                        xhr.responseType = cfg.responseType
 
-                        /*  Set to 'arraybuffer' to receive binary data
-                         */
-                        if (cfg.responseType)
-                            xhr.responseType = cfg.responseType
+                    /*  Set headers
+                     */
+                    _.each (cfg.headers, (value, key) => {
+                        xhr.setRequestHeader (key, value) })
 
-                        /*  Set headers
-                         */
-                        _.each (cfg.headers, (value, key) => {
-                            xhr.setRequestHeader (key, value) })
+                    /*  Bind events
+                     */
+                    if (cfg.progress) {
+                        xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress)
+                    }
 
-                        /*  Bind events
-                         */
+                    xhr.onload =
+                    xhr.onerror = () => {
+
                         if (cfg.progress) {
-                            xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress)
-                        }
+                            cfg.progress (1) }
 
-                        xhr.onload =
-                        xhr.onerror = () => {
+                        const response = (xhr.responseType === 'arraybuffer')
+                                            ? xhr.response
+                                            : xhr.responseText
 
-                            if (cfg.progress) {
-                                cfg.progress (1) }
+                        if (xhr.status === 200) { resolve (response) }
+                                           else { reject  (_.extend (new Error (xhr.statusText), {
+                                                                            httpResponse: response,
+                                                                            httpStatus: xhr.status })) }
+                    }
 
-                            const response = (xhr.responseType === 'arraybuffer')
-                                                ? xhr.response
-                                                : xhr.responseText
+                    /*  Set up the abort method
+                     */
+                    abort = () => {
+                                xhr.abort ()
+                                reject ('aborted') }
 
-                            if (xhr.status === 200) { resolve (response) }
-                                               else { reject  (_.extend (new Error (xhr.statusText), {
-                                                                                httpResponse: response,
-                                                                                httpStatus: xhr.status })) }
-                        }
+                    /*  Send
+                     */
+                    if (cfg.data) { xhr.send (cfg.data) }
+                             else { xhr.send () }
 
-                        /*  Set up the abort method
-                         */
-                        abort = () => {
-                                    xhr.abort ()
-                                    reject ('aborted') }
-
-                        /*  Send
-                         */
-                        if (cfg.data) { xhr.send (cfg.data) }
-                                 else { xhr.send () } }
-
-                    else {
-                        reject ('not implemented') } })
+                 })
 
                 /*  Add abort method to the returned Promise
                  */
