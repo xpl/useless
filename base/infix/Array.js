@@ -71,6 +71,7 @@ _.withTest ('Array extensions', function () {
         flat:        _.flatten.tails2 (true),
         object:      _.fromPairs,
         shuffle:     _.shuffle,
+        unique:      _.unique,
         nonempty:    _.nonempty,
         pluck:       $method (_.pluck),
         without:     $method (_.without),
