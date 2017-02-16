@@ -12,6 +12,10 @@ var http      = require ('http'),
 
 /*  ------------------------------------------------------------------------ */
 
+StackTracey.isThirdParty.except (path => path.includes ('useless/server'))
+
+/*  ------------------------------------------------------------------------ */
+
 module.exports = $trait ({
 
     $depends: [require ('./api')],

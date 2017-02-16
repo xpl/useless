@@ -89,10 +89,8 @@
             log.margin ()
 
             for (var loc of new StackTracey (this.where)
-                                    .withSources
                                     .slice (3)
-                                    .withSources
-                                    .mergeRepeatedLines
+                                    .clean
                                     .filter ((e, i) => (!e.hide && !e.native && e.sourceLine))
                                     .reverse ()) {
                 

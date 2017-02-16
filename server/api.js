@@ -196,7 +196,7 @@ $global.APISchema = {
                             var chain =  (args.length > 1 ? [match.vars] :
                                           args.length > 0 ? args : []).concat (_.coerceToArray (handler))
 
-                            return { fn: function () { return __(__.seq (chain)) }, vars: vars } } }
+                            return { fn: function () { return __(__.seq (chain)) }, vars: vars } } } // @hide
 
                     else {
                         trace (route)
