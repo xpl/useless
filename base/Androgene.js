@@ -91,8 +91,9 @@
             for (var loc of new StackTracey (this.where)
                                     .withSources
                                     .slice (3)
-                                    .clean
-                                    .filter (x => !x.native)
+                                    .withSources
+                                    .mergeRepeatedLines
+                                    .filter ((e, i) => (!e.hide && !e.native && e.sourceLine))
                                     .reverse ()) {
                 
                 log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) }
