@@ -18,19 +18,28 @@
             for (var i = 0, n = chain.length; i < n; i++) {
                 try {
                     chain[i] (e)
-                    break }
+                    break
+                }
                 catch (newE) {
-                    console.log (newE)
                     if (i === n - 1) {
+                        console.log (newE)
                         newE.message += reThrownTag
-                        throw newE }
+                        throw newE;
+                        break;
+                    }
                     else {
                         if (newE && (typeof newE === 'object')) { newE.originalError = e }
-                        e = newE } } } }
+                        e = newE
+                    }
+                }
+            }
+        }
         else {
             e.message += reThrownTag
             console.log (e)
-            throw e } }
+            throw e
+        }
+    }
 
     _.withUncaughtExceptionHandler = function (handler, context_) { var context = context_ || _.identity
 
@@ -49,7 +58,8 @@
         case 'browser':
             window.addEventListener ('error', function (e) {
 
-                if (e.message.indexOf (reThrownTag) < 0) { // if not already processed by async hooks
+                if (!e.message.includes (reThrownTag) &&
+                    !((e.error === null) && (e.lineno === 0) && (e.colno === 0) && (e.filename === ''))) { // if not already processed by async hooks
 
                     if (e.error) {
                         globalUncaughtExceptionHandler (e.error) }

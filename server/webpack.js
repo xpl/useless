@@ -210,8 +210,13 @@ module.exports = $trait ({
 
     /*  Locate absolute paths to modules. We do this because webpack fails to locate them when Useless is symlinked    */
 
-        const webpackPath          = moduleLocator.modulePath ('webpack', __filename),
-              webpackDevServerPath = moduleLocator.modulePath ('webpack-dev-server', __filename)
+        const modulePath = name => moduleLocator.modulePath (name, __filename)
+
+        const webpackPath          = modulePath ('webpack'),
+              webpackDevServerPath = modulePath ('webpack-dev-server'),
+              styleLoaderPath      = modulePath ('style-loader'),
+              cssLoaderPath        = modulePath ('css-loader'),
+              babelLoaderPath      = modulePath ('babel-loader')
 
     /*  Full path here is for handling modules that are symlinked with `npm link`.
         Otherwise babel blames with `Error: Couldn't find preset "es2015" relative to
@@ -250,25 +255,33 @@ module.exports = $trait ({
                      ],
 
             module: {
-                loaders: [
+                
+                rules: [
 
                 /*  CSS processing      */
 
-                    { test: /\.css$/,
-                      loader: this.shouldExtractStyles
-                                ? ExtractTextPlugin.extract ({ loader: 'css-loader?-url' })
-                                : 'style-loader!css-loader?-url' // -url tells not to inline URLs (pics, fonts)
+                    {
+                        test: /\.css$/,
+                        use: this.shouldExtractStyles
+                                    ? ExtractTextPlugin.extract ({ use: { loader: cssLoaderPath, options: { url: false } } })
+                                    : [
+                                        { loader: styleLoaderPath },
+                                        { loader: cssLoaderPath, options: { url: false } }
+                                    ]
                     },
                 
                 /*  JS  processing  */
 
-                    { test: /\.js$/,
-                      include: moduleLocator.hasBabelrc,
-                      loaders: [/*'react-hot', 'babel?presets[]=es2015,presets[]=react'*/
-                                //...(config.compress ? ['strip-tests-loader'] : []),
-                                'babel?cacheDirectory' // cacheDirectory speeds up ×2
+                    {
+                        test: /\.js$/,
+                        include: moduleLocator.hasBabelrc,
+                        loaders: [
 
-                                ] },
+                            /*'react-hot', 'babel?presets[]=es2015,presets[]=react'*/
+                        
+                            { loader: babelLoaderPath, query: { cacheDirectory: true } },
+                        ]
+                    },
                 ]
             },
         })
