@@ -17098,7 +17098,17 @@ _.defineProperties(document, {
 /*  document.ready
     ======================================================================== */
 
-document.on('DOMContentLoaded', document.ready = _.barrier());
+document.ready = _.barrier();
+document.on('DOMContentLoaded', function () {
+
+    try {
+        document.ready();
+    } catch (e) {
+        _.delay(function () {
+            throw e;
+        });
+    } // rethrow after some delay, to let devtools load itself beforehand
+});
 
 /*  ------------------------------------------------------------------------ */
 

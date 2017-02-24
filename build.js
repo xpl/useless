@@ -26,8 +26,9 @@ const BuildApp = $singleton (Component, {
     $depends: [
         require ('./server/args'),
         require ('./server/tests'),
-        require ('./server/supervisor'),
-        require ('./server/webpack')],
+        //require ('./server/supervisor'),
+        require ('./server/webpack')
+    ],
 
     argsReady (args) {
 

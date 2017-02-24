@@ -9962,7 +9962,16 @@
                 return BBox.fromLTWH(0, 0, window.innerWidth || document.documentElement.clientWidth, window.innerHeight || document.documentElement.clientHeight);
             }
         });
-        document.on('DOMContentLoaded', document.ready = _.barrier());
+        document.ready = _.barrier();
+        document.on('DOMContentLoaded', function () {
+            try {
+                document.ready();
+            } catch (e) {
+                _.delay(function () {
+                    throw e;
+                });
+            }
+        });
         ;
     },
     ,

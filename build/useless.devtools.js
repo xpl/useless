@@ -4208,15 +4208,29 @@ class StackTracey extends Array {
 /*  Chaining helper for .isThirdParty
     ------------------------------------------------------------------------ */
 
-StackTracey.isThirdParty.except = function (pred) {
+(function () {
 
-    var impl = StackTracey.isThirdParty;
+    var methods = {
 
-    StackTracey.isThirdParty = function (path) {
-        return impl(path) && !pred(path);
+        include(pred) {
+
+            var f = StackTracey.isThirdParty;
+            O.assign(StackTracey.isThirdParty = function (path) {
+                return f(path) || pred(path);
+            }, methods);
+        },
+
+        except(pred) {
+
+            var f = StackTracey.isThirdParty;
+            O.assign(StackTracey.isThirdParty = function (path) {
+                return f(path) && !pred(path);
+            }, methods);
+        }
     };
-    StackTracey.isThirdParty.except = impl.except;
-}
+
+    O.assign(StackTracey.isThirdParty, methods);
+})()
 
 /*  Array methods
     ------------------------------------------------------------------------ */
@@ -6299,6 +6313,10 @@ Modal overlay that renders log.js output for debugging purposes
 	======================================================================== */
 
 (function ($ /* JQUERY */) {
+
+	StackTracey.isThirdParty.include(function (path) {
+		return path.indexOf('useless/') === 0;
+	});
 
 	$global.Panic = function (what, cfg) {
 		cfg = _.defaults(_.clone(cfg || {}), { dismiss: _.identity, raw: false });
