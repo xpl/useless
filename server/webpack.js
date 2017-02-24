@@ -28,23 +28,26 @@ module.exports = $trait ({
 
         argKeys: { 'webpack-build-and-quit': 1 }, // pass this arg to build everything and quit
 
-        config: { webpack: {
+        config: {
 
-            offline: false,     // supresses WebPack from building everything at server's startup
-            buildPath: './build',
-            entry: {},
-            devServer: false,
-            hotReload: false,   // for development use only! enables Webpack HotModuleReplacement
-            port: 3000,
-            separateCSS: false, // meaningless when hotReload = true
-            compress: false,    // meaningless when hotReload = true
-            externals: {
-                fs:   true,
-                path: true,
-                xhr2: true
-            },
+            webpack: {
 
-        } } },
+                offline: false,     // supresses WebPack from building everything at server's startup
+                buildPath: './build',
+                entry: {},
+                devServer: false,
+                hotReload: false,   // for development use only! enables Webpack HotModuleReplacement
+                port: 3000,
+                separateCSS: true,  // meaningless when hotReload = true
+                compress: false,    // meaningless when hotReload = true
+                externals: {
+                    fs:   true,
+                    path: true,
+                    xhr2: true
+                },
+            }
+        }
+    },
 
     api () {
         if (this.file) {
@@ -275,13 +278,10 @@ module.exports = $trait ({
                     {
                         test: /\.js$/,
                         include: moduleLocator.hasBabelrc,
-                        loaders: [
-
-                            /*'react-hot', 'babel?presets[]=es2015,presets[]=react'*/
-                        
-                            { loader: babelLoaderPath, query: { cacheDirectory: true } },
+                        loaders: [                            
+                            { loader: babelLoaderPath, query: { cacheDirectory: true } }
                         ]
-                    },
+                    }
                 ]
             },
         })

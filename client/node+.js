@@ -514,8 +514,12 @@ var is = function (tag) { return function () { return this.tagName === tag } }
 /*  document.ready
     ======================================================================== */
 
-    document.on ('DOMContentLoaded', document.ready = _.barrier ())
+    document.ready = _.barrier ()
+    document.on ('DOMContentLoaded', function () {
 
+        try { document.ready () }
+        catch (e) { _.delay (() => { throw e }) } // rethrow after some delay, to let devtools load itself beforehand
+    })
 
 /*  ------------------------------------------------------------------------ */
 
