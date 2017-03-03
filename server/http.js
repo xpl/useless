@@ -57,6 +57,8 @@ module.exports = $trait ({
             'css'        : 'text/css',
             'svg'        : 'image/svg+xml',
             'ico'        : 'image/x-icon',
+            'mp4'        : 'video/mp4',
+            'webm'       : 'video/webm',
             'appcache'   : 'text/cache-manifest',
 
             guess (x) {
@@ -166,24 +168,52 @@ module.exports = $trait ({
 
         file (file) {
 
-                return fs.stat (file)
-                         .then (stat => {   if (!stat.isFile ()) {
-                                                throw this.NotFoundError }
+            return fs.stat (file)
+                     .then (stat => { 
 
-                                            this.setHeaders ({
-                                                    'Content-Type': $http.mime.guessFromFileName (file) || this.mime.binary,
-                                                    'Content-Length': stat.size })
-                                                 .writeHead ()
+                        if (!stat.isFile ()) {
+                            throw this.NotFoundError
+                        }
 
-                                            return new Promise ((then, err) =>
-                                                                    fs.createReadStream (file, { 'bufferSize': 4 * 1024 })
-                                                                        .on ('error', err)
-                                                                        .on ('close', then.arity0)
-                                                                        .pipe (this.response)) })
+                        let [, start, end] = (this.request.headers.range || 'bytes=0-').match (/bytes=(\d+)-(\d+)?/)
 
-                    .catch (e => {
-                        log.ee ('file not found: ', log.color.bright, file, '\n')
-                        throw this.NotFoundError }) } }),
+                        const isPartial = (end !== undefined)
+
+                        start = Number (start)
+                        end   = isPartial ? Number (end) : (stat.size - 1)
+
+                        if (isPartial) {
+                            this.setCode (206)
+                            this.setHeaders ({
+                                'Accept-Ranges': 'bytes',
+                                'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+                                'Content-Type': 'multipart/byteranges',                                    
+                                'Content-Length': (end - start) + 1,
+                                'Connection': 'keep-alive'
+                            })
+
+                        } else {
+                            this.setHeaders ({
+                                'Content-Length': stat.size,
+                                'Content-Type': ($http.mime.guessFromFileName (file) || this.mime.binary)
+                            })
+                        }
+
+                        this.writeHead ()
+
+                        return new Promise ((then, err) =>
+                                                fs.createReadStream (file, { bufferSize: 4 * 1024, start: start, end: end })
+                                                    .on ('error', err)
+                                                    .on ('close', then.arity0)
+                                                    .pipe (this.response))
+                    })
+
+                .catch (e => {
+                    log.ee ('file not found: ', log.color.bright, file, '\n')
+                    throw this.NotFoundError
+                })
+        }
+    }),
 
 /*  Entry point
     ------------------------------------------------------------------------ */

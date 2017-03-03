@@ -50,7 +50,7 @@ _.deferTest = _.withTest = function (name, test, subj) { subj () }
 
     require ('./base/concurrency')     // concurrency utility
     require ('./base/component')       // component model
-    require ('./base/Rx')              // regular expressions helper
+    //require ('./base/Rx')              // regular expressions helper
 
 
 /*  Experimental stuff
