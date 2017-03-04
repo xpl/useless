@@ -8,6 +8,10 @@ const
 
 module.exports = $trait ({
 
+    $depends: [
+        require ('./args')
+    ],
+
     $defaults: {
         pidFile: path.resolve ('./' + path.parse (process.argv[1]).name + '.pid')
     },
