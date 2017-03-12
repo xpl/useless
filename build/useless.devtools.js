@@ -835,7 +835,7 @@ var stylesInDom = {},
 		};
 	},
 	isOldIE = memoize(function() {
-		return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
+		return /msie [6-9]\b/.test(self.navigator.userAgent.toLowerCase());
 	}),
 	getHeadElement = memoize(function () {
 		return document.head || document.getElementsByTagName("head")[0];
@@ -7331,6 +7331,8 @@ var _configure = function _configure(cfg) {
             return 'global';
         } else if (x === null) {
             return 'null';
+        } else if (x instanceof Date) {
+            return state.pure ? x.getTime() : "📅  " + x.toString();
         } else if (state.parents.has(x)) {
             return state.pure ? undefined : '<cyclic>';
         } else if (state.siblings.has(x)) {
@@ -10187,17 +10189,17 @@ exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 380).SourceNod
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !./../~/css-loader??ref--0-1!./LogOverlay.css */ 370);
+var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./LogOverlay.css */ 370);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
-var update = __webpack_require__(/*! ./../~/style-loader/addStyles.js */ 130)(content, {});
+var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 130)(content, {});
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
 	// When the styles change, update the <style> tags
 	if(!content.locals) {
-		module.hot.accept("!!./../node_modules/css-loader/index.js??ref--0-1!./LogOverlay.css", function() {
-			var newContent = require("!!./../node_modules/css-loader/index.js??ref--0-1!./LogOverlay.css");
+		module.hot.accept("!!../node_modules/css-loader/index.js??ref--0-1!./LogOverlay.css", function() {
+			var newContent = require("!!../node_modules/css-loader/index.js??ref--0-1!./LogOverlay.css");
 			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 			update(newContent);
 		});
@@ -10219,17 +10221,17 @@ if(false) {
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !./../~/css-loader??ref--0-1!./Panic.css */ 371);
+var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./Panic.css */ 371);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
-var update = __webpack_require__(/*! ./../~/style-loader/addStyles.js */ 130)(content, {});
+var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 130)(content, {});
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
 	// When the styles change, update the <style> tags
 	if(!content.locals) {
-		module.hot.accept("!!./../node_modules/css-loader/index.js??ref--0-1!./Panic.css", function() {
-			var newContent = require("!!./../node_modules/css-loader/index.js??ref--0-1!./Panic.css");
+		module.hot.accept("!!../node_modules/css-loader/index.js??ref--0-1!./Panic.css", function() {
+			var newContent = require("!!../node_modules/css-loader/index.js??ref--0-1!./Panic.css");
 			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 			update(newContent);
 		});

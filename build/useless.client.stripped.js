@@ -5967,7 +5967,6 @@
                 }
             },
             stream: function stream(cfg_) {
-                var _this = this;
                 var cfg = cfg_ || {};
                 var queue = _.extend([], {
                     off: function off() {
@@ -6046,7 +6045,7 @@
                         for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
                             args[_key9] = arguments[_key9];
                         }
-                        _this.postponed.apply(self.context, args);
+                        self.postponed.apply(self.context, args);
                     }
                 });
             }

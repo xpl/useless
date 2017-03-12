@@ -223,6 +223,11 @@ _.tests.stream = {
         $assert (foo.value, undefined)
         $assert (bar.value, 88)
         $assert (items.value, { bar: 88 })
+    },
+
+    'postpone works with _.trigger (regression)': function (done) {
+
+        _.trigger (done).postpone ()
     }
 }
 
@@ -475,7 +480,10 @@ _.extend (_, {
                     off:    _.off.asMethod,
                     read:     read,
                     write:    write,
-                    postpone: (...args) => { this.postponed.apply (self.context, args) } })) } })
+                    postpone (...args) { self.postponed.apply (self.context, args) }
+                }))
+            }
+        })
 
 
 /*  Observable.map (experimental)

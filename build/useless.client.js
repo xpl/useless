@@ -10650,6 +10650,11 @@ _.tests.stream = {
         $assert(foo.value, undefined);
         $assert(bar.value, 88);
         $assert(items.value, { bar: 88 });
+    },
+
+    'postpone works with _.trigger (regression)': function postponeWorksWith_TriggerRegression(done) {
+
+        _.trigger(done).postpone();
     }
 };
 
@@ -10918,7 +10923,6 @@ _.extend(_, {
     },
 
     stream: function stream(cfg_) {
-        var _this = this;
 
         var cfg = cfg_ || {};
         var queue = _.extend([], { off: function off() {
@@ -11019,9 +11023,11 @@ _.extend(_, {
                     args[_key9] = arguments[_key9];
                 }
 
-                _this.postponed.apply(self.context, args);
-            } });
-    } });
+                self.postponed.apply(self.context, args);
+            }
+        });
+    }
+});
 
 /*  Observable.map (experimental)
     ======================================================================== */
