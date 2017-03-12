@@ -16591,7 +16591,7 @@ $mixin(Node, {
     },
 
     hasClass: function hasClass(x) {
-        return this.classList.contains(x);
+        return this.classList ? this.classList.contains(x) : false;
     },
 
     toggleAttribute: function toggleAttribute(name, value) {

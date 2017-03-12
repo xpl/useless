@@ -266,7 +266,7 @@ var is = function (tag) { return function () { return this.tagName === tag } }
         cls: function (x) { this.className = x; return this },
         css: function (x) { _.extend (this.style, x); return this; },
 
-        hasClass: function (x) { return this.classList.contains (x) },
+        hasClass: function (x) { return this.classList ? this.classList.contains (x) : false },
 
         toggleAttribute: function (name, value) { var arg1 = arguments.length < 2
 
