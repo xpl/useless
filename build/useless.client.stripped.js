@@ -9520,7 +9520,7 @@
                 return this;
             },
             hasClass: function hasClass(x) {
-                return (this.className || '').split(' ').contains(x);
+                return this.classList.contains(x);
             },
             toggleAttribute: function toggleAttribute(name, value) {
                 var arg1 = arguments.length < 2;
