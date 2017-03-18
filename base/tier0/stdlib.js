@@ -611,13 +611,14 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
     var Proto = $prototype ({})
 
-    var obj     = { a: [{ b: { c: 'd' } }], b: {}, c: new Proto ()  }
+    var obj     = { a: [{ b: { c: 'd' } }], b: {}, c: new Proto (), e: new Date ()  }
     var copy    = _.cloneDeep (obj)
 
     $assert (obj   !== copy)    // should be distinct references
     $assert (obj.a !== copy.a)  //
     $assert (obj.b !== copy.b)  //
     $assert (obj.c === copy.c)  // should be same instance (should consider prototype instances as atomic value)
+    $assert (obj.e === copy.e)  // Date should not be cloned
 
     $assert (obj, copy)     // structure should not change
 
@@ -628,8 +629,9 @@ _.deferTest (['stdlib', 'cloneDeep'], function () {
 
     clone: function (x) {
                 return  (x instanceof Set) ? new Set (x) :
-                        (!_.isObject (x)   ? x :
-                        (_.isArray   (x)   ? x.slice () : _.extend ({}, x))) },
+                        ((x instanceof Date) ? x :
+                         (!_.isObject (x)   ? x :
+                         (_.isArray   (x)   ? x.slice () : _.extend ({}, x)))) },
 
     cloneDeep: _.tails2 (_.mapMap, function (value) {
                                         return ( _.isStrictlyObject    (value) &&

@@ -13709,7 +13709,7 @@ _.withTest(['function', 'Y combinator'], function () {
     };
 
     _.isTrivial = function (x) {
-        return _.isEmpty(x) || _.isString(x) || _.isNumber(x) || x instanceof RegExp || !(_.isStrictlyObject(x) || _.isArray(x)) || _.isPrototypeInstance(x) || _.isMeta(x);
+        return _.isEmpty(x) || _.isString(x) || _.isNumber(x) || x instanceof RegExp || x instanceof Date || !(_.isStrictlyObject(x) || _.isArray(x)) || _.isPrototypeInstance(x) || _.isMeta(x);
     };
 
     _.isMeta = _.constant(false);
@@ -15227,13 +15227,14 @@ _.deferTest(['stdlib', 'cloneDeep'], function () {
 
     var Proto = $prototype({});
 
-    var obj = { a: [{ b: { c: 'd' } }], b: {}, c: new Proto() };
+    var obj = { a: [{ b: { c: 'd' } }], b: {}, c: new Proto(), e: new Date() };
     var copy = _.cloneDeep(obj);
 
     $assert(obj !== copy); // should be distinct references
     $assert(obj.a !== copy.a); //
     $assert(obj.b !== copy.b); //
     $assert(obj.c === copy.c); // should be same instance (should consider prototype instances as atomic value)
+    $assert(obj.e === copy.e); // Date should not be cloned
 
     $assert(obj, copy); // structure should not change
 
@@ -15243,7 +15244,7 @@ _.deferTest(['stdlib', 'cloneDeep'], function () {
     _.extend(_, {
 
         clone: function clone(x) {
-            return x instanceof Set ? new Set(x) : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
+            return x instanceof Set ? new Set(x) : x instanceof Date ? x : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
         },
 
         cloneDeep: _.tails2(_.mapMap, function (value) {

@@ -7964,7 +7964,7 @@
                 }
             };
             _.isTrivial = function (x) {
-                return _.isEmpty(x) || _.isString(x) || _.isNumber(x) || x instanceof RegExp || !(_.isStrictlyObject(x) || _.isArray(x)) || _.isPrototypeInstance(x) || _.isMeta(x);
+                return _.isEmpty(x) || _.isString(x) || _.isNumber(x) || x instanceof RegExp || x instanceof Date || !(_.isStrictlyObject(x) || _.isArray(x)) || _.isPrototypeInstance(x) || _.isMeta(x);
             };
             _.isMeta = _.constant(false);
             _.isNonTrivial = _.not(_.isTrivial);
@@ -8729,7 +8729,7 @@
         {
             _.extend(_, {
                 clone: function clone(x) {
-                    return x instanceof Set ? new Set(x) : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
+                    return x instanceof Set ? new Set(x) : x instanceof Date ? x : !_.isObject(x) ? x : _.isArray(x) ? x.slice() : _.extend({}, x);
                 },
                 cloneDeep: _.tails2(_.mapMap, function (value) {
                     return _.isStrictlyObject(value) && !_.isPrototypeInstance(value) ? _.clone(value) : value;
