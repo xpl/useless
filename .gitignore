@@ -3,3 +3,4 @@ npm-debug.log
 lepro-build.sh
 lepro-build-production.sh
 build/example/*
+.DS_Store

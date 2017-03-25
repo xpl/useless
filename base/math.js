@@ -107,6 +107,12 @@ $global.Vec2 = $prototype ({
     width:  $alias ($property ('x')),
     height: $alias ($property ('y')),
 
+    left: $alias ($property ('x')),
+    top: $alias ($property ('y')),
+
+    right: $alias ($property ('x')),
+    bottom: $alias ($property ('y')),
+
     length:        $property (function () { return Math.sqrt (this.lengthSquared) }),
     lengthSquared: $property (function () { return this.x * this.x + this.y * this.y }),
 
@@ -254,8 +260,9 @@ $global.BBox = $prototype ({
                                    else { return new BBox (l + w / 2.0, t + h / 2.0, w, h) } },
 
         fromLTRB: function (l,t,r,b) {
-            if (arguments.length === 1) { return l && (BBox.fromLTRB (l.left, l.top, l.right, l.bottom)) }
-                                   else { return new BBox (_.lerp (0.5, l, r), _.lerp (0.5, t, b), r - l, b - t) } },
+                 if (arguments.length === 1) { return l && (BBox.fromLTRB (l.left, l.top, l.right, l.bottom)) }
+            else if (arguments.length === 2) { return BBox.fromLTRB (l.x, l.y, t.x, l.y) }
+                                        else { return new BBox (_.lerp (0.5, l, r), _.lerp (0.5, t, b), r - l, b - t) } },
 
         fromSizeAndCenter: function (size, center) {
             return new BBox (center.x - size.x / 2.0, center.y - size.y / 2.0, size.x, size.y) },
@@ -270,7 +277,9 @@ $global.BBox = $prototype ({
                 t = Math.min (pt.y, t)
                 r = Math.max (pt.x, r)
                 b = Math.max (pt.y, b) })
-            return BBox.fromLTRB (l, t, r, b) } },
+            return BBox.fromLTRB (l, t, r, b)
+        }
+    },
 
     constructor: function (x, y, w, h) {
         if (arguments.length == 4) {
@@ -478,8 +487,25 @@ $global.BBox = $prototype ({
                (this.y === other.y) &&
                (this.width === other.width) &&
                (this.height === other.height)
+    },
+
+    project (other) {
+
+        if (other instanceof BBox) {
+
+            return BBox.fromSizeAndCenter (other.size.divide (this.size), this.project (other.center))
+
+        } else {
+
+            return new Vec2 ((other.x - this.left) / this.width,
+                             (other.y - this.top) / this.height)
+        }
     }
 })
+
+BBox.union = function (a, b) {
+    return a ? a.union (b) : new BBox (b.x, b.y, 0, 0)
+}
 
 /*  ------------------------------------------------------------------------ */
 

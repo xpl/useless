@@ -7956,7 +7956,7 @@ _.tests['Promise+'] = {
     /*  ------------------------------------------------------------------------ */
 
     map: function map() {
-        return [__.map(111, _.appends('bar')).assert('111bar'), __.map([222], _.appends('bar')).assert(['222bar']), __.map(__(333), _.appends('bar')).assert('333bar'), __.map({ foo: 444 }, _.appends('bar')).assert({ foo: '444bar' }), __.map({ foo: 555 }, __.constant('bar')).assert({ foo: 'bar' }), __.map(['a', 'b', 'c', 'd', 'e'], function (x, i) {
+        return [__.map(111, _.appends('bar')).assert('111bar'), __.map([222], _.appends('bar')).assert(['222bar']), __.map(__(333), _.appends('bar')).assert('333bar'), __.map({ foo: 444 }, _.appends('bar')).assert({ foo: '444bar' }), __.map({ foo: 555 }, __.constant('bar')).assert({ foo: 'bar' }), __.map({ foo: Promise.resolve(111), bar: Promise.resolve(222) }).assert({ foo: 111, bar: 222 }), __.map(['a', 'b', 'c', 'd', 'e'], function (x, i) {
             return Promise.resolve([i, x]).delay(10 - i);
         }).assert([[0, 'a'], [1, 'b'], [2, 'c'], [3, 'd'], [4, 'e']])];
     },
@@ -8326,6 +8326,7 @@ function () {
 /*  ------------------------------------------------------------------------ */
 
 __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
+    fn = fn || _.identity;
     return __.scatter(x, function (v, k, x) {
         return __.then(fn.$(v, k, x), function (x) {
             return [x, k];
@@ -12311,6 +12312,12 @@ $global.Vec2 = $prototype((_$prototype = {
     width: $alias($property('x')),
     height: $alias($property('y')),
 
+    left: $alias($property('x')),
+    top: $alias($property('y')),
+
+    right: $alias($property('x')),
+    bottom: $alias($property('y')),
+
     length: $property(function () {
         return Math.sqrt(this.lengthSquared);
     }),
@@ -12468,6 +12475,8 @@ $global.BBox = $prototype({
         fromLTRB: function fromLTRB(l, t, r, b) {
             if (arguments.length === 1) {
                 return l && BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
+            } else if (arguments.length === 2) {
+                return BBox.fromLTRB(l.x, l.y, t.x, l.y);
             } else {
                 return new BBox(_.lerp(0.5, l, r), _.lerp(0.5, t, b), r - l, b - t);
             }
@@ -12497,7 +12506,8 @@ $global.BBox = $prototype({
                 b = Math.max(pt.y, b);
             });
             return BBox.fromLTRB(l, t, r, b);
-        } },
+        }
+    },
 
     constructor: function constructor(x, y, w, h) {
         if (arguments.length == 4) {
@@ -12725,8 +12735,22 @@ $global.BBox = $prototype({
 
     equals: function equals(other) {
         return this.x === other.x && this.y === other.y && this.width === other.width && this.height === other.height;
+    },
+    project: function project(other) {
+
+        if (other instanceof BBox) {
+
+            return BBox.fromSizeAndCenter(other.size.divide(this.size), this.project(other.center));
+        } else {
+
+            return new Vec2((other.x - this.left) / this.width, (other.y - this.top) / this.height);
+        }
     }
 });
+
+BBox.union = function (a, b) {
+    return a ? a.union(b) : new BBox(b.x, b.y, 0, 0);
+};
 
 /*  ------------------------------------------------------------------------ */
 

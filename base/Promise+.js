@@ -92,6 +92,8 @@ _.tests['Promise+'] = {
                         __.map ({ foo: 444 },  _.appends ('bar')).assert ({ foo: '444bar' }),
                         __.map ({ foo: 555 }, __.constant ('bar')).assert ({ foo: 'bar' }),
 
+                        __.map ({ foo: Promise.resolve (111), bar: Promise.resolve (222) }).assert ({ foo: 111, bar: 222 }),
+
                         __.map (['a','b','c','d','e'],
                             function (x,i) { return Promise.resolve ([i,x]).delay (10 - i) })
                                 .assert ([[0,'a'], [1,'b'], [2,'c'], [3,'d'], [4,'e']]) ] },
@@ -350,7 +352,7 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
 /*  ------------------------------------------------------------------------ */
 
-__.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
+__.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) { fn = fn || _.identity
             return __.scatter (x, function (v, k, x) {
                 return __.then (fn.$ (v, k, x), function (x) { return [x, k] }) }, cfg) }
 

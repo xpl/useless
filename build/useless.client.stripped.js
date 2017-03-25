@@ -4930,6 +4930,7 @@
             };
         }
         __.map = function (x, fn, cfg) {
+            fn = fn || _.identity;
             return __.scatter(x, function (v, k, x) {
                 return __.then(fn.$(v, k, x), function (x) {
                     return [
@@ -6835,6 +6836,10 @@
             h: $alias($property('y')),
             width: $alias($property('x')),
             height: $alias($property('y')),
+            left: $alias($property('x')),
+            top: $alias($property('y')),
+            right: $alias($property('x')),
+            bottom: $alias($property('y')),
             length: $property(function () {
                 return Math.sqrt(this.lengthSquared);
             }),
@@ -6989,6 +6994,8 @@
                 fromLTRB: function fromLTRB(l, t, r, b) {
                     if (arguments.length === 1) {
                         return l && BBox.fromLTRB(l.left, l.top, l.right, l.bottom);
+                    } else if (arguments.length === 2) {
+                        return BBox.fromLTRB(l.x, l.y, t.x, l.y);
                     } else {
                         return new BBox(_.lerp(0.5, l, r), _.lerp(0.5, t, b), r - l, b - t);
                     }
@@ -7201,8 +7208,18 @@
             },
             equals: function equals(other) {
                 return this.x === other.x && this.y === other.y && this.width === other.width && this.height === other.height;
+            },
+            project: function project(other) {
+                if (other instanceof BBox) {
+                    return BBox.fromSizeAndCenter(other.size.divide(this.size), this.project(other.center));
+                } else {
+                    return new Vec2((other.x - this.left) / this.width, (other.y - this.top) / this.height);
+                }
             }
         });
+        BBox.union = function (a, b) {
+            return a ? a.union(b) : new BBox(b.x, b.y, 0, 0);
+        };
         if (typeof Symbol !== 'undefined') {
             BBox.prototype[Symbol.for('String.ify')] = function () {
                 return '{ ' + this.left + ',' + this.top + ' \u2190\u2192 ' + this.right + ',' + this.bottom + ' }';
