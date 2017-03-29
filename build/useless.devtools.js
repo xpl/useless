@@ -5455,7 +5455,8 @@ _.tests.prototypeMeta = {
     var findMeta = function findMeta(stack) {
         return _.find2(stack.withSources.reverse(), function (location) {
 
-            var match = location.sourceLine.match(/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/);
+            var match = location.sourceLine.match(/([A-z]+)\s*=\s*\$([A-Za-z0-9_]+)/);
+
             return match && { name: match[1] === 'exports' ? location.fileName : match[1],
                 type: match[2],
                 file: location.fileShort } || false;
@@ -6277,6 +6278,14 @@ Modal overlay that renders log.js output for debugging purposes
 			})).remove();
 		},
 
+		clear: function clear() {
+
+			if (this.body) {
+				this.body.empty();
+			}
+		},
+
+
 		write: function write(params) {
 			this.toggle(true);
 
@@ -6333,6 +6342,13 @@ Modal overlay that renders log.js output for debugging purposes
 
 		if (_.isFunction(cfg.dismiss)) {
 			Panic.widget.onClose(cfg.dismiss);
+		}
+	};
+
+	$global.Panic.close = function () {
+
+		if (Panic.widget.modalBody) {
+			Panic.widget.close();
 		}
 	};
 

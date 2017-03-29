@@ -58,6 +58,13 @@ Modal overlay that renders log.js output for debugging purposes
 		            	return (lineTop    > clipHeight) &&
 		            		   (lineBottom > clipHeight) })).remove () },
 
+		clear () {
+
+			if (this.body) {
+				this.body.empty ()
+			}
+		},
+
 		write: function (params) { 	this.toggle (true)
 
 									if (params.config.clear) {

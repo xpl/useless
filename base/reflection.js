@@ -105,7 +105,8 @@ _.tests.prototypeMeta = {
 
     const findMeta = stack => _.find2 (stack.withSources.reverse (), location => {
 
-        let match = location.sourceLine.match (/([A-z]+)\s*=\s*\$(prototype|singleton|component|extends|trait)/)
+        let match = location.sourceLine.match (/([A-z]+)\s*=\s*\$([A-Za-z0-9_]+)/)
+
         return (match && { name: (match[1] === 'exports') ? location.fileName : match[1],
                            type:  match[2],
                            file:  location.fileShort }) || false

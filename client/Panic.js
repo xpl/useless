@@ -20,6 +20,13 @@ $global.Panic = (what, cfg) => { cfg = _.defaults (_.clone (cfg || {}), { dismis
 	if (_.isFunction (cfg.dismiss)) {
 		Panic.widget.onClose (cfg.dismiss) } }
 
+$global.Panic.close = function () {
+
+	if (Panic.widget.modalBody) {
+		Panic.widget.close ()
+	}
+}
+
 Panic.init = () => {
 	if (!Panic._initialized) {
 		 Panic._initialized = true

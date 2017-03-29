@@ -241,9 +241,8 @@ $mixin (Promise, {
                             function (e) { return { state: 'rejected', rejected: true, value: x } }).now.catch (function () {
                                            return { state: 'pending', pending: true } }) }),*/
 
-    log:   $property (function () { return this.then (log,       log.then (_.throwsError)) }),
-    alert: $property (function () { return this.done (alert2, alert2.then (_.throwsError)) }),
-    
+    log:   $property (function () { return this.then (log, log.then (_.throwsError)) }),
+
     panic: $property (function () { return this.catch (function (e) {
 
                                                         if (_.globalUncaughtExceptionHandler) {
