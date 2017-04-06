@@ -7,8 +7,8 @@ _.hasTypeMatch = true
 /*  Type matching for arbitrary complex structures (TODO: test)
     ======================================================================== */
 
-Tags.define ('required')
-Tags.define ('atom')
+Meta.globalTag ('required')
+Meta.globalTag ('atom')
 
 $global.const ('$any', _.identity)
 
@@ -57,11 +57,11 @@ _.deferTest (['type', 'type matching'], function () {
 
 }, function () {
 
-    _.isMeta = function (x) { return (x === $any) || ($atom.is (x) === true) || ($required.is (x) === true)  }
+    _.isMeta = function (x) { return (x === $any) || $atom.is (x) || $required.is (x) }
 
     var zip = function (type, value, pred) {
-        var required    = Tags.unwrapAll (_.filter2 (type, $required.matches))
-        var match       = _.nonempty (_.zip2 (Tags.unwrapAll (type), value, pred))
+        var required    = Meta.unwrapAll (_.filter2 (type, $required.is))        
+        var match       = _.nonempty (_.zip2 (Meta.unwrapAll (type), value, pred))
 
         if (_.isEmpty (required)) {
                 return match }
@@ -72,7 +72,7 @@ _.deferTest (['type', 'type matching'], function () {
                             match : _.coerceToEmpty (value) } }
 
     var hyperMatch = _.hyperOperator (_.binary,
-        function (type_, value, pred) { var type = Tags.unwrap (type_)
+        function (type_, value, pred) { var type = Meta.unwrap (type_)
 
             if (_.isArray (type)) { // matches [ItemType] → [item, item, ..., N]
                 if (_.isArray (value)) {
@@ -90,7 +90,7 @@ _.deferTest (['type', 'type matching'], function () {
             else {
                 return zip (type_, value, pred) } })
 
- var typeMatchesValue = function (c, v) { var contract = Tags.unwrap (c)
+ var typeMatchesValue = function (c, v) { var contract = Meta.unwrap (c)    
                                 return  (contract === $any) ||
                                         ((contract === undefined) && (v === undefined)) ||
                                         (_.isFunction (contract) && (

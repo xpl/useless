@@ -27,7 +27,7 @@ _.tests['component+'] = {
 /*  Observable enum (implemented via novel prototype macro facility from OOP.js)
  */
 
- Tags.define ('observableEnum', function (impl) {
+ Meta.globalTag ('observableEnum', function (impl) {
                                             return function () {
                                                 return impl (_.asArray (arguments)) } })
 

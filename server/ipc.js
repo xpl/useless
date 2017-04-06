@@ -2,7 +2,7 @@
 
 const _  = require ('underscore')
 
-Tags.define ('callableFromMasterProcess')
+Meta.globalTag ('callableFromMasterProcess')
 
 module.exports = $trait ({
 
@@ -14,7 +14,8 @@ module.exports = $trait ({
 
             if (this.supervisorState === 'supervisor') {
                 this.mapMethods ((fn, name, def) => {
-                    if (def && def.$callableFromMasterProcess) {
+                    
+                    if ($callableFromMasterProcess.is (def)) {
 
                         return function () { var args = _.asArray (arguments)
                             

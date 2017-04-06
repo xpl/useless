@@ -113,7 +113,7 @@ const ServerTests = module.exports = $trait ({
                     tests: _.nonempty (_.extended (Trait.prototype.tests || {},
                                                    Trait.prototype.test ? { '': Trait.prototype.test } : {},
 
-                                       _.map2 (Trait.$membersByTag.withTest, _.property ('$withTest'))))
+                                       _.map2 (Trait.$membersByTag.withTest, $withTest.read)))
                     })
             )
 

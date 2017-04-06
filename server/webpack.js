@@ -19,7 +19,7 @@ const fs                 = require ('fs'),
       moduleLocator      = require ('./base/module-locator')
 
 if (!$global.$callAtMasterProcess) {
-    Tags.define ('callAtMasterProcess')
+    Meta.globalTag ('callAtMasterProcess')
 }
 
 module.exports = $trait ({

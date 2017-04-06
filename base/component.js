@@ -341,6 +341,8 @@ _.tests.component = {
             colorChange: function (now, was) { if (was) {   fromConfig ()
                                                             $assert ([now, was], ['green', 'blue']) } } })
 
+        //console.log (compo.constructor.$definition)
+
         compo.smellChange (function (now, was) { fromLateBoundListener ()
             $assert (compo.smell, now, 'bad')
             $assert (undefined,   was) })
@@ -364,7 +366,7 @@ _.tests.component = {
 
     'binding to streams with traits': function () {
 
-        Tags.define ('dummy')
+        Meta.globalTag ('dummy')
 
         $assertEveryCalled (function (mkay1, mkay2) { var this_ = undefined
 
@@ -525,12 +527,12 @@ _.tests.component = {
 
         var Trait =    $trait ({   $macroTags: {
                                         add_2: function (def, fn, name) {
-                                            return Tags.modify (fn, function (fn) {
+                                            return Meta.modify (fn, function (fn) {
                                                 return fn.then (_.sum.$ (2)) }) } } })
 
         var Base = $component ({   $macroTags: {
                                         add_20: function (def, fn, name) {
-                                            return Tags.modify (fn, function (fn) {
+                                            return Meta.modify (fn, function (fn) {
                                                 return fn.then (_.sum.$ (20)) }) } } })
 
         var Compo = $extends (Base, {
@@ -657,8 +659,20 @@ _.tests.component = {
                 destroy: function () { mkay () },
                 close: $alias ('destroy') })
 
-            $assert (test.close, test.destroy) } }
+            $assert (test.close, test.destroy) },
 
+    '(regression) pollution of stream listeners': function () {
+
+        var A = $trait ({ something: $bindable (function (x) { }) })
+        var B = $trait ({ afterSomething (x) { $assert (false) }})
+
+        var Y = $singleton (Component, { $depends: [A, B] })
+
+        var Z = $singleton (Component, { $depends: [A] })
+
+        Z.something ()
+    },
+}
 
 /*  General syntax
  */
@@ -667,17 +681,31 @@ $global.$component = function (definition) {
 
 _([ 'extendable', 'trigger', 'triggerOnce', 'barrier', 'bindable', 'memoize', 'interlocked',
     'memoizeCPS', 'debounce', 'throttle', 'overrideThis', 'listener', 'postpones', 'reference', 'raw', 'binds', 'observes'])
-    .each (Tags.define)
+    .each (Meta.globalTag)
 
 ;(function () {
-    var impl = function (impl) {
-                return function (x, fn) {
-                    return ((_.isFunction (x) && (arguments.length === 1)) ?
-                                impl (x, fn) :     // $observableProperty (listener)
-                                impl (fn, x)) } }  // $observableProperty (value[, listener])
 
-    Tags.define ('observableProperty', impl) 
-    Tags.define ('observable',         impl) 
+    var impl = function (tag, a, b) {
+
+        if (arguments.length < 3) {
+
+            const listener = $untag (a)
+
+            return _.isFunction (listener)
+                        ? Meta.setTag (tag, listener)       // $observableProperty (listener)
+                        : Meta.setTag (tag, true, a)        // $observableProperty (value)
+
+        } else {
+
+            const listener = $untag (b)
+
+            return Meta.setTag (tag, _.isFunction (listener) ? listener : true, a) // $observableProperty (value, listener)
+        }
+    }
+
+    Meta.globalTag ('observableProperty', impl) 
+    Meta.globalTag ('observable',         impl)
+
 }) ();
 
 $global.$observableRef = function (x) { return $observableProperty ($reference (x)) }
@@ -733,8 +761,8 @@ $global.Component = $prototype ({
         mergeExtendables: function (base) { return function (def) {
 
                 _.each (base.$definition, function (value, name) {
-                    if (value && value.$extendable) {
-                        def[name] = Tags.modify (                       value,
+                    if ($extendable.is (value)) {
+                        def[name] = Meta.modify (                       value,
                                         function (                      value) {
                                                                         value =    _.extendedDeep (value, $untag (def[name] || {}))
                                     _.each ($untag (def.$traits),
@@ -770,7 +798,7 @@ $global.Component = $prototype ({
 
             _.each (def.__streams, function (stream, name) {
 
-                    var clonedStream = def[name] = Tags.clone (stream)
+                    var clonedStream = def[name] = Meta.new (stream)
                         clonedStream.listeners = []
 
                     _.each (pool[name], function (member) {
@@ -779,7 +807,8 @@ $global.Component = $prototype ({
 
         mergeBindables: function (def) { var pool = def.__membersByName
 
-            _.each (def.__bindables, function (member, name) {
+            _.each (def.__bindables, (member, name) => {
+
                 var bound = _.filter2 (_.bindable.hooks, function (hook, i) {
                                                             var bound = pool[_.bindable.hooksShort[i] + name.capitalized]
                                                             return bound ? [hook, bound] : false })
@@ -790,17 +819,22 @@ $global.Component = $prototype ({
                         _.each (kv[1], function (fn) { fn = $untag (fn)
                             if (_.isFunction (fn)) { var k = '_' + kv[0]; (hooks[k] || (hooks[k] = [])).push (fn) } }) })
 
-                    def[name] = $bindable ({ hooks: hooks }, Tags.clone (member)) } }, this)
+                    def[name] = $bindable ({ hooks: hooks }, member)            
+                }
+            })
 
-            return def } },
+            return def
+        }
+    },
 
 
     /*  Syntax helper
      */
     isStreamDefinition: $static (function (def) {
-        return _.isObject (def) && (
-            def.$trigger || def.$triggerOnce ||
-            def.$barrier || def.$observable || def.$observableProperty) }),
+
+        const tags = Meta.tags (def)
+
+        return tags.trigger || tags.triggerOnce || tags.barrier || tags.observable || tags.observableProperty }),
     
 
     /*  Another helper (it was needed because _.methods actually evaluate $property values while enumerating keys,
@@ -811,7 +845,7 @@ $global.Component = $prototype ({
         var methods = []
         for (var k in this) {
             var def = this.constructor.$definition[k]
-            if (!(def && def.$property)) { var fn = this[k]
+            if ($property.isNot (def)) { var fn = this[k]
                 if (_.isFunction (fn) && !_.isPrototypeConstructor (fn) && predicate (def))  {
                     this[k] = iterator.call (this, fn, k, def) || fn } } } },
 
@@ -839,7 +873,9 @@ $global.Component = $prototype ({
 
         /*  Add thiscall semantics to methods
          */
-        this.mapMethods (function (fn, name, def) { if ((name !== '$') && (name !== 'init') && !(def && def.$raw)) { return this.$ (fn) } })
+        this.mapMethods (function (fn, name, def) {
+            if ((name !== '$') && (name !== 'init') && $raw.isNot (def)) { return this.$ (fn) }
+        })
 
 
         /*  Listen self destroy method
@@ -857,10 +893,13 @@ $global.Component = $prototype ({
          */
         _.each (componentDefinition, function (def, name) { if (def !== undefined) {
 
+            const member = Meta.unwrap (def)
+            const tags   = Meta.tags (def)
+
             /*  Expand $observableProperty
                 TODO: rewrite with $prototype.macro
              */
-            if (def.$observableProperty) {  var definitionValue = def.subject
+            if (tags.observableProperty) {  var definitionValue = member
                                             var defaultValue = (name in cfg) ? cfg[name] : definitionValue
                                             var streamName   = name + 'Change'
 
@@ -868,7 +907,7 @@ $global.Component = $prototype ({
                  */
                 var observable           = excludeFromCfg[streamName] = this[streamName] = _.observable ()
                     observable.context   = this
-                    observable.postpones = def.$postpones
+                    observable.postpones = tags.postpones
 
                 /*  auto-coercion of incoming values to prototype instance
                  */
@@ -878,8 +917,9 @@ $global.Component = $prototype ({
 
                 /*  tracking by reference
                  */
-                if (def.$reference) {
+                if (tags.reference) {
                     observable.trackReference = true }
+
 
                 /*  property
                  */
@@ -895,8 +935,8 @@ $global.Component = $prototype ({
 
                 /*  Default listener which comes from $observableProperty (defValue, defListener) syntax
                  */
-                if (_.isFunction (def.$observableProperty)) {
-                      initialStreamListeners.push ([observable, def.$observableProperty]) }
+                if (_.isFunction (tags.observableProperty)) {
+                      initialStreamListeners.push ([observable, tags.observableProperty]) }
 
                 /*  write default value
                  */
@@ -907,14 +947,14 @@ $global.Component = $prototype ({
              */
             else if (Component.isStreamDefinition (def)) {
                 var stream = excludeFromCfg[name] = this[name] = _.extend (
-                                (def.$trigger       ? _.trigger :
-                                (def.$triggerOnce   ? _.triggerOnce :
-                                (def.$observable    ? _.observable :
-                                (def.$barrier       ? _.barrier : undefined)))) (def.subject), { context: this, postpones: def.$postpones })
+                                (tags.trigger       ? _.trigger :
+                                (tags.triggerOnce   ? _.triggerOnce :
+                                (tags.observable    ? _.observable :
+                                (tags.barrier       ? _.barrier : undefined)))) (member), { context: this, postpones: tags.postpones })
 
                 /*  tracking by reference
                  */
-                if (def.$reference) {
+                if (tags.reference) {
                     observable.trackReference = true }
 
                 if (def.listeners) {
@@ -923,47 +963,46 @@ $global.Component = $prototype ({
 
                 /*  Default listener which comes from $observable (defValue, defListener) syntax
                  */
-                if (_.isFunction (def.$observable)) {
-                      initialStreamListeners.push ([stream, def.$observable]) }
+                if (_.isFunction (tags.observable)) {
+                      initialStreamListeners.push ([stream, tags.observable]) }
 
                 var defaultListener = cfg[name]                
                 if (defaultListener) {
-                    if (def.$observable && defaultListener.isObservable) { // two-way observable binding
+                    if (tags.observable && defaultListener.isObservable) { // two-way observable binding
                         defaultListener.tie (stream) }
                     else {
                         initialStreamListeners.push ([stream, defaultListener]) } } }
 
             /*  Expand $listener (TODO: REMOVE)
              */
-            if (def.$listener) {
+            if (tags.listener) {
                 this[name].queuedBy = [] }
 
             /*  Expand $interlocked
              */
-            if (def.$interlocked) {
+            if (tags.interlocked) {
                 this[name] = _.interlocked (this[name]) }
 
             /*  Expand $bindable
              */
-            if (def.$bindable) {
+            if (tags.bindable) {
                 this[name] = _.extend (_.bindable (this[name], this),
-                                       _.map2 (def.$bindable.hooks || {},
-                                       _.mapsWith (this.$.bind (this).arity1))) }
+                                       _.map2 (tags.bindable.hooks || {}, hooks => _.map (hooks, f => this.$ (f)))) }
             /*  Expand $debounce
              */
-            if (def.$debounce) { var fn = this[name], opts = _.coerceToObject (def.$debounce)
+            if (tags.debounce) { var fn = this[name], opts = _.coerceToObject (tags.debounce)
                 this[name] = fn.debounced (opts.wait || 500, opts.immediate) }
 
             /*  Expand $throttle
              */
-            if (def.$throttle) { var fn = this[name], opts = _.coerceToObject (def.$throttle)
+            if (tags.throttle) { var fn = this[name], opts = _.coerceToObject (tags.throttle)
                 this[name] = _.throttle (fn, opts.wait || 500, opts) }
 
             /*  Expand $memoize
              */
-                 if (def.$memoize) {
+                 if (tags.memoize) {
                 this[name] = _.memoize (this[name]) }
-            else if (def.$memoizeCPS) {
+            else if (tags.memoizeCPS) {
                 this[name] = _.cps.memoize (this[name]) } } }, this)
 
         /*  Add before/after stage to init
@@ -983,7 +1022,7 @@ $global.Component = $prototype ({
         /*  Fixup aliases (they're now pointing to nothing probably, considering what we've done at this point)
          */
         _.each (componentDefinition, function (def, name) {
-            if (def && def.$alias && !def.$raw) {
+            if ($alias.is (def) && $raw.isNot (def)) {
                 this[name] = this[$untag (def)] } }, this)
 
 
@@ -1048,7 +1087,8 @@ $global.Component = $prototype ({
                             and they're might get called at init, so their default values get bound before init.
                          */
                         _.each (self.constructor.$definition, function (def, name) {
-                            if (def && def.$observableProperty) {            name += 'Change'
+                            if ($observableProperty.is (def)) {
+                                name += 'Change'
                                 var defaultListener = cfg[name]
                                 if (defaultListener) {
                                     self[name] (defaultListener) } } })
@@ -1131,3 +1171,4 @@ $global.Component = $prototype ({
                     _.each (this.children_, function (c) { c.parent_ = undefined; c.destroy () })
                             this.children_ = []
                             return this } })
+

@@ -11,11 +11,13 @@ const fs              = require ('fs'),
 
 /*  Supresses $callAtMasterProcess-marked methods from calling at supervised process (usually it's beforeInit method)   */
 
-Tags.define ('callAtMasterProcess', tag => beforeInitMethod =>
-                                                tag (function () {
-                                                        return this.isSupervisedProcess
-                                                                ? undefined
-                                                                : beforeInitMethod.apply (this, arguments) }))
+Meta.globalTag ('callAtMasterProcess', (tag, x) =>
+                                            Meta.setTag (tag, true,
+                                                Meta.modify (x, beforeInitMethod =>
+                                                                    function (...args) {
+                                                                        return this.isSupervisedProcess
+                                                                                    ? undefined
+                                                                                    : beforeInitMethod.call (this, ...args) })))
 
 const Supervisor = module.exports = $trait ({
 

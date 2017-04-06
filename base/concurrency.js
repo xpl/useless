@@ -72,7 +72,7 @@ _.interlocked = function (fn) { var lock = new Lock (),
  */
 $global.$scope = function (fn) { var releaseStack = undefined
                                                     
-    return _.argumentPrependingWrapper (Tags.unwrap (fn),
+    return _.argumentPrependingWrapper (Meta.unwrap (fn),
 
             function /* acquire */ (fn) {
 

@@ -175,7 +175,7 @@ $global.DOMEvents = $trait ({
 
         on: function (def, method, methodName) {        var DOMEventListeners = (def.constructor.DOMEventListeners ||
                                                                                 (def.constructor.DOMEventListeners = []))
-                var on_def = method.$on
+                var on_def = $on.read (method)
                     on_def = (_.isString (on_def) ? { fn: methodName, e: on_def } :
                              (_.isObject (on_def) ? { fn: methodName, e: on_def.what, target: on_def.target } :
                                                     { fn: methodName, e: methodName }))

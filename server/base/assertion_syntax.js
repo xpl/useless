@@ -9,8 +9,8 @@ you define assertions without need to actually plug in tests.js trait.
 
 /*  For marking custom assertions
  */
-Tags.define ('assertion')
+Meta.globalTag ('assertion')
 
 /*  For marking methods with test procedure
  */
-Tags.define ('withTest')
+Meta.globalTag ('withTest')

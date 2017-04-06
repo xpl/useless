@@ -261,11 +261,11 @@ _.withTest ('assert.js bootstrap', function () {
             var inContext = true; context (function () { if (inContext) { $fail } }); inContext = false },
 
         assertEveryCalledOnce: function (fn, then) {
-            return _.assertEveryCalled (_.hasTags ? $once (fn) : (fn.once = true, fn), then) },
+            return _.assertEveryCalled ($once (fn), then) },
 
-        assertEveryCalled: function (fn_, then) { const fn    = _.hasTags ? $untag (fn_)    : fn_,
-                                                        async = _.hasTags ? $async.is (fn_) : fn_.async,
-                                                        once  = _.hasTags ? $once.is (fn_)  : fn_.once
+        assertEveryCalled: function (fn_, then) { const fn    = $untag (fn_),
+                                                        async = $async.is (fn_),
+                                                        once  = $once.is (fn_)
 
             var match     = once ? null : fn.toString ().match (/.*function[^\(]\(([^\)]+)\)/)
             var contracts = once ? _.times (fn.length, _.constant (1)) :

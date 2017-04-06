@@ -20,12 +20,12 @@ const bullet  = require ('string.bullet'),
 
 /*  A contract for test routines that says that test should fail and it's the behavior expected
  */
-Tags.define ('shouldFail')
+Meta.globalTag ('shouldFail')
 
 
 /*  A contract for custom assertions, says that assertion is asynchronous.
  */
-Tags.define ('async')
+Meta.globalTag ('async')
 
 
 /*  This is test suite for tests framework itself.
@@ -66,7 +66,7 @@ _.tests.Testosterone = {
 
 /*  For marking methods in internal impl that should publish themselves as global functions (like $assert)
  */
-Tags.define ('assertion')
+Meta.globalTag ('assertion')
 
 $global.Testosterone = $singleton ({
 
@@ -271,14 +271,14 @@ $global.Test = $prototype ({
         var assertion = new Test ({
             mother: this,
             name: name,
-            shouldFail: def.$shouldFail || this.shouldFail,
+            shouldFail: $shouldFail.is (def) || this.shouldFail,
             depth: this.depth + 1,
             location: loc,
             context: this.context,
             timeout: this.timeout / 2,
             verbose: this.verbose,
             silent:  this.silent,
-            routine: Tags.modify (def, function (fn) {
+            routine: Meta.modify (def, function (fn) {
                                             return function (done) {
                                                     if ($async.is (args[0]) || $async.is (def)) {
                                                         _.cps.apply (fn, self.context, args, function (args, then) {
@@ -357,7 +357,7 @@ $global.Test = $prototype ({
                         else  { this.finalize () } },
 
     run: function () { var self    = Testosterone.currentAssertion = this,
-                           routine = Tags.unwrap (this.routine)
+                           routine = Meta.unwrap (this.routine)
 
         return new Channel (this.$ (function (then) {
 
@@ -424,7 +424,7 @@ $global.Test = $prototype ({
 
 /*
  */
-Tags.define ('allowsRecursion')
+Meta.globalTag ('allowsRecursion')
 
 _.limitRecursion = function (max, fn, name) { if (!fn) { fn = max; max = 0 }
                         var depth       = -1
@@ -459,18 +459,21 @@ Testosterone.ValidatesRecursion = $trait ({
 
     $constructor: function () {
         _.each (this, function (member, name) {
-            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!member.$allowsRecursion || (member.$allowsRecursion.max !== undefined))) {
-                this[name] = Tags.modify (member, function (fn) {
-                    return _.limitRecursion ((member && member.$allowsRecursion && member.$allowsRecursion.max) || 0, fn, name) }) } }, this) } })
+
+            const allowsRecursion = $allowsRecursion.read (member)
+
+            if (_.isFunction ($untag (member)) && (name !== 'constructor') && (!allowsRecursion || (allowsRecursion.max !== undefined))) {
+                this[name] = Meta.modify (member, function (fn) {
+                    return _.limitRecursion ((allowsRecursion && allowsRecursion.max) || 0, fn, name) }) } }, this) } })
 
 /*  $log for methods
  */
 ;(function () { var colors = _.keys (_.omit (log.color, 'none'))
-                    colors.each (Tags.define)
+                    colors.each (Meta.globalTag)
 
     var stringify = String.ify.configure ({ pretty: false })
 
-    Tags.define ('verbose')
+    Meta.globalTag ('verbose')
 
     Testosterone.LogsMethodCalls = $trait ({
 
@@ -492,9 +495,10 @@ Testosterone.ValidatesRecursion = $trait ({
 */
         $macroTags: {
 
-            log: function (def, member, name) { var param         = (_.isBoolean (member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '')
+            log: function (def, member, name) { var logTag        = $log.read (member)
+                                                var param         = (_.isBoolean (logTag) ? undefined : logTag) || ($verbose.is (member) ? '{{$proto}}' : '')
                                                 var meta          = def.$meta || {}
-                                                var color         = _.find2 (colors, function (color) { return log.color ((member['$' + color] && color)) || false })
+                                                var color         = log.color[_.find (colors, Meta.hasTag.$ (member))]
                                                 var template      = param && _.template (param, { interpolate: /\{\{(.+?)\}\}/g })
 
                 return $prototype.impl.modifyMember (member, function (fn, name_) { return function () { var this_      = this,
@@ -506,7 +510,7 @@ Testosterone.ValidatesRecursion = $trait ({
                     log.write (log.config ({
                         color: color,
                         location: true,
-                        where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
+                        where: $verbose.is (member) ? undefined : { calleeShort: meta.name } }), _.nonempty ([this_dump, name, name_]).join ('.'), args_dump)
 
                     return log.withConfig ({ indent: 1,
                                              color: color,

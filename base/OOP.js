@@ -158,7 +158,10 @@ _.withTest ('OOP', {
         let Foo = $prototype ({
 
             get foo () {
-                $assertTypeMatches (this.constructor.$definition.foo, { subject: { get: 'function' }, $property: true })
+
+                $assert (Meta.unwrap (this.constructor.$definition.foo).get instanceof Function)
+                $assert (Meta.tags (this.constructor.$definition.foo), { 'property': true })
+
                 return 42
             },
 
@@ -169,7 +172,8 @@ _.withTest ('OOP', {
             }
         })
 
-        $assertTypeMatches (Foo.$definition.bar, { subject: { get: 'function' }, $property: true, $static: true })
+        $assert (Meta.unwrap (Foo.$definition.bar).get instanceof Function)
+        $assert (Meta.tags (Foo.$definition.bar), { 'static': true, 'property': true })
         $assert (Foo.bar, 42)
 
         let foo = new Foo ()
@@ -193,9 +197,9 @@ _.withTest ('OOP', {
 
                 $assert (foo.finalCrash, foo.crash, foo.failure, foo.error) // all point to same function
 
-                $assert    (def.finalCrash.$final)   // you can add new tags to alias members
-                $assertNot (def.crash.$final)        // adding tags to alias members does not affect original members 
-                $assertNot (def.error.$final)
+                $assert    ($final.is (def.finalCrash))   // you can add new tags to alias members
+                $assertNot ($final.is (def.crash))        // adding tags to alias members does not affect original members 
+                $assertNot ($final.is (def.error))
 
         /*  Ad-hoc property aliases (applicable even when there's no explicitly declared member at what alias points to)
          */
@@ -246,7 +250,7 @@ _.withTest ('OOP', {
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
         $assert (_.isTypeOf (Function,  foo.constructor.noop))           
-        $assert (_.isTypeOf (Tags,      foo.constructor.$definition.noop)) // note how $static group is collapsed to normal form
+        $assert (_.isTypeOf (Meta,      foo.constructor.$definition.noop)) // note how $static group is collapsed to normal form
 
     /*  Infix version (a static member of every $prototype)
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -352,7 +356,7 @@ _.withTest ('OOP', {
     ======================================================================== */
 
     _(['property', 'static', 'final', 'alias', 'memoized', 'private', 'builtin', 'hidden', 'testArguments'])
-        .each (Tags.define)
+        .each (Meta.globalTag)
 
     _.extend ($global, {
     
@@ -382,8 +386,10 @@ _.withTest ('OOP', {
             else {
                 $prototype.impl.memberNameTriggeredMacros[arg] = fn } },
 
-        macroTag: function (name, fn) { Tags.define (name)
-            $prototype.impl.tagTriggeredMacros['$' + name] = fn },
+        macroTag: function (name, fn) {
+
+            Meta.globalTag (name)
+            $prototype.impl.tagTriggeredMacros[name] = fn },
 
         each: function (visitor) { var namespace = $global
             for (var k in namespace) {
@@ -400,11 +406,6 @@ _.withTest ('OOP', {
                 chain.push (def)
                 def = def.$base && def.$base.constructor }
             return chain },
-
-        wrapMethods: function (def, op) {
-                        return Tags.map (def, function (fn, k, t) {
-                            return _.isFunction (fn) ? op (fn, k, t).wraps (fn) : fn }) },
-
 
     /*  INTERNALS
         ==================================================================== */
@@ -487,11 +488,14 @@ _.withTest ('OOP', {
             evalMemberTriggeredMacros: function (base) {
                 return function (def) { var names = $prototype.impl.memberNameTriggeredMacros,
                                             tags  = $prototype.impl.tagTriggeredMacros
+
                     _.each (def, function (value, name) {
                         if (names.hasOwnProperty (name)) {
                             def = (names[name] (def, value, name, base)) || def }
-                        _.each (_.keys (value), function (tag) { if (tags.hasOwnProperty (tag)) {
-                            def = (tags [tag] (def, value, name, base)) || def } }) })
+
+                        Meta.eachTag (value, (tag => { if (tags.hasOwnProperty (tag)) {
+                            def = (tags [tag] (def, value, name, base)) || def } })) })
+
                      return def } },
 
             evalPrototypeSpecificMacros: function (base) { return function (def) {
@@ -503,7 +507,7 @@ _.withTest ('OOP', {
             applyMacroTags: function (macroTags, def) {
                 _.each (def, function (memberDef, memberName) {
                             _.each (macroTags, function (macroFn, tagName) { memberDef = def[memberName]
-                                if (_.isObject (memberDef) && (('$' + tagName) in memberDef)) {
+                                if (Meta.hasTag (memberDef, tagName)) {
                                     def[memberName] = macroFn.call (def, def, memberDef, memberName) || memberDef } }, this) }, this)
                 return def },
 
@@ -531,11 +535,10 @@ _.withTest ('OOP', {
 
             mergeTraitsMembers: function (def, traits, base) {
                 _.each (traits, function (trait) {
-                    _.defaults (def, _.omit (trait.$definition,
-                        _.or ($builtin.matches, _.key (_.equals ('constructor'))))) }) },
+                    _.defaults (def, _.omit (trait.$definition, (v, k) => $builtin.is (v) || k === 'constructor')) }) },
 
             extendWithTags: function (def) {                    
-                return _.extendWith ($untag (def), _.mapValues (Tags.get (def), $static.arity1)) },
+                return _.extendWith ($untag (def), _.object (_.map (Meta.tags (def), (v, k) => ['$' + k, $static (v)]))) },
 
             callStaticConstructor: function (def) { 
                 if (!def.isTraitOf) { 
@@ -547,7 +550,7 @@ _.withTest ('OOP', {
 
             generateConstructor: function (base) { return function (def) {
                 return _.extend (def, { constructor:
-                    Tags.modify (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
+                    Meta.modify (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
                         function (fn) {
                             if (base) { fn.prototype = Object.create (base.prototype);
                                         fn.prototype.constructor = fn }
@@ -573,11 +576,11 @@ _.withTest ('OOP', {
                     function (cfg) { _.extend (this, cfg || {}) }) },
 
             defineStaticMembers: function (def) {
-                this.defineMembers ($untag (def.constructor), _.pick (def, $static.matches))
+                this.defineMembers ($untag (def.constructor), _.pick (def, $static.is))
                 return def },
 
             defineInstanceMembers: function (def) {
-                this.defineMembers ($untag (def.constructor).prototype, _.omit (def, $static.matches))
+                this.defineMembers ($untag (def.constructor).prototype, _.omit (def, $static.is))
                 return def },
 
             defineMembers: function (targetObject, def) {
@@ -586,13 +589,17 @@ _.withTest ('OOP', {
                         this.defineMember (targetObject, value, key) } }, this) },
 
             defineMember: function (targetObject, def, key) {
-                if (def && def.$property) {
-                    (def.$memoized ? _.defineMemoizedProperty : _.defineProperty) (targetObject, key, def, def.$hidden ? { enumerable: false } : {}) }
+
+                const tags = Meta.tags (def)
+
+                if (tags.property) {
+                    (tags.memoized ? _.defineMemoizedProperty : _.defineProperty) (targetObject, key, def, tags.hidden ? { enumerable: false } : {})
+                }
                 else {
                     Object.defineProperty (targetObject, key, {
                         value: $untag (def),
                         configurable: true, writable: true,
-                        enumerable: (def && def.$hidden) ? false : true }) } },
+                        enumerable: !tags.hidden }) } },
 
             ensureFinalContracts: function (base) { return function (def) {
                                         if (base) {
@@ -601,7 +608,7 @@ _.withTest ('OOP', {
 
                                             if (base.$definition) {
                                                 var invalidMembers = _.intersection (
-                                                    _.keys (_.pick (base.$definition, $final.matches)),
+                                                    _.keys (_.pick (base.$definition, $final.is)),
                                                     _.keys (def))
                                                 if (invalidMembers.length) {
                                                     throw new Error ('Cannot override $final ' + invalidMembers.join (', ')) } } }
@@ -617,17 +624,20 @@ _.withTest ('OOP', {
                                                           var refName  = ref[0]
                                                           var refValue = ref[1]
 
-                                    return [refName, ($property.is (member) ?
-                                                      $property ({ get: function ()  { return this[refName]     },
-                                                                   set: function (x) {        this[refName] = x } }) : Tags.extend (refValue, Tags.omit (member, '$alias'))) ] }
+                                    return [refName, ($property.is (member)
+
+                                                      ? $property ({ get ()  { return this[refName]     },
+                                                                     set (x) {        this[refName] = x } })
+
+                                                      : Meta.replaceTags (refValue, _.omit (Meta.tags (member), 'alias'))) ] }
 
                                 else { return [name, member] } },
 
             groupMembersByTagForFastEnumeration: function (def) { var membersByTag = {}
 
                                                     _.each (def, function (m, name) {
-                                                        Tags.each (m, function (tag) {
-                                                            (membersByTag[tag] = (membersByTag[tag] || {}))[name] = m }) })
+                                                        Meta.eachTag (m, tag => (membersByTag[tag] = (membersByTag[tag] || {}))[name] = m)
+                                                    })
 
                                                     def.$membersByTag = $static ($builtin ($property (membersByTag))); return def },
 
@@ -635,8 +645,8 @@ _.withTest ('OOP', {
                 return (key[0] === '$') && _.isFunction ($global[key]) && (typeof value === 'object') && !_.isArray (value) },
 
             modifyMember: function (member, newValue) {
-                return ($property.is (member) && Tags.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), newValue)) })) ||
-                       (_.isFunction ($untag (member)) && Tags.modify (member, newValue)) || member } } }) })
+                return ($property.is (member) && Meta.modify (member, function (value) { return _.extend (value, _.map2 (_.pick (value, 'get', 'set'), newValue)) })) ||
+                       (_.isFunction ($untag (member)) && Meta.modify (member, newValue)) || member } } }) })
 
 
 /*  $trait  A combinatoric-style alternative to inheritance.
@@ -719,7 +729,7 @@ _.withTest ('OOP', {
     ======================================================================== */
 
     $prototype.macro ('$macroTags', function (def, value, name) {
-        _.each ($untag (value), function (v, k) { Tags.define (k) }) })
+        _.each ($untag (value), function (v, k) { Meta.globalTag (k) }) })
 
 
 /*  Context-free implementation of this.$
@@ -766,7 +776,7 @@ _.withTest ('OOP', {
 
                 /*  Impl
                  */
-                Tags.define  ('callableAsFreeFunction')
+                Meta.globalTag  ('callableAsFreeFunction')
                 $prototype.macroTag ('callableAsFreeFunction',
                     function (def, value, name) {
                               def.constructor[name] = $untag (value).asFreeFunction
@@ -785,10 +795,10 @@ _.withTest ('OOP', {
 
                 /*  Impl 
                  */
-                Tags.define  ('callableAsMethod')
+                Meta.globalTag  ('callableAsMethod')
                 $prototype.macroTag ('callableAsMethod',
                     function (def, value, name) {
-                              def[name] = Tags.modify (value, _.asMethod)
+                              def[name] = Meta.modify (value, _.asMethod)
                               def.constructor[name] = $untag (value)
                        return def }) })
 

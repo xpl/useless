@@ -13,6 +13,7 @@ const _ = $global._ = module.exports = require ('./base/3rd/underscore-fix') // 
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     require ('./base/tier0/platform')    // platform abstraction layer
+    require ('./base/tier0/meta-tags')   // metaprogramming utility
     require ('./base/tier0/assert')      // $assert syntax
     require ('./base/tier0/arguments')   // argument count tracking utility (to streamline metaprogramming utilities)
     require ('./base/tier0/function')    // function-centric utilities
@@ -20,7 +21,6 @@ const _ = $global._ = module.exports = require ('./base/3rd/underscore-fix') // 
     require ('./base/tier0/type')        // type system extensions
     require ('./base/tier0/stdlib')      // consider it as underscore 2.0
     require ('./base/tier0/properties')  // properties 2.0
-    require ('./base/tier0/meta-tags')   // metaprogramming utility
     require ('./base/tier0/typeMatch')   // advanced type system extensions
 
 

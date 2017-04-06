@@ -331,7 +331,7 @@ $prototype.macroTag ('channel', (def, value, name) => {
     var memberName = '_' + name
     var initialValue = $untag (value)
 
-    def[name] = Tags.modify (value, () => $property ({
+    def[name] = Meta.modify (value, () => $property ({
 
         get: function () {
                 return this[memberName] ||

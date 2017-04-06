@@ -57,6 +57,7 @@
   "homepage": "https://github.com/xpl/useless#readme",
   "dependencies": {
     "as-table": "*",
+    "meta-fields": "*",
     "babel-core": "^6.14.0",
     "babel-eslint": "^6.1.2",
     "babel-loader": "^6.3.2",

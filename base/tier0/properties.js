@@ -66,19 +66,20 @@ _.withTest ('properties', function () { var obj = {}
 
     coerceToPropertyDefinition: function (value_, /* optional */ name) {
         var value = value_ || {}
-        var actualValue = (typeof Tags === 'undefined') ? value_ : Tags.unwrap (value_)
+        var actualValue = Meta.unwrap (value_)
+        var tags = Meta.tags (value_)
 
                 // property definition case (short circuit then)
-        return  (!value.$constant && !value.$get && _.isPropertyDefinition (actualValue) && actualValue) ||
+        return  (!tags.constant && !tags.get && _.isPropertyDefinition (actualValue) && actualValue) ||
 
                 // get-accessor-alone case
-                ((value.$get || (!value.$constant && _.isFunction (actualValue) && _.noArgs (actualValue))) &&
+                ((tags.get || (!tags.constant && _.isFunction (actualValue) && _.noArgs (actualValue))) &&
                     {   get: actualValue,
                         set: _.throwsError ('cannot change ' + (name || 'property') + ' (as it\'s an accessor function)') }) ||
 
                 // constant value case
-                (!value.$get && {   get: _.constant (actualValue),
-                                    set: _.throwsError ('cannot change ' + (name || 'property') + ' (as it\'s sealed to ' + actualValue + ')') }) ||
+                (!tags.get && {   get: _.constant (actualValue),
+                                  set: _.throwsError ('cannot change ' + (name || 'property') + ' (as it\'s sealed to ' + actualValue + ')') }) ||
 
                 // any other case (erroneous)
                 _.throwsError ('coerceToPropertyDefinition: crazy input, unable to match') () },

@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "/build";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 387);
+/******/ 	return __webpack_require__(__webpack_require__.s = 389);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -145,7 +145,7 @@ module.exports = function() {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 54);
+var util = __webpack_require__(/*! ./util */ 53);
 var has = Object.prototype.hasOwnProperty;
 
 /**
@@ -291,7 +291,7 @@ exports.ArraySet = ArraySet;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var base64 = __webpack_require__(/*! ./base64 */ 375);
+var base64 = __webpack_require__(/*! ./base64 */ 377);
 
 // A single base 64 digit can contain 6 bits of data. For the base 64 variable
 // length quantities we use in the source map spec, the first bit is the sign,
@@ -414,9 +414,9 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
  */
 
 var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 128);
-var util = __webpack_require__(/*! ./util */ 54);
+var util = __webpack_require__(/*! ./util */ 53);
 var ArraySet = __webpack_require__(/*! ./array-set */ 127).ArraySet;
-var MappingList = __webpack_require__(/*! ./mapping-list */ 377).MappingList;
+var MappingList = __webpack_require__(/*! ./mapping-list */ 379).MappingList;
 
 /**
  * An instance of the SourceMapGenerator represents a source map which is
@@ -1098,22 +1098,22 @@ module.exports = fs;
 
 /*	__NO_COMPRESS__	*/
 
-String.ify = __webpack_require__(/*! string.ify */ 187);
+String.ify = __webpack_require__(/*! string.ify */ 189);
 
-__webpack_require__(/*! ./base/tier0/assert */ 168);
-__webpack_require__(/*! ./base/uncaught */ 177);
-__webpack_require__(/*! ./base/uncaughtAsync */ 178);
-__webpack_require__(/*! ./base/reflection */ 166);
-__webpack_require__(/*! ./base/log */ 163);
-__webpack_require__(/*! ./base/Testosterone */ 153);
-__webpack_require__(/*! ./base/profiling */ 165);
+__webpack_require__(/*! ./base/tier0/assert */ 170);
+__webpack_require__(/*! ./base/uncaught */ 179);
+__webpack_require__(/*! ./base/uncaughtAsync */ 180);
+__webpack_require__(/*! ./base/reflection */ 168);
+__webpack_require__(/*! ./base/log */ 165);
+__webpack_require__(/*! ./base/Testosterone */ 155);
+__webpack_require__(/*! ./base/profiling */ 167);
 
-__webpack_require__(/*! ./client/jQueryPlus */ 183);
+__webpack_require__(/*! ./client/jQueryPlus */ 185);
 
-__webpack_require__(/*! ./client/Panic */ 181);
-__webpack_require__(/*! ./client/LogOverlay */ 180);
-__webpack_require__(/*! ./client/Panic.css */ 383);
-__webpack_require__(/*! ./client/LogOverlay.css */ 382);
+__webpack_require__(/*! ./client/Panic */ 183);
+__webpack_require__(/*! ./client/LogOverlay */ 182);
+__webpack_require__(/*! ./client/Panic.css */ 385);
+__webpack_require__(/*! ./client/LogOverlay.css */ 384);
 
 /*  ------------------------------------------------------------------------ */
 
@@ -1809,7 +1809,7 @@ function isObject(value) {
 
 module.exports = memoize;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../../useless/~/webpack/buildin/global.js */ 32)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../../useless/~/webpack/buildin/global.js */ 29)))
 
 /***/ }),
 
@@ -3973,7 +3973,7 @@ var path = module.exports = {
 
 /***/ }),
 
-/***/ 144:
+/***/ 146:
 /* unknown exports provided */
 /* all exports used */
 /*!****************************************!*\
@@ -4010,7 +4010,7 @@ module.exports = function (arr_, pred) {
 
 /***/ }),
 
-/***/ 145:
+/***/ 147:
 /* unknown exports provided */
 /* all exports used */
 /*!*************************************!*\
@@ -4031,7 +4031,7 @@ var O = Object,
     return x[x.length - 1];
 },
     getSource = __webpack_require__(/*! get-source */ 142),
-    partition = __webpack_require__(/*! ./impl/partition */ 144);
+    partition = __webpack_require__(/*! ./impl/partition */ 146);
 
 /*  ------------------------------------------------------------------------ */
 
@@ -4258,7 +4258,7 @@ module.exports = StackTracey;
 
 /***/ }),
 
-/***/ 153:
+/***/ 155:
 /* unknown exports provided */
 /* all exports used */
 /*!******************************!*\
@@ -4284,16 +4284,16 @@ Testosterone is a cross-platform unit test shell. Features:
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-var bullet = __webpack_require__(/*! string.bullet */ 50),
-    asTable = __webpack_require__(/*! as-table */ 66);
+var bullet = __webpack_require__(/*! string.bullet */ 66),
+    asTable = __webpack_require__(/*! as-table */ 65);
 
 /*  A contract for test routines that says that test should fail and it's the behavior expected
  */
-Tags.define('shouldFail');
+Meta.globalTag('shouldFail');
 
 /*  A contract for custom assertions, says that assertion is asynchronous.
  */
-Tags.define('async');
+Meta.globalTag('async');
 
 /*  This is test suite for tests framework itself.
 
@@ -4336,7 +4336,7 @@ _.tests.Testosterone = {
 
 /*  For marking methods in internal impl that should publish themselves as global functions (like $assert)
  */
-Tags.define('assertion');
+Meta.globalTag('assertion');
 
 $global.Testosterone = $singleton({
 
@@ -4578,14 +4578,14 @@ $global.Test = $prototype({
         var assertion = new Test({
             mother: this,
             name: name,
-            shouldFail: def.$shouldFail || this.shouldFail,
+            shouldFail: $shouldFail.is(def) || this.shouldFail,
             depth: this.depth + 1,
             location: loc,
             context: this.context,
             timeout: this.timeout / 2,
             verbose: this.verbose,
             silent: this.silent,
-            routine: Tags.modify(def, function (fn) {
+            routine: Meta.modify(def, function (fn) {
                 return function (done) {
                     if ($async.is(args[0]) || $async.is(def)) {
                         _.cps.apply(fn, self.context, args, function (args, then) {
@@ -4691,7 +4691,7 @@ $global.Test = $prototype({
 
     run: function run() {
         var self = Testosterone.currentAssertion = this,
-            routine = Tags.unwrap(this.routine);
+            routine = Meta.unwrap(this.routine);
 
         return new Channel(this.$(function (then) {
 
@@ -4772,7 +4772,7 @@ $global.Test = $prototype({
 
 /*
  */
-Tags.define('allowsRecursion');
+Meta.globalTag('allowsRecursion');
 
 _.limitRecursion = function (max, fn, name) {
     if (!fn) {
@@ -4825,9 +4825,12 @@ Testosterone.ValidatesRecursion = $trait({
 
     $constructor: function $constructor() {
         _.each(this, function (member, name) {
-            if (_.isFunction($untag(member)) && name !== 'constructor' && (!member.$allowsRecursion || member.$allowsRecursion.max !== undefined)) {
-                this[name] = Tags.modify(member, function (fn) {
-                    return _.limitRecursion(member && member.$allowsRecursion && member.$allowsRecursion.max || 0, fn, name);
+
+            var allowsRecursion = $allowsRecursion.read(member);
+
+            if (_.isFunction($untag(member)) && name !== 'constructor' && (!allowsRecursion || allowsRecursion.max !== undefined)) {
+                this[name] = Meta.modify(member, function (fn) {
+                    return _.limitRecursion(allowsRecursion && allowsRecursion.max || 0, fn, name);
                 });
             }
         }, this);
@@ -4837,11 +4840,11 @@ Testosterone.ValidatesRecursion = $trait({
  */
 ;(function () {
     var colors = _.keys(_.omit(log.color, 'none'));
-    colors.each(Tags.define);
+    colors.each(Meta.globalTag);
 
     var stringify = String.ify.configure({ pretty: false });
 
-    Tags.define('verbose');
+    Meta.globalTag('verbose');
 
     Testosterone.LogsMethodCalls = $trait({
 
@@ -4874,11 +4877,10 @@ Testosterone.ValidatesRecursion = $trait({
 
                 return log;
             }(function (def, member, name) {
-                var param = (_.isBoolean(member.$log) ? undefined : member.$log) || (member.$verbose ? '{{$proto}}' : '');
+                var logTag = $log.read(member);
+                var param = (_.isBoolean(logTag) ? undefined : logTag) || ($verbose.is(member) ? '{{$proto}}' : '');
                 var meta = def.$meta || {};
-                var color = _.find2(colors, function (color) {
-                    return log.color(member['$' + color] && color) || false;
-                });
+                var color = log.color[_.find(colors, Meta.hasTag.$(member))];
                 var template = param && _.template(param, { interpolate: /\{\{(.+?)\}\}/g });
 
                 return $prototype.impl.modifyMember(member, function (fn, name_) {
@@ -4892,7 +4894,7 @@ Testosterone.ValidatesRecursion = $trait({
                         log.write(log.config({
                             color: color,
                             location: true,
-                            where: member.$verbose ? undefined : { calleeShort: meta.name } }), _.nonempty([this_dump, name, name_]).join('.'), args_dump);
+                            where: $verbose.is(member) ? undefined : { calleeShort: meta.name } }), _.nonempty([this_dump, name, name_]).join('.'), args_dump);
 
                         return log.withConfig({ indent: 1,
                             color: color,
@@ -4922,7 +4924,7 @@ if ($platform.NodeJS) {
 
 /***/ }),
 
-/***/ 163:
+/***/ 165:
 /* unknown exports provided */
 /* all exports used */
 /*!*********************!*\
@@ -4934,8 +4936,8 @@ if ($platform.NodeJS) {
 
 
 var O = __webpack_require__(/*! es7-object-polyfill */ 42),
-    bullet = __webpack_require__(/*! string.bullet */ 50),
-    asTable = __webpack_require__(/*! as-table */ 66);
+    bullet = __webpack_require__(/*! string.bullet */ 66),
+    asTable = __webpack_require__(/*! as-table */ 65);
 
 _.hasLog = true;
 
@@ -5273,7 +5275,7 @@ if ($platform.NodeJS) {
 
 /***/ }),
 
-/***/ 165:
+/***/ 167:
 /* unknown exports provided */
 /* all exports used */
 /*!***************************!*\
@@ -5344,7 +5346,7 @@ _.perfTest = function (arg, then) {
 
 /***/ }),
 
-/***/ 166:
+/***/ 168:
 /* unknown exports provided */
 /* all exports used */
 /*!****************************!*\
@@ -5367,11 +5369,11 @@ _.hasReflection = true;
 
 /*  ------------------------------------------------------------------------ */
 
-$global.getSource = __webpack_require__(/*! get-source */ 185);
+$global.getSource = __webpack_require__(/*! get-source */ 187);
 
 /*  ------------------------------------------------------------------------ */
 
-$global.StackTracey = O.assign(__webpack_require__(/*! stacktracey */ 145), {
+$global.StackTracey = O.assign(__webpack_require__(/*! stacktracey */ 147), {
     fromErrorWithAsync: function fromErrorWithAsync(e) {
 
         var stackEntries = new StackTracey(e),
@@ -5408,7 +5410,7 @@ _.tests.reflection = {
 
 /*  ------------------------------------------------------------------------ */
 
-var asTable = __webpack_require__(/*! as-table */ 66);
+var asTable = __webpack_require__(/*! as-table */ 65);
 
 StackTracey.prototype[Symbol.for('String.ify')] = function (stringify) {
 
@@ -5490,7 +5492,7 @@ _.tests.prototypeMeta = {
 
 /***/ }),
 
-/***/ 168:
+/***/ 170:
 /* unknown exports provided */
 /* all exports used */
 /*!******************************!*\
@@ -5832,13 +5834,13 @@ _.withTest('assert.js bootstrap', function () {
         },
 
         assertEveryCalledOnce: function assertEveryCalledOnce(fn, then) {
-            return _.assertEveryCalled(_.hasTags ? $once(fn) : (fn.once = true, fn), then);
+            return _.assertEveryCalled($once(fn), then);
         },
 
         assertEveryCalled: function assertEveryCalled(fn_, then) {
-            var fn = _.hasTags ? $untag(fn_) : fn_,
-                async = _.hasTags ? $async.is(fn_) : fn_.async,
-                once = _.hasTags ? $once.is(fn_) : fn_.once;
+            var fn = $untag(fn_),
+                async = $async.is(fn_),
+                once = $once.is(fn_);
 
             var match = once ? null : fn.toString().match(/.*function[^\(]\(([^\)]+)\)/);
             var contracts = once ? _.times(fn.length, _.constant(1)) : _.map(match[1].split(','), function (arg) {
@@ -5998,7 +6000,7 @@ _.withTest('assert.js bootstrap', function () {
 
 /***/ }),
 
-/***/ 177:
+/***/ 179:
 /* unknown exports provided */
 /* all exports used */
 /*!**************************!*\
@@ -6090,7 +6092,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 /***/ }),
 
-/***/ 178:
+/***/ 180:
 /* unknown exports provided */
 /* all exports used */
 /*!*******************************!*\
@@ -6202,7 +6204,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 /***/ }),
 
-/***/ 180:
+/***/ 182:
 /* unknown exports provided */
 /* all exports used */
 /*!******************************!*\
@@ -6307,7 +6309,7 @@ Modal overlay that renders log.js output for debugging purposes
 
 /***/ }),
 
-/***/ 181:
+/***/ 183:
 /* unknown exports provided */
 /* all exports used */
 /*!*************************!*\
@@ -6565,7 +6567,7 @@ Modal overlay that renders log.js output for debugging purposes
 
 /***/ }),
 
-/***/ 183:
+/***/ 185:
 /* unknown exports provided */
 /* all exports used */
 /*!******************************!*\
@@ -7088,7 +7090,7 @@ Modal overlay that renders log.js output for debugging purposes
 
 /***/ }),
 
-/***/ 185:
+/***/ 187:
 /* unknown exports provided */
 /* all exports used */
 /*!************************************!*\
@@ -7103,9 +7105,9 @@ Modal overlay that renders log.js output for debugging purposes
 
 var O = Object,
     isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
-    SourceMapConsumer = __webpack_require__(/*! source-map */ 381).SourceMapConsumer,
-    path = __webpack_require__(/*! ./impl/path */ 186),
-    memoize = __webpack_require__(/*! lodash.memoize */ 373),
+    SourceMapConsumer = __webpack_require__(/*! source-map */ 383).SourceMapConsumer,
+    path = __webpack_require__(/*! ./impl/path */ 188),
+    memoize = __webpack_require__(/*! lodash.memoize */ 375),
     lastOf = function (x) {
     return x[x.length - 1];
 };
@@ -7218,7 +7220,7 @@ class SourceFile {
 
 /***/ }),
 
-/***/ 186:
+/***/ 188:
 /* unknown exports provided */
 /* all exports used */
 /*!***********************************!*\
@@ -7296,7 +7298,7 @@ var path = module.exports = {
 
 /***/ }),
 
-/***/ 187:
+/***/ 189:
 /* unknown exports provided */
 /* all exports used */
 /*!************************************!*\
@@ -7310,7 +7312,7 @@ var path = module.exports = {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var O = __webpack_require__(/*! es7-object-polyfill */ 42),
-    bullet = __webpack_require__(/*! string.bullet */ 50),
+    bullet = __webpack_require__(/*! string.bullet */ 66),
     isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
     maxOf = function maxOf(arr, pick) {
     return arr.reduce(function (max, s) {
@@ -7476,11 +7478,11 @@ module.exports = _configure({
     pretty: 'auto'
 
 });
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/global.js */ 32)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/global.js */ 29)))
 
 /***/ }),
 
-/***/ 32:
+/***/ 29:
 /* unknown exports provided */
 /* all exports used */
 /*!***********************************!*\
@@ -7513,7 +7515,7 @@ module.exports = g;
 
 /***/ }),
 
-/***/ 370:
+/***/ 372:
 /* unknown exports provided */
 /* all exports used */
 /*!************************************************************!*\
@@ -7533,7 +7535,7 @@ exports.push([module.i, ".useless-log-overlay {\tposition: fixed; bottom: 10px; 
 
 /***/ }),
 
-/***/ 371:
+/***/ 373:
 /* unknown exports provided */
 /* all exports used */
 /*!*******************************************************!*\
@@ -7553,7 +7555,7 @@ exports.push([module.i, "@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-tran
 
 /***/ }),
 
-/***/ 373:
+/***/ 375:
 /* unknown exports provided */
 /* all exports used */
 /*!***********************************!*\
@@ -8238,11 +8240,11 @@ function isObject(value) {
 
 module.exports = memoize;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/global.js */ 32)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/global.js */ 29)))
 
 /***/ }),
 
-/***/ 375:
+/***/ 377:
 /* unknown exports provided */
 /* all exports used */
 /*!************************************!*\
@@ -8321,7 +8323,7 @@ exports.decode = function (charCode) {
 
 /***/ }),
 
-/***/ 376:
+/***/ 378:
 /* unknown exports provided */
 /* all exports used */
 /*!*******************************************!*\
@@ -8444,7 +8446,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
 
 /***/ }),
 
-/***/ 377:
+/***/ 379:
 /* unknown exports provided */
 /* all exports used */
 /*!******************************************!*\
@@ -8459,7 +8461,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 54);
+var util = __webpack_require__(/*! ./util */ 53);
 
 /**
  * Determine whether mappingB is after mappingA with respect to generated
@@ -8535,7 +8537,7 @@ exports.MappingList = MappingList;
 
 /***/ }),
 
-/***/ 378:
+/***/ 380:
 /* unknown exports provided */
 /* all exports used */
 /*!****************************************!*\
@@ -8661,7 +8663,7 @@ exports.quickSort = function (ary, comparator) {
 
 /***/ }),
 
-/***/ 379:
+/***/ 381:
 /* unknown exports provided */
 /* all exports used */
 /*!*************************************************!*\
@@ -8676,11 +8678,11 @@ exports.quickSort = function (ary, comparator) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 54);
-var binarySearch = __webpack_require__(/*! ./binary-search */ 376);
+var util = __webpack_require__(/*! ./util */ 53);
+var binarySearch = __webpack_require__(/*! ./binary-search */ 378);
 var ArraySet = __webpack_require__(/*! ./array-set */ 127).ArraySet;
 var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 128);
-var quickSort = __webpack_require__(/*! ./quick-sort */ 378).quickSort;
+var quickSort = __webpack_require__(/*! ./quick-sort */ 380).quickSort;
 
 function SourceMapConsumer(aSourceMap) {
   var sourceMap = aSourceMap;
@@ -9755,7 +9757,7 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 
 /***/ }),
 
-/***/ 380:
+/***/ 382:
 /* unknown exports provided */
 /* all exports used */
 /*!*****************************************!*\
@@ -9771,7 +9773,7 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
  */
 
 var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 129).SourceMapGenerator;
-var util = __webpack_require__(/*! ./util */ 54);
+var util = __webpack_require__(/*! ./util */ 53);
 
 // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
 // operating systems these days (capturing the result).
@@ -10174,7 +10176,7 @@ exports.SourceNode = SourceNode;
 
 /***/ }),
 
-/***/ 381:
+/***/ 383:
 /* unknown exports provided */
 /* all exports used */
 /*!************************************!*\
@@ -10188,13 +10190,13 @@ exports.SourceNode = SourceNode;
  * http://opensource.org/licenses/BSD-3-Clause
  */
 exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 129).SourceMapGenerator;
-exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 379).SourceMapConsumer;
-exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 380).SourceNode;
+exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 381).SourceMapConsumer;
+exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 382).SourceNode;
 
 
 /***/ }),
 
-/***/ 382:
+/***/ 384:
 /* unknown exports provided */
 /* all exports used */
 /*!*******************************!*\
@@ -10205,7 +10207,7 @@ exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 380).SourceNod
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./LogOverlay.css */ 370);
+var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./LogOverlay.css */ 372);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
 var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 130)(content, {});
@@ -10226,7 +10228,7 @@ if(false) {
 
 /***/ }),
 
-/***/ 383:
+/***/ 385:
 /* unknown exports provided */
 /* all exports used */
 /*!**************************!*\
@@ -10237,7 +10239,7 @@ if(false) {
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./Panic.css */ 371);
+var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./Panic.css */ 373);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
 var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 130)(content, {});
@@ -10258,7 +10260,7 @@ if(false) {
 
 /***/ }),
 
-/***/ 387:
+/***/ 389:
 /* unknown exports provided */
 /* all exports used */
 /*!***********************************!*\
@@ -10932,34 +10934,7 @@ exports.compareByGeneratedPositionsInflated = compareByGeneratedPositionsInflate
 
 /***/ }),
 
-/***/ 50:
-/* unknown exports provided */
-/* all exports used */
-/*!******************************************!*\
-  !*** ./~/string.bullet/string.bullet.js ***!
-  \******************************************/
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-module.exports = function (bullet, arg) {
-
-    var isArray = Array.isArray(arg);
-
-    var lines = isArray ? arg : arg.split('\n');
-
-    var indent = bullet.replace(/[^\s]/g, ' '); // replace non-whitespace with whitespace
-    lines = lines.map(function (line, i) {
-        return i === 0 ? bullet + line : indent + line;
-    });
-
-    return isArray ? lines : lines.join('\n');
-};
-
-/***/ }),
-
-/***/ 54:
+/***/ 53:
 /* unknown exports provided */
 /* all exports used */
 /*!**********************************!*\
@@ -11388,7 +11363,7 @@ exports.compareByGeneratedPositionsInflated = compareByGeneratedPositionsInflate
 
 /***/ }),
 
-/***/ 66:
+/***/ 65:
 /* unknown exports provided */
 /* all exports used */
 /*!********************************!*\
@@ -11510,6 +11485,33 @@ var O = Object,
 };
 
 module.exports = asTable({ maxTotalWidth: Number.MAX_SAFE_INTEGER });
+
+/***/ }),
+
+/***/ 66:
+/* unknown exports provided */
+/* all exports used */
+/*!******************************************!*\
+  !*** ./~/string.bullet/string.bullet.js ***!
+  \******************************************/
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = function (bullet, arg) {
+
+    var isArray = Array.isArray(arg);
+
+    var lines = isArray ? arg : arg.split('\n');
+
+    var indent = bullet.replace(/[^\s]/g, ' '); // replace non-whitespace with whitespace
+    lines = lines.map(function (line, i) {
+        return i === 0 ? bullet + line : indent + line;
+    });
+
+    return isArray ? lines : lines.join('\n');
+};
 
 /***/ }),
 
