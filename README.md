@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- [meta-fields](https://github.com/xpl/meta-fields) facility now available as a separate NPM module.
+
 - [webpack](https://github.com/xpl/useless/blob/master/server/webpack.js) server trait now supports `compress` option for crunching scripts with Google Closure Compiler.
 
 - Webpack Hot Module Replacement now works (run the example app and try change `example/index.css`). It was previously broken due to `webpack-dev-server` incompatilibity with Webpack 2. This is solved by introducing [`webpack-hot-fix.js`](https://github.com/xpl/useless/blob/master/client/webpack-hot-fix.js).
