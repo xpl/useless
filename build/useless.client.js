@@ -14277,6 +14277,8 @@ _.withTest(['function', 'sequence / then'], function () {
 "use strict";
 
 
+// This is temporary (until refactoring done)
+
 $global.Meta = __webpack_require__(/*! meta-fields */ 144);
 
 Meta.$definition = {}; // to make it recognizeable by OOP.js
