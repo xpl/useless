@@ -3944,14 +3944,7 @@
             }();
             module.exports = O.assign(Meta, {
                 new: function _new(x) {
-                    return new Proxy(new Meta(x), {
-                        get: function get(target, prop, proxy) {
-                            if (prop[0] === '$') {
-                                throw new Error('accessing ' + prop + ' \u2014 IMPLEMENTATION CHANGED, YOUR CODE IS OBSOLETE');
-                            }
-                            return target[prop];
-                        }
-                    });
+                    return new Meta(x);
                 },
                 coerce: function coerce(x) {
                     return Meta.is(x) ? x : Meta.new(arguments.length > 0 ? { wrapped: x } : {});
