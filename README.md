@@ -21,6 +21,8 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
+- [ololog](https://github.com/xpl/ololog) logging facility is now separate project (redesigned from a scratch)
+
 - [meta-fields](https://github.com/xpl/meta-fields) facility now available as a separate NPM module.
 
 - [webpack](https://github.com/xpl/useless/blob/master/server/webpack.js) server trait now supports `compress` option for crunching scripts with Google Closure Compiler.
