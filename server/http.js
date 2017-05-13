@@ -69,7 +69,8 @@ module.exports = $trait ({
 
             addUTF8 (x) {
                     return x && (x + (((x.split ('/')[0] === 'text') ||
-                                             (x === 'application/json'))
+                                             (x === 'application/json') ||
+                                             (x === 'application/javascript'))
                                                     ? '; charset=utf-8'
                                                     : '')) } },
 
@@ -353,7 +354,7 @@ module.exports = $trait ({
                     return x => ($http.headers['Access-Control-Allow-Origin'] = value, x) },
 
     jsVariable (rvalue, lvalue) {
-                    $http.contentType ($http.mime.javascript)
+                    $http.setHeaders ({ 'Content-Type': $http.mime.javascript })
                     return 'var ' + rvalue +
                             ' = ' + stringify (lvalue, { pure: true, pretty: true }) },
 
