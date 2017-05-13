@@ -356,7 +356,7 @@ module.exports = $trait ({
     jsVariable (rvalue, lvalue) {
                     $http.setHeaders ({ 'Content-Type': $http.mime.javascript })
                     return 'var ' + rvalue +
-                            ' = ' + stringify (lvalue, { pure: true, pretty: true }) },
+                            ' = ' + stringify.configure ({ pure: true, pretty: true }) (lvalue) },
 
     receiveJSON () {
             return $http.receiveData ()
