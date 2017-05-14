@@ -39,9 +39,9 @@ $global.Http = $singleton (Component, {
 
     request (type, path, cfg_) { const cfg = cfg_ || {}
                                            
-            /*  Reference to the abort method (will be initialized at Promise construction) */
+            /*  Local state (will be initialized at Promise construction) */
 
-                let abort = undefined
+                let xhr, abort
 
             /*  returned Promise     */
 
@@ -54,8 +54,8 @@ $global.Http = $singleton (Component, {
 
                     /*  Init XMLHttpRequest
                      */
-                    var xhr = new XMLHttpRequest ()
-                        xhr.open (type, prePath + path, true)
+                    xhr = new XMLHttpRequest ()
+                    xhr.open (type, prePath + path, true)
 
                     /*  Set to 'arraybuffer' to receive binary data
                      */
@@ -102,9 +102,9 @@ $global.Http = $singleton (Component, {
 
                  })
 
-                /*  Add abort method to the returned Promise
-                 */
-                return _.extend (p, { abort: abort }) },
+            /*  Publish some local state as properties of the returned Promise */
+
+                return _.extend (p, { xhr: xhr, abort: abort }) },
 
     progressCallbackWithSimulation (progress) { let simulated = 0
 

@@ -29,7 +29,7 @@ module.exports = $trait ({
 
         if (!this.requireDeveloper) {
              this.requireDeveloper = _.identity
-             this.devHint ("Add 'auth' trait to restrict access to devtools API") }
+             this.devHint ("Implement requireDeveloper() to restrict access to devtools API") }
 
         return {
 

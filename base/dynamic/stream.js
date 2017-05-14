@@ -161,16 +161,6 @@ _.tests.stream = {
             obj.somethingReady ('foo') })   // that's how you trigger it (may pass arguments)
         obj.somethingReady ('bar')          // should not call anything
 
-
-        /*  Test _.allTriggered
-         */
-        var t1 = _.triggerOnce (), t2 = _.triggerOnce (),       // test pair1
-            t3 = _.triggerOnce (), t4 = _.triggerOnce ()        // test pair2
-
-        _.allTriggered ([t1, t2], function () { $fail }); t1 ()     // pair1: should not cause _.allTriggered to trigger
-
-        $assertEveryCalledOnce (function (mkay) {
-            _.allTriggered ([t3, t4], mkay); t3 (); t4 () })        // pair2: should trigger _.allTriggered
     },
 
     'call order consistency': function (done) {
@@ -243,17 +233,10 @@ _.extend (_, {
         _.each (observables, function (read) {
             read (gather) }) },
 
-    allTriggered: function (triggers, then) {
-                        var triggered = []
-                        if (triggers.length > 0) {
-                            _.each (triggers, function (t) {
-                                t (function () {
-                                    triggered = _.union (triggered, [t])
-                                    if (then && (triggered.length === triggers.length)) {
-                                        then ()
-                                        then = undefined } }) }) }
-                        else {
-                            then () } },
+    allTriggered (triggers, then /* deprecated */) {
+
+        return Promise.all (triggers.map (t => t.promise)).then (then)
+    },
 
     observableRef: function (...args) {
         return _.extend (_.observable.apply (this, args), { trackReference: true }) },
@@ -382,9 +365,6 @@ _.extend (_, {
         if (defaultListener) {
             barrier (defaultListener) }
 
-        _.defineProperty (barrier, 'promise', function () {
-                                                    return new Promise (function (resolve) { barrier (resolve) }) })
-
         return barrier },
 
 
@@ -474,14 +454,19 @@ _.extend (_, {
 
                 /*  Constructor
                  */
-                return (self = _.extend ($restArg (frontEnd), cfg, {
+                self = _.extend ($restArg (frontEnd), cfg, {
                     queue:    queue,
                     once:     once,
                     off:    _.off.asMethod,
                     read:     read,
                     write:    write,
-                    postpone (...args) { self.postponed.apply (self.context, args) }
-                }))
+                    postpone (...args) { self.postponed.apply (self.context, args) },
+
+                })
+
+                _.defineProperty (self, 'promise', () => new Promise (resolve => self (resolve)))
+
+                return self
             }
         })
 

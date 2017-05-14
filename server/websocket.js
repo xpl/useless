@@ -12,24 +12,11 @@ module.exports = $trait ({
     /*  Override this to specify who can connect via WebSocket
      */
     websocketAuth (msg, authorize, drop) {
+        log.warn ('Override websocketAuth() to restrict incoming WebSocket connections')
+        return Promise.resolve ({} /* user */)
+    },
 
-        if (!this.db) {
-            log.warn ('Add `auth` trait to restrict incoming WebSocket connections')
-            authorize (msg) }
-
-        else {
-            var credentials = _.pick (msg, 'email', 'password')
-            if (credentials.email && credentials.password) {
-                this.db.users.findOne (_.extend ({ isAdmin: true }, credentials), (e, user) => {
-                    if (user) {
-                        authorize (user) }
-                    else {
-                        drop ('invalid auth credentials') } }) }
-            else {
-                drop ('missing auth credentials') } } },
-
-    websocketStringifyUser (user) {
-        return ((this.entitySchema && this.entitySchema.users && this.entitySchema.users.text) || stringify) (user) },
+    websocketStringifyUser (user) { return '<user>' },
 
     /*  Sends a message to connected peers via WebSocket
      */
@@ -59,14 +46,17 @@ module.exports = $trait ({
 
             connection.on ('close', this.$ (function () {
                 this.peers = _.reject (this.peers, connection)
-                log.dark ('peer disconnected:', this.websocketStringifyUser (connection.user), '(' + connection.remoteAddress + ')') }))
+                log.dark ('peer disconnected:', connection.user, '(' + connection.remoteAddress + ')') }))
 
             connection.on ('message', this.$ (function (message) {
                 if (message.type === 'utf8') {
-                    this.websocketAuth (JSON.parse (message.utf8Data), this.$ (function (user) {
-                        log.gg ('peer authorized:', this.websocketStringifyUser (user), '(' + connection.remoteAddress + ')')
-                        connection.send (JSON.stringify ({ what: 'handshake', uptime: this.uptime ? this.uptime () : undefined }))
-                        connection.user = user
-                        this.peers.push (connection) }), drop) }
+                    this.websocketAuth (JSON.parse (message.utf8Data))
+                        .then (this.$ (function (user) {
+                            log.gg ('peer authorized:', this.websocketStringifyUser (user), '(' + connection.remoteAddress + ')')
+                            connection.send (JSON.stringify ({ what: 'handshake', uptime: this.uptime ? this.uptime () : undefined }))
+                            connection.user = user
+                            this.peers.push (connection) }))
+                        .catch (drop)
+                }
                 else {
                     drop ('invalid auth format') } })) })) } })
