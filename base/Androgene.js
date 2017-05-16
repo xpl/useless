@@ -28,7 +28,9 @@
         current: undefined,
 
         constructor: function () {
+
             this.eventLog = []
+            this.eventAdded = _.trigger ()
             this.where = new Error () // @hide
             this.state = 'pending'
 
@@ -47,10 +49,14 @@
             var PrevPromise    = Promise
                                  Promise = AndrogenePromise
             
-            var logHook = function () { context.eventLog.push (
-                                            [log.config ({ where: (new StackTracey ()).withSource (5) })].concat (_.initial (arguments)))
+            var logHook = function () {
 
-                                        return _.find (arguments, _.not (_.instanceOf (log.Config))) }
+                const event = [log.config ({ where: (new StackTracey ()).withSource (5) })].concat (_.initial (arguments))
+
+                context.eventLog.push (event)
+                context.eventAdded (event)
+
+                return _.find (arguments, _.not (_.instanceOf (log.Config))) }
             
             log.impl.write.intercept (logHook)
 

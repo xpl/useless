@@ -27,7 +27,7 @@ module.exports = $trait ({
         config: {
             port: 1333,
             maxFileSize: 16 * 1024 * 1024,
-            requestTimeout: 2000,
+            requestTimeout: undefined,
             production: false
         }
     },
@@ -256,10 +256,12 @@ module.exports = $trait ({
             context.setCode (500).write ('Starting up...').end ()
             return
         }
-        
+
+        context.timeout = this.config.requestTimeout
+
         var result = new AndrogenePromise (resolve => { $global.$http = context
                                                         resolve (this.callAPIHandler ()
-                                                                     .timeout (this.config.requestTimeout)) })
+                                                                     .timeout (context.timeout)) })
                         .then (this.writeResult,
                                this.writeError)
 
@@ -346,6 +348,12 @@ module.exports = $trait ({
 
 /*  REQUEST PROCESSING PRIMITIVES
     ------------------------------------------------------------------------ */
+
+    timeout (ms) {
+        $http.timeout = ms },
+
+    noTimeout () {
+        $http.timeout = undefined },
 
     interlocked (then) {
                     return _.interlocked (releaseLock => { _.onAfter ($http, 'end', releaseLock); then () }) },

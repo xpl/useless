@@ -188,7 +188,7 @@ __.delays = function (ms) {
 
 $mixin (Promise, {
     delay:              function (ms) { return this.then (__.delays (ms)) },
-    timeout:            function (ms) { return this.race (__.delay (ms).reject (new TimeoutError ())) },
+    timeout:            function (ms) { return (ms === undefined) ? this : this.race (__.delay (ms).reject (new TimeoutError ())) },
     now:     $property (function (  ) { return this.timeout (0) }) })
 
 

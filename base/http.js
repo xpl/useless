@@ -42,6 +42,11 @@ $global.Http = $singleton (Component, {
             /*  Local state (will be initialized at Promise construction) */
 
                 let xhr, abort
+                let progress = _.observable (0)
+
+                if (cfg.progress) {
+                    progress (cfg.progress)
+                }
 
             /*  returned Promise     */
 
@@ -69,10 +74,7 @@ $global.Http = $singleton (Component, {
 
                     /*  Bind events
                      */
-                    if (cfg.progress) {
-                        xhr.onprogress = Http.progressCallbackWithSimulation (cfg.progress)
-                    }
-
+                    xhr.onprogress = Http.progressCallbackWithSimulation (progress)
                     xhr.onload =
                     xhr.onerror = () => {
 
@@ -102,15 +104,20 @@ $global.Http = $singleton (Component, {
 
                  })
 
-            /*  Publish some local state as properties of the returned Promise */
+            /*  Publish some additional methods as properties of the returned Promise */
 
-                return _.extend (p, { xhr: xhr, abort: abort }) },
+                return _.extend (p, {
 
-    progressCallbackWithSimulation (progress) { let simulated = 0
+                    abort: abort,
+                    progress (accept) { progress (accept); return this }
+                }) 
+            },
 
-                                                progress (0)
-        return e => { if (e.lengthComputable) { progress (e.loaded / e.total) }
-                                         else { progress (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
+    progressCallbackWithSimulation (accept) { let simulated = 0
+
+                                                accept (0)
+        return e => { if (e.lengthComputable) { accept (e.loaded / e.total) }
+                                         else { accept (simulated = ((simulated += 0.1) > 1) ? 0 : simulated) } } },
 })
 
 /*  An example of custom API layer over Http:

@@ -21,6 +21,7 @@ module.exports = $trait ({
     /*  Sends a message to connected peers via WebSocket
      */
     messageToPeers (obj, filterPredicate) {
+
         var msg = JSON.stringify (obj)
         var peers = (filterPredicate && this.peers.filter (peer => filterPredicate (peer.user))) || this.peers
 

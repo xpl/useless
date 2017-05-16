@@ -206,11 +206,9 @@ _.extend (log, {
 
         /*  Nuts & guts
          */
-        write: $restArg (_.bindable (function () { var writeBackend = log.writeBackend ()
+        processArguments (args) {
 
-            log.impl.numWrites++
-
-            var args   = _.asArray (arguments)
+            var writeBackend = log.writeBackend ()
             var config = log.impl.configure ([{ indent: writeBackend.indent || 0 }].concat (log.impl.configStack))
 
             var runs = _.reduce2 (
@@ -252,7 +250,8 @@ _.extend (log, {
             var where           = config.where || log.impl.findWhere (new StackTracey ()) // @hide
             var indentation     = (config.indentPattern || '\t').repeats (config.indent)
 
-            writeBackend ({
+            return {
+
                 lines:         lines,
                 config:        config,
                 color:         config.color,
@@ -265,7 +264,18 @@ _.extend (log, {
                 text:          totalText,
                 codeLocation:  (config.location && log.impl.location (where)) || '',
                 trailNewlines: trailNewlines || '',
-                where:         (config.location && where) || undefined })
+                where:         (config.location && where) || undefined
+            }
+        },
+
+        write: $restArg (_.bindable (function () {
+
+            log.impl.numWrites++
+
+            const args = _.asArray (arguments)
+            const params = log.impl.processArguments (args) // @hide
+
+            log.writeBackend () (params)
 
             return _.find (args, _.not (_.isTypeOf.$ (log.Config)))
         })),
