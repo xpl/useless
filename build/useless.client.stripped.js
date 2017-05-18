@@ -5175,7 +5175,7 @@
         };
         __.parallelEach = __.map;
         __.seq = function (arr) {
-            return _.reduce2(arr, __.then);
+            return _.reduce2(undefined, arr, __.then);
         };
         __.all = function (arr) {
             return Promise.all(_.map(arr, __));
@@ -5611,10 +5611,11 @@
             }),
             callChainMethod: function callChainMethod(name) {
                 var self = this;
-                return __.seq(_.filter2(this.constructor.$traits || [], function (Trait) {
+                var methods = _.filter2(this.constructor.$traits || [], function (Trait) {
                     var method = Trait.prototype[name];
                     return method && method.bind(self) || false;
-                }));
+                });
+                return __.seq(methods);
             },
             _beforeInit: function _beforeInit() {
                 if (this.initialized.already) {

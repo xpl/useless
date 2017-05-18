@@ -1056,10 +1056,23 @@ $global.Component = $prototype ({
     /*  Arranges methods defined in $traits in chains and evals them
      */
     callChainMethod: function (name) { var self = this
-        return __.seq (
-                _.filter2 (this.constructor.$traits || [], function (Trait) {
-                                                            var method = Trait.prototype[name]
-                                                            return (method && method.bind (self)) || false })) },
+
+        //console.log ('callChainMethod', this.constructor.$meta.name, name)
+
+        const methods = _.filter2 (this.constructor.$traits || [], function (Trait) {
+
+                                                                        var method = Trait.prototype[name]
+
+                                                                        // if (method) {
+                                                                        //     return (...args) => {
+                                                                        //         console.log ('Calling', Trait.$meta.name, name)
+                                                                        //         return method.call (self, ...args)
+                                                                        //     }
+                                                                        // }
+
+                                                                        return (method && method.bind (self)) || false })
+
+        return __.seq (methods) },
 
     /*  Lifecycle
      */

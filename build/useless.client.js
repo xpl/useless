@@ -8204,6 +8204,8 @@ _.tests['Promise+'] = {
         $assert(__.seq([123, 333]), 333);
         $assert(__.seq([123, _.constant(333)]), 333);
 
+        $assert(__.seq([_.constant(333)]), 333);
+
         return [__.seq([Promise.resolve(123), Promise.resolve(333)]).assert(333), __.seq([123, __.constant(333)]).assert(333), __.seq([123, __.rejects('foo')]).assertRejected('foo'), __.seq([123, __.delays(0), _.appends('bar')]).assert('123bar')];
     },
 
@@ -8611,7 +8613,7 @@ __.each = function (obj, fn) {
 __.parallelEach = __.map;
 
 __.seq = function (arr) {
-    return _.reduce2(arr, __.then);
+    return _.reduce2(undefined, arr, __.then);
 };
 
 __.all = function (arr) {
@@ -10062,10 +10064,24 @@ $global.Component = $prototype({
      */
     callChainMethod: function callChainMethod(name) {
         var self = this;
-        return __.seq(_.filter2(this.constructor.$traits || [], function (Trait) {
+
+        //console.log ('callChainMethod', this.constructor.$meta.name, name)
+
+        var methods = _.filter2(this.constructor.$traits || [], function (Trait) {
+
             var method = Trait.prototype[name];
+
+            // if (method) {
+            //     return (...args) => {
+            //         console.log ('Calling', Trait.$meta.name, name)
+            //         return method.call (self, ...args)
+            //     }
+            // }
+
             return method && method.bind(self) || false;
-        }));
+        });
+
+        return __.seq(methods);
     },
 
     /*  Lifecycle

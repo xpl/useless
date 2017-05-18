@@ -75,6 +75,8 @@ _.tests['Promise+'] = {
                         $assert (__.seq ([123, 333]), 333)
                         $assert (__.seq ([123, _.constant (333)]), 333)
 
+                        $assert (__.seq ([_.constant (333)]), 333)
+
                         return [
                             __.seq ([Promise.resolve (123), Promise.resolve (333)]).assert (333),
                             __.seq ([123, __.constant (333)]).assert (333),
@@ -375,7 +377,7 @@ __.each = function (obj, fn) {
 __.parallelEach = __.map
 
 __.seq = function (arr) {
-            return _.reduce2 (arr, __.then) }
+            return _.reduce2 (undefined, arr, __.then) }
 
 __.all = function (arr) {
             return Promise.all (_.map (arr, __)) }
