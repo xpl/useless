@@ -53,7 +53,9 @@
 
     switch ($platform.engine) {
         case 'node':
-            require ('process').on ('uncaughtException', globalUncaughtExceptionHandler); break;
+            require ('process').on ('uncaughtException',  globalUncaughtExceptionHandler);
+            require ('process').on ('unhandledRejection', globalUncaughtExceptionHandler);
+            break;
 
         case 'browser':
             window.addEventListener ('error', function (e) {

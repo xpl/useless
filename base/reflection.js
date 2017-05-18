@@ -71,7 +71,7 @@ Error.prototype[Symbol.for ('String.ify')] = function (stringify) {
 
         return ('[EXCEPTION] ' + why +
 
-                (this.notMatching && ([].concat (this.notMatching).map (x => '\t' + stringify (x)).join ('\n') + '\n\n') || '') +
+                (this.notMatching && ([].concat (this.notMatching).map (x => '\t' + stringify.noPretty (x)).join ('\n') + '\n\n') || '') +
 
             '\n\n') + stringify (stack) + '\n' }
 
