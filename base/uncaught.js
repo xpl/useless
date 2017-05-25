@@ -58,6 +58,12 @@
             break;
 
         case 'browser':
+
+            window.addEventListener ('unhandledrejection', function (e) {
+                
+                globalUncaughtExceptionHandler (_.extend (new Error (e.reason), { stub: true }))
+            })
+
             window.addEventListener ('error', function (e) {
 
                 if (!e.message.includes (reThrownTag) &&
@@ -69,5 +75,6 @@
                     else { // emulate missing .error (that's Safari)
                         globalUncaughtExceptionHandler (_.extend (new Error (e.message), {
                             stub: true,
-                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } }) }
+                            stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno })) } } })
+    }
 }) ()

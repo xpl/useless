@@ -290,6 +290,8 @@ $global.BBox = $prototype ({
         else {
             _.extend (this, x) } },
 
+    isPointInside (pt) { return this.classifyPoint (pt).inside },
+
     classifyPoint: function (pt) {
         
         var sides = _.extend (

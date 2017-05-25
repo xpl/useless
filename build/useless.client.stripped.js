@@ -7253,6 +7253,9 @@
                     _.extend(this, x);
                 }
             },
+            isPointInside: function isPointInside(pt) {
+                return this.classifyPoint(pt).inside;
+            },
             classifyPoint: function classifyPoint(pt) {
                 var sides = _.extend(pt.x > this.right ? { right: true } : {}, pt.x < this.left ? { left: true } : {}, pt.y > this.bottom ? { bottom: true } : {}, pt.y < this.top ? { top: true } : {});
                 return _.extend(sides, !sides.left && !sides.right && !sides.bottom && !sides.top ? { inside: true } : {});
@@ -8890,8 +8893,8 @@
                         label: undefined,
                         items: [arr.first]
                     };
-                _.each(arr, function (x) {
-                    var label = pred(x);
+                _.each(arr, function (x, i) {
+                    var label = pred(x, i);
                     if (span.label != label && span.items.length) {
                         spans.push(span = {
                             label: label,

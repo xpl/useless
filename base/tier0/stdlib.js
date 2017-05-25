@@ -749,7 +749,7 @@ _.withTest (['stdlib', 'partition2'], function () {
                                             var spans = [],
                                                 span  = { label: undefined, items: [arr.first] }
 
-            _.each (arr, function (x) { var label = pred (x)
+            _.each (arr, function (x, i) { var label = pred (x, i)
                 if ((span.label != label) &&
                      span.items.length) { spans.push (span = { label: label, items: [x] }) }
                                    else { span.items.push (x) } })

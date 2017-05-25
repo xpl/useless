@@ -43,7 +43,7 @@
 
                         globalAsyncContext = asyncContext
 
-                        try       { return fn.apply (this, arguments) }
+                        try       { return fn.apply (this, arguments) } // @hide
                         catch (e) { _.globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
 
                     wrappers.push (wrapper)

@@ -1,11 +1,9 @@
 "use strict";
 
-/*  A sketch of a new test system based on Promises.
-    ======================================================================== */
-
 (function () {
 
     const _ = require ('underscore')
+    const O = Object
 
     $mixin (Promise, {
 
@@ -70,62 +68,95 @@
                         try       { var x = fn.apply (this, arguments); pop (); return x } // @hide
                         catch (e) {                                     pop (); throw  e } } },
 
-        /*  TODO: current impl does not account error doubling (solved by state.visited in printEvents)
-         */ 
-        numEvents: $memoized ($property (function () {
-                                                return _.reduce2 ({ log: 0, errors: 0 }, this.eventLog, function (sum, e) {
+        stackTracey: function (where) {
 
-                                                    var n = ((e instanceof AndrogeneProcessContext) ? e.numEvents :
-                                                            ((e instanceof Error)                   ? { errors: 1 } :
-                                                                                                      { log: 1 }))
-                                                    sum.all = (sum.errors += (n.errors || 0)) +
-                                                              (sum.log    += (n.log    || 0))
+            return new StackTracey (where).filter ((e, i) => !(e.line === 5)) // Babeled sources produce stacktraces with a glitch, fast-fix for it
+        },
 
-                                                    return sum }) })),
+        report (state = {}) {
 
-        printLog: function (state) { state = state || {}
-                        if (state.verbose || (this.numEvents.all > 0)) {
-                            this.printWhere (state)
-                            this.printEvents (state) } },
+            const { indent = 0 } = state
 
-        printWhere: function (state) { var indent = (state && state.indent) || 0
+            const head = this.reportLocation (state)
+            const body = this.reportContents (O.assign ({}, state, { indent: indent + ((head.length === 0) ? 0 : 1) }))
+
+            return (state.verbose || (body.length > 0))
+                        ? [...head, ...body]
+                        : []
+        },
+
+    /*  TODO: deforestration (linearization) of redundant nesting   */
+    
+        reportLocation: function (state = {}) {
 
             var color = log.color[{ 'fulfilled': 'green', 'pending': 'orange', 'rejected': 'red', '': 'purple' }[this.state || '']]
 
-            log.margin ()
+            const stack = this.stackTracey (this.where)
+                                .slice (3)
+                                .clean
+                                .filter ((e, i) => (!e.hide && !e.native && e.sourceLine))
+                                .reverse ()
 
-            for (var loc of new StackTracey (this.where)
-                                    .slice (3)
-                                    .clean
-                                    .filter ((e, i) => (!e.hide && !e.native && e.sourceLine))
-                                    .reverse ()) {
-                
-                log.write (color, log.config ({ indent: indent, location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) }
+            return stack.map (loc => ({ type: 'location', data: this.log (color, log.config ({ indent: state.indent || 0, location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) }))
+        },
 
-            log.margin () },
+        reportContents (state = {}) {
 
-        printEvents: function (state) { var state = state || {},
-                                            indent  = state.indent || 0,
-                                            visited = state.visited || new Set () // contains errors already printed, to reduce clutter
-            
-            if (state.verbose || (this.numEvents.all > 0)) {
+            const { indent = 0, visited = new Set () } = state
 
-                log.margin ()
-                
-                for (var e of this.eventLog) {
-                    if (e instanceof AndrogeneProcessContext) {
-                        if (e.eventLog.length) {
-                            e.printLog ({ indent: indent + 1, visited: visited, verbose: state.verbose }) } }
-                    else if (e instanceof Error) {
-                        if (!visited.has (e)) {
-                             visited.add (e)
-                             log.boldRed (log.indent (indent + 1), e) } }
-                    else {
-                        log.write.apply (null, [log.indent (indent + 1)].concat (e)) } }
+            const report = []
 
-                log.margin () }
+            return this.eventLog
 
-            return this.numEvents } })
+                    .filter (x => !visited.has (x))
+                    .each (x => visited.add (x))
+
+                    .map (x => ((x instanceof AndrogeneProcessContext)
+                                        ? x.report (O.assign (state, { visited })) :
+                               
+                               ((x instanceof Error)
+                                        ? this.reportError (x, state)
+
+                                // else
+                                        : [ { type: 'log', data: this.log (log.indent (indent), ...(x || [])) } ] )))
+
+                    .reduce ((a, b) => [...a, ...b], [])
+        },
+
+        reportError (e, { indent = 0 }) {
+
+            const loc = this.stackTracey (e).withSource (0)
+
+            return [
+                { type: 'location', data: this.log (log.config ({ indent: indent, color: log.color ('boldRed'), location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) },
+                { type: 'error', data: this.log (log.config ({ indent: indent + 1, color: log.color ('bright') }), '[EXCEPTION] ' + e.message) }
+            ]
+        },
+
+        log (...args) {
+
+            return log.impl.processArguments (args)
+        },
+
+        displayReport (report = this.report ()) {
+
+            const blocks = _.partition2 (report, ({ type, data: { lines, config: { indent } } }, i) => // generates unique 'block id'
+
+                                                          (type + indent)            // groups entries by type/indent
+                                                        + ((lines.length > 1) && i)  // separates multiline log items
+                                        ) 
+
+            for (const block of blocks) {
+
+                for (const { data } of block) {
+
+                    log.writeBackend () (data)
+                }
+
+                log.newline ()
+            }
+        }
+    })
 
 /*  ------------------------------------------------------------------------ */
 
@@ -191,130 +222,6 @@
                 return ((x instanceof AndrogenePromise) ? x :
                        ((x instanceof Function)         ? new AndrogenePromise (function (resolve) { resolve (x ()) }) : // @hide
                                                           AndrogenePromise.resolve (x))) } }
-
-/*  ------------------------------------------------------------------------ */
-
-    var assertion = function (fn) {
-                        return function () {
-                            return AndrogenePromise.eval (fn) } } // @hide
-
-/*  ------------------------------------------------------------------------ */
-
-    var assert = assertion (function (a, b) {
-                                if (a !== b) {
-                                    throw new AndrogeneError () } })
-
-    var assertEveryCalled = assertion (function (acceptCallbacks) {
-        
-        var promises = [],
-            callbacks = []
-
-        for (var i = 0, n = acceptCallbacks.length; i < n; i++) {
-            promises.push (new Promise (function (resolve) {
-                callbacks.push (resolve.$ (true)) })) }
-
-        acceptCallbacks.apply (this, callbacks)
-
-        return Promise.all (promises) })
-
-/*  ------------------------------------------------------------------------ */
-
-    var test = assertion (function () {
-
-        //log.ww ('Ololo')
-        //throw new Error ('pizda')
-        //log.ii ('Foo')
-
-        //assert (2 + 2, 5)
-        //assert (2 + 2, 6).shouldFail
-
-        return __('foo').then (_.appends ('bar')).shouldBe ('foobr')
-    })
-
-    var chainTest = assertion (function () {
-
-        return new Promise (function (resolve) {
-
-            log.i ('example log message #1');
-
-            new Promise (function (resolve) {
-                log.i ('example log message #2')
-                resolve ()
-
-            }).then (function () {
-                log.i ('example log message #3')
-                resolve ()
-            })
-
-        }).then (function () {
-            log.i ('example log message #4')
-            some_undefined_function ()
-        })
-    })
-
-    var treeLogTest = assertion (function () {
-
-        var b = new Promise (function (resolve) {
-                                log.i ('A')
-                                resolve ('A') })
-
-                    .then (function (_A) {
-                        log.i ('B')
-                        return 'B'
-                    })
-
-        return new Promise (function (resolve) {
-            log.i ('C')
-            resolve ('C')
-
-        }).then (function (_С) {
-
-            log.i ('D')
-
-            return b.then (function (_D) {
-                log.i ('E')
-                return 'E' })
-
-        }).then (function (_E) {
-            log.i ('F')
-            return 'F'
-        })
-    })
-
-    var raceTest = assertion (function () {
-        return __('foo')
-                    .then (_.appends ('bar'))
-                    .delay (500)
-                    .log
-                    .then (function () { dasdsad () })
-                    .timeout (600)
-    })
-
-    var throwTest = assertion (function () {
-                                    throw new Error ('yo') })
-
-    /*  TODO: investigate why fails
-     */
-    var thenFunctionTest = assertion (function () {
-                                            return Promise.resolve ().then (function () { return function () { } })
-                                                .then (function (x) { console.log (x) }) })
-
-    var eachTest = assertion (function () {
-                                return __.each ([1,2,3], function (x) { log.i (x) }) })
-
-    // uncomment, then run "node test Androgene" to see output
-
-    /*_.tests['Androgene'] = function () {
-
-        var result = eachTest ()
-
-        return result.disarmAndrogene ().finally (function (e, x) {
-
-                                            result.processContext.root.printLog ({ verbose: true })
-                                            log.margin ()
-
-                                            if (e) { throw e } })
-    }*/
 
 /*  ------------------------------------------------------------------------ */
 

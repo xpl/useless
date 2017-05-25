@@ -8,7 +8,8 @@ var http      = require ('http'),
     fs        = require ('./base/fs'),
     url       = require ('url'),
     path      = require ('path'),
-    stringify = require ('string.ify')
+    stringify = require ('string.ify'),
+    bullet    = require ('string.bullet')
 
 /*  ------------------------------------------------------------------------ */
 
@@ -239,7 +240,7 @@ module.exports = $trait ({
          */
         return new Promise (then => {
                                 this.httpServer = http.createServer ((request, response) => {
-                                                                            this.serveRequest (new this.HttpContext ({
+                                                                            this.serveRequest (new this.HttpContext ({ // @hide
                                                                                 request: request,
                                                                                 response: response })) })
 
@@ -269,21 +270,26 @@ module.exports = $trait ({
                 .disarmAndrogene ()
                 .finally ((e, x) => {
 
-                        result.processContext.within (() => context.writeHead ().end ()) () // finalizes request
+                    result.processContext.within (() => context.writeHead ().end ()) () // finalizes request
 
-                        log (e ? log.color.red : (context.method === 'GET'
-                               ? log.color.green
-                               : log.color.pink), context.method.pad (4), ': ', e ? log.color.boldRed
-                                                                                  : log.color.bright, context.request.url)
+                    log (e ? log.color.red : (context.method === 'GET'
+                           ? log.color.green
+                           : log.color.pink), context.method.pad (4), ': ', e ? log.color.boldRed
+                                                                              : log.color.bright, context.request.url)
 
-                        log.withConfig (log.config ({ indentPattern: '    ' }), () => {
-                            if ((result.processContext.root.printEvents ({ verbose: e ? true : false }).all > 0) &&
-                                (x !== undefined)) {
-                                    log.margin ()
-                                    log.green (log.indent (1), log.thinLine)
-                                    log.margin ()
-                                    log.gg (log.indent (1), _.isString (x) ? x.limitedTo (120) : x, '\n') } }) })
+                    log.withConfig (log.config ({ indentPattern: '    ', indent: 1 }), () => {
 
+                        const androgene = result.processContext.root
+                        const report = androgene.report ({ verbose: e ? true : false })
+
+                        if (report.length) {
+
+                            log.newline ()
+                            
+                            androgene.displayReport (report)
+                        }
+                    })
+                })
                 .catch (function (e) {
                     log.ee (log.config ({ indent: 1, location: false }), '\n', e)
                     throw e }) },
@@ -314,7 +320,10 @@ module.exports = $trait ({
                          $http.headers['Content-Type'] = $http.mime.guess (
                                                             x = ($http.isJSONAPI ? { success: true, value : x } : x)) }
                     $http.writeHead ()
-                         .write (x) }
+                         .write (x)
+
+                    log.gg (_.isString (x) ? x.limitedTo (120) : x, '\n')
+                }
 
                 return x },
 
@@ -363,8 +372,7 @@ module.exports = $trait ({
 
     jsVariable (rvalue, lvalue) {
                     $http.setHeaders ({ 'Content-Type': $http.mime.javascript })
-                    return 'var ' + rvalue +
-                            ' = ' + stringify.configure ({ pure: true, pretty: true }) (lvalue) },
+                    return bullet ('var ' + rvalue + ' = ', stringify.configure ({ pure: true, pretty: true }) (lvalue)) },
 
     receiveJSON () {
             return $http.receiveData ()

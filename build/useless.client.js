@@ -8550,7 +8550,7 @@ function () {
 
         all: $property(function () {
             return Promise.all(this.pending);
-        }) });
+        }) }); // @hide
 
     /*  ------------------------------------------------------------------------ */
 
@@ -8608,7 +8608,8 @@ __.each = function (obj, fn) {
     return __.then(obj, function (obj) {
         return new Promise(function (complete, whoops) {
             _.cps.each(obj, function (x, i, then) {
-                Promise.coerce(fn(x, i)).then(then).catch(whoops);
+                Promise.coerce(fn(x, i)) // @hide
+                .then(then).catch(whoops);
             }, complete);
         });
     });
@@ -8622,11 +8623,11 @@ __.seq = function (arr) {
 
 __.all = function (arr) {
     return Promise.all(_.map(arr, __));
-};
+}; // @hide
 
 __.race = function (arr) {
     return Promise.race(_.map(arr, __));
-};
+}; // @hide
 
 /*  ------------------------------------------------------------------------ */
 
@@ -8661,6 +8662,7 @@ $mixin(Function, {
             var self = this,
                 args = arguments;
             return new Promise(function (resolve, reject) {
+                // @hide
                 f.apply(self, _.asArray(args).concat(function (err, what) {
                     if (err) {
                         reject(err);
@@ -12821,6 +12823,11 @@ $global.BBox = $prototype({
         }
     },
 
+    isPointInside: function isPointInside(pt) {
+        return this.classifyPoint(pt).inside;
+    },
+
+
     classifyPoint: function classifyPoint(pt) {
 
         var sides = _.extend(pt.x > this.right ? { right: true } : {}, pt.x < this.left ? { left: true } : {}, pt.y > this.bottom ? { bottom: true } : {}, pt.y < this.top ? { top: true } : {});
@@ -15385,8 +15392,8 @@ _.withTest(['stdlib', 'partition2'], function () {
         var spans = [],
             span = { label: undefined, items: [arr.first] };
 
-        _.each(arr, function (x) {
-            var label = pred(x);
+        _.each(arr, function (x, i) {
+            var label = pred(x, i);
             if (span.label != label && span.items.length) {
                 spans.push(span = { label: label, items: [x] });
             } else {

@@ -327,7 +327,7 @@ _.deferTest (['Promise+', '_.scatter with pooling'], function () {
 
 
             all: $property (function () {
-                                return Promise.all (this.pending) }) })
+                                return Promise.all (this.pending) }) }) // @hide
 
     /*  ------------------------------------------------------------------------ */
 
@@ -370,7 +370,7 @@ __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
                     return new Promise (function (complete, whoops) {
                                         _.cps.each (obj, function (x, i, then) {
-                                                            Promise.coerce (fn (x, i))
+                                                            Promise.coerce (fn (x, i)) // @hide
                                                                    .then (then)
                                                                    .catch (whoops) }, complete) }) }) }
 
@@ -380,10 +380,10 @@ __.seq = function (arr) {
             return _.reduce2 (undefined, arr, __.then) }
 
 __.all = function (arr) {
-            return Promise.all (_.map (arr, __)) }
+            return Promise.all (_.map (arr, __)) } // @hide
 
 __.race = function (arr) {
-            return Promise.race (_.map (arr, __)) }
+            return Promise.race (_.map (arr, __)) } // @hide
 
 /*  ------------------------------------------------------------------------ */
 
@@ -410,7 +410,7 @@ $mixin (Function, {
     promisify: $hidden ($property (
                             function () {            var f    = this
                                 return function () { var self = this, args = arguments
-                                    return new Promise (function (resolve, reject) {
+                                    return new Promise (function (resolve, reject) { // @hide
                                         f.apply (self, _.asArray (args).concat (function (err, what) {
                                                                                       if (err) { reject (err) }
                                                                                                  resolve (what) })) }) } })) })

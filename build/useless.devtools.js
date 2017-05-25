@@ -4557,8 +4557,8 @@ var _configure = function _configure(cfg) {
             return state.pure ? x.getTime() : "📅  " + x.toString();
         } else if (state.parents.has(x)) {
             return state.pure ? undefined : '<cyclic>';
-        } else if (state.siblings.has(x)) {
-            return state.pure ? undefined : '<ref:' + state.siblings.get(x) + '>';
+        } else if (!state.pure && state.siblings.has(x)) {
+            return '<ref:' + state.siblings.get(x) + '>';
         } else if (x && typeof Symbol !== 'undefined' && (customFormat = x[Symbol.for('String.ify')]) && typeof (customFormat = customFormat.call(x, stringify.configure(state))) === 'string') {
 
             return customFormat;
@@ -6564,6 +6564,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             break;
 
         case 'browser':
+
+            window.addEventListener('unhandledrejection', function (e) {
+
+                globalUncaughtExceptionHandler(_.extend(new Error(e.reason), { stub: true }));
+            });
+
             window.addEventListener('error', function (e) {
 
                 if (!e.message.includes(reThrownTag) && !(e.error === null && e.lineno === 0 && e.colno === 0 && e.filename === '')) {
@@ -6578,7 +6584,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                             stack: 'at ' + e.filename + ':' + e.lineno + ':' + e.colno }));
                     }
                 }
-            });}
+            });
+    }
 })();
 
 /***/ }),
@@ -6645,7 +6652,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
                     try {
                         return fn.apply(this, arguments);
-                    } catch (e) {
+                    } // @hide
+                    catch (e) {
                         _.globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
                     }
                 };

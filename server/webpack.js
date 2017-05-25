@@ -248,7 +248,7 @@ module.exports = $trait ({
 
             externals: config.externals, // ignores them
 
-            plugins: [  ...(this.isWebpackHotReloadEnabled ? [new webpack.HotModuleReplacementPlugin ()] : []),
+            plugins: [  ...(this.isWebpackHotReloadEnabled ? [new webpack.HotModuleReplacementPlugin (), new webpack.NamedModulesPlugin ()] : []),
                         ...input.commons.map (def => new CommonsChunkPlugin (def)),
                         ...(this.shouldExtractStyles ? [new ExtractTextPlugin ('[name].css')] : []),
 
