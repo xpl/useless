@@ -57,7 +57,7 @@ Panic.widget = $singleton (Component, {
 
 		try {
 			$(window).resize (this.layout).resize ()
-			this.modal.enableScrollFaders ({ scroller: this.modalBody })
+			this.modal.enablePanicScrollFaders ({ scroller: this.modalBody })
 			$(document).keydown (this.$ (function (e) { if (e.keyCode === 27) { this.close () } })) }
 
 		catch (e) {
@@ -230,13 +230,13 @@ Panic.widget = $singleton (Component, {
 				return dom }))) ] } })
 
 $.fn.extend ({
-	enableScrollFaders: function (cfg) {
+	enablePanicScrollFaders: function (cfg) {
 		var horizontal = cfg && cfg.horizontal
 		var faderTop, faderBottom, scroller = this.find ((cfg && cfg.scroller) || '.scroller')
 
 		this.css ({ position: 'relative' })
-		this.append (faderTop = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'left' : 'top') + '"></div>'))
-			.append (faderBottom = $('<div class="scroll-fader scroll-fader-' + (horizontal ? 'right' : 'bottom') + '"></div>'))
+		this.append (faderTop = $('<div class="panic-scroll-fader panic-scroll-fader-' + (horizontal ? 'left' : 'top') + '"></div>'))
+			.append (faderBottom = $('<div class="panic-scroll-fader panic-scroll-fader-' + (horizontal ? 'right' : 'bottom') + '"></div>'))
 		
 		scroller.scroll (function () {
 				var scrollTop = horizontal ? $(this).scrollLeft () : $(this).scrollTop (),

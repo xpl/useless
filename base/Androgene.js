@@ -28,7 +28,8 @@
         constructor: function () {
 
             this.eventLog = []
-            this.eventAdded = _.trigger ()
+            this.numLogMessages = 0
+            this.numErrors = 0
             this.where = new Error () // @hide
             this.state = 'pending'
 
@@ -49,10 +50,7 @@
             
             var logHook = function () {
 
-                const event = [log.config ({ where: (new StackTracey ()).withSource (5) })].concat (_.initial (arguments))
-
-                context.eventLog.push (event)
-                context.eventAdded (event)
+                context.addEvent ([log.config ({ where: (new StackTracey ()).withSource (5) })].concat (_.initial (arguments)))
 
                 return _.find (arguments, _.not (_.instanceOf (log.Config))) }
             
@@ -61,6 +59,22 @@
             return function /* pop */ () {  AndrogeneProcessContext.current     = prev
                                             Promise = PrevPromise
                                             log.impl.write.off (logHook) } }),
+
+        addEvent (e) {
+
+            for (let ctx = this; ctx; ctx = ctx.parent) {
+
+                if (e instanceof Error) { ctx.numErrors++ }
+                else if (Array.isArray (e)) { ctx.numLogMessages++ }
+            }
+
+            this.eventLog.push (e)
+        },
+
+        get hasSomethingToReport () {
+
+            return (this.numErrors + this.numLogMessages) > 0
+        },
 
         within: function (fn) { var self = this
                     return function () {
@@ -182,7 +196,7 @@
                     var resolve, reject
                         super (function (resolve_, reject_) {
                             resolve = resolve_
-                            reject  = function (e) { processContext.eventLog.push (e); reject_ (e) } })
+                            reject  = function (e) { processContext.addEvent (e); reject_ (e) } })
 
                     this.processContext = processContext
 

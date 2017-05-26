@@ -20,9 +20,9 @@
 
 .i-am-busy { -webkit-animation: pulse-opacity 1s ease-in infinite; animation: pulse-opacity 1s ease-in infinite; pointer-events: none; }
 
-.panic-modal .scroll-fader-top, .scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }
-.panic-modal .scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }
-.panic-modal .scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }
+.panic-modal .panic-scroll-fader-top, .panic-scroll-fader-bottom { left: 42px; right: 42px; position: absolute; height: 20px; pointer-events: none; }
+.panic-modal .panic-scroll-fader-top { top: 36px; background: -webkit-linear-gradient(bottom, rgba(255,255,255,0), rgba(255,255,255,1)); }
+.panic-modal .panic-scroll-fader-bottom { bottom: 128px; background: -webkit-linear-gradient(top, rgba(255,255,255,0), rgba(255,255,255,1)); }
 
 .panic-modal-appear {
   -webkit-animation: bombo-jumbo 0.25s cubic-bezier(1,.03,.48,1);

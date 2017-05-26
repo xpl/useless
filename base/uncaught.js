@@ -59,10 +59,10 @@
 
         case 'browser':
 
-            window.addEventListener ('unhandledrejection', function (e) {
+            // window.addEventListener ('unhandledrejection', function (e) {
                 
-                globalUncaughtExceptionHandler (_.extend (new Error (e.reason), { stub: true }))
-            })
+            //     globalUncaughtExceptionHandler (_.extend (new Error (e.reason), { stub: true }))
+            // })
 
             window.addEventListener ('error', function (e) {
 

@@ -277,18 +277,16 @@ module.exports = $trait ({
                            : log.color.pink), context.method.pad (4), ': ', e ? log.color.boldRed
                                                                               : log.color.bright, context.request.url)
 
-                    log.withConfig (log.config ({ indentPattern: '    ', indent: 1 }), () => {
+                    const androgene = result.processContext.root
 
-                        const androgene = result.processContext.root
-                        const report = androgene.report ({ verbose: e ? true : false })
+                    if (androgene.hasSomethingToReport) {
 
-                        if (report.length) {
+                        log.withConfig (log.config ({ indentPattern: '    ', indent: 1 }), () => {
 
                             log.newline ()
-                            
-                            androgene.displayReport (report)
-                        }
-                    })
+                            androgene.displayReport (androgene.report ({ verbose: e ? true : false }))
+                        })
+                    }
                 })
                 .catch (function (e) {
                     log.ee (log.config ({ indent: 1, location: false }), '\n', e)
@@ -322,7 +320,9 @@ module.exports = $trait ({
                     $http.writeHead ()
                          .write (x)
 
-                    log.gg (_.isString (x) ? x.limitedTo (120) : x, '\n')
+                    if (AndrogeneProcessContext.current.root.hasSomethingToReport) {
+                        log.gg (_.isString (x) ? x.limitedTo (120) : x, '\n')
+                    }
                 }
 
                 return x },
