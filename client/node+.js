@@ -232,21 +232,15 @@ var is = function (tag) { return function () { return this.tagName === tag } }
     /*  Events
         ======================================================================== */
 
-        on (e, fn) { this.addEventListener (e, fn); return this },
+        on (event, fn) { this.addEventListener (event, fn); return this },
 
-        once (e) {
-
-            let finalize,
-                finalized = false
+        once (event) {
             
-            const p = new Channel (resolve => { // use Channel instead of Promise because Channel is synchronous, while Promise's "then" is called on next event loop iteration
-                                        this.addEventListener (e, finalize =
-                                            e => {
-                                                if (!finalized) {
-                                                    finalized = true
-                                                    this.removeEventListener (e, finalize)
-                                                    resolve (e) } }) })
-            p.finalize = finalize
+            const p = new Channel () // use Channel instead of Promise because Channel is synchronous, while Promise's "then" is called on next event loop iteration
+            
+            this.addEventListener (event, p.resolve = p.resolve.bind (p))
+
+            p.finally (() => this.removeEventListener (event, p.resolve))
 
             return p
         },

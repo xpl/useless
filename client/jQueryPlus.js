@@ -162,123 +162,184 @@ _.extend ($, {
                                                       if (done) { done.call (this) } })) }
         return this },
 
-    /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
+    /*  Powerful drag & drop abstraction, perfectly compatible with touch devices.
+        Documentation pending.
+
+            $(handle).drag ({
+
+                start (positionRelativeToDelegateTarget, event) -> memo|false,
+                move  (memo, offsetRelativeToInitialEvent, positionRelativeToDelegateTarget, event),
+                end   (memo, offsetRelativeToInitialEvent, event)
+
+            })
 
         Simplest example:
 
             $(handle).drag ({
                 start: function ()             { return this.leftTop () },                          // returns 'memo'
-                move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } }) })
+                move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) }
+            })
+           
      */
     drag: (function () {
 
         /*  Helper routine
          */
-        var translateTouchEvent = function (e, desiredTarget) {
-            return (e.originalEvent.touches &&
-                    _.find (e.originalEvent.touches, function (touch) {
-                                                        return $(touch.target).hasParent (desiredTarget) })) || e }
+        const translateTouchEvent = (e, desiredTarget) =>
+                                        e && (_.find (e.originalEvent.touches || [],
+                                                        touch => $(touch.target).hasParent (desiredTarget)) || e)
+
         /*  Impl
          */
-        return function (cfg) {
+        return function (cfg) { this[0].dragConfig = cfg
 
-            this[0].dragConfig = cfg
+            const {
 
-            if (!$platform.touch && !window.__globalDragOverlay) {
-                 window.__globalDragOverlay =
-                     $('<div>').css ({
-                        display: 'none',
-                        position: 'fixed',
-                        top: 0, right: 0, bottom: 0, left: 0,
-                        zIndex: 999999 }).appendTo (document.body) }
+                context = this,
+                relativeTo = this,
+                callMoveAtStart = false,
+                longPress = $platform.touch,
+                minDelta = 0,
+                button = 1,
+                cursor = '',
+                cls = '',
 
-            var overlay = window.__globalDragOverlay
-            var button  = cfg.button || 1
+                _start = _.noop,
+                _move = _.noop, 
+                _end = _.noop,
+
+            } = cfg
+
+            const start = _start.bind (context),
+                  move = _move.bind (context),
+                  end = _end.bind (context)
+
+            const translatesTouchEvent = fn => e => fn (_.extended (e, translateTouchEvent (e, this[0])), e) // copy event, cuz on iPad it's re-used by browser
+
+            const track = ({ move = _.noop, end = _.noop, _end = end, _move = move }) => {
+
+                const target = $platform.touch
+                                    ? document.body
+                                    : (window.__globalDragOverlay ||
+                                      (window.__globalDragOverlay = N.div.attr ({ id: '__globalDragOverlay' }).css ({
+
+                                                                        display: 'none',
+                                                                        position: 'fixed',
+                                                                        top: 0, right: 0, bottom: 0, left: 0,
+                                                                        zIndex: 999999
+
+                                                                    }).appendTo (document.body)))
+                const dismount = () => $(target)
+                                        .css ((target === document.body) ? {} : { display: 'none' })
+                                        .off ('mouseup touchend',    end)
+                                        .off ('mousemove touchmove', move)
+                $(target)
+                    .css ((target === document.body) ? {} : { display: '', cursor })
+                    .on ('mousemove touchmove', move = translatesTouchEvent (move))
+                    .one ('mouseup touchend', end = translatesTouchEvent (e => (dismount (), _end (e))))
+
+                return { move, end }
+            }
+
+            var begin = translatesTouchEvent (initialEvent => {
+
+                this.addClass (cls)
                 
-            var begin = this.$ (function (initialEvent) { var relativeTo = (cfg.relativeTo || this)
+                if ($platform.touch || (initialEvent.which === button)) {
 
-                this.addClass (cfg.cls || '')
-                
-                if ($platform.touch || initialEvent.which === button) { var offset = relativeTo.offset (), memo = undefined
-                    
-                    if (!cfg.start || ((memo = cfg.start.call (cfg.context || this, new Vec2 (
-                            // position (relative to delegate target)
-                            initialEvent.pageX - offset.left,
-                            initialEvent.pageY - offset.top), initialEvent)) !== false)) /* one can cancel drag by returning false from 'start' */ {
-                        
-                        var abort = undefined, unbind = undefined, end = undefined
+                    const offset = Vec2.fromLeftTop (relativeTo.offset ()),
+                          initialPageXY = Vec2.xy (initialEvent.pageX, initialEvent.pageY),
+                          positionRelativeToDelegateTarget = initialPageXY.sub (offset)
 
-                        memo = _.clone (memo)
-
-                        var move = this.$ (function (e) {
-                            if ($platform.touch || e.which === button) {
-                                e.preventDefault ()
-                                var translatedEvent = translateTouchEvent (e, this[0])
-                                var offset = relativeTo.offset ()
-
-                                memo = cfg.move.call (cfg.context || this, memo, new Vec2 (
-                                    // offset (relative to initial event)
-                                    translatedEvent.pageX - initialEvent.pageX,
-                                    translatedEvent.pageY - initialEvent.pageY), new Vec2 (
-                                    // position (relative to delegate target)
-                                    translatedEvent.pageX - offset.left,
-                                    translatedEvent.pageY - offset.top),
-                                    // the event
-                                    translatedEvent) || memo }
-                            else {
-                                abort (e) } })
-
-                        unbind = function () { $(overlay || document.body)
-                                                .css (overlay ? { display: 'none' } : {})
-                                                .off ('mouseup touchend',    end)
-                                                .off ('mousemove touchmove', move) }
-
-                        end = this.$ (function (e) { unbind ()
+                    let memo = _.clone (start (positionRelativeToDelegateTarget, initialEvent)) // return 'false' to prevent drag
+                    if (memo !== false) {
                             
-                            if (cfg.end) { var translatedEvent = translateTouchEvent (e, this[0])
-                                cfg.end.call (cfg.context || this, memo, new Vec2 (
-                                    // offset (relative to initial event)
-                                    translatedEvent.pageX - initialEvent.pageX,
-                                    translatedEvent.pageY - initialEvent.pageY), translatedEvent) }
+                        const tracking = track ({
 
-                            this.removeClass (cfg.cls || '') })
+                            move: e => {
 
-                        abort = this.$ (function (e) { unbind (); end (e) })
+                                log.pp (e)
 
-                        $(overlay || document.body)
-                            .css (overlay ? { display: '', cursor: cfg.cursor || '' } : {})
-                            .on ('mousemove touchmove', move)
-                            .one ('mouseup touchend', end)
+                                if ($platform.touch || e.which === button) {
 
-                        if (cfg.callMoveAtStart) {
-                            cfg.move.call (cfg.context || this, memo, Vec2.zero, new Vec2 (
-                                // position (relative to delegate target)
-                                initialEvent.pageX - offset.left,
-                                initialEvent.pageY - offset.top),
-                                // the event
-                                initialEvent) } } } })
+                                    e.preventDefault ()
 
-            var touchstartListener = _.$ (this, function (e) {
-                var where = _.extend ({}, translateTouchEvent (e, this[0])) /* copy event, cuz on iPad it's re-used by browser */
-                if ($platform.touch && cfg.longPress) {
-                    var cancel = undefined
-                    var timeout = window.setTimeout (_.$ (this, function () {
-                        this.off ('touchmove touchend', cancel)
-                        begin (where) }), 300)
-                    cancel = this.$ (function () {
-                        window.clearTimeout (timeout)
-                        this.off ('touchmove touchend', cancel) })
-                    this.one ('touchmove touchend', cancel) }
-                else {
-                    begin (where)
-                    e.preventDefault ()
-                    e.stopPropagation () } })
+                                    const offset = Vec2.fromLeftTop (relativeTo.offset ()),
+                                          pageXY = Vec2.xy (e.pageX, e.pageY),
+                                          offsetRelativeToInitialEvent = pageXY.sub (initialPageXY),
+                                          positionRelativeToDelegateTarget = pageXY.sub (offset)
+                                    
+                                    memo = _.clone (move (memo, offsetRelativeToInitialEvent, positionRelativeToDelegateTarget, e)) || memo
 
-            this.on ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener)
+                                } else {
 
-            return _.extend (this, {
-                        cancel: this.$ (function () {
-                            this.off ($platform.touch ? 'touchstart' : 'mousedown', touchstartListener) }) }) } }) (),
+                                    tracking.end (e)
+                                }
+                            },
+
+                            end: e => {
+                                
+                                const offsetRelativeToInitialEvent = Vec2.xy (e.pageX, e.pageY).sub (initialPageXY)
+
+                                end (memo, offsetRelativeToInitialEvent, e)
+
+                                this.removeClass (cls)
+                            }
+                        })
+
+                        if (callMoveAtStart) {
+
+                            move (memo, Vec2.zero, positionRelativeToDelegateTarget, initialEvent)
+                        }
+                    }
+                }
+            })
+
+            let whereFirstTouch, minDeltaTracking
+
+            const entryPoint = translatesTouchEvent ((e, originalEvent) => {
+
+                // const where = Vec2.xy (e.clientX, e.clientY)
+
+                // if (whereFirstTouch === undefined) {
+                //     whereFirstTouch = where
+                //     minDeltaTracking = track ({ move: entryPoint })
+                // }
+
+                if (true) {//if (where.distance (whereFirstTouch) >= minDelta) {
+
+                    //minDeltaTracking.end ()
+
+                    if (longPress) {
+
+                        Promise.firstResolved ([
+
+                            this[0].once ('touchmove'),
+                            this[0].once ('touchend'),
+
+                            __.delays (300).then (begin.$ (originalEvent))
+                        ])
+
+                        // let cancel
+                        // const timeout = setTimeout (() => { cancel (); begin (originalEvent) }, 300)
+                        // this.one ('touchmove touchend', cancel = () => { this.off ('touchmove touchend', cancel); clearTimeout (timeout) })
+                    
+                    } else {
+
+                        begin (originalEvent)
+
+                        originalEvent.preventDefault ()
+                        originalEvent.stopPropagation ()
+                    }
+                }
+            })
+
+            this.on ($platform.touch ? 'touchstart' : 'mousedown', entryPoint)
+
+            return _.extend (this, { cancel () { this.off ($platform.touch ? 'touchstart' : 'mousedown', entryPoint) } })
+        }
+
+    }) (),
 
     /*  $(el).transform ({
                 translate: new Vec2 (a, b),

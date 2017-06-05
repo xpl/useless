@@ -293,8 +293,8 @@ UselessApp = $singleton (Component, {
      */
     api: function () { return {
         
-        '/':             this.file ('./static/index.html'),
-        '/static/:file': this.file ('./static'),            // directory
+        '/':             this.file.$ ('./static/index.html'),
+        '/static/:file': this.file.$ ('./static'),            // directory
     
         'hello-world':       () => { return "Hello world!"        }, // plain text
         'hello-world/json':  () => { return { foo: 42, bar: 777 } }, // JSON

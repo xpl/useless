@@ -1,15 +1,15 @@
 "use strict";
 
-const _  = require ('underscore')
-
-var http      = require ('http'),
-    util      = require ('./base/util'),
-    ass       = require ('./base/assertion_syntax'),
-    fs        = require ('./base/fs'),
-    url       = require ('url'),
-    path      = require ('path'),
-    stringify = require ('string.ify'),
-    bullet    = require ('string.bullet')
+const   _         = require ('underscore'),
+        http      = require ('http'),
+        util      = require ('./base/util'),
+        ass       = require ('./base/assertion_syntax'),
+        fs        = require ('./base/fs'),
+        url       = require ('url'),
+        path      = require ('path'),
+        stringify = require ('string.ify'),
+        bullet    = require ('string.bullet'),
+        O         = Object
 
 /*  ------------------------------------------------------------------------ */
 
@@ -20,7 +20,6 @@ StackTracey.isThirdParty.except (path => path.includes ('useless/server'))
 module.exports = $trait ({
 
     $depends: [require ('./api')],
-
 
 /*  ------------------------------------------------------------------------ */
 
@@ -33,17 +32,29 @@ module.exports = $trait ({
         }
     },
 
-
 /*  The $http thing prototype
     ------------------------------------------------------------------------ */
 
     HttpContext: $component ({
 
-        ForbiddenError: $property (function () {
-                                        return _.extend (new Error ('Forbidden (403)'), { httpErrorCode: 403 }) }),
+        $property: _.object (_.map ({
 
-        NotFoundError: $property (function () {
-                                        return _.extend (new Error ('Not Found (404)'), { httpErrorCode: 404 }) }),
+            400: 'Bad Request',
+            401: 'Unauthorized',
+            403: 'Forbidden',
+            404: 'Not Found',
+            500: 'Internal Server',
+            501: 'Not Implemented',
+
+        }, (code, desc) =>
+
+            /*  generates 'InternalServerError': $property (() => $http.Error (500, 'Internal Server'))    */
+
+                [`${desc.replace (/\s/g, '')}Error`, $property (() => $http.Error (code, desc))]
+            )
+        ),
+
+        Error: $static ((code, desc = 'HTTP Error') => O.assign (new Error (`${desc} Error (${code})`, { httpErrorCode: code }))),
 
         mime: {
             'html'       : 'text/html',
@@ -121,6 +132,9 @@ module.exports = $trait ({
 
         setHeaders (headers) {
                         _.extend (this.headers, headers); return this },
+
+        setMime (x) {
+                    return this.setHeaders ({ 'Content-Type': $http.mime[x] || x }) },
 
         redirect (to) {
                         return this.setCode (302)
@@ -358,6 +372,9 @@ module.exports = $trait ({
 /*  REQUEST PROCESSING PRIMITIVES
     ------------------------------------------------------------------------ */
 
+    mime (x) {
+        $http.setMime (x) },
+
     timeout (ms) {
         $http.timeout = ms },
 
@@ -373,6 +390,9 @@ module.exports = $trait ({
     jsVariable (rvalue, lvalue) {
                     $http.setHeaders ({ 'Content-Type': $http.mime.javascript })
                     return bullet ('var ' + rvalue + ' = ', stringify.configure ({ pure: true, pretty: true }) (lvalue)) },
+
+    receiveText () {
+            return $http.receiveData ().then (log.ii) },
 
     receiveJSON () {
             return $http.receiveData ()
@@ -405,15 +425,19 @@ module.exports = $trait ({
                     request: $http.request,
                     filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
-    file (location) { var location    = path.join (process.cwd (), location),
-                          isDirectory = fs.statSync (location).isDirectory ()
+    file (location) {
 
-            return () => {
-                var file = isDirectory ? $env.file : ''
-                if (file.split ('/').find (x => (x === '.') || (x === '..'))) {
-                    throw $http.ForbiddenError }
-                else {
-                    return $http.file (path.join (location, file)) } } },
+        const location = path.join (process.cwd (), location),
+              isDirectory = fs.statSync (location).isDirectory (),
+              file = isDirectory ? $env.file : '',
+              containsDotDirs = file.split ('/').find (x => (x === '.') || (x === '..'))
+
+        if (containsDotDirs) {
+            throw $http.ForbiddenError }
+            
+        else {
+            return $http.file (path.join (location, file)) }
+    },
 
     redirect (to) {
                 return x => ($http.redirect (to), x) },

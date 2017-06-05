@@ -1,6 +1,7 @@
 "use strict";
 
-const _ = require ('underscore')
+const _ = require ('underscore'),
+      O = Object
 
 /*  Promise-centric extensions (WIP) /// TODO: REFACTOR
     ======================================================================== */
@@ -55,11 +56,43 @@ _.tests['Promise+'] = {
             __(function () { throw 123 }).assertRejected (123),
             __(adds ('foo', 'bar'), 123, 456).assert (['123foo', '456bar']) ] },
 
-    first: function () {
-            return [
-                Promise.firstResolved ([Promise.reject (123), Promise.resolve (456)]).assert (456),
-                Promise.firstResolved ([Promise.reject (123), Promise.reject  (456)]).assertRejected (null),
-                Promise.firstResolved ([])                                           .assertRejected (null) ] },
+    firstResolved: () => [
+
+        Promise.firstResolved ([Promise.reject (123), Promise.resolve (456)]).assert (456),
+        Promise.firstResolved ([Promise.reject (123), Promise.reject  (456)]).assertRejected (null),
+        Promise.firstResolved ([])                                           .assertRejected (null),
+    ],
+
+    'aborting __.sleep': () => {
+
+        return [
+            __.sleep (1).abort ().assertRejected ('aborted'),
+            __.sleep (1)
+                .then (() => { throw new Error ("shouldn't happen") })
+                .catch (e => { $assert (e, 'aborted') })
+                .abort ()
+                .assertRejected ('aborted')
+        ]
+    },
+
+
+    'firstResolved: finalize semantics' () {
+
+        let timeouts = [30, 5, 10, 20]
+        let resolved = []
+        let rejected = []
+        let promises = timeouts.map (t => __.sleep (t)
+                                                .then (() => { resolved.push (t); return t })
+                                                .catch (e => { rejected.push (t); return t }))
+        return Promise
+                .firstResolved (promises)
+                .assert (5)
+                .sleep (50)
+                .then (() => {
+                    $assert (resolved, [5])
+                    $assert (rejected, [30,10,20])
+                })
+    },
 
 /*  ------------------------------------------------------------------------ */
 
@@ -182,16 +215,35 @@ __.then = function (a, b) { b = _.coerceToFunction (b)
 
 /*  ------------------------------------------------------------------------ */
 
+
+
+
+/*  ------------------------------------------------------------------------ */
+
 __.delay = function (ms) { return __.delays (ms) () }
 
-__.delays = function (ms) {
-                return function (x) {
-                    return new Promise (function (return_) { setTimeout (function () { return_ (x) }, ms || 0) }) } }
+__.delays = (ms = 0) => x => {
+
+    let abort
+
+    let p = new Promise ((resolve, reject)  => {
+                        const timeout = setTimeout (() => resolve (x), ms)
+                        abort = (why = 'aborted') => (clearTimeout (timeout), reject (why))
+                })
+
+    return p.abortableWith (abort)
+}
+
+__.sleep = __.delay
+__.sleeps = __.delays
 
 $mixin (Promise, {
-    delay:              function (ms) { return this.then (__.delays (ms)) },
-    timeout:            function (ms) { return (ms === undefined) ? this : this.race (__.delay (ms).reject (new TimeoutError ())) },
-    now:     $property (function (  ) { return this.timeout (0) }) })
+    
+    sleep: $alias ('delay'),
+    delay   (ms) { return this.then (__.delays (ms)) },
+    timeout (ms) { return (ms === undefined) ? this : this.race (__.delay (ms).reject (new TimeoutError ())) },
+    get now ()   { return this.timeout (0) }
+})
 
 
 /*  ------------------------------------------------------------------------ */
@@ -204,22 +256,48 @@ $mixin (Array, {
 
 $mixin (Promise, {
 
-    race: function (other) { return [this, other].race },
+    race (other) { return [this, other].race },
 
-    firstResolved: $static (function (arr) {
-                        return new Promise (function (resolve, reject) { var todo = arr && arr.length
-                            if (!todo) {
-                                reject (null) }
-                            else {
-                                _.each (arr, function (x) {
-                                                Promise.coerce (x)
-                                                       .then (function (x) { todo--
-                                                                if (resolve) {
-                                                                    resolve (x)
-                                                                    resolve = undefined } })
-                                                       .catch (function () { todo--
-                                                            if (!todo) {
-                                                                reject (null) } }) }) } }) }),
+    abortableWith (abort) {
+
+        const _then = this.then.bind (this),
+              _catch = this.catch.bind (this)
+
+        return O.assign (this, { // propagate .abort to derived promises
+
+            abort: () => (abort (), this),
+            then: (...args) => _then (...args).abortableWith (abort),
+            catch: (...args) => _catch (...args).abortableWith (abort)
+        })
+    },
+
+    firstResolved: $static (arr => new Promise ((resolve, reject) => {
+
+                                        let todo = arr && arr.length
+
+                                        const abortOthers = resolvedOne => _.each (arr, p => (p !== resolvedOne) && p && p.abort && p.abort ())
+
+                                        if (!todo) {
+                                            reject (null)
+
+                                        } else {
+                                            _.each (arr, p => {
+                                                            Promise.coerce (p)
+                                                                   .then (x => {
+                                                                            todo--
+                                                                            if (resolve) {
+                                                                                abortOthers (p)
+                                                                                resolve (x)
+                                                                                resolve = undefined } })
+
+                                                                   .catch (() => {
+                                                                        todo--
+                                                                        if (!todo) {
+                                                                            reject (null) } })
+                                                        })
+                                        }
+                                    })
+                                ),
 
     reject: function (e) { return this.then (_.throwsError (e)) },
 

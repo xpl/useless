@@ -4,7 +4,7 @@ require ('./useless')
 
 /*  ------------------------------------------------------------------------ */
 
-const BuildApp = $singleton (Component, {
+const TestApp = $singleton (Component, {
 
     $defaults: {
         argKeys: { verbose: 1 } },

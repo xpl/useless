@@ -1,8 +1,8 @@
 "use strict";
 
-const _ = require ('underscore')
-
-const O = require ('es7-object-polyfill')
+const _    = require ('underscore')
+const O    = require ('es7-object-polyfill')
+const Meta = require ('meta-fields')
 
 _.hasStdlib = true
 
@@ -513,7 +513,14 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
             $assert (_.extendedDeep ({ foo: new Set ([7]) }, {}).foo instanceof Set)
 
             $assert (Array.from (_.extendedDeep ({ foo: new Set ([1,2]) },
-                                                 { foo: new Set ([2,3]) }).foo.values ()), [1,2,3]) }) (),
+                                                 { foo: new Set ([2,3]) }).foo.values ()), [1,2,3])
+
+            $assert (_.extendedDeep ({ foo: 4 }, { bar: 5 }, { qux: 6 }), { foo: 4, bar: 5, qux: 6 }) // >2 arguments
+
+            $assert (_.extendedDeep ({ foo: ['a', 'b'] }, { foo: ['c'] }), { foo: ['c'] })                     // default array merge semantics (replace)
+            $assert (_.extendedDeep ({ foo: ['a', 'b'] }, { foo: $concat (['c']) }), { foo: ['a', 'b', 'c'] }) // optional merge semantics (concats arrays)
+
+        }) (),
 
         /*  Referentially-transparent version (to be used in functional expressions)
          */
@@ -530,7 +537,21 @@ _.withTest (['stdlib', 'extend 2.0'], function () {
     _.extendWith = _.flip (_.extend)                                        
     _.extendsWith = _.flip (_.partial (_.partial, _.flip (_.extend)))   // higher order shit
 
-    _.extendedDeep = _.tails3 (_.zipZip, function (a, b) { return b === undefined ? a : b })
+    Meta.globalTag ('concat')
+
+    _.extendedDeep = (...args) => _.reduce (args, (a, b) => _.extendedDeep.zipZip (a, b, ($a, $b) => {
+
+        const a = $untag ($a),
+              b = $untag ($b)
+
+        return (b === undefined)
+                    ? a
+                    : (_.isArray (a) && $concat.is ($b))
+                        ? a.concat (b)
+                        : b
+    }))
+
+    _.extendedDeep.zipZip = _.hyperOperator (_.binary, _.zip2, _.goDeeperWhenFirstArgumentIsGood, x => !_.isArray (x) && _.isNonTrivial (x))
 
     _.extend2 = $restArg (function (what) { 
                                 return _.extend (what, _.reduceRight (arguments, function (right, left) {

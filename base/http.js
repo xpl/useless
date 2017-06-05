@@ -91,12 +91,6 @@ $global.Http = $singleton (Component, {
                                                                             httpStatus: xhr.status })) }
                     }
 
-                    /*  Set up the abort method
-                     */
-                    abort = () => {
-                                xhr.abort ()
-                                reject ('aborted') }
-
                     /*  Send
                      */
                     if (cfg.data) { xhr.send (cfg.data) }
@@ -106,11 +100,9 @@ $global.Http = $singleton (Component, {
 
             /*  Publish some additional methods as properties of the returned Promise */
 
-                return _.extend (p, {
+                p.progress = function (accept) { progress (accept); return this }
 
-                    abort: abort,
-                    progress (accept) { progress (accept); return this }
-                }) 
+                p.abortableWith (() => xhr.abort ())
             },
 
     progressCallbackWithSimulation (accept) { let simulated = 0
