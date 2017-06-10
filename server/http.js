@@ -46,15 +46,15 @@ module.exports = $trait ({
             500: 'Internal Server',
             501: 'Not Implemented',
 
-        }, (code, desc) =>
+        }, (desc, code) =>
 
             /*  generates 'InternalServerError': $property (() => $http.Error (500, 'Internal Server'))    */
 
-                [`${desc.replace (/\s/g, '')}Error`, $property (() => $http.Error (code, desc))]
+                [`${desc.replace (/\s/g, '')}Error`, $property (function () { return this.Error (code, desc) })]
             )
         ),
 
-        Error: $static ((code, desc = 'HTTP Error') => O.assign (new Error (`${desc} Error (${code})`, { httpErrorCode: code }))),
+        Error: (code, desc = 'HTTP Error') => O.assign (new Error (`${desc} Error (${code})`), { httpErrorCode: code, stackOffset: 3 }),
 
         mime: {
             'html'       : 'text/html',
@@ -225,7 +225,7 @@ module.exports = $trait ({
                     })
 
                 .catch (e => {
-                    log.ee ('file not found: ', log.color.bright, file, '\n')
+
                     throw this.NotFoundError
                 })
         }
@@ -303,8 +303,11 @@ module.exports = $trait ({
                     }
                 })
                 .catch (function (e) {
+
                     log.ee (log.config ({ indent: 1, location: false }), '\n', e)
-                    throw e }) },
+                    throw e
+                })
+    },
 
     callAPIHandler: function () {
 
@@ -427,8 +430,8 @@ module.exports = $trait ({
 
     file (location) {
 
-        const location = path.join (process.cwd (), location),
-              isDirectory = fs.statSync (location).isDirectory (),
+        const fullPath = path.join (process.cwd (), location),
+              isDirectory = fs.statSync (fullPath).isDirectory (),
               file = isDirectory ? $env.file : '',
               containsDotDirs = file.split ('/').find (x => (x === '.') || (x === '..'))
 
@@ -436,7 +439,7 @@ module.exports = $trait ({
             throw $http.ForbiddenError }
             
         else {
-            return $http.file (path.join (location, file)) }
+            return $http.file (path.join (fullPath, file)) }
     },
 
     redirect (to) {

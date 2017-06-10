@@ -68,7 +68,7 @@
 /************************************************************************/
 /******/ ({
 
-/***/ 126:
+/***/ 127:
 /* unknown exports provided */
 /* all exports used */
 /*!**************************************!*\
@@ -130,7 +130,7 @@ module.exports = function() {
 
 /***/ }),
 
-/***/ 127:
+/***/ 128:
 /* unknown exports provided */
 /* all exports used */
 /*!***************************************!*\
@@ -246,7 +246,7 @@ exports.ArraySet = ArraySet;
 
 /***/ }),
 
-/***/ 128:
+/***/ 129:
 /* unknown exports provided */
 /* all exports used */
 /*!****************************************!*\
@@ -398,7 +398,7 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
 
 /***/ }),
 
-/***/ 129:
+/***/ 130:
 /* unknown exports provided */
 /* all exports used */
 /*!**************************************************!*\
@@ -413,9 +413,9 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 128);
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 129);
 var util = __webpack_require__(/*! ./util */ 53);
-var ArraySet = __webpack_require__(/*! ./array-set */ 127).ArraySet;
+var ArraySet = __webpack_require__(/*! ./array-set */ 128).ArraySet;
 var MappingList = __webpack_require__(/*! ./mapping-list */ 383).MappingList;
 
 /**
@@ -814,7 +814,7 @@ exports.SourceMapGenerator = SourceMapGenerator;
 
 /***/ }),
 
-/***/ 130:
+/***/ 131:
 /* unknown exports provided */
 /* all exports used */
 /*!*************************************!*\
@@ -1072,7 +1072,7 @@ function updateLink(linkElement, obj) {
 
 /***/ }),
 
-/***/ 131:
+/***/ 132:
 /* unknown exports provided */
 /* all exports used */
 /*!*********************!*\
@@ -1085,7 +1085,7 @@ module.exports = fs;
 
 /***/ }),
 
-/***/ 133:
+/***/ 134:
 /* unknown exports provided */
 /* all exports used */
 /*!*****************************!*\
@@ -1124,7 +1124,7 @@ document.ready(function () {
 
 /***/ }),
 
-/***/ 134:
+/***/ 135:
 /* unknown exports provided */
 /* all exports used */
 /*!*********************************************************!*\
@@ -1147,7 +1147,7 @@ if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
 
 /***/ }),
 
-/***/ 135:
+/***/ 136:
 /* unknown exports provided */
 /* all exports used */
 /*!***********************************************!*\
@@ -1836,7 +1836,7 @@ module.exports = memoize;
 
 /***/ }),
 
-/***/ 136:
+/***/ 137:
 /* unknown exports provided */
 /* all exports used */
 /*!************************************************!*\
@@ -1915,7 +1915,7 @@ exports.decode = function (charCode) {
 
 /***/ }),
 
-/***/ 137:
+/***/ 138:
 /* unknown exports provided */
 /* all exports used */
 /*!*******************************************************!*\
@@ -2038,7 +2038,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
 
 /***/ }),
 
-/***/ 138:
+/***/ 139:
 /* unknown exports provided */
 /* all exports used */
 /*!******************************************************!*\
@@ -2129,7 +2129,7 @@ exports.MappingList = MappingList;
 
 /***/ }),
 
-/***/ 139:
+/***/ 140:
 /* unknown exports provided */
 /* all exports used */
 /*!****************************************************!*\
@@ -2255,7 +2255,7 @@ exports.quickSort = function (ary, comparator) {
 
 /***/ }),
 
-/***/ 140:
+/***/ 141:
 /* unknown exports provided */
 /* all exports used */
 /*!*************************************************************!*\
@@ -2271,10 +2271,10 @@ exports.quickSort = function (ary, comparator) {
  */
 
 var util = __webpack_require__(/*! ./util */ 48);
-var binarySearch = __webpack_require__(/*! ./binary-search */ 137);
+var binarySearch = __webpack_require__(/*! ./binary-search */ 138);
 var ArraySet = __webpack_require__(/*! ./array-set */ 94).ArraySet;
 var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 95);
-var quickSort = __webpack_require__(/*! ./quick-sort */ 139).quickSort;
+var quickSort = __webpack_require__(/*! ./quick-sort */ 140).quickSort;
 
 function SourceMapConsumer(aSourceMap) {
   var sourceMap = aSourceMap;
@@ -3349,7 +3349,7 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 
 /***/ }),
 
-/***/ 141:
+/***/ 142:
 /* unknown exports provided */
 /* all exports used */
 /*!*****************************************************!*\
@@ -3768,7 +3768,7 @@ exports.SourceNode = SourceNode;
 
 /***/ }),
 
-/***/ 142:
+/***/ 143:
 /* unknown exports provided */
 /* all exports used */
 /*!************************************************!*\
@@ -3782,13 +3782,13 @@ exports.SourceNode = SourceNode;
  * http://opensource.org/licenses/BSD-3-Clause
  */
 exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 96).SourceMapGenerator;
-exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 140).SourceMapConsumer;
-exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 141).SourceNode;
+exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 141).SourceMapConsumer;
+exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 142).SourceNode;
 
 
 /***/ }),
 
-/***/ 143:
+/***/ 144:
 /* unknown exports provided */
 /* all exports used */
 /*!*****************************************************!*\
@@ -3802,7 +3802,7 @@ exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 141).SourceNod
 module.exports = function () {
 	"use strict";
 
-	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 134);
+	var ownKeys = __webpack_require__(/*! reflect.ownkeys */ 135);
 	var reduce = Function.bind.call(Function.call, Array.prototype.reduce);
 	var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
 	var concat = Function.bind.call(Function.call, Array.prototype.concat);
@@ -3828,7 +3828,7 @@ module.exports = function () {
 
 /***/ }),
 
-/***/ 144:
+/***/ 145:
 /* unknown exports provided */
 /* all exports used */
 /*!***********************************!*\
@@ -3843,9 +3843,9 @@ module.exports = function () {
 
 var O = Object,
     isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
-    SourceMapConsumer = __webpack_require__(/*! source-map */ 142).SourceMapConsumer,
-    path = __webpack_require__(/*! ./impl/path */ 145),
-    memoize = __webpack_require__(/*! lodash.memoize */ 135),
+    SourceMapConsumer = __webpack_require__(/*! source-map */ 143).SourceMapConsumer,
+    path = __webpack_require__(/*! ./impl/path */ 146),
+    memoize = __webpack_require__(/*! lodash.memoize */ 136),
     lastOf = function (x) {
     return x[x.length - 1];
 };
@@ -3908,7 +3908,7 @@ class SourceFile {
 
                     this.text = xhr.responseText;
                 } else {
-                    this.text = __webpack_require__(/*! fs */ 131).readFileSync(path, { encoding: 'utf8' });
+                    this.text = __webpack_require__(/*! fs */ 132).readFileSync(path, { encoding: 'utf8' });
                 }
             } catch (e) {
                 this.error = e;
@@ -3958,7 +3958,7 @@ class SourceFile {
 
 /***/ }),
 
-/***/ 145:
+/***/ 146:
 /* unknown exports provided */
 /* all exports used */
 /*!**********************************!*\
@@ -4226,7 +4226,7 @@ var O = Object,
     lastOf = function (x) {
     return x[x.length - 1];
 },
-    getSource = __webpack_require__(/*! get-source */ 144),
+    getSource = __webpack_require__(/*! get-source */ 145),
     partition = __webpack_require__(/*! ./impl/partition */ 148),
     asTable = __webpack_require__(/*! as-table */ 149);
 
@@ -4336,7 +4336,7 @@ class StackTracey extends Array {
     }
 
     withSource(i) {
-        return StackTracey.withSource(this[i]);
+        return this[i] && StackTracey.withSource(this[i]);
     }
 
     static withSource(loc) {
@@ -4503,7 +4503,7 @@ module.exports = function (bullet, arg) {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var O = __webpack_require__(/*! es7-object-polyfill */ 143),
+var O = __webpack_require__(/*! es7-object-polyfill */ 144),
     bullet = __webpack_require__(/*! string.bullet */ 151),
     isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
     maxOf = function maxOf(arr, pick) {
@@ -4763,7 +4763,7 @@ Testosterone is a cross-platform unit test shell. Features:
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-var bullet = __webpack_require__(/*! string.bullet */ 97),
+var bullet = __webpack_require__(/*! string.bullet */ 98),
     asTable = __webpack_require__(/*! as-table */ 65);
 
 /*  A contract for test routines that says that test should fail and it's the behavior expected
@@ -5415,7 +5415,7 @@ if ($platform.NodeJS) {
 
 
 var O = __webpack_require__(/*! es7-object-polyfill */ 49),
-    bullet = __webpack_require__(/*! string.bullet */ 97),
+    bullet = __webpack_require__(/*! string.bullet */ 98),
     asTable = __webpack_require__(/*! as-table */ 65);
 
 _.hasLog = true;
@@ -7292,135 +7292,175 @@ Modal overlay that renders log.js output for debugging purposes
             return this;
         },
 
-        /*  Powerful drag & drop abstraction, perfectly compatible with touch devices. Documentation pending.
+        /*  Powerful drag & drop abstraction, perfectly compatible with touch devices.
+            Documentation pending.
+                 $(handle).drag ({
+                     start (positionRelativeToDelegateTarget, event) -> memo|false,
+                    move  (memo, offsetRelativeToInitialEvent, positionRelativeToDelegateTarget, event),
+                    end   (memo, offsetRelativeToInitialEvent, event)
+                 })
              Simplest example:
                  $(handle).drag ({
                     start: function ()             { return this.leftTop () },                          // returns 'memo'
-                    move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) } }) })
+                    move:  function (memo, offset) { this.css (memo.add (offset).asLeftTop) }
+                })
+               
          */
         drag: function () {
 
             /*  Helper routine
              */
             var translateTouchEvent = function translateTouchEvent(e, desiredTarget) {
-                return e.originalEvent.touches && _.find(e.originalEvent.touches, function (touch) {
+                return e && (_.find(e.originalEvent.touches || [], function (touch) {
                     return $(touch.target).hasParent(desiredTarget);
-                }) || e;
+                }) || e);
             };
+
             /*  Impl
              */
             return function (cfg) {
+                var _this = this;
 
                 this[0].dragConfig = cfg;
 
-                if (!$platform.touch && !window.__globalDragOverlay) {
-                    window.__globalDragOverlay = $('<div>').css({
+                var _cfg$context = cfg.context,
+                    context = _cfg$context === undefined ? this : _cfg$context,
+                    _cfg$relativeTo = cfg.relativeTo,
+                    relativeTo = _cfg$relativeTo === undefined ? this : _cfg$relativeTo,
+                    _cfg$callMoveAtStart = cfg.callMoveAtStart,
+                    callMoveAtStart = _cfg$callMoveAtStart === undefined ? false : _cfg$callMoveAtStart,
+                    _cfg$longPress = cfg.longPress,
+                    longPress = _cfg$longPress === undefined ? $platform.touch : _cfg$longPress,
+                    _cfg$minDelta = cfg.minDelta,
+                    minDelta = _cfg$minDelta === undefined ? 0 : _cfg$minDelta,
+                    _cfg$button = cfg.button,
+                    button = _cfg$button === undefined ? 1 : _cfg$button,
+                    _cfg$cursor = cfg.cursor,
+                    cursor = _cfg$cursor === undefined ? '' : _cfg$cursor,
+                    _cfg$cls = cfg.cls,
+                    cls = _cfg$cls === undefined ? '' : _cfg$cls;
+
+
+                var start = (cfg.start || _.identity).bind(context),
+                    move = (cfg.move || _.identity).bind(context),
+                    end = (cfg.end || _.identity).bind(context);
+
+                var translatesTouchEvent = function translatesTouchEvent(fn) {
+                    return function (e) {
+                        return fn(_.extended(e, translateTouchEvent(e, _this[0]), { pageXY: Vec2.xy(e.pageX, e.pageY),
+                            clientXY: Vec2.xy(e.clientX, e.clientY) }), e);
+                    };
+                }; // copy event, cuz on iPad it's re-used by browser
+
+                var track = function track(_ref) {
+                    var _ref$move = _ref.move,
+                        move = _ref$move === undefined ? _.noop : _ref$move,
+                        _ref$end = _ref.end,
+                        end = _ref$end === undefined ? _.noop : _ref$end,
+                        _ref$_end = _ref._end,
+                        _end = _ref$_end === undefined ? end : _ref$_end;
+
+                    var target = $platform.touch ? document.body : window.__globalDragOverlay || (window.__globalDragOverlay = N.div.attr({ id: '__globalDragOverlay' }).css({
+
                         display: 'none',
                         position: 'fixed',
                         top: 0, right: 0, bottom: 0, left: 0,
-                        zIndex: 999999 }).appendTo(document.body);
-                }
+                        zIndex: 999999
 
-                var overlay = window.__globalDragOverlay;
-                var button = cfg.button || 1;
+                    }).appendTo(document.body));
+                    var dismount = function dismount() {
+                        return $(target).css(target === document.body ? {} : { display: 'none' }).off('mouseup touchend', end).off('mousemove touchmove', move);
+                    };
+                    $(target).css(target === document.body ? {} : { display: '', cursor: cursor }).on('mousemove touchmove', move).one('mouseup touchend', end = function end(e) {
+                        return dismount(), _end(e);
+                    });
 
-                var begin = this.$(function (initialEvent) {
-                    var relativeTo = cfg.relativeTo || this;
+                    return { move: move, end: end };
+                };
 
-                    this.addClass(cfg.cls || '');
+                var begin = translatesTouchEvent(function (initialEvent) {
+
+                    _this.addClass(cls);
 
                     if ($platform.touch || initialEvent.which === button) {
-                        var offset = relativeTo.offset(),
-                            memo = undefined;
 
-                        if (!cfg.start || (memo = cfg.start.call(cfg.context || this, new Vec2(
-                        // position (relative to delegate target)
-                        initialEvent.pageX - offset.left, initialEvent.pageY - offset.top), initialEvent)) !== false) /* one can cancel drag by returning false from 'start' */{
+                        var origin = Vec2.fromLeftTop(relativeTo.offset()),
+                            position = initialEvent.pageXY.sub(origin);
 
-                                var abort = undefined,
-                                    unbind = undefined,
-                                    end = undefined;
+                        var memo = _.clone(start(position, initialEvent)); // return 'false' to prevent drag
+                        if (memo !== false) {
 
-                                memo = _.clone(memo);
+                            var tracking = track({
 
-                                var move = this.$(function (e) {
+                                move: translatesTouchEvent(function (e) {
+
                                     if ($platform.touch || e.which === button) {
+
                                         e.preventDefault();
-                                        var translatedEvent = translateTouchEvent(e, this[0]);
-                                        var offset = relativeTo.offset();
 
-                                        memo = cfg.move.call(cfg.context || this, memo, new Vec2(
-                                        // offset (relative to initial event)
-                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), new Vec2(
-                                        // position (relative to delegate target)
-                                        translatedEvent.pageX - offset.left, translatedEvent.pageY - offset.top),
-                                        // the event
-                                        translatedEvent) || memo;
+                                        var _origin = Vec2.fromLeftTop(relativeTo.offset()),
+                                            offsetRelativeToInitialEvent = e.pageXY.sub(initialEvent.pageXY),
+                                            _position = e.pageXY.sub(_origin);
+
+                                        memo = _.clone(move(memo, offsetRelativeToInitialEvent, _position, e)) || memo;
                                     } else {
-                                        abort(e);
+
+                                        tracking.end(e);
                                     }
-                                });
+                                }),
 
-                                unbind = function unbind() {
-                                    $(overlay || document.body).css(overlay ? { display: 'none' } : {}).off('mouseup touchend', end).off('mousemove touchmove', move);
-                                };
+                                end: translatesTouchEvent(function (e) {
 
-                                end = this.$(function (e) {
-                                    unbind();
+                                    end(memo, e.pageXY.sub(initialEvent.pageXY), e);
 
-                                    if (cfg.end) {
-                                        var translatedEvent = translateTouchEvent(e, this[0]);
-                                        cfg.end.call(cfg.context || this, memo, new Vec2(
-                                        // offset (relative to initial event)
-                                        translatedEvent.pageX - initialEvent.pageX, translatedEvent.pageY - initialEvent.pageY), translatedEvent);
-                                    }
+                                    _this.removeClass(cls);
+                                })
+                            });
 
-                                    this.removeClass(cfg.cls || '');
-                                });
+                            if (callMoveAtStart) {
 
-                                abort = this.$(function (e) {
-                                    unbind();end(e);
-                                });
-
-                                $(overlay || document.body).css(overlay ? { display: '', cursor: cfg.cursor || '' } : {}).on('mousemove touchmove', move).one('mouseup touchend', end);
-
-                                if (cfg.callMoveAtStart) {
-                                    cfg.move.call(cfg.context || this, memo, Vec2.zero, new Vec2(
-                                    // position (relative to delegate target)
-                                    initialEvent.pageX - offset.left, initialEvent.pageY - offset.top),
-                                    // the event
-                                    initialEvent);
-                                }
+                                move(memo, Vec2.zero, position, initialEvent);
                             }
+                        }
                     }
                 });
 
-                var touchstartListener = _.$(this, function (e) {
-                    var where = _.extend({}, translateTouchEvent(e, this[0])); /* copy event, cuz on iPad it's re-used by browser */
-                    if ($platform.touch && cfg.longPress) {
-                        var cancel = undefined;
-                        var timeout = window.setTimeout(_.$(this, function () {
-                            this.off('touchmove touchend', cancel);
-                            begin(where);
-                        }), 300);
-                        cancel = this.$(function () {
-                            window.clearTimeout(timeout);
-                            this.off('touchmove touchend', cancel);
-                        });
-                        this.one('touchmove touchend', cancel);
-                    } else {
-                        begin(where);
-                        e.preventDefault();
-                        e.stopPropagation();
+                var firstTouch = void 0,
+                    minDeltaTracking = void 0;
+
+                var entryPoint = translatesTouchEvent(function (e, originalEvent) {
+
+                    if (firstTouch === undefined) {
+                        firstTouch = e.clientXY;
+                        minDeltaTracking = track({ move: entryPoint, end: function end() {
+                                firstTouch = undefined;
+                            } });
+                    }
+
+                    if (e.clientXY.distance(firstTouch) >= minDelta) {
+
+                        minDeltaTracking.end();
+
+                        if (longPress) {
+
+                            Promise.firstResolved([_this[0].once('touchmove'), _this[0].once('touchend'), __.delays(300).then(begin.$(originalEvent))]);
+                        } else {
+
+                            begin(originalEvent);
+
+                            originalEvent.preventDefault();
+                            originalEvent.stopPropagation();
+                        }
                     }
                 });
 
-                this.on($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
+                this.on($platform.touch ? 'touchstart' : 'mousedown', entryPoint);
 
                 return _.extend(this, {
-                    cancel: this.$(function () {
-                        this.off($platform.touch ? 'touchstart' : 'mousedown', touchstartListener);
-                    }) });
+                    cancel: function cancel() {
+                        this.off($platform.touch ? 'touchstart' : 'mousedown', entryPoint);
+                    }
+                });
             };
         }(),
 
@@ -7669,7 +7709,7 @@ class SourceFile {
 
                     this.text = xhr.responseText;
                 } else {
-                    this.text = __webpack_require__(/*! fs */ 131).readFileSync(path, { encoding: 'utf8' });
+                    this.text = __webpack_require__(/*! fs */ 132).readFileSync(path, { encoding: 'utf8' });
                 }
             } catch (e) {
                 this.error = e;
@@ -7838,7 +7878,7 @@ module.exports = g;
   \************************************************************/
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 126)();
+exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 127)();
 // imports
 
 
@@ -7858,7 +7898,7 @@ exports.push([module.i, ".useless-log-overlay {\tposition: fixed; bottom: 10px; 
   \*******************************************************/
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 126)();
+exports = module.exports = __webpack_require__(/*! ./../~/css-loader/lib/css-base.js */ 127)();
 // imports
 
 
@@ -8995,8 +9035,8 @@ exports.quickSort = function (ary, comparator) {
 
 var util = __webpack_require__(/*! ./util */ 53);
 var binarySearch = __webpack_require__(/*! ./binary-search */ 382);
-var ArraySet = __webpack_require__(/*! ./array-set */ 127).ArraySet;
-var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 128);
+var ArraySet = __webpack_require__(/*! ./array-set */ 128).ArraySet;
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 129);
 var quickSort = __webpack_require__(/*! ./quick-sort */ 384).quickSort;
 
 function SourceMapConsumer(aSourceMap) {
@@ -10087,7 +10127,7 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 129).SourceMapGenerator;
+var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 130).SourceMapGenerator;
 var util = __webpack_require__(/*! ./util */ 53);
 
 // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
@@ -10504,7 +10544,7 @@ exports.SourceNode = SourceNode;
  * Licensed under the New BSD license. See LICENSE.txt or:
  * http://opensource.org/licenses/BSD-3-Clause
  */
-exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 129).SourceMapGenerator;
+exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 130).SourceMapGenerator;
 exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 385).SourceMapConsumer;
 exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 386).SourceNode;
 
@@ -10525,7 +10565,7 @@ exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 386).SourceNod
 var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./LogOverlay.css */ 376);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
-var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 130)(content, {});
+var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 131)(content, {});
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
@@ -10557,7 +10597,7 @@ if(false) {
 var content = __webpack_require__(/*! !../~/css-loader??ref--0-1!./Panic.css */ 377);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // add the styles to the DOM
-var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 130)(content, {});
+var update = __webpack_require__(/*! ../~/style-loader/addStyles.js */ 131)(content, {});
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
@@ -10583,7 +10623,7 @@ if(false) {
   \***********************************/
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /Users/mac/useless/useless.devtools.js */133);
+module.exports = __webpack_require__(/*! /Users/mac/useless/useless.devtools.js */134);
 
 
 /***/ }),
@@ -22220,7 +22260,7 @@ exports.ArraySet = ArraySet;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var base64 = __webpack_require__(/*! ./base64 */ 136);
+var base64 = __webpack_require__(/*! ./base64 */ 137);
 
 // A single base 64 digit can contain 6 bits of data. For the base 64 variable
 // length quantities we use in the source map spec, the first bit is the sign,
@@ -22345,7 +22385,7 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
 var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 95);
 var util = __webpack_require__(/*! ./util */ 48);
 var ArraySet = __webpack_require__(/*! ./array-set */ 94).ArraySet;
-var MappingList = __webpack_require__(/*! ./mapping-list */ 138).MappingList;
+var MappingList = __webpack_require__(/*! ./mapping-list */ 139).MappingList;
 
 /**
  * An instance of the SourceMapGenerator represents a source map which is
@@ -22743,7 +22783,7 @@ exports.SourceMapGenerator = SourceMapGenerator;
 
 /***/ }),
 
-/***/ 97:
+/***/ 98:
 /* unknown exports provided */
 /* all exports used */
 /*!******************************************!*\

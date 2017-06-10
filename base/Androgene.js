@@ -139,11 +139,11 @@
 
         reportError (e, { indent = 0 }) {
 
-            const loc = this.stackTracey (e).withSource (0)
+            const loc = this.stackTracey (e).withSource (e.stackOffset || 0)
 
             return [
-                { type: 'location', data: this.log (log.config ({ indent: indent, color: log.color ('boldRed'), location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) },
-                { type: 'error', data: this.log (log.config ({ indent: indent + 1, color: log.color ('bright') }), '[EXCEPTION] ' + e.message) }
+                ...loc ? [{ type: 'location', data: this.log (log.config ({ indent: indent,     color: log.color ('boldRed'), location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) }] : [],
+                          { type: 'error',    data: this.log (log.config ({ indent: indent + 1, color: log.color ('bright') }), '[EXCEPTION] ' + e.message) }
             ]
         },
 

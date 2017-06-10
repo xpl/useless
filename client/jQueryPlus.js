@@ -202,21 +202,21 @@ _.extend ($, {
                 minDelta = 0,
                 button = 1,
                 cursor = '',
-                cls = '',
-
-                _start = _.noop,
-                _move = _.noop, 
-                _end = _.noop,
+                cls = ''
 
             } = cfg
 
-            const start = _start.bind (context),
-                  move = _move.bind (context),
-                  end = _end.bind (context)
+            const start = (cfg.start || _.identity).bind (context),
+                  move = (cfg.move || _.identity).bind (context),
+                  end = (cfg.end || _.identity).bind (context)
 
-            const translatesTouchEvent = fn => e => fn (_.extended (e, translateTouchEvent (e, this[0])), e) // copy event, cuz on iPad it's re-used by browser
+            const translatesTouchEvent = fn => e => fn (
+                                                    _.extended (e,
+                                                        translateTouchEvent (e, this[0]),
+                                                        { pageXY:   Vec2.xy (e.pageX, e.pageY),
+                                                          clientXY: Vec2.xy (e.clientX, e.clientY) }), e) // copy event, cuz on iPad it's re-used by browser
 
-            const track = ({ move = _.noop, end = _.noop, _end = end, _move = move }) => {
+            const track = ({ move = _.noop, end = _.noop, _end = end }) => {
 
                 const target = $platform.touch
                                     ? document.body
@@ -235,8 +235,8 @@ _.extend ($, {
                                         .off ('mousemove touchmove', move)
                 $(target)
                     .css ((target === document.body) ? {} : { display: '', cursor })
-                    .on ('mousemove touchmove', move = translatesTouchEvent (move))
-                    .one ('mouseup touchend', end = translatesTouchEvent (e => (dismount (), _end (e))))
+                    .on ('mousemove touchmove', move)
+                    .one ('mouseup touchend', end = e => (dismount (), _end (e)))
 
                 return { move, end }
             }
@@ -247,68 +247,60 @@ _.extend ($, {
                 
                 if ($platform.touch || (initialEvent.which === button)) {
 
-                    const offset = Vec2.fromLeftTop (relativeTo.offset ()),
-                          initialPageXY = Vec2.xy (initialEvent.pageX, initialEvent.pageY),
-                          positionRelativeToDelegateTarget = initialPageXY.sub (offset)
+                    const origin = Vec2.fromLeftTop (relativeTo.offset ()),
+                          position = initialEvent.pageXY.sub (origin)
 
-                    let memo = _.clone (start (positionRelativeToDelegateTarget, initialEvent)) // return 'false' to prevent drag
+                    let memo = _.clone (start (position, initialEvent)) // return 'false' to prevent drag
                     if (memo !== false) {
                             
                         const tracking = track ({
 
-                            move: e => {
-
-                                log.pp (e)
+                            move: translatesTouchEvent (e => {
 
                                 if ($platform.touch || e.which === button) {
 
                                     e.preventDefault ()
 
-                                    const offset = Vec2.fromLeftTop (relativeTo.offset ()),
-                                          pageXY = Vec2.xy (e.pageX, e.pageY),
-                                          offsetRelativeToInitialEvent = pageXY.sub (initialPageXY),
-                                          positionRelativeToDelegateTarget = pageXY.sub (offset)
+                                    const origin = Vec2.fromLeftTop (relativeTo.offset ()),
+                                          offsetRelativeToInitialEvent = e.pageXY.sub (initialEvent.pageXY),
+                                          position = e.pageXY.sub (origin)
                                     
-                                    memo = _.clone (move (memo, offsetRelativeToInitialEvent, positionRelativeToDelegateTarget, e)) || memo
+                                    memo = _.clone (move (memo, offsetRelativeToInitialEvent, position, e)) || memo
 
                                 } else {
 
                                     tracking.end (e)
                                 }
-                            },
+                            }),
 
-                            end: e => {
-                                
-                                const offsetRelativeToInitialEvent = Vec2.xy (e.pageX, e.pageY).sub (initialPageXY)
+                            end: translatesTouchEvent (e => {
 
-                                end (memo, offsetRelativeToInitialEvent, e)
+                                end (memo, e.pageXY.sub (initialEvent.pageXY), e)
 
                                 this.removeClass (cls)
-                            }
+                            })
                         })
 
                         if (callMoveAtStart) {
 
-                            move (memo, Vec2.zero, positionRelativeToDelegateTarget, initialEvent)
+                            move (memo, Vec2.zero, position, initialEvent)
                         }
                     }
                 }
             })
 
-            let whereFirstTouch, minDeltaTracking
+            let firstTouch, minDeltaTracking
 
             const entryPoint = translatesTouchEvent ((e, originalEvent) => {
 
-                // const where = Vec2.xy (e.clientX, e.clientY)
+                if (firstTouch === undefined) {
+                    firstTouch = e.clientXY
+                    minDeltaTracking = track ({ move: entryPoint, end: () => { firstTouch = undefined } })
+                }
 
-                // if (whereFirstTouch === undefined) {
-                //     whereFirstTouch = where
-                //     minDeltaTracking = track ({ move: entryPoint })
-                // }
+                if (e.clientXY.distance (firstTouch) >= minDelta) {
 
-                if (true) {//if (where.distance (whereFirstTouch) >= minDelta) {
-
-                    //minDeltaTracking.end ()
+                    minDeltaTracking.end ()
 
                     if (longPress) {
 
@@ -320,10 +312,6 @@ _.extend ($, {
                             __.delays (300).then (begin.$ (originalEvent))
                         ])
 
-                        // let cancel
-                        // const timeout = setTimeout (() => { cancel (); begin (originalEvent) }, 300)
-                        // this.one ('touchmove touchend', cancel = () => { this.off ('touchmove touchend', cancel); clearTimeout (timeout) })
-                    
                     } else {
 
                         begin (originalEvent)
