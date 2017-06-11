@@ -103,6 +103,8 @@ $global.Http = $singleton (Component, {
                 p.progress = function (accept) { progress (accept); return this }
 
                 p.abortableWith (() => xhr.abort ())
+
+                return p
             },
 
     progressCallbackWithSimulation (accept) { let simulated = 0

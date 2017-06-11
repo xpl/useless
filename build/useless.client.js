@@ -11572,6 +11572,8 @@ $global.Http = $singleton(Component, {
         p.abortableWith(function () {
             return xhr.abort();
         });
+
+        return p;
     },
     progressCallbackWithSimulation: function progressCallbackWithSimulation(accept) {
         var simulated = 0;
