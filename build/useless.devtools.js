@@ -7077,6 +7077,8 @@ Modal overlay that renders log.js output for debugging purposes
 "use strict";
 
 
+module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 92)
+
 /*  Some handy jQuery extensions
     ======================================================================== */
 
@@ -7336,9 +7338,11 @@ Modal overlay that renders log.js output for debugging purposes
                     _cfg$button = cfg.button,
                     button = _cfg$button === undefined ? 1 : _cfg$button,
                     _cfg$cursor = cfg.cursor,
-                    cursor = _cfg$cursor === undefined ? '' : _cfg$cursor,
+                    cursor = _cfg$cursor === undefined ? 'default' : _cfg$cursor,
                     _cfg$cls = cfg.cls,
-                    cls = _cfg$cls === undefined ? '' : _cfg$cls;
+                    cls = _cfg$cls === undefined ? '' : _cfg$cls,
+                    _cfg$useOverlayForCap = cfg.useOverlayForCapturingEvents,
+                    useOverlayForCapturingEvents = _cfg$useOverlayForCap === undefined ? $platform.touch : _cfg$useOverlayForCap;
 
 
                 var start = (cfg.start || _.identity).bind(context),
@@ -7352,7 +7356,7 @@ Modal overlay that renders log.js output for debugging purposes
                     };
                 }; // copy event, cuz on iPad it's re-used by browser
 
-                var track = function track(_ref) {
+                var trackUsingOverlay = function trackUsingOverlay(_ref) {
                     var _ref$move = _ref.move,
                         move = _ref$move === undefined ? _.noop : _ref$move,
                         _ref$end = _ref.end,
@@ -7360,23 +7364,38 @@ Modal overlay that renders log.js output for debugging purposes
                         _ref$_end = _ref._end,
                         _end = _ref$_end === undefined ? end : _ref$_end;
 
-                    var target = $platform.touch ? document.body : window.__globalDragOverlay || (window.__globalDragOverlay = N.div.attr({ id: '__globalDragOverlay' }).css({
+                    var overlay = $('<div class="jqueryplus-drag-overlay">').css({
 
-                        display: 'none',
                         position: 'fixed',
                         top: 0, right: 0, bottom: 0, left: 0,
-                        zIndex: 999999
-
-                    }).appendTo(document.body));
-                    var dismount = function dismount() {
-                        return $(target).css(target === document.body ? {} : { display: 'none' }).off('mouseup touchend', end).off('mousemove touchmove', move);
-                    };
-                    $(target).css(target === document.body ? {} : { display: '', cursor: cursor }).on('mousemove touchmove', move).one('mouseup touchend', end = function end(e) {
-                        return dismount(), _end(e);
-                    });
+                        zIndex: 999999,
+                        cursor: cursor
+                    }).on('mousemove touchmove', move).one('mouseup touchend', end = function end(e) {
+                        return overlay.remove(), _end(e);
+                    }).appendTo(document.body);
 
                     return { move: move, end: end };
                 };
+
+                var trackUsingDocumentBody = function trackUsingDocumentBody(_ref2) {
+                    var _ref2$move = _ref2.move,
+                        move = _ref2$move === undefined ? _.noop : _ref2$move,
+                        _ref2$end = _ref2.end,
+                        _end2 = _ref2$end === undefined ? _.noop : _ref2$end,
+                        _ref2$_end = _ref2._end,
+                        _end = _ref2$_end === undefined ? _end2 : _ref2$_end;
+
+                    var body = $(document.body);
+
+                    body.on('mousemove touchmove', move);
+                    body.one('mouseup touchend', _end2 = function end(e) {
+                        return body.off('mousemove touchmove', move), body.off('mouseup touchend', _end2), _end(e);
+                    });
+
+                    return { move: move, end: _end2 };
+                };
+
+                var track = useOverlayForCapturingEvents ? trackUsingOverlay : trackUsingDocumentBody;
 
                 var begin = translatesTouchEvent(function (initialEvent) {
 
@@ -7430,16 +7449,18 @@ Modal overlay that renders log.js output for debugging purposes
 
                 var entryPoint = translatesTouchEvent(function (e, originalEvent) {
 
-                    if (firstTouch === undefined) {
+                    if (minDelta && firstTouch === undefined) {
                         firstTouch = e.clientXY;
                         minDeltaTracking = track({ move: entryPoint, end: function end() {
                                 firstTouch = undefined;
                             } });
                     }
 
-                    if (e.clientXY.distance(firstTouch) >= minDelta) {
+                    if (!minDelta || e.clientXY.distance(firstTouch) >= minDelta) {
 
-                        minDeltaTracking.end();
+                        if (minDeltaTracking) {
+                            minDeltaTracking.end();
+                        }
 
                         if (longPress) {
 
@@ -7625,7 +7646,7 @@ Modal overlay that renders log.js output for debugging purposes
             });
         } // also synthesize click events we just swallowed up
     });
-})(module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 92));
+})(jQuery);
 
 /***/ }),
 

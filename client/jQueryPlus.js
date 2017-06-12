@@ -1,5 +1,7 @@
 "use strict";
 
+module.exports = $global.jQuery = require ('jquery')
+
 /*  Some handy jQuery extensions
     ======================================================================== */
 
@@ -201,8 +203,9 @@ _.extend ($, {
                 longPress = $platform.touch,
                 minDelta = 0,
                 button = 1,
-                cursor = '',
-                cls = ''
+                cursor = 'default',
+                cls = '',
+                useOverlayForCapturingEvents = $platform.touch
 
             } = cfg
 
@@ -216,32 +219,37 @@ _.extend ($, {
                                                         { pageXY:   Vec2.xy (e.pageX, e.pageY),
                                                           clientXY: Vec2.xy (e.clientX, e.clientY) }), e) // copy event, cuz on iPad it's re-used by browser
 
-            const track = ({ move = _.noop, end = _.noop, _end = end }) => {
+            const trackUsingOverlay = ({ move = _.noop, end = _.noop, _end = end }) => {
 
-                const target = $platform.touch
-                                    ? document.body
-                                    : (window.__globalDragOverlay ||
-                                      (window.__globalDragOverlay = N.div.attr ({ id: '__globalDragOverlay' }).css ({
+                const overlay = $('<div class="jqueryplus-drag-overlay">').css ({
 
-                                                                        display: 'none',
-                                                                        position: 'fixed',
-                                                                        top: 0, right: 0, bottom: 0, left: 0,
-                                                                        zIndex: 999999
-
-                                                                    }).appendTo (document.body)))
-                const dismount = () => $(target)
-                                        .css ((target === document.body) ? {} : { display: 'none' })
-                                        .off ('mouseup touchend',    end)
-                                        .off ('mousemove touchmove', move)
-                $(target)
-                    .css ((target === document.body) ? {} : { display: '', cursor })
-                    .on ('mousemove touchmove', move)
-                    .one ('mouseup touchend', end = e => (dismount (), _end (e)))
+                    position: 'fixed',
+                    top: 0, right: 0, bottom: 0, left: 0,
+                    zIndex: 999999,
+                    cursor
+                })
+                .on ('mousemove touchmove', move)
+                .one ('mouseup touchend', end = e => (overlay.remove (), _end (e)))
+                .appendTo (document.body)                    
 
                 return { move, end }
             }
 
-            var begin = translatesTouchEvent (initialEvent => {
+            const trackUsingDocumentBody = ({ move = _.noop, end = _.noop, _end = end }) => {
+
+                const body = $(document.body)
+
+                body.on ('mousemove touchmove', move)
+                body.one ('mouseup touchend', end = e => (
+                    body.off ('mousemove touchmove', move),
+                    body.off ('mouseup touchend', end), _end (e)))
+                
+                return { move, end }
+            }
+
+            const track = useOverlayForCapturingEvents ? trackUsingOverlay : trackUsingDocumentBody
+
+            const begin = translatesTouchEvent (initialEvent => {
 
                 this.addClass (cls)
                 
@@ -252,7 +260,7 @@ _.extend ($, {
 
                     let memo = _.clone (start (position, initialEvent)) // return 'false' to prevent drag
                     if (memo !== false) {
-                            
+
                         const tracking = track ({
 
                             move: translatesTouchEvent (e => {
@@ -293,14 +301,16 @@ _.extend ($, {
 
             const entryPoint = translatesTouchEvent ((e, originalEvent) => {
 
-                if (firstTouch === undefined) {
+                if (minDelta && (firstTouch === undefined)) {
                     firstTouch = e.clientXY
                     minDeltaTracking = track ({ move: entryPoint, end: () => { firstTouch = undefined } })
                 }
 
-                if (e.clientXY.distance (firstTouch) >= minDelta) {
+                if (!minDelta || (e.clientXY.distance (firstTouch) >= minDelta)) {
 
-                    minDeltaTracking.end ()
+                    if (minDeltaTracking) {
+                        minDeltaTracking.end ()
+                    }
 
                     if (longPress) {
 
@@ -454,6 +464,7 @@ _.extend ($, {
             $(e.target).trigger ('click') }) }      // also synthesize click events we just swallowed up
     })
 
-}) (module.exports = $global.jQuery = require ('jquery'));
+}) (jQuery);
+
 
 

@@ -45,7 +45,10 @@ function initComponentDemo () {
                 .append (this.handle = $('<em>'))
                 .drag ({
                     callMoveAtStart: true,
-                    minDelta: 100,
+                    //minDelta: 100,
+                    start () {
+                        return false
+                    },
                     move: (memo, offset, position) => {
 
                         this.value = _.rescale (position.x,
