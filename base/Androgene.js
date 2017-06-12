@@ -4,6 +4,15 @@
 
     const _ = require ('underscore')
     const O = Object
+    const StackTracey = require ('stacktracey')
+
+/*  ------------------------------------------------------------------------ */
+
+    const locationId = x => ('' + x.file + (x.line || '')) // do not count column, because we show whole source lines (TODO: maybe implement column highlighting)
+
+
+/*  TODO: move outta here
+    ------------------------------------------------------------------------ */
 
     $mixin (Promise, {
 
@@ -89,11 +98,16 @@
 
         report (state = {}) {
 
-            const { indent = 0 } = state
+            const { indent = 0, prevLocations = [] } = state
+
+            const supressRedundantNesting = (this.eventLog.length === 1) && (this.eventLog[0] instanceof AndrogeneProcessContext)
 
             const head = this.reportLocation (state)
-            const body = this.reportContents (O.assign ({}, state, { indent: indent + ((head.length === 0) ? 0 : 1) }))
-
+            const body = this.reportContents (O.assign ({}, state, {
+                                                                indent: indent + (((head.length === 0) || supressRedundantNesting) ? 0 : 1),
+                                                                prevLocations: new Set ([...prevLocations, ..._.map (head, m => locationId (m.data.where))])
+                                                            }))
+            
             return (state.verbose || (body.length > 0))
                         ? [...head, ...body]
                         : []
@@ -103,12 +117,13 @@
     
         reportLocation: function (state = {}) {
 
-            var color = log.color[{ 'fulfilled': 'green', 'pending': 'orange', 'rejected': 'red', '': 'purple' }[this.state || '']]
+            const { prevLocations } = state
+            const color = log.color[{ 'fulfilled': 'green', 'pending': 'orange', 'rejected': 'red', '': 'purple' }[this.state || '']]
 
             const stack = this.stackTracey (this.where)
                                 .slice (3)
                                 .clean
-                                .filter ((e, i) => (!e.hide && !e.native && e.sourceLine))
+                                .filter (e => !e.hide && !e.native && e.sourceLine && !prevLocations.has (locationId (e)))
                                 .reverse ()
 
             return stack.map (loc => ({ type: 'location', data: this.log (color, log.config ({ indent: state.indent || 0, location: true, where: loc }), '·', (loc.sourceLine || '').trim ()) }))
