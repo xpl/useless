@@ -4603,7 +4603,7 @@ var _configure = function _configure(cfg) {
         },
 
         get json() {
-            return stringify.configure({ json: true });
+            return stringify.configure({ json: true, pure: true });
         },
         get pure() {
             return stringify.configure({ pure: true });

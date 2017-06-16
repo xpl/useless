@@ -1,5 +1,3 @@
-/*  NB: WORK IN PROGRESS    */
-
 "use strict";
 
 const _  = require ('underscore')
@@ -11,7 +9,7 @@ const fs                 = require ('fs'),
       ExtractTextPlugin  = require ('extract-text-webpack-plugin'),
       WriteFilePlugin    = require ('write-file-webpack-plugin'),
       CommonsChunkPlugin = require ('webpack/lib/optimize/CommonsChunkPlugin'),
-      esprima            = require ('esprima'),
+      esprima            = require ('esprima-fb'),
       escodegen          = require ('escodegen'),
       querystring        = require ('querystring'),
       http               = require ('http'),
@@ -414,7 +412,17 @@ module.exports = $trait ({
 
         const parsedPath = path.parse (file)
 
-        const sourceAST = esprima.parse (src, { loc: true, sourceType: 'module' })
+        let sourceAST
+
+        try {
+
+            sourceAST = esprima.parse (src, { loc: true, sourceType: 'module' })
+        
+        } catch (e) {
+
+            log.ee (`Failed to parse ${file} with ESPrima`)
+            throw e
+        }
 
         const
 
