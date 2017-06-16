@@ -58,6 +58,7 @@ module.exports = $trait ({
 
         mime: {
             'html'       : 'text/html',
+            'xml'        : 'text/xml',
             'text'       : 'text/plain',
             'json'       : 'application/json',
             'binary'     : 'binary/octet-stream',
