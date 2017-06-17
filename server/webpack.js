@@ -26,13 +26,14 @@ module.exports = $trait ({
 
         argKeys: { 'webpack-build-and-quit': 1 }, // pass this arg to build everything and quit
 
+        webpackEntries: {},
+
         config: {
 
             webpack: {
 
                 offline: false,     // supresses WebPack from building everything at server's startup
                 buildPath: './build',
-                entry: {},
                 devServer: false,
                 hotReload: false,   // for development use only! enables Webpack HotModuleReplacement
                 port: 3000,
@@ -190,7 +191,7 @@ module.exports = $trait ({
 
     beforeInit: $callAtMasterProcess (function () {
 
-        const config = this.config.webpack
+        const config = _.extend ({}, this.webpack, this.config.webpack)
 
         try {
             fs.mkdirSync (path.resolve (config.buildPath))
@@ -202,7 +203,7 @@ module.exports = $trait ({
             return
         }
 
-        const input = this.webpackInput = this.transformEntries (config.entry)
+        const input = this.webpackInput = this.transformEntries (config.entry /* legacy */ || this.webpackEntries)
 
         const outputPath = path.resolve (config.buildPath),
               publicPath = this.webpackServerURL.concatPath ('build')
@@ -365,7 +366,7 @@ module.exports = $trait ({
 
         log.g ('Compressing with Google Closure Compiler: ', log.color.boldOrange, parsedPath.base)
 
-        return this.callGoogleClosureCompiler (fs.readFileSync (file, { encoding: 'utf-8' })).then (compressedText => {
+        return this.callGoogleClosureCompiler (fs.readFileSync (file, { encoding: 'utf-8' }), file).then (compressedText => {
 
             const outputFile = path.join (parsedPath.dir, parsedPath.name + '.min.js')
 
@@ -375,7 +376,7 @@ module.exports = $trait ({
         })
     },
 
-    callGoogleClosureCompiler (src) {
+    callGoogleClosureCompiler (src, what) {
 
         return new Promise ((resolve, reject) => {
 
@@ -401,7 +402,7 @@ module.exports = $trait ({
                                                                 if (response.trimmed.length) {
                                                                     resolve (response) }
                                                                 else {
-                                                                    reject (new Error ('Google Closure Compiler replied with empty response'))  } }))
+                                                                    reject (new Error ('Google Closure Compiler failed to compress ' + what))  } }))
 
             post_req.write (post_data)
             post_req.end ()

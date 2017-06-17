@@ -11,15 +11,17 @@ const Examples = $singleton (Component, {
 
     $defaults: {
         runCodeBaseTests: false,
+        webpackEntries: {
+            entry: {
+                'example/shared': {
+                    'example/useless.client':   "./useless.client.js",
+                    'example/useless.devtools': "./useless.devtools.js",
+                    'example/index':            "./example/index.js",
+                }
+            }
+        },
         config: {
             webpack: {
-                entry: {
-                    'example/shared': {
-                        'example/useless.client':   "./useless.client.js",
-                        'example/useless.devtools': "./useless.devtools.js",
-                        'example/index':            "./example/index.js",
-                    }
-                },
                 hotReload: true
             }
         }
