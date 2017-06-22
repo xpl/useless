@@ -9751,7 +9751,7 @@
                     return this._onceAnimationEnd;
                 }
                 if (this._onceAnimationEnd) {
-                    this._onceAnimationEnd.finalize();
+                    this._onceAnimationEnd.resolve();
                 }
                 this.setAttribute(attr, true);
                 this._onceAnimationEnd = this.onceAnimationEnd;

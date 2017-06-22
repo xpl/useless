@@ -16821,7 +16821,7 @@ $mixin(Node, {
         /*  If already animating — finalize the existing promise */
 
         if (this._onceAnimationEnd) {
-            this._onceAnimationEnd.finalize();
+            this._onceAnimationEnd.resolve();
         }
 
         /*  Allocate new promise    */
