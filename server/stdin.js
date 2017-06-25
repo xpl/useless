@@ -1,5 +1,7 @@
 module.exports = $trait ({
 
+	$depends: [require ('./ipc')],
+
 /*  Bind to this    */
 
     lineFromStdin: $trigger (line => {}),
@@ -8,14 +10,24 @@ module.exports = $trait ({
 
     beforeInit () {
 
-        log.minor ('Initializing command line interface...')
+    	if (!this.isSupervisedProcess) {
 
-        require ('readline').createInterface ({
+	        log.minor ('Initializing command line interface...')
 
-            input: process.stdin,
-            output: process.stdout,
-            terminal: false
+	        require ('readline').createInterface ({
 
-        }).on ('line', this.lineFromStdin)
-    }
+	            input: process.stdin,
+	            output: process.stdout,
+	            terminal: false
+
+	        }).on ('line', line => { this._lineFromStdin (line) })
+    	}
+    },
+
+	// TODO: implement ability to do $callableFromMasterProcess ($trigger (...)), to get rid of this shim
+	
+	_lineFromStdin: $callableFromMasterProcess (function (line) {
+
+		this.lineFromStdin (line)
+	})
 })

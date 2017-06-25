@@ -9,6 +9,8 @@ const fs              = require ('fs'),
       foreverMonitor  = require ('forever-monitor'),
       util            = require ('./base/util')
 
+const CODE_RESTART = 3
+
 /*  Supresses $callAtMasterProcess-marked methods from calling at supervised process (usually it's beforeInit method)   */
 
 Meta.globalTag ('callAtMasterProcess', (tag, x) =>
@@ -56,14 +58,14 @@ const Supervisor = module.exports = $trait ({
             return this[this.supervisorState] ()
     },
 
-    lineFromStdin: $callableFromMasterProcess (function (line) {
+    lineFromStdin (line) {
 
         if (line === 'restart' ||
             line === 'r') {
 
             this.restart ()
         }
-    }),
+    },
 
 /*  One of these gets called at beforeInit ()   */
 
@@ -136,9 +138,19 @@ const Supervisor = module.exports = $trait ({
                                                                                                             'tests-failed' : [])) })
 
                                     supervisedProcess.on ('exit:code', code => {
+
                                         log.brown ('Exited with code', code)
-                                        log.w ('Waiting for file change (or press Ctrl-C to exit)....\n')
-                                        supervisedProcess.stop () /* prevents Forever from restarting it */ })
+
+                                        if (code !== CODE_RESTART) {
+
+                                            log.w ('Waiting for file change (or press Ctrl-C to exit)....\n')
+                                            supervisedProcess.stop () /* prevents Forever from restarting it */ 
+                                            
+                                        } else {
+                                            
+                                            supervisedProcess.restart ()
+                                        }
+                                    })
 
                                     _.intercept (supervisedProcess, 'restart', function (restart) {
                                         
@@ -156,10 +168,21 @@ const Supervisor = module.exports = $trait ({
                                 }
                             },
 
-    restart: function () { log.e ('\nRestarting', log.line, '\n')
-                
-                if (this.supervised) { process.exit (0) }
-                                else { this.supervisedProcess.restart () }  },
+    restart: function () {
+
+        
+        
+        if (this.isSupervisedProcess) {
+
+            log.e ('\Restarting (from child process)', log.line, '\n')
+            process.exit (CODE_RESTART)
+
+        } else {
+
+            log.e ('\Restarting (from master process)', log.line, '\n')
+            this.supervisedProcess.restart ()
+        } 
+    },
 
     watchDirectory: function (path, changed) { log.pink ('Watching:', path)
 

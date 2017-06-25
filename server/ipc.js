@@ -17,7 +17,7 @@ module.exports = $trait ({
                     
                     if ($callableFromMasterProcess.is (def)) {
 
-                        return function () { var args = _.asArray (arguments)
+                        return (...args) => {
                             
                             return new Promise (resolve => {
 
@@ -38,7 +38,13 @@ module.exports = $trait ({
 
                                 else {
                                     
-                                    resolve (fn.apply (null, args)) } }) } } }) }
+                                    resolve (fn.apply (null, args))
+                                }
+                            })
+                        }
+                    }
+                })
+            }
 
         /*  Setup receive   */
 

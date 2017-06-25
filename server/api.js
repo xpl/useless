@@ -255,7 +255,9 @@ $global.APISchema = {
                 delete groups[name]
                 var merged = _.flatten (_.map (group, route => route[1]), true)
                 return [name, APISchema.collapse (merged)] }
-            return false })) } }
+            return false })) }
+
+}
 
 
 
