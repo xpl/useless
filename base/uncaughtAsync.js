@@ -11,6 +11,8 @@
 
         var globalAsyncContext = undefined
 
+        _.errorWithAsync = (e = new Error ()) => (e.asyncContext = globalAsyncContext, e) // @hide
+
         var listenEventListeners = function (genAddEventListener, genRemoveEventListener) {
 
             var override = function (obj) {
@@ -44,7 +46,7 @@
                         globalAsyncContext = asyncContext
 
                         try       { return fn.apply (this, arguments) } // @hide
-                        catch (e) { _.globalUncaughtExceptionHandler (_.extend (e, { asyncContext: asyncContext })) } }
+                        catch (e) { _.globalUncaughtExceptionHandler (_.errorWithAsync (e)) } }
 
                     wrappers.push (wrapper)
 

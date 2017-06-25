@@ -6612,6 +6612,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
         var globalAsyncContext = undefined;
 
+        _.errorWithAsync = function () {
+            var e = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new Error();
+            return e.asyncContext = globalAsyncContext, e;
+        }; // @hide
+
         var listenEventListeners = function listenEventListeners(genAddEventListener, genRemoveEventListener) {
 
             var override = function override(obj) {
@@ -6654,7 +6659,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                         return fn.apply(this, arguments);
                     } // @hide
                     catch (e) {
-                        _.globalUncaughtExceptionHandler(_.extend(e, { asyncContext: asyncContext }));
+                        _.globalUncaughtExceptionHandler(_.errorWithAsync(e));
                     }
                 };
 
@@ -6830,6 +6835,10 @@ Modal overlay that renders log.js output for debugging purposes
 
 	$global.Panic = function (what, cfg) {
 		cfg = _.defaults(_.clone(cfg || {}), { dismiss: _.identity, raw: false });
+
+		if (what === undefined) {
+			what = _.errorWithAsync(new Error('Panic!'));
+		}
 
 		if (_.isTypeOf(Error, what)) {
 			_.extend(cfg, _.pick(what, 'retry', 'dismiss'));

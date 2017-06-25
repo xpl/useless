@@ -9,6 +9,10 @@ StackTracey.isThirdParty.include (path => (path.indexOf ('useless/') === 0))
 
 $global.Panic = (what, cfg) => { cfg = _.defaults (_.clone (cfg || {}), { dismiss: _.identity, raw: false })
 
+	if (what === undefined) {
+		what = _.errorWithAsync (new Error ('Panic!'))
+	}
+	
 	if (_.isTypeOf (Error, what)) {
 		_.extend (cfg, _.pick (what, 'retry', 'dismiss')) }
 
