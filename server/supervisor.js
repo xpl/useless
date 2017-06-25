@@ -22,7 +22,8 @@ Meta.globalTag ('callAtMasterProcess', (tag, x) =>
 const Supervisor = module.exports = $trait ({
 
     $depends: [require ('./args'),
-               require ('./ipc')],
+               require ('./ipc'),
+               require ('./stdin')],
 
     $defaults: $const ({ argKeys: { respawnedBecauseCodeChange: 1,
                                            spawnedBySupervisor: 1,
@@ -54,6 +55,15 @@ const Supervisor = module.exports = $trait ({
 
             return this[this.supervisorState] ()
     },
+
+    lineFromStdin: $callableFromMasterProcess (function (line) {
+
+        if (line === 'restart' ||
+            line === 'r') {
+
+            this.restart ()
+        }
+    }),
 
 /*  One of these gets called at beforeInit ()   */
 
@@ -114,7 +124,8 @@ const Supervisor = module.exports = $trait ({
 
                                 if (this.currentProcessFileName) {
 
-                                    log.gg ('Spawning supervised process')
+                                    log (ansi.bright.green ('Spawning supervised process') +
+                                         ansi.bright.yellow (' (type ' + 'r'.red + ' to restart)'))
 
                                     let supervisedProcess =
                                         this.supervisedProcess = new foreverMonitor.Monitor (this.currentProcessFileName, {

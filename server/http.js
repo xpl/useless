@@ -376,6 +376,8 @@ module.exports = $trait ({
 /*  REQUEST PROCESSING PRIMITIVES
     ------------------------------------------------------------------------ */
 
+    env: x => () => { $env = x },
+
     mime (x) {
         $http.setMime (x) },
 

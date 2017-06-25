@@ -71,6 +71,8 @@ const _ = $global._ = module.exports = require ('./base/3rd/underscore-fix') // 
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     String.ify = require ('string.ify')
+
+    $global.ansi = require ('ansicolor').nice
     
     require ('./base/uncaught')        // uncaught exception facility
     require ('./base/reflection')      // callstack access + source code access
