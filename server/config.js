@@ -43,14 +43,38 @@ module.exports = $trait ({
         try       { return JSON.parse (fs.readFileSync (this.configPath, { encoding: 'utf-8' })) }
         catch (e) { return {} } },
 
+    get commandLineConfig () {
+
+        const cfg = {}
+
+        for (const arg of this.args.values) {
+
+            const [ , k, v] = arg.match (/^(.+)=(.+)$/)
+
+            const path = k.split ('.')
+
+            for (const nestedObjName of _.initial (path)) { cfg[nestedObjName] = {} }
+
+            cfg[_.last (path)] = v
+        }
+
+        return cfg
+    },
+
     applyConfig (cfg) {
 
-        this.config = _.extendedDeep (this.config, cfg)
+        this.config = _.extendedDeep (this.config, cfg, this.commandLineConfig)
 
         log.timestampEnabled = this.config.logTimestamps
-        return this.config },
+        
+        return this.config
+    },
 
-    beforeInit () { log.i (`Reading ${'config.json'.bright}...`)
+    beforeInit () {
+
+        const commandLineConfig = String.ify.noPretty (this.commandLineConfig)
+
+        log.i (`Reading ${'config.json'.bright}` + (commandLineConfig === '{  }' ? '' : ` + ${commandLineConfig.bright.magenta}`))
 
         /*  Re-write config at startup (with default values and pretty printed).
          */
