@@ -39,12 +39,15 @@ module.exports = {
         fs.writeFileSync.$ (file, what, { encoding: 'utf-8'})
           .catches (module.exports.fatalError.$ ('Cannot write', file)) ()  },
 
-    mkdir: function (dirPath, root_) {
+    mkdir: function (dirPath, root_ = process.cwd ()) {
         var dirs = dirPath.split ('/')
         var dir = dirs.shift ()
-        var root = path.join ((root_ || ''), dir)
+        var root = path.join (root_, dir)
         try {
-            fs.mkdirSync (root)
+            if (!fs.existsSync (root)) {
+                log.w ('mkdir', root.bright)
+                fs.mkdirSync (root)
+            }
         } catch (e) {
             if (fs.statSync (root).isDirectory () !== true) {
                 throw 'directory creation failed';

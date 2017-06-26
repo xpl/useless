@@ -50,7 +50,7 @@ module.exports = $trait ({
         log.timestampEnabled = this.config.logTimestamps
         return this.config },
 
-    beforeInit () { log.info ('Reading config...')
+    beforeInit () { log.i (`Reading ${'config.json'.bright}...`)
 
         /*  Re-write config at startup (with default values and pretty printed).
          */

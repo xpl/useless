@@ -237,7 +237,7 @@ module.exports = $trait ({
 
     beforeInit () {
 
-        log.ii ('Starting HTTP @ localhost:' + this.config.port)
+        log.i ('Starting HTTP @ ', log.color.boldBlue, `localhost:${this.config.port}`)
 
         /*  Creates $http thing
          */

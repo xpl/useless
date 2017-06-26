@@ -143,7 +143,7 @@ const Supervisor = module.exports = $trait ({
 
                                         if (code !== CODE_RESTART) {
 
-                                            log.w ('Waiting for file change (or press Ctrl-C to exit)....\n')
+                                            log.w (`Waiting for file change (or press ${'Ctrl-C'.bright} to exit)....\n`)
                                             supervisedProcess.stop () /* prevents Forever from restarting it */ 
                                             
                                         } else {
@@ -184,7 +184,7 @@ const Supervisor = module.exports = $trait ({
         } 
     },
 
-    watchDirectory: function (path, changed) { log.pink ('Watching:', path)
+    watchDirectory: function (path, changed) { log.pink ('Watching:', path.bright)
 
                         chokidar.watch (path, { ignoreInitial: true })
                                 .on ('all', (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) }) },
