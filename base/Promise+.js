@@ -440,6 +440,8 @@ __.map.configure = Cfg => (x, fn, cfg) => __.map (x, fn, Object.assign ({}, Cfg,
 __.map.maxConcurrency = n => __.map.configure ({ maxConcurrency: n })
 __.map.maxTime = n => __.map.configure ({ maxTime: n })
 
+__.parallelEach = __.map
+
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                 return __.scatter (x, function (v, k, x) {
                                         return __.then (fn.$ (v, k, x),
