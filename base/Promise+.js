@@ -437,6 +437,9 @@ __.map = function (x, fn, cfg /* { maxConcurrency, maxTime } */) { fn = fn || _.
 
 __.map.configure = Cfg => (x, fn, cfg) => __.map (x, fn, Object.assign ({}, Cfg, cfg))
 
+__.map.maxConcurrency = n => __.map.configure ({ maxConcurrency: n })
+__.map.maxTime = n => __.map.configure ({ maxTime: n })
+
 __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
                 return __.scatter (x, function (v, k, x) {
                                         return __.then (fn.$ (v, k, x),
@@ -451,8 +454,6 @@ __.each = function (obj, fn) {
                                                             Promise.coerce (fn (x, i)) // @hide
                                                                    .then (then)
                                                                    .catch (whoops) }, complete) }) }) }
-
-__.parallelEach = __.map
 
 __.seq = function (arr) {
             return _.reduce2 (undefined, arr, __.then) }
