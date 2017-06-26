@@ -12,6 +12,9 @@ module.exports = $trait ({
     $depends: [require ('./args')],
 
     $defaults: {
+
+        argKeys: {
+            resetConfig: 1 },
         
         configPath:
             path.join (process.cwd (), '/config.json'),
@@ -21,27 +24,36 @@ module.exports = $trait ({
 
     /*  Configures 'supervisor' trait.
      */
-    shouldRestartOnSourceChange (action, file, yes, no) {
+    shouldRestartOnSourceChange (action, file, restart, supressRestart) {
 
         if (file.contains (this.configPath)) {
 
-            /*  If nothing changed actually, supress restart. This is needed because we
-                over-write config at startup, and we don't want restart loops.
-             */
-            if (_.isEqual (this.readConfig (), this.config)) {
-                no () }
+            const newConfig = this.totalConfig
 
-            /*  Config changed: apply, report and restart.
-             */
-            else {
-                this.applyConfig (this.readConfig ())
-                log.pp (log.config ({ pretty: true }), this.config)
-                yes () } } },
+            if (_.isEqual (newConfig, this.config)) {
 
-    readConfig () {
+                supressRestart ()
 
-        try       { return JSON.parse (fs.readFileSync (this.configPath, { encoding: 'utf-8' })) }
-        catch (e) { return {} } },
+            } else {
+                
+                log.pp (_.diff (this.config, newConfig))
+
+                this.config = newConfig
+
+                restart ()
+            }
+        }
+    },
+
+    get totalConfig () {
+
+        return _.extendedDeep (this.config, this.fileConfig, this.commandLineConfig)
+    },
+
+    get fileConfig () {
+
+        return fs.existsSync (this.configPath) ? JSON.parse (fs.readFileSync (this.configPath, { encoding: 'utf-8' })) : {}
+    },
 
     get commandLineConfig () {
 
@@ -52,39 +64,74 @@ module.exports = $trait ({
             const [ , k, v] = arg.match (/^(.+)=(.+)$/)
 
             const path = k.split ('.')
+            
+            let cursor = cfg
 
-            for (const nestedObjName of _.initial (path)) { cfg[nestedObjName] = {} }
+            for (const nestedProp of _.initial (path)) {
 
-            cfg[_.last (path)] = v
+                cursor = cursor[nestedProp] ||
+                        (cursor[nestedProp] = {})
+            }
+
+            try {
+
+                const [,str] = v.match (/^\"(.+)\"$/)
+
+                cursor[_.last (path)] = str
+
+            } catch (e) {
+
+                cursor[_.last (path)] = _.isFinite (Number (v)) ? Number (v) :
+                                            ((v === 'false') ? false :
+                                            ((v === 'true') ? true : v))
+            }
         }
 
         return cfg
     },
 
-    applyConfig (cfg) {
+    saveConfig () {
 
-        this.config = _.extendedDeep (this.config, cfg, this.commandLineConfig)
+        log.g ('Writing', this.configPath.bright)
+        log.w (this.config)
 
-        log.timestampEnabled = this.config.logTimestamps
-        
-        return this.config
+        util.writeFile (this.configPath, String.ify.configure ({ pretty: true, json: true }) (this.config))
+    },
+
+    lineFromStdin (line) {
+
+        if (line === 'saveConfig') this.saveConfig ()
     },
 
     beforeInit () {
 
-        const commandLineConfig = String.ify.noPretty (this.commandLineConfig)
+        if (this.args.resetConfig) {
 
-        log.i (`Reading ${'config.json'.bright}` + (commandLineConfig === '{  }' ? '' : ` + ${commandLineConfig.bright.magenta}`))
+            log.e (`Removing ${'config.json'.bright}`)
+            fs.unlinkSync (this.configPath)
+        }
 
-        /*  Re-write config at startup (with default values and pretty printed).
-         */
-        util.writeFile (this.configPath,
-            String.ify.configure ({ pretty: true, json: true }) (this.applyConfig (this.readConfig ())))
+        this.config = this.totalConfig
 
-        /*  Supresses double-reporting when running under supervisor.
-         */
-        if (!this.args.spawnedBySupervisor) {
-            log.p (log.config ({ pretty: true }), this.config) }
+        if (!fs.existsSync (this.configPath)) {
+
+            this.saveConfig ()
+
+        } else {
+
+            const overrides = String.ify.noPretty (this.commandLineConfig)
+
+            log.i (`Reading ${'config.json'.bright}` + (overrides === '{  }' ? '' : ` + ${overrides.bright.magenta}`))
+
+            if (!this.args.spawnedBySupervisor) {
+
+                log.p (this.config)
+            }
+        }
+
+        if (this.config.logTimestamps) {
+            log.timestampEnabled = this.config.logTimestamps
+        }
     }
 })
 
