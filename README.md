@@ -21,9 +21,9 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- You can override config with command line args, e.g. `node example.js webpack.offline=false`, using `server/config.js` trait.
+- You can override config with command line args, e.g. `node example.js webpack.offline=false`, using [`server/config.js`](https://github.com/xpl/useless/blob/master/server/config.js) trait.
 
-- You can now handle interactive terminal input with `server/stdin.js` trait.
+- You can now handle interactive terminal input with [`server/stdin.js`](https://github.com/xpl/useless/blob/master/server/stdin.js) trait.
 
 - [ololog](https://github.com/xpl/ololog) logging facility is now separate project (redesigned from a scratch)
 
