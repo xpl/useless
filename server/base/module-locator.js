@@ -23,9 +23,15 @@ const locator = module.exports = {
         return basePath && path.join (basePath, 'node_modules', name)
     },
 
+    cache: {},
+
     locateFromFile (file) {
-        return _.find (locator.parentDirsOf (file),
-                    dir => locator.isFile (path.join (dir, 'package.json')))
+
+        const dir = path.dirname (file)
+
+        return this.cache[dir] || (
+               this.cache[dir] = _.find (locator.parentDirsOf (file),
+                                            dir => locator.isFile (path.join (dir, 'package.json'))))
     },
 
 /*  Locates NPM module path     */

@@ -433,7 +433,10 @@ module.exports = $trait ({
 
     safeFilePath ({ location, dirRoot = process.cwd () }) {
 
-        if (location.split ('/').find (x => (x === '.') || (x === '..'))) {
+        if (location.split ('/').includes ('..')) {
+
+            log.e ('Contains forbidden symbols:', location.bright)
+            
             throw $http.ForbiddenError }
 
         else {

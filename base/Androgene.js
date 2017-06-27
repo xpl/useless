@@ -112,8 +112,6 @@
                         ? [...head, ...body]
                         : []
         },
-
-    /*  TODO: deforestration (linearization) of redundant nesting   */
     
         reportLocation: function (state = {}) {
 
