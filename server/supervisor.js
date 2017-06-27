@@ -184,7 +184,7 @@ const Supervisor = module.exports = $trait ({
         } 
     },
 
-    watchDirectory: function (path, changed) { log.pink ('Watching:', path.bright)
+    watchDirectory: function (path, changed) { log.pink ('Watching', path.bright)
 
                         chokidar.watch (path, { ignoreInitial: true })
                                 .on ('all', (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) }) },

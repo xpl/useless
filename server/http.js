@@ -431,22 +431,25 @@ module.exports = $trait ({
                     request: $http.request,
                     filePath: path.join (process.env.TMP || process.env.TMPDIR || process.env.TEMP || '/tmp' || process.cwd (), String.randomHex (32)) }) } },
 
-    file (location) {
+    safeFilePath ({ location, dirRoot = process.cwd () }) {
 
-        const fullPath = path.join (process.cwd (), location),
-              isDirectory = fs.statSync (fullPath).isDirectory (),
-              file = isDirectory ? $env.file : '',
-              containsDotDirs = file.split ('/').find (x => (x === '.') || (x === '..'))
-
-        if (containsDotDirs) {
+        if (location.split ('/').find (x => (x === '.') || (x === '..'))) {
             throw $http.ForbiddenError }
-            
+
         else {
-            return $http.file (path.join (fullPath, file)) }
+            return path.join (path.resolve (dirRoot), location) }
+    },
+
+    async file (location, subLocation = $env.file) {
+
+        const locatedPath = this.safeFilePath ({ location })
+        const isDirectory = (await fs.stat (locatedPath)).isDirectory ()
+
+        return $http.file (isDirectory ? this.safeFilePath ({ location: subLocation, dirRoot: locatedPath }) : locatedPath)
     },
 
     redirect (to) {
-                return x => ($http.redirect (to), x) },
+        return x => ($http.redirect (to), x) },
 
     hideFromProduction () {
 

@@ -18,7 +18,7 @@ const imagemagick = module.exports = {
 
     convert (cfg) {
         return exec (_.nonempty (['convert',
-                                    cfg.crop && ('-crop ' + cfg.crop.width + 'x' + cfg.crop.height + '+' + cfg.crop.left + '+' + cfg.crop.top),
+                                     cfg.crop && ('-crop ' + cfg.crop.width + 'x' + cfg.crop.height + '+' + cfg.crop.left + '+' + cfg.crop.top),
                                     (cfg.width || cfg.height) && ('-resize ' + [cfg.width || '', cfg.height || ''].join ('x')),
                                      cfg.quality && ('-quality ' + cfg.quality),
                                     _.quote (cfg.srcPath),
@@ -31,5 +31,58 @@ const imagemagick = module.exports = {
                             : imagemagick.convert ({
                                     srcPath: srcPath,
                                     dstPath: dstPath,
-                                    quality: 90 })).then (_.constant (features)) }) }
+                                    quality: 90 })).then (_.constant (features)) }) },
+
+    cropTop (cfg) {
+
+        const { originalWidth, originalHeight, targetWidth, targetHeight } = cfg
+
+        const originalAspect = originalWidth / originalHeight
+        const targetAspect = targetWidth / targetHeight
+
+        return imagemagick.convert (_.extended (cfg, (targetAspect > originalAspect) ?
+
+            /*
+                --------
+                |//////|        targetAspect=2
+                |------
+                |      |
+                |      |
+                --------
+            */
+
+            {
+                width: targetWidth, // resize
+
+                crop: {
+
+                    left: 0,
+                    top: 0,
+                    width: originalWidth,
+                    height: Math.floor (originalHeight / targetAspect)
+                }
+            } :
+
+            /*
+
+                --------------
+                |    |//|    |     targetAspect = 0.5
+                |    |//|    |
+                |    |//|    |
+                |    |//|    |
+                --------------
+            */
+            {
+                height: targetHeight, // resize
+
+                crop: {
+
+                    left: Math.floor ((originalWidth / 2) - (targetWidth / 2)),
+                    top: 0,
+                    width: Math.floor (originalHeight * targetAspect),
+                    height: originalHeight
+                }
+            })
+        )
+    }
 }

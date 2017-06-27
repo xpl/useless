@@ -1,9 +1,10 @@
 "use strict";
 
-/*  Run this file with this command in console
+/*  Usage:
 
-    > node example.js
- */
+        npm start example
+        
+*/
 
 require ('./useless')
 

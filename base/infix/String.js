@@ -102,6 +102,9 @@ _.deferTest ('String extensions', function () {
              'foo/'.concatPath ( 'bar'),
              'foo' .concatPath ( 'bar'), 'foo/bar')
 
+    $assert ('/'.concatPath ('/bar'), '/bar')
+    $assert ('/'.concatPath ('bar'),  '/bar')
+
     $assert ('123456'.first (2), '12')
     $assert ('123456'.last  (2), '56')
 
