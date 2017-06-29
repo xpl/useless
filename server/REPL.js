@@ -13,14 +13,14 @@ module.exports = $trait ({
 
             try {
 
-                eval (`__.then (${line}, result => { log.pp (result); log.margin () })`)
-            }
-            catch (e) {
+                eval (`Promise.resolve (${line}).then (x => { log.pp (x); log.margin () }).catch (e => { log.margin (); log.ee (e) })`)
+            
+            } catch (e) {
 
                 log.margin ()
                 log.ee (e)
             }
-
+            
             return true
         }
     }
