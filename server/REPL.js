@@ -7,13 +7,13 @@ module.exports = $trait ({
         log.ii ('REPL mode ready')
     },
 
-    async lineFromStdin (line) {
+    lineFromStdin (line) {
 
         if (line) {
 
             try {
 
-                eval (`__.then (${line}, result => { log (result); log.margin () })`)
+                eval (`__.then (${line}, result => { log.pp (result); log.margin () })`)
             }
             catch (e) {
 
