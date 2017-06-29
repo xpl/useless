@@ -39,8 +39,9 @@ const Examples = $singleton (Component, {
         require ('./server/webpack'),
         require ('./server/templating'),
         require ('./server/websocket'),
-        require ('./server/devtools'),
-        require ('./server/uptime') ],
+        require ('./server/REPL'),
+        require ('./server/source')
+    ],
 
     erroneousMethod () {
         unknownFunction () },

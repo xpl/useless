@@ -161,7 +161,25 @@ _.tests['Promise+'] = {
 
                     __.each ([1,2], function (x, i) {
                                         if (i > 0) $fail // should stop at 0, due to rejection
-                                        return Promise.reject ('foo') }).assertRejected ('foo') ] }
+                                        return Promise.reject ('foo') }).assertRejected ('foo') ] },
+
+/*  ------------------------------------------------------------------------ */
+
+    'each + break': async function () {
+
+        const log = []
+
+        const a =       () => {                     log.push ('a')              }
+        const b = async () => { await __.sleep (1); log.push ('b');             }
+        const c =       () => {                     log.push ('c'); return 42   } // breaks here
+        const d =       () => {                     log.push ('d');             } // will not be executed
+
+        await __.each ([a, b, c], (fn, i, break_) =>
+                                    __.then (fn, x => {
+                                                    if (x === 42) break_ () }))
+
+        $assert (log, ['a', 'b', 'c'])
+    },
 
 /*  END OF TESTS ----------------------------------------------------------- */
 
@@ -447,8 +465,8 @@ __.filter = function (x, fn, cfg /* { maxConcurrency, maxTime } */) {
 __.each = function (obj, fn) {
                 return __.then (obj, function (obj) {
                     return new Promise (function (complete, whoops) {
-                                        _.cps.each (obj, function (x, i, then) {
-                                                            Promise.coerce (fn (x, i)) // @hide
+                                        _.cps.each (obj, function (x, i, then, break_) {
+                                                            Promise.coerce (fn (x, i, break_)) // @hide
                                                                    .then (then)
                                                                    .catch (whoops) }, complete) }) }) }
 

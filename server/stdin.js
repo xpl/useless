@@ -2,11 +2,20 @@ module.exports = $trait ({
 
     $depends: [require ('./ipc')],
 
-/*  Bind to this    */
+/*  Implement this in traits:       */
 
-    lineFromStdin: $trigger (line => {}),
+    lineFromStdin (line) {
+
+        /* return true */       // return "true" to stop evaluaing 'lineFromStdin' methods defined in traits
+    },
+
 
 /*  Impl    */
+
+    _lineFromStdin: $callableFromMasterProcess (function (line) {
+
+        this.methodChain ('lineFromStdin', { until: returnValue => returnValue === true }) (line)
+    }),
 
     beforeInit () {
 
@@ -22,12 +31,5 @@ module.exports = $trait ({
 
             }).on ('line', line => { this._lineFromStdin (line) })
         }
-    },
-
-    // TODO: implement ability to do $callableFromMasterProcess ($trigger (...)), to get rid of this shim
-    
-    _lineFromStdin: $callableFromMasterProcess (function (line) {
-
-        this.lineFromStdin (line)
-    })
+    }
 })

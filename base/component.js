@@ -1053,26 +1053,24 @@ $global.Component = $prototype ({
             if (result instanceof Promise) {
                 result.panic } } }),
 
-    /*  Arranges methods defined in $traits in chains and evals them
+    /*  Arranges methods defined in $traits in chain
      */
-    callChainMethod: function (name) { var self = this
+    methodChain (name, { until = () => false } = {}) {
 
-        //console.log ('callChainMethod', this.constructor.$meta.name, name)
+        const methods = _.filter2 (this.constructor.$traits || [], Trait => {
+                                                            const method = Trait.prototype[name]
+                                                            return (method && method.bind (this)) || false })
 
-        const methods = _.filter2 (this.constructor.$traits || [], function (Trait) {
+        return (...args) => __.each (methods, (fn, i, break_) =>
 
-                                                                        var method = Trait.prototype[name]
+            __.then (fn (...args), returnValue => {
 
-                                                                        // if (method) {
-                                                                        //     return (...args) => {
-                                                                        //         console.log ('Calling', Trait.$meta.name, name)
-                                                                        //         return method.call (self, ...args)
-                                                                        //     }
-                                                                        // }
-
-                                                                        return (method && method.bind (self)) || false })
-
-        return __.seq (methods) },
+                if (until (returnValue)) {
+                    break_ ()
+                }
+            })
+        )
+    },
 
     /*  Lifecycle
      */
@@ -1080,14 +1078,14 @@ $global.Component = $prototype ({
         if (this.initialized.already) {
             throw new Error ('Component: I am already initialized. Probably you\'re doing it wrong.') }
 
-        return this.callChainMethod ('beforeInit') },
+        return this.methodChain ('beforeInit') () },
 
     init: function () { /* return Promise for asynchronous init */ },
 
     _afterInit: function () { var cfg  = this.cfg,
                                   self = this
 
-        return __.then (this.callChainMethod.$ ('afterInit'), function () {
+        return __.then (this.methodChain ('afterInit') (), function () {
 
                         self.initialized (true)
                         self.alive (true)

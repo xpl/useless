@@ -64,6 +64,7 @@ const Supervisor = module.exports = $trait ({
             line === 'r') {
 
             this.restart ()
+            return true
         }
     },
 
