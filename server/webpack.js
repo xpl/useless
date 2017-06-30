@@ -83,8 +83,8 @@ module.exports = $trait ({
             },
 
             commons: [
-                { name: 'admin-commons', minChunks: 2, children: true, chunks: ['a1', 'a2'] },
-                { name: 'commons', minChunks: 2, children: true, chunks: ['p1', 'p2', 'p3', 'admin-commons.js'] }
+                { name: 'admin-commons', minChunks: 2, chunks: ['a1', 'a2'] },
+                { name: 'commons', minChunks: 2, chunks: ['p1', 'p2', 'p3', 'admin-commons.js'] }
             ]
         })
     },
@@ -100,7 +100,6 @@ module.exports = $trait ({
 
             name: name,
             minChunks: 2,
-            children: true,
             chunks: _.map (entries, function (v, k) {
 
                 if (_.isString (v)) {
