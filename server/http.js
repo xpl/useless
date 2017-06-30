@@ -134,8 +134,9 @@ module.exports = $trait ({
         setHeaders (headers) {
                         _.extend (this.headers, headers); return this },
 
-        setMime (x) {
-                    return this.setHeaders ({ 'Content-Type': $http.mime[x] || x }) },
+        setMime (x) { return this.setHeaders ({ 'Content-Type': $http.mime[x] || x }) },
+
+        setMimeIfNotAlready (x) { return this.setMime (this.headers['Content-Type'] || x) },
 
         redirect (to) {
                         return this.setCode (302)
@@ -359,12 +360,15 @@ module.exports = $trait ({
                     ...((e instanceof Error) ? { parsedStack: new StackTracey (e).map (e => _.extend (e, { remote: true })) } : {})
                 })
 
-        } else { var x = log.impl.stringify (e)
+        } else {
+
+            const x = log.impl.stringify (e)
+            const isHTML = $http.headers['Content-Type'] === $http.mime.html
 
             $http.setCode (((e instanceof Error) && e.httpErrorCode) || $http.code || 500)
+                 .setMime (isHTML ? 'html' : 'text')
                  .writeHead ()
-                 .write (($http.headers['Content-Type'] === $http.mime.html) ?
-                            ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x)
+                 .write (isHTML ? ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x)
         }
 
         throw e
@@ -393,7 +397,7 @@ module.exports = $trait ({
 
     jsVariable (rvalue, lvalue) {
                     $http.setHeaders ({ 'Content-Type': $http.mime.javascript })
-                    return bullet ('var ' + rvalue + ' = ', stringify.configure ({ pure: true, pretty: true }) (lvalue)) },
+                    return bullet ('window.' + rvalue + ' = ', stringify.configure ({ pure: true, pretty: true }) (lvalue)) },
 
     receiveText () {
             return $http.receiveData ().then (log.ii) },

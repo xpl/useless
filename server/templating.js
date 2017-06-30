@@ -15,12 +15,11 @@ module.exports = $trait ({
 
     template (file, args) {
 
-            $http.headers['Content-Type'] =
-                $http.mime.guessFromFileName (file)
+            $http.setMimeIfNotAlready ($http.mime.guessFromFileName (file))
 
             const fullPath = path.resolve (path.join (this.templatesDir, file))
 
-            return this.compiledTemplate (fullPath).call (this, _.extend ({ env: $http.env }, args)) },
+            return this.compiledTemplate (fullPath).call (this, _.extend ({ require, $args: args }, args)) },
 
     compiledTemplate: $memoize (function (file) {
                                     return  _.template (fs.readFileSync (file, { encoding: 'utf-8' })) }),
