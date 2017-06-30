@@ -350,27 +350,25 @@ module.exports = $trait ({
         if ( ($http.headers['Content-Type'] === $http.mime.json) || // if JSON
             (!$http.headers['Content-Type']  && $http.isJSONAPI)) { // or if /api/ and no Content-Type explicitly specified
             
-            if (e instanceof Error) {
-                $http.setCode (e.httpErrorCode || $http.code || 500)
-                     .writeHead ()
-                     .write ({
-                        success: false,
-                        error: e.message,
-                        parsedStack: new StackTracey (e).map (e => _.extend (e, { remote: true })) }) }
-            else {
-                $http.writeHead ()
-                     .write ({
-                        success: false,
-                        error: e }) } }
+            $http.setCode (((e instanceof Error) && e.httpErrorCode) || $http.code || 500)
+                 .setMime ('json')
+                 .writeHead ()
+                 .write ({
+                    success: false,
+                    error: e.message,
+                    ...((e instanceof Error) ? { parsedStack: new StackTracey (e).map (e => _.extend (e, { remote: true })) } : {})
+                })
 
-        else { var x = log.impl.stringify (e)
+        } else { var x = log.impl.stringify (e)
 
             $http.setCode (((e instanceof Error) && e.httpErrorCode) || $http.code || 500)
                  .writeHead ()
                  .write (($http.headers['Content-Type'] === $http.mime.html) ?
-                            ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x) }
+                            ('<html><body><pre>' + _.escape (x) + '</pre></body></html>') : x)
+        }
 
-        throw e },
+        throw e
+    },
 
 
 /*  REQUEST PROCESSING PRIMITIVES
