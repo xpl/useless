@@ -21,7 +21,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- You can override config with command line args, e.g. `node example.js webpack.offline=false`, using [`server/config.js`](https://github.com/xpl/useless/blob/master/server/config.js) trait.
+- You can override config with command line args, e.g. `npm start example.js webpack.offline=false`, using [`server/config.js`](https://github.com/xpl/useless/blob/master/server/config.js) trait.
 
 - You can now handle interactive terminal input with [`server/stdin.js`](https://github.com/xpl/useless/blob/master/server/stdin.js) trait.
 
@@ -62,7 +62,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 ### Running example app
 
 ```bash
-> node example.js
+> npm start example.js
 ```
 
 If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.

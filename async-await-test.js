@@ -11,7 +11,7 @@ module.exports = $singleton (Component, {
 
     $depends: [
 
-        //require ('./server/supervisor'),
+        require ('./server/supervisor'),
         require ('./server/exceptions'),
         require ('./server/http'),
     ],

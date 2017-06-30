@@ -1053,7 +1053,7 @@ $global.Component = $prototype ({
             if (result instanceof Promise) {
                 result.panic } } }),
 
-    /*  Arranges methods defined in $traits in chain
+    /*  Arranges methods defined in $traits in chains and evals them
      */
     methodChain (name, { until = () => false } = {}) {
 
@@ -1072,20 +1072,44 @@ $global.Component = $prototype ({
         )
     },
 
+    /*  LEGACY
+        TODO: find why methodChain () does not work as a replacement    */
+
+    callChainMethod: function (name) { var self = this
+
+        //console.log ('callChainMethod', this.constructor.$meta.name, name)
+
+        const methods = _.filter2 (this.constructor.$traits || [], function (Trait) {
+
+                                                                        var method = Trait.prototype[name]
+
+                                                                        // if (method) {
+                                                                        //     return (...args) => {
+                                                                        //         console.log ('Calling', Trait.$meta.name, name)
+                                                                        //         return method.call (self, ...args)
+                                                                        //     }
+                                                                        // }
+
+                                                                        return (method && method.bind (self)) || false })
+
+        return __.seq (methods) },
+
+
+
     /*  Lifecycle
      */
     _beforeInit: function () {
         if (this.initialized.already) {
             throw new Error ('Component: I am already initialized. Probably you\'re doing it wrong.') }
 
-        return this.methodChain ('beforeInit') () },
+        return this.callChainMethod ('beforeInit') },
 
     init: function () { /* return Promise for asynchronous init */ },
 
     _afterInit: function () { var cfg  = this.cfg,
                                   self = this
 
-        return __.then (this.methodChain ('afterInit') (), function () {
+        return __.then (this.callChainMethod.$ ('afterInit'), function () {
 
                         self.initialized (true)
                         self.alive (true)

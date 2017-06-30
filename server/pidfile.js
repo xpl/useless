@@ -18,7 +18,7 @@ module.exports = $trait ({
 
     beforeInit () {
 
-        if (!this.isSupervisedProcess) {
+        if (!this.isSupervisedProcess && this.pidFile) {
 
             log.ok ('Writing PID to', this.pidFile)
 
