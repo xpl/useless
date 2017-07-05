@@ -2,10 +2,11 @@
 
 const _  = require ('underscore')
 
-const imagemagick = require ('./base/imagemagick'),
-      util        = require ('./base/util'),
-      path        = require ('path'),
-      fs          = require ('./base/fs')
+const
+    imagemagick = require ('./base/imagemagick'),
+    util        = require ('./base/util'),
+    path        = require ('path'),
+    fs          = require ('./base/fs')
 
 module.exports = $trait ({
 
@@ -23,18 +24,22 @@ module.exports = $trait ({
 
         try {
 
-            const features = await imagemagick.toJPEG (await this.receiveFile (), isDirectory
-                                                                                    ? util.uniqueFilePath (locatedPath, String.randomHex (8), 'jpg')
-                                                                                    : locatedPath)
+            const targetFile = isDirectory
+                                    ? util.uniqueFilePath (locatedPath, String.randomHex (8), 'jpg')
+                                    : locatedPath
+
+            const features = await imagemagick.toJPEG (await this.receiveFile (), targetFile)
 
             return {
 
-                id: target.name,
+                id: path.parse (targetFile).name,
                  w: features.width,
                  h: features.height
             }
 
         } catch (e) {
+
+            log.ee (e)
 
             throw new Error ('cannot process the uploaded file (bad format)')
         }

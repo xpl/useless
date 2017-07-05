@@ -24,14 +24,28 @@ const imagemagick = module.exports = {
                                     _.quote (cfg.srcPath),
                                     _.quote (cfg.dstPath)]).join (' ')) },
 
-    toJPEG (srcPath, dstPath) { // calls convert if not JPEG, copies as is otherwise
-        return imagemagick.identify (srcPath).then (features => {
-                return ((features.format === 'JPEG')
-                            ? exec ('cp ' + _.quote (srcPath) + ' ' + _.quote (dstPath))
-                            : imagemagick.convert ({
-                                    srcPath: srcPath,
-                                    dstPath: dstPath,
-                                    quality: 90 })).then (_.constant (features)) }) },
+    async toJPEG (srcPath, dstPath) { // calls convert if not JPEG, copies as is otherwise
+
+        log.ww ('toJPEG', srcPath, '→', dstPath)
+
+        const features = await imagemagick.identify (srcPath)
+
+        log.pp (features)
+
+        if (features.format === 'JPEG') {
+            
+            exec ('cp ' + _.quote (srcPath) + ' ' + _.quote (dstPath))
+        
+        } else {
+        
+            await imagemagick.convert ({
+                            srcPath: srcPath,
+                            dstPath: dstPath,
+                            quality: 90 })
+        }
+
+        return features
+    },
 
     cropTop (cfg) {
 
