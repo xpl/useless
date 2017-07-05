@@ -21,7 +21,7 @@ path.joins     = _.higherOrder (path.join)
 path.joinWith  = _.flipN       (path.join)
 path.joinsWith = _.higherOrder (path.joinWith)
 
-module.exports = {
+const util = module.exports = {
 
     fatalError: function (explain) {
                     log.error.apply (null, _.cons (log.config ({ stackOffset: 1 }), _.asArray (arguments).concat ('\n')))
@@ -39,6 +39,8 @@ module.exports = {
         fs.writeFileSync.$ (file, what, { encoding: 'utf-8'})
           .catches (module.exports.fatalError.$ ('Cannot write', file)) ()  },
 
+    isDirectory: x => fs.statSync.catches ({ isDirectory: () => false }) (path.resolve (x)).isDirectory (),
+
     mkdir: function (dirPath, root_ = process.cwd ()) {
         var dirs = dirPath.split ('/')
         var dir = dirs.shift ()
@@ -55,12 +57,15 @@ module.exports = {
         }
         return (dirs.length === 0 ? root : false) || module.exports.mkdir (dirs.join ('/'), root);
     },
-    uniqueFileName: function (root, name, extension) {
+    uniqueFilePath: function (root, name, extension) {
         var n = 1, resultPath, resultName = name
         while (fs.existsSync (resultPath = path.join (root, resultName) + (extension ? ('.' + extension) : ''))) {
             resultName = name + '_' + (n++)
         }
-        return resultName
+        return resultPath
+    },
+    uniqueFileName: function (...args) {
+        return path.basename (util.uniqueFilePath (...args))
     },
     httpGet_and_downloadFile_example: function () {
         module.exports.httpGet ({

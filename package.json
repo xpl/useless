@@ -14,9 +14,9 @@
     "example": "examples"
   },
   "scripts": {
-    "start": "node boot.js",
-    "test": "node test.js no-supervisor",
-    "build": "node build.js"
+    "test": "node test",
+    "build": "node build",
+    "example": "node example"
   },
   "repository": {
     "type": "git",

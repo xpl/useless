@@ -240,17 +240,23 @@ module.exports = $trait ({
 
         log.i ('Starting HTTP @ ', log.color.boldBlue, `localhost:${this.config.port}`)
 
-        /*  Creates $http thing
+        /*  Creates pseudo-global properties bound to the current HTTP request context
          */
         $global.property ('$http', {
+
             get: () => AndrogeneProcessContext.current &&  AndrogeneProcessContext.current.env,
             set: x  => AndrogeneProcessContext.current && (AndrogeneProcessContext.current.env = x) })
 
-        /*  Creates $env thing
-         */
         $global.property ('$env', {
+
             get: () => ($http && $http.env) || {},
             set: x  => _.extend ($http.env, x) })
+
+        $global.property ('$this', {
+
+            get: () => ($http && $http.this_) || {},
+        })
+
 
         /*  Starts HTTP server
          */
@@ -258,7 +264,8 @@ module.exports = $trait ({
                                 this.httpServer = http.createServer ((request, response) => {
                                                                             this.serveRequest (new this.HttpContext ({ // @hide
                                                                                 request: request,
-                                                                                response: response })) })
+                                                                                response: response,
+                                                                                this_: this })) })
 
                                                                             .listen (this.config.port, then.arity0) }) },
 

@@ -16,39 +16,33 @@ module.exports = $singleton (Component, {
         require ('./server/http'),
     ],
 
-    api () {
+    '/test/promise': function () {
 
-        return {
+        log.ii ('Testing asynchronous logging / environment with Androgene Promises...')
 
-            'test/promise': function () {
+        return __.sleep (500).then (() => {
 
-                log.ii ('Testing asynchronous logging / environment with Androgene Promises...')
+            $http.setHeaders ({ 'Content-Type': 'text/plain' }) // pseudo-global $http (i.e. request context) works
 
-                return __.sleep (500).then (() => {
+            log.ww ('Lol') // asynchronus logging works
 
-                    $http.setHeaders ({ 'Content-Type': 'text/plain' }) // pseudo-global $http (i.e. request context) works
-
-                    log.ww ('Lol') // asynchronus logging works
-
-                    return 'Lol'
-                })
-            },
-
-            'test/async-await': async () => { // async-await version (does not work without transpiling, because the native async/await impl forbids global Promise overriding)
-
-                log.ii ('Testing async-await version...')
-
-                await __.sleep (500)
-
-                $http.setHeaders ({ 'Content-Type': 'text/plain' })
-
-                log.ww ('Lol')
-
-                return 'Lol'
-            },
-        }
+            return 'Lol'
+        })
     },
 
+    '/test/async-await': async () => { // async-await version (does not work without transpiling, because the native async/await impl forbids global Promise overriding)
+
+        log.ii ('Testing async-await version...')
+
+        await __.sleep (500)
+
+        $http.setHeaders ({ 'Content-Type': 'text/plain' })
+
+        log.ww ('Lol')
+
+        return 'Lol'
+    },
+    
     async init () {
 
         log.gg ('Loaded')

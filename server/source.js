@@ -16,45 +16,46 @@ module.exports = $trait ({
         sourceRoot: process.cwd ()
     },
 
-    devHint: log.warn,
-
-    api () {
+    beforeInit () {
 
         if (!this.requireDeveloper) {
              this.requireDeveloper = _.identity
-             this.devHint ("Implement requireDeveloper() to restrict access to source code API") }
-
-        return {
-
-            'api': {
-                'source/:file': { get:  [this.requireDeveloper, this.allowOrigin ('*'), this.readSource],
-                                  // post: [this.requireDeveloper, this.allowOrigin ('*'), this.receiveJSON, this.writeSource]
-                                },
-            }
-        }
+             log.warn ("Implement requireDeveloper() to restrict access to source code API") }
     },
 
-    readSource () {
+    '/api/source/:file': {
 
-                    $http.headers['Content-Type'] =
-                        $http.mime.guessFromFileName ($http.env.file)
+        async get () {
 
-                    const src = getSource (($http.env.file[0] === '/')
-                                                ? $http.env.file
-                                                : path.join (this.sourceRoot, $http.env.file))
+            await this.requireDeveloper ()
 
-                    if (src.error) {
-                        throw src.error }
+            this.allowOrigin ('*')
 
-                    else {
-                        return src.text } },
+            $http.headers['Content-Type'] =
+                $http.mime.guessFromFileName ($http.env.file)
 
-    // writeSource: function (input) {
-    //                 return new Promise (then => {
-    //                                         log.w ('Writing source:', $http.env.file)
-    //                                         SourceFiles.write (
-    //                                                 path.join (this.sourceRoot, $http.env.file),
-    //                                                 input.text,
-    //                                                 then.arity0) }) },
+            const src = getSource (($http.env.file[0] === '/')
+                                        ? $http.env.file
+                                        : path.join (this.sourceRoot, $http.env.file))
+
+            if (src.error) {
+                throw src.error }
+
+            else {
+                return src.text }
+        },
+        
+        // post () { return __.seq (
+        //                     this.requireDeveloper,
+        //                     this.allowOrigin ('*'),
+        //                     this.receiveJSON,
+        //                     function (input) {
+        //                             return new Promise (then => {
+        //                                                     log.w ('Writing source:', $http.env.file)
+        //                                                     SourceFiles.write (
+        //                                                             path.join (this.sourceRoot, $http.env.file),
+        //                                                             input.text,
+        //                                                             then.arity0) }) }) }
+    },
 
 })

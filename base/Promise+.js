@@ -106,6 +106,7 @@ _.tests['Promise+'] = {
 
     seq: function () {  $assert (__.seq (123), 123)
                         $assert (__.seq ([123, 333]), 333)
+                        $assert (__.seq ( 123, 333 ), 333)
                         $assert (__.seq ([123, _.constant (333)]), 333)
 
                         $assert (__.seq ([_.constant (333)]), 333)
@@ -470,8 +471,7 @@ __.each = function (obj, fn) {
                                                                    .then (then)
                                                                    .catch (whoops) }, complete) }) }) }
 
-__.seq = function (arr) {
-            return _.reduce2 (undefined, arr, __.then) }
+__.seq = (...args) => _.reduce2 (undefined, (args.length > 1) ? args : args[0], __.then)
 
 __.all = function (arr) {
             return Promise.all (_.map (arr, __)) } // @hide

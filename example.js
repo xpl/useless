@@ -28,11 +28,6 @@ const Examples = $singleton (Component, {
         }
     },
 
-    api () {
-        return {
-            '/': this.template.$ ('./example/index.html'),
-            'api/erroneous-method': { post: this.erroneousMethod } } },
-
     $depends: [
         
         require ('./server/supervisor'),
@@ -43,8 +38,9 @@ const Examples = $singleton (Component, {
         require ('./server/source')
     ],
 
-    erroneousMethod () {
-        unknownFunction () },
+    '/': () => $this.template ('./example/index.html'),
+
+    '/api/erroneous-method': { post: () => unknownFunction () },
                                         
-    init () {
-        log.green ('Example app is running at http://localhost:1333') } })
+    init () { log.green ('Example app is running at http://localhost:1333') }
+})

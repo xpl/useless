@@ -578,6 +578,25 @@ _.tests.component = {
         x ('oy'); $assert (compo.x.value, 'yo')  // shouldnt change
     },
 
+    'member order' () {
+
+        var X = $component ({
+
+            $depends: [
+                $trait ({ foo_1 () {} }),
+                $trait ({ foo_2 () {} })
+            ],
+
+            foo_3 () {}
+        })
+
+        $assert (_.filter (_.keys (X.prototype), k => k.startsWith ('foo')),
+
+                ['foo_1',
+                 'foo_2',
+                 'foo_3'])
+    },
+
     /*  $alias (TODO: fix bugs)
      */
     /*'$alias': function () { var value = 41
@@ -773,7 +792,11 @@ $global.Component = $prototype ({
                                                                return   value }) } }); 
                return def } },
 
-        mergeTraitsMembers: function (def, traits) { var pool = {}, bindables = {}, streams = {}
+        mergeTraitsMembers: function (def, traits) {
+
+            var newDef = {} // clone to re-add members in correct order (traits first)
+
+            var pool = {}, bindables = {}, streams = {}
 
             var macroTags = $untag (def.$macroTags)
             var definitions = _.pluck (traits, '$definition').concat (_.clone (def))
@@ -788,11 +811,22 @@ $global.Component = $prototype ({
 
                             if ($bindable.is (member))                  { bindables[name] = member }
                             if (Component.isStreamDefinition (member))  {   streams[name] = member }
-                            (pool[name] || (pool[name] = [])).push (member);    def[name] = member } }) }, this)
+                            (pool[name] || (pool[name] = [])).push (member); newDef[name] = member } }) }, this)
 
             def.__bindables     = bindables
             def.__streams       = streams
-            def.__membersByName = pool },
+            def.__membersByName = pool
+
+        /*  Re-add members in correct order */
+        
+            for (const k of Object.keys (newDef)) {
+                delete def[k]
+            }
+
+            for (const k of Object.keys (newDef)) {
+                def[k] = newDef[k]
+            }
+        },
 
         mergeStreams: function (def) { var pool = def.__membersByName
 
@@ -1055,13 +1089,13 @@ $global.Component = $prototype ({
 
     /*  Arranges methods defined in $traits in chains and evals them
      */
-    methodChain (name, { until = () => false } = {}) {
+    methodChain (name, { reverse = false, until = () => false } = {}) {
 
         const methods = _.filter2 (this.constructor.$traits || [], Trait => {
                                                             const method = Trait.prototype[name]
                                                             return (method && method.bind (this)) || false })
 
-        return (...args) => __.each (methods, (fn, i, break_) =>
+        return (...args) => __.each (reverse ? methods.reverse () : methods, (fn, i, break_) => (
 
             __.then (fn (...args), returnValue => {
 
@@ -1069,7 +1103,7 @@ $global.Component = $prototype ({
                     break_ ()
                 }
             })
-        )
+        ))
     },
 
     /*  LEGACY

@@ -14,7 +14,7 @@ module.exports = $trait ({
 
     _lineFromStdin: $callableFromMasterProcess (function (line) {
 
-        this.methodChain ('lineFromStdin', { until: returnValue => returnValue === true }) (line)
+        this.methodChain ('lineFromStdin', { reverse: true, until: returnValue => returnValue === true }) (line)
     }),
 
     beforeInit () {

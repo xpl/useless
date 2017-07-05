@@ -21,7 +21,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 
 ### Recent updates / changelog
 
-- You can override config with command line args, e.g. `npm start example.js webpack.offline=false`, using [`server/config.js`](https://github.com/xpl/useless/blob/master/server/config.js) trait.
+- You can override config with command line args, e.g. `node example webpack.offline=false`, using [`server/config.js`](https://github.com/xpl/useless/blob/master/server/config.js) trait.
 
 - You can now handle interactive terminal input with [`server/stdin.js`](https://github.com/xpl/useless/blob/master/server/stdin.js) trait.
 
@@ -62,7 +62,7 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 ### Running example app
 
 ```bash
-> npm start example.js
+node example
 ```
 
 If everything's ok, example app will be running at <a href="http://localhost:1333">http://localhost:1333</a>. Currently there's not much example code, but it's on the way.
@@ -293,52 +293,50 @@ UselessApp = $singleton (Component, {
         require ('useless/server/webpack'),
         require ('useless/server/http') ],
 
-    /*    URL router schema
-     */
-    api: function () { return {
-        
-        '/':             this.file.$ ('./static/index.html'),
-        '/static/:file': this.file.$ ('./static'),            // directory
-    
-        'hello-world':       () => { return "Hello world!"        }, // plain text
-        'hello-world/json':  () => { return { foo: 42, bar: 777 } }, // JSON
-        
-        /*    Tree-style defintions, Promise-backed method chains
-         */
-        'api': {
-            'login':  { post: [this.receiveJSON, this.doLogin] },
-            'logout': { post: () => $http.removeCookies (['email', 'password']) } } } },
+/*  Members starting with "/" are HTTP request handlers         */
 
-    /*  A complex request handler example, demonstrating some core features.
-    
-        All execution is wrapped into so-called "supervised Promise chain",
-        so you don't need to pass the request context explicitly, it is always
-        available as $http object in any promise callback related to request
-        represented by that object.
-        
-        All thrown errors and all log messages are handled by the engine
-        automagically. It builds a process/event hierarchy that reflects the
-        actual execution flow, so you don't need to run a debugger to see what's
-        going on, it's all in the log. Request is automatically ended when an
-        unhandled exception occurs, no need to trigger it explicitly.
-     */
-    doLogin: function () {
-        var login = _.pick ($http.env, 'email', 'password') // 'receiveJSON' writes to $http.env
-        if (login.email && login.password) {
-            return this.db.users
-                    .find (login)
-                    .count ()
-                    .then (count => {
-                                    if (count > 0) {
-                                        $http.setCookies (login) }
-                                    else {
-                                        throw new Error ('Wrong credentials') } }) }
-        else {
-                throw new Error ('Empty email or password') } },
+    '/hello-world':       () => "Hello world!",          // text/plain; charset=utf-8
+    '/hello-world/json':  () => ({ foo: 42, bar: 777 }), // application/json; charset=utf-8
 
-    init: function (then) {
-            log.ok ('App started')
-            then () } })
+    '/':             () => $this.file ('./static/index.html'), // $this is a smart alias for `this`, accessible from anywhere in the request execution context
+    '/static/:file': () => $this.file ('./static'),
+
+    '/api': { // tree-style definitions are supported
+        
+        'login':  { post: async () => $this.doLogin (await $this.receiveJSON) },
+        'logout': { post:       () => $http.removeCookies (['email', 'password']) },
+    }
+
+/*  A complex request handler example, demonstrating some core features.
+
+    All execution is wrapped into so-called "supervised Promise chain",
+    so you don't need to pass the request context explicitly, it is always
+    available as $http object in any promise callback related to request
+    represented by that object.
+    
+    All thrown errors and all log messages are handled by the engine
+    automagically. It builds a process/event hierarchy that reflects the
+    actual execution flow, so you don't need to run a debugger to see what's
+    going on, it's all in the log. Request is automatically ended when an
+    unhandled exception occurs, no need to trigger it explicitly.               */
+
+    async doLogin ({ email, password }) {
+
+        if (await this.db.users.find ({ email, password }).count () > 0) {
+
+            $http.setCookies ({ email, password })
+
+        } else {
+
+            throw new Error ('Wrong credentials')
+        }
+    },
+
+    init () {
+
+        log.ok ('App started')
+    }
+})
 ```
 
 Example report generated from a Promise chain:

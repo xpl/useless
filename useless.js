@@ -1,10 +1,17 @@
 "use strict";
 
-const $global = (typeof window === 'undefined' ? global : window)
+var isBrowser = typeof window !== 'undefined'
+
+if (!isBrowser) {
+
+    require ('./babel') // transpiles ES6+ via the `require` hook
+}
+
+var $global = isBrowser ? window : global
 
 $global.$uselessFile = 'useless.js'
 
-const _ = $global._ = module.exports = require ('./base/3rd/underscore-fix') // latest underscore from GitHub, fixes strict-mode issue
+var _ = $global._ = module.exports = require ('./base/3rd/underscore-fix') // latest underscore from GitHub, fixes strict-mode issue
 
 /*  Internal dependencies
     ======================================================================== */
@@ -85,3 +92,4 @@ const _ = $global._ = module.exports = require ('./base/3rd/underscore-fix') // 
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     require ('./base/http')
+

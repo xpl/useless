@@ -46,9 +46,7 @@ function initComponentDemo () {
                 .drag ({
                     callMoveAtStart: true,
                     //minDelta: 100,
-                    start () {
-                        return false
-                    },
+                    start () {},
                     move: (memo, offset, position) => {
 
                         this.value = _.rescale (position.x,

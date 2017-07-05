@@ -48,13 +48,7 @@ module.exports = $trait ({
         }
     },
 
-    api () {
-        if (this.file) {
-            return {
-                'build/:file': this.file.$ (this.config.webpack.buildPath)
-            }
-        }
-    },
+    '/build/:file' () { return this.file.$ (this.config.webpack.buildPath) },
 
     test () {
 

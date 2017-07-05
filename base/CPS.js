@@ -99,9 +99,11 @@ _.withTest (['cps', 'each'], function () {
 
 function () { _.extend (_.cps, {
 
-    each: function each (obj, elem_, complete_, index_, length_, keys_) {
+    each: function each (obj, elem_, complete_ = _.noop, index_, length_, keys_) {
 
-                var complete = complete_ || _.noop
+                let completed = false
+
+                var complete = (...args) => !completed && (completed = true, complete_ (...args))
                 var elem     = function (x, k, next) {
                                     if (_.numArgs (elem_) === 2) { elem_ (x,    next, complete, obj) }
                                                             else { elem_ (x, k, next, complete, obj) } }
@@ -124,7 +126,13 @@ function () { _.extend (_.cps, {
                     else {
                         var key = keys ? keys[index] : index
 
-                        elem (obj[key], key, each.bind (this, obj, elem_, complete_, index + 1, length, keys)) } } } })} )
+                        elem (obj[key], key, () => !completed && each.call (this, obj, elem_, complete_, index + 1, length, keys))
+                    }
+                }
+            }
+        })
+    }
+)
 
 
 /*  map

@@ -9,6 +9,8 @@ module.exports = $trait ({
 
     lineFromStdin (line) {
 
+        log.ww ('repl')
+
         if (line) {
 
             try {

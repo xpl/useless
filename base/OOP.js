@@ -549,6 +549,7 @@ _.withTest ('OOP', {
                         $untag (def.$constructor).call (def) } } return def },
 
             generateConstructor: function (base) { return function (def) {
+
                 return _.extend (def, { constructor:
                     Meta.modify (def.hasOwnProperty ('constructor') ? def.constructor : this.defaultConstructor (base),
                         function (fn) {
@@ -596,10 +597,19 @@ _.withTest ('OOP', {
                     (tags.memoized ? _.defineMemoizedProperty : _.defineProperty) (targetObject, key, def, tags.hidden ? { enumerable: false } : {})
                 }
                 else {
-                    Object.defineProperty (targetObject, key, {
-                        value: $untag (def),
-                        configurable: true, writable: true,
-                        enumerable: !tags.hidden }) } },
+
+                    try {
+                        Object.defineProperty (targetObject, key, {
+                            value: $untag (def),
+                            configurable: true, writable: true,
+                            enumerable: !tags.hidden })
+                    } catch (e) {
+
+                        console.log ('Failed to define property', key, 'on', targetObject, 'with def =', def)
+                        console.log (e)
+                    }
+                }
+            },
 
             ensureFinalContracts: function (base) { return function (def) {
                                         if (base) {
