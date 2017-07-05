@@ -17,8 +17,6 @@ module.exports = $trait ({
 
         log.info ('Collecting HTTP route handlers', `(type ${'routes'.bright.yellow} to show schema)`.bright.cyan)
 
-        //log.gg (this.constructor.$definition)
-
     /*  ...returned from api() methods (DEPRECATED)  */
 
         const routes = _.flat (
@@ -27,23 +25,15 @@ module.exports = $trait ({
 
     /*  ...via member definitions (new way)    */
 
-        // const mapMethods = (handler, fn) =>
-        //                         _.isArray (handler)
-        //                                 ? handler.map (fn)
-        //                                 : (handler.get || handler.post)
-        //                                         ? { get:  fn (handler.get),
-        //                                             post: fn (handler.post) }
-        //                                         : fn (handler)
-
         // const evaluate = interpreter ({ 'this': this })
 
         for (const k of _.keys (this.constructor.prototype)) {
 
             if (k[0] === '/') {
 
-                // routes.push ([k, mapMethods (prototype[k], evaluate)])
+                const handlers = this[k]
 
-                routes.push ([k === '/' ? '/' : k.slice (1), this[k]])
+                routes.push ([k === '/' ? '/' : k.slice (1), _.map2 (handlers, m => m.bind (this))])
             }
         }
 
