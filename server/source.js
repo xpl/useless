@@ -9,8 +9,6 @@ const fs        = require ('fs'),
 
 module.exports = $trait ({
 
-    $depends: [require ('./http')],
-
     $defaults: {
 
         sourceRoot: process.cwd ()

@@ -7,9 +7,6 @@ const fs   = require ('./base/fs'),
 
 module.exports = $trait ({
 
-    $depends: [
-        require ('./http')],
-
     $defaults: {
         templatesDir: '' },
 
