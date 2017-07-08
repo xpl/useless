@@ -2,6 +2,10 @@
 
 const _ = require ('underscore')
 
+const { ansiEscapeCodes,
+        printableCharacters,
+        nonPrintableCharacters } = require ('printable-characters')
+
 /*  String extensions
     ======================================================================== */
 
@@ -148,6 +152,10 @@ _.deferTest ('String extensions', function () {
 
     trimmed: function (s) {
         return s.trim () },
+
+    looksEmpty: function (s) {
+        const visibleLetters = s.replace (nonPrintableCharacters, '')
+        return visibleLetters.length === 0 },
 
     limitedTo: function (s, n) {
         return s && ((s.length <= n) ? s : (s.substr (0, n - 1) + '…')) },

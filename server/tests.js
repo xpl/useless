@@ -24,7 +24,10 @@ const ServerTests = module.exports = $trait ({
             testsFailed: 1 },
 
         supressCodeBaseTests:     false,
-        supressAppComponentTests: false },
+        supressAppComponentTests: false,
+
+        testsConfig: {}
+    },
 
 
     /*  Set to `false` this in your app to get $traits tests run early (before init, not after).
@@ -118,6 +121,8 @@ const ServerTests = module.exports = $trait ({
             )
 
             return Testosterone.run ({    
+
+                ...this.testsConfig,
 
                  context: this,
                 codebase: false,

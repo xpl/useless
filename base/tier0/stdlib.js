@@ -762,17 +762,29 @@ _.withTest (['stdlib', 'partition2'], function () {
         $assert (_.partition3 ([ 'a', 'b', 'c', undefined, undefined, 42], _.typeOf),
                 [{ label: 'string',    items: ['a', 'b', 'c'] },
                  { label: 'undefined', items: [undefined, undefined] },
-                 { label: 'number',    items: [42] }]) }, function () {
+                 { label: 'number',    items: [42] }])
 
-    _.partition2 = function (arr, pred) { return _.pluck (_.partition3 (arr, pred), 'items') }
+        $assert (_.partition3 ([ { foo: 'a' }, { foo: 'a' }, { foo: 'b' }], 'foo'),
 
-    _.partition3 = function (arr_, pred) {  var arr  = arr_ || []
+                    [{ foo: 'a', items: [{ foo: 'a' }, { foo: 'a' }] },
+                     { foo: 'b', items: [{ foo: 'b' }]               }])
+
+
+
+    }, function () {
+
+    _.partition2 = function (arr, pick) { return _.pluck (_.partition3 (arr, pick), 'items') }
+
+    _.partition3 = function (arr_, pick) {  var arr  = arr_ || []
                                             var spans = [],
                                                 span  = { label: undefined, items: [arr.first] }
 
-            _.each (arr, function (x, i) { var label = pred (x, i)
-                if ((span.label != label) &&
-                     span.items.length) { spans.push (span = { label: label, items: [x] }) }
+            const prop = _.isFunction (pick) ? 'label' : pick
+            const pickFn = _.isFunction (pick) ? pick : x => x[pick]
+
+            _.each (arr, function (x, i) { var value = pickFn (x, i)
+                if ((span[prop] != value) &&
+                     span.items.length) { spans.push (span = { [prop]: value, items: [x] }) }
                                    else { span.items.push (x) } })
 
             return (span.length && spans.push (span)),

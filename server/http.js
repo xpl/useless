@@ -254,7 +254,7 @@ module.exports = $trait ({
 
         $global.property ('$this', {
 
-            get: () => ($http && $http.this_) || {},
+            get: () => ($http && $http.this_) || this,
         })
 
 

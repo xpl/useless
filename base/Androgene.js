@@ -5,6 +5,7 @@
     const _ = require ('underscore')
     const O = Object
     const StackTracey = require ('stacktracey')
+    const ololog = require ('ololog')
 
 /*  ------------------------------------------------------------------------ */
 
@@ -65,16 +66,24 @@
             
             log.impl.write.intercept (logHook)
 
+            const olologRender = ololog.impl.render
+
+            ololog.impl.render = function (text) {
+
+                context.addEvent ({ olologRender, text: text })
+            }
+
             return function /* pop */ () {  AndrogeneProcessContext.current     = prev
                                             Promise = PrevPromise
-                                            log.impl.write.off (logHook) } }),
+                                            log.impl.write.off (logHook)
+                                            ololog.impl.render = olologRender } }),
 
         addEvent (e) {
 
             for (let ctx = this; ctx; ctx = ctx.parent) {
 
                 if (e instanceof Error) { ctx.numErrors++ }
-                else if (Array.isArray (e)) { ctx.numLogMessages++ }
+                else if (e.olologRender || Array.isArray (e)) { ctx.numLogMessages++ }
             }
 
             this.eventLog.push (e)
@@ -142,10 +151,11 @@
                                         ? x.report (O.assign (state, { visited })) :
                                
                                ((x instanceof Error)
-                                        ? this.reportError (x, state)
+                                        ? this.reportError (x, state) :
 
-                                // else
-                                        : [ { type: 'log', data: this.log (log.indent (indent), ...(x || [])) } ] )))
+                                (Array.isArray (x)
+                                        ? [ { type: 'log', data: this.log (log.indent (indent), ...(x || [])) } ]
+                                        : [ { type: 'log', data: this.log (log.indent (indent), x.text) } ]))))
 
                     .reduce ((a, b) => [...a, ...b], [])
         },
