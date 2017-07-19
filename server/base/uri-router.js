@@ -136,15 +136,17 @@ const URIRouter = module.exports = {
                 var subroutes   = _.isArray (handler) ? handler : undefined
 
                 var isJsonBinding   = (match[0] === '@')
-                var isBinding       = (match[0] === ':') || isJsonBinding
-                
+                var isNumberBinding = (match[0] === '%')
+                var isBinding       = (match[0] === ':') || isJsonBinding || isNumberBinding
+
                 trace (match, '← ', log.color.bright, element)
 
                 if (isBinding || element == match) {
                     if (isBinding) {
                         var key    = match.slice (1)
                         var value  = decodeURIComponent (subroutes ? element : path.slice (depth).join ('/'))
-                        vars[key]  = isJsonBinding ? JSON.parse.catches () (value) : value
+                        vars[key]  = (isJsonBinding ? JSON.parse.catches () (value) :
+                                     (isNumberBinding ? Number (value) : value))
 
                         trace (match + ' = ' + vars[key]) }
                     else {

@@ -478,11 +478,24 @@ $global.BBox = $prototype ({
     area: $property (function () {
         return Math.abs (this.width * this.height) }),
 
-    intersects: function (other) {
-                    return !((this.right < other.left) ||
-                             (this.left > other.right) ||
-                             (this.bottom < other.top) ||
-                             (this.top > other.bottom)) },
+    intersects (other) {
+        return !((this.right < other.left) ||
+                 (this.left > other.right) ||
+                 (this.bottom < other.top) ||
+                 (this.top > other.bottom)) },
+
+    intersect (other) {
+        return this.intersects (other) ? BBox.fromLTRB (
+                                            Math.max (this.left, other.left),
+                                            Math.max (this.top, other.top),
+                                            Math.min (this.right, other.right),
+                                            Math.min (this.bottom, other.bottom)) : undefined
+    },
+
+    intersectionArea (other) {
+        const intersection = this.intersect (other)
+        return (intersection && intersection.area) || 0
+    },
 
     equals (other) {
         return (this.x === other.x) &&
