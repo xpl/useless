@@ -22,6 +22,7 @@ module.exports = $trait ({
                                     return  _.template (fs.readFileSync (file, { encoding: 'utf-8' })) }),
 
     shouldRestartOnSourceChange (action, file) {
+
         if (file in this.compiledTemplate.cache) {
             log.w ('Resetting template cache for ', log.color.boldOrange, file)
             delete this.compiledTemplate.cache[file]
