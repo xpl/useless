@@ -1,6 +1,6 @@
 # Use Less. Do More.
 
-A cross-platform JavaScript toolbox for writing complex web applications. Currently in pre-release stage, missing some basic documentation and being under heavy development. **In near future, it will be split into several loosely coupled NPM modules, for everyone's convenience. Stay tuned.**
+A research project, from which I learned a lot. Especially how one shouldn't write code and web frameworks in particular :) **In near future, it will be split into several loosely coupled, clean and maintainable NPM modules, for everyone's convenience.** Stay tuned.
 
 [Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
@@ -14,8 +14,6 @@ A cross-platform JavaScript toolbox for writing complex web applications. Curren
 - [useless.devtools.js](https://github.com/xpl/useless/blob/master/build/useless.client.js) — logging / stacktraces / assertions / Panic.js
 
 ### Upcoming features
-
-- New unit test system based on Promises (will replace the old buggy `Testosterone` thing).
 
 - Splitting of distinct framework parts to separate projects (finally, _useful_ ones).
 
