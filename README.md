@@ -1,6 +1,8 @@
 # Use Less. Do More.
 
-A research project, from which I learned a lot. Especially how one shouldn't write code and web frameworks in particular :) **In near future, it will be split into several loosely coupled, clean and maintainable NPM modules, for everyone's convenience.** Stay tuned.
+A research project, from which I learned a lot. Especially how one shouldn't write code and web frameworks in particular :) 
+
+**In near future, it will be split into several loosely coupled, clean and maintainable NPM modules, for everyone's convenience.** Stay tuned.
 
 [Installing](#installing) | [Building](#building) | [Wiki](https://github.com/xpl/useless/wiki)
 
