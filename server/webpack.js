@@ -167,7 +167,7 @@ module.exports = $trait ({
 
         const hasStyle = this.shouldExtractStyles && (cssTimestamp !== undefined)
 
-        const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}?${cssTimestamp}"></link>` : ''
+        const style = hasStyle ? `<link rel="stylesheet" type="text/css" href="${this.webpackURL (name + '.css')}?${cssTimestamp}" />` : ''
         
         const scriptFile      = this.webpackScriptFile (name),
               scriptName      = path.relative (this.config.webpack.buildPath, scriptFile),
