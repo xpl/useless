@@ -2,6 +2,12 @@ module.exports = $trait ({
 
     $depends: [require ('./ipc')],
 
+    $defaults: {
+        config: {
+            noStdin: false
+        }
+    },
+
 /*  Implement this in traits:       */
 
     lineFromStdin (line) {
@@ -19,7 +25,7 @@ module.exports = $trait ({
 
     beforeInit () {
 
-        if (!this.isSupervisedProcess) {
+        if (!this.isSupervisedProcess && !this.config.noStdin) {
 
             log.minor ('Initializing command line interface...')
 
