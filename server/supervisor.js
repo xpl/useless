@@ -7,7 +7,8 @@ const fs              = require ('fs'),
       process         = require ('process'),
       chokidar        = require ('chokidar'),
       foreverMonitor  = require ('forever-monitor'),
-      util            = require ('./base/util')
+      util            = require ('./base/util'),
+      log             = require ('ololog')
 
 const CODE_RESTART = 3
 
@@ -42,20 +43,30 @@ const Supervisor = module.exports = $trait ({
 
     beforeInit () {
 
+        if (this.isSupervisorProcess) {
+
         /*  Call .beforeInit() methods marked with $callAtMasterProcess   */
 
-            if (this.isSupervisorProcess) {
+            _.each (this.constructor.$traits, Trait => {
+                if ($callAtMasterProcess.is (Trait.$definition.beforeInit)) {
+                    Trait.prototype.beforeInit.call (this)
+                }
+            })
 
-                _.each (this.constructor.$traits, Trait => {
-                    if ($callAtMasterProcess.is (Trait.$definition.beforeInit)) {
-                        Trait.prototype.beforeInit.call (this)
-                    }
-                })
-            }
+        /*  Terminate child process when master process exits   */
 
-        /*  Dispatch further init based on current state (see below)   */
+            process.on ('SIGINT', () => {
+                if (!this.receivedSIGINT) {
+                    this.receivedSIGINT = true
+                    this.supervisedProcess.stop ()
+                    _.delay (() => process.exit (0))
+                }
+            })
+        }
 
-            return this[this.supervisorState] ()
+    /*  Dispatch further init based on current state (see below)   */
+
+        return this[this.supervisorState] ()
     },
 
     lineFromStdin (line) {
@@ -116,7 +127,7 @@ const Supervisor = module.exports = $trait ({
 
                             if (yes && !this.supervisedProcess.isRestarting) {
 
-                                log.e ('\nRestarting because ', log.color.boldRed, file, log.color.red, ' changed\n')
+                                log.red ('\nRestarting because', file.bright, 'changed\n')
 
                                 if (!this.supervisedProcess.args.contains ('respawned-because-code-change')) {
                                      this.supervisedProcess.args.push     ('respawned-because-code-change') }
@@ -140,16 +151,19 @@ const Supervisor = module.exports = $trait ({
 
                                     supervisedProcess.on ('exit:code', code => {
 
-                                        log.brown ('Exited with code', code)
+                                        log.dim.yellow ('Exited with code', code)
 
-                                        if (code !== CODE_RESTART) {
+                                        if (!this.receivedSIGINT) {
 
-                                            log.w (`Waiting for file change (or press ${'Ctrl-C'.bright} to exit)....\n`)
-                                            supervisedProcess.stop () /* prevents Forever from restarting it */ 
-                                            
-                                        } else {
-                                            
-                                            supervisedProcess.restart ()
+                                            if (code !== CODE_RESTART) {
+
+                                                log.yellow (`Waiting for file change (or press ${'Ctrl-C'.bright} to exit)....\n`)
+                                                supervisedProcess.stop () /* prevents Forever from restarting it */ 
+                                                
+                                            } else {
+                                                
+                                                supervisedProcess.restart ()
+                                            }
                                         }
                                     })
 
@@ -169,23 +183,21 @@ const Supervisor = module.exports = $trait ({
                                 }
                             },
 
-    restart: function () {
+    restart () {
 
-        
-        
         if (this.isSupervisedProcess) {
 
-            log.e ('\Restarting (from child process)', log.line, '\n')
+            log.red ('\Restarting (from child process)', log.line, '\n')
             process.exit (CODE_RESTART)
 
         } else {
 
-            log.e ('\Restarting (from master process)', log.line, '\n')
+            log.red ('\Restarting (from master process)', log.line, '\n')
             this.supervisedProcess.restart ()
         } 
     },
 
-    watchDirectory: function (path, changed) { log.pink ('Watching', path.bright)
+    watchDirectory: function (path, changed) { log.magenta ('Watching', path.bright)
 
                         chokidar.watch (path, { ignoreInitial: true })
                                 .on ('all', (stat, f) => { changed (stat, fs.realpathSync.catches (f) (f)) }) },

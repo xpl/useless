@@ -24,10 +24,15 @@ module.exports = $trait ({
 
             fs.writeFileSync (this.pidFile, process.pid + '\n', { encoding: 'ascii' })
 
+            let receivedSIGINT = false
+
             process.on ('SIGINT', () => {
-                log.e ('Removing PID', this.pidFile)
-                try { fs.unlinkSync (this.pidFile) } catch (e) {}
-                process.exit ()
+                if (!receivedSIGINT) {
+                    receivedSIGINT = true
+                    log.e ('Removing PID', this.pidFile)
+                    try { fs.unlinkSync (this.pidFile) } catch (e) {}
+                    _.delay (() => process.exit (0))
+                }
             })
         }
     }
