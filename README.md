@@ -298,8 +298,17 @@ UselessApp = $singleton (Component, {
     '/hello-world':       () => "Hello world!",          // text/plain; charset=utf-8
     '/hello-world/json':  () => ({ foo: 42, bar: 777 }), // application/json; charset=utf-8
 
+/*  File serving  */
+
     '/':             () => $this.file ('./static/index.html'), // $this is a smart alias for `this`, accessible from anywhere in the request execution context
-    '/static/:file': () => $this.file ('./static'),
+    '/static/:file': () => $this.file ('./static'), // any file from ./static folder
+
+/*  Query params matching  */
+
+    '/sqr?x={\\d+}':          ({ x    }) => Math.pow (Number (x),         2),  // x²
+    '/pow?x={\\d+}&n={\\d+}': ({ x, n }) => Math.pow (Number (x), Number (n)), // x^n
+                 
+/*  Put your JSONAPI stuff in /api    */
 
     '/api': { // tree-style definitions are supported
         
