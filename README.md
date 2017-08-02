@@ -72,6 +72,100 @@ You may want to look into these projects (built upon Useless.js):
 * [Skychat](https://github.com/xpl/skychat) — a simple WebRTC paint/chat app.
 * [Wyg](https://github.com/xpl/wyg) — a revolutionary WYSIWYG editor ([demo](https://www.youtube.com/watch?v=u1wNfSHwSQA)).
 
+## Server app framework
+
+Example (pseudo-code):
+
+```javascript
+require ('useless')
+
+UselessApp = $singleton (Component, {
+
+    $depends: [
+        require ('useless/server/tests'),
+        require ('useless/server/webpack'),
+        require ('useless/server/http') ],
+
+/*  Members starting with "/" are HTTP request handlers         */
+
+    '/hello-world':       () => "Hello world!",          // text/plain; charset=utf-8
+    '/hello-world/json':  () => ({ foo: 42, bar: 777 }), // application/json; charset=utf-8
+
+/*  File serving  */
+
+    '/':             () => $this.file ('./static/index.html'), // $this is a smart alias for `this`, accessible from anywhere in the request execution context
+    '/static/:file': () => $this.file ('./static'), // any file from ./static folder
+
+/*  Query params matching  */
+
+    '/sqr?x={\\d+}':          ({ x    }) => Math.pow (Number (x),         2),  // x²
+    '/pow?x={\\d+}&n={\\d+}': ({ x, n }) => Math.pow (Number (x), Number (n)), // x^n
+                 
+/*  Put your JSONAPI stuff in /api    */
+
+    '/api': { // tree-style definitions are supported
+        
+        'login':  { post: async () => $this.doLogin (await $this.receiveJSON) },
+        'logout': { post:       () => $http.removeCookies (['email', 'password']) },
+    }
+
+/*  A complex request handler example, demonstrating some core features.
+
+    All execution is wrapped into so-called "supervised Promise chain",
+    so you don't need to pass the request context explicitly, it is always
+    available as $http object in any promise callback related to request
+    represented by that object.
+    
+    All thrown errors and all log messages are handled by the engine
+    automagically. It builds a process/event hierarchy that reflects the
+    actual execution flow, so you don't need to run a debugger to see what's
+    going on, it's all in the log. Request is automatically ended when an
+    unhandled exception occurs, no need to trigger it explicitly.               */
+
+    async doLogin ({ email, password }) {
+
+        if (await this.db.users.find ({ email, password }).count () > 0) {
+
+            $http.setCookies ({ email, password })
+
+        } else {
+
+            throw new Error ('Wrong credentials')
+        }
+    },
+
+    init () {
+
+        log.ok ('App started')
+    }
+})
+```
+
+Example report generated from a Promise chain:
+
+![Promise stack demo](http://wtf.jpg.wtf/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png)
+
+Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
+
+- [`api.js`](https://github.com/xpl/useless/blob/master/server/api.js) URL routing
+- [`args.js`](https://github.com/xpl/useless/blob/master/server/args.js) command line arguments parsing
+- [`config.js`](https://github.com/xpl/useless/blob/master/server/config.js) handles `this.config` management via `config.json` / command line arguments 
+- [`exceptions.js`](https://github.com/xpl/useless/blob/master/server/exceptions.js) a humane exception printer (replaces Node's default)
+- [`http.js`](https://github.com/xpl/useless/blob/master/server/http.js) powerful HTTP server abstraction
+- [`ipc.js`](https://github.com/xpl/useless/blob/master/server/ipc.js) for app logic splitting between supervisor and supervised processes (RPC for app methods)
+- [`pidfile.js`](https://github.com/xpl/useless/blob/master/server/pidfile.js) generates PID file upon startup / removes it on exit
+- [`REPL.js`](https://github.com/xpl/useless/blob/master/server/REPL.js) REPL-style debugger (experimental)
+- [`source.js`](https://github.com/xpl/useless/blob/master/server/source.js) remote access to app's own sources
+- [`stdin.js`](https://github.com/xpl/useless/blob/master/server/stdin.js) handling interactive terminal input
+- [`supervisor.js`](https://github.com/xpl/useless/blob/master/server/supervisor.js) auto-restart on source code change
+- [`templating.js`](https://github.com/xpl/useless/blob/master/server/templating.js) Underscore's templates + caching
+- [`tests.js`](https://github.com/xpl/useless/blob/master/server/tests.js) startup smoke tests for app traits
+- [`thumbnailer.js`](https://github.com/xpl/useless/blob/master/server/thumbnailer.js) inline thumbnailer for images
+- [`uploads.js`](https://github.com/xpl/useless/blob/master/server/uploads.js) image uploads basics
+- [`uptime.js`](https://github.com/xpl/useless/blob/master/server/uploads.js) uptime tracking
+- [`webpack.js`](https://github.com/xpl/useless/blob/master/server/webpack.js) full-featured WebPack integration
+- [`websocket.js`](https://github.com/xpl/useless/blob/master/server/webpack.js) WebSocket basics
+
 ## Macro processor for prototype definitions
 
 [How-to & Examples](https://github.com/xpl/useless/wiki/$prototype)
@@ -264,110 +358,6 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 * Custom assertions
 * Humane error reporting
 * Browser-side support (see demo: [youtube.com/watch?v=IWLE8omFnQw](https://www.youtube.com/watch?v=IWLE8omFnQw))
-
-## Logging
-
-[Reference / examples](https://github.com/xpl/useless/blob/master/base/log.js)
-
-![log demo](https://raw.githubusercontent.com/xpl/useless/master/example/img/log.png)
-![log demo](http://img.leprosorium.com/2512874)
-
-+ Platform-independent
-+ Color output (even in WebInspector)
-+ Shows code location
-+ [Configurable object printer](https://github.com/xpl/string.ify)
-+ Table layout formatting
-+ Hookable/interceptable
-
-## Server app framework
-
-Example (pseudo-code):
-
-```javascript
-require ('useless')
-
-UselessApp = $singleton (Component, {
-
-    $depends: [
-        require ('useless/server/tests'),
-        require ('useless/server/webpack'),
-        require ('useless/server/http') ],
-
-/*  Members starting with "/" are HTTP request handlers         */
-
-    '/hello-world':       () => "Hello world!",          // text/plain; charset=utf-8
-    '/hello-world/json':  () => ({ foo: 42, bar: 777 }), // application/json; charset=utf-8
-
-/*  File serving  */
-
-    '/':             () => $this.file ('./static/index.html'), // $this is a smart alias for `this`, accessible from anywhere in the request execution context
-    '/static/:file': () => $this.file ('./static'), // any file from ./static folder
-
-/*  Query params matching  */
-
-    '/sqr?x={\\d+}':          ({ x    }) => Math.pow (Number (x),         2),  // x²
-    '/pow?x={\\d+}&n={\\d+}': ({ x, n }) => Math.pow (Number (x), Number (n)), // x^n
-                 
-/*  Put your JSONAPI stuff in /api    */
-
-    '/api': { // tree-style definitions are supported
-        
-        'login':  { post: async () => $this.doLogin (await $this.receiveJSON) },
-        'logout': { post:       () => $http.removeCookies (['email', 'password']) },
-    }
-
-/*  A complex request handler example, demonstrating some core features.
-
-    All execution is wrapped into so-called "supervised Promise chain",
-    so you don't need to pass the request context explicitly, it is always
-    available as $http object in any promise callback related to request
-    represented by that object.
-    
-    All thrown errors and all log messages are handled by the engine
-    automagically. It builds a process/event hierarchy that reflects the
-    actual execution flow, so you don't need to run a debugger to see what's
-    going on, it's all in the log. Request is automatically ended when an
-    unhandled exception occurs, no need to trigger it explicitly.               */
-
-    async doLogin ({ email, password }) {
-
-        if (await this.db.users.find ({ email, password }).count () > 0) {
-
-            $http.setCookies ({ email, password })
-
-        } else {
-
-            throw new Error ('Wrong credentials')
-        }
-    },
-
-    init () {
-
-        log.ok ('App started')
-    }
-})
-```
-
-Example report generated from a Promise chain:
-
-![Promise stack demo](http://wtf.jpg.wtf/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png)
-
-Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
-
-- `api.js` URL routing
-- `args.js` command line arguments parsing
-- `config.js` handles `config.json` and default parameters
-- `deploy.js` self-deployment protocol (automatic builds)
-- `devtools.js` developer-mode APIs for Git / source code access
-- `exceptions.js` custom unhandled exception printer
-- `history.js` journal for DB operation
-- `http.js` request serving basics
-- `supervisor.js` auto-restart on source code change
-- `templating.js` basic templating (via underscore)
-- `tests.js` self-tests on startup for TDD
-- `uploads.js` file/image uploads
-- `uptime.js` uptime tracking
-- `websocket.js` WebSocket utility
 
 ## And more..
 
