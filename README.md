@@ -74,17 +74,33 @@ You may want to look into these projects (built upon Useless.js):
 
 ## Server app framework
 
-Example (pseudo-code):
-
 ```javascript
-require ('useless')
+require ('./useless')
 
 UselessApp = $singleton (Component, {
 
+    $defaults: {
+        webpackEntries: {
+            entry: {
+                'shared': { // duplicate code will be extracted to shared.js
+                    'useless.client':   "./node_modules/useless/build/useless.client.js",
+                    'useless.devtools': "./node_modules/useless/build/useless.devtools.js",
+                    'index':            "./example/index.js",
+                }
+            }
+        },
+        config: {
+            webpack: {
+                hotReload: true
+            }
+        }
+    },
+
     $depends: [
-        require ('useless/server/tests'),
-        require ('useless/server/webpack'),
-        require ('useless/server/http') ],
+        require ('./server/supervisor'), // for auto-reload on code change
+        require ('./server/webpack'),
+        require ('./server/http')
+    ],
 
 /*  Members starting with "/" are HTTP request handlers         */
 
@@ -94,7 +110,7 @@ UselessApp = $singleton (Component, {
 /*  File serving  */
 
     '/':             () => $this.file ('./static/index.html'), // $this is a smart alias for `this`, accessible from anywhere in the request execution context
-    '/static/:file': () => $this.file ('./static'), // any file from ./static folder
+    '/static/:file': () => $this.file ('./static'),            // any file from ./static folder
 
 /*  Query params matching  */
 
@@ -107,7 +123,7 @@ UselessApp = $singleton (Component, {
         
         'login':  { post: async () => $this.doLogin (await $this.receiveJSON) },
         'logout': { post:       () => $http.removeCookies (['email', 'password']) },
-    }
+    },
 
 /*  A complex request handler example, demonstrating some core features.
 
@@ -124,7 +140,7 @@ UselessApp = $singleton (Component, {
 
     async doLogin ({ email, password }) {
 
-        if (await this.db.users.find ({ email, password }).count () > 0) {
+        if (await this.findUser ({ email, password })) {
 
             $http.setCookies ({ email, password })
 
@@ -133,6 +149,8 @@ UselessApp = $singleton (Component, {
             throw new Error ('Wrong credentials')
         }
     },
+
+    async findUser (criteria) { /* ... */ },
 
     init () {
 
