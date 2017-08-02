@@ -55,7 +55,7 @@ A research project, from which I learned a lot. Especially how one shouldn't wri
 
 - An early alpha of the new [HTTP server framework](https://github.com/xpl/useless/tree/master/server) built around the recent `Androgene` subsystem. See a brief [example](https://github.com/xpl/useless#server-app-framework) here. It allows to write and debug complex asynchronous chains in no time, with unprecedented level of the error reporting legibility.
 
-- A working prototype of [Androgene](https://github.com/xpl/useless/blob/master/base/Androgene.js) subsystem, delivering the "supervised Promises" concept for [asynchronous/nonlinear logging and stack traces](http://wtf.jpg.wtf/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png). It is also a core mechanism behind the upcoming unit test system (will replace the old `Testosterone` thing).
+- A working prototype of [Androgene](https://github.com/xpl/useless/blob/master/base/Androgene.js) subsystem, delivering the "supervised Promises" concept for [asynchronous/nonlinear logging and stack traces](http://cdn.jpg.wtf/futurico/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png). It is also a core mechanism behind the upcoming unit test system (will replace the old `Testosterone` thing).
 
 - [Read more...](https://github.com/xpl/useless/wiki/Changelog)
 
@@ -143,7 +143,7 @@ UselessApp = $singleton (Component, {
 
 Example report generated from a Promise chain:
 
-![Promise stack demo](http://wtf.jpg.wtf/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png)
+![Promise stack demo](http://cdn.jpg.wtf/futurico/43/b7/1465795630-43b7b55e9beabe1e72738c50b50cb2ef.png)
 
 Following are [**$traits**](https://github.com/xpl/useless/wiki/$trait) defined at `useless/server`:
 
