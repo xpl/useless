@@ -89,7 +89,9 @@ _.tests.URIRouter = {
         const schema = normalize ({
 
             'say/hello?name={}': ({ name }) => 'Hello ' + name,
-            'export/?hash={[0-9a-f]+}&ids={(\\d+,?)+}': ({ hash, ids }) => ({ hash, ids: ids.split (',').map (Number) })
+            'export/?hash={[0-9a-f]+}&ids={(\\d+,?)+}': ({ hash, ids }) => ({ hash, ids: ids.split (',').map (Number) }),
+
+            'something/:file': file => file,
         })
 
         $assert (match (schema, 'GET', '/say/hello?name=Sponge%20Bob')       .fn (),  'Hello Sponge Bob')
@@ -100,6 +102,8 @@ _.tests.URIRouter = {
         $assert (match (schema, 'GET', '/export/?hash=BLAH&ids=123,45,678'),                undefined) // wrong hash (doesn't match the regex)
         $assert (match (schema, 'GET', '/export/?hash=580ea7df&ids=123,45,678,FOO'),        undefined) // wrong ids (doesn't match the regex)
         $assert (match (schema, 'GET', '/export/?hash=580ea7df'),                           undefined) // `ids` is required
+
+        $assert (match (schema, 'GET', '/something/wat.jpg?v=123').fn (), 'wat.jpg') // cuts params off
     }
 }
 
@@ -180,7 +184,7 @@ const URIRouter = module.exports = {
 
                     if (isBinding) {
                         var key    = match.slice (1)
-                        var value  = decodeURIComponent (subroutes ? element : path.slice (depth).join ('/'))
+                        var value  = decodeURIComponent (subroutes ? element : extractQueryParams (path.slice (depth).join ('/'))[0])
                         vars[key]  = (isJsonBinding ? JSON.parse.catches () (value) :
                                      (isNumberBinding ? Number (value) : value))
 
