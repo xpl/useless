@@ -120,10 +120,11 @@ module.exports = $trait ({
                                                                                                         val => (val || '').trimmed))),
                 env: _.extend ({ when: Date.now (), who: null }, $env, this.env) })
 
-            this.uri       = this.request && this.request.url && url.parse (this.request.url)
-            this.path      = this.uri && this.uri.pathname.split ('/')
+            this.url       = this.request.url || ''
+            this.uri       = this.url && url.parse (this.url)
+            this.path      = this.uri.pathname.split ('/')
             this.method    = this.request.method
-            this.isJSONAPI = (this.path && this.path[1]) === 'api'
+            this.isJSONAPI = this.path[1] === 'api'
 
             if (this.method === 'POST') {
                 this.request.pause () } }, // pauses incoming data receiving, until explicitly resumed
@@ -320,10 +321,10 @@ module.exports = $trait ({
 
     callAPIHandler: function () {
 
-                        var match = APISchema.match (this.apiSchema, $http.method, $http.path)
+                        var match = APISchema.match (this.apiSchema, $http.method, $http.url)
 
                         if (!match) {   log.newline ()
-                                        APISchema.debugTrace (this.apiSchema, $http.method, $http.path)
+                                        APISchema.debugTrace (this.apiSchema, $http.method, $http.url)
                                         throw $http.NotFoundError }
 
                         else {

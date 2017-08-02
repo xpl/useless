@@ -33,6 +33,7 @@ const Examples = $singleton (Component, {
         require ('./server/supervisor'),
         require ('./server/webpack'),
         require ('./server/templating'),
+        require ('./server/http'),
         require ('./server/websocket'),
         require ('./server/REPL'),
         require ('./server/source')
@@ -40,7 +41,11 @@ const Examples = $singleton (Component, {
 
     '/': () => $this.template ('./example/index.html'),
 
+    '/example/:file': () => $this.file ('./example'),
+
     '/api/erroneous-method': { post: () => unknownFunction () },
+
+    '/square?x={\\d+}': ({ x }) => Math.pow (Number (x), 2),
                                         
     init () { log.green ('Example app is running at http://localhost:1333') }
 })

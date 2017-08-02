@@ -1,8 +1,13 @@
-const _ = require ('underscore')
-const log = require ('ololog')
+const O   = Object
+    , _   = require ('underscore')
+    , log = require ('ololog')
 
-const parseQueryParams = s => !s ? [] : s.split ('&')
-                                         .reduce ((result, kv) => { const [k,v=''] = kv.split ('='); result[k] = v; return result }, {})
+    , extractQueryParams = (s, decode = _.identity, [, token, query = ''] = s.match (/^([^?]*)(?:\?(.*))?$/)) => [ // token | token?query)
+
+        token,
+        !query ? {} : query.split ('&')
+                           .reduce ((result, kv) => { const [k,v=''] = kv.split ('='); result[k] = decode (v); return result }, {})
+    ]
 
 _.tests.URIRouter = {
 
@@ -144,31 +149,26 @@ const URIRouter = module.exports = {
 
                     return routes },
 
-    match (routes, method, path, /* optional */ debug, depth, vars, virtualTrailSlashCase) {
+    match (routes, method, path, debug = false, depth = 1, vars = {}, virtualTrailSlashCase = undefined) {
 
         if (typeof path === 'string') path = path.split ('/')
 
         const trace = (debug === true) ? log.configure ({ indent: { level: depth, pattern: '→   '} }) : log.null
-
-        depth = depth || 1
-        vars  = vars  || {}
         
         if ((virtualTrailSlashCase === undefined) && path.length <= depth) {
             return false }
 
         else {
-            const [element, elementQueryParamsStr=''] = (virtualTrailSlashCase ? '' : path[depth]).split ('?')
-            const elementQueryParams = parseQueryParams (decodeURIComponent (elementQueryParamsStr))
+
+            const [element, elementQueryParams] = extractQueryParams (virtualTrailSlashCase ? '' : path[depth], decode = decodeURIComponent)
 
             for (var i = 0, n = routes.length; i < n; i++) {
 
                 const route = routes[i]
+                const handler = route[1]
+                const subroutes  = _.isArray (handler) ? handler : undefined
 
-                const [, match, queryParamsStr] = route[0].match (/^([^?]*)(?:\?(.*))?$/)
-                const queryParams = parseQueryParams (queryParamsStr)
-
-                const handler     = route[1]
-                const subroutes   = _.isArray (handler) ? handler : undefined
+                const [match, queryParams] = !subroutes ? extractQueryParams (route[0]) : [route[0], {}]
 
                 const isJsonBinding   = (match[0] === '@')
                 const isNumberBinding = (match[0] === '%')
@@ -176,23 +176,8 @@ const URIRouter = module.exports = {
 
                 trace (match, queryParams, '← ', element.bright, elementQueryParams)
 
-                const validQueryParams = {}
+                if (isBinding || element === match) {
 
-                for (const [k,vLeft] of Object.entries (queryParams)) {
-
-                    const vRight = elementQueryParams[k]
-
-                    if ((vRight === undefined) ||
-                        ((vLeft !== '{}') && !(new RegExp ('^' + vLeft.slice (1, -1) + '$').test (vRight)))) { // TODO: cache regexp
-
-                        trace.red ('    ' + k.bright, 'doesnt match!')
-                        return undefined
-                    }
-
-                    validQueryParams[k] = vRight
-                }
-
-                if (isBinding || element == match) {
                     if (isBinding) {
                         var key    = match.slice (1)
                         var value  = decodeURIComponent (subroutes ? element : path.slice (depth).join ('/'))
@@ -219,6 +204,22 @@ const URIRouter = module.exports = {
 
                     else if (virtualTrailSlashCase || (depth == (path.length - 1)) || isBinding) {
 
+                        const validQueryParams = {}
+
+                            for (const [k,vLeft] of O.entries (queryParams)) {
+
+                                const vRight = elementQueryParams[k]
+
+                                if ((vRight === undefined) ||
+                                    ((vLeft !== '{}') && !(new RegExp ('^' + vLeft.slice (1, -1) + '$').test (vRight)))) { // TODO: cache regexp
+
+                                    trace.red ('    ' + k.bright, 'doesnt match!')
+                                    return undefined
+                                }
+
+                                validQueryParams[k] = vRight
+                            }
+
                         const handlerForMethod = handler[method.lowercase]
                         if (!handlerForMethod) {
                             trace.red ('    no appropriate handler found') }
@@ -226,9 +227,9 @@ const URIRouter = module.exports = {
 
                         /*  Prepend Promise chain with argument(s)  */
 
-                            var args = (Object.keys (validQueryParams).length > 0)
-                                            ? [Object.assign (validQueryParams, vars)]
-                                            : Object.values (vars)
+                            var args = (O.keys (validQueryParams).length > 0)
+                                            ? [O.assign (validQueryParams, vars)]
+                                            :  O.values (vars)
 
                             var chain =  (args.length > 1 ? [match.vars] :
                                           args.length > 0 ? args : []).concat (_.coerceToArray (handlerForMethod))
