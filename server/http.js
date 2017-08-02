@@ -327,7 +327,7 @@ module.exports = $trait ({
                                         throw $http.NotFoundError }
 
                         else {
-                            _.extend ($env, match.vars); return match.fn () } },
+                            _.extend ($env, match.vars); return __(match.fn ()) } },
 
     writeResult: function (x) {
 
