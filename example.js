@@ -45,7 +45,8 @@ const Examples = $singleton (Component, {
 
     '/api/erroneous-method': { post: () => unknownFunction () },
 
-    '/square?x={\\d+}': ({ x }) => Math.pow (Number (x), 2),
-                                        
+    '/sqr?x={\\d+}':          ({ x    }) => Math.pow (Number (x),         2),  // x²
+    '/pow?x={\\d+}&n={\\d+}': ({ x, n }) => Math.pow (Number (x), Number (n)), // x^n
+
     init () { log.green ('Example app is running at http://localhost:1333') }
 })
