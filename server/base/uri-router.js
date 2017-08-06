@@ -213,15 +213,20 @@ const URIRouter = module.exports = {
 
                         for (let [k,vLeft] of O.entries (queryParams)) {
 
-                            const [isOptional,key] = k.match (/^\[(.+)\]$/) || [false, k] // example: [optional]
+                            const [optionalMatch,key] = k.match (/^\[(.+)\]$/) || [null, k] // example: [optional]
+                            const isOptional = optionalMatch !== null
 
                             const vRight = elementQueryParams[key]
 
-                            if ((vRight === undefined && !isOptional) ||
+                            trace.cyan (optionalMatch, isOptional, vRight)
+
+                            if ((vRight === undefined) ||
                                 ((vLeft !== '{}') && !(new RegExp ('^' + vLeft.slice (1, -1) + '$').test (vRight)))) { // TODO: cache regexp
 
-                                trace.red ('    ' + k.bright, 'doesnt match!')
-                                return undefined
+                                if (!(isOptional && vRight === undefined)) {
+                                    trace.red ('    ' + k.bright, 'doesnt match!')
+                                    return undefined
+                                }
                             }
 
                             validQueryParams[key] = vRight
