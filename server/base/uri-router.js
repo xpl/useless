@@ -89,7 +89,7 @@ _.tests.URIRouter = {
         const schema = normalize ({
 
             'say/hello?name={}': ({ name }) => 'Hello ' + name,
-            'export/?hash={[0-9a-f]+}&ids={(\\d+,?)+}': ({ hash, ids }) => ({ hash, ids: ids.split (',').map (Number) }),
+            'export/?hash={[0-9a-f]+}&ids={(\\d+,?)+}&[optional]={}': ({ hash, ids, optional }) => ({ hash, ids: ids.split (',').map (Number), optional }),
 
             'something/:file': file => file,
         })
@@ -98,7 +98,8 @@ _.tests.URIRouter = {
         $assert (match (schema, 'GET', '/say/hello?name=Sponge%20Bob&age=33').fn (),  'Hello Sponge Bob') // should tolerate extra params
         $assert (match (schema, 'GET', '/say/hello'),                                  undefined)         // `name` is required
 
-        $assert (match (schema, 'GET', '/export/?hash=580ea7df&ids=123,45,678').fn (),    { hash: '580ea7df', ids: [123, 45, 678] })
+        $assert (match (schema, 'GET', '/export/?hash=580ea7df&ids=123,45,678').fn (),               { hash: '580ea7df', ids: [123, 45, 678], optional: undefined })
+        $assert (match (schema, 'GET', '/export/?hash=580ea7df&ids=123,45,678&optional=42').fn (),   { hash: '580ea7df', ids: [123, 45, 678], optional: '42' })
         $assert (match (schema, 'GET', '/export/?hash=BLAH&ids=123,45,678'),                undefined) // wrong hash (doesn't match the regex)
         $assert (match (schema, 'GET', '/export/?hash=580ea7df&ids=123,45,678,FOO'),        undefined) // wrong ids (doesn't match the regex)
         $assert (match (schema, 'GET', '/export/?hash=580ea7df'),                           undefined) // `ids` is required
@@ -210,19 +211,21 @@ const URIRouter = module.exports = {
 
                         const validQueryParams = {}
 
-                            for (const [k,vLeft] of O.entries (queryParams)) {
+                        for (let [k,vLeft] of O.entries (queryParams)) {
 
-                                const vRight = elementQueryParams[k]
+                            const [isOptional,key] = k.match (/^\[(.+)\]$/) || [false, k] // example: [optional]
 
-                                if ((vRight === undefined) ||
-                                    ((vLeft !== '{}') && !(new RegExp ('^' + vLeft.slice (1, -1) + '$').test (vRight)))) { // TODO: cache regexp
+                            const vRight = elementQueryParams[key]
 
-                                    trace.red ('    ' + k.bright, 'doesnt match!')
-                                    return undefined
-                                }
+                            if ((vRight === undefined && !isOptional) ||
+                                ((vLeft !== '{}') && !(new RegExp ('^' + vLeft.slice (1, -1) + '$').test (vRight)))) { // TODO: cache regexp
 
-                                validQueryParams[k] = vRight
+                                trace.red ('    ' + k.bright, 'doesnt match!')
+                                return undefined
                             }
+
+                            validQueryParams[key] = vRight
+                        }
 
                         const handlerForMethod = handler[method.lowercase]
                         if (!handlerForMethod) {
