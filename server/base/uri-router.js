@@ -118,7 +118,7 @@ const URIRouter = module.exports = {
                 log.green.indent (depth) (route[0] || '(empty)',
                     _.nonempty ([route[1].get && 'GET', route[1].post && 'POST']).join (' ')) }
             else {
-                log.yello.indent (depth) (route[0] || '(empty)', ':')
+                log.yellow.indent (depth) (route[0] || '(empty)', ':')
                 URIRouter.prettyPrint (route[1], depth + 1)
                 log.newline ()
             }
