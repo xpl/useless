@@ -353,7 +353,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 - Cross-platform uncaught exception handling (works around incomplete 'onerror' impl. in Safari).
 - Uncaught exceptions pass through network API calls
 - Client displays server's exceptions as if it was single environment
-- Complete [API](https://github.com/xpl/useless/blob/master/base/reflection.js) for it's internals
+- Complete [API](https://github.com/xpl/stacktracey) for it's internals
 - Strips third party calls (clean mode)
 - Fetches source code (local/remote)
 - Nice output
