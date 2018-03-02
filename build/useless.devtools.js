@@ -8521,7 +8521,7 @@ module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 98)
              */
             var translateTouchEvent = function translateTouchEvent(e, desiredTarget) {
                 return e && (_.find(e.originalEvent.touches || [], function (touch) {
-                    return $(touch.target).hasParent(desiredTarget);
+                    return touch.target === desiredTarget || $(touch.target).hasParent(desiredTarget);
                 }) || e);
             };
 

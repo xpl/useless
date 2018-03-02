@@ -189,7 +189,8 @@ _.extend ($, {
          */
         const translateTouchEvent = (e, desiredTarget) =>
                                         e && (_.find (e.originalEvent.touches || [],
-                                                        touch => $(touch.target).hasParent (desiredTarget)) || e)
+                                                        touch => (touch.target === desiredTarget) ||
+                                                                $(touch.target).hasParent (desiredTarget)) || e)
 
         /*  Impl
          */
