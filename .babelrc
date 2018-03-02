@@ -1,4 +1,4 @@
 {
-  "presets": ["es2015"],
+  "presets": ["env"],
   "plugins": ["async-to-promises", "transform-async-to-generator", "transform-async-generator-functions", "transform-object-rest-spread"]
 }

@@ -12,8 +12,8 @@ const fs                 = require ('fs'),
       esprima            = require ('esprima-fb'),
       escodegen          = require ('escodegen'),
       querystring        = require ('querystring'),
-      http               = require ('http'),
       util               = require ('./base/util'),
+      fetch              = require ('node-fetch'),
       moduleLocator      = require ('./base/module-locator')
 
 if (!$global.$callAtMasterProcess) {
@@ -275,7 +275,8 @@ module.exports = $trait ({
 
                     {
                         test: /\.js$/,
-                        include: moduleLocator.hasBabelrc,
+                        //include: moduleLocator.hasBabelrc,
+                        exclude: /node_modules/,
                         loaders: [                            
                             { loader: babelLoaderPath, query: { cacheDirectory: true } }
                         ]
@@ -290,7 +291,7 @@ module.exports = $trait ({
 
             this.webpackServer = new WebpackServer (compiler, {
 
-                outputPath: outputPath,
+                //outputPath: outputPath,
                 publicPath: publicPath,
                 hot: this.isWebpackHotReloadEnabled,
                 historyApiFallback: true,
@@ -375,37 +376,33 @@ module.exports = $trait ({
         })
     },
 
-    callGoogleClosureCompiler (src, what) {
+    async callGoogleClosureCompiler (src, what) {
 
-        return new Promise ((resolve, reject) => {
-
-            var post_data = querystring.stringify ({
-                'compilation_level' : 'SIMPLE_OPTIMIZATIONS',
-                'output_format': 'text',
-                'output_info': 'compiled_code',
-                'language_out': 'ecmascript5',
-                'warning_level' : 'QUIET',
-                'js_code' : src })
-
-            var post_options = {
-                host: 'closure-compiler.appspot.com',
-                port: '80',
-                path: '/compile',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Content-Length': post_data.length } };
-
-            var post_req = http.request(post_options, util.readHttpResponse ('utf-8',
-                                                            response => {
-                                                                if (response.trimmed.length) {
-                                                                    resolve (response) }
-                                                                else {
-                                                                    reject (new Error ('Google Closure Compiler failed to compress ' + what))  } }))
-
-            post_req.write (post_data)
-            post_req.end ()
+        var post_data = querystring.stringify ({
+            'compilation_level' : 'SIMPLE_OPTIMIZATIONS',
+            'output_format': 'text',
+            'output_info': 'compiled_code',
+            'language_out': 'ecmascript5',
+            'warning_level': 'QUIET',
+            'js_code': src
         })
+
+        const text = await (await fetch ('https://closure-compiler.appspot.com/compile', {
+
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Length': post_data.length
+            },
+            body: post_data
+        })).text ()
+
+        const [,err] = text.match (/<title>(.+)<\/title>/) || []
+        if (err) {
+            throw new Error (err)
+        }
+
+        return text
     },
 
     stripTests (file, src) {

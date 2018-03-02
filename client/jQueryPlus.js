@@ -200,12 +200,12 @@ _.extend ($, {
                 context = this,
                 relativeTo = this,
                 callMoveAtStart = false,
-                longPress = $platform.touch,
+                longPress = false,//$platform.touch,
                 minDelta = 0,
                 button = 1,
                 cursor = 'default',
                 cls = '',
-                useOverlayForCapturingEvents = $platform.touch
+                useOverlayForCapturingEvents = !$platform.touch
 
             } = cfg
 
@@ -213,11 +213,13 @@ _.extend ($, {
                   move = (cfg.move || _.identity).bind (context),
                   end = (cfg.end || _.identity).bind (context)
 
-            const translatesTouchEvent = fn => e => fn (
-                                                    _.extended (e,
-                                                        translateTouchEvent (e, this[0]),
-                                                        { pageXY:   Vec2.xy (e.pageX, e.pageY),
-                                                          clientXY: Vec2.xy (e.clientX, e.clientY) }), e) // copy event, cuz on iPad it's re-used by browser
+            const translatesTouchEvent = fn => e => {
+                const translated = translateTouchEvent (e, this[0])
+                return fn (_.extended (e, // copy event, cuz on iPad it's re-used by browser
+                                       translated,
+                                        {   pageXY: Vec2.xy (translated.pageX, translated.pageY),
+                                          clientXY: Vec2.xy (translated.clientX, translated.clientY) }), e)
+            }
 
             const trackUsingOverlay = ({ move = _.noop, end = _.noop, _end = end }) => {
 

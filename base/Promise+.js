@@ -261,7 +261,7 @@ $mixin (Promise, {
     sleep: $alias ('delay'),
     delay   (ms) { return this.then (__.delays (ms)) },
     timeout (ms) { return (ms === undefined) ? this : this.race (__.delay (ms).reject (new TimeoutError ())) },
-    get now ()   { return this.timeout (0) }
+    now: $property (function () { return this.timeout (0) })
 })
 
 

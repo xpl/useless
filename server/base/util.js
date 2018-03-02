@@ -112,13 +112,14 @@ const util = module.exports = {
     //         failure: log.error
     //     })
     // },
-    readHttpResponse: function (encoding, then) {
+    readHttpResponse: function (encoding, then, error) {
         return function (response) {
             var data = ''
             response.setEncoding ((encoding == 'cp1251') ? 'binary' : (encoding || 'utf8'))
             response.on ('data', function (chunk) {
                 data += chunk
             })
+            response.on ('error', error || function () {})
             response.on ('end', function() {
                 switch (encoding) {
                     case 'cp1251':

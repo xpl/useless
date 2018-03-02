@@ -115,7 +115,7 @@ $extensionMethods (Function, {
 
     or:     _.or,
     and:    _.and,
-    not:    _.not,
+    //not:    _.not,
 
     new: _.higherOrder (_.new),
 
