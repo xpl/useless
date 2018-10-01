@@ -128,8 +128,6 @@ $global.Vec2 = $prototype ({
         else {
             return new Vec2 (this.x + a, this.y + b) } },
 
-    aspect: $property (function () { return this.w / this.h }),
-
     jitter: function (amount) {
         return this.add (Vec2.random.scale (amount))
     },
