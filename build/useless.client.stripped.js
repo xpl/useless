@@ -11731,20 +11731,6 @@
     },
     function (module, exports, __webpack_require__) {
         'use strict';
-        var _$prototype;
-        function _defineProperty(obj, key, value) {
-            if (key in obj) {
-                Object.defineProperty(obj, key, {
-                    value: value,
-                    enumerable: true,
-                    configurable: true,
-                    writable: true
-                });
-            } else {
-                obj[key] = value;
-            }
-            return obj;
-        }
         var _ = __webpack_require__(5);
         Math.clamp = _.clamp = function (n, min, max) {
             return Math.max(min, Math.min(max, n));
@@ -11797,7 +11783,7 @@
                 }
             }
         };
-        $global.Vec2 = $prototype((_$prototype = {
+        $global.Vec2 = $prototype({
             $static: {
                 xx: function xx(x) {
                     return new Vec2(x, x);
@@ -11877,78 +11863,97 @@
                 } else {
                     return new Vec2(this.x + a, this.y + b);
                 }
+            },
+            jitter: function jitter(amount) {
+                return this.add(Vec2.random.scale(amount));
+            },
+            dot: function dot(other) {
+                return this.x * other.x + this.y * other.y;
+            },
+            sub: function sub(other) {
+                return new Vec2(this.x - other.x, this.y - other.y);
+            },
+            scale: function scale(tx, ty) {
+                return new Vec2(this.x * tx, this.y * (ty === undefined ? tx : ty));
+            },
+            mul: function mul(other) {
+                return new Vec2(this.x * other.x, this.y * other.y);
+            },
+            divide: function divide(other) {
+                return new Vec2(this.x / other.x, this.y / other.y);
+            },
+            normal: $property(function () {
+                return this.scale(1 / this.length);
+            }),
+            perp: $property(function () {
+                return new Vec2(this.y, -this.x);
+            }),
+            half: $property(function () {
+                return new Vec2(this.x * 0.5, this.y * 0.5);
+            }),
+            inverse: $property(function () {
+                return new Vec2(-this.x, -this.y);
+            }),
+            asArray: $property(function () {
+                return [
+                    this.x,
+                    this.y
+                ];
+            }),
+            asLeftTop: $property(function () {
+                return {
+                    left: this.x,
+                    top: this.y
+                };
+            }),
+            asLeftTopMargin: $property(function () {
+                return {
+                    marginLeft: this.x,
+                    marginTop: this.y
+                };
+            }),
+            asWidthHeight: $property(function () {
+                return {
+                    width: this.x,
+                    height: this.y
+                };
+            }),
+            asTranslate: $property(function () {
+                return 'translate(' + this.x + ' ' + this.y + ')';
+            }),
+            separatedWith: function separatedWith(sep) {
+                return this.x + sep + this.y;
+            },
+            floor: $property(function () {
+                return new Vec2(Math.floor(this.x), Math.floor(this.y));
+            }),
+            sum: $static(function (arr) {
+                return _.reduce(_.isArray(arr) && arr || _.asArray(arguments), function (memo, v) {
+                    return memo.add(v || Vec2.zero);
+                }, Vec2.zero);
+            }),
+            projectOnCircle: function projectOnCircle(center, r) {
+                return center.add(this.sub(center).normal.scale(r));
+            },
+            projectOnLineSegment: function projectOnLineSegment(v, w) {
+                var wv = w.sub(v);
+                var l2 = wv.lengthSquared;
+                if (l2 == 0)
+                    return v;
+                var t = this.sub(v).dot(wv) / l2;
+                if (t < 0)
+                    return v;
+                if (t > 1)
+                    return w;
+                return v.add(wv.scale(t));
+            },
+            projectOnRay: function projectOnRay(origin, dir) {
+                var l2 = dir.lengthSquared;
+                if (l2 == 0)
+                    return 0;
+                return this.sub(origin).dot(dir) / l2;
             }
-        }, _defineProperty(_$prototype, 'aspect', $property(function () {
-            return this.w / this.h;
-        })), _defineProperty(_$prototype, 'jitter', function jitter(amount) {
-            return this.add(Vec2.random.scale(amount));
-        }), _defineProperty(_$prototype, 'dot', function dot(other) {
-            return this.x * other.x + this.y * other.y;
-        }), _defineProperty(_$prototype, 'sub', function sub(other) {
-            return new Vec2(this.x - other.x, this.y - other.y);
-        }), _defineProperty(_$prototype, 'scale', function scale(tx, ty) {
-            return new Vec2(this.x * tx, this.y * (ty === undefined ? tx : ty));
-        }), _defineProperty(_$prototype, 'mul', function mul(other) {
-            return new Vec2(this.x * other.x, this.y * other.y);
-        }), _defineProperty(_$prototype, 'divide', function divide(other) {
-            return new Vec2(this.x / other.x, this.y / other.y);
-        }), _defineProperty(_$prototype, 'normal', $property(function () {
-            return this.scale(1 / this.length);
-        })), _defineProperty(_$prototype, 'perp', $property(function () {
-            return new Vec2(this.y, -this.x);
-        })), _defineProperty(_$prototype, 'half', $property(function () {
-            return new Vec2(this.x * 0.5, this.y * 0.5);
-        })), _defineProperty(_$prototype, 'inverse', $property(function () {
-            return new Vec2(-this.x, -this.y);
-        })), _defineProperty(_$prototype, 'asArray', $property(function () {
-            return [
-                this.x,
-                this.y
-            ];
-        })), _defineProperty(_$prototype, 'asLeftTop', $property(function () {
-            return {
-                left: this.x,
-                top: this.y
-            };
-        })), _defineProperty(_$prototype, 'asLeftTopMargin', $property(function () {
-            return {
-                marginLeft: this.x,
-                marginTop: this.y
-            };
-        })), _defineProperty(_$prototype, 'asWidthHeight', $property(function () {
-            return {
-                width: this.x,
-                height: this.y
-            };
-        })), _defineProperty(_$prototype, 'asTranslate', $property(function () {
-            return 'translate(' + this.x + ' ' + this.y + ')';
-        })), _defineProperty(_$prototype, 'separatedWith', function separatedWith(sep) {
-            return this.x + sep + this.y;
-        }), _defineProperty(_$prototype, 'floor', $property(function () {
-            return new Vec2(Math.floor(this.x), Math.floor(this.y));
-        })), _defineProperty(_$prototype, 'sum', $static(function (arr) {
-            return _.reduce(_.isArray(arr) && arr || _.asArray(arguments), function (memo, v) {
-                return memo.add(v || Vec2.zero);
-            }, Vec2.zero);
-        })), _defineProperty(_$prototype, 'projectOnCircle', function projectOnCircle(center, r) {
-            return center.add(this.sub(center).normal.scale(r));
-        }), _defineProperty(_$prototype, 'projectOnLineSegment', function projectOnLineSegment(v, w) {
-            var wv = w.sub(v);
-            var l2 = wv.lengthSquared;
-            if (l2 == 0)
-                return v;
-            var t = this.sub(v).dot(wv) / l2;
-            if (t < 0)
-                return v;
-            if (t > 1)
-                return w;
-            return v.add(wv.scale(t));
-        }), _defineProperty(_$prototype, 'projectOnRay', function projectOnRay(origin, dir) {
-            var l2 = dir.lengthSquared;
-            if (l2 == 0)
-                return 0;
-            return this.sub(origin).dot(dir) / l2;
-        }), _$prototype));
+        });
         if (typeof Symbol !== 'undefined') {
             Vec2.prototype[Symbol.for('String.ify')] = function () {
                 return '{' + this.x + ',' + this.y + '}';

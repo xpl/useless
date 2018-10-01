@@ -9302,9 +9302,9 @@ if(false) {
 /***/ }),
 
 /***/ 407:
-/*!******************************************************************!*\
-  !*** ./node_modules/css-loader?{"url":false}!./client/Panic.css ***!
-  \******************************************************************/
+/*!**************************************************************!*\
+  !*** ./node_modules/css-loader??ref--0-1!./client/Panic.css ***!
+  \**************************************************************/
 /*! dynamic exports provided */
 /*! all exports used */
 /***/ (function(module, exports, __webpack_require__) {
@@ -9460,9 +9460,9 @@ if(false) {
 /***/ }),
 
 /***/ 410:
-/*!***********************************************************************!*\
-  !*** ./node_modules/css-loader?{"url":false}!./client/LogOverlay.css ***!
-  \***********************************************************************/
+/*!*******************************************************************!*\
+  !*** ./node_modules/css-loader??ref--0-1!./client/LogOverlay.css ***!
+  \*******************************************************************/
 /*! dynamic exports provided */
 /*! all exports used */
 /***/ (function(module, exports, __webpack_require__) {
@@ -20635,9 +20635,9 @@ jQuery.nodeName = nodeName;
 // https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
 
 if ( true ) {
-	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() {
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = (function() {
 		return jQuery;
-	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+	}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 }
 
