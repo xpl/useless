@@ -47,7 +47,7 @@
                 value: Vec2.zero
             })
 
-            ball.$toggleAttribute ('animating', position.animatingChange)
+            ball.$toggleAttr ('animating', position.animatingChange)
 
             position.valueChange (p => {
                 box.css (p.asLeftTop)

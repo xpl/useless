@@ -23346,7 +23346,7 @@ $mixin(Node, {
         return this.classList ? this.classList.contains(x) : false;
     },
 
-    toggleAttribute: function toggleAttribute(name, value) {
+    toggleAttr: function toggleAttr(name, value) {
         var arg1 = arguments.length < 2;
 
         if (arg1) {
@@ -23362,8 +23362,8 @@ $mixin(Node, {
         return arg1 ? value : this;
     },
 
-    toggleAttributes: function toggleAttributes(cfg) {
-        _.map(cfg, _.flip2(this.toggleAttribute), this);return this;
+    toggleAttrs: function toggleAttrs(cfg) {
+        _.map(cfg, _.flip2(this.toggleAttr), this);return this;
     },
     setAttributes: function setAttributes(cfg) {
         _.map(cfg, _.flip2(this.setAttribute), this);return this;
@@ -23552,9 +23552,9 @@ $mixin(Element, {
         return this;
     },
 
-    $toggleAttribute: function $toggleAttribute(name, value) {
+    $toggleAttr: function $toggleAttr(name, value) {
         value(this.$(function (value) {
-            this.toggleAttribute(name, value);
+            this.toggleAttr(name, value);
         }));return this;
     },
 

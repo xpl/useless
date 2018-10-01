@@ -14157,7 +14157,7 @@
             hasClass: function hasClass(x) {
                 return this.classList ? this.classList.contains(x) : false;
             },
-            toggleAttribute: function toggleAttribute(name, value) {
+            toggleAttr: function toggleAttr(name, value) {
                 var arg1 = arguments.length < 2;
                 if (arg1) {
                     value = !this.hasAttribute(name);
@@ -14169,8 +14169,8 @@
                 }
                 return arg1 ? value : this;
             },
-            toggleAttributes: function toggleAttributes(cfg) {
-                _.map(cfg, _.flip2(this.toggleAttribute), this);
+            toggleAttrs: function toggleAttrs(cfg) {
+                _.map(cfg, _.flip2(this.toggleAttr), this);
                 return this;
             },
             setAttributes: function setAttributes(cfg) {
@@ -14302,9 +14302,9 @@
                 }));
                 return this;
             },
-            $toggleAttribute: function $toggleAttribute(name, value) {
+            $toggleAttr: function $toggleAttr(name, value) {
                 value(this.$(function (value) {
-                    this.toggleAttribute(name, value);
+                    this.toggleAttr(name, value);
                 }));
                 return this;
             },

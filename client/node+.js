@@ -262,18 +262,18 @@ var is = function (tag) { return function () { return this.tagName === tag } }
 
         hasClass: function (x) { return this.classList ? this.classList.contains (x) : false },
 
-        toggleAttribute: function (name, value) { var arg1 = arguments.length < 2
+        toggleAttr: function (name, value) { var arg1 = arguments.length < 2
 
-                                    if (arg1) {
-                                        value = !this.hasAttribute (name) }
+                        if (arg1) {
+                            value = !this.hasAttribute (name) }
 
-                                     if (value) { this.setAttribute    (name, value) }
-                                           else { this.removeAttribute (name) }
+                            if (value) { this.setAttribute    (name, value) }
+                                else { this.removeAttribute (name) }
 
-                                    return arg1 ? value : this },
+                        return arg1 ? value : this },
 
-        toggleAttributes: function (cfg) { _.map (cfg, _.flip2 (this.toggleAttribute), this); return this },
-        setAttributes:    function (cfg) { _.map (cfg, _.flip2 (this.setAttribute),    this); return this },
+        toggleAttrs:   function (cfg) { _.map (cfg, _.flip2 (this.toggleAttr),   this); return this },
+        setAttributes: function (cfg) { _.map (cfg, _.flip2 (this.setAttribute), this); return this },
 
         intAttribute: function (name) { return (this.getAttribute (name) || '').parsedInt },
 
@@ -434,8 +434,8 @@ var is = function (tag) { return function () { return this.tagName === tag } }
                         this.add (x instanceof Node ? x : (x + '')) }))
                     return this },
 
-        $toggleAttribute: function (name, value) {
-                                value (this.$ (function (value) { this.toggleAttribute (name, value) })); return this },
+        $toggleAttr: function (name, value) {
+                                value (this.$ (function (value) { this.toggleAttr (name, value) })); return this },
 
         $add: function (nodes) { // TODO: make it default .add impl (but keep .appendChildren intact)
 
