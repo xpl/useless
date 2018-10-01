@@ -8558,7 +8558,6 @@
         'use strict';
         (function (global) {
             var _ = __webpack_require__(5);
-            ;
             (function () {
                 var p = function () {
                     if (typeof window !== 'undefined' && window.window === window && window.navigator !== undefined) {
@@ -8712,7 +8711,6 @@
                 }
             });
         }
-        ;
         (function () {
             var override = function override(name, genImpl) {
                 return _[name] = genImpl(_[name]);
@@ -10217,7 +10215,6 @@
     function (module, exports, __webpack_require__) {
         'use strict';
         var _ = __webpack_require__(5);
-        ;
         [
             'method',
             'property',
@@ -12385,7 +12382,6 @@
             value = value.toString().split('e');
             return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
         }));
-        ;
         (function () {
             var toposort = __webpack_require__(365);
             $mixin(Array, {
