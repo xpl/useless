@@ -60,12 +60,12 @@
 /******/ 	__webpack_require__.p = "/build";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 377);
+/******/ 	return __webpack_require__(__webpack_require__.s = 378);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 134:
+/***/ 135:
 /*!***********************************************!*\
   !*** ./node_modules/get-source/get-source.js ***!
   \***********************************************/
@@ -80,9 +80,9 @@
 
 const O                 = Object,
       isBrowser         = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
-      SourceMapConsumer = __webpack_require__ (/*! source-map */ 384).SourceMapConsumer,
-      path              = __webpack_require__ (/*! ./impl/path */ 391),
-      dataURIToBuffer   = __webpack_require__ (/*! data-uri-to-buffer */ 392),
+      SourceMapConsumer = __webpack_require__ (/*! source-map */ 385).SourceMapConsumer,
+      path              = __webpack_require__ (/*! ./impl/path */ 392),
+      dataURIToBuffer   = __webpack_require__ (/*! data-uri-to-buffer */ 393),
       lastOf            = x => x[x.length - 1]
 
 /*  ------------------------------------------------------------------------ */
@@ -218,11 +218,11 @@ class SourceFile {
 
 /*  ------------------------------------------------------------------------ */
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/module.js */ 135)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../webpack/buildin/module.js */ 136)(module)))
 
 /***/ }),
 
-/***/ 135:
+/***/ 136:
 /*!***********************************!*\
   !*** (webpack)/buildin/module.js ***!
   \***********************************/
@@ -256,7 +256,7 @@ module.exports = function(module) {
 
 /***/ }),
 
-/***/ 136:
+/***/ 137:
 /*!*************************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/source-map-generator.js ***!
   \*************************************************************************************/
@@ -271,10 +271,10 @@ module.exports = function(module) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 137);
-var util = __webpack_require__(/*! ./util */ 54);
-var ArraySet = __webpack_require__(/*! ./array-set */ 138).ArraySet;
-var MappingList = __webpack_require__(/*! ./mapping-list */ 386).MappingList;
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 138);
+var util = __webpack_require__(/*! ./util */ 55);
+var ArraySet = __webpack_require__(/*! ./array-set */ 139).ArraySet;
+var MappingList = __webpack_require__(/*! ./mapping-list */ 387).MappingList;
 
 /**
  * An instance of the SourceMapGenerator represents a source map which is
@@ -693,7 +693,7 @@ exports.SourceMapGenerator = SourceMapGenerator;
 
 /***/ }),
 
-/***/ 137:
+/***/ 138:
 /*!***************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/base64-vlq.js ***!
   \***************************************************************************/
@@ -738,7 +738,7 @@ exports.SourceMapGenerator = SourceMapGenerator;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var base64 = __webpack_require__(/*! ./base64 */ 385);
+var base64 = __webpack_require__(/*! ./base64 */ 386);
 
 // A single base 64 digit can contain 6 bits of data. For the base 64 variable
 // length quantities we use in the source map spec, the first bit is the sign,
@@ -845,7 +845,7 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
 
 /***/ }),
 
-/***/ 138:
+/***/ 139:
 /*!**************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/array-set.js ***!
   \**************************************************************************/
@@ -860,7 +860,7 @@ exports.decode = function base64VLQ_decode(aStr, aIndex, aOutParam) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 54);
+var util = __webpack_require__(/*! ./util */ 55);
 var has = Object.prototype.hasOwnProperty;
 var hasNativeMap = typeof Map !== "undefined";
 
@@ -978,7 +978,7 @@ exports.ArraySet = ArraySet;
 
 /***/ }),
 
-/***/ 139:
+/***/ 140:
 /*!*************************************************!*\
   !*** ./node_modules/css-loader/lib/css-base.js ***!
   \*************************************************/
@@ -1066,7 +1066,7 @@ function toComment(sourceMap) {
 
 /***/ }),
 
-/***/ 140:
+/***/ 141:
 /*!****************************************************!*\
   !*** ./node_modules/style-loader/lib/addStyles.js ***!
   \****************************************************/
@@ -1127,7 +1127,7 @@ var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
-var	fixUrls = __webpack_require__(/*! ./urls */ 407);
+var	fixUrls = __webpack_require__(/*! ./urls */ 408);
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -1477,7 +1477,7 @@ module.exports = g;
 
 /***/ }),
 
-/***/ 377:
+/***/ 378:
 /*!***********************************!*\
   !*** multi ./useless.devtools.js ***!
   \***********************************/
@@ -1485,12 +1485,12 @@ module.exports = g;
 /*! all exports used */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! /Users/mac/useless/useless.devtools.js */378);
+module.exports = __webpack_require__(/*! /Users/mac/useless/useless.devtools.js */379);
 
 
 /***/ }),
 
-/***/ 378:
+/***/ 379:
 /*!*****************************!*\
   !*** ./useless.devtools.js ***!
   \*****************************/
@@ -1503,22 +1503,22 @@ module.exports = __webpack_require__(/*! /Users/mac/useless/useless.devtools.js 
 
 /*	__NO_COMPRESS__	*/
 
-String.ify = __webpack_require__(/*! string.ify */ 379);
+String.ify = __webpack_require__(/*! string.ify */ 380);
 
-__webpack_require__(/*! ./base/tier0/assert */ 380);
-__webpack_require__(/*! ./base/uncaught */ 381);
-__webpack_require__(/*! ./base/uncaughtAsync */ 382);
-__webpack_require__(/*! ./base/reflection */ 383);
-__webpack_require__(/*! ./base/log */ 399);
-__webpack_require__(/*! ./base/Testosterone */ 400);
-__webpack_require__(/*! ./base/profiling */ 401);
+__webpack_require__(/*! ./base/tier0/assert */ 381);
+__webpack_require__(/*! ./base/uncaught */ 382);
+__webpack_require__(/*! ./base/uncaughtAsync */ 383);
+__webpack_require__(/*! ./base/reflection */ 384);
+__webpack_require__(/*! ./base/log */ 400);
+__webpack_require__(/*! ./base/Testosterone */ 401);
+__webpack_require__(/*! ./base/profiling */ 402);
 
-__webpack_require__(/*! ./client/jQueryPlus */ 402);
+__webpack_require__(/*! ./client/jQueryPlus */ 403);
 
-__webpack_require__(/*! ./client/Panic */ 403);
-__webpack_require__(/*! ./client/LogOverlay */ 404);
-__webpack_require__(/*! ./client/Panic.css */ 405);
-__webpack_require__(/*! ./client/LogOverlay.css */ 408);
+__webpack_require__(/*! ./client/Panic */ 404);
+__webpack_require__(/*! ./client/LogOverlay */ 405);
+__webpack_require__(/*! ./client/Panic.css */ 406);
+__webpack_require__(/*! ./client/LogOverlay.css */ 409);
 
 /*  ------------------------------------------------------------------------ */
 
@@ -1529,7 +1529,7 @@ document.ready(function () {
 
 /***/ }),
 
-/***/ 379:
+/***/ 380:
 /*!*****************************************************!*\
   !*** ./node_modules/string.ify/build/string.ify.js ***!
   \*****************************************************/
@@ -1558,7 +1558,7 @@ function _objectEntries(obj) {
     return entries;
 }
 
-const bullet = __webpack_require__(/*! string.bullet */ 52),
+const bullet = __webpack_require__(/*! string.bullet */ 53),
       isBrowser = typeof window !== 'undefined' && window.window === window && window.navigator,
       maxOf = (arr, pick) => arr.reduce((max, s) => Math.max(max, pick ? pick(s) : s), 0),
       isInteger = Number.isInteger || (value => typeof value === 'number' && isFinite(value) && Math.floor(value) === value),
@@ -1572,7 +1572,7 @@ const assignProps = (to, from) => {
 
 const escapeStr = x => x.replace(/\n/g, '\\n').replace(/\'/g, "\\'").replace(/\"/g, '\\"');
 
-const { first, strlen } = __webpack_require__(/*! printable-characters */ 48); // handles ANSI codes and invisible characters
+const { first, strlen } = __webpack_require__(/*! printable-characters */ 49); // handles ANSI codes and invisible characters
 
 const limit = (s, n) => s && (strlen(s) <= n ? s : first(s, n - 1) + '…');
 
@@ -1769,7 +1769,7 @@ module.exports = configure({
 
 /***/ }),
 
-/***/ 380:
+/***/ 381:
 /*!******************************!*\
   !*** ./base/tier0/assert.js ***!
   \******************************/
@@ -2277,7 +2277,7 @@ _.withTest('assert.js bootstrap', function () {
 
 /***/ }),
 
-/***/ 381:
+/***/ 382:
 /*!**************************!*\
   !*** ./base/uncaught.js ***!
   \**************************/
@@ -2347,8 +2347,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
     switch ($platform.engine) {
         case 'node':
-            __webpack_require__(/*! process */ 69).on('uncaughtException', globalUncaughtExceptionHandler);
-            __webpack_require__(/*! process */ 69).on('unhandledRejection', globalUncaughtExceptionHandler);
+            __webpack_require__(/*! process */ 48).on('uncaughtException', globalUncaughtExceptionHandler);
+            __webpack_require__(/*! process */ 48).on('unhandledRejection', globalUncaughtExceptionHandler);
             break;
 
         case 'browser':
@@ -2378,7 +2378,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 /***/ }),
 
-/***/ 382:
+/***/ 383:
 /*!*******************************!*\
   !*** ./base/uncaughtAsync.js ***!
   \*******************************/
@@ -2496,7 +2496,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 /***/ }),
 
-/***/ 383:
+/***/ 384:
 /*!****************************!*\
   !*** ./base/reflection.js ***!
   \****************************/
@@ -2519,11 +2519,11 @@ _.hasReflection = true;
 
 /*  ------------------------------------------------------------------------ */
 
-$global.getSource = __webpack_require__(/*! get-source */ 134);
+$global.getSource = __webpack_require__(/*! get-source */ 135);
 
 /*  ------------------------------------------------------------------------ */
 
-$global.StackTracey = O.assign(__webpack_require__(/*! stacktracey */ 397), {
+$global.StackTracey = O.assign(__webpack_require__(/*! stacktracey */ 398), {
     fromErrorWithAsync: function fromErrorWithAsync(e) {
 
         var stackEntries = new StackTracey(e),
@@ -2560,7 +2560,7 @@ _.tests.reflection = {
 
 /*  ------------------------------------------------------------------------ */
 
-var asTable = __webpack_require__(/*! as-table */ 70);
+var asTable = __webpack_require__(/*! as-table */ 71);
 
 StackTracey.prototype[Symbol.for('String.ify')] = function (stringify) {
 
@@ -2642,7 +2642,7 @@ _.tests.prototypeMeta = {
 
 /***/ }),
 
-/***/ 384:
+/***/ 385:
 /*!***********************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/source-map.js ***!
   \***********************************************************************/
@@ -2655,14 +2655,14 @@ _.tests.prototypeMeta = {
  * Licensed under the New BSD license. See LICENSE.txt or:
  * http://opensource.org/licenses/BSD-3-Clause
  */
-exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 136).SourceMapGenerator;
-exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 387).SourceMapConsumer;
-exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 390).SourceNode;
+exports.SourceMapGenerator = __webpack_require__(/*! ./lib/source-map-generator */ 137).SourceMapGenerator;
+exports.SourceMapConsumer = __webpack_require__(/*! ./lib/source-map-consumer */ 388).SourceMapConsumer;
+exports.SourceNode = __webpack_require__(/*! ./lib/source-node */ 391).SourceNode;
 
 
 /***/ }),
 
-/***/ 385:
+/***/ 386:
 /*!***********************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/base64.js ***!
   \***********************************************************************/
@@ -2741,7 +2741,7 @@ exports.decode = function (charCode) {
 
 /***/ }),
 
-/***/ 386:
+/***/ 387:
 /*!*****************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/mapping-list.js ***!
   \*****************************************************************************/
@@ -2756,7 +2756,7 @@ exports.decode = function (charCode) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 54);
+var util = __webpack_require__(/*! ./util */ 55);
 
 /**
  * Determine whether mappingB is after mappingA with respect to generated
@@ -2832,7 +2832,7 @@ exports.MappingList = MappingList;
 
 /***/ }),
 
-/***/ 387:
+/***/ 388:
 /*!************************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/source-map-consumer.js ***!
   \************************************************************************************/
@@ -2847,11 +2847,11 @@ exports.MappingList = MappingList;
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var util = __webpack_require__(/*! ./util */ 54);
-var binarySearch = __webpack_require__(/*! ./binary-search */ 388);
-var ArraySet = __webpack_require__(/*! ./array-set */ 138).ArraySet;
-var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 137);
-var quickSort = __webpack_require__(/*! ./quick-sort */ 389).quickSort;
+var util = __webpack_require__(/*! ./util */ 55);
+var binarySearch = __webpack_require__(/*! ./binary-search */ 389);
+var ArraySet = __webpack_require__(/*! ./array-set */ 139).ArraySet;
+var base64VLQ = __webpack_require__(/*! ./base64-vlq */ 138);
+var quickSort = __webpack_require__(/*! ./quick-sort */ 390).quickSort;
 
 function SourceMapConsumer(aSourceMap, aSourceMapURL) {
   var sourceMap = aSourceMap;
@@ -3989,7 +3989,7 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 
 /***/ }),
 
-/***/ 388:
+/***/ 389:
 /*!******************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/binary-search.js ***!
   \******************************************************************************/
@@ -4112,7 +4112,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
 
 /***/ }),
 
-/***/ 389:
+/***/ 390:
 /*!***************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/quick-sort.js ***!
   \***************************************************************************/
@@ -4238,7 +4238,7 @@ exports.quickSort = function (ary, comparator) {
 
 /***/ }),
 
-/***/ 390:
+/***/ 391:
 /*!****************************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/source-node.js ***!
   \****************************************************************************/
@@ -4253,8 +4253,8 @@ exports.quickSort = function (ary, comparator) {
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 136).SourceMapGenerator;
-var util = __webpack_require__(/*! ./util */ 54);
+var SourceMapGenerator = __webpack_require__(/*! ./source-map-generator */ 137).SourceMapGenerator;
+var util = __webpack_require__(/*! ./util */ 55);
 
 // Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
 // operating systems these days (capturing the result).
@@ -4663,7 +4663,7 @@ exports.SourceNode = SourceNode;
 
 /***/ }),
 
-/***/ 391:
+/***/ 392:
 /*!**********************************************!*\
   !*** ./node_modules/get-source/impl/path.js ***!
   \**********************************************/
@@ -4730,11 +4730,11 @@ const path = module.exports = {
 
 /*  ------------------------------------------------------------------------ */
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../process/browser.js */ 69)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../process/browser.js */ 48)))
 
 /***/ }),
 
-/***/ 392:
+/***/ 393:
 /*!**************************************************!*\
   !*** ./node_modules/data-uri-to-buffer/index.js ***!
   \**************************************************/
@@ -4810,11 +4810,11 @@ function dataUriToBuffer (uri) {
   return buffer;
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../buffer/index.js */ 393).Buffer))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../buffer/index.js */ 394).Buffer))
 
 /***/ }),
 
-/***/ 393:
+/***/ 394:
 /*!**************************************!*\
   !*** ./node_modules/buffer/index.js ***!
   \**************************************/
@@ -4833,9 +4833,9 @@ function dataUriToBuffer (uri) {
 
 
 
-var base64 = __webpack_require__(/*! base64-js */ 394)
-var ieee754 = __webpack_require__(/*! ieee754 */ 395)
-var isArray = __webpack_require__(/*! isarray */ 396)
+var base64 = __webpack_require__(/*! base64-js */ 395)
+var ieee754 = __webpack_require__(/*! ieee754 */ 396)
+var isArray = __webpack_require__(/*! isarray */ 397)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -6617,7 +6617,7 @@ function isnan (val) {
 
 /***/ }),
 
-/***/ 394:
+/***/ 395:
 /*!*****************************************!*\
   !*** ./node_modules/base64-js/index.js ***!
   \*****************************************/
@@ -6744,7 +6744,7 @@ function fromByteArray (uint8) {
 
 /***/ }),
 
-/***/ 395:
+/***/ 396:
 /*!***************************************!*\
   !*** ./node_modules/ieee754/index.js ***!
   \***************************************/
@@ -6840,7 +6840,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 /***/ }),
 
-/***/ 396:
+/***/ 397:
 /*!***************************************!*\
   !*** ./node_modules/isarray/index.js ***!
   \***************************************/
@@ -6857,7 +6857,7 @@ module.exports = Array.isArray || function (arr) {
 
 /***/ }),
 
-/***/ 397:
+/***/ 398:
 /*!*************************************************!*\
   !*** ./node_modules/stacktracey/stacktracey.js ***!
   \*************************************************/
@@ -6873,9 +6873,9 @@ module.exports = Array.isArray || function (arr) {
 const O            = Object,
       isBrowser    = (typeof window !== 'undefined') && (window.window === window) && window.navigator,
       lastOf       = x => x[x.length - 1],
-      getSource    = __webpack_require__ (/*! get-source */ 134),
-      partition    = __webpack_require__ (/*! ./impl/partition */ 398),
-      asTable      = __webpack_require__ (/*! as-table */ 70),
+      getSource    = __webpack_require__ (/*! get-source */ 135),
+      partition    = __webpack_require__ (/*! ./impl/partition */ 399),
+      asTable      = __webpack_require__ (/*! as-table */ 71),
       pathRoot     = isBrowser ? window.location.href : (process.cwd () + '/')
 
 /*  ------------------------------------------------------------------------ */
@@ -7138,11 +7138,11 @@ module.exports = StackTracey
 /*  ------------------------------------------------------------------------ */
 
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../process/browser.js */ 69), __webpack_require__(/*! ./../webpack/buildin/module.js */ 135)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../process/browser.js */ 48), __webpack_require__(/*! ./../webpack/buildin/module.js */ 136)(module)))
 
 /***/ }),
 
-/***/ 398:
+/***/ 399:
 /*!****************************************************!*\
   !*** ./node_modules/stacktracey/impl/partition.js ***!
   \****************************************************/
@@ -7176,7 +7176,7 @@ module.exports = (arr_, pred) => {
 
 /***/ }),
 
-/***/ 399:
+/***/ 400:
 /*!*********************!*\
   !*** ./base/log.js ***!
   \*********************/
@@ -7187,9 +7187,9 @@ module.exports = (arr_, pred) => {
 "use strict";
 
 
-var O = __webpack_require__(/*! es7-object-polyfill */ 53),
-    bullet = __webpack_require__(/*! string.bullet */ 52),
-    asTable = __webpack_require__(/*! as-table */ 70);
+var O = __webpack_require__(/*! es7-object-polyfill */ 54),
+    bullet = __webpack_require__(/*! string.bullet */ 53),
+    asTable = __webpack_require__(/*! as-table */ 71);
 
 _.hasLog = true;
 
@@ -7537,7 +7537,7 @@ if ($platform.NodeJS) {
 
 /***/ }),
 
-/***/ 400:
+/***/ 401:
 /*!******************************!*\
   !*** ./base/Testosterone.js ***!
   \******************************/
@@ -7548,7 +7548,7 @@ if ($platform.NodeJS) {
 "use strict";
 
 
-var O = __webpack_require__(/*! es7-object-polyfill */ 53);
+var O = __webpack_require__(/*! es7-object-polyfill */ 54);
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------
@@ -7563,8 +7563,8 @@ Testosterone is a cross-platform unit test shell. Features:
 ------------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-var bullet = __webpack_require__(/*! string.bullet */ 52),
-    asTable = __webpack_require__(/*! as-table */ 70);
+var bullet = __webpack_require__(/*! string.bullet */ 53),
+    asTable = __webpack_require__(/*! as-table */ 71);
 
 /*  A contract for test routines that says that test should fail and it's the behavior expected
  */
@@ -8202,7 +8202,7 @@ if ($platform.NodeJS) {
 
 /***/ }),
 
-/***/ 401:
+/***/ 402:
 /*!***************************!*\
   !*** ./base/profiling.js ***!
   \***************************/
@@ -8273,7 +8273,7 @@ _.perfTest = function (arg, then) {
 
 /***/ }),
 
-/***/ 402:
+/***/ 403:
 /*!******************************!*\
   !*** ./client/jQueryPlus.js ***!
   \******************************/
@@ -8284,7 +8284,7 @@ _.perfTest = function (arg, then) {
 "use strict";
 
 
-module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 98)
+module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 99)
 
 /*  Some handy jQuery extensions
     ======================================================================== */
@@ -8859,7 +8859,7 @@ module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 98)
 
 /***/ }),
 
-/***/ 403:
+/***/ 404:
 /*!*************************!*\
   !*** ./client/Panic.js ***!
   \*************************/
@@ -9117,11 +9117,11 @@ module.exports = $global.jQuery = __webpack_require__(/*! jquery */ 98)
 		} });
 
 	// -- end of namespace
-})(__webpack_require__(/*! jquery */ 98));
+})(__webpack_require__(/*! jquery */ 99));
 
 /***/ }),
 
-/***/ 404:
+/***/ 405:
 /*!******************************!*\
   !*** ./client/LogOverlay.js ***!
   \******************************/
@@ -9223,11 +9223,11 @@ Modal overlay that renders log.js output for debugging purposes
 		} });
 
 	// -- end of namespace
-})(__webpack_require__(/*! jquery */ 98));
+})(__webpack_require__(/*! jquery */ 99));
 
 /***/ }),
 
-/***/ 405:
+/***/ 406:
 /*!**************************!*\
   !*** ./client/Panic.css ***!
   \**************************/
@@ -9238,7 +9238,7 @@ Modal overlay that renders log.js output for debugging purposes
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !../node_modules/css-loader??ref--0-1!./Panic.css */ 406);
+var content = __webpack_require__(/*! !../node_modules/css-loader??ref--0-1!./Panic.css */ 407);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -9246,7 +9246,7 @@ var transform;
 var options = {"hmr":true}
 options.transform = transform
 // add the styles to the DOM
-var update = __webpack_require__(/*! ../node_modules/style-loader/lib/addStyles.js */ 140)(content, options);
+var update = __webpack_require__(/*! ../node_modules/style-loader/lib/addStyles.js */ 141)(content, options);
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
@@ -9264,7 +9264,7 @@ if(false) {
 
 /***/ }),
 
-/***/ 406:
+/***/ 407:
 /*!******************************************************************!*\
   !*** ./node_modules/css-loader?{"url":false}!./client/Panic.css ***!
   \******************************************************************/
@@ -9272,7 +9272,7 @@ if(false) {
 /*! all exports used */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/lib/css-base.js */ 139)(undefined);
+exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/lib/css-base.js */ 140)(undefined);
 // imports
 
 
@@ -9284,7 +9284,7 @@ exports.push([module.i, "@-webkit-keyframes bombo-jumbo {\n  0%   { -webkit-tran
 
 /***/ }),
 
-/***/ 407:
+/***/ 408:
 /*!***********************************************!*\
   !*** ./node_modules/style-loader/lib/urls.js ***!
   \***********************************************/
@@ -9385,7 +9385,7 @@ module.exports = function (css) {
 
 /***/ }),
 
-/***/ 408:
+/***/ 409:
 /*!*******************************!*\
   !*** ./client/LogOverlay.css ***!
   \*******************************/
@@ -9396,7 +9396,7 @@ module.exports = function (css) {
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(/*! !../node_modules/css-loader??ref--0-1!./LogOverlay.css */ 409);
+var content = __webpack_require__(/*! !../node_modules/css-loader??ref--0-1!./LogOverlay.css */ 410);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -9404,7 +9404,7 @@ var transform;
 var options = {"hmr":true}
 options.transform = transform
 // add the styles to the DOM
-var update = __webpack_require__(/*! ../node_modules/style-loader/lib/addStyles.js */ 140)(content, options);
+var update = __webpack_require__(/*! ../node_modules/style-loader/lib/addStyles.js */ 141)(content, options);
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
@@ -9422,7 +9422,7 @@ if(false) {
 
 /***/ }),
 
-/***/ 409:
+/***/ 410:
 /*!***********************************************************************!*\
   !*** ./node_modules/css-loader?{"url":false}!./client/LogOverlay.css ***!
   \***********************************************************************/
@@ -9430,7 +9430,7 @@ if(false) {
 /*! all exports used */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/lib/css-base.js */ 139)(undefined);
+exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/lib/css-base.js */ 140)(undefined);
 // imports
 
 
@@ -9443,6 +9443,202 @@ exports.push([module.i, ".useless-log-overlay {\tposition: fixed; bottom: 10px; 
 /***/ }),
 
 /***/ 48:
+/*!*****************************************!*\
+  !*** ./node_modules/process/browser.js ***!
+  \*****************************************/
+/*! dynamic exports provided */
+/*! all exports used */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+
+/***/ 49:
 /*!*************************************************************************!*\
   !*** ./node_modules/printable-characters/build/printable-characters.js ***!
   \*************************************************************************/
@@ -9507,7 +9703,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 52:
+/***/ 53:
 /*!*****************************************************!*\
   !*** ./node_modules/string.bullet/string.bullet.js ***!
   \*****************************************************/
@@ -9518,7 +9714,7 @@ module.exports = {
 "use strict";
 
 
-const { blank } = __webpack_require__ (/*! printable-characters */ 48)
+const { blank } = __webpack_require__ (/*! printable-characters */ 49)
 
 module.exports = (bullet, arg) => {
 
@@ -9532,7 +9728,7 @@ module.exports = (bullet, arg) => {
 
 /***/ }),
 
-/***/ 53:
+/***/ 54:
 /*!*****************************************************************!*\
   !*** ./node_modules/es7-object-polyfill/es7-object-polyfill.js ***!
   \*****************************************************************/
@@ -9543,7 +9739,7 @@ module.exports = (bullet, arg) => {
 module.exports = (function () {
 	"use strict";
 
-	var ownKeys      = __webpack_require__ (/*! reflect.ownkeys */ 97)
+	var ownKeys      = __webpack_require__ (/*! reflect.ownkeys */ 98)
 	var reduce       = Function.bind.call(Function.call, Array.prototype.reduce);
 	var isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
 	var concat       = Function.bind.call(Function.call, Array.prototype.concat);
@@ -9562,7 +9758,7 @@ module.exports = (function () {
 
 /***/ }),
 
-/***/ 54:
+/***/ 55:
 /*!*********************************************************************!*\
   !*** ./node_modules/get-source/node_modules/source-map/lib/util.js ***!
   \*********************************************************************/
@@ -10062,203 +10258,7 @@ exports.computeSourceURL = computeSourceURL;
 
 /***/ }),
 
-/***/ 69:
-/*!*****************************************!*\
-  !*** ./node_modules/process/browser.js ***!
-  \*****************************************/
-/*! dynamic exports provided */
-/*! all exports used */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-
-/***/ }),
-
-/***/ 70:
+/***/ 71:
 /*!*************************************************!*\
   !*** ./node_modules/as-table/build/as-table.js ***!
   \*************************************************/
@@ -10273,7 +10273,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 const O = Object;
 
-var _require = __webpack_require__(/*! printable-characters */ 48);
+var _require = __webpack_require__(/*! printable-characters */ 49);
 
 const first = _require.first,
       strlen = _require.strlen,
@@ -10354,7 +10354,7 @@ module.exports = asTable({
 
 /***/ }),
 
-/***/ 97:
+/***/ 98:
 /*!***********************************************!*\
   !*** ./node_modules/reflect.ownkeys/index.js ***!
   \***********************************************/
@@ -10377,7 +10377,7 @@ if (typeof Reflect === 'object' && typeof Reflect.ownKeys === 'function') {
 
 /***/ }),
 
-/***/ 98:
+/***/ 99:
 /*!********************************************!*\
   !*** ./node_modules/jquery/dist/jquery.js ***!
   \********************************************/
