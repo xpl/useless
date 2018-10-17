@@ -16,7 +16,9 @@
   "scripts": {
     "test": "node test",
     "build": "node build",
-    "example": "node example"
+    "example": "node example",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -99,9 +101,11 @@
     "webpack-dev-server": "2.11.2",
     "websocket": "1.0.23",
     "write-file-webpack-plugin": "4.2.0",
-    "xhr2": "0.1.4"
+    "xhr2": "0.1.4",
+    "snyk": "^1.104.1"
   },
   "devDependencies": {
     "node-fetch": "1.7.3"
-  }
+  },
+  "snyk": true
 }
