@@ -350,7 +350,7 @@ Vector math (**Vec2**, **Transform**, **BBox**, **Bezier**, intersections):
 
 ## Error handling
 
-**UPDATE: It is now available as a bunch of clean separate libraries with minimal dependencies, check it out: [panic-overlay](https://github.com/xpl/panic-overlay) & [ololog](https://github.com/xpl/ololog)**
+### UPDATE: It is now available as a bunch of clean separate libraries with minimal dependencies, check it out: [panic-overlay](https://github.com/xpl/panic-overlay) and [ololog](https://github.com/xpl/ololog)
 
 [![node.js stacktrace](https://raw.githubusercontent.com/xpl/useless/master/example/img/callstack2.png)](https://github.com/xpl/useless/blob/master/base/reflection.js)
 
