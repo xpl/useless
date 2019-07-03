@@ -2,7 +2,11 @@
 
 A research project, from which I learned a lot. Especially how one shouldn't write code and web frameworks in particular :) 
 
-**In near future, it will be split into several loosely coupled, clean and maintainable NPM modules, for everyone's convenience.** Stay tuned.
+```diff
+-THIS PROJECT IS UNMAINTAINED, SHOULDN'T BE USED / LEFT HERE JUST FOR THE EDUCATIONAL PURPOSES
+```
+
+**Hey, as the name suggests, this is not something you're supposed to use! The project contains a number of interesting ideas (like traits system) which could be further explored and evolved as separate projects — but I probably won't do that in near future. Anyway, feel free to read the docs/code and use it for whatever you like.**
 
 [Installing](#installing) | [Wiki](https://github.com/xpl/useless/wiki)
 
