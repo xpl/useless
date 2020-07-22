@@ -92,7 +92,7 @@
     "stacktracey": "1.2.87",
     "string.bullet": "1.0.11",
     "string.ify": "1.0.43",
-    "style-loader": "0.19.1",
+    "style-loader": "0.20.0",
     "toposort": "1.0.0",
     "underscore": "1.8.3",
     "webpack": "3.11.0",
