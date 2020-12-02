@@ -96,7 +96,7 @@
     "toposort": "1.0.0",
     "underscore": "1.8.3",
     "webpack": "3.11.0",
-    "webpack-dev-server": "2.11.2",
+    "webpack-dev-server": "3.1.6",
     "websocket": "1.0.23",
     "write-file-webpack-plugin": "4.2.0",
     "xhr2": "0.1.4"
