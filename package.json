@@ -73,7 +73,7 @@
     "babel-preset-es2017": "6.24.1",
     "babel-register": "6.24.1",
     "babel-runtime": "6.11.6",
-    "chokidar": "1.7.0",
+    "chokidar": "3.0.0",
     "css-loader": "0.28.10",
     "es6-object-assign": "1.1.0",
     "es7-object-polyfill": "0.0.5",
